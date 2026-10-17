@@ -26,6 +26,12 @@ function App() {
     if (!joined) setSelectedId(null)
   }
 
+  const openDialog = useCallback((id: string) => {
+    // Clears an earlier error, such as a lost connection, so the new dialog starts clean
+    leave()
+    setSelectedId(id)
+  }, [leave])
+
   const closeDialog = useCallback(() => {
     // Also drops a socket left open by a refused join
     leave()
@@ -56,7 +62,7 @@ function App() {
       </header>
       <main className="lobby-main">
         {error && !selected && <div className="lobby-error">{error}</div>}
-        <GameList games={PLAYABLE_GAMES} onSelect={setSelectedId} />
+        <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
       </main>
       {selected && client && (
         <JoinDialog

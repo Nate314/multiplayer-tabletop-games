@@ -55,6 +55,10 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+[data-game="quoridor"] button {
+  font-weight: 500;
+}
+
 [data-game="quoridor"] .game-header {
   display: flex;
   align-items: center;
@@ -107,7 +111,9 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Centred in the space under the header; the auto margins drop to 0 when the window is too short */
 [data-game="quoridor"] .game-layout {
+  margin: auto 0;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -494,13 +500,8 @@
   border: 2px solid #6A1B9A;
 }
 
-/* On narrow screens the board scrolls sideways instead of the page; the padding leaves room for the frame's outer edge */
 [data-game="quoridor"] .board-area {
   position: relative;
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 8px;
-  box-sizing: border-box;
 }
 
 [data-game="quoridor"] .goal-list {
@@ -605,5 +606,15 @@
   [data-game="quoridor"] .back-button,
   [data-game="quoridor"] .faq-button {
     padding: 0 0.75rem;
+  }
+}
+
+/* Too narrow for the board: it scrolls sideways instead of the page; the padding leaves room for the frame's outer edge */
+@media (max-width: 540px) {
+  [data-game="quoridor"] .board-area {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 8px;
+    box-sizing: border-box;
   }
 }
