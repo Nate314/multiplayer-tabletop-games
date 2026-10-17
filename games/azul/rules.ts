@@ -54,6 +54,11 @@ export function sourceTiles(table: Table, source: Source): Color[] {
   return source.type === 'center' ? table.center : table.factories[source.index] ?? [];
 }
 
+// How the status line and the history name a factory or the center
+export function sourceName(source: Source): string {
+  return source.type === 'factory' ? `factory ${source.index + 1}` : 'the center';
+}
+
 export function sourceColors(table: Table, source: Source): Color[] {
   const tiles = sourceTiles(table, source);
   return COLORS.filter(color => tiles.includes(color));
@@ -400,7 +405,6 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   const floor = [...board.floor, ...dropped.slice(0, room)];
   const lid = [...state.lid, ...dropped.slice(room).filter(isColor)];
 
-  const where = fromFactory ? `factory ${source.index + 1}` : 'the center';
   const next: GameState = {
     ...state,
     factories,
@@ -410,7 +414,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
     lid,
     boards: { ...state.boards, [seat]: { ...board, patternLines, floor } },
     lastMove: { playerNumber: seat, source, color, count, line },
-    gameStatus: `${state.playerNames[seat]} took ${count} ${color} from ${where}`
+    gameStatus: `${state.playerNames[seat]} took ${count} ${color} from ${sourceName(source)}`
   };
 
   const tableEmpty = center.length === 0 && factories.every(factory => factory.length === 0);

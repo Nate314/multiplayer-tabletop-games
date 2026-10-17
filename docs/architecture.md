@@ -52,14 +52,14 @@ flowchart TD
 - Its metadata, state shape and types (`types.ts`, `index.ts`)
 - Its rules: starting state, applying a move, extra non-move actions, who won, what happens when a player is seated or leaves (`rules.ts`)
 - Its public view, `toPublicState`, which removes hidden information
-- Its screen, FAQ content, icon and styles (`client/`), with CSS scoped under `[data-game="<id>"]`
+- Its screen, read-only history board, move descriptions, FAQ content, icon and styles (`client/`), with CSS scoped under `[data-game="<id>"]`
 - Its rules tests
 
 ## Contracts
 
 - `shared/gameDefinition.ts` defines `GameDefinition` and `GameInfo`, which the server uses
 - `games/registry.ts` lists every `GameDefinition` in landing page order
-- `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`) and lists them in `CLIENT_GAMES`
+- `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
@@ -70,14 +70,16 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
    - `GameList.tsx` is the landing page: one row per game, in registry order
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
-   - `GameView.tsx` is the header (Back to games, FAQ, theme toggle) around the game's own `Screen`
+   - `GameView.tsx` is the header (Back to games, History, FAQ, theme toggle) around the game's own `Screen`
    - `FaqButton.tsx` and `FaqDialog.tsx` show a game's FAQ items
+   - `HistoryButton.tsx` fetches the game's moves from `/api/history/<game type>/<game ID>` (disabled before the first move) and `HistoryDialog.tsx` shows them: a range slider over the moves, "Move k of N: <the game's `describeMove`>", and the game's read-only `HistoryBoard` for that step. It shows the history as of opening and changes nothing for other players
    - `ThemeToggle.tsx` switches light and dark; the choice is shared across the site
    - `UndoVote.tsx` shows a running undo vote
    - `RejoinButton.tsx` is the "Back to <game> (<game ID>)" button on the landing page, shown when the remembered game was left with Back to games or a lost connection
    - `PresenceBar.tsx` sits above the game screen while anyone is disconnected: each disconnected player with a Dismiss button, and "Waiting for <name> to reconnect" when it is their turn
    - `DismissVote.tsx` shows a running dismiss vote
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
+   - `/src/hooks/useEscapeKey.ts` closes the topmost dialog on Escape
    - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service, remembers the game, rejoins it after a refresh, and offers it again after Back to games
 
 2. **Game Service (`/src/services/gameService.ts`)**
@@ -98,7 +100,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
 5. **Default styles for the platform pieces (`/src/App.css`)**
-   - The game header (`.game-root`, `.game-header`, `.back-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) and the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
+   - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) and the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
    - Quoridor and Azul style the header, FAQ dialog and undo vote themselves, so the defaults do not change how those look; the disconnected players bar and the dismiss vote use the defaults

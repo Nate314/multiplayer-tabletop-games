@@ -242,7 +242,7 @@
 }
 
 /*
- * Default look for the platform pieces a game screen shows: the game header, the FAQ dialog, the undo vote,
+ * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
  * the disconnected players bar and the dismiss vote.
  * Every selector sits in :where(), so it has no specificity and any rule in a game's own CSS wins.
  * A game can restyle these pieces with its own rules, or just set these variables on [data-game="<id>"]:
@@ -273,7 +273,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .faq-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -310,11 +310,35 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* FAQ dialog */
+/* Phones: the five header buttons fill the width, so the title takes its own row above them */
+@media (max-width: 480px) {
+  :where([data-game] .game-header) {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem;
+  }
+
+  :where([data-game] .game-header h1) {
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+    padding: 0 0.6rem;
+  }
+}
+
+/* Before the first move there is no history */
+:where([data-game] .history-button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* FAQ and history dialogs */
 
 :where([data-game] .overlay) {
   position: fixed;
@@ -356,6 +380,26 @@
 
 :where([data-game] .faq dd) {
   margin: 4px 0 0;
+}
+
+/* The history dialog is as wide as the board it shows; a board wider than the window scrolls sideways */
+:where([data-game] .modal.history) {
+  max-width: 1100px;
+}
+
+:where([data-game] .history-move) {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+:where([data-game] .history-slider) {
+  width: 100%;
+  margin: 0 0 16px;
+}
+
+:where([data-game] .history-board) {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 :where([data-game] .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {

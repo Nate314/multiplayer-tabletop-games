@@ -169,15 +169,17 @@ The platform (server, landing page, join dialog, undo voting, Docker, CI) needs 
    - `index.ts`: exports a `GameDefinition` object (see `shared/gameDefinition.ts`). Its properties are `info` (`id`, `name`, `description`, `minPlayers`, `maxPlayers`), `createGameState`, `resetLobby`, `applyMove`, `toPublicState`, and optionally `onPlayerLeft` and `applyAction`. The platform does not block `applyAction` during an undo vote or after the game is over, so refuse actions there yourself if the game needs to
    - tests, for example `rules.test.ts` and `manager.test.ts`
 2. Create `games/<id>/client/` with:
-   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq` and `icon`
+   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `icon`, `HistoryBoard` and `describeMove`
+   - a `HistoryBoard` component: a read-only board for one public state from the history, with its `lastMove` highlighted
+   - `describeMove.ts`: one line about the move that produced a public state, such as `Alice placed a wall`, shown as "Move 7 of 23: ..." in the history dialog
    - `faq.ts`: the FAQ items shown by the FAQ button
    - optionally a CSS file whose rules are all scoped under `[data-game="<id>"]`, so the game's colors never leak into other games or the landing page
 3. Add one line to `games/registry.ts`: put the game in the `GAMES` array.
 4. Add one line to `src/clientGames.ts`: put the client in `CLIENT_GAMES`.
 
-The platform styles its own pieces by default (in `src/App.css`): the game header with Back to games, FAQ and the theme toggle, the FAQ dialog, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
+The platform styles its own pieces by default (in `src/App.css`): the game header with Back to games, History, FAQ and the theme toggle, the FAQ and history dialogs, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
 
 - set any of these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`; or
-- write your own rules for the classes: `.game-root`, `.game-header`, `.back-button`, `.faq-button`, `.theme-toggle`, `.overlay`, `.modal`, `.faq` (`dl`, `dt`, `dd`), `.primary-button`, `.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`. The defaults have no specificity, so any rule scoped under `[data-game="<id>"]` wins. Quoridor and Azul do this.
+- write your own rules for the classes: `.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`, `.overlay`, `.modal`, `.faq` (`dl`, `dt`, `dd`), `.history` (`.history-move`, `.history-slider`, `.history-board`), `.primary-button`, `.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`. The defaults have no specificity, so any rule scoped under `[data-game="<id>"]` wins. Quoridor and Azul do this.
 
 Server code (`server/`, `shared/`, and the non-client files of a game) must not import from `src/` or any `games/<id>/client/`.

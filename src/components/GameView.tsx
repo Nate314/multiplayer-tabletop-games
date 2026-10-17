@@ -1,4 +1,5 @@
 import FaqButton from './FaqButton';
+import HistoryButton from './HistoryButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
 import PresenceBar from './PresenceBar';
@@ -26,6 +27,7 @@ export default function GameView({ game, client, gameState, playerNumber, error,
       <header className="game-header">
         <button type="button" className="back-button" onClick={onBack}>Back to games</button>
         <h1>{game.name}</h1>
+        <HistoryButton gameType={game.id} gameState={gameState} client={client} />
         <FaqButton game={game} items={client.faq} />
         <GitHubLink />
         <ThemeToggle />

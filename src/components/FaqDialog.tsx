@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import useEscapeKey from '../hooks/useEscapeKey';
 import type { FaqItem } from '../clientGames.ts';
 
 type FaqDialogProps = {
@@ -8,16 +8,7 @@ type FaqDialogProps = {
 };
 
 export default function FaqDialog({ title, items, onClose }: FaqDialogProps) {
-  useEffect(() => {
-    // Capture phase, so Escape closes only the FAQ and not the join dialog behind it
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return;
-      event.stopPropagation();
-      onClose();
-    }
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   return (
     <div className="overlay" onClick={onClose}>

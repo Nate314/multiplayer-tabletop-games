@@ -77,6 +77,7 @@
 }
 
 [data-game="quoridor"] .back-button,
+[data-game="quoridor"] .history-button,
 [data-game="quoridor"] .faq-button,
 [data-game="quoridor"] .github-link,
 [data-game="quoridor"] .theme-toggle {
@@ -101,6 +102,7 @@
 }
 
 [data-game="quoridor"] .back-button:hover,
+[data-game="quoridor"] .history-button:hover:enabled,
 [data-game="quoridor"] .faq-button:hover,
 [data-game="quoridor"] .github-link:hover,
 [data-game="quoridor"] .theme-toggle:hover {
@@ -156,6 +158,26 @@
 [data-game="quoridor"] .modal h2 {
   margin: 0 0 12px;
   font-size: 24px;
+}
+
+/* History dialog */
+[data-game="quoridor"] .modal.history {
+  max-width: 900px;
+}
+
+/* Its own stacking context, so the frame's outer edge paints above the dialog; the padding leaves room for that edge */
+[data-game="quoridor"] .history-board {
+  isolation: isolate;
+  padding: 8px;
+}
+
+[data-game="quoridor"] .history-board .board-frame {
+  margin: 0 auto;
+}
+
+/* The board at full strength, though nothing on it can be clicked */
+[data-game="quoridor"] .history-board .board:is(.not-your-turn, .game-over) {
+  opacity: 1;
 }
 
 [data-game="quoridor"] .faq dl {
@@ -598,13 +620,17 @@
   background: var(--button-hover-bg);
 }
 
-/* Phones: five header controls share about 360px, so the title gives way last, with an ellipsis */
+/* Phones: the five header buttons fill about 360px, so the title takes its own row above them, with an ellipsis */
 @media (max-width: 480px) {
   [data-game="quoridor"] .game-header {
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 0.375rem;
   }
 
   [data-game="quoridor"] .game-header h1 {
+    flex-basis: 100%;
+    order: -1;
     min-width: 0;
     overflow: hidden;
     font-size: 1.1rem;
@@ -613,6 +639,7 @@
   }
 
   [data-game="quoridor"] .back-button,
+  [data-game="quoridor"] .history-button,
   [data-game="quoridor"] .faq-button {
     padding: 0 0.6rem;
   }
