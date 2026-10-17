@@ -265,15 +265,30 @@ test('the winning move can be undone', () => {
   assert.equal(restored.currentPlayer, 1);
 });
 
-test('an undo vote after a win passes when the only other voter disconnects', () => {
+test('an undo vote after a win is canceled when the winner disconnects', () => {
   const manager = wonGame();
   ok(manager.requestUndo(ROOM, 2));
   const state = left(manager.disconnect(ROOM, 1));
   assert.equal(state.undoVote, null);
-  assert.equal(state.isGameOver, false);
-  assert.deepEqual(state.winners, []);
-  assert.equal(state.moves, 2);
+  assert.equal(state.isGameOver, true);
+  assert.deepEqual(state.winners, [1]);
+  assert.equal(state.moves, 3);
+  assert.equal(state.moveCount, 3);
   assert.deepEqual(state.disconnected, [1]);
+  assert.deepEqual(manager.voteUndo(ROOM, 2, true), { error: 'No undo vote in progress' });
+});
+
+test('an undo vote is canceled when a disconnect leaves one connected player', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  const state = left(manager.disconnect(ROOM, 2));
+  assert.equal(state.undoVote, null);
+  assert.equal(state.moves, 1);
+  assert.equal(state.moveCount, 1);
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(state.gameStatus, 'B disconnected');
+  assert.equal(manager.history('test', 'g1')?.length, 1);
 });
 
 test('an undo vote after a win is canceled when the requester disconnects', () => {

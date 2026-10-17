@@ -51,12 +51,18 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
     return { room };
   }
 
-  // Applies the undo once every connected player has approved
+  // Applies the undo once every connected player has approved; an undo always needs two connected players,
+  // so a vote left with fewer (after a disconnect) is canceled instead
   function resolveUndoVote(room: Room): void {
     const { state } = room;
     const vote = state.undoVote;
+    if (!vote) return;
     const voters = connectedPlayers(state);
-    if (!vote || voters.length === 0 || !voters.every(seat => vote.votes[seat])) return;
+    if (voters.length < 2) {
+      room.state = { ...state, undoVote: null };
+      return;
+    }
+    if (!voters.every(seat => vote.votes[seat])) return;
 
     const previous = room.history.pop();
     if (!previous) return; // Unreachable: a vote only opens when there is history
@@ -133,7 +139,9 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       resolveUndoVote(room);
 
       if (room.state.started && !room.emptyTimer && connectedPlayers(room.state).length === 0) {
-        room.emptyTimer = setTimeout(() => rooms.delete(roomId), EMPTY_ROOM_TIMEOUT_MS);
+        room.emptyTimer = setTimeout(() => {
+          if (rooms.get(roomId) === room) rooms.delete(roomId);
+        }, EMPTY_ROOM_TIMEOUT_MS);
         room.emptyTimer.unref(); // never keeps the process alive on its own
       }
       return { state: view(room) };
