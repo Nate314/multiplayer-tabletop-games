@@ -8,16 +8,20 @@ export const MESSAGE_TYPES = {
   GAME_ACTION: 'GAME_ACTION',
   REQUEST_UNDO: 'REQUEST_UNDO',
   VOTE_UNDO: 'VOTE_UNDO',
+  REQUEST_DISMISS: 'REQUEST_DISMISS',
+  VOTE_DISMISS: 'VOTE_DISMISS',
   GAME_STATE: 'GAME_STATE',
   GAME_ERROR: 'GAME_ERROR'
 } as const;
 
 export type ClientMessage =
-  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string }
+  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean }
   | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown } }
   | { type: typeof MESSAGE_TYPES.GAME_ACTION; payload: { action: unknown } }
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }
-  | { type: typeof MESSAGE_TYPES.VOTE_UNDO; payload: { approve: boolean } };
+  | { type: typeof MESSAGE_TYPES.VOTE_UNDO; payload: { approve: boolean } }
+  | { type: typeof MESSAGE_TYPES.REQUEST_DISMISS; payload: { seat: Seat } }
+  | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } };
 
 export type ServerMessage =
   | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat; gameState: BasePublicState } }

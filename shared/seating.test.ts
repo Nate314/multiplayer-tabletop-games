@@ -150,6 +150,11 @@ test('reconnecting clears the seat and a dismiss vote against it', () => {
   assert.deepEqual(back.activePlayers, [1, 2, 3]);
 });
 
+test('reconnecting a seat that is not held changes nothing', () => {
+  const state = threeStarted();
+  assert.equal(reconnectPlayer(state, 3), state);
+});
+
 test('reconnecting keeps a dismiss vote against someone else', () => {
   let state = disconnectPlayer(testGame, disconnectPlayer(testGame, threeStarted(), 3), 2);
   const vote = { target: 3, requestedBy: 1, votes: { 1: true } as Record<number, boolean> };

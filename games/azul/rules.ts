@@ -178,9 +178,9 @@ export function resetLobby(state: GameState, random: Random): GameState {
   };
 }
 
-export function toPublicState(state: GameState, undoAvailable: boolean): PublicGameState {
+export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
   const { bag: _bag, lid: _lid, roundStarter: _roundStarter, markerHolder: _markerHolder, ...view } = state;
-  return { ...view, undoAvailable, moveCount: 0 }; // the manager fills in moveCount
+  return { ...view, undoAvailable };
 }
 
 function isColor(item: unknown): item is Color {

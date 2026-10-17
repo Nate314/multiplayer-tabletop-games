@@ -51,7 +51,7 @@ test('what browsers receive never includes the bag or the lid', () => {
   const second = manager.join('azul', 'g1', 'B');
   if ('error' in first || 'error' in second) assert.fail('join failed');
   const afterMove = ok(manager.move(ROOM, 1, anyMove(second.state as PublicGameState)));
-  const three = gameWith('A', 'B', 'C').leave(ROOM, 3);
+  const three = gameWith('A', 'B', 'C').disconnect(ROOM, 3);
   assert.ok(three, 'expected the game to still exist');
   for (const state of [first.state, second.state, afterMove, three.state, current(manager)]) {
     assert.equal('bag' in state, false);
@@ -76,12 +76,11 @@ test('moves are validated', () => {
   assert.deepEqual(current(manager), state);
 });
 
-test('leaving mid-game hands the win to the last player', () => {
+test('dismissing the last opponent hands the win to the player left', () => {
   const manager = gameWith('A', 'B');
   ok(manager.move(ROOM, 1, anyMove(current(manager))));
-  const left = manager.leave(ROOM, 2);
-  assert.ok(left, 'expected the game to still exist');
-  const state = left.state as PublicGameState;
+  manager.disconnect(ROOM, 2);
+  const state = ok(manager.requestDismiss(ROOM, 1, 2));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
   assert.deepEqual(manager.move(ROOM, 1, anyMove(state)), { error: 'The game is over' });

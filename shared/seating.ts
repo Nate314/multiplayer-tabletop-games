@@ -80,7 +80,8 @@ export function removePlayer<S extends BaseGameState>(
     }, random);
   }
 
-  // Mid-game: the game stays and the seat is skipped from now on
+  // Mid-game: the game stays and the seat is skipped from now on.
+  // Only a dismissal reaches here (a mid-game disconnect holds the seat), so any dismiss vote is settled.
   const next: S = {
     ...state,
     activePlayers,
@@ -132,6 +133,7 @@ export function disconnectPlayer<S extends BaseGameState>(
 }
 
 export function reconnectPlayer<S extends BaseGameState>(state: S, seat: Seat): S {
+  if (!state.disconnected.includes(seat)) return state;
   return {
     ...state,
     disconnected: state.disconnected.filter(s => s !== seat),

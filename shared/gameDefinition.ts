@@ -23,5 +23,6 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   // Not turn-bound and not recorded for undo. Validates untrusted `action`.
   // The platform does not block actions during an undo vote or after the game is over; the game must refuse them itself where needed.
   applyAction?(state: S, seat: Seat, action: unknown, random: Random): Result<S>;
-  toPublicState(state: S, undoAvailable: boolean): P;
+  // The platform adds moveCount; a game never supplies it
+  toPublicState(state: S, undoAvailable: boolean): Omit<P, 'moveCount'>;
 };
