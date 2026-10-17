@@ -15,11 +15,24 @@ function originOf(root: HTMLElement): { x: number; y: number } {
   return { x: rect.x - root.scrollLeft, y: rect.y - root.scrollTop };
 }
 
+// Where the element rests: our own (Web Animations API) animations still running are seeked to their end for the measurement,
+// so a piece in the middle of a slide is measured at its place, not where it is drawn
+function restingRect(element: Element): DOMRect {
+  const running = element.getAnimations().filter(animation =>
+    !(animation instanceof CSSAnimation) && !(animation instanceof CSSTransition) && animation.playState !== 'finished'
+  );
+  const times = running.map(animation => animation.currentTime);
+  running.forEach(animation => { animation.currentTime = animation.effect?.getComputedTiming().endTime ?? null; });
+  const rect = element.getBoundingClientRect();
+  running.forEach((animation, index) => { animation.currentTime = times[index]; });
+  return rect;
+}
+
 function measure(root: HTMLElement): Map<string, DOMRect> {
   const origin = originOf(root);
   const rects = new Map<string, DOMRect>();
   root.querySelectorAll<HTMLElement>('[data-anim-key]').forEach(element => {
-    const { x, y, width, height } = element.getBoundingClientRect();
+    const { x, y, width, height } = restingRect(element);
     rects.set(element.dataset.animKey!, new DOMRect(x - origin.x, y - origin.y, width, height));
   });
   return rects;
@@ -40,21 +53,29 @@ export function useMoveAnimation<P extends BasePublicState>(
     const root = rootRef.current;
     const previous = previousRef.current;
     previousRef.current = state;
-    if (!root) return;
-
-    const rects = rectsRef.current;
-    if (previous && rects && state.moveCount === previous.moveCount + 1) {
-      const origin = originOf(root);
-      animate({
-        previous,
-        next: state,
-        root,
-        rectOf: (key) => {
-          const rect = rects.get(key);
-          return rect && new DOMRect(rect.x + origin.x, rect.y + origin.y, rect.width, rect.height);
-        }
-      });
+    if (!root) {
+      rectsRef.current = null;
+      return;
     }
-    rectsRef.current = measure(root);
+
+    // Measured before animate starts anything, so the stored rects are where the pieces now rest
+    const rects = rectsRef.current;
+    const nextRects = measure(root);
+    try {
+      if (previous && rects && state.moveCount === previous.moveCount + 1) {
+        const origin = originOf(root);
+        animate({
+          previous,
+          next: state,
+          root,
+          rectOf: (key) => {
+            const rect = rects.get(key);
+            return rect && new DOMRect(rect.x + origin.x, rect.y + origin.y, rect.width, rect.height);
+          }
+        });
+      }
+    } finally {
+      rectsRef.current = nextRects;
+    }
   }, [rootRef, state, animate]);
 }
