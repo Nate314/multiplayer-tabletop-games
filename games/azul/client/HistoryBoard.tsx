@@ -15,6 +15,7 @@ export default function HistoryBoard({ gameState }: { gameState: PublicGameState
           <PlayerBoard
             key={seat}
             board={boards[seat]}
+            seat={seat}
             name={playerNames[seat]}
             isMe={false}
             isCurrent={currentPlayer === seat}

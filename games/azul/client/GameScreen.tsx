@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import gameService from '../../../src/services/gameService';
 import Factories from './Factories';
 import GameStatus from './GameStatus';
 import PlayerBoard from './PlayerBoard';
 import RoundSummary from './RoundSummary';
 import UndoVote from '../../../src/components/UndoVote';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import animateMove from './animateMove.ts';
 import { azul } from '../index.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Selection } from './selection.ts';
@@ -15,6 +17,7 @@ const MAX_PLAYERS = azul.info.maxPlayers;
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [finalScoringClosed, setFinalScoringClosed] = useState(false);
+  const screenRef = useRef<HTMLDivElement>(null);
   const {
     currentPlayer, activePlayers, playerNames, boards, isGameOver, winners, round,
     roundSummary, undoVote, undoAvailable
@@ -22,6 +25,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote;
   const canUndo = undoAvailable && !undoVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+
+  // Only the live table and boards animate; the history dialog renders them without this hook
+  useMoveAnimation(screenRef, gameState, animateMove);
 
   useEffect(() => {
     // Nothing stays picked up across turns or rounds
@@ -52,6 +58,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       <PlayerBoard
         key={seat}
         board={boards[seat]}
+        seat={seat}
         name={playerNames[seat]}
         isMe={isMe}
         isCurrent={currentPlayer === seat}
@@ -71,7 +78,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
-      <div className="game-screen">
+      <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">
             You are {playerNames[playerNumber]} (Player {playerNumber})
