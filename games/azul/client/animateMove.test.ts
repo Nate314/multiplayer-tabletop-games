@@ -39,8 +39,8 @@ function game(overrides: Partial<GameState> = {}): GameState {
   };
 }
 
-function after(state: GameState, move: Move): GameState {
-  const result: Result<GameState> = applyMove(state, 1, move);
+function after(state: GameState, move: Move, seat = 1): GameState {
+  const result: Result<GameState> = applyMove(state, seat, move);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -94,6 +94,21 @@ test('only the floor slots there are room for animate', () => {
   ]);
 });
 
+test('leftovers of one color from a factory join the end of that color in the center', () => {
+  const before = game({
+    currentPlayer: 2,
+    factories: [['black', 'red', 'black', 'blue'], ['cyan'], [], [], []],
+    center: ['black', 'yellow']
+  });
+  // Factory 0 shows blue, red, black, black; the center becomes yellow, red, black, black, black
+  assert.deepEqual(slides(before, after(before, { source: factory(0), color: 'blue', line: 0 }, 2)), [
+    ['factory-0-0', 'line-2-0-0'],
+    ['factory-0-1', 'center-1'],
+    ['factory-0-2', 'center-3'],
+    ['factory-0-3', 'center-4']
+  ]);
+});
+
 test('a round-ending move slides each new wall tile from the last slot of its line', () => {
   const before = game({
     factories: [['red', 'red'], [], [], [], []],
@@ -104,11 +119,27 @@ test('a round-ending move slides each new wall tile from the last slot of its li
   });
   const next = after(before, { source: factory(0), color: 'red', line: 1 });
   assert.ok(next.roundSummary, 'the round ended');
-  // Line 1 filled and went straight to the wall, so the picked tiles have no slot to land in
+  // Line 1 filled and went straight to the wall, so its wall tile comes from the factory
   assert.deepEqual(slides(before, next), [
     ['line-1-0-0', 'wall-1-0-0'],
-    ['line-1-1-1', 'wall-1-1-3'],
+    ['factory-0-0', 'wall-1-1-3'],
     ['line-2-1-1', 'wall-2-1-0']
+  ]);
+});
+
+test('a round-ending move that leaves its line partial fills the line and skips the floor', () => {
+  const before = game({
+    center: ['yellow', 'yellow', 'yellow'],
+    centerHasMarker: true,
+    boards: { 1: board({ patternLines: lines({ 4: { color: 'yellow', count: 1 } }) }), 2: board() }
+  });
+  const next = after(before, { source: CENTER, color: 'yellow', line: 4 });
+  assert.ok(next.roundSummary, 'the round ended');
+  // Line 5 now holds 4 of 5 and stays; the marker went to the floor, which scoring cleared
+  assert.deepEqual(slides(before, next), [
+    ['center-0', 'line-1-4-3'],
+    ['center-1', 'line-1-4-2'],
+    ['center-2', 'line-1-4-1']
   ]);
 });
 

@@ -1,5 +1,5 @@
 import { slideFrom } from '../../../src/animation/motion.ts';
-import { COLORS } from '../rules.ts';
+import { COLORS, wallColumn } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { Color, PublicGameState, Seat } from '../types.ts';
 
@@ -20,7 +20,7 @@ type Table = Pick<PublicGameState, 'factories' | 'center' | 'centerHasMarker' | 
 export function slides(previous: Table, next: Table): [string, string][] {
   const { lastMove } = next;
   if (!lastMove) return [];
-  const { playerNumber: seat, source, color, count, line } = lastMove;
+  const { playerNumber: seat, source, color, line } = lastMove;
   const before = previous.boards[seat];
   const after = next.boards[seat];
   if (!before || !after) return [];
@@ -30,18 +30,21 @@ export function slides(previous: Table, next: Table): [string, string][] {
   const pileKey = (slot: number) => (source.type === 'center' ? centerKey(slot) : factoryKey(source.index, slot));
   const picked = pile.flatMap((tile, slot) => (tile === color ? [pileKey(slot)] : []));
 
-  // Lines fill from the right, so the new tiles sit just left of the ones already there.
-  // A line the round end moved to the wall shows none of them.
-  const placed = line === 'floor' ? 0 : Math.min(count, line + 1 - before.patternLines[line].count);
+  // A move that ends the round and completes its line sends that line straight to the wall
+  const completedLine = line !== 'floor' &&
+    after.wall[line][wallColumn(line, color)] && !before.wall[line][wallColumn(line, color)];
+  let placed = 0;
   if (line !== 'floor') {
-    const firstFilled = line + 1 - after.patternLines[line].count;
-    picked.slice(0, placed).forEach((from, index) => {
-      const slot = line - before.patternLines[line].count - index;
-      if (slot >= firstFilled) result.push([from, lineKey(seat, line, slot)]);
-    });
+    const countBefore = before.patternLines[line].count;
+    placed = (completedLine ? line + 1 : after.patternLines[line].count) - countBefore;
+    // Lines fill from the right, so the new tiles sit just left of the ones already there
+    if (!completedLine) {
+      picked.slice(0, placed).forEach((from, index) => result.push([from, lineKey(seat, line, line - countBefore - index)]));
+    }
   }
 
-  // The marker goes down first, then the tiles that did not fit; the round end clears the floor
+  // The marker goes down first, then the tiles that did not fit. A round-ending move animates
+  // neither: scoring has already cleared the floor, so their slots are empty.
   const takesMarker = source.type === 'center' && previous.centerHasMarker;
   const dropped = [...(takesMarker ? [CENTER_MARKER_KEY] : []), ...picked.slice(placed)];
   dropped.forEach((from, index) => {
@@ -62,13 +65,17 @@ export function slides(previous: Table, next: Table): [string, string][] {
     });
   }
 
-  // At the round end each full line leaves one tile on the wall, taken from the line's last slot
+  // At the round end each full line leaves one tile on the wall, taken from the line's last slot.
+  // The line this move completed was never shown full, so its tile comes from where it was picked.
+  // There is one wall tile to move, so the first picked tile stands for them all.
   for (const [key, board] of Object.entries(next.boards)) {
     const boardSeat = Number(key);
     const wallBefore = previous.boards[boardSeat]?.wall;
     if (!wallBefore) continue;
     board.wall.forEach((cells, row) => cells.forEach((filled, col) => {
-      if (filled && !wallBefore[row][col]) result.push([lineKey(boardSeat, row, row), wallKey(boardSeat, row, col)]);
+      if (!filled || wallBefore[row][col]) return;
+      const from = completedLine && boardSeat === seat && row === line ? picked[0] : lineKey(boardSeat, row, row);
+      result.push([from, wallKey(boardSeat, row, col)]);
     }));
   }
   return result;
