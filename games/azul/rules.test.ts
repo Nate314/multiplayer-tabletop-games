@@ -459,6 +459,17 @@ test('a disconnect after everyone else continued deals the round', () => {
   assert.deepEqual(next.disconnected, [3]);
 });
 
+test('the round is dealt when the last connected player disconnects, so a returning player finds it dealt', () => {
+  const acknowledged = ok(acknowledgeRound(scoredForThree(), 1));
+  const everyoneAway = [2, 3, 1].reduce((current, seat) => disconnectPlayer(azul, current, seat), acknowledged);
+  assert.equal(everyoneAway.round, 2);
+  assert.equal(everyoneAway.roundSummary, null);
+
+  const nobodyAcknowledged = [1, 2, 3].reduce((current, seat) => disconnectPlayer(azul, current, seat), scoredForThree());
+  assert.equal(nobodyAcknowledged.round, 2);
+  assert.equal(nobodyAcknowledged.roundSummary, null);
+});
+
 test('a player leaving no longer holds up the next round', () => {
   const three = game({
     factories: [['blue'], [], [], [], [], [], []],

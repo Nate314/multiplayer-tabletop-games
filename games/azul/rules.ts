@@ -327,8 +327,7 @@ export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Rand
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
   const summary = state.roundSummary;
   if (!summary || state.isGameOver) return state;
-  const waitingOn = connectedPlayers(state);
-  if (waitingOn.length === 0 || !waitingOn.every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
 
   const dealt = deal(state.bag, state.lid, state.factories.length, random);
   if (dealt.factories.every(factory => factory.length === 0)) return endGame({ ...state, roundSummary: null });
