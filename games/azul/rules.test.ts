@@ -218,6 +218,8 @@ function game(overrides: Partial<GameState> = {}): GameState {
     winners: [],
     roundSummary: null,
     undoVote: null,
+    disconnected: [],
+    dismissVote: null,
     bag: Array<Color>(40).fill('black'),
     lid: [],
     roundStarter: 1,
@@ -599,7 +601,7 @@ test('leaving mid-game skips the seat, and the last player left wins', () => {
   assert.deepEqual(afterOne.activePlayers, [2, 3]);
   assert.equal(afterOne.currentPlayer, 2);
   assert.ok(afterOne.boards[1]);
-  assert.equal(afterOne.gameStatus, 'Alice left the game');
+  assert.equal(afterOne.gameStatus, 'Alice was dismissed');
   assert.equal(removePlayer(azul, three, 3).currentPlayer, 1);
 
   const afterTwo = removePlayer(azul, afterOne, 3);

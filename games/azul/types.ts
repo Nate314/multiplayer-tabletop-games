@@ -61,4 +61,5 @@ export type GameState = BaseGameState & {
 // The game state as the server sends it to browsers
 export type PublicGameState = Omit<GameState, 'bag' | 'lid' | 'roundStarter' | 'markerHolder'> & {
   undoAvailable: boolean;
+  moveCount: number;
 };

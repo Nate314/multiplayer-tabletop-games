@@ -31,7 +31,7 @@ export type GameState = BaseGameState & {
 };
 
 // The game state as the server sends it to browsers
-export type PublicGameState = GameState & { undoAvailable: boolean };
+export type PublicGameState = GameState & { undoAvailable: boolean; moveCount: number };
 
 // The parts of the state that board geometry reads
 export type BoardState = { pawns: Record<Seat, Position>; walls: Wall[]; activePlayers: Seat[] };

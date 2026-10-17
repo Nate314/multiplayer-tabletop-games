@@ -42,6 +42,8 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       activePlayers: state.activePlayers,
       playerNames: state.playerNames,
       undoVote: null,
+      disconnected: state.disconnected,
+      dismissVote: null,
       gameStatus: 'Last turn undone'
     };
     const current = restored.currentPlayer;

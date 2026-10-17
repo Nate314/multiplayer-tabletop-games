@@ -150,7 +150,7 @@ export function resetLobby(state: GameState): GameState {
 }
 
 export function toPublicState(state: GameState, undoAvailable: boolean): PublicGameState {
-  return { ...state, undoAvailable };
+  return { ...state, undoAvailable, moveCount: 0 }; // the manager fills in moveCount
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {

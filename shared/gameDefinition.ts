@@ -16,6 +16,8 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   resetLobby(state: S, random: Random): S;
   // Mid-game, after the platform has removed `seat` and moved the turn on; only while 2+ remain and the game is not over.
   onPlayerLeft?(state: S, seat: Seat, random: Random): S;
+  // Mid-game, after the platform marked `seat` disconnected and settled votes.
+  onPlayerDisconnected?(state: S, seat: Seat, random: Random): S;
   // Called only after the platform's turn guards pass. Validates untrusted `move`.
   applyMove(state: S, seat: Seat, move: unknown): Result<S>;
   // Not turn-bound and not recorded for undo. Validates untrusted `action`.

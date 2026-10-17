@@ -180,7 +180,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
 
 export function toPublicState(state: GameState, undoAvailable: boolean): PublicGameState {
   const { bag: _bag, lid: _lid, roundStarter: _roundStarter, markerHolder: _markerHolder, ...view } = state;
-  return { ...view, undoAvailable };
+  return { ...view, undoAvailable, moveCount: 0 }; // the manager fills in moveCount
 }
 
 function isColor(item: unknown): item is Color {

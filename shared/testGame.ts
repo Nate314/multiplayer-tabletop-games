@@ -33,6 +33,6 @@ export const testGame: GameDefinition<TestState, TestPublicState> = {
 
   toPublicState(state, undoAvailable) {
     const { secret: _secret, ...view } = state;
-    return { ...view, undoAvailable };
+    return { ...view, undoAvailable, moveCount: 0 }; // the manager fills in moveCount
   }
 };
