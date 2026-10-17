@@ -5,6 +5,7 @@ import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
 import JoinDialog from './components/JoinDialog'
+import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
 import ThemeToggle from './components/ThemeToggle'
 import './App.css'
@@ -21,8 +22,10 @@ function App() {
   // Kept here so the form is still filled in after leaving or a disconnect
   const [playerName, setPlayerName] = useState('')
   const [gameId, setGameId] = useState('')
-  const { playerNumber, gameState, error, join, leave } = useGameConnection()
+  const { playerNumber, gameState, error, session, join, leave, backToGames, rejoin } = useGameConnection()
   const joined = gameState !== null && playerNumber !== null
+  // A join saves the session, so it names the game on screen however it was joined: dialog, refresh or rejoin button
+  const sessionGame = PLAYABLE_GAMES.find(({ info }) => info.id === session?.gameType)
 
   // Leaving or losing the connection goes back to the list, not to the dialog
   const [wasJoined, setWasJoined] = useState(joined)
@@ -45,15 +48,15 @@ function App() {
 
   const selected = PLAYABLE_GAMES.find(({ info }) => info.id === selectedId)
 
-  if (selected && joined) {
+  if (sessionGame && joined) {
     return (
       <GameView
-        game={selected.info}
-        client={selected.client}
+        game={sessionGame.info}
+        client={sessionGame.client}
         gameState={gameState}
         playerNumber={playerNumber}
         error={error}
-        onBack={leave}
+        onBack={backToGames}
       />
     )
   }
@@ -67,6 +70,9 @@ function App() {
       </header>
       <main className="lobby-main">
         {error && !selected && <div className="lobby-error">{error}</div>}
+        {session && !session.inGame && sessionGame && (
+          <RejoinButton gameName={sessionGame.info.name} gameId={session.gameId} onRejoin={rejoin} />
+        )}
         <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
       </main>
       {selected && (

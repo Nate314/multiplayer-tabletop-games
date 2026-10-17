@@ -136,6 +136,14 @@
   white-space: nowrap;
 }
 
+.lobby-rejoin {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  font-size: 1rem;
+}
+
 .lobby-error {
   margin-bottom: 12px;
   padding: 8px 12px;
@@ -234,7 +242,8 @@
 }
 
 /*
- * Default look for the platform pieces a game screen shows: the game header, the FAQ dialog and the undo vote.
+ * Default look for the platform pieces a game screen shows: the game header, the FAQ dialog, the undo vote,
+ * the disconnected players bar and the dismiss vote.
  * Every selector sits in :where(), so it has no specificity and any rule in a game's own CSS wins.
  * A game can restyle these pieces with its own rules, or just set these variables on [data-game="<id>"]:
  *   --platform-page-bg, --platform-text, --platform-button-bg, --platform-button-hover-bg, --platform-button-text,
@@ -349,7 +358,7 @@
   margin: 4px 0 0;
 }
 
-:where([data-game] .primary-button, [data-game] .undo-vote-actions button) {
+:where([data-game] .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -363,13 +372,13 @@
   margin-top: 16px;
 }
 
-:where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover) {
+:where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Undo vote */
+/* Undo and dismiss votes */
 
-:where([data-game] .undo-vote) {
+:where([data-game] .undo-vote, [data-game] .dismiss-vote) {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -379,7 +388,7 @@
   background: var(--platform-backdrop, rgba(0, 0, 0, 0.45));
 }
 
-:where([data-game] .undo-vote-panel) {
+:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel) {
   padding: 20px;
   border-radius: 10px;
   background: var(--platform-panel-bg, var(--lobby-surface));
@@ -388,18 +397,74 @@
   text-align: center;
 }
 
-:where([data-game] .undo-vote-title) {
+:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title) {
   font-weight: 600;
 }
 
-:where([data-game] .undo-vote-list) {
+:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list) {
   list-style: none;
   margin: 12px 0;
   padding: 0;
 }
 
-:where([data-game] .undo-vote-actions) {
+:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions) {
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* Disconnected players, above the game screen */
+
+:where([data-game] .presence-bar) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .presence-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where([data-game] .presence-player) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:where([data-game] .presence-waiting) {
+  font-weight: 600;
+}
+
+:where([data-game] .dismiss-button) {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+}
+
+:where([data-game] .dismiss-button:hover:enabled) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where([data-game] .dismiss-button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -1,6 +1,10 @@
 import FaqButton from './FaqButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
+import PresenceBar from './PresenceBar';
+import DismissVote from './DismissVote';
+import gameService from '../services/gameService';
+import { connectedPlayers } from '../../shared/seating.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -27,7 +31,17 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <GitHubLink />
         <ThemeToggle />
       </header>
+      <PresenceBar gameState={gameState} onDismiss={(seat) => gameService.requestDismiss(seat)} />
       <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
+      {gameState.dismissVote && (
+        <DismissVote
+          vote={gameState.dismissVote}
+          playerNumber={playerNumber}
+          connectedPlayers={connectedPlayers(gameState)}
+          playerNames={gameState.playerNames}
+          onVote={(approve) => gameService.voteDismiss(approve)}
+        />
+      )}
     </div>
   );
 }

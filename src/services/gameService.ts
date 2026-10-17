@@ -18,7 +18,8 @@ class GameService {
     this.onDisconnect = null;
   }
 
-  connect(gameType: string, gameId: string, playerName: string, serverUrl = window.location.host): void {
+  // `rejoin` only takes back a held seat, so it never starts a new game
+  connect(gameType: string, gameId: string, playerName: string, rejoin = false, serverUrl = window.location.host): void {
     // Drop any earlier socket, e.g. after a refused join, without reporting a disconnect
     this.disconnect();
 
@@ -28,7 +29,7 @@ class GameService {
     this.ws = ws;
 
     ws.onopen = () => {
-      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName });
+      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName, rejoin });
     };
 
     ws.onmessage = (event) => {
@@ -78,6 +79,14 @@ class GameService {
 
   voteUndo(approve: boolean): void {
     this.send({ type: MESSAGE_TYPES.VOTE_UNDO, payload: { approve } });
+  }
+
+  requestDismiss(seat: Seat): void {
+    this.send({ type: MESSAGE_TYPES.REQUEST_DISMISS, payload: { seat } });
+  }
+
+  voteDismiss(approve: boolean): void {
+    this.send({ type: MESSAGE_TYPES.VOTE_DISMISS, payload: { approve } });
   }
 
   disconnect(): void {

@@ -75,7 +75,11 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 2. In each window, click a game in the list. The join dialog asks for your name and a game ID (any string); use the same game ID to join the same game. The dialog has an FAQ button, so you can read a game's rules before joining
 3. Players are seated in join order. The lowest-numbered player moves first once at least two players have joined. Nobody can join after the first move
 4. Game IDs are separate per game: Azul "friday" and Quoridor "friday" are different games
-5. Each game screen has a header with Back to games, FAQ and the light/dark theme toggle. Back to games leaves the game and returns to the list; the game treats it like leaving mid-game
+5. Each game screen has a header with Back to games, FAQ and the light/dark theme toggle. Back to games returns to the list but keeps your seat, the same as closing the tab or losing the connection
+6. Once the first move is made, a player who disconnects keeps their seat. The others see them as disconnected; play goes on until their turn, then waits for them. Before the first move, disconnecting frees the seat
+7. To rejoin, enter the same game ID and the same name (capitalization does not matter), from any device. After a refresh the page rejoins by itself, and after Back to games the list shows a "Back to <game> (<game ID>)" button that rejoins with one click. A name that is still connected cannot be taken; a device that drops off without closing its connection frees the seat within about 30 seconds
+8. The other players can vote to dismiss a disconnected player with the Dismiss button next to their name. Every connected player must approve; one decline cancels it. A dismissed player is out for good: their turns are skipped, they cannot rejoin, and if only one player is left, that player wins
+9. A game whose players have all disconnected is kept for 10 minutes, then deleted
 
 ## Network Setup
 
