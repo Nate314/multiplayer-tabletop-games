@@ -294,7 +294,7 @@ function endGame(state: GameState): GameState {
   };
 }
 
-// Runs once the factories and the centre are empty. The next round is not dealt until
+// Runs once the factories and the center are empty. The next round is not dealt until
 // every player has acknowledged the summary.
 function endRound(state: GameState): GameState {
   const lid = [...state.lid];
@@ -372,7 +372,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
 
   const tiles = sourceTiles(state, source);
   const count = tiles.filter(tile => tile === color).length;
-  if (count === 0) return { error: 'No tiles of that colour there' };
+  if (count === 0) return { error: 'No tiles of that color there' };
 
   const board = state.boards[seat];
   if (line !== 'floor' && !canPlaceOnLine(board, line, color)) return { error: 'Those tiles cannot go on that line' };
@@ -395,7 +395,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   const floor = [...board.floor, ...dropped.slice(0, room)];
   const lid = [...state.lid, ...dropped.slice(room).filter(isColor)];
 
-  const where = fromFactory ? `factory ${source.index + 1}` : 'the centre';
+  const where = fromFactory ? `factory ${source.index + 1}` : 'the center';
   const next: GameState = {
     ...state,
     factories,

@@ -67,6 +67,21 @@
   font-size: 1.2rem;
 }
 
+.lobby-header .github-link {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  border: 1px solid var(--lobby-border);
+  border-radius: 50%;
+  background: var(--lobby-surface);
+  color: var(--lobby-text);
+}
+
 .lobby-games {
   display: flex;
   flex-direction: column;
@@ -272,7 +287,21 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover) {
+:where([data-game] .game-header .github-link) {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .back-button:hover, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 

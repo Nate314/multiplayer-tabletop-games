@@ -78,6 +78,7 @@
 
 [data-game="quoridor"] .back-button,
 [data-game="quoridor"] .faq-button,
+[data-game="quoridor"] .github-link,
 [data-game="quoridor"] .theme-toggle {
   height: 2.5rem;
   padding: 0 1rem;
@@ -90,6 +91,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+[data-game="quoridor"] .github-link,
 [data-game="quoridor"] .theme-toggle {
   width: 2.5rem;
   padding: 0;
@@ -99,6 +101,7 @@
 
 [data-game="quoridor"] .back-button:hover,
 [data-game="quoridor"] .faq-button:hover,
+[data-game="quoridor"] .github-link:hover,
 [data-game="quoridor"] .theme-toggle:hover {
   background: var(--button-hover-bg);
 }
@@ -111,7 +114,7 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Centred in the space under the header; the auto margins drop to 0 when the window is too short */
+/* Centered in the space under the header; the auto margins drop to 0 when the window is too short */
 [data-game="quoridor"] .game-layout {
   margin: auto 0;
   display: flex;
@@ -238,7 +241,7 @@
   transform: none;
 }
 
-/* The frame sits outside .board so its colours stay full strength when the board is dimmed */
+/* The frame sits outside .board so its colors stay full strength when the board is dimmed */
 [data-game="quoridor"] .board-frame {
   position: relative;
   border: 8px solid var(--board-frame);
@@ -267,7 +270,7 @@
     );
 }
 
-/* Each side of the frame takes the colour of the pawn that has to reach it */
+/* Each side of the frame takes the color of the pawn that has to reach it */
 [data-game="quoridor"] .board-frame.goal-edge1 {
   border-top-color: var(--player1);
 }

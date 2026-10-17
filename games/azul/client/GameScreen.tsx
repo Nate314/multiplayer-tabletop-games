@@ -43,7 +43,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   if (isMyTurn) {
     hint = selection
       ? `Place the ${selection.color} tiles on a highlighted line, or on the floor`
-      : 'Your turn: pick tiles from a factory or the centre';
+      : 'Your turn: pick tiles from a factory or the center';
   }
 
   function renderBoard(seat: Seat) {

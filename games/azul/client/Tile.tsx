@@ -1,6 +1,6 @@
 import type { FloorItem } from '../types.ts';
 
-// Each colour has its own mark, so colours are not told apart by hue alone
+// Each color has its own mark, so colors are not told apart by hue alone
 const MARKS: Record<FloorItem, string> = {
   blue: '◆',
   yellow: '●',

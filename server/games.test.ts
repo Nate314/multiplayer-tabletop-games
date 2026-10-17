@@ -248,7 +248,7 @@ test('the winning move can be undone', () => {
   assert.equal(restored.currentPlayer, 1);
 });
 
-test('an undo vote after a win is cancelled when the winner leaves', () => {
+test('an undo vote after a win is canceled when the winner leaves', () => {
   const manager = wonGame();
   ok(manager.requestUndo(ROOM, 2));
   const state = left(manager.leave(ROOM, 1));
@@ -258,7 +258,7 @@ test('an undo vote after a win is cancelled when the winner leaves', () => {
   assert.deepEqual(manager.voteUndo(ROOM, 2, true), { error: 'No undo vote in progress' });
 });
 
-test('an undo vote after a win is cancelled when the requester leaves', () => {
+test('an undo vote after a win is canceled when the requester leaves', () => {
   const manager = wonGame();
   ok(manager.requestUndo(ROOM, 2));
   const state = left(manager.leave(ROOM, 2));

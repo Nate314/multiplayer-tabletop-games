@@ -5,6 +5,7 @@ import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
 import JoinDialog from './components/JoinDialog'
+import GitHubLink from './components/GitHubLink'
 import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
@@ -61,6 +62,7 @@ function App() {
     <div className="lobby">
       <header className="lobby-header">
         <h1>Multiplayer Tabletop Games</h1>
+        <GitHubLink />
         <ThemeToggle />
       </header>
       <main className="lobby-main">

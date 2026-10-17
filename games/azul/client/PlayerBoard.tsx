@@ -9,7 +9,7 @@ type PlayerBoardProps = {
   isCurrent: boolean;
   hasLeft: boolean;
   isWinner: boolean;
-  // The colour picked up, on your own board on your turn; null everywhere else
+  // The color picked up, on your own board on your turn; null everywhere else
   selectedColor: Color | null;
   onPlace: (line: number | 'floor') => void;
 };

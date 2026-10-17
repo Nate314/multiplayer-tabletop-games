@@ -32,7 +32,7 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do I win?',
     answer: 'Be the first to reach the side of the board opposite where you started. That side of the board frame ' +
-      'is in your pawn\'s colour, and every player\'s goal is listed under "Goals".'
+      'is in your pawn\'s color, and every player\'s goal is listed under "Goals".'
   },
   {
     question: 'What do Undo and Show Last Move do?',

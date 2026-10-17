@@ -16,7 +16,7 @@ function reason({ rowRun, colRun }: Placement): string {
   const runs: string[] = [];
   if (rowRun > 1) runs.push(`row of ${rowRun}`);
   if (colRun > 1) runs.push(`column of ${colRun}`);
-  return runs.length > 0 ? runs.join(' + ') : 'no neighbours';
+  return runs.length > 0 ? runs.join(' + ') : 'no neighbors';
 }
 
 function SeatLines({ seat }: { seat: SeatSummary }) {
@@ -65,7 +65,7 @@ function SeatLines({ seat }: { seat: SeatSummary }) {
       )}
       {bonus && bonus.colors > 0 && (
         <li>
-          <span>{plural(bonus.colors, 'complete colour')}</span>
+          <span>{plural(bonus.colors, 'complete color')}</span>
           <span className="summary-points">+{bonus.colors * 10}</span>
         </li>
       )}

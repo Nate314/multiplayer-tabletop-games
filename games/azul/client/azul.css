@@ -46,7 +46,7 @@
   --highlight: #ffb020;
 }
 
-/* Page: the blue background, with the header and the game in a centred column */
+/* Page: the blue background, with the header and the game in a centered column */
 .game-root[data-game="azul"] {
   min-height: 100vh;
   box-sizing: border-box;
@@ -84,6 +84,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+[data-game="azul"] .github-link,
 [data-game="azul"] .theme-toggle {
   width: 2.5rem;
   height: 2.5rem;
@@ -101,6 +102,7 @@
 
 [data-game="azul"] .back-button:hover,
 [data-game="azul"] .faq-button:hover,
+[data-game="azul"] .github-link:hover,
 [data-game="azul"] .theme-toggle:hover {
   background: var(--button-hover-bg);
 }
@@ -161,7 +163,7 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  /* The same centred 1100px column as the header, so the boards wrap as they always have */
+  /* The same centered 1100px column as the header, so the boards wrap as they always have */
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -253,7 +255,7 @@
   filter: brightness(1.15);
 }
 
-/* The table: factories and the centre */
+/* The table: factories and the center */
 
 [data-game="azul"] .table {
   display: flex;
@@ -310,7 +312,7 @@
   font-size: 0.85rem;
 }
 
-/* A colour's tiles stay on one row. A group too wide for the centre shrinks its tiles instead of wrapping. */
+/* A color's tiles stay on one row. A group too wide for the center shrinks its tiles instead of wrapping. */
 [data-game="azul"] .center-group {
   display: flex;
   flex-wrap: nowrap;

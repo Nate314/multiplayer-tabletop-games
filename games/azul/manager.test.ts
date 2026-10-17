@@ -28,7 +28,7 @@ function current(manager: Manager): PublicGameState {
   return state as PublicGameState;
 }
 
-// A move that is always legal: one colour from the first pile with tiles, to the floor
+// A move that is always legal: one color from the first pile with tiles, to the floor
 function anyMove(state: PublicGameState): Move {
   const index = state.factories.findIndex(tiles => tiles.length > 0);
   if (index < 0) return { source: { type: 'center' }, color: state.center[0], line: 'floor' };

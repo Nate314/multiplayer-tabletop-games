@@ -27,7 +27,7 @@ export type LastMove = Move & { playerNumber: Seat; count: number };
 // One tile moved onto the wall at the end of a round, and what it scored
 export type Placement = { row: number; col: number; color: Color; points: number; rowRun: number; colRun: number };
 
-// End-of-game bonuses: counts of complete rows, columns and colours, and their total
+// End-of-game bonuses: counts of complete rows, columns and colors, and their total
 export type Bonus = { rows: number; columns: number; colors: number; points: number };
 
 export type SeatSummary = {
