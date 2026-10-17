@@ -17,7 +17,7 @@ import {
   createGameState
 } from './rules.ts';
 import { azul } from './index.ts';
-import { addPlayer, removePlayer, applyMove } from '../../shared/seating.ts';
+import { addPlayer, removePlayer, applyMove, disconnectPlayer } from '../../shared/seating.ts';
 import type { Color, GameState, Move, PatternLine, PlayerBoard, Result, Source } from './types.ts';
 
 function wallOf(...cells: [number, number][]): boolean[][] {
@@ -426,6 +426,37 @@ test('the next round is dealt once every player has acknowledged the summary', (
 
   assert.deepEqual(acknowledgeRound(next, 1), { error: 'Nothing to continue' });
   assert.deepEqual(acknowledgeRound(game(), 1), { error: 'Nothing to continue' });
+});
+
+function scoredForThree(): GameState {
+  const three = game({
+    started: true,
+    factories: [['blue'], [], [], [], [], [], []],
+    activePlayers: [1, 2, 3],
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cara' },
+    boards: { 1: board(), 2: board(), 3: board() }
+  });
+  return ok(applyMove(azul, three, 1, take(factory(0), 'blue', 4)));
+}
+
+test('the next round does not wait for a disconnected player', () => {
+  const away = disconnectPlayer(azul, scoredForThree(), 3);
+  assert.equal(away.round, 1);
+
+  const next = ok(acknowledgeRound(ok(acknowledgeRound(away, 1)), 2));
+  assert.equal(next.round, 2);
+  assert.equal(next.roundSummary, null);
+  assert.deepEqual(next.disconnected, [3]);
+});
+
+test('a disconnect after everyone else continued deals the round', () => {
+  const waiting = ok(acknowledgeRound(ok(acknowledgeRound(scoredForThree(), 1)), 2));
+  assert.equal(waiting.round, 1);
+
+  const next = disconnectPlayer(azul, waiting, 3);
+  assert.equal(next.round, 2);
+  assert.equal(next.roundSummary, null);
+  assert.deepEqual(next.disconnected, [3]);
 });
 
 test('a player leaving no longer holds up the next round', () => {

@@ -1,6 +1,6 @@
 // Azul rules shared by the browser (legal picks and lines) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
+import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
   Bonus,
@@ -318,11 +318,17 @@ export function onPlayerLeft(state: GameState, _seat: Seat, random: Random): Gam
   return startNextRoundIfReady(state, random);
 }
 
-// Deals the next round once every player still in the game has acknowledged the summary
+// The next round may have been waiting only for the player who disconnected
+export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
+  return startNextRoundIfReady(state, random);
+}
+
+// Deals the next round once every connected player has acknowledged the summary
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
   const summary = state.roundSummary;
   if (!summary || state.isGameOver) return state;
-  if (!state.activePlayers.every(seat => summary.acknowledged.includes(seat))) return state;
+  const waitingOn = connectedPlayers(state);
+  if (waitingOn.length === 0 || !waitingOn.every(seat => summary.acknowledged.includes(seat))) return state;
 
   const dealt = deal(state.bag, state.lid, state.factories.length, random);
   if (dealt.factories.every(factory => factory.length === 0)) return endGame({ ...state, roundSummary: null });
