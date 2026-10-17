@@ -6,7 +6,7 @@ export function prefersReducedMotion(): boolean {
 }
 
 // Cancel a running animation first, so a fast follow-up move ends in the right place.
-// getAnimations() also returns the element's CSS animations and transitions, so those are cancelled too.
+// getAnimations() also returns the element's CSS animations and transitions, so those are canceled too.
 function cancelAnimations(element: Element) {
   element.getAnimations().forEach(animation => animation.cancel());
 }

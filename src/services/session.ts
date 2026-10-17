@@ -1,38 +1,69 @@
-// The most recent game this browser joined, so a refresh can rejoin it and the list can offer it again
+// The most recent game this tab joined, so a refresh can rejoin it and the list can offer it again
 export type Session = { gameType: string; gameId: string; playerName: string; inGame: boolean };
 
-const STORAGE_KEY = 'lastGame';
+type SavedGame = Omit<Session, 'inGame'>;
+
+// Shared by every tab: the game the "Back to ..." button offers
+const LAST_GAME_KEY = 'lastGame';
+// This tab only, and kept across a refresh: the game to take back automatically.
+// Per tab so a second tab, or a tab seated as another player, never rejoins as someone else.
+const IN_GAME_KEY = 'inGame';
 
 // Storage can be blocked or full (private windows, site settings), so every access is allowed to fail
-export function loadSession(): Session | null {
+function read(storage: () => Storage, key: string): SavedGame | null {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<Session> | null;
-    if (
-      typeof saved?.gameType !== 'string' ||
-      typeof saved.gameId !== 'string' ||
-      typeof saved.playerName !== 'string' ||
-      typeof saved.inGame !== 'boolean'
-    ) {
+    const saved = JSON.parse(storage().getItem(key) ?? 'null') as Partial<SavedGame> | null;
+    if (typeof saved?.gameType !== 'string' || typeof saved.gameId !== 'string' || typeof saved.playerName !== 'string') {
       return null;
     }
-    return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, inGame: saved.inGame };
+    return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName };
   } catch {
     return null;
   }
 }
 
-export function saveSession(session: Session): void {
+function write(storage: () => Storage, key: string, game: SavedGame): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    storage().setItem(key, JSON.stringify(game));
   } catch {
     // Without storage the session still lives in memory until the page goes away
   }
 }
 
-export function clearSession(): void {
+function remove(storage: () => Storage, key: string): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    storage().removeItem(key);
   } catch {
     // Nothing was saved if storage is unavailable
   }
+}
+
+const local = () => localStorage;
+const perTab = () => sessionStorage;
+
+function sameGame(a: SavedGame, b: SavedGame): boolean {
+  return a.gameType === b.gameType && a.gameId === b.gameId && a.playerName === b.playerName;
+}
+
+export function loadSession(): Session | null {
+  const inGame = read(perTab, IN_GAME_KEY);
+  if (inGame) return { ...inGame, inGame: true };
+  const lastGame = read(local, LAST_GAME_KEY);
+  return lastGame && { ...lastGame, inGame: false };
+}
+
+export function saveSession({ inGame, ...game }: Session): void {
+  write(local, LAST_GAME_KEY, game);
+  if (inGame) {
+    write(perTab, IN_GAME_KEY, game);
+  } else {
+    remove(perTab, IN_GAME_KEY);
+  }
+}
+
+// Forgets this game; another tab's newer game stays offered
+export function clearSession(game: SavedGame): void {
+  remove(perTab, IN_GAME_KEY);
+  const lastGame = read(local, LAST_GAME_KEY);
+  if (lastGame && sameGame(lastGame, game)) remove(local, LAST_GAME_KEY);
 }

@@ -17,8 +17,8 @@ export default function ActionButtons({
   onToggleLastMovePinned,
   onLastMoveHover,
 }: ActionButtonsProps) {
-  const { activePlayers, undoAvailable, undoVote, lastMove } = gameState;
-  const canUndo = undoAvailable && !undoVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
+  const { activePlayers, undoAvailable, undoVote, dismissVote, lastMove } = gameState;
+  const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
 
   return (
     <div className="action-buttons">

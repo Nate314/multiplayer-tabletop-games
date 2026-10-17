@@ -46,10 +46,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const summaryHeld = useSummaryHeld(gameState);
   const {
     currentPlayer, activePlayers, playerNames, boards, isGameOver, winners, round,
-    roundSummary, undoVote, undoAvailable
+    roundSummary, undoVote, dismissVote, undoAvailable
   } = gameState;
-  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote;
-  const canUndo = undoAvailable && !undoVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
+  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
+  const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const showSummary = roundSummary !== null && !summaryHeld && !(isGameOver && finalScoringClosed);
 
   // Only the live table and boards animate; the history dialog renders them without this hook

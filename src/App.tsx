@@ -22,9 +22,11 @@ function App() {
   // Kept here so the form is still filled in after leaving or a disconnect
   const [playerName, setPlayerName] = useState('')
   const [gameId, setGameId] = useState('')
-  const { playerNumber, gameState, error, session, join, leave, backToGames, rejoin } = useGameConnection()
+  const { playerNumber, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection()
   const joined = gameState !== null && playerNumber !== null
-  // A join saves the session, so it names the game on screen however it was joined: dialog, refresh or rejoin button
+  // The game on screen however it was joined: dialog, refresh or rejoin button
+  const joinedGame = PLAYABLE_GAMES.find(({ info }) => info.id === gameType)
+  // The remembered game the list offers to rejoin, which may differ from a lobby just left
   const sessionGame = PLAYABLE_GAMES.find(({ info }) => info.id === session?.gameType)
 
   // Leaving or losing the connection goes back to the list, not to the dialog
@@ -48,11 +50,11 @@ function App() {
 
   const selected = PLAYABLE_GAMES.find(({ info }) => info.id === selectedId)
 
-  if (sessionGame && joined) {
+  if (joinedGame && joined) {
     return (
       <GameView
-        game={sessionGame.info}
-        client={sessionGame.client}
+        game={joinedGame.info}
+        client={joinedGame.client}
         gameState={gameState}
         playerNumber={playerNumber}
         error={error}

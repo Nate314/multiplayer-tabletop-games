@@ -17,8 +17,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [lastMoveHovered, setLastMoveHovered] = useState(false);
   const [lastMovePinned, setLastMovePinned] = useState(false);
   const boardAreaRef = useRef<HTMLDivElement>(null);
-  const { currentPlayer, activePlayers, lastMove, isGameOver, undoVote } = gameState;
-  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote;
+  const { currentPlayer, activePlayers, lastMove, isGameOver, undoVote, dismissVote } = gameState;
+  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const showLastMove = Boolean(lastMove) && (lastMoveHovered || lastMovePinned);
 
   // Only the live board animates; the history dialog's board renders without this hook
