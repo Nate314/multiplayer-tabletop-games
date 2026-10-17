@@ -1,6 +1,8 @@
 import type { ComponentType } from 'react';
+import type { GameInfo } from '../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../shared/types.ts';
 import { quoridorClient } from '../games/quoridor/client/index.ts';
+import { azulClient } from '../games/azul/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -17,5 +19,9 @@ export type ClientGame = {
 };
 
 export const CLIENT_GAMES: Record<string, ClientGame> = {
-  [quoridorClient.id]: quoridorClient
+  [quoridorClient.id]: quoridorClient,
+  [azulClient.id]: azulClient
 };
+
+// A game's rules and screen together, as the landing list and game view use them
+export type PlayableGame = { info: GameInfo; client: ClientGame };

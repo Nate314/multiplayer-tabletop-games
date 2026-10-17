@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { GAMES } from '../games/registry.ts'
-import { CLIENT_GAMES } from './clientGames.ts'
+import { CLIENT_GAMES, type PlayableGame } from './clientGames.ts'
 import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
@@ -8,8 +8,12 @@ import JoinDialog from './components/JoinDialog'
 import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
-// A game shows up once it has a screen as well as rules
-const PLAYABLE_GAMES = GAMES.map(game => game.info).filter(info => CLIENT_GAMES[info.id])
+// Every game needs a screen as well as rules; a missing one fails at startup instead of hiding the game
+const PLAYABLE_GAMES: PlayableGame[] = GAMES.map(({ info }) => {
+  const client = CLIENT_GAMES[info.id]
+  if (!client) throw new Error(`Game "${info.id}" has no entry in CLIENT_GAMES`)
+  return { info, client }
+})
 
 function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -38,14 +42,13 @@ function App() {
     setSelectedId(null)
   }, [leave])
 
-  const selected = PLAYABLE_GAMES.find(info => info.id === selectedId)
-  const client = selected && CLIENT_GAMES[selected.id]
+  const selected = PLAYABLE_GAMES.find(({ info }) => info.id === selectedId)
 
-  if (selected && client && joined) {
+  if (selected && joined) {
     return (
       <GameView
-        game={selected}
-        client={client}
+        game={selected.info}
+        client={selected.client}
         gameState={gameState}
         playerNumber={playerNumber}
         error={error}
@@ -64,16 +67,16 @@ function App() {
         {error && !selected && <div className="lobby-error">{error}</div>}
         <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
       </main>
-      {selected && client && (
+      {selected && (
         <JoinDialog
-          game={selected}
-          faq={client.faq}
+          game={selected.info}
+          faq={selected.client.faq}
           playerName={playerName}
           gameId={gameId}
           error={error}
           onPlayerNameChange={setPlayerName}
           onGameIdChange={setGameId}
-          onJoin={() => join(selected.id, gameId, playerName)}
+          onJoin={() => join(selected.info.id, gameId, playerName)}
           onCancel={closeDialog}
         />
       )}

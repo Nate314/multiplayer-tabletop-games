@@ -1,0 +1,113 @@
+import Tile from './Tile';
+import type { Placement, PublicGameState, RoundSummary as Summary, Seat, SeatSummary } from '../types.ts';
+
+type RoundSummaryProps = {
+  summary: Summary;
+  gameState: PublicGameState;
+  playerNumber: Seat;
+  seats: Seat[]; // in the order the boards are shown
+  onContinue: () => void;
+  onClose: () => void;
+};
+
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+function reason({ rowRun, colRun }: Placement): string {
+  const runs: string[] = [];
+  if (rowRun > 1) runs.push(`row of ${rowRun}`);
+  if (colRun > 1) runs.push(`column of ${colRun}`);
+  return runs.length > 0 ? runs.join(' + ') : 'no neighbours';
+}
+
+function SeatLines({ seat }: { seat: SeatSummary }) {
+  const { placements, floor, floorPenalty, bonus, scoreBefore } = seat;
+  const earned = placements.reduce((sum, placement) => sum + placement.points, 0);
+  const hitZero = scoreBefore + earned - floorPenalty < 0;
+
+  return (
+    <ul className="summary-lines">
+      {placements.map(placement => (
+        <li key={placement.row}>
+          <Tile kind={placement.color} />
+          <span>Row {placement.row + 1}</span>
+          <span className="summary-reason">{reason(placement)}</span>
+          <span className="summary-points">+{placement.points}</span>
+        </li>
+      ))}
+      {placements.length === 0 && (
+        <li>
+          <span className="summary-reason">No pattern line was full</span>
+          <span className="summary-points">+0</span>
+        </li>
+      )}
+      {floor.length > 0 && (
+        <li>
+          <span className="summary-floor">
+            {floor.map((item, index) => <Tile key={index} kind={item} />)}
+          </span>
+          <span className="summary-reason">
+            floor line{hitZero && ' (a score cannot drop below 0)'}
+          </span>
+          <span className="summary-points">-{floorPenalty}</span>
+        </li>
+      )}
+      {bonus && bonus.rows > 0 && (
+        <li>
+          <span>{plural(bonus.rows, 'complete row')}</span>
+          <span className="summary-points">+{bonus.rows * 2}</span>
+        </li>
+      )}
+      {bonus && bonus.columns > 0 && (
+        <li>
+          <span>{plural(bonus.columns, 'complete column')}</span>
+          <span className="summary-points">+{bonus.columns * 7}</span>
+        </li>
+      )}
+      {bonus && bonus.colors > 0 && (
+        <li>
+          <span>{plural(bonus.colors, 'complete colour')}</span>
+          <span className="summary-points">+{bonus.colors * 10}</span>
+        </li>
+      )}
+    </ul>
+  );
+}
+
+export default function RoundSummary({ summary, gameState, playerNumber, seats, onContinue, onClose }: RoundSummaryProps) {
+  const { playerNames, activePlayers, isGameOver, winners, gameStatus } = gameState;
+  const acknowledged = summary.acknowledged.includes(playerNumber);
+  const waitingFor = activePlayers.filter(seat => !summary.acknowledged.includes(seat)).map(seat => playerNames[seat]);
+
+  return (
+    <div className="overlay">
+      <div className="modal" role="dialog" aria-label="Round scoring">
+        <h2>{isGameOver ? 'Final scoring' : `Round ${summary.round} scoring`}</h2>
+        {isGameOver && <div className="summary-result">{gameStatus}</div>}
+        <div className="summary-seats">
+          {seats.filter(seat => summary.seats[seat]).map(seat => (
+            <section key={seat} className={winners.includes(seat) ? 'summary-seat summary-winner' : 'summary-seat'}>
+              <header>
+                <span>
+                  {playerNames[seat]}
+                  {seat === playerNumber && ' (you)'}
+                  {!activePlayers.includes(seat) && ' (left)'}
+                </span>
+                <span>
+                  {summary.seats[seat].scoreBefore} → <strong>{summary.seats[seat].scoreAfter} pts</strong>
+                </span>
+              </header>
+              <SeatLines seat={summary.seats[seat]} />
+            </section>
+          ))}
+        </div>
+        {isGameOver ? (
+          <button type="button" className="primary-button" onClick={onClose}>Close</button>
+        ) : acknowledged ? (
+          <div className="summary-waiting">Waiting for {waitingFor.join(', ')}</div>
+        ) : (
+          <button type="button" className="primary-button" onClick={onContinue}>Continue</button>
+        )}
+      </div>
+    </div>
+  );
+}
