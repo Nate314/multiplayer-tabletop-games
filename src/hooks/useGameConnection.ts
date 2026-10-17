@@ -78,11 +78,11 @@ export default function useGameConnection() {
         setError(message);
         return;
       }
-      const remembered = sessionRef.current;
-      if (remembered && message.endsWith(STILL_CONNECTED) && attempt.retriesLeft > 0) {
+      if (sessionRef.current && message.endsWith(STILL_CONNECTED) && attempt.retriesLeft > 0) {
         attempt.retriesLeft -= 1;
         attempt.timer = setTimeout(() => {
-          connect(remembered.gameType, remembered.gameId, remembered.playerName, true);
+          const remembered = sessionRef.current;
+          if (remembered) connect(remembered.gameType, remembered.gameId, remembered.playerName, true);
         }, REJOIN_RETRY_DELAY_MS);
         return;
       }
@@ -128,14 +128,17 @@ export default function useGameConnection() {
     connect(gameType, trimmedGameId, trimmedName, false);
   }, [connect, stopRejoining]);
 
-  // Leaving on purpose is not a lost connection, so no "Disconnected" message; the remembered game is untouched
+  // Leaving on purpose is not a lost connection, so no "Disconnected" message.
+  // The remembered game is untouched, except that a rejoin cut short is offered again as the rejoin button.
   const leave = useCallback(() => {
+    const remembered = sessionRef.current;
+    if (rejoining.current && remembered?.inGame) updateSession({ ...remembered, inGame: false });
     stopRejoining();
     gameService.disconnect();
     setPlayerNumber(null);
     setGameState(null);
     setError(null);
-  }, [stopRejoining]);
+  }, [stopRejoining, updateSession]);
 
   // The server holds the seat, so the list offers a one-click rejoin
   const backToGames = useCallback(() => {

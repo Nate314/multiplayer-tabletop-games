@@ -104,15 +104,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           onClose={() => setFinalScoringClosed(true)}
         />
       )}
-      {undoVote && (
-        <UndoVote
-          vote={undoVote}
-          playerNumber={playerNumber}
-          activePlayers={activePlayers}
-          playerNames={playerNames}
-          onVote={(approve) => gameService.voteUndo(approve)}
-        />
-      )}
+      <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
     </>
   );
 }

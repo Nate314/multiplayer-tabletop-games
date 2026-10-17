@@ -76,7 +76,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `UndoVote.tsx` shows a running undo vote
    - `RejoinButton.tsx` is the "Back to <game> (<game ID>)" button on the landing page, shown when the remembered game was left with Back to games or a lost connection
    - `PresenceBar.tsx` sits above the game screen while anyone is disconnected: each disconnected player with a Dismiss button, and "Waiting for <name> to reconnect" when it is their turn
-   - `DismissVote.tsx` shows a running dismiss vote to the connected players
+   - `DismissVote.tsx` shows a running dismiss vote
+   - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
    - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service, remembers the game, rejoins it after a refresh, and offers it again after Back to games
 
 2. **Game Service (`/src/services/gameService.ts`)**

@@ -1,38 +1,26 @@
-import type { Seat, DismissVote as DismissVoteState } from '../../shared/types.ts';
+import VotePanel from './VotePanel';
+import type { BasePublicState, Seat } from '../../shared/types.ts';
 
 type DismissVoteProps = {
-  vote: DismissVoteState;
+  gameState: BasePublicState;
   playerNumber: Seat;
-  connectedPlayers: Seat[]; // only connected players vote
-  playerNames: Record<Seat, string>;
   onVote: (approve: boolean) => void;
 };
 
-export default function DismissVote({ vote, playerNumber, connectedPlayers, playerNames, onVote }: DismissVoteProps) {
-  const canVote = connectedPlayers.includes(playerNumber) && !vote.votes[playerNumber];
+// Shows the open dismiss vote, if any
+export default function DismissVote({ gameState, playerNumber, onVote }: DismissVoteProps) {
+  const vote = gameState.dismissVote;
+  if (!vote) return null;
 
+  const { playerNames } = gameState;
   return (
-    <div className="dismiss-vote">
-      <div className="dismiss-vote-panel">
-        <div className="dismiss-vote-title">
-          {`${playerNames[vote.requestedBy]} wants to dismiss ${playerNames[vote.target]}`}
-        </div>
-        <ul className="dismiss-vote-list">
-          {connectedPlayers.map(seat => (
-            <li key={seat}>
-              {playerNames[seat]}: {vote.votes[seat] ? 'approved' : 'waiting'}
-            </li>
-          ))}
-        </ul>
-        {canVote ? (
-          <div className="dismiss-vote-actions">
-            <button onClick={() => onVote(true)}>Approve</button>
-            <button onClick={() => onVote(false)}>Decline</button>
-          </div>
-        ) : (
-          <div>Waiting for the other players</div>
-        )}
-      </div>
-    </div>
+    <VotePanel
+      className="dismiss-vote"
+      title={`${playerNames[vote.requestedBy]} wants to dismiss ${playerNames[vote.target]}`}
+      votes={vote.votes}
+      gameState={gameState}
+      playerNumber={playerNumber}
+      onVote={onVote}
+    />
   );
 }

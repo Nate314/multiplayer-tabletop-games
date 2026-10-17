@@ -14,7 +14,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [selectedAction, setSelectedAction] = useState<Action>('move');
   const [lastMoveHovered, setLastMoveHovered] = useState(false);
   const [lastMovePinned, setLastMovePinned] = useState(false);
-  const { currentPlayer, activePlayers, playerNames, lastMove, isGameOver, undoVote } = gameState;
+  const { currentPlayer, activePlayers, lastMove, isGameOver, undoVote } = gameState;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote;
   const showLastMove = Boolean(lastMove) && (lastMoveHovered || lastMovePinned);
 
@@ -41,15 +41,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             showLastMove={showLastMove}
             onMove={handleMove}
           />
-          {undoVote && (
-            <UndoVote
-              vote={undoVote}
-              playerNumber={playerNumber}
-              activePlayers={activePlayers}
-              playerNames={playerNames}
-              onVote={(approve) => gameService.voteUndo(approve)}
-            />
-          )}
+          <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
         </div>
         <div className="game-info side-panel">
           <GameStatus gameState={gameState} error={error} />
