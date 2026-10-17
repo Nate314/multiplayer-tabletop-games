@@ -80,6 +80,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `DismissVote.tsx` shows a running dismiss vote
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
    - `/src/hooks/useEscapeKey.ts` closes the topmost dialog on Escape
+   - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. Quoridor glides the moved pawn from its old square and fades in a new wall; history boards never animate
    - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service, remembers the game, rejoins it after a refresh, and offers it again after Back to games
 
 2. **Game Service (`/src/services/gameService.ts`)**

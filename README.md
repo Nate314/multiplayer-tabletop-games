@@ -174,6 +174,7 @@ The platform (server, landing page, join dialog, undo voting, Docker, CI) needs 
    - `describeMove.ts`: one line about the move that produced a public state, such as `Alice placed a wall`, shown as "Move 7 of 23: ..." in the history dialog
    - `faq.ts`: the FAQ items shown by the FAQ button
    - optionally a CSS file whose rules are all scoped under `[data-game="<id>"]`, so the game's colors never leak into other games or the landing page
+   - optionally move animations: give the elements to animate a `data-anim-key` and call `useMoveAnimation(rootRef, gameState, animate)` (`src/animation/useMoveAnimation.ts`) in the game's screen, not in its `HistoryBoard`. It calls `animate({ previous, next, root, rectOf })` only when exactly one move was added, so the first render, a rejoin and an undo snap into place. `rectOf(key)` is where that keyed element was before the move. `slideFrom` and `fadeIn` (`src/animation/motion.ts`) last `MOVE_DURATION_MS` (300 ms) and do nothing under `prefers-reduced-motion: reduce`. Nothing animates unless the game asks for it
 3. Add one line to `games/registry.ts`: put the game in the `GAMES` array.
 4. Add one line to `src/clientGames.ts`: put the client in `CLIENT_GAMES`.
 

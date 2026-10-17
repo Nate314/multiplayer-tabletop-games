@@ -7,7 +7,7 @@ type PawnProps = {
 
 export default function Pawn({ seat, name }: PawnProps) {
   return (
-    <div className={`pawn player${seat}`} title={name}>
+    <div className={`pawn player${seat}`} title={name} data-anim-key={`pawn-${seat}`}>
       {name?.[0] || `P${seat}`}
     </div>
   );
