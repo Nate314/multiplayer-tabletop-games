@@ -224,7 +224,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
 - Port `azul:server/games.ts` into the generic manager. A room is `{ game: GameDefinition; state; history: state[] }` keyed by `roomId = \`${gameType}/${gameId}\``. `join` validates the game type first (`'Unknown game'`), then trims and caps ID and name exactly as today. Undo request, vote and restore logic are unchanged from azul, using `nextActivePlayer` from `shared/seating.ts`. `action` returns `'This game has no actions'` when `applyAction` is missing and is never pushed to `history`. `view` is `game.toPublicState(state, history.length > 0)`.
 - Port `azul:server/server.ts`: connections hold `{ roomId, seat }`; `JOIN_GAME` passes `message.gameType`; add a `GAME_ACTION` case calling `manager.action(roomId, seat, payload?.action)`; drop `ACKNOWLEDGE_ROUND`. The manager is created with `GAMES`.
 
-- [ ] **Step 1: Write the failing tests** in `server/games.test.ts` using `createGameManager([testGame], seededRandom)`. Port every platform test from `azul:server/games.test.ts` and `quoridor:server/games.test.ts` (join trimming and blanks, 20-character caps, full and started refusals, lobby leave and last-one-out deletion, undo approve, decline, validation, leaving during a vote, repeated undos staying locked, undo returning the turn to a departed player, undo after a win cancelled when the winner or requester leaves), rewritten against `testGame` moves. Add:
+- [ ] **Step 1: Write the failing tests** in `server/games.test.ts` using `createGameManager([testGame], seededRandom)`. Port every platform test from `azul:server/games.test.ts` and `quoridor:server/games.test.ts` (join trimming and blanks, 20-character caps, full and started refusals, lobby leave and last-one-out deletion, undo approve, decline, validation, leaving during a vote, repeated undos staying locked, undo returning the turn to a departed player, undo after a win canceled when the winner or requester leaves), rewritten against `testGame` moves. Add:
   - `an unknown or missing game type is refused`: `join('chess', 'g', 'A')` and `join(undefined, 'g', 'A')` both give `{ error: 'Unknown game' }`.
   - `the same game ID in two game types is two rooms`: register `testGame` and a copy with `info.id: 'test2'`; join both with ID `'friday'`; both seats are 1 and `roomId`s differ.
   - `actions are not recorded for undo`: two players, one move, one `ping` action; `requestUndo` then approve restores the state before the move.
@@ -336,7 +336,7 @@ requestUndo(): void; voteUndo(approve: boolean): void; disconnect(): void;
 
 - [ ] **Step 1:** Port, scope the CSS, register `azul` in `CLIENT_GAMES`.
 - [ ] **Step 2:** `npm run typecheck && npm run lint && npm test` pass.
-- [ ] **Step 3: Browser check** (two windows): join Azul, take tiles from a factory and the centre, finish a round, both players press Continue on the round summary, request and decline an undo, FAQ from dialog and game, Back to games. Repeat at 390px wide.
+- [ ] **Step 3: Browser check** (two windows): join Azul, take tiles from a factory and the center, finish a round, both players press Continue on the round summary, request and decline an undo, FAQ from dialog and game, Back to games. Repeat at 390px wide.
 - [ ] **Step 4:** Commit "feat: Azul screen".
 
 ---

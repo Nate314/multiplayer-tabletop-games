@@ -67,6 +67,21 @@
   font-size: 1.2rem;
 }
 
+.lobby-header .github-link {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  border: 1px solid var(--lobby-border);
+  border-radius: 50%;
+  background: var(--lobby-surface);
+  color: var(--lobby-text);
+}
+
 .lobby-games {
   display: flex;
   flex-direction: column;
@@ -119,6 +134,14 @@
 
 .lobby-game-players {
   white-space: nowrap;
+}
+
+.lobby-rejoin {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  font-size: 1rem;
 }
 
 .lobby-error {
@@ -219,7 +242,8 @@
 }
 
 /*
- * Default look for the platform pieces a game screen shows: the game header, the FAQ dialog and the undo vote.
+ * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
+ * the disconnected players bar and the dismiss vote.
  * Every selector sits in :where(), so it has no specificity and any rule in a game's own CSS wins.
  * A game can restyle these pieces with its own rules, or just set these variables on [data-game="<id>"]:
  *   --platform-page-bg, --platform-text, --platform-button-bg, --platform-button-hover-bg, --platform-button-text,
@@ -249,7 +273,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .faq-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -272,11 +296,49 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover) {
+:where([data-game] .game-header .github-link) {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* FAQ dialog */
+/* Phones: the five header buttons fill the width, so the title takes its own row above them */
+@media (max-width: 480px) {
+  :where([data-game] .game-header) {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem;
+  }
+
+  :where([data-game] .game-header h1) {
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+    padding: 0 0.6rem;
+  }
+}
+
+/* Before the first move there is no history */
+:where([data-game] .history-button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* FAQ and history dialogs */
 
 :where([data-game] .overlay) {
   position: fixed;
@@ -320,7 +382,27 @@
   margin: 4px 0 0;
 }
 
-:where([data-game] .primary-button, [data-game] .undo-vote-actions button) {
+/* The history dialog is as wide as the board it shows; a board wider than the window scrolls sideways */
+:where([data-game] .modal.history) {
+  max-width: 1100px;
+}
+
+:where([data-game] .history-move) {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+:where([data-game] .history-slider) {
+  width: 100%;
+  margin: 0 0 16px;
+}
+
+:where([data-game] .history-board) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+:where([data-game] .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -334,13 +416,13 @@
   margin-top: 16px;
 }
 
-:where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover) {
+:where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Undo vote */
+/* Undo and dismiss votes */
 
-:where([data-game] .undo-vote) {
+:where([data-game] .undo-vote, [data-game] .dismiss-vote) {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -350,7 +432,7 @@
   background: var(--platform-backdrop, rgba(0, 0, 0, 0.45));
 }
 
-:where([data-game] .undo-vote-panel) {
+:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel) {
   padding: 20px;
   border-radius: 10px;
   background: var(--platform-panel-bg, var(--lobby-surface));
@@ -359,18 +441,74 @@
   text-align: center;
 }
 
-:where([data-game] .undo-vote-title) {
+:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title) {
   font-weight: 600;
 }
 
-:where([data-game] .undo-vote-list) {
+:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list) {
   list-style: none;
   margin: 12px 0;
   padding: 0;
 }
 
-:where([data-game] .undo-vote-actions) {
+:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions) {
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* Disconnected players, above the game screen */
+
+:where([data-game] .presence-bar) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .presence-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where([data-game] .presence-player) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:where([data-game] .presence-waiting) {
+  font-weight: 600;
+}
+
+:where([data-game] .dismiss-button) {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+}
+
+:where([data-game] .dismiss-button:hover:enabled) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where([data-game] .dismiss-button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Pawn from './Pawn';
 import WallPiece from './WallPiece';
+import { squareKey, wallKey } from './animateMove.ts';
 import { BOARD_SIZE, getValidMoves, isValidWallPlacement } from '../rules.ts';
 import type { Move, PlacedWall, Position, PublicGameState, Seat, Wall } from '../types.ts';
 import type { Action } from './types.ts';
@@ -84,6 +85,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedActio
                 <div
                   key={col}
                   className={getSquareClassName(position)}
+                  data-anim-key={squareKey(position)}
                   onClick={() => handleSquareClick(position)}
                   onMouseEnter={() => setHoveredSquare(position)}
                   onMouseLeave={() => setHoveredSquare(null)}
@@ -96,7 +98,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedActio
         ))}
         <div className="wall-overlay">
           {walls.map((wall, index) => (
-            <WallPiece key={index} wall={wall} className={isLastMoveWall(wall) ? 'wall last-move' : 'wall'} />
+            <WallPiece key={index} wall={wall} className={isLastMoveWall(wall) ? 'wall last-move' : 'wall'} animKey={wallKey(wall)} />
           ))}
         </div>
         {wallPreview && <WallPiece wall={wallPreview} className="wall-preview" />}

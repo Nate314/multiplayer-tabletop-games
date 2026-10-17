@@ -5,6 +5,8 @@ import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
 import JoinDialog from './components/JoinDialog'
+import RejoinButton from './components/RejoinButton'
+import GitHubLink from './components/GitHubLink'
 import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
@@ -20,8 +22,12 @@ function App() {
   // Kept here so the form is still filled in after leaving or a disconnect
   const [playerName, setPlayerName] = useState('')
   const [gameId, setGameId] = useState('')
-  const { playerNumber, gameState, error, join, leave } = useGameConnection()
+  const { playerNumber, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection()
   const joined = gameState !== null && playerNumber !== null
+  // The game on screen however it was joined: dialog, refresh or rejoin button
+  const joinedGame = PLAYABLE_GAMES.find(({ info }) => info.id === gameType)
+  // The remembered game the list offers to rejoin, which may differ from a lobby just left
+  const sessionGame = PLAYABLE_GAMES.find(({ info }) => info.id === session?.gameType)
 
   // Leaving or losing the connection goes back to the list, not to the dialog
   const [wasJoined, setWasJoined] = useState(joined)
@@ -44,15 +50,15 @@ function App() {
 
   const selected = PLAYABLE_GAMES.find(({ info }) => info.id === selectedId)
 
-  if (selected && joined) {
+  if (joinedGame && joined) {
     return (
       <GameView
-        game={selected.info}
-        client={selected.client}
+        game={joinedGame.info}
+        client={joinedGame.client}
         gameState={gameState}
         playerNumber={playerNumber}
         error={error}
-        onBack={leave}
+        onBack={backToGames}
       />
     )
   }
@@ -61,10 +67,14 @@ function App() {
     <div className="lobby">
       <header className="lobby-header">
         <h1>Multiplayer Tabletop Games</h1>
+        <GitHubLink />
         <ThemeToggle />
       </header>
       <main className="lobby-main">
         {error && !selected && <div className="lobby-error">{error}</div>}
+        {session && !session.inGame && sessionGame && (
+          <RejoinButton gameName={sessionGame.info.name} gameId={session.gameId} onRejoin={rejoin} />
+        )}
         <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
       </main>
       {selected && (

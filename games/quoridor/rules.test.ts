@@ -222,7 +222,7 @@ test('turns skip players who left', () => {
   assert.equal(state.currentPlayer, 2);
   state = removePlayer(quoridor, state, 2);
   assert.equal(state.currentPlayer, 3);
-  assert.equal(state.gameStatus, 'B left the game');
+  assert.equal(state.gameStatus, 'B was dismissed');
   assert.deepEqual(state.pawns[2], { row: 0, col: 4 });
   assert.equal(state.playerNames[2], 'B');
   state = play(state, 3, step(4, 1));

@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { addPlayer, removePlayer, nextActivePlayer, applyMove, baseGameState } from './seating.ts';
+import {
+  addPlayer, removePlayer, nextActivePlayer, applyMove, baseGameState,
+  connectedPlayers, findSeatByName, disconnectPlayer, reconnectPlayer, resolveDismissVote
+} from './seating.ts';
 import { testGame, type TestState } from './testGame.ts';
 
 function join(state: TestState, ...names: string[]): TestState {
@@ -69,7 +72,7 @@ test('leaving mid-game passes the turn and keeps the name', () => {
   assert.equal(state.currentPlayer, 2);
   assert.deepEqual(state.activePlayers, [2, 3]);
   assert.equal(state.playerNames[1], 'A');
-  assert.equal(state.gameStatus, 'A left the game');
+  assert.equal(state.gameStatus, 'A was dismissed');
 });
 
 test('the last player left wins', () => {
@@ -91,6 +94,125 @@ test('baseGameState starts empty', () => {
     gameStatus: '',
     isGameOver: false,
     winners: [],
-    undoVote: null
+    undoVote: null,
+    disconnected: [],
+    dismissVote: null
   });
+});
+
+function threeStarted(): TestState {
+  return move(join(testGame.createGameState('g'), 'A', 'B', 'C'), 1); // seat 2 to move
+}
+
+test('a lobby disconnect frees the seat', () => {
+  const state = disconnectPlayer(testGame, join(testGame.createGameState('g'), 'A', 'B'), 2);
+  assert.deepEqual(state.activePlayers, [1]);
+  assert.deepEqual(state.disconnected, []);
+});
+
+test('a mid-game disconnect holds the seat and the turn waits', () => {
+  const before = { ...threeStarted(), currentPlayer: 3 };
+  const state = disconnectPlayer(testGame, before, 3);
+  assert.deepEqual(state.activePlayers, [1, 2, 3]);
+  assert.deepEqual(state.disconnected, [3]);
+  assert.equal(state.currentPlayer, 3);
+  assert.equal(state.gameStatus, 'C disconnected');
+  assert.deepEqual(connectedPlayers(state), [1, 2]);
+  assert.equal(disconnectPlayer(testGame, state, 3), state);
+});
+
+test('the disconnect hook runs after the seat is held', () => {
+  const seen: number[][] = [];
+  const game = { ...testGame, onPlayerDisconnected: (s: TestState) => { seen.push(s.disconnected); return s; } };
+  disconnectPlayer(game, threeStarted(), 3);
+  assert.deepEqual(seen, [[3]]);
+});
+
+test('findSeatByName ignores case and spaces', () => {
+  const state = join(testGame.createGameState('g'), 'A', 'Bob');
+  assert.equal(findSeatByName(state, '  a '), 1);
+  assert.equal(findSeatByName(state, 'BOB'), 2);
+  assert.equal(findSeatByName(state, 'Zed'), undefined);
+});
+
+test('findSeatByName also finds dismissed players', () => {
+  const state = removePlayer(testGame, threeStarted(), 3);
+  assert.equal(findSeatByName(state, 'c'), 3);
+});
+
+test('reconnecting clears the seat and a dismiss vote against it', () => {
+  let state = disconnectPlayer(testGame, threeStarted(), 3);
+  state = { ...state, dismissVote: { target: 3, requestedBy: 1, votes: { 1: true } } };
+  const back = reconnectPlayer(state, 3);
+  assert.deepEqual(back.disconnected, []);
+  assert.equal(back.dismissVote, null);
+  assert.equal(back.gameStatus, 'C is back');
+  assert.deepEqual(back.activePlayers, [1, 2, 3]);
+});
+
+test('reconnecting a seat that is not held changes nothing', () => {
+  const state = threeStarted();
+  assert.equal(reconnectPlayer(state, 3), state);
+});
+
+test('reconnecting keeps a dismiss vote against someone else', () => {
+  let state = disconnectPlayer(testGame, disconnectPlayer(testGame, threeStarted(), 3), 2);
+  const vote = { target: 3, requestedBy: 1, votes: { 1: true } as Record<number, boolean> };
+  state = { ...state, dismissVote: vote };
+  assert.deepEqual(reconnectPlayer(state, 2).dismissVote, vote);
+});
+
+test('a dismiss vote passes only when every connected player approves', () => {
+  let state = disconnectPlayer(testGame, threeStarted(), 3);
+  state = { ...state, dismissVote: { target: 3, requestedBy: 1, votes: { 1: true } } };
+  const waiting = resolveDismissVote(testGame, state);
+  assert.deepEqual(waiting.activePlayers, [1, 2, 3]);
+  assert.notEqual(waiting.dismissVote, null);
+
+  const approved = { ...state, dismissVote: { target: 3, requestedBy: 1, votes: { 1: true, 2: true } } };
+  const done = resolveDismissVote(testGame, approved);
+  assert.deepEqual(done.activePlayers, [1, 2]);
+  assert.deepEqual(done.disconnected, []);
+  assert.equal(done.dismissVote, null);
+  assert.equal(done.gameStatus, 'C was dismissed');
+});
+
+test('a lone connected player can dismiss alone', () => {
+  let state = disconnectPlayer(testGame, disconnectPlayer(testGame, threeStarted(), 3), 2);
+  state = { ...state, dismissVote: { target: 3, requestedBy: 1, votes: { 1: true } } };
+  const done = resolveDismissVote(testGame, state);
+  assert.deepEqual(done.activePlayers, [1, 2]);
+  assert.deepEqual(done.disconnected, [2]);
+});
+
+test('a voter disconnecting re-resolves the dismiss vote', () => {
+  let state = disconnectPlayer(testGame, threeStarted(), 3);
+  state = { ...state, dismissVote: { target: 3, requestedBy: 1, votes: { 1: true } } };
+  const done = disconnectPlayer(testGame, state, 2);
+  assert.deepEqual(done.activePlayers, [1, 2]);
+  assert.equal(done.dismissVote, null);
+});
+
+test('dismissing the last opponent wins', () => {
+  let state = move(join(testGame.createGameState('g'), 'A', 'B'), 1);
+  state = disconnectPlayer(testGame, state, 2);
+  state = { ...state, dismissVote: { target: 2, requestedBy: 1, votes: { 1: true } } };
+  const done = resolveDismissVote(testGame, state);
+  assert.equal(done.gameStatus, 'A wins! Everyone else left.');
+  assert.deepEqual(done.winners, [1]);
+  assert.equal(done.isGameOver, true);
+});
+
+test('moves are refused during a dismiss vote', () => {
+  let state = disconnectPlayer(testGame, threeStarted(), 3);
+  state = { ...state, dismissVote: { target: 3, requestedBy: 1, votes: { 1: true } } };
+  assert.deepEqual(applyMove(testGame, state, 2, { type: 'tick' }), { error: 'A dismiss vote is in progress' });
+});
+
+test('the undo requester disconnecting cancels the undo vote', () => {
+  const started = threeStarted();
+  const byThree = { ...started, undoVote: { requestedBy: 3, votes: { 3: true } } };
+  assert.equal(disconnectPlayer(testGame, byThree, 3).undoVote, null);
+  const byOne = { ...started, undoVote: { requestedBy: 1, votes: { 1: true } } };
+  assert.notEqual(disconnectPlayer(testGame, byOne, 3).undoVote, null);
 });

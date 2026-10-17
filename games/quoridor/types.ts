@@ -1,5 +1,5 @@
 // Data shapes shared by the browser and the server
-import type { BaseGameState } from '../../shared/types.ts';
+import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
 
 export type { Result, Seat, UndoVote } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
@@ -31,7 +31,7 @@ export type GameState = BaseGameState & {
 };
 
 // The game state as the server sends it to browsers
-export type PublicGameState = GameState & { undoAvailable: boolean };
+export type PublicGameState = GameState & BasePublicState;
 
 // The parts of the state that board geometry reads
 export type BoardState = { pawns: Record<Seat, Position>; walls: Wall[]; activePlayers: Seat[] };

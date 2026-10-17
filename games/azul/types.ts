@@ -1,5 +1,5 @@
 // Data shapes shared by the browser and the server
-import type { BaseGameState } from '../../shared/types.ts';
+import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
 
 export type { Result, Seat, UndoVote } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
@@ -27,7 +27,7 @@ export type LastMove = Move & { playerNumber: Seat; count: number };
 // One tile moved onto the wall at the end of a round, and what it scored
 export type Placement = { row: number; col: number; color: Color; points: number; rowRun: number; colRun: number };
 
-// End-of-game bonuses: counts of complete rows, columns and colours, and their total
+// End-of-game bonuses: counts of complete rows, columns and colors, and their total
 export type Bonus = { rows: number; columns: number; colors: number; points: number };
 
 export type SeatSummary = {
@@ -59,6 +59,4 @@ export type GameState = BaseGameState & {
 };
 
 // The game state as the server sends it to browsers
-export type PublicGameState = Omit<GameState, 'bag' | 'lid' | 'roundStarter' | 'markerHolder'> & {
-  undoAvailable: boolean;
-};
+export type PublicGameState = Omit<GameState, 'bag' | 'lid' | 'roundStarter' | 'markerHolder'> & BasePublicState;

@@ -1,6 +1,6 @@
-import { test } from 'node:test';
+import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGameManager } from './games.ts';
+import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import { testGame, type TestPublicState } from '../shared/testGame.ts';
 import type { Random, Result } from '../shared/types.ts';
 
@@ -33,7 +33,7 @@ function joined(result: ReturnType<Manager['join']>) {
   return result;
 }
 
-function left(result: ReturnType<Manager['leave']>): TestPublicState {
+function left(result: ReturnType<Manager['disconnect']>): TestPublicState {
   assert.ok(result, 'expected the game to still exist');
   return result.state as TestPublicState;
 }
@@ -102,7 +102,7 @@ test('browsers never receive hidden fields', () => {
   const first = joined(manager.join('test', 'g1', 'A'));
   const second = joined(manager.join('test', 'g1', 'B'));
   const afterMove = ok(manager.move(ROOM, 1, tick));
-  const afterLeave = left(gameWith('A', 'B', 'C').leave(ROOM, 3));
+  const afterLeave = left(gameWith('A', 'B', 'C').disconnect(ROOM, 3));
   for (const state of [first.state, second.state, afterMove, afterLeave, current(manager)]) {
     assert.equal('secret' in state, false);
   }
@@ -125,22 +125,36 @@ test('moves are validated and recorded for undo', () => {
   assert.deepEqual(current(manager), state);
 });
 
-test('leaving the lobby frees the seat and the last one out deletes the game', () => {
+test('disconnecting in the lobby frees the seat and the last one out deletes the game', () => {
   const manager = gameWith('A', 'B');
-  assert.deepEqual(left(manager.leave(ROOM, 1)).activePlayers, [2]);
+  assert.deepEqual(left(manager.disconnect(ROOM, 1)).activePlayers, [2]);
   assert.equal(joined(manager.join('test', 'g1', 'C')).seat, 1);
-  manager.leave(ROOM, 1);
-  assert.equal(manager.leave(ROOM, 2), null);
+  manager.disconnect(ROOM, 1);
+  assert.equal(manager.disconnect(ROOM, 2), null);
   assert.equal(manager.getState(ROOM), undefined);
-  assert.equal(manager.leave(ROOM, 2), null);
+  assert.equal(manager.disconnect(ROOM, 2), null);
 });
 
-test('leaving mid-game hands the win to the last player', () => {
+test('disconnecting mid-game holds the seat', () => {
   const manager = gameWith('A', 'B');
   ok(manager.move(ROOM, 1, tick));
-  const state = left(manager.leave(ROOM, 2));
+  const state = left(manager.disconnect(ROOM, 2));
+  assert.deepEqual(state.activePlayers, [1, 2]);
+  assert.deepEqual(state.disconnected, [2]);
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(state.isGameOver, false);
+  assert.equal(state.gameStatus, 'B disconnected');
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Not your turn' });
+});
+
+test('dismissing the last opponent hands the win to the player left', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  const state = ok(manager.requestDismiss(ROOM, 1, 2));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
+  assert.deepEqual(state.activePlayers, [1]);
   assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'The game is over' });
 });
 
@@ -194,15 +208,16 @@ test('undo requests and votes are validated', () => {
   assert.deepEqual(manager.move(ROOM, 2, tick), { error: 'An undo vote is in progress' });
 });
 
-test('a player leaving during a vote no longer counts', () => {
+test('a player disconnecting during a vote no longer counts', () => {
   const manager = gameWith('A', 'B', 'C');
   ok(manager.move(ROOM, 1, tick));
   ok(manager.requestUndo(ROOM, 1));
   ok(manager.voteUndo(ROOM, 2, true));
-  const after = left(manager.leave(ROOM, 3));
+  const after = left(manager.disconnect(ROOM, 3));
   assert.equal(after.undoVote, null);
   assert.equal(after.moves, 0);
-  assert.deepEqual(after.activePlayers, [1, 2]);
+  assert.deepEqual(after.activePlayers, [1, 2, 3]);
+  assert.deepEqual(after.disconnected, [3]);
   assert.equal(after.currentPlayer, 1);
   assert.equal(after.gameStatus, 'Last turn undone');
 });
@@ -223,11 +238,13 @@ test('repeated undos step back to the start and the game stays locked', () => {
   assert.deepEqual(manager.join('test', 'g1', 'C'), { error: 'Game already in progress' });
 });
 
-test('an undo returning the turn to a departed player skips them', () => {
+test('an undo returning the turn to a dismissed player skips them', () => {
   const manager = gameWith('A', 'B', 'C');
   ok(manager.move(ROOM, 1, tick));
   ok(manager.move(ROOM, 2, tick));
-  manager.leave(ROOM, 2);
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
   ok(manager.requestUndo(ROOM, 1));
   const restored = ok(manager.voteUndo(ROOM, 3, true));
   assert.equal(restored.currentPlayer, 3);
@@ -248,20 +265,36 @@ test('the winning move can be undone', () => {
   assert.equal(restored.currentPlayer, 1);
 });
 
-test('an undo vote after a win is cancelled when the winner leaves', () => {
+test('an undo vote after a win is canceled when the winner disconnects', () => {
   const manager = wonGame();
   ok(manager.requestUndo(ROOM, 2));
-  const state = left(manager.leave(ROOM, 1));
+  const state = left(manager.disconnect(ROOM, 1));
   assert.equal(state.undoVote, null);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
+  assert.equal(state.moves, 3);
+  assert.equal(state.moveCount, 3);
+  assert.deepEqual(state.disconnected, [1]);
   assert.deepEqual(manager.voteUndo(ROOM, 2, true), { error: 'No undo vote in progress' });
 });
 
-test('an undo vote after a win is cancelled when the requester leaves', () => {
+test('an undo vote is canceled when a disconnect leaves one connected player', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  const state = left(manager.disconnect(ROOM, 2));
+  assert.equal(state.undoVote, null);
+  assert.equal(state.moves, 1);
+  assert.equal(state.moveCount, 1);
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(state.gameStatus, 'B disconnected');
+  assert.equal(manager.history('test', 'g1')?.length, 1);
+});
+
+test('an undo vote after a win is canceled when the requester disconnects', () => {
   const manager = wonGame();
   ok(manager.requestUndo(ROOM, 2));
-  const state = left(manager.leave(ROOM, 2));
+  const state = left(manager.disconnect(ROOM, 2));
   assert.equal(state.undoVote, null);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
@@ -288,4 +321,205 @@ test('a game without actions refuses them', () => {
   manager.join('test', 'g1', 'A');
   manager.join('test', 'g1', 'B');
   assert.deepEqual(manager.action(ROOM, 1, { type: 'ping' }), { error: 'This game has no actions' });
+});
+
+// A, B and C in a started game: A has moved, so it is B's turn
+function startedWith3(): Manager {
+  const manager = gameWith('A', 'B', 'C');
+  ok(manager.move(ROOM, 1, tick));
+  return manager;
+}
+
+test('a disconnected player rejoins their seat by name', () => {
+  const manager = startedWith3();
+  manager.disconnect(ROOM, 1);
+  const back = joined(manager.join('test', 'g1', ' a ', true));
+  assert.equal(back.roomId, ROOM);
+  assert.equal(back.seat, 1);
+  assert.equal(back.state.playerNames[1], 'A');
+  assert.equal(back.state.gameStatus, 'A is back');
+  assert.deepEqual(back.state.disconnected, []);
+  assert.equal(back.state.moveCount, 1);
+});
+
+test('a connected name cannot be taken', () => {
+  const manager = startedWith3();
+  assert.deepEqual(manager.join('test', 'g1', 'a'), { error: 'A is already in this game' });
+  assert.deepEqual(manager.join('test', 'g1', 'A', true), { error: 'A is already in this game' });
+  assert.deepEqual(gameWith('Bob').join('test', 'g1', 'BOB '), { error: 'Bob is already in this game' });
+});
+
+test('a dismissed player cannot rejoin', () => {
+  const manager = startedWith3();
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(manager.join('test', 'g1', 'C'), { error: 'You were removed from this game' });
+  assert.deepEqual(manager.join('test', 'g1', 'c', true), { error: 'You were removed from this game' });
+});
+
+test('rejoin never creates a game', () => {
+  const manager = newManager();
+  assert.deepEqual(manager.join('test', 'nope', 'A', true), { error: 'Game not found' });
+  assert.equal(manager.getState('test/nope'), undefined);
+  assert.deepEqual(gameWith('A').join('test', 'g1', 'B', true), { error: 'You are not in this game' });
+  assert.deepEqual(startedWith3().join('test', 'g1', 'D', true), { error: 'You are not in this game' });
+  assert.deepEqual(startedWith3().join('test', 'g1', 'D'), { error: 'Game already in progress' });
+});
+
+// A started game whose players have all disconnected
+function everyoneGone(): Manager {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  return manager;
+}
+
+test('an empty started game survives ten minutes', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const manager = everyoneGone();
+  manager.disconnect(ROOM, 2); // a repeat does not restart the countdown
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  assert.deepEqual(current(manager).disconnected, [1, 2]);
+  assert.equal(joined(manager.join('test', 'g1', 'B', true)).seat, 2);
+
+  // The rejoin canceled the countdown, and the next empty spell starts a new one
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.ok(manager.getState(ROOM));
+  manager.disconnect(ROOM, 2);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  assert.ok(manager.getState(ROOM));
+  t.mock.timers.tick(1);
+  assert.equal(manager.getState(ROOM), undefined);
+});
+
+test('an empty started game is deleted after ten minutes', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const manager = everyoneGone();
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.equal(manager.getState(ROOM), undefined);
+  assert.deepEqual(manager.join('test', 'g1', 'A', true), { error: 'Game not found' });
+  assert.equal(manager.history('test', 'g1'), null);
+});
+
+test('undo counts only connected players', () => {
+  const manager = startedWith3();
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 2, true));
+  assert.equal(restored.moves, 0);
+  assert.equal(restored.moveCount, 0);
+  assert.deepEqual(restored.disconnected, [3]);
+  assert.deepEqual(restored.activePlayers, [1, 2, 3]);
+});
+
+test('undo needs two connected players', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  assert.deepEqual(manager.requestUndo(ROOM, 2), { error: 'Not enough players to vote' });
+});
+
+test("undo back to a disconnected player's turn waits on them", () => {
+  const manager = startedWith3();
+  ok(manager.move(ROOM, 2, tick)); // C to move
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestUndo(ROOM, 3));
+  const restored = ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(restored.currentPlayer, 2);
+  assert.deepEqual(restored.disconnected, [2]);
+  assert.equal(restored.moves, 1);
+  assert.deepEqual(manager.move(ROOM, 3, tick), { error: 'Not your turn' });
+});
+
+test('the undo requester disconnecting cancels the vote, and rejoining leaves no vote', () => {
+  const manager = startedWith3();
+  ok(manager.requestUndo(ROOM, 1));
+  assert.equal(left(manager.disconnect(ROOM, 1)).undoVote, null);
+  const back = joined(manager.join('test', 'g1', 'A', true));
+  assert.equal(back.state.undoVote, null);
+  assert.deepEqual(manager.voteUndo(ROOM, 2, true), { error: 'No undo vote in progress' });
+  assert.equal(current(manager).moves, 1);
+});
+
+test('dismiss vote: target must be disconnected; one at a time; decline cancels; approval removes', () => {
+  const manager = startedWith3();
+  assert.deepEqual(manager.requestDismiss(ROOM, 1, 3), { error: 'That player is not disconnected' });
+  assert.deepEqual(manager.requestDismiss(ROOM, 1, 9), { error: 'That player is not disconnected' });
+  assert.deepEqual(manager.requestDismiss(ROOM, 1, '3'), { error: 'That player is not disconnected' });
+  assert.deepEqual(manager.voteDismiss(ROOM, 1, true), { error: 'No dismiss vote in progress' });
+
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestUndo(ROOM, 1));
+  assert.deepEqual(manager.requestDismiss(ROOM, 2, 3), { error: 'A vote is already in progress' });
+  ok(manager.voteUndo(ROOM, 2, false));
+
+  const requested = ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.deepEqual(requested.dismissVote, { target: 3, requestedBy: 1, votes: { 1: true } });
+  assert.equal(requested.gameStatus, 'A wants to dismiss C');
+  assert.deepEqual(manager.requestDismiss(ROOM, 2, 3), { error: 'A vote is already in progress' });
+  assert.deepEqual(manager.requestUndo(ROOM, 2), { error: 'A dismiss vote is in progress' });
+  assert.deepEqual(manager.voteDismiss(ROOM, 1, true), { error: 'You already voted' });
+  assert.deepEqual(manager.move(ROOM, 2, tick), { error: 'A dismiss vote is in progress' });
+
+  const declined = ok(manager.voteDismiss(ROOM, 2, 'yes')); // anything but true is a decline
+  assert.equal(declined.dismissVote, null);
+  assert.equal(declined.gameStatus, 'B declined to dismiss C');
+  assert.deepEqual(declined.activePlayers, [1, 2, 3]);
+
+  ok(manager.requestDismiss(ROOM, 2, 3));
+  const dismissed = ok(manager.voteDismiss(ROOM, 1, true));
+  assert.equal(dismissed.dismissVote, null);
+  assert.deepEqual(dismissed.activePlayers, [1, 2]);
+  assert.deepEqual(dismissed.disconnected, []);
+  assert.equal(dismissed.gameStatus, 'C was dismissed');
+  assert.equal(dismissed.playerNames[3], 'C');
+});
+
+test('a dismiss vote ends when its target rejoins', () => {
+  const manager = startedWith3();
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  const back = joined(manager.join('test', 'g1', 'C', true));
+  assert.equal(back.state.dismissVote, null);
+  assert.deepEqual(manager.voteDismiss(ROOM, 2, true), { error: 'No dismiss vote in progress' });
+});
+
+test('history lists the state after each move, hides secrets, and drops undone moves', () => {
+  const manager = gameWith('A', 'B', 'C');
+  assert.deepEqual(manager.history('test', 'g1'), []);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  const last = ok(manager.move(ROOM, 3, tick));
+  assert.equal(last.moveCount, 3);
+
+  const steps = manager.history('test', ' g1 ') as TestPublicState[] | null;
+  assert.ok(steps);
+  assert.deepEqual(steps.map(step => step.moveCount), [1, 2, 3]);
+  assert.deepEqual(steps.map(step => step.moves), [1, 2, 3]);
+  assert.deepEqual(steps.map(step => step.gameStatus), ['A ticked', 'B ticked', 'C ticked']);
+  for (const step of steps) {
+    assert.equal('secret' in step, false);
+    assert.equal(step.undoAvailable, false);
+  }
+
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  const undone = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(undone.moveCount, 2);
+  assert.equal(manager.history('test', 'g1')?.length, 2);
+
+  assert.equal(manager.history('chess', 'g1'), null);
+  assert.equal(manager.history('test', 'nope'), null);
+  assert.equal(manager.history('test', 'a/b'), null);
+  assert.equal(manager.history(undefined, undefined), null);
+});
+
+test('actions add no history steps', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  const pinged = ok(manager.action(ROOM, 2, { type: 'ping' }));
+  assert.equal(pinged.moveCount, 1);
+  assert.equal(manager.history('test', 'g1')?.length, 1);
 });

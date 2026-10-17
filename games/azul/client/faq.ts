@@ -3,11 +3,11 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'How do I take tiles?',
-    answer: 'On your turn, click a tile in a factory or in the centre. You pick up every tile of that colour from that one place. From a factory, the tiles you leave behind move to the centre. Click the tiles again to put them back.'
+    answer: 'On your turn, click a tile in a factory or in the center. You pick up every tile of that color from that one place. From a factory, the tiles you leave behind move to the center. Click the tiles again to put them back.'
   },
   {
     question: 'Where can I put them?',
-    answer: 'On one of your five pattern lines, the stepped rows on the left of your board. The lines you can use are outlined. A line holds one colour only, and you cannot use a line if that row of your wall already has that colour.'
+    answer: 'On one of your five pattern lines, the stepped rows on the left of your board. The lines you can use are outlined. A line holds one color only, and you cannot use a line if that row of your wall already has that color.'
   },
   {
     question: 'What if I take more tiles than the line holds?',
@@ -15,11 +15,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is the tile marked 1?',
-    answer: 'The first-player marker. Whoever first takes tiles from the centre in a round gets it on their floor line, where it costs a point like any other tile, and starts the next round.'
+    answer: 'The first-player marker. Whoever first takes tiles from the center in a round gets it on their floor line, where it costs a point like any other tile, and starts the next round.'
   },
   {
     question: 'When do tiles move to my wall?',
-    answer: 'When the factories and the centre are empty, the round ends. Each full pattern line moves one tile onto the wall in the same row. Lines that are not full keep their tiles for the next round.'
+    answer: 'When the factories and the center are empty, the round ends. Each full pattern line moves one tile onto the wall in the same row. Lines that are not full keep their tiles for the next round.'
   },
   {
     question: 'How is a wall tile scored?',
@@ -35,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'When does the game end, and who wins?',
-    answer: 'The game ends after the round in which someone completes a horizontal row of their wall. Then each complete row adds 2 points, each complete column 7, and each colour placed all five times 10. The highest score wins. A tie goes to the player with more complete rows.'
+    answer: 'The game ends after the round in which someone completes a horizontal row of their wall. Then each complete row adds 2 points, each complete column 7, and each color placed all five times 10. The highest score wins. A tie goes to the player with more complete rows.'
   },
   {
     question: 'Can I take back a move?',

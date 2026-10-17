@@ -38,11 +38,13 @@ flowchart TD
 
 - Express static serving and SPA fallback, the WebSocket server, message parsing and routing, broadcast (`server/server.ts`)
 - The in-memory game manager, keyed by game type and game ID (`server/games.ts`)
-- Seating in join order up to the game's maximum, refusing joins after the game has started, leaving mid-game, deleting a game when its last player leaves (`shared/seating.ts`)
-- Turn rotation that skips players who left
-- Undo: the history of states before each move, requests, voting, and restoring the state once every remaining player approves
+- Seating in join order up to the game's maximum, with names unique ignoring case, and refusing new names after the game has started (`shared/seating.ts`)
+- Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name, and dismissing a disconnected player by vote
+- Turn rotation that skips dismissed players; a disconnected player's turn waits for them
+- A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
+- Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
 - Calling the game's `toPublicState` before anything is sent to a browser
-- The landing page, join dialog, game view header (Back to games, FAQ, theme toggle), FAQ dialog, undo vote panel, connection hook and service, in `src/`
+- The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, theme toggle), FAQ dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`
 - Docker, compose, launcher, CI, lint and TypeScript config
 
 **Each game owns (`games/<id>/`):**
@@ -50,14 +52,14 @@ flowchart TD
 - Its metadata, state shape and types (`types.ts`, `index.ts`)
 - Its rules: starting state, applying a move, extra non-move actions, who won, what happens when a player is seated or leaves (`rules.ts`)
 - Its public view, `toPublicState`, which removes hidden information
-- Its screen, FAQ content, icon and styles (`client/`), with CSS scoped under `[data-game="<id>"]`
+- Its screen, read-only history board, move descriptions, FAQ content, icon and styles (`client/`), with CSS scoped under `[data-game="<id>"]`
 - Its rules tests
 
 ## Contracts
 
 - `shared/gameDefinition.ts` defines `GameDefinition` and `GameInfo`, which the server uses
 - `games/registry.ts` lists every `GameDefinition` in landing page order
-- `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`) and lists them in `CLIENT_GAMES`
+- `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
@@ -68,27 +70,41 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
    - `GameList.tsx` is the landing page: one row per game, in registry order
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
-   - `GameView.tsx` is the header (Back to games, FAQ, theme toggle) around the game's own `Screen`
+   - `GameView.tsx` is the header (Back to games, History, FAQ, theme toggle) around the game's own `Screen`
    - `FaqButton.tsx` and `FaqDialog.tsx` show a game's FAQ items
+   - `HistoryButton.tsx` fetches the game's moves from `/api/history/<game type>/<game ID>` (disabled before the first move) and `HistoryDialog.tsx` shows them: a range slider over the moves, "Move k of N: <the game's `describeMove`>", and the game's read-only `HistoryBoard` for that step. It shows the history as of opening and changes nothing for other players
    - `ThemeToggle.tsx` switches light and dark; the choice is shared across the site
    - `UndoVote.tsx` shows a running undo vote
-   - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service
+   - `RejoinButton.tsx` is the "Back to <game> (<game ID>)" button on the landing page, shown when the remembered game was left with Back to games or a lost connection
+   - `PresenceBar.tsx` sits above the game screen while anyone is disconnected: each disconnected player with a Dismiss button, and "Waiting for <name> to reconnect" when it is their turn
+   - `DismissVote.tsx` shows a running dismiss vote
+   - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
+   - `/src/hooks/useEscapeKey.ts` closes the topmost dialog on Escape
+   - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. Quoridor glides the moved pawn from its old square and fades in a new wall; history boards never animate
+   - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service, remembers the game, rejoins it after a refresh, and offers it again after Back to games
 
 2. **Game Service (`/src/services/gameService.ts`)**
 
    - Manages the WebSocket connection
-   - Sends joins, moves, game actions, undo requests and undo votes
+   - Sends joins (and rejoins), moves, game actions, undo and dismiss requests and votes
    - Passes server state updates and errors to the UI
 
-3. **Game screens (`/games/<id>/client`)**
+3. **Remembered game (`/src/services/session.ts`)**
+
+   - Keeps the most recent game (game type, game ID, name, and whether the player was still in it) in `localStorage` under `lastGame`
+   - A page that loads while the player was in the game rejoins it automatically. If the old socket still holds the seat ("<name> is already in this game"), it retries up to 5 times, 1 second apart. Any other error, such as a deleted game or a dismissal, forgets the game and shows the error on the list
+   - Back to games and a lost connection keep the game but mark the player as out of it, so the list shows the rejoin button instead of rejoining by itself
+   - Every storage access may fail (blocked storage); the site then works without remembering the game across page loads
+
+4. **Game screens (`/games/<id>/client`)**
    - Each game's board components and screen, receiving the public state, the player's seat and any error
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
-4. **Default styles for the platform pieces (`/src/App.css`)**
-   - The game header (`.game-root`, `.game-header`, `.back-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`) and the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and an undo panel
+5. **Default styles for the platform pieces (`/src/App.css`)**
+   - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) and the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
-   - Quoridor and Azul style all of these pieces themselves, so the defaults do not change how they look
+   - Quoridor and Azul style the header, FAQ dialog and undo vote themselves, so the defaults do not change how those look; the disconnected players bar and the dismiss vote use the defaults
 
 ## Server
 
@@ -103,6 +119,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Creates games from the registry, seats players, and locks joining after the first move
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
    - Keeps each game's undo history and runs unanimous undo votes
+   - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
    - Holds each game's full state in memory, and sends only the public view
 
 3. **Game registry (`/games/registry.ts`)**
@@ -117,10 +134,12 @@ Every state sent to a browser goes through the game's `toPublicState`. A game th
 1. **Joining**
 
    ```
-   Client -> Server: JOIN_GAME (gameType, gameId, playerName)
+   Client -> Server: JOIN_GAME (gameType, gameId, playerName, rejoin)
    Server -> Client: GAME_JOINED (playerNumber, gameState) or GAME_ERROR
    Server -> All clients in the game: GAME_STATE
    ```
+
+   A join with a name already seated in the game, ignoring case, takes back that seat if it is held. `rejoin: true` (sent by the automatic and one-click rejoins) only takes back a held seat; it never creates a game or takes a new seat, and fails with "Game not found", "You are not in this game", "You were removed from this game" or "<name> is already in this game".
 
 2. **Playing**
 
@@ -147,9 +166,18 @@ Every state sent to a browser goes through the game's `toPublicState`. A game th
    ```
 
 5. **Disconnecting or Back to games**
+
    ```
    Client disconnects
-   Server -> Remaining clients: GAME_STATE (player marked as left)
+   Server -> Remaining clients: GAME_STATE (player listed in `disconnected`, or removed before the first move)
+   ```
+
+6. **Dismissing**
+
+   ```
+   Client -> Server: REQUEST_DISMISS (seat of a disconnected player)
+   Each connected client -> Server: VOTE_DISMISS (approve)
+   Server -> All clients in the game: GAME_STATE (vote progress, then the dismissal or the decline)
    ```
 
 ## Single Port

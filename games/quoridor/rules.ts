@@ -149,7 +149,7 @@ export function resetLobby(state: GameState): GameState {
   };
 }
 
-export function toPublicState(state: GameState, undoAvailable: boolean): PublicGameState {
+export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
   return { ...state, undoAvailable };
 }
 

@@ -77,7 +77,9 @@
 }
 
 [data-game="quoridor"] .back-button,
+[data-game="quoridor"] .history-button,
 [data-game="quoridor"] .faq-button,
+[data-game="quoridor"] .github-link,
 [data-game="quoridor"] .theme-toggle {
   height: 2.5rem;
   padding: 0 1rem;
@@ -90,7 +92,9 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+[data-game="quoridor"] .github-link,
 [data-game="quoridor"] .theme-toggle {
+  flex: none;
   width: 2.5rem;
   padding: 0;
   border-radius: 50%;
@@ -98,7 +102,9 @@
 }
 
 [data-game="quoridor"] .back-button:hover,
+[data-game="quoridor"] .history-button:hover:enabled,
 [data-game="quoridor"] .faq-button:hover,
+[data-game="quoridor"] .github-link:hover,
 [data-game="quoridor"] .theme-toggle:hover {
   background: var(--button-hover-bg);
 }
@@ -111,7 +117,7 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Centred in the space under the header; the auto margins drop to 0 when the window is too short */
+/* Centered in the space under the header; the auto margins drop to 0 when the window is too short */
 [data-game="quoridor"] .game-layout {
   margin: auto 0;
   display: flex;
@@ -152,6 +158,26 @@
 [data-game="quoridor"] .modal h2 {
   margin: 0 0 12px;
   font-size: 24px;
+}
+
+/* History dialog */
+[data-game="quoridor"] .modal.history {
+  max-width: 900px;
+}
+
+/* Its own stacking context, so the frame's outer edge paints above the dialog; the padding leaves room for that edge */
+[data-game="quoridor"] .history-board {
+  isolation: isolate;
+  padding: 8px;
+}
+
+[data-game="quoridor"] .history-board .board-frame {
+  margin: 0 auto;
+}
+
+/* The board at full strength, though nothing on it can be clicked */
+[data-game="quoridor"] .history-board .board:is(.not-your-turn, .game-over) {
+  opacity: 1;
 }
 
 [data-game="quoridor"] .faq dl {
@@ -238,7 +264,7 @@
   transform: none;
 }
 
-/* The frame sits outside .board so its colours stay full strength when the board is dimmed */
+/* The frame sits outside .board so its colors stay full strength when the board is dimmed */
 [data-game="quoridor"] .board-frame {
   position: relative;
   border: 8px solid var(--board-frame);
@@ -267,7 +293,7 @@
     );
 }
 
-/* Each side of the frame takes the colour of the pawn that has to reach it */
+/* Each side of the frame takes the color of the pawn that has to reach it */
 [data-game="quoridor"] .board-frame.goal-edge1 {
   border-top-color: var(--player1);
 }
@@ -351,6 +377,9 @@
   box-shadow:
     inset 0 -2px 5px rgba(0, 0, 0, 0.5),
     0 2px 4px rgba(0, 0, 0, 0.3);
+  /* Above the squares it passes over while it glides */
+  position: relative;
+  z-index: 1;
 }
 
 [data-game="quoridor"] .pawn.player1 {
@@ -594,18 +623,28 @@
   background: var(--button-hover-bg);
 }
 
+/* Phones: the five header buttons fill about 360px, so the title takes its own row above them, with an ellipsis */
 @media (max-width: 480px) {
   [data-game="quoridor"] .game-header {
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem;
   }
 
   [data-game="quoridor"] .game-header h1 {
-    font-size: 1.2rem;
+    flex-basis: 100%;
+    order: -1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 1.1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   [data-game="quoridor"] .back-button,
+  [data-game="quoridor"] .history-button,
   [data-game="quoridor"] .faq-button {
-    padding: 0 0.75rem;
+    padding: 0 0.6rem;
   }
 }
 

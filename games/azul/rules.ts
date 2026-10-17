@@ -1,6 +1,6 @@
 // Azul rules shared by the browser (legal picks and lines) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
+import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
   Bonus,
@@ -52,6 +52,11 @@ type Table = Pick<PublicGameState, 'factories' | 'center'>;
 
 export function sourceTiles(table: Table, source: Source): Color[] {
   return source.type === 'center' ? table.center : table.factories[source.index] ?? [];
+}
+
+// How the status line and the history name a factory or the center
+export function sourceName(source: Source): string {
+  return source.type === 'factory' ? `factory ${source.index + 1}` : 'the center';
 }
 
 export function sourceColors(table: Table, source: Source): Color[] {
@@ -178,7 +183,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
   };
 }
 
-export function toPublicState(state: GameState, undoAvailable: boolean): PublicGameState {
+export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
   const { bag: _bag, lid: _lid, roundStarter: _roundStarter, markerHolder: _markerHolder, ...view } = state;
   return { ...view, undoAvailable };
 }
@@ -294,7 +299,7 @@ function endGame(state: GameState): GameState {
   };
 }
 
-// Runs once the factories and the centre are empty. The next round is not dealt until
+// Runs once the factories and the center are empty. The next round is not dealt until
 // every player has acknowledged the summary.
 function endRound(state: GameState): GameState {
   const lid = [...state.lid];
@@ -318,11 +323,16 @@ export function onPlayerLeft(state: GameState, _seat: Seat, random: Random): Gam
   return startNextRoundIfReady(state, random);
 }
 
-// Deals the next round once every player still in the game has acknowledged the summary
+// The next round may have been waiting only for the player who disconnected
+export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
+  return startNextRoundIfReady(state, random);
+}
+
+// Deals the next round once every connected player has acknowledged the summary
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
   const summary = state.roundSummary;
   if (!summary || state.isGameOver) return state;
-  if (!state.activePlayers.every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
 
   const dealt = deal(state.bag, state.lid, state.factories.length, random);
   if (dealt.factories.every(factory => factory.length === 0)) return endGame({ ...state, roundSummary: null });
@@ -372,7 +382,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
 
   const tiles = sourceTiles(state, source);
   const count = tiles.filter(tile => tile === color).length;
-  if (count === 0) return { error: 'No tiles of that colour there' };
+  if (count === 0) return { error: 'No tiles of that color there' };
 
   const board = state.boards[seat];
   if (line !== 'floor' && !canPlaceOnLine(board, line, color)) return { error: 'Those tiles cannot go on that line' };
@@ -395,7 +405,6 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   const floor = [...board.floor, ...dropped.slice(0, room)];
   const lid = [...state.lid, ...dropped.slice(room).filter(isColor)];
 
-  const where = fromFactory ? `factory ${source.index + 1}` : 'the centre';
   const next: GameState = {
     ...state,
     factories,
@@ -405,7 +414,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
     lid,
     boards: { ...state.boards, [seat]: { ...board, patternLines, floor } },
     lastMove: { playerNumber: seat, source, color, count, line },
-    gameStatus: `${state.playerNames[seat]} took ${count} ${color} from ${where}`
+    gameStatus: `${state.playerNames[seat]} took ${count} ${color} from ${sourceName(source)}`
   };
 
   const tableEmpty = center.length === 0 && factories.every(factory => factory.length === 0);

@@ -75,7 +75,11 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 2. In each window, click a game in the list. The join dialog asks for your name and a game ID (any string); use the same game ID to join the same game. The dialog has an FAQ button, so you can read a game's rules before joining
 3. Players are seated in join order. The lowest-numbered player moves first once at least two players have joined. Nobody can join after the first move
 4. Game IDs are separate per game: Azul "friday" and Quoridor "friday" are different games
-5. Each game screen has a header with Back to games, FAQ and the light/dark theme toggle. Back to games leaves the game and returns to the list; the game treats it like leaving mid-game
+5. Each game screen has a header with Back to games, FAQ and the light/dark theme toggle. Back to games returns to the list but keeps your seat, the same as closing the tab or losing the connection
+6. Once the first move is made, a player who disconnects keeps their seat. The others see them as disconnected; play goes on until their turn, then waits for them. Before the first move, disconnecting frees the seat
+7. To rejoin, enter the same game ID and the same name (capitalization does not matter), from any device. After a refresh the page rejoins by itself, and after Back to games the list shows a "Back to <game> (<game ID>)" button that rejoins with one click. A name that is still connected cannot be taken; a device that drops off without closing its connection frees the seat within about 30 seconds
+8. The other players can vote to dismiss a disconnected player with the Dismiss button next to their name. Every connected player must approve; one decline cancels it. A dismissed player is out for good: their turns are skipped, they cannot rejoin, and if only one player is left, that player wins
+9. A game whose players have all disconnected is kept for 10 minutes, then deleted
 
 ## Network Setup
 
@@ -119,7 +123,7 @@ Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2
 - Click "Move" and then click a valid square to move your pawn
 - Click "Horizontal Wall" or "Vertical Wall" to place walls
 - Valid moves and wall placements are highlighted
-- The game board is dimmed when it's not your turn; its frame stays coloured to show each player's goal side
+- The game board is dimmed when it's not your turn; its frame stays colored to show each player's goal side
 - Click "FAQ" at the top of the page for FAQs on moving, placing walls and the rules
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
 - Hover or click Show Last Move to highlight the previous move
@@ -132,24 +136,28 @@ Draft colored tiles and decorate your palace wall.
 
 Each round, players take turns picking tiles and placing them on their own board.
 
-- **Picking.** Take every tile of one colour from one factory; the factory's other tiles move to the centre. Or take every tile of one colour from the centre. The first player to take from the centre in a round also takes the first-player marker, which goes on their floor line.
-- **Placing.** Put the tiles on one of your five pattern lines. A line holds one colour, and line 1 holds one tile up to line 5 holding five. You cannot use a line whose wall row already has that colour. Tiles that do not fit go to your floor line. You may also put all of them on the floor line.
-- **End of the round.** When the factories and the centre are empty, each full pattern line moves one tile onto the wall, and lines that are not full stay as they are. A tile placed alone scores 1. Otherwise it scores the length of the row of tiles it joins plus the length of the column it joins. Then the floor line costs 1, 1, 2, 2, 2, 3 and 3 points for its seven spaces. A score never drops below zero. A scoring screen shows why everyone scored what they did, and the next round is dealt once every player has pressed Continue. Whoever holds the marker starts the next round.
-- **End of the game.** The game ends after the round in which someone completes a horizontal row of their wall. Bonuses: 2 points for each complete row, 7 for each complete column, and 10 for each colour placed five times. The highest score wins. A tie goes to the player with more complete rows.
+- **Picking.** Take every tile of one color from one factory; the factory's other tiles move to the center. Or take every tile of one color from the center. The first player to take from the center in a round also takes the first-player marker, which goes on their floor line.
+- **Placing.** Put the tiles on one of your five pattern lines. A line holds one color, and line 1 holds one tile up to line 5 holding five. You cannot use a line whose wall row already has that color. Tiles that do not fit go to your floor line. You may also put all of them on the floor line.
+- **End of the round.** When the factories and the center are empty, each full pattern line moves one tile onto the wall, and lines that are not full stay as they are. A tile placed alone scores 1. Otherwise it scores the length of the row of tiles it joins plus the length of the column it joins. Then the floor line costs 1, 1, 2, 2, 2, 3 and 3 points for its seven spaces. A score never drops below zero. A scoring screen shows why everyone scored what they did, and the next round is dealt once every player has pressed Continue. Whoever holds the marker starts the next round.
+- **End of the game.** The game ends after the round in which someone completes a horizontal row of their wall. Bonuses: 2 points for each complete row, 7 for each complete column, and 10 for each color placed five times. The highest score wins. A tie goes to the player with more complete rows.
 - If a player leaves mid-game, their board stays and their turns are skipped. The last player left wins.
 - Any player can ask to undo the last turn. It is undone only if every player still in the game approves.
 
 #### Controls
 
-- On your turn, click a tile in a factory or the centre to pick up every tile of that colour there. Click it again to put them back
+- On your turn, click a tile in a factory or the center to pick up every tile of that color there. Click it again to put them back
 - Your legal pattern lines and your floor line are outlined. Click one to place the tiles
 - The table is dimmed when it is not your turn
 - The source of the last move is outlined
 - Boards are shown in turn order starting with yours, so play always passes to the board on the right
-- In the centre, each colour stays together on one row
+- In the center, each color stays together on one row
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
 - After each round, read the scoring screen and click Continue; the next round starts once everyone has
 - Click FAQ at the top of the page for a short guide to the rules and controls
+
+## Inspirations
+
+This site grew out of two earlier projects, [Quoridor](https://github.com/Nate314/quoridor) and [Azul](https://github.com/Nate314/azul). Both are deprecated; this repo replaces them.
 
 ## Adding a game
 
@@ -161,15 +169,18 @@ The platform (server, landing page, join dialog, undo voting, Docker, CI) needs 
    - `index.ts`: exports a `GameDefinition` object (see `shared/gameDefinition.ts`). Its properties are `info` (`id`, `name`, `description`, `minPlayers`, `maxPlayers`), `createGameState`, `resetLobby`, `applyMove`, `toPublicState`, and optionally `onPlayerLeft` and `applyAction`. The platform does not block `applyAction` during an undo vote or after the game is over, so refuse actions there yourself if the game needs to
    - tests, for example `rules.test.ts` and `manager.test.ts`
 2. Create `games/<id>/client/` with:
-   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq` and `icon`
+   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `icon`, `HistoryBoard` and `describeMove`
+   - a `HistoryBoard` component: a read-only board for one public state from the history, with its `lastMove` highlighted
+   - `describeMove.ts`: one line about the move that produced a public state, such as `Alice placed a wall`, shown as "Move 7 of 23: ..." in the history dialog
    - `faq.ts`: the FAQ items shown by the FAQ button
    - optionally a CSS file whose rules are all scoped under `[data-game="<id>"]`, so the game's colors never leak into other games or the landing page
+   - optionally move animations: give the elements to animate a `data-anim-key` and call `useMoveAnimation(rootRef, gameState, animate)` (`src/animation/useMoveAnimation.ts`) in the game's screen, not in its `HistoryBoard`. It calls `animate({ previous, next, root, rectOf })` only when exactly one move was added, so the first render, a rejoin and an undo snap into place. `rectOf(key)` is where that keyed element was before the move. `slideFrom` and `fadeIn` (`src/animation/motion.ts`) last `MOVE_DURATION_MS` (300 ms) and do nothing under `prefers-reduced-motion: reduce`. Nothing animates unless the game asks for it
 3. Add one line to `games/registry.ts`: put the game in the `GAMES` array.
 4. Add one line to `src/clientGames.ts`: put the client in `CLIENT_GAMES`.
 
-The platform styles its own pieces by default (in `src/App.css`): the game header with Back to games, FAQ and the theme toggle, the FAQ dialog, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
+The platform styles its own pieces by default (in `src/App.css`): the game header with Back to games, History, FAQ and the theme toggle, the FAQ and history dialogs, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
 
 - set any of these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`; or
-- write your own rules for the classes: `.game-root`, `.game-header`, `.back-button`, `.faq-button`, `.theme-toggle`, `.overlay`, `.modal`, `.faq` (`dl`, `dt`, `dd`), `.primary-button`, `.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`. The defaults have no specificity, so any rule scoped under `[data-game="<id>"]` wins. Quoridor and Azul do this.
+- write your own rules for the classes: `.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`, `.overlay`, `.modal`, `.faq` (`dl`, `dt`, `dd`), `.history` (`.history-move`, `.history-slider`, `.history-board`), `.primary-button`, `.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`. The defaults have no specificity, so any rule scoped under `[data-game="<id>"]` wins. Quoridor and Azul do this.
 
 Server code (`server/`, `shared/`, and the non-client files of a game) must not import from `src/` or any `games/<id>/client/`.

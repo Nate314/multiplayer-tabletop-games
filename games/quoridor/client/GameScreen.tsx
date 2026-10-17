@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import gameService from '../../../src/services/gameService';
 import ActionButtons from './ActionButtons';
 import Board from './Board';
@@ -6,6 +6,8 @@ import GameStatus from './GameStatus';
 import GoalList from './GoalList';
 import TurnActions from './TurnActions';
 import UndoVote from '../../../src/components/UndoVote';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState } from '../types.ts';
 import type { Action } from './types.ts';
@@ -14,9 +16,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [selectedAction, setSelectedAction] = useState<Action>('move');
   const [lastMoveHovered, setLastMoveHovered] = useState(false);
   const [lastMovePinned, setLastMovePinned] = useState(false);
-  const { currentPlayer, activePlayers, playerNames, lastMove, isGameOver, undoVote } = gameState;
-  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote;
+  const boardAreaRef = useRef<HTMLDivElement>(null);
+  const { currentPlayer, activePlayers, lastMove, isGameOver, undoVote, dismissVote } = gameState;
+  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const showLastMove = Boolean(lastMove) && (lastMoveHovered || lastMovePinned);
+
+  // Only the live board animates; the history dialog's board renders without this hook
+  useMoveAnimation(boardAreaRef, gameState, animateMove);
 
   useEffect(() => {
     // Reset to move at the start of every turn
@@ -32,7 +38,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
       <div className="game game-layout">
-        <div className="board-area">
+        <div className="board-area" ref={boardAreaRef}>
           <Board
             gameState={gameState}
             playerNumber={playerNumber}
@@ -41,15 +47,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             showLastMove={showLastMove}
             onMove={handleMove}
           />
-          {undoVote && (
-            <UndoVote
-              vote={undoVote}
-              playerNumber={playerNumber}
-              activePlayers={activePlayers}
-              playerNames={playerNames}
-              onVote={(approve) => gameService.voteUndo(approve)}
-            />
-          )}
+          <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
         </div>
         <div className="game-info side-panel">
           <GameStatus gameState={gameState} error={error} />

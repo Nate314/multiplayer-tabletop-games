@@ -6,7 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Multiplayer Tabletop Games</title>
     <script>
-      document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+      // Storage can be blocked; the default theme is used then
+      try {
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+      } catch {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
     </script>
   </head>
   <body>

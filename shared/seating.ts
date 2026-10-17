@@ -11,7 +11,9 @@ export function baseGameState(gameId: string): BaseGameState {
     gameStatus: '',
     isGameOver: false,
     winners: [],
-    undoVote: null
+    undoVote: null,
+    disconnected: [],
+    dismissVote: null
   };
 }
 
@@ -23,6 +25,17 @@ function without(names: Record<Seat, string>, seat: Seat): Record<Seat, string> 
   const rest = { ...names };
   delete rest[seat];
   return rest;
+}
+
+export function connectedPlayers(state: Pick<BaseGameState, 'activePlayers' | 'disconnected'>): Seat[] {
+  return state.activePlayers.filter(seat => !state.disconnected.includes(seat));
+}
+
+// Matches every name in playerNames, so dismissed players are found too
+export function findSeatByName(state: BaseGameState, name: string): Seat | undefined {
+  const wanted = name.trim().toLowerCase();
+  const found = Object.entries(state.playerNames).find(([, existing]) => existing.trim().toLowerCase() === wanted);
+  return found ? Number(found[0]) : undefined;
 }
 
 export function addPlayer<S extends BaseGameState>(
@@ -67,8 +80,15 @@ export function removePlayer<S extends BaseGameState>(
     }, random);
   }
 
-  // Mid-game: the game stays and the seat is skipped from now on
-  const next: S = { ...state, activePlayers, gameStatus: `${name} left the game` };
+  // Mid-game: the game stays and the seat is skipped from now on.
+  // Only a dismissal reaches here (a mid-game disconnect holds the seat), so any dismiss vote is settled.
+  const next: S = {
+    ...state,
+    activePlayers,
+    disconnected: state.disconnected.filter(s => s !== seat),
+    dismissVote: null,
+    gameStatus: `${name} was dismissed`
+  };
   if (state.isGameOver) return activePlayers.length < 2 ? { ...next, undoVote: null } : next;
 
   if (activePlayers.length === 1) {
@@ -89,6 +109,52 @@ export function removePlayer<S extends BaseGameState>(
   return game.onPlayerLeft ? game.onPlayerLeft(next, seat, random) : next;
 }
 
+// Before the first move the seat is freed; after it the seat is held for a rejoin
+export function disconnectPlayer<S extends BaseGameState>(
+  game: GameDefinition<S, BasePublicState>,
+  state: S,
+  seat: Seat,
+  random: Random = Math.random
+): S {
+  if (!state.started) return removePlayer(game, state, seat, random);
+  if (!state.activePlayers.includes(seat) || state.disconnected.includes(seat)) return state;
+
+  let next: S = {
+    ...state,
+    disconnected: [...state.disconnected, seat].sort((a, b) => a - b),
+    gameStatus: `${state.playerNames[seat]} disconnected`
+  };
+  if (next.undoVote?.requestedBy === seat) next = { ...next, undoVote: null };
+  if (next.dismissVote) next = resolveDismissVote(game, next, random);
+  const stillHeld = next.disconnected.includes(seat);
+  return stillHeld && !next.isGameOver && game.onPlayerDisconnected
+    ? game.onPlayerDisconnected(next, seat, random)
+    : next;
+}
+
+export function reconnectPlayer<S extends BaseGameState>(state: S, seat: Seat): S {
+  if (!state.disconnected.includes(seat)) return state;
+  return {
+    ...state,
+    disconnected: state.disconnected.filter(s => s !== seat),
+    dismissVote: state.dismissVote?.target === seat ? null : state.dismissVote,
+    gameStatus: `${state.playerNames[seat]} is back`
+  };
+}
+
+// Dismisses the target once every connected player has approved
+export function resolveDismissVote<S extends BaseGameState>(
+  game: GameDefinition<S, BasePublicState>,
+  state: S,
+  random: Random = Math.random
+): S {
+  const vote = state.dismissVote;
+  if (!vote) return state;
+  const voters = connectedPlayers(state);
+  if (voters.length === 0 || !voters.every(seat => vote.votes[seat] === true)) return state;
+  return removePlayer(game, { ...state, dismissVote: null }, vote.target, random);
+}
+
 export function applyMove<S extends BaseGameState>(
   game: GameDefinition<S, BasePublicState>,
   state: S,
@@ -98,6 +164,7 @@ export function applyMove<S extends BaseGameState>(
   if (state.isGameOver) return { error: 'The game is over' };
   if (state.activePlayers.length < game.info.minPlayers) return { error: 'Waiting for more players' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
+  if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   if (state.currentPlayer !== seat) return { error: 'Not your turn' };
 
   const result = game.applyMove(state, seat, move);

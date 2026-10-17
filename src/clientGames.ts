@@ -16,6 +16,12 @@ export type ClientGame = {
   Screen: ComponentType<GameScreenProps<any>>;
   faq: FaqItem[];
   icon: string; // a short glyph or emoji shown in the landing row
+  // A read-only board of one public state with its lastMove highlighted, for the history dialog
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  HistoryBoard: ComponentType<{ gameState: any }>;
+  // The move that produced a public state, from its lastMove and playerNames, e.g. 'Alice placed a wall'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  describeMove(gameState: any): string;
 };
 
 export const CLIENT_GAMES: Record<string, ClientGame> = {

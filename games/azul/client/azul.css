@@ -46,7 +46,7 @@
   --highlight: #ffb020;
 }
 
-/* Page: the blue background, with the header and the game in a centred column */
+/* Page: the blue background, with the header and the game in a centered column */
 .game-root[data-game="azul"] {
   min-height: 100vh;
   box-sizing: border-box;
@@ -72,6 +72,7 @@
 }
 
 [data-game="azul"] .back-button,
+[data-game="azul"] .history-button,
 [data-game="azul"] .faq-button {
   height: 2.5rem;
   padding: 0 1rem;
@@ -84,6 +85,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+[data-game="azul"] .github-link,
 [data-game="azul"] .theme-toggle {
   width: 2.5rem;
   height: 2.5rem;
@@ -100,7 +102,9 @@
 }
 
 [data-game="azul"] .back-button:hover,
+[data-game="azul"] .history-button:hover:enabled,
 [data-game="azul"] .faq-button:hover,
+[data-game="azul"] .github-link:hover,
 [data-game="azul"] .theme-toggle:hover {
   background: var(--button-hover-bg);
 }
@@ -161,7 +165,7 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  /* The same centred 1100px column as the header, so the boards wrap as they always have */
+  /* The same centered 1100px column as the header, so the boards wrap as they always have */
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -253,7 +257,7 @@
   filter: brightness(1.15);
 }
 
-/* The table: factories and the centre */
+/* The table: factories and the center */
 
 [data-game="azul"] .table {
   display: flex;
@@ -310,7 +314,7 @@
   font-size: 0.85rem;
 }
 
-/* A colour's tiles stay on one row. A group too wide for the centre shrinks its tiles instead of wrapping. */
+/* A color's tiles stay on one row. A group too wide for the center shrinks its tiles instead of wrapping. */
 [data-game="azul"] .center-group {
   display: flex;
   flex-wrap: nowrap;
@@ -414,7 +418,9 @@
 }
 
 [data-game="azul"] .pattern-line.legal,
-[data-game="azul"] .floor-line.legal {
+[data-game="azul"] .floor-line.legal,
+[data-game="azul"] .pattern-line.last-line,
+[data-game="azul"] .floor-line.last-line {
   outline: 3px solid var(--highlight);
   outline-offset: 2px;
 }
@@ -497,6 +503,22 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   color: var(--text);
   text-align: center;
+}
+
+/* History: the table above the boards, at full strength, though nothing on it can be clicked */
+[data-game="azul"] .modal.history {
+  max-width: 1100px;
+}
+
+[data-game="azul"] .history-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+[data-game="azul"] .history-board .table-waiting {
+  opacity: 1;
 }
 
 [data-game="azul"] .modal h2 {
@@ -620,17 +642,23 @@
     --tile: 26px;
   }
 
+  /* The five header buttons fill the width, so the title takes its own row above them */
   [data-game="azul"] .game-header {
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem;
   }
 
   [data-game="azul"] .game-header h1 {
+    flex-basis: 100%;
+    order: -1;
     font-size: 1.4rem;
   }
 
   [data-game="azul"] .back-button,
+  [data-game="azul"] .history-button,
   [data-game="azul"] .faq-button {
-    padding: 0 0.75rem;
+    padding: 0 0.6rem;
   }
 }
 

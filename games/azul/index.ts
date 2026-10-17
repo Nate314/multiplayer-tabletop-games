@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyAction, applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const azul: GameDefinition<GameState, PublicGameState> = {
@@ -13,6 +13,7 @@ export const azul: GameDefinition<GameState, PublicGameState> = {
   createGameState,
   resetLobby,
   onPlayerLeft,
+  onPlayerDisconnected,
   applyMove,
   applyAction,
   toPublicState

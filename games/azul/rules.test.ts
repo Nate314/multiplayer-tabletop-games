@@ -17,7 +17,7 @@ import {
   createGameState
 } from './rules.ts';
 import { azul } from './index.ts';
-import { addPlayer, removePlayer, applyMove } from '../../shared/seating.ts';
+import { addPlayer, removePlayer, applyMove, disconnectPlayer } from '../../shared/seating.ts';
 import type { Color, GameState, Move, PatternLine, PlayerBoard, Result, Source } from './types.ts';
 
 function wallOf(...cells: [number, number][]): boolean[][] {
@@ -43,7 +43,7 @@ test('factory count depends on player count', () => {
   assert.equal(factoryCount(4), 9);
 });
 
-test('the wall shifts the colours one step per row', () => {
+test('the wall shifts the colors one step per row', () => {
   assert.deepEqual([0, 1, 2, 3, 4].map(col => wallColor(0, col)), ['blue', 'yellow', 'red', 'black', 'cyan']);
   assert.deepEqual([0, 1, 2, 3, 4].map(col => wallColor(1, col)), ['cyan', 'blue', 'yellow', 'red', 'black']);
   assert.equal(wallColor(4, 0), 'yellow');
@@ -52,23 +52,23 @@ test('the wall shifts the colours one step per row', () => {
   }
 });
 
-test('wallColumn finds the space for a colour in a row', () => {
+test('wallColumn finds the space for a color in a row', () => {
   for (let row = 0; row < 5; row++) {
     for (const color of COLORS) assert.equal(wallColor(row, wallColumn(row, color)), color);
   }
 });
 
-test('an empty board takes any colour on any line', () => {
+test('an empty board takes any color on any line', () => {
   assert.deepEqual(legalLines(board(), 'red'), [0, 1, 2, 3, 4]);
 });
 
-test('a line holds one colour and stops when full', () => {
+test('a line holds one color and stops when full', () => {
   const b = board({ patternLines: linesOf({ 0: { color: 'red', count: 1 }, 2: { color: 'blue', count: 1 } }) });
   assert.deepEqual(legalLines(b, 'red'), [1, 3, 4]);
   assert.deepEqual(legalLines(b, 'blue'), [1, 2, 3, 4]);
 });
 
-test('a line refuses a colour already on the wall in that row', () => {
+test('a line refuses a color already on the wall in that row', () => {
   const b = board({ wall: wallOf([1, wallColumn(1, 'red')]) });
   assert.equal(canPlaceOnLine(b, 1, 'red'), false);
   assert.equal(canPlaceOnLine(b, 1, 'blue'), true);
@@ -80,7 +80,7 @@ test('lines off the board are never legal', () => {
   assert.equal(canPlaceOnLine(board(), -1, 'red'), false);
 });
 
-test('sourceColors lists each colour in a source once', () => {
+test('sourceColors lists each color in a source once', () => {
   const table = { factories: [['red', 'blue', 'red', 'red'] as const].map(tiles => [...tiles]), center: [] };
   assert.deepEqual(sourceColors(table, { type: 'factory', index: 0 }), ['blue', 'red']);
   assert.deepEqual(sourceColors(table, { type: 'factory', index: 7 }), []);
@@ -109,7 +109,7 @@ test('floor penalties grow along the floor line', () => {
   assert.equal(floorPenalty(['red', 'red', 'red', 'red', 'red', 'red', 'red']), 14);
 });
 
-test('end-game bonuses: 2 per row, 7 per column, 10 per colour', () => {
+test('end-game bonuses: 2 per row, 7 per column, 10 per color', () => {
   assert.equal(endGameBonus(wallOf()).points, 0);
   assert.deepEqual(endGameBonus(wallOf(...fullRow(0))), { rows: 1, columns: 0, colors: 0, points: 2 });
   assert.deepEqual(endGameBonus(wallOf(...fullColumn(0))), { rows: 0, columns: 1, colors: 0, points: 7 });
@@ -218,6 +218,8 @@ function game(overrides: Partial<GameState> = {}): GameState {
     winners: [],
     roundSummary: null,
     undoVote: null,
+    disconnected: [],
+    dismissVote: null,
     bag: Array<Color>(40).fill('black'),
     lid: [],
     roundStarter: 1,
@@ -248,7 +250,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-test('taking from a factory moves the rest to the centre', () => {
+test('taking from a factory moves the rest to the center', () => {
   const next = ok(applyMove(azul, game({ factories: OPENING, started: false }), 1, take(factory(0), 'blue', 1)));
   assert.deepEqual(next.boards[1].patternLines[1], { color: 'blue', count: 2 });
   assert.deepEqual(next.boards[1].floor, []);
@@ -273,7 +275,7 @@ test('the floor can be chosen outright', () => {
   assert.ok(next.boards[1].patternLines.every(line => line.count === 0));
 });
 
-test('the first pick from the centre takes the marker', () => {
+test('the first pick from the center takes the marker', () => {
   const state = game({ factories: OPENING, center: ['red', 'blue', 'red'] });
   const first = ok(applyMove(azul, state, 1, take(CENTER, 'red', 2)));
   assert.deepEqual(first.boards[1].floor, ['first']);
@@ -281,7 +283,7 @@ test('the first pick from the centre takes the marker', () => {
   assert.deepEqual(first.center, ['blue']);
   assert.equal(first.centerHasMarker, false);
   assert.equal(first.markerHolder, 1);
-  assert.equal(first.gameStatus, 'Alice took 2 red from the centre');
+  assert.equal(first.gameStatus, 'Alice took 2 red from the center');
 
   const second = ok(applyMove(azul, first, 2, take(CENTER, 'blue', 0)));
   assert.deepEqual(second.boards[2].floor, []);
@@ -313,10 +315,10 @@ test('illegal moves are refused', () => {
     boards: { 1: board({ patternLines: linesOf({ 3: { color: 'red', count: 1 } }) }), 2: board() }
   });
   assert.deepEqual(applyMove(azul, state, 2, take(factory(0), 'blue', 1)), { error: 'Not your turn' });
-  assert.deepEqual(applyMove(azul, state, 1, take(factory(0), 'cyan', 1)), { error: 'No tiles of that colour there' });
-  assert.deepEqual(applyMove(azul, state, 1, take(factory(2), 'blue', 1)), { error: 'No tiles of that colour there' });
-  assert.deepEqual(applyMove(azul, state, 1, take(factory(99), 'blue', 1)), { error: 'No tiles of that colour there' });
-  assert.deepEqual(applyMove(azul, state, 1, take(CENTER, 'blue', 1)), { error: 'No tiles of that colour there' });
+  assert.deepEqual(applyMove(azul, state, 1, take(factory(0), 'cyan', 1)), { error: 'No tiles of that color there' });
+  assert.deepEqual(applyMove(azul, state, 1, take(factory(2), 'blue', 1)), { error: 'No tiles of that color there' });
+  assert.deepEqual(applyMove(azul, state, 1, take(factory(99), 'blue', 1)), { error: 'No tiles of that color there' });
+  assert.deepEqual(applyMove(azul, state, 1, take(CENTER, 'blue', 1)), { error: 'No tiles of that color there' });
   assert.deepEqual(applyMove(azul, state, 1, take(factory(0), 'blue', 3)), { error: 'Those tiles cannot go on that line' });
   assert.deepEqual(applyMove(azul, { ...state, isGameOver: true }, 1, take(factory(0), 'blue', 1)), { error: 'The game is over' });
   assert.deepEqual(applyMove(azul, { ...state, activePlayers: [1] }, 1, take(factory(0), 'blue', 1)), { error: 'Waiting for more players' });
@@ -424,6 +426,48 @@ test('the next round is dealt once every player has acknowledged the summary', (
 
   assert.deepEqual(acknowledgeRound(next, 1), { error: 'Nothing to continue' });
   assert.deepEqual(acknowledgeRound(game(), 1), { error: 'Nothing to continue' });
+});
+
+function scoredForThree(): GameState {
+  const three = game({
+    started: true,
+    factories: [['blue'], [], [], [], [], [], []],
+    activePlayers: [1, 2, 3],
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cara' },
+    boards: { 1: board(), 2: board(), 3: board() }
+  });
+  return ok(applyMove(azul, three, 1, take(factory(0), 'blue', 4)));
+}
+
+test('the next round does not wait for a disconnected player', () => {
+  const away = disconnectPlayer(azul, scoredForThree(), 3);
+  assert.equal(away.round, 1);
+
+  const next = ok(acknowledgeRound(ok(acknowledgeRound(away, 1)), 2));
+  assert.equal(next.round, 2);
+  assert.equal(next.roundSummary, null);
+  assert.deepEqual(next.disconnected, [3]);
+});
+
+test('a disconnect after everyone else continued deals the round', () => {
+  const waiting = ok(acknowledgeRound(ok(acknowledgeRound(scoredForThree(), 1)), 2));
+  assert.equal(waiting.round, 1);
+
+  const next = disconnectPlayer(azul, waiting, 3);
+  assert.equal(next.round, 2);
+  assert.equal(next.roundSummary, null);
+  assert.deepEqual(next.disconnected, [3]);
+});
+
+test('the round is dealt when the last connected player disconnects, so a returning player finds it dealt', () => {
+  const acknowledged = ok(acknowledgeRound(scoredForThree(), 1));
+  const everyoneAway = [2, 3, 1].reduce((current, seat) => disconnectPlayer(azul, current, seat), acknowledged);
+  assert.equal(everyoneAway.round, 2);
+  assert.equal(everyoneAway.roundSummary, null);
+
+  const nobodyAcknowledged = [1, 2, 3].reduce((current, seat) => disconnectPlayer(azul, current, seat), scoredForThree());
+  assert.equal(nobodyAcknowledged.round, 2);
+  assert.equal(nobodyAcknowledged.roundSummary, null);
 });
 
 test('a player leaving no longer holds up the next round', () => {
@@ -599,7 +643,7 @@ test('leaving mid-game skips the seat, and the last player left wins', () => {
   assert.deepEqual(afterOne.activePlayers, [2, 3]);
   assert.equal(afterOne.currentPlayer, 2);
   assert.ok(afterOne.boards[1]);
-  assert.equal(afterOne.gameStatus, 'Alice left the game');
+  assert.equal(afterOne.gameStatus, 'Alice was dismissed');
   assert.equal(removePlayer(azul, three, 3).currentPlayer, 1);
 
   const afterTwo = removePlayer(azul, afterOne, 3);

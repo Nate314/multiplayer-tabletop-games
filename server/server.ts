@@ -11,6 +11,7 @@ import type { BasePublicState, Result, Seat } from '../shared/types.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
+const HEARTBEAT_MS = 15_000; // a socket that misses one ping is dead within about 30 s
 
 const app = express();
 const server = http.createServer(app);
@@ -20,8 +21,18 @@ type Connection = { roomId: string; seat: Seat };
 
 const manager = createGameManager(GAMES);
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
+const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
 
 // Configure Express routes
+app.get('/api/history/:gameType/:gameId', (req, res) => {
+  const steps = manager.history(req.params.gameType, req.params.gameId);
+  if (!steps) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+  res.json({ steps });
+});
+
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // Serve index.html for any routes that don't match static files
@@ -30,6 +41,9 @@ app.use((req, res) => {
 });
 
 wss.on('connection', (ws) => {
+  answered.add(ws);
+  ws.on('pong', () => answered.add(ws));
+
   ws.on('message', (message) => {
     let data: unknown;
     try {
@@ -51,6 +65,19 @@ wss.on('connection', (ws) => {
   // Without a listener, a malformed frame would crash the process; ws closes the socket itself
   ws.on('error', (error) => console.error('WebSocket error:', error));
 });
+
+// A dropped device may never close its socket, so one that misses a ping is closed here, which disconnects it
+const heartbeat = setInterval(() => {
+  for (const ws of wss.clients) {
+    if (!answered.has(ws)) {
+      ws.terminate();
+      continue;
+    }
+    answered.delete(ws);
+    ws.ping();
+  }
+}, HEARTBEAT_MS);
+server.on('close', () => clearInterval(heartbeat));
 
 function handleMessage(ws: WebSocket, data: unknown): void {
   const message = asRecord(data);
@@ -80,6 +107,12 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_UNDO:
       respond(ws, roomId, manager.voteUndo(roomId, seat, payload?.approve));
       break;
+    case MESSAGE_TYPES.REQUEST_DISMISS:
+      respond(ws, roomId, manager.requestDismiss(roomId, seat, payload?.seat));
+      break;
+    case MESSAGE_TYPES.VOTE_DISMISS:
+      respond(ws, roomId, manager.voteDismiss(roomId, seat, payload?.approve));
+      break;
   }
 }
 
@@ -89,7 +122,7 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName);
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
@@ -105,7 +138,7 @@ function handleDisconnect(ws: WebSocket): void {
   if (!connection) return;
 
   connections.delete(ws);
-  const result = manager.leave(connection.roomId, connection.seat);
+  const result = manager.disconnect(connection.roomId, connection.seat);
   if (result) broadcast(connection.roomId, result.state);
 }
 
