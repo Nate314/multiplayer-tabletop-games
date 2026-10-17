@@ -84,6 +84,12 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Each game's board components and screen, receiving the public state, the player's seat and any error
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
+4. **Default styles for the platform pieces (`/src/App.css`)**
+   - The game header (`.game-root`, `.game-header`, `.back-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`) and the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and an undo panel
+   - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
+   - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
+   - Quoridor and Azul style all of these pieces themselves, so the defaults do not change how they look
+
 ## Server
 
 1. **Express and WebSocket server (`/server/server.ts`)**
@@ -100,7 +106,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Holds each game's full state in memory, and sends only the public view
 
 3. **Game registry (`/games/registry.ts`)**
-   - `GAMES` lists the games; `findGame` looks one up by id
+   - `GAMES` lists the games, in landing page order
 
 ## Hidden state
 
