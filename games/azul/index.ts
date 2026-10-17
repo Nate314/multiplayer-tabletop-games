@@ -1,0 +1,19 @@
+import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { applyAction, applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import type { GameState, PublicGameState } from './types.ts';
+
+export const azul: GameDefinition<GameState, PublicGameState> = {
+  info: {
+    id: 'azul',
+    name: 'Azul',
+    description: 'Draft colored tiles and decorate your palace wall',
+    minPlayers: 2,
+    maxPlayers: 4
+  },
+  createGameState,
+  resetLobby,
+  onPlayerLeft,
+  applyMove,
+  applyAction,
+  toPublicState
+};
