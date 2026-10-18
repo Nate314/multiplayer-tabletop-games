@@ -35,8 +35,8 @@ test('an extra turn can be undone back to the start', () => {
 
   ok(manager.requestUndo('mancala/g1', 2));
   const restored = ok(manager.voteUndo('mancala/g1', 1, true));
-  assert.equal(restored.board[2], 4);
-  assert.equal(restored.board[6], 0);
+  assert.equal(restored.board[2].length, 4);
+  assert.equal(restored.board[6].length, 0);
   assert.equal(restored.lastMove, null);
   assert.equal(restored.currentPlayer, 1);
 });

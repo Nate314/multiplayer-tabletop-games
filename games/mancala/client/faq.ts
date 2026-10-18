@@ -8,35 +8,37 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does the board look like?',
-    answer: 'Each player has a row of six pits and a store. Your row is always along the bottom and your store is ' +
-      'the big hole on the right. Your opponent\'s row is along the top and their store is on the left. Every pit ' +
-      'starts with four seeds, and the number in each pit and store is how many seeds it holds.'
+    answer: 'Each player has a row of six pits and a bank. Your row is always along the bottom and your bank is ' +
+      'the big hole on the right, labeled Your bank. Your opponent\'s row is along the top and their bank is on the ' +
+      'left. Each bank is tinted in its owner\'s color. Every pit starts with four stones: blue on the first ' +
+      'player\'s side, red on the second player\'s. Stones keep their color wherever they go. The number on each ' +
+      'pit and bank is how many stones it holds.'
   },
   {
     question: 'How do I move?',
-    answer: 'On your turn, click one of your pits that has seeds; those pits are outlined. All its seeds are picked ' +
-      'up and sown one at a time into the following holes, counter-clockwise: to the right along your row, into ' +
-      'your store, then right to left along your opponent\'s row and back around. Your opponent\'s store is ' +
-      'skipped.'
+    answer: 'On your turn, click one of your pits that has stones; those pits are outlined. You pick up all its ' +
+      'stones and drop one stone in each following hole, counter-clockwise, as the arrows around the board show: ' +
+      'to the right along your row, into your bank, then right to left along your opponent\'s row and back around. ' +
+      'Your opponent\'s bank is skipped.'
   },
   {
     question: 'When do I get an extra turn?',
-    answer: 'When the last seed you sow lands in your own store, you move again. The status says so.'
+    answer: 'When the last stone you drop lands in your own bank, you move again. The status says so.'
   },
   {
     question: 'How do captures work?',
-    answer: 'When the last seed you sow lands in an empty pit on your own side, and the pit straight across from it ' +
-      'has seeds, you capture both: that last seed and every seed across go into your store. If the pit across ' +
+    answer: 'When the last stone you drop lands in an empty pit on your own side, and the pit straight across from it ' +
+      'has stones, you capture both: that last stone and every stone across go into your bank. If the pit across ' +
       'is empty, nothing is captured.'
   },
   {
     question: 'How does the game end?',
-    answer: 'As soon as either row is empty, each player moves every seed left on their own side into their own ' +
-      'store. Whoever has the most seeds in their store wins. Equal stores are a draw.'
+    answer: 'As soon as either row is empty, each player moves every stone left on their own side into their own ' +
+      'bank. Whoever has the most stones in their bank wins. Equal banks are a draw.'
   },
   {
     question: 'What is highlighted on the board?',
-    answer: 'The pit the last move started from has a dashed outline and the hole where its last seed landed has a ' +
+    answer: 'The pit the last move started from has a dashed outline and the hole where its last stone landed has a ' +
       'solid one. The board is dimmed when it is not your turn.'
   },
   {

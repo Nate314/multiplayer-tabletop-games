@@ -6,7 +6,7 @@ export const mancala: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'mancala',
     name: 'Mancala',
-    description: 'Sow seeds around the board and capture the most in your store',
+    description: 'Move stones around the board and collect the most in your bank',
     minPlayers: 2,
     maxPlayers: 2
   },
