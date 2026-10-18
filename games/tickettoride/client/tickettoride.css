@@ -124,13 +124,19 @@
 
 /* The map */
 
+/* On a narrow window the map keeps a size where routes can still be clicked, and scrolls sideways */
+[data-game="tickettoride"] .map-frame {
+  overflow-x: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+
 [data-game="tickettoride"] .map {
   display: block;
   width: 100%;
+  min-width: 640px;
   height: auto;
   max-height: calc(100vh - 120px);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
 }
 
 [data-game="tickettoride"] .map .sea { fill: var(--sea); }
@@ -161,7 +167,19 @@
   stroke-width: 2;
 }
 
+/* A white dot on each claimed space, like a train car's window, so a claimed route never reads as an open one of the same color */
+[data-game="tickettoride"] .track.owned circle { fill: #ffffff; }
+
 [data-game="tickettoride"] .track.closed { opacity: 0.3; }
+
+/* A wide invisible line along an open route, so a click between its spaces still picks it */
+[data-game="tickettoride"] .track .hit-area {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  stroke-linecap: round;
+  pointer-events: stroke;
+}
 
 [data-game="tickettoride"] .track.clickable { cursor: pointer; }
 [data-game="tickettoride"] .track.clickable:hover rect,
@@ -431,6 +449,7 @@
 [data-game="tickettoride"] .ticket-cities { flex: 1; }
 [data-game="tickettoride"] .ticket-points { font-weight: 700; }
 [data-game="tickettoride"] .ticket-mark { color: var(--seat3); font-weight: 700; }
+[data-game="tickettoride"] .ticket-mark.missed-mark { color: var(--seat1); }
 [data-game="tickettoride"] .tickets li:focus-visible { outline: 2px solid var(--highlight); border-radius: 5px; }
 
 /* Players */
@@ -500,7 +519,9 @@
 /* The history dialog is narrower than the page, so its panel always goes under the map */
 [data-game="tickettoride"] .history-layout {
   grid-template-columns: minmax(0, 1fr);
+  width: min(900px, 84vw);
   padding: 0;
+  text-align: left;
 }
 
 [data-game="tickettoride"] .history-layout .map { max-height: none; }

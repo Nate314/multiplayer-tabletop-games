@@ -69,7 +69,7 @@ export function FinalScores({ gameState }: { gameState: Pick<PublicGameState, 'f
           <ul className="tickets">
             {final[seat].tickets.map(({ ticket, completed }) => (
               <li key={ticket} className={completed ? undefined : 'missed'}>
-                <TicketFace ticket={ticket} done={completed} />
+                <TicketFace ticket={ticket} done={completed} missed={!completed} />
               </li>
             ))}
           </ul>

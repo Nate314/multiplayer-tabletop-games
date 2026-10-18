@@ -3,6 +3,7 @@
 import { CITIES } from '../map.ts';
 import type { Route } from '../types.ts';
 
+export const MAP_LEFT = -50;  // room for the names of the westernmost cities
 export const MAP_WIDTH = 1060;
 export const MAP_HEIGHT = 630;
 export const CITY_RADIUS = 7;
@@ -76,4 +77,4 @@ export const LAND_OUTLINE =
 
 // Canada: the top of the map down to the northern border of the outline above, from Maine back to the Pacific
 const NORTHERN_BORDER = LAND_OUTLINE.split(' ').slice(0, 13).reverse().join(' ');
-export const CANADA_OUTLINE = `10,0 ${MAP_WIDTH},0 ${MAP_WIDTH},125 ${NORTHERN_BORDER} 10,92`;
+export const CANADA_OUTLINE = `${MAP_LEFT},0 ${MAP_WIDTH},0 ${MAP_WIDTH},125 ${NORTHERN_BORDER} ${MAP_LEFT},92`;
