@@ -88,12 +88,3 @@ export function checkGameOver(state: GameState): GameState {
     ? `${nameOf(state, winner)} wins: they control the whole world`
     : `${nameOf(state, winner)} wins: no other player holds a territory`);
 }
-
-// When too few players are left to go on, whoever holds the most territories wins; a tie shares the win
-export function endByTerritories(state: GameState): GameState {
-  const players = inGame(state);
-  const most = Math.max(...players.map(seat => territoriesHeld(state, seat).length));
-  const winners = players.filter(seat => territoriesHeld(state, seat).length === most);
-  return endGame(state, winners, `Too few players are left to go on. ${winners.map(seat => nameOf(state, seat)).join(' and ')} ` +
-    `${winners.length === 1 ? 'wins' : 'share the win'} with the most territories (${most})`);
-}

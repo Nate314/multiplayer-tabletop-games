@@ -8,7 +8,7 @@ import { attack, blitz, occupy } from './battle.ts';
 import { drawCard, tradeCards } from './cards.ts';
 import { fortify, placeReinforcements, placeStarting } from './placement.ts';
 import {
-  LOG_SIZE, MIN_PLAYERS, STARTING_ARMIES, checkGameOver, endByTerritories, inGame, nameOf, nextInGame, note, plural, startTurn
+  LOG_SIZE, STARTING_ARMIES, checkGameOver, inGame, nameOf, nextInGame, note, plural, startTurn
 } from './state.ts';
 import type { GameState, LastMove, Move, Placements, PublicGameState, Random, Result, Seat } from './types.ts';
 
@@ -242,10 +242,8 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
     setupLeft: { ...working.setupLeft, [seat]: 0 }
   }, `${nameOf(state, seat)} left: their territories are neutral and their ${plural(cards.length, 'card')} discarded`);
 
-  // The site lets no move be played with fewer seated than the game needs, so the game ends here instead
-  if (working.activePlayers.length < MIN_PLAYERS && checkGameOver(working) === working) {
-    working = endByTerritories(working);
-  } else if (state.turnHolder === seat) {
+  // Play goes on with two; `finish` ends the game if only one player still holds territory
+  if (state.turnHolder === seat) {
     if (working.phase === 'setup') working = afterSetupPlacement(working, seat);
     else working = startTurn(working, nextInGame(working, seat));
   } else {

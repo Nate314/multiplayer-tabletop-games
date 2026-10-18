@@ -321,7 +321,7 @@ test('illegal moves are refused', () => {
   assert.deepEqual(applyMove(azul, state, 1, take(CENTER, 'blue', 1)), { error: 'No tiles of that color there' });
   assert.deepEqual(applyMove(azul, state, 1, take(factory(0), 'blue', 3)), { error: 'Those tiles cannot go on that line' });
   assert.deepEqual(applyMove(azul, { ...state, isGameOver: true }, 1, take(factory(0), 'blue', 1)), { error: 'The game is over' });
-  assert.deepEqual(applyMove(azul, { ...state, activePlayers: [1] }, 1, take(factory(0), 'blue', 1)), { error: 'Waiting for more players' });
+  assert.deepEqual(applyMove(azul, { ...state, started: false, activePlayers: [1] }, 1, take(factory(0), 'blue', 1)), { error: 'Waiting for more players' });
 });
 
 test('malformed moves are refused', () => {

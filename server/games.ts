@@ -277,8 +277,6 @@ export function createGameManager(
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
       if (connectedPlayers(state).length < 2) return { error: 'Not enough players to vote' };
-      // An undo keeps today's seats, so below the game's minimum no move could be made after it
-      if (state.activePlayers.length < room.game.info.minPlayers) return { error: 'Not enough players left to undo' };
 
       room.state = {
         ...state,

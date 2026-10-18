@@ -854,15 +854,17 @@ test('deleting a room removes it from the store', (t: TestContext) => {
   assert.equal(store.loadAll().size, 0);
 });
 
-test('undo is refused once too few players are left to play', () => {
-  // A game that needs three, like Rook's four: undoing past a dismissal would leave it unplayable
+test('a started game plays on and can undo after dismissals take it below its minimum', () => {
+  // Only the start needs the minimum; a game that cannot go on ends itself in onPlayerLeft, as Rook does
   const manager = createGameManager([{ ...testGame, info: { ...testGame.info, minPlayers: 3 } }], seededRandom);
   for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
   ok(manager.move(ROOM, 1, tick));
   manager.disconnect(ROOM, 3);
   ok(manager.requestDismiss(ROOM, 1, 3));
   ok(manager.voteDismiss(ROOM, 2, true));
-  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players left to undo' });
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  assert.equal(ok(manager.voteUndo(ROOM, 2, true)).currentPlayer, 2);
 });
 
 test('an undo past a dismissal runs the game hook for the dismissed player again', () => {

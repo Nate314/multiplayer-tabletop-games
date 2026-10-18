@@ -133,7 +133,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
    - Creates games from the registry, seats players, and locks joining after the first move
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
-   - Keeps each game's undo history and runs unanimous undo votes. An undo is refused once fewer players are seated than the game's minimum, since an undo keeps today's seats and no move could follow it. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
+   - Keeps each game's undo history and runs unanimous undo votes. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
    - Holds each game's full state in memory, written through to SQLite, and sends only the public view
    - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state
