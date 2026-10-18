@@ -22,24 +22,31 @@ export const FAQS: FaqItem[] = [
       'Your opponent\'s bank is skipped.'
   },
   {
-    question: 'When do I get an extra turn?',
-    answer: 'When the last stone you drop lands in your own bank, you move again. The status says so.'
+    question: 'What happens when my last stone lands in a pit with stones?',
+    answer: 'You keep going. If that pit, on either side of the board, already had stones, you pick up every stone ' +
+      'in it, including the one that just landed, and drop them the same way. This repeats until your last stone ' +
+      'lands in an empty pit or in your bank, so one click can send stones all around the board. The whole chain ' +
+      'plays out on the board, faster when it is long.'
   },
   {
-    question: 'How do captures work?',
-    answer: 'When the last stone you drop lands in an empty pit on your own side, and the pit straight across from it ' +
-      'has stones, you capture both: that last stone and every stone across go into your bank. If the pit across ' +
-      'is empty, nothing is captured.'
+    question: 'When does my turn end?',
+    answer: 'When your last stone lands in an empty pit, on your side or your opponent\'s, your turn ends. There ' +
+      'are no captures: the stones stay where they are.'
+  },
+  {
+    question: 'When do I get an extra turn?',
+    answer: 'When your last stone lands in your own bank, whether on the first pickup or later in the chain, you ' +
+      'move again. The status says so.'
   },
   {
     question: 'How does the game end?',
-    answer: 'As soon as either row is empty, each player moves every stone left on their own side into their own ' +
-      'bank. Whoever has the most stones in their bank wins. Equal banks are a draw.'
+    answer: 'As soon as either row is empty after a turn, each player moves every stone left on their own side into ' +
+      'their own bank. Whoever has the most stones in their bank wins. Equal banks are a draw.'
   },
   {
     question: 'What is highlighted on the board?',
-    answer: 'The pit the last move started from has a dashed outline and the hole where its last stone landed has a ' +
-      'solid one. The board is dimmed when it is not your turn.'
+    answer: 'The pit the last move started from has a dashed outline and the hole where its chain ended has a solid ' +
+      'one. The board is dimmed when it is not your turn.'
   },
   {
     question: 'What does Undo do?',

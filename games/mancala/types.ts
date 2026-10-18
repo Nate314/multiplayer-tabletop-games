@@ -19,10 +19,10 @@ export type Move = { pit: number };
 
 export type LastMove = {
   playerNumber: Seat;
-  pit: number; // where the stones were picked up
-  end: number; // where the last stone landed
-  pickedUp: number;
-  captured: number; // stones moved into the bank by a capture, 0 when there was none
+  pit: number; // where the first stones were picked up
+  end: number; // where the last stone of the chain landed
+  pickedUp: number; // stones in the first pickup
+  laps: number; // pickups in the chain, 1 when the first lap ended in an empty pit or the bank
   extraTurn: boolean;
 };
 

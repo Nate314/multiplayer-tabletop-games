@@ -1,7 +1,7 @@
-// Mancala (Kalah) rules shared by the browser (board layout, playable pits, move animation) and the server (validation).
+// Mancala Avalanche rules shared by the browser (board layout, playable pits, move animation) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
-import type { Board, GameState, PublicGameState, Result, Seat, Transfer } from './types.ts';
+import type { Board, GameState, LastMove, PublicGameState, Result, Seat, Transfer } from './types.ts';
 
 export const PITS_PER_SIDE = 6;
 export const STONES_PER_PIT = 4;
@@ -27,11 +27,6 @@ export function pitsOf(seat: Seat): number[] {
 
 export function bankOf(seat: Seat): number {
   return SIDES[seat].bank;
-}
-
-// The pit straight across the board; pits i and 12 - i face each other
-export function oppositePit(pit: number): number {
-  return 2 * PITS_PER_SIDE - pit;
 }
 
 export function stoneCount(count: number): string {
@@ -64,39 +59,57 @@ function emptyInto(board: Board, holes: number[], to: number): Transfer[] {
   return holes.flatMap(from => board[from].map(() => ({ from, to })));
 }
 
+// A turn's stones go from hole to hole one step at a time, never into the opponent's bank, so the 13 holes they do visit
+// come round in a fixed order and every 13 steps put one stone in the mover's bank. That bank can never hold more than
+// all 48 stones, so a turn takes fewer than 13 * 49 steps, and each lap is at least one step. The limit is therefore
+// never reached; if it ever were, the turn would simply end where the last lap did.
+const MAX_LAPS = (HOLES - 1) * (2 * PITS_PER_SIDE * STONES_PER_PIT + 1);
+
 export type Turn = {
   board: Board; // after the whole turn
-  end: number; // where the last picked-up stone landed
-  drops: Transfer[]; // the picked-up stones, one into each following hole
-  capture: Transfer[];
+  end: number; // where the last stone of the last lap landed
+  laps: Transfer[][]; // each pickup's stones, one into each following hole; every lap starts where the one before ended
   sweep: Transfer[]; // the end-of-game sweep of both rows into their banks
   isGameOver: boolean;
 };
 
-// Picks up every stone in `pit` and drops one into each following hole counter-clockwise, skipping the opponent's bank,
-// then captures and sweeps. The move animation replays the same transfers, so every stone follows these rules.
+// Picks up every stone in `pit` and drops one into each following hole counter-clockwise, skipping the opponent's bank.
+// While the last stone lands in a pit that already had stones, that whole pit is picked up and dropped the same way.
+// Then the rows are swept if the game is over. The move animation replays the same transfers, so every stone follows these rules.
 export function playPit(board: Board, seat: Seat, pit: number): Turn {
   const next = board.map(hole => [...hole]);
   const skipped = bankOf(opponentOf(seat));
-  const drops: Transfer[] = [];
+  const laps: Transfer[][] = [];
   let end = pit;
-  for (let left = board[pit].length; left > 0; left--) {
-    do end = (end + 1) % HOLES; while (end === skipped);
-    drops.push({ from: pit, to: end });
-  }
-  applyTransfers(next, drops);
-
-  // The last stone made an empty pit of ours hold one, so it takes the pit across too, if that has stones
-  const across = oppositePit(end);
-  const captures = pitsOf(seat).includes(end) && next[end].length === 1 && next[across].length > 0;
-  const capture = captures ? emptyInto(next, [end, across], bankOf(seat)) : [];
-  applyTransfers(next, capture);
+  do {
+    const from = end;
+    const drops: Transfer[] = [];
+    for (let left = next[from].length; left > 0; left--) {
+      do end = (end + 1) % HOLES; while (end === skipped);
+      drops.push({ from, to: end });
+    }
+    applyTransfers(next, drops);
+    laps.push(drops);
+  } while (end !== bankOf(seat) && next[end].length > 1 && laps.length < MAX_LAPS);
 
   // When either row runs out, each player moves the stones left on their side into their own bank
   const isGameOver = stonesOnSide(next, 1) === 0 || stonesOnSide(next, 2) === 0;
   const sweep = isGameOver ? SEATS.flatMap(owner => emptyInto(next, pitsOf(owner), bankOf(owner))) : [];
   applyTransfers(next, sweep);
-  return { board: next, end, drops, capture, sweep, isGameOver };
+  return { board: next, end, laps, sweep, isGameOver };
+}
+
+// One line about the turn, e.g. 'Alice picked up 4 stones and kept going 3 times, ending in an empty pit'.
+// `start` can name the first pit, as in ' from pit 2'.
+export function describeTurn(
+  { playerNumber, pickedUp, laps, end, extraTurn }: LastMove, playerNames: GameState['playerNames'], start = ''
+): string {
+  const name = playerNames[playerNumber];
+  const relays = laps - 1;
+  const keptGoing = relays === 0 ? '' : ` and kept going ${relays === 1 ? 'once' : `${relays} times`}`;
+  let ending = 'an empty pit';
+  if (end === bankOf(playerNumber)) ending = extraTurn ? `${name}'s bank for an extra turn` : `${name}'s bank`;
+  return `${name} picked up ${stoneCount(pickedUp)}${start}${keptGoing}, ending in ${ending}`;
 }
 
 function finalStatus(state: GameState, board: Board): Pick<GameState, 'winners' | 'gameStatus'> {
@@ -125,23 +138,18 @@ export function toPublicState(state: GameState, undoAvailable: boolean): Omit<Pu
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const pit = asRecord(move)?.pit;
   if (!isPlayablePit(state.board, seat, pit)) return { error: 'Invalid move' };
-  const name = state.playerNames[seat];
-  const { board, end, drops, capture, isGameOver } = playPit(state.board, seat, pit);
-  const extraTurn = end === bankOf(seat);
-  const lastMove = { playerNumber: seat, pit, end, pickedUp: drops.length, captured: capture.length, extraTurn };
+  const { board, end, laps, isGameOver } = playPit(state.board, seat, pit);
+  const extraTurn = end === bankOf(seat) && !isGameOver;
+  const lastMove = { playerNumber: seat, pit, end, pickedUp: laps[0].length, laps: laps.length, extraTurn };
   if (isGameOver) {
     return { state: { ...state, board, lastMove, isGameOver, currentPlayer: null, ...finalStatus(state, board) } };
   }
-
-  let gameStatus = `${name} picked up ${stoneCount(drops.length)}`;
-  if (extraTurn) gameStatus = `${name} gets an extra turn`;
-  if (capture.length > 0) gameStatus = `${name} captured ${stoneCount(capture.length)}`;
   return {
     state: {
       ...state,
       board,
       lastMove,
-      gameStatus,
+      gameStatus: describeTurn(lastMove, state.playerNames),
       currentPlayer: extraTurn ? seat : nextActivePlayer(state, seat)
     }
   };
