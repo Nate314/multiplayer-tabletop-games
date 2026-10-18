@@ -1,0 +1,506 @@
+/* Ticket to Ride's railway poster theme. Every rule is scoped to data-game="tickettoride", so none of it reaches other games. */
+
+[data-game="tickettoride"] {
+  color-scheme: light;
+  --page-bg: #f3ecdc;
+  --text: #2b2118;
+  --muted: #6e5f4f;
+  --panel-bg: #fffaf0;
+  --panel-border: #d8c8a8;
+  --button-bg: #8a2d1c;
+  --button-hover-bg: #6f2316;
+  --button-text: #ffffff;
+  --status-bg: #efe2c6;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #ff8f00;
+  --sea: #b9d3dd;
+  --land-usa: #efe3c2;
+  --land-canada: #e2dcc4;
+  --land-border: #a89770;
+  --city: #3b2b1d;
+  --city-fill: #f7d76a;
+  --label-halo: #fffaf0;
+  --card-pink: #e46aa6;
+  --card-white: #f5f5f0;
+  --card-blue: #2f6fd6;
+  --card-yellow: #f2c230;
+  --card-orange: #ee8a2b;
+  --card-black: #2b2b2b;
+  --card-red: #d8392f;
+  --card-green: #3f9b46;
+  --card-gray: #a7a49c;
+  --card-ink-dark: #1d1d1d;
+  --card-ink-light: #ffffff;
+  --seat1: #c62828;
+  --seat2: #1565c0;
+  --seat3: #2e7d32;
+  --seat4: #f9a825;
+  --seat5: #6a1b9a;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="tickettoride"] {
+  color-scheme: dark;
+  --page-bg: #1b1712;
+  --text: #f1e8d8;
+  --muted: #b8a993;
+  --panel-bg: #2a231b;
+  --panel-border: #4a3d2e;
+  --button-bg: #b2422c;
+  --button-hover-bg: #c95539;
+  --status-bg: #3a3025;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --highlight: #ffb300;
+  --sea: #24353d;
+  --land-usa: #4a4232;
+  --land-canada: #3c382b;
+  --land-border: #7d6f52;
+  --city: #f1e8d8;
+  --city-fill: #d9b440;
+  --label-halo: #2a231b;
+}
+
+[data-game="tickettoride"] .seat1 { --seat: var(--seat1); }
+[data-game="tickettoride"] .seat2 { --seat: var(--seat2); }
+[data-game="tickettoride"] .seat3 { --seat: var(--seat3); }
+[data-game="tickettoride"] .seat4 { --seat: var(--seat4); }
+[data-game="tickettoride"] .seat5 { --seat: var(--seat5); }
+
+[data-game="tickettoride"] button {
+  font: inherit;
+  cursor: pointer;
+}
+
+[data-game="tickettoride"] button:disabled {
+  cursor: default;
+}
+
+[data-game="tickettoride"] .game-id {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* The map takes what the side panel leaves; below 980px the panel goes under the map */
+[data-game="tickettoride"] .ttr-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 14px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 10px 8px 24px;
+}
+
+@media (max-width: 980px) {
+  [data-game="tickettoride"] .ttr-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+[data-game="tickettoride"] .map-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+[data-game="tickettoride"] .side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The map */
+
+[data-game="tickettoride"] .map {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(100vh - 120px);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+
+[data-game="tickettoride"] .map .sea { fill: var(--sea); }
+[data-game="tickettoride"] .map .land { stroke: var(--land-border); stroke-width: 1.5; stroke-linejoin: round; }
+[data-game="tickettoride"] .map .usa { fill: var(--land-usa); }
+[data-game="tickettoride"] .map .canada { fill: var(--land-canada); stroke-dasharray: 5 4; }
+
+[data-game="tickettoride"] .track rect {
+  fill: var(--track);
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 1;
+}
+
+[data-game="tickettoride"] .track-pink { --track: var(--card-pink); }
+[data-game="tickettoride"] .track-white { --track: var(--card-white); }
+[data-game="tickettoride"] .track-blue { --track: var(--card-blue); }
+[data-game="tickettoride"] .track-yellow { --track: var(--card-yellow); }
+[data-game="tickettoride"] .track-orange { --track: var(--card-orange); }
+[data-game="tickettoride"] .track-black { --track: var(--card-black); }
+[data-game="tickettoride"] .track-red { --track: var(--card-red); }
+[data-game="tickettoride"] .track-green { --track: var(--card-green); }
+[data-game="tickettoride"] .track-gray { --track: var(--card-gray); }
+
+/* A claimed route is a row of train cars in the owner's color, with a white outline so it never reads as an open track */
+[data-game="tickettoride"] .track.owned rect {
+  fill: var(--seat);
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+[data-game="tickettoride"] .track.closed { opacity: 0.3; }
+
+[data-game="tickettoride"] .track.clickable { cursor: pointer; }
+[data-game="tickettoride"] .track.clickable:hover rect,
+[data-game="tickettoride"] .track.clickable:focus-visible rect {
+  stroke: var(--highlight);
+  stroke-width: 2.5;
+}
+[data-game="tickettoride"] .track:focus { outline: none; }
+
+[data-game="tickettoride"] .track.selected rect,
+[data-game="tickettoride"] .track.highlight rect {
+  stroke: var(--highlight);
+  stroke-width: 3;
+}
+
+[data-game="tickettoride"] .city circle {
+  fill: var(--city-fill);
+  stroke: var(--city);
+  stroke-width: 2;
+}
+
+[data-game="tickettoride"] .city.ringed circle {
+  stroke: var(--highlight);
+  stroke-width: 5;
+}
+
+[data-game="tickettoride"] .city text {
+  fill: var(--city);
+  font-size: 13px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--label-halo);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* Status and the turn panel */
+
+[data-game="tickettoride"] .game-status {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--status-bg);
+  overflow-wrap: anywhere;
+}
+
+[data-game="tickettoride"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="tickettoride"] .turn-message {
+  font-weight: 700;
+}
+
+[data-game="tickettoride"] .turn-panel,
+[data-game="tickettoride"] .market,
+[data-game="tickettoride"] .hand-panel,
+[data-game="tickettoride"] .player-list,
+[data-game="tickettoride"] .final-scores {
+  padding: 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+[data-game="tickettoride"] .turn-panel-title { margin: 0 0 8px; }
+[data-game="tickettoride"] .turn-panel-note { margin: 6px 0; color: var(--muted); font-size: 14px; }
+
+[data-game="tickettoride"] .turn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+[data-game="tickettoride"] .turn-actions button,
+[data-game="tickettoride"] .primary-action,
+[data-game="tickettoride"] .undo-button {
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+[data-game="tickettoride"] .primary-action {
+  border-color: var(--button-bg);
+  background: var(--button-bg);
+  color: var(--button-text);
+}
+
+[data-game="tickettoride"] .primary-action:hover:enabled { background: var(--button-hover-bg); }
+[data-game="tickettoride"] .turn-actions button:disabled,
+[data-game="tickettoride"] .primary-action:disabled,
+[data-game="tickettoride"] .undo-button:disabled { opacity: 0.5; }
+
+[data-game="tickettoride"] .undo-button { align-self: flex-start; }
+
+[data-game="tickettoride"] .ticket-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="tickettoride"] .ticket-choice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Cards */
+
+[data-game="tickettoride"] .card {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 54px;
+  height: 36px;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--card-ink-light);
+  font-size: 11px;
+  font-weight: 700;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+}
+
+[data-game="tickettoride"] .card-pink { --card: var(--card-pink); }
+[data-game="tickettoride"] .card-white { --card: var(--card-white); color: var(--card-ink-dark); text-shadow: none; }
+[data-game="tickettoride"] .card-blue { --card: var(--card-blue); }
+[data-game="tickettoride"] .card-yellow { --card: var(--card-yellow); color: var(--card-ink-dark); text-shadow: none; }
+[data-game="tickettoride"] .card-orange { --card: var(--card-orange); }
+[data-game="tickettoride"] .card-black { --card: var(--card-black); }
+[data-game="tickettoride"] .card-red { --card: var(--card-red); }
+[data-game="tickettoride"] .card-green { --card: var(--card-green); }
+[data-game="tickettoride"] .card-locomotive {
+  background: linear-gradient(135deg, var(--card-red), var(--card-orange), var(--card-yellow), var(--card-green), var(--card-blue), var(--card-pink));
+}
+[data-game="tickettoride"] .card-back {
+  background: repeating-linear-gradient(45deg, #5a3b23, #5a3b23 5px, #7a5232 5px, #7a5232 10px);
+}
+
+[data-game="tickettoride"] .card.empty {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+  text-shadow: none;
+}
+
+[data-game="tickettoride"] .card-count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--panel-bg);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  text-shadow: none;
+}
+
+[data-game="tickettoride"] .face-up {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+[data-game="tickettoride"] .card-button,
+[data-game="tickettoride"] .deck-button {
+  padding: 2px;
+  border: 2px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+}
+
+[data-game="tickettoride"] .card-button:hover:enabled,
+[data-game="tickettoride"] .deck-button:hover:enabled {
+  border-color: var(--highlight);
+}
+
+[data-game="tickettoride"] .card-button:disabled,
+[data-game="tickettoride"] .deck-button:disabled { opacity: 0.75; }
+
+[data-game="tickettoride"] .decks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+[data-game="tickettoride"] .deck-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-game="tickettoride"] .deck-count { font-size: 13px; color: var(--muted); }
+
+[data-game="tickettoride"] .ticket-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 36px;
+  border: 1px solid var(--land-border);
+  border-radius: 5px;
+  background: var(--land-usa);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Hand and tickets */
+
+[data-game="tickettoride"] .hand-panel h2,
+[data-game="tickettoride"] .final-scores h2 { margin: 0 0 8px; font-size: 16px; }
+[data-game="tickettoride"] .hand-panel h3,
+[data-game="tickettoride"] .final-scores h3 { margin: 10px 0 6px; font-size: 14px; }
+
+[data-game="tickettoride"] .hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+  padding-top: 6px;
+}
+
+[data-game="tickettoride"] .muted { color: var(--muted); }
+
+[data-game="tickettoride"] .tickets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="tickettoride"] .ticket {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 5px;
+  background: var(--status-bg);
+  font-size: 14px;
+}
+
+[data-game="tickettoride"] .ticket.done {
+  border-color: var(--seat3);
+  background: color-mix(in srgb, var(--seat3) 18%, var(--panel-bg));
+}
+
+[data-game="tickettoride"] .tickets .missed .ticket { opacity: 0.75; text-decoration: line-through; }
+[data-game="tickettoride"] .ticket-cities { flex: 1; }
+[data-game="tickettoride"] .ticket-points { font-weight: 700; }
+[data-game="tickettoride"] .ticket-mark { color: var(--seat3); font-weight: 700; }
+[data-game="tickettoride"] .tickets li:focus-visible { outline: 2px solid var(--highlight); border-radius: 5px; }
+
+/* Players */
+
+[data-game="tickettoride"] .player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-game="tickettoride"] .player-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 2px 8px;
+  align-items: center;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+}
+
+[data-game="tickettoride"] .player-row.current { border-color: var(--seat); }
+[data-game="tickettoride"] .player-row.out { opacity: 0.55; }
+
+[data-game="tickettoride"] .player-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--seat);
+}
+
+[data-game="tickettoride"] .player-name { font-weight: 700; overflow-wrap: anywhere; }
+[data-game="tickettoride"] .last-turn { font-weight: 400; color: var(--muted); font-size: 13px; }
+
+[data-game="tickettoride"] .player-stats {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Final scores */
+
+[data-game="tickettoride"] .final-scores table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+[data-game="tickettoride"] .final-scores th,
+[data-game="tickettoride"] .final-scores td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--panel-border);
+  text-align: left;
+}
+
+[data-game="tickettoride"] .final-scores .winner td { font-weight: 700; color: var(--button-bg); }
+
+[data-game="tickettoride"] .final-tickets {
+  display: inline-block;
+  vertical-align: top;
+  width: min(100%, 300px);
+  margin-right: 12px;
+}
+
+/* The history dialog is narrower than the page, so its panel always goes under the map */
+[data-game="tickettoride"] .history-layout {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+}
+
+[data-game="tickettoride"] .history-layout .map { max-height: none; }

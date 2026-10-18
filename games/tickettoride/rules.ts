@@ -140,6 +140,11 @@ export function claimError(board: Board, seat: Seat, player: { hand: Hand; train
   return paymentOptions(player.hand, route).length === 0 ? 'You do not have the cards for that route' : null;
 }
 
+// How many of the offered tickets must be kept: 2 of the first deal, 1 of a later draw, and never more than were offered
+export function ticketsToKeep(phase: GameState['phase'], offered: number): number {
+  return Math.min(phase === 'setup' ? KEEP_AT_START : KEEP_LATER, offered);
+}
+
 // The table as both sides can see it: counts of the hidden decks and the face-up row
 type Table = Board & { deckCount: number; discardCount: number; ticketDeckCount: number; faceUp: (Card | null)[] };
 
@@ -359,7 +364,7 @@ function drawTickets(state: GameState, seat: Seat): Result<GameState> {
   if (state.ticketDeck.length === 0) return { error: 'There are no destination tickets left' };
   const offered = state.ticketDeck.slice(0, TICKETS_DEALT);
   const lastMove: LastMove = { seat, type: 'drawTickets', count: offered.length };
-  const keep = Math.min(KEEP_LATER, offered.length);
+  const keep = ticketsToKeep(state.phase, offered.length);
   return {
     state: updatePlayer({
       ...state,
@@ -373,7 +378,7 @@ function drawTickets(state: GameState, seat: Seat): Result<GameState> {
 function keepTickets(state: GameState, seat: Seat, tickets: number[]): Result<GameState> {
   const offered = state.players[seat].offered;
   if (!offered) return { error: 'You have no tickets to choose from' };
-  const minimum = Math.min(state.phase === 'setup' ? KEEP_AT_START : KEEP_LATER, offered.length);
+  const minimum = ticketsToKeep(state.phase, offered.length);
   if (!tickets.every(id => offered.includes(id))) return { error: 'You were not offered that ticket' };
   if (tickets.length < minimum) return { error: `Keep at least ${minimum} ticket${minimum === 1 ? '' : 's'}` };
   const returned = offered.filter(id => !tickets.includes(id));

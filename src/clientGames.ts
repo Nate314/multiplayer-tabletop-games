@@ -21,6 +21,7 @@ import { gofishClient } from '../games/gofish/client/index.ts';
 import { warClient } from '../games/war/client/index.ts';
 import { rookClient } from '../games/rook/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
+import { tickettorideClient } from '../games/tickettoride/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -64,7 +65,8 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [gofishClient.id]: gofishClient,
   [warClient.id]: warClient,
   [rookClient.id]: rookClient,
-  [splendorClient.id]: splendorClient
+  [splendorClient.id]: splendorClient,
+  [tickettorideClient.id]: tickettorideClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
