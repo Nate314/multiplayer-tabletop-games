@@ -9,6 +9,7 @@ import { checkersClient } from '../games/checkers/client/index.ts';
 import { backgammonClient } from '../games/backgammon/client/index.ts';
 import { mancalaClient } from '../games/mancala/client/index.ts';
 import { parchisiClient } from '../games/parchisi/client/index.ts';
+import { rummikubClient } from '../games/rummikub/client/index.ts';
 import { scrabbleClient } from '../games/scrabble/client/index.ts';
 import { unoClient } from '../games/uno/client/index.ts';
 import { phase10Client } from '../games/phase10/client/index.ts';
@@ -49,6 +50,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [backgammonClient.id]: backgammonClient,
   [mancalaClient.id]: mancalaClient,
   [parchisiClient.id]: parchisiClient,
+  [rummikubClient.id]: rummikubClient,
   [scrabbleClient.id]: scrabbleClient,
   [unoClient.id]: unoClient,
   [phase10Client.id]: phase10Client,
