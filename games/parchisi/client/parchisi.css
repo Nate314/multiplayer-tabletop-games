@@ -172,6 +172,7 @@
 /* Home: one triangle per side, pointing at the center, holding the pawns that made it */
 [data-game="parchisi"] .center {
   position: relative;
+  container-type: inline-size;
   background: conic-gradient(
     from -45deg,
     var(--player2) 0 90deg,
@@ -188,9 +189,10 @@
   gap: 2px;
 }
 
+/* Sized by the center block, not the strip, so the pawns match on all four sides */
 [data-game="parchisi"] .home-pawns .pawn {
   flex: none;
-  width: 16%;
+  width: 12cqw;
   max-width: none;
 }
 
@@ -200,11 +202,6 @@
 [data-game="parchisi"] .home-pawns.side3 { top: 15%; bottom: 15%; flex-direction: column; align-items: center; width: 22%; }
 [data-game="parchisi"] .home-pawns.side1 { right: 2%; }
 [data-game="parchisi"] .home-pawns.side3 { left: 2%; }
-
-[data-game="parchisi"] .home-pawns.side1 .pawn,
-[data-game="parchisi"] .home-pawns.side3 .pawn {
-  width: 72%;
-}
 
 [data-game="parchisi"] .pawn {
   /* Above the squares it passes over while it glides */
@@ -434,7 +431,8 @@
 
 /* History dialog: the board at full strength, though nothing on it can be clicked */
 [data-game="parchisi"] .history-board .board {
-  width: min(480px, 80vw);
+  width: 480px;
+  max-width: 100%;
   margin: 0 auto;
   opacity: 1;
 }
