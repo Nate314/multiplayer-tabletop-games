@@ -3,6 +3,7 @@ import { CONTINENTS, TERRITORIES, territoriesOf } from './map.ts';
 import type { ContinentId, GameState, Seat } from './types.ts';
 
 export const LOG_SIZE = 40;
+export const MIN_PLAYERS = 3;
 
 // Starting armies by number of players, from the official rules
 export const STARTING_ARMIES: Record<number, number> = { 3: 35, 4: 30, 5: 25, 6: 20 };
@@ -66,6 +67,10 @@ export function startTurn(state: GameState, seat: Seat | null): GameState {
   return note(started, `${nameOf(state, seat)} receives ${plural(armies, 'army', 'armies')}`);
 }
 
+function endGame(state: GameState, winners: Seat[], text: string): GameState {
+  return note({ ...state, isGameOver: true, winners, currentPlayer: null, turnHolder: null, conquest: null, reinforcements: 0 }, text);
+}
+
 // The game ends when one player holds every territory, or is the only player left holding any
 export function checkGameOver(state: GameState): GameState {
   if (state.isGameOver || state.phase === 'setup') return state;
@@ -73,13 +78,16 @@ export function checkGameOver(state: GameState): GameState {
   if (holders.length !== 1) return state;
   const [winner] = holders;
   const everything = territoriesHeld(state, winner).length === TERRITORIES.length;
-  return note({
-    ...state,
-    isGameOver: true,
-    winners: [winner],
-    currentPlayer: null,
-    turnHolder: null,
-    conquest: null,
-    reinforcements: 0
-  }, everything ? `${nameOf(state, winner)} wins: they control the whole world` : `${nameOf(state, winner)} wins: no other player holds a territory`);
+  return endGame(state, [winner], everything
+    ? `${nameOf(state, winner)} wins: they control the whole world`
+    : `${nameOf(state, winner)} wins: no other player holds a territory`);
+}
+
+// When too few players are left to go on, whoever holds the most territories wins; a tie shares the win
+export function endByTerritories(state: GameState): GameState {
+  const players = inGame(state);
+  const most = Math.max(...players.map(seat => territoriesHeld(state, seat).length));
+  const winners = players.filter(seat => territoriesHeld(state, seat).length === most);
+  return endGame(state, winners, `Too few players are left to go on. ${winners.map(seat => nameOf(state, seat)).join(' and ')} ` +
+    `${winners.length === 1 ? 'wins' : 'share the win'} with the most territories (${most})`);
 }

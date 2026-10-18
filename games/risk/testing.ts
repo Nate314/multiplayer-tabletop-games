@@ -34,6 +34,19 @@ export function game(overrides: Partial<GameState> = {}): GameState {
   };
 }
 
+// The same with Dan in seat 4, holding Japan, so a dismissal still leaves three players
+export function fourPlayers(overrides: Partial<GameState> = {}): GameState {
+  const base = game();
+  return game({
+    activePlayers: [1, 2, 3, 4],
+    playerNames: { ...base.playerNames, 4: 'Dan' },
+    owners: { ...base.owners, japan: 4 },
+    setupLeft: { ...base.setupLeft, 4: 0 },
+    hands: { ...base.hands, 4: [] },
+    ...overrides
+  });
+}
+
 // Dice that roll the given faces in order, then 1s
 export function dice(...faces: number[]): Random {
   let call = 0;

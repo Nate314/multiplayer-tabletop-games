@@ -8,7 +8,7 @@ import { connectedTerritories } from './placement.ts';
 import { createGameState, toPublicState } from './rules.ts';
 import { reinforcementsFor, territoriesHeld } from './state.ts';
 import { risk } from './index.ts';
-import { IDS, dice, game, move, ownership, played } from './testing.ts';
+import { IDS, dice, fourPlayers, game, move, ownership, played } from './testing.ts';
 import type { GameState, Random, Seat } from './types.ts';
 
 function lobby(count: number, random: Random = () => 0): GameState {
@@ -327,10 +327,11 @@ test('invalid moves are refused and change nothing', () => {
 });
 
 test('a player dismissed mid-turn leaves neutral territories, their cards are discarded and the next turn begins', () => {
-  let state = attacking({ owners: ownership(1, { kamchatka: 2, northwestTerritory: 2, greenland: 3 }), hands: { 1: [], 2: [7, 8], 3: [] },
+  let state = fourPlayers({ phase: 'attack', reinforcements: 0, owners: ownership(1, { kamchatka: 2, northwestTerritory: 2, greenland: 3, japan: 4 }),
+    hands: { 1: [], 2: [7, 8], 3: [], 4: [] },
     armies: { ...game().armies, alaska: 5, kamchatka: 1 }, currentPlayer: 2, turnHolder: 2 });
   state = removePlayer(risk, state, 2, dice());
-  assert.deepEqual(state.activePlayers, [1, 3]);
+  assert.deepEqual(state.activePlayers, [1, 3, 4]);
   assert.equal(state.owners.kamchatka, null);
   assert.equal(state.armies.kamchatka, 1);
   assert.deepEqual(state.hands[2], []);
@@ -349,7 +350,7 @@ test('a player dismissed mid-turn leaves neutral territories, their cards are di
 });
 
 test('a player dismissed while moving into a capture leaves the minimum there', () => {
-  let state = attacking({ armies: { ...game().armies, alaska: 5, kamchatka: 1 } });
+  let state = fourPlayers({ phase: 'attack', reinforcements: 0, armies: { ...game().armies, alaska: 5, kamchatka: 1 } });
   state = played(state, 1, { type: 'attack', from: 'alaska', to: 'kamchatka', dice: 3 }, dice(6, 1, 1, 2));
   state = removePlayer(risk, state, 1, dice());
   assert.equal(state.owners.kamchatka, null);
@@ -361,10 +362,21 @@ test('a player dismissed while moving into a capture leaves the minimum there', 
 });
 
 test('a player dismissed while not their turn changes nobody\'s turn', () => {
-  const state = removePlayer(risk, attacking({ reinforcements: 0 }), 3, dice());
+  const state = removePlayer(risk, fourPlayers({ phase: 'attack', reinforcements: 0 }), 3, dice());
   assert.equal(state.currentPlayer, 1);
   assert.equal(state.phase, 'attack');
   assert.equal(state.owners.greenland, null);
+});
+
+test('a dismissal that leaves two of three players ends the game: the most territories wins', () => {
+  // Alice holds 14 and Bob 14 plus Kamchatka
+  const state = removePlayer(risk, game({ phase: 'attack', reinforcements: 0, owners: { ...game().owners, kamchatka: 2 } }), 3, dice());
+  assert.equal(state.isGameOver, true);
+  assert.deepEqual(state.winners, [2]);
+  assert.equal(state.currentPlayer, null);
+  assert.match(state.gameStatus, /Too few players are left to go on. Bob wins with the most territories \(15\)/);
+  const tied = removePlayer(risk, game({ phase: 'attack', reinforcements: 0 }), 3, dice());
+  assert.deepEqual(tied.winners, [1, 2]);
 });
 
 test('a player dismissed during the setup is skipped, and the last one left holding territory wins', () => {

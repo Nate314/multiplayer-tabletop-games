@@ -47,7 +47,7 @@ export default function PhasePanel(props: PhasePanelProps) {
   const { phase, armies, currentPlayer, playerNames, isGameOver, conquest, reinforcements, setupLeft, hand, midTurnTrade } = gameState;
   const [dice, setDice] = useState(MAX_ATTACK_DICE);
   const [moveCount, setMoveCount] = useState<{ key: string; value: number } | null>(null);
-  if (isGameOver || currentPlayer === null) return null;
+  if (isGameOver || currentPlayer === null || gameState.firstPlayer === null) return null;
   if (!canMove) {
     return (
       <section className="panel phase-panel" aria-label="Turn">

@@ -369,3 +369,9 @@
   [data-game="risk"] .map-area { flex-basis: 100%; max-width: 100%; }
   [data-game="risk"] .side-panel { max-width: 720px; }
 }
+
+/* On a phone the map keeps a size that can be tapped and scrolls sideways inside its own box */
+@media (max-width: 679px) {
+  [data-game="risk"] .risk-layout .map-area { overflow-x: auto; }
+  [data-game="risk"] .risk-layout .world-map { min-width: 640px; }
+}
