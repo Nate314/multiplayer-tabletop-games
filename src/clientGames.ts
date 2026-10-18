@@ -7,6 +7,7 @@ import { azulClient } from '../games/azul/client/index.ts';
 import { chessClient } from '../games/chess/client/index.ts';
 import { checkersClient } from '../games/checkers/client/index.ts';
 import { backgammonClient } from '../games/backgammon/client/index.ts';
+import { catanClient } from '../games/catan/client/index.ts';
 import { mancalaClient } from '../games/mancala/client/index.ts';
 import { monopolyClient } from '../games/monopoly/client/index.ts';
 import { parchisiClient } from '../games/parchisi/client/index.ts';
@@ -49,6 +50,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [chessClient.id]: chessClient,
   [checkersClient.id]: checkersClient,
   [backgammonClient.id]: backgammonClient,
+  [catanClient.id]: catanClient,
   [mancalaClient.id]: mancalaClient,
   [monopolyClient.id]: monopolyClient,
   [parchisiClient.id]: parchisiClient,

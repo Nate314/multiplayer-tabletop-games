@@ -1,0 +1,49 @@
+# Catan
+
+Settle an island, trade resources and build roads, settlements and cities to reach 10 points, for 3 to 4 players. The base game only.
+
+## Rules
+
+- **Board.** 19 land hexes: 4 forest (wood), 4 pasture (sheep), 4 fields (wheat), 3 hills (brick), 3 mountains (ore) and 1 desert, with the 18 number tokens (2, 3 to 6 twice, 8 to 11 twice, 12) and 9 ports (four 3:1 and one 2:1 for each resource) on the coast. The resources, tokens and port kinds are shuffled each game, and drawn again until no 6 or 8 are on neighbouring hexes. The robber starts on the desert
+- **Start.** Everyone rolls both dice and the highest total places first; players tied for highest roll again. Each player places a settlement and a road touching it, in order round the table and then back (1, 2, 3, 3, 2, 1), so the first player places last. The second settlement takes one card of each resource around it
+- **Distance rule.** No settlement or city may be on an intersection next to another one, during setup or after
+- **A turn.** Roll the dice, then trade and build in any order, then end the turn. Every hex with the rolled number produces: each settlement on its corners takes one card of its resource and each city two, except on the hex with the robber
+- **A 7.** Nobody produces. Everyone holding more than 7 resource cards gives back half, rounded down, and chooses which. Then the roller moves the robber to another hex and steals one random card from a player with a settlement or city there who has a card
+- **Building.** Road: 1 wood and 1 brick. Settlement: 1 wood, 1 brick, 1 sheep and 1 wheat. City: 2 wheat and 3 ore, replacing one of your settlements, whose piece comes back. Development card: 1 sheep, 1 wheat and 1 ore. A road must join one of your roads, settlements or cities, and cannot join your road through an intersection another player has built on. A new settlement must be next to one of your roads. Each player has 15 roads, 5 settlements and 4 cities
+- **The bank.** There are 19 cards of each resource. When a roll owes more of a resource than the bank holds, nobody takes any of it, unless only one player is owed it, who then takes what is left. A trade or a Year of Plenty for a resource the bank does not have is refused
+- **Trading.** On your turn, after rolling: with the bank, 4 of one resource for 1 of another; 3:1 if you have a settlement or city on a 3:1 port; 2:1 for a resource whose port you are on. With other players: you offer some of your cards for some of theirs, to one player or to everyone. Both sides must give at least one card, a resource cannot be on both sides, and only the player whose turn it is can offer. The first player to accept makes the trade, and the offer can be withdrawn until then
+- **Development cards.** 14 Knights, 5 Victory Points, 2 Road Building, 2 Year of Plenty and 2 Monopoly, shuffled. You may play one a turn, at any time in your turn, even before rolling, but not one bought that turn. Knight: move the robber and steal, without the discards. Road Building: place two roads free. Year of Plenty: take any two resources from the bank. Monopoly: name a resource, and every other player gives you all of theirs. Victory Point cards are never played: each is a point for its owner, kept hidden until the game ends
+- **Longest Road.** The first player with a single line of at least 5 roads (counting each road once, branches not added) takes the card, worth 2 points. Another player takes it only by building a longer one. A settlement or city of another player on your line breaks it there. If a break leaves the holder no longer longest, the one player now longest takes it; if several tie for longest, the holder keeps it if they are among them, and otherwise nobody holds it until one is longer. With nobody at 5 or more, nobody holds it
+- **Largest Army.** The first player to have played 3 Knights takes the card, worth 2 points, and loses it only to a player who has played more
+- **Winning.** A settlement is 1 point, a city 2, each Victory Point card 1, and each award card 2. The first player with 10 points on their own turn wins at once. A player who reaches 10 on another player's turn wins when their own turn begins
+- Hidden: each player's resource cards and unplayed development cards (others see how many), and the order of the development deck. A stolen card is shown only to the thief and the victim. Points shown for other players leave out their Victory Point cards until the game ends. The History dialog shows no hands; a downloaded game file's "View as" shows the chosen player's cards
+- A dismissed player is out, and their roads, settlements and cities stay on the board as dead pieces: they score and produce nothing, but still take up their places, count for the distance rule and break other players' roads. Their resource cards go back to the bank and their development cards out of the game, and an award card they held goes to the player now leading (or nobody, on a tie). A discard they owed or a trade offer from or to them is dropped. If it was their turn, the next player's turn begins; during setup, their remaining placements are skipped. With fewer than three players left, the game ends and the player with the most points (counting Victory Point cards) wins, all of them on a tie
+- A trade offer from or to a player who disconnects is dropped. A discard or turn waiting on a disconnected player waits for them to rejoin, or for the others to dismiss them
+- Any player can ask to undo the last move. It is undone only if every player still in the game approves. Discards, trade offers and answers are not moves, so an undo goes back past them too, and a roll played again may come up differently
+
+## Controls
+
+- The board shows the hexes with their number tokens (6 and 8 in red; the dots under each number are how many ways two dice roll it), the ports, every road, settlement and city in its player's color, the robber, and the last roll in the top left corner. A dismissed player's pieces are faded
+- What you can click is highlighted: white circles on intersections, dashed white lines on paths, and orange outlines on hexes for the robber
+- In setup, click a highlighted intersection for your settlement, then a highlighted path for its road
+- On your turn the panel has Roll the dice, then Build road, Build settlement and Build city (each highlights where it can go; click it again to cancel), Buy development card, the bank trade (choose what to give, at your best rate, and what to take) and End turn. A greyed out button says why when you hover over it
+- After a 7 or a Knight, click a highlighted hex for the robber; if more than one player there can be stolen from, choose one in the panel
+- Your cards panel shows your resources and development cards; Play plays a card (Year of Plenty and Monopoly first ask for the resources). Cards bought this turn are listed but cannot be played yet
+- After a 7, a player with more than 7 cards sees the Discard panel: pick the cards with + and - and click Discard
+- Offer a trade to other players opens the trade form: choose Everyone or a player, set what you give and what you get, and click Send offer. The players it is for see Accept and Decline; you can Withdraw it until someone accepts
+- The player list shows each player's points, cards, unplayed development cards, Knights played, longest road and award cards, and the bank's cards. Recent events lists what happened, newest first
+- Click Undo to ask everyone to undo the last move
+- Click FAQ at the top of the page for a short guide to the rules and controls
+
+## Differences from Wikipedia
+
+These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Catan) and, where it is silent, the official base game rules from Catan GmbH (the almanac). What remains different:
+
+- **Resource names.** The cards are called wood, brick, sheep, wheat and ore, as the owner named them, rather than the current edition's lumber, brick, wool, grain and ore
+- **Random board, 6s and 8s apart.** Wikipedia describes a random layout, and the rule book also offers a fixed beginner layout and places tokens in a spiral. Here every game is a random layout with the number tokens shuffled freely, drawn again until no 6 or 8 are neighbours (a common table rule). The ports keep the printed frame's positions round the coast and their kinds are shuffled
+- **Bank shortage.** Wikipedia says nothing about the bank running out. The official rule is followed: nobody takes a resource the bank cannot pay in full, except a single player owed it, who takes what is left
+- **Trades are offers.** At a table players haggle freely. Here the turn holder offers a fixed trade to one player or to everyone, one offer at a time, and the first player to accept makes it. Players who are not on their turn cannot trade with each other, as the rules say
+- **Discards are chosen at once.** Each player who must discard picks their cards in the Discard panel, in any order; the robber moves once everyone has
+- **The robber's victim.** The roller chooses the victim, and the card taken is random, as in the rules; only the thief and victim are told which card it was
+- **Winning on another player's turn.** The rules say a player can only win on their own turn. A player who passes 10 points during another's turn (only possible when a broken road hands them Longest Road) wins when their own turn begins
+- **Leaving.** The rules do not cover a player leaving. Here a dismissed player's pieces stay as dead pieces and their cards go back to the bank, and with fewer than three players left the game ends with the leader winning
