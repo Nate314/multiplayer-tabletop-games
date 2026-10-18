@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import {
-  addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, nextActivePlayer, reconnectPlayer,
+  addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
@@ -134,21 +134,23 @@ export function createGameManager(
     if (!previous) return; // Unreachable: a vote only opens when there is history
     room.timeline.pop();
 
-    const restored: BaseGameState = {
+    // The restored state is from before any dismissal since, so each dismissed player is removed from it again,
+    // through the game's own onPlayerLeft, which also moves a turn they held on
+    let restored: BaseGameState = {
       ...previous,
       started: true,
-      activePlayers: state.activePlayers,
       playerNames: state.playerNames,
       undoVote: null,
       disconnected: state.disconnected,
-      dismissVote: null,
-      gameStatus: 'Last turn undone'
+      dismissVote: null
     };
-    const current = restored.currentPlayer;
-    if (current !== null && !restored.activePlayers.includes(current)) {
-      restored.currentPlayer = nextActivePlayer(restored, current);
+    for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
+      restored = removePlayer(room.game, restored, seat, random);
     }
-    room.state = restored;
+    // Dismissed seats are removed in seat order, which may differ from the order they were dismissed in.
+    // A hook that ends the game again keeps its ending in the status
+    const gameStatus = restored.isGameOver ? `Last turn undone. ${restored.gameStatus}` : 'Last turn undone';
+    room.state = { ...restored, gameStatus };
     return { type: 'pop', index: room.history.length };
   }
 
@@ -275,6 +277,8 @@ export function createGameManager(
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
       if (connectedPlayers(state).length < 2) return { error: 'Not enough players to vote' };
+      // An undo keeps today's seats, so below the game's minimum no move could be made after it
+      if (state.activePlayers.length < room.game.info.minPlayers) return { error: 'Not enough players left to undo' };
 
       room.state = {
         ...state,

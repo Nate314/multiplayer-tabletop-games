@@ -853,3 +853,64 @@ test('deleting a room removes it from the store', (t: TestContext) => {
   t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
   assert.equal(store.loadAll().size, 0);
 });
+
+test('undo is refused once too few players are left to play', () => {
+  // A game that needs three, like Rook's four: undoing past a dismissal would leave it unplayable
+  const manager = createGameManager([{ ...testGame, info: { ...testGame.info, minPlayers: 3 } }], seededRandom);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players left to undo' });
+});
+
+test('an undo past a dismissal runs the game hook for the dismissed player again', () => {
+  // The restored state is from before the dismissal, so the game must clear the leaver out of it once more
+  const leaveHook = { ...testGame, onPlayerLeft: (state: TestState) => ({ ...state, moves: state.moves + 100 }) };
+  const manager = createGameManager([leaveHook], seededRandom);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(restored.moves, 101);
+  assert.equal(restored.currentPlayer, 3);
+  assert.deepEqual(restored.activePlayers, [1, 3]);
+  assert.equal(restored.gameStatus, 'Last turn undone');
+});
+
+test('an undo that ends the game again keeps the ending in the status', () => {
+  // The re-run hook ends the game, as Phase 10 does when a tiebreak loses all but one player
+  const endsOnLeave = {
+    ...testGame,
+    onPlayerLeft: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [3], gameStatus: 'C wins!' })
+  };
+  const manager = createGameManager([endsOnLeave], seededRandom);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(restored.isGameOver, true);
+  assert.equal(restored.gameStatus, 'Last turn undone. C wins!');
+});
+
+test('undoing the first move past a dismissal keeps the game started', () => {
+  const manager = gameWith('A', 'B', 'C');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(restored.started, true);
+  assert.deepEqual(restored.activePlayers, [1, 3]);
+  assert.equal(restored.currentPlayer, 1);
+  assert.equal(restored.moves, 0);
+});
