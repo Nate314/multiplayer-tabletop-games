@@ -1,3 +1,5 @@
+export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
+
 export type Seat = number; // 1-based, seated in join order
 export type Result<T> = { state: T } | { error: string };
 export type Random = () => number;

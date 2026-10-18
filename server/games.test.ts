@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import type { GameStore, SavedRoom } from './store.ts';
 import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
-import type { HistoryStep, Random, Result } from '../shared/types.ts';
+import { nextActivePlayer } from '../shared/seating.ts';
+import type { BaseGameState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
@@ -583,13 +584,31 @@ test('a game won by a move has no end step', () => {
   assert.deepEqual(steps.map(s => s.historyStep), ['start', 'move', 'move', 'move']);
 });
 
-// A store over a Map; copies on save and load, as the database does, so shared references fail the tests
-function memoryStore(): GameStore {
-  const rooms = new Map<string, SavedRoom>();
+// A store over Maps laid out like the database's two tables; copies on save and load, as the database does,
+// so shared references fail the tests. `written` counts the states each save wrote
+type MemoryStore = GameStore & { written: number[] };
+
+function memoryStore(): MemoryStore {
+  const rooms = new Map<string, { gameType: string; state: BaseGameState }>();
+  const steps = new Map<string, { before: BaseGameState; after: BaseGameState }[]>();
+  const written: number[] = [];
   return {
-    loadAll: () => structuredClone(rooms),
-    save: (roomId, room) => { rooms.set(roomId, structuredClone(room)); },
-    remove: roomId => { rooms.delete(roomId); }
+    written,
+    loadAll: () => new Map([...rooms].map(([roomId, { gameType, state }]) => {
+      const roomSteps = steps.get(roomId) ?? [];
+      const history = roomSteps.map(step => step.before);
+      const timeline = roomSteps.map(step => step.after);
+      return [roomId, structuredClone({ gameType, state, history, timeline })];
+    })),
+    save: (roomId, gameType, state, step) => {
+      rooms.set(roomId, structuredClone({ gameType, state }));
+      const roomSteps = steps.get(roomId) ?? [];
+      if (step?.type === 'push') roomSteps[step.index] = structuredClone({ before: step.before, after: step.after });
+      if (step?.type === 'pop') roomSteps.length = step.index;
+      steps.set(roomId, roomSteps);
+      written.push(step?.type === 'push' ? 3 : 1);
+    },
+    remove: roomId => { rooms.delete(roomId); steps.delete(roomId); }
   };
 }
 
@@ -615,6 +634,58 @@ test('a started game is saved after each change and a lobby is not', () => {
   assert.equal(saved(store).timeline.length, 1);
   ok(manager.action(ROOM, 1, { type: 'ping' }));
   assert.equal(saved(store).state.gameStatus, 'A pinged');
+});
+
+test('a save late in a long game writes one step, not the whole history', () => {
+  // Never ends, so the game can run long
+  const endless = {
+    ...testGame,
+    applyMove: (state: TestState, seat: Seat) =>
+      ({ state: { ...state, moves: state.moves + 1, currentPlayer: nextActivePlayer(state, seat) } })
+  };
+  const store = memoryStore();
+  const manager = createGameManager([endless], seededRandom, store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  for (let move = 0; move < 50; move++) ok(manager.move(ROOM, (move % 2) + 1, tick));
+
+  assert.equal(saved(store).timeline.length, 50);
+  assert.equal(store.written.at(-1), 3); // the live state, and the one step's before and after
+  assert.ok(store.written.every(count => count <= 3));
+});
+
+test('an approved undo removes the last saved step', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.equal(saved(store).timeline.length, 1);
+  assert.equal(saved(store).history.length, 1);
+  assert.equal(saved(store).state.gameStatus, 'Last turn undone');
+  assert.equal(restart(store).history('test', 'g1')?.length, 2);
+});
+
+test('a dismiss vote, a disconnect and a rejoin are saved', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+
+  manager.disconnect(ROOM, 3);
+  assert.deepEqual(saved(store).state.disconnected, [3]);
+  manager.disconnect(ROOM, 2);
+  assert.deepEqual(saved(store).state.disconnected, [2, 3]);
+  joined(manager.join('test', 'g1', 'B', true));
+  assert.deepEqual(saved(store).state.disconnected, [3]);
+
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(saved(store).state.activePlayers, [1, 2]);
+  assert.equal(saved(store).state.dismissVote, null);
 });
 
 test('a restart keeps the game and holds every seat', () => {
@@ -679,9 +750,26 @@ test('a saved game whose type no longer exists is dropped', (t: TestContext) => 
   const logged = t.mock.method(console, 'error', () => {});
   const store = memoryStore();
   const state = { ...testGame.createGameState('g1'), started: true };
-  store.save('chess/g1', { gameType: 'chess', state, history: [], timeline: [] });
+  store.save('chess/g1', 'chess', state);
   restart(store);
   assert.equal(store.loadAll().has('chess/g1'), false);
+  assert.equal(logged.mock.callCount(), 1);
+});
+
+test('a saved game that fails to load is dropped and the others still load', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  const { activePlayers: _activePlayers, ...broken } = { ...testGame.createGameState('g2'), started: true };
+  store.save('test/g2', 'test', broken as unknown as BaseGameState);
+
+  const restarted = restart(store);
+  assert.equal(restarted.getState('test/g2'), undefined);
+  assert.equal(store.loadAll().has('test/g2'), false);
+  assert.equal(current(restarted).moveCount, 1);
   assert.equal(logged.mock.callCount(), 1);
 });
 

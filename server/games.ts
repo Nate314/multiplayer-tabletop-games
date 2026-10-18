@@ -3,10 +3,10 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, nextActivePlayer, reconnectPlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
-import type { GameStore } from './store.ts';
+import type { GameStore, SavedRoom, StepChange } from './store.ts';
+import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
-const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
 
 // `history` holds the state before each move, for undo; `timeline` holds the state right after each move.
@@ -49,11 +49,12 @@ export function createGameManager(
     }
   }
 
-  // Only a started game is kept: a lobby lost in a restart is just joined again
-  function save(roomId: string, room: Room): void {
-    const { game, state, history, timeline } = room;
+  // Only a started game is kept: a lobby lost in a restart is just joined again.
+  // `step` is how this change moved `history` and `timeline`, so only that step is written
+  function save(roomId: string, room: Room, step?: StepChange): void {
+    const { game, state } = room;
     writeStore(roomId, target => {
-      if (state.started) target.save(roomId, { gameType: game.info.id, state, history, timeline });
+      if (state.started) target.save(roomId, game.info.id, state, step);
       else target.remove(roomId);
     });
   }
@@ -92,8 +93,8 @@ export function createGameManager(
   }
 
   // Applies the undo once every connected player has approved; an undo always needs two connected players,
-  // so a vote left with fewer (after a disconnect) is canceled instead
-  function resolveUndoVote(room: Room): void {
+  // so a vote left with fewer (after a disconnect) is canceled instead. Returns the popped step when it undid a move
+  function resolveUndoVote(room: Room): StepChange | undefined {
     const { state } = room;
     const vote = state.undoVote;
     if (!vote) return;
@@ -123,6 +124,7 @@ export function createGameManager(
       restored.currentPlayer = nextActivePlayer(restored, current);
     }
     room.state = restored;
+    return { type: 'pop', index: room.history.length };
   }
 
   function clearEmptyTimer(room: Room): void {
@@ -132,19 +134,26 @@ export function createGameManager(
 
   // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
   // No game hook runs: a game's disconnect hook may deal the next round once nobody is waiting
-  for (const [roomId, saved] of store?.loadAll() ?? []) {
+  function loadRoom(roomId: string, saved: SavedRoom): void {
     const game = findGame(saved.gameType);
-    if (!game) {
-      console.error(`Dropping saved game ${roomId}: this site has no ${saved.gameType} game`);
-      writeStore(roomId, target => target.remove(roomId));
-      continue;
-    }
+    if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     const state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
     rooms.set(roomId, room);
     save(roomId, room);
     startEmptyTimer(roomId, room);
+  }
+
+  // A saved game that cannot be loaded is dropped, so it never stops the server from starting
+  for (const [roomId, saved] of store?.loadAll() ?? []) {
+    try {
+      loadRoom(roomId, saved);
+    } catch (error) {
+      console.error(`Dropping saved game ${roomId}:`, error);
+      rooms.delete(roomId);
+      writeStore(roomId, target => target.remove(roomId));
+    }
   }
 
   return {
@@ -195,8 +204,8 @@ export function createGameManager(
         deleteRoom(roomId);
         return null;
       }
-      resolveUndoVote(room);
-      save(roomId, room);
+      const step = resolveUndoVote(room);
+      save(roomId, room, step);
       startEmptyTimer(roomId, room);
       return { state: view(room, seat) };
     },
@@ -209,10 +218,10 @@ export function createGameManager(
       const result = applyMove(room.game, room.state, seat, move, random);
       if ('error' in result) return result;
 
-      room.history.push(room.state);
+      const index = room.history.push(room.state) - 1;
       room.timeline.push(result.state);
       room.state = result.state;
-      save(roomId, room);
+      save(roomId, room, { type: 'push', index, before: room.history[index], after: result.state });
       return { state: view(room, seat) };
     },
 
@@ -268,8 +277,7 @@ export function createGameManager(
       }
 
       room.state = { ...state, undoVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
-      resolveUndoVote(room);
-      save(roomId, room);
+      save(roomId, room, resolveUndoVote(room));
       return { state: view(room, seat) };
     },
 

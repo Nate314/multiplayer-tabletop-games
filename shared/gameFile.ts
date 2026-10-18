@@ -1,11 +1,11 @@
 // The saved-game file a player downloads from a finished game and opens later on the landing page.
 import { asRecord } from './messages.ts';
+import { MAX_NAME_LENGTH } from './types.ts';
 import type { HistoryStep } from './types.ts';
 
 export const GAME_FILE_FORMAT = 'multiplayer-tabletop-games';
 export const GAME_FILE_VERSION = 1;
 
-const MAX_GAME_ID_LENGTH = 20; // matches the game ID limit in server/games.ts
 const HISTORY_STEPS = ['start', 'move', 'end'];
 const NOT_A_SAVED_GAME = 'This file is not a saved game';
 
@@ -47,7 +47,7 @@ function isGameFile(value: unknown): value is GameFile {
     typeof file.gameType === 'string' &&
     typeof file.gameId === 'string' &&
     file.gameId.length > 0 &&
-    file.gameId.length <= MAX_GAME_ID_LENGTH &&
+    file.gameId.length <= MAX_NAME_LENGTH &&
     typeof file.exportedAt === 'string' &&
     Array.isArray(file.steps) &&
     file.steps.length > 0 &&
