@@ -1,4 +1,4 @@
-import { HOME, PAWN_COUNT } from '../rules.ts';
+import { HOME, PAWN_COUNT, inTurnOrder } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type PlayerListProps = {
@@ -8,7 +8,7 @@ type PlayerListProps = {
 
 export default function PlayerList({ gameState, playerNumber }: PlayerListProps) {
   const { playerNames, activePlayers, pawns, currentPlayer, winners } = gameState;
-  const seats = Object.keys(playerNames).map(Number).sort((a, b) => a - b);
+  const seats = inTurnOrder(Object.keys(playerNames).map(Number)); // listed in the order turns go
 
   return (
     <div className="player-list">
