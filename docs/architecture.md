@@ -43,7 +43,7 @@ flowchart TD
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
 - A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
 - Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
-- Calling the game's `toPublicState` before anything is sent to a browser
+- Calling the game's `toPublicState` for each player before anything is sent to them, so each player gets their own view
 - The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, theme toggle), FAQ dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`
 - Docker, compose, launcher, CI, lint and TypeScript config
 
@@ -127,7 +127,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
 ## Hidden state
 
-Every state sent to a browser goes through the game's `toPublicState`. A game that hides nothing returns its state as is. Azul removes the bag, the lid and round bookkeeping, so nobody can count what is left in the bag, as in the physical game.
+Every state sent to a browser goes through the game's `toPublicState`, which is told the seat it is building the view for (`viewer`). The server builds a separate view for each connected player, so a card game can send each player their own hand and only the size of everyone else's. The history endpoint builds its views with `viewer` set to `null`, which sees no hand. A game that hides nothing returns its state as is. Azul removes the bag, the lid and round bookkeeping, so nobody can count what is left in the bag, as in the physical game.
 
 ## Communication Flow
 
