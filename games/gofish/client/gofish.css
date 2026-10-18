@@ -63,10 +63,16 @@
   margin: 0 auto;
 }
 
+/* The history dialog sizes to its content, so the board asks for a width of its own */
+[data-game="gofish"] .gofish-board {
+  width: min(860px, calc(100vw - 96px));
+}
+
 [data-game="gofish"] .game-info,
 [data-game="gofish"] .table,
 [data-game="gofish"] .hand {
   box-sizing: border-box;
+  text-align: left;
   padding: 12px 16px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -77,6 +83,9 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+[data-game="gofish"] .game-info {
   text-align: center;
 }
 
