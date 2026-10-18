@@ -4,7 +4,7 @@ import { describeMove } from './describeMove.ts';
 import { HOME, NEST } from '../rules.ts';
 
 const playerNames = { 1: 'Alice', 2: 'Bob' };
-const move = { playerNumber: 2, pawn: 0, from: 10, to: 14, steps: 4, captured: null };
+const move = { playerNumber: 2, pawn: 0, from: 10, to: 14, steps: 4, captured: [] };
 
 test('describes entering, moving and reaching home', () => {
   assert.equal(describeMove({ lastMove: { ...move, from: NEST, to: 0, steps: 5 }, playerNames }), 'Bob entered a pawn');
@@ -14,7 +14,7 @@ test('describes entering, moving and reaching home', () => {
 });
 
 test('describes a capture', () => {
-  const lastMove = { ...move, captured: { seat: 1, pawn: 2 } };
+  const lastMove = { ...move, captured: [{ seat: 1, pawn: 2 }] };
   assert.equal(describeMove({ lastMove, playerNames }), "Bob moved a pawn 4 squares and captured Alice's pawn (+20)");
 });
 

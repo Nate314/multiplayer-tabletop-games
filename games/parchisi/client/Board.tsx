@@ -111,7 +111,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
         const classNames = ['nest', `player${seat}`];
         if (!activePlayers.includes(seat)) classNames.push('empty-seat');
         if (lastMove?.playerNumber === seat && lastMove.from === NEST) classNames.push('last-move-from');
-        if (lastMove?.captured?.seat === seat) classNames.push('last-move-to');
+        if (lastMove?.captured.some(ref => ref.seat === seat)) classNames.push('last-move-to');
         return (
           <div key={`nest-${seat}`} className={classNames.join(' ')} style={gridPlacement(nestArea(seat))} onClick={() => handleClick('', nestPawns)}>
             <span className="nest-name">{playerNames[seat] ?? ''}</span>

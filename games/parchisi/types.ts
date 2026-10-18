@@ -10,14 +10,15 @@ export type Progress = number;
 
 export type Die = { value: number; used: boolean };
 
-// What a move spends: one die by index, both dice together (a sum of 5, to enter), or the oldest bonus
-export type DieChoice = 0 | 1 | 'sum' | 'bonus';
+// What a move spends: one die by index, both dice on one pawn (their total), or the oldest bonus
+export type DieChoice = number | 'total' | 'bonus';
 
 export type Move = { type: 'move'; pawn: number; die: DieChoice };
 
 export type PawnRef = { seat: Seat; pawn: number };
 
-export type LegalMove = { pawn: number; die: DieChoice; steps: number; to: Progress; captured: PawnRef | null };
+// A move by the total can capture twice: where the first die lands and where the second does
+export type LegalMove = { pawn: number; die: DieChoice; steps: number; to: Progress; captured: PawnRef[] };
 
 export type LastMove = {
   playerNumber: Seat;
@@ -25,15 +26,16 @@ export type LastMove = {
   from: Progress;
   to: Progress;
   steps: number;
-  captured: PawnRef | null;
+  captured: PawnRef[];
 };
 
 export type GameState = BaseGameState & {
   pawns: Record<Seat, Progress[]>; // a player who left has no entry
-  dice: Die[]; // the current roll, empty until two players are seated
+  dice: Die[]; // the current roll, empty until two players are seated; doubles may add the two faces underneath
   bonuses: number[]; // bonus moves earned this turn and not used yet, oldest first
   roller: Seat | null; // who the dice were rolled for
   doublesRolled: number; // doubles in a row this turn, including the current roll
+  splitBlockades: Progress[]; // squares the roller's blockades were split from this doubles roll; the other pawn stays
   lastMove: LastMove | null;
 };
 

@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAPTURE_BONUS, HOME, HOME_BONUS, NEST, TRACK_LENGTH, createGameState, entryIndex, getLegalMoves, isSafe } from './rules.ts';
+import {
+  CAPTURE_BONUS, HOME, HOME_BONUS, NEST, TRACK_LENGTH, createGameState, entryIndex, getLegalMoves, isSafe, nextPlayer
+} from './rules.ts';
 import { parchisi } from './index.ts';
 import { addPlayer, removePlayer } from '../../shared/seating.ts';
 import type { DieChoice, GameState, Progress, Random, Result, Seat } from './types.ts';
@@ -52,6 +54,11 @@ function ok(result: Result<GameState>): GameState {
   return result.state;
 }
 
+// Each legal move as pawn:die
+function options(state: GameState, seat: Seat): string[] {
+  return getLegalMoves(state, seat).map(({ pawn, die }) => `${pawn}:${die}`);
+}
+
 function lobby(names: string[], random: Random): GameState {
   let state = parchisi.createGameState('g1');
   for (const name of names) {
@@ -67,26 +74,45 @@ test('opposite sides for two players and twelve safe squares', () => {
   assert.equal(Array.from({ length: TRACK_LENGTH }, (_, index) => index).filter(isSafe).length, 12);
 });
 
-test('the first player rolls once two players are seated', () => {
+test('with four players turns pass to the left, around the board', () => {
+  const players = { activePlayers: [1, 2, 3, 4] };
+  assert.deepEqual([1, 4, 2, 3].map(seat => nextPlayer(players, seat)), [4, 2, 3, 1]);
+
+  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: IN_NEST, 3: IN_NEST, 4: IN_NEST }, dice: [1, 2] });
+  const next = move(state, 1, 0, 'total', rolls(1, 2, 1, 2, 1, 2, 6, 1));
+  assert.equal(next.gameStatus, 'Alice moved a pawn 3 squares. Dan rolled 1 and 2 and cannot move. ' +
+    'Bob rolled 1 and 2 and cannot move. Cara rolled 1 and 2 and cannot move. Alice rolled 6 and 1');
+
+  const left = removePlayer(parchisi, state, 1, rolls(5, 1));
+  assert.equal(left.currentPlayer, 4);
+});
+
+test('the lowest roll-off goes first, and players tied for lowest roll again', () => {
   const alone = lobby(['Alice'], rolls(5, 2));
   assert.deepEqual(alone.dice, []);
   assert.deepEqual(alone.pawns, { 1: IN_NEST });
 
-  const state = lobby(['Alice', 'Bob'], rolls(5, 2));
+  const state = lobby(['Alice', 'Bob'], rolls(4, 3, 5, 2));
+  assert.equal(state.currentPlayer, 2);
   assert.deepEqual(state.dice, [{ value: 5, used: false }, { value: 2, used: false }]);
-  assert.equal(state.currentPlayer, 1);
-  assert.match(state.gameStatus, /Alice rolled 5 and 2$/);
+  assert.match(state.gameStatus, /Lowest roll goes first: Alice 4, Bob 3\. Bob goes first\. Bob rolled 5 and 2$/);
+
+  const three = parchisi.resetLobby({ ...state, activePlayers: [1, 2, 3], playerNames: NAMES, gameStatus: 'Cara joined' },
+    rolls(4, 2, 2, 5, 3, 5, 1));
+  assert.equal(three.currentPlayer, 3);
+  assert.equal(three.gameStatus,
+    'Cara joined. Lowest roll goes first: Alice 4, Bob 2, Cara 2; tie: Bob 5, Cara 3. Cara goes first. Cara rolled 5 and 1');
 });
 
 test('a roll without a move passes the turn with a message', () => {
-  const state = lobby(['Alice', 'Bob'], rolls(1, 2, 5, 3));
-  assert.equal(state.currentPlayer, 2);
-  assert.match(state.gameStatus, /Alice rolled 1 and 2 and cannot move\. Bob rolled 5 and 3$/);
+  const state = lobby(['Alice', 'Bob'], rolls(2, 1, 1, 2, 5, 3));
+  assert.equal(state.currentPlayer, 1);
+  assert.match(state.gameStatus, /Bob rolled 1 and 2 and cannot move\. Alice rolled 5 and 3$/);
 });
 
 test('a 5 on one die enters a pawn and the other die stays to use', () => {
   const state = playing({ pawns: { 1: IN_NEST, 2: IN_NEST }, dice: [5, 2] });
-  assert.equal(getLegalMoves(state, 1).length, 4);
+  assert.deepEqual(options(state, 1), ['0:0', '1:0', '2:0', '3:0']);
   const next = move(state, 1, 0, 0);
   assert.deepEqual(next.pawns[1], [0, NEST, NEST, NEST]);
   assert.deepEqual(next.dice, [{ value: 5, used: true }, { value: 2, used: false }]);
@@ -94,10 +120,10 @@ test('a 5 on one die enters a pawn and the other die stays to use', () => {
   assert.equal(next.gameStatus, 'Alice entered a pawn');
 });
 
-test('dice summing to 5 enter a pawn together', () => {
+test('dice totalling 5 enter a pawn together', () => {
   const state = playing({ pawns: { 1: IN_NEST, 2: IN_NEST }, dice: [2, 3] });
-  assert.deepEqual(getLegalMoves(state, 1).map(option => option.die), ['sum', 'sum', 'sum', 'sum']);
-  const next = move(state, 1, 2, 'sum', rolls(5, 1));
+  assert.deepEqual(options(state, 1), ['0:total', '1:total', '2:total', '3:total']);
+  const next = move(state, 1, 2, 'total', rolls(5, 1));
   assert.deepEqual(next.pawns[1], [NEST, NEST, 0, NEST]);
   assert.equal(next.currentPlayer, 2);
   assert.deepEqual(next.dice, [{ value: 5, used: false }, { value: 1, used: false }]);
@@ -108,53 +134,114 @@ test('without a 5 nobody leaves the nest', () => {
   assert.deepEqual(getLegalMoves(state, 1), []);
 });
 
-test('the turn passes once both dice are used', () => {
-  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: IN_NEST }, dice: [1, 2] });
-  const half = move(state, 1, 0, 0);
-  assert.equal(half.currentPlayer, 1);
-  const done = move(half, 1, 0, 1, rolls(4, 6, 5, 1));
-  assert.equal(done.pawns[1][0], 3);
-  assert.equal(done.currentPlayer, 1);
-  assert.equal(done.gameStatus, 'Alice moved a pawn 2 squares. Bob rolled 4 and 6 and cannot move. Alice rolled 5 and 1');
+test('one pawn can move by each die or by the total', () => {
+  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: IN_NEST }, dice: [2, 4] });
+  assert.deepEqual(getLegalMoves(state, 1).map(({ die, to }) => `${die}:${to}`), ['0:2', '1:4', 'total:6']);
+  const next = move(state, 1, 0, 'total', rolls(6, 1, 6, 1));
+  assert.equal(next.pawns[1][0], 6);
+  assert.equal(next.gameStatus, 'Alice moved a pawn 6 squares. Bob rolled 6 and 1 and cannot move. Alice rolled 6 and 1');
 });
 
-test('landing on an opponent captures it and earns a 20 square bonus', () => {
-  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [onSquare(2, 8), NEST, NEST, NEST] }, dice: [3, 1] });
+test('the total moves one die at a time, capturing along the way, and must be legal as a whole', () => {
+  const capture = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [onSquare(2, entryIndex(1) + 2), NEST, NEST, NEST] }, dice: [2, 4] });
+  const next = move(capture, 1, 0, 'total');
+  assert.equal(next.pawns[1][0], 6);
+  assert.equal(next.pawns[2][0], NEST);
+  assert.deepEqual(next.bonuses, [CAPTURE_BONUS]);
+  assert.equal(next.gameStatus, "Alice moved a pawn 6 squares and captured Bob's pawn (+20)");
+
+  const blockade = onSquare(2, entryIndex(1) + 3);
+  const blocked = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [blockade, blockade, NEST, NEST] }, dice: [2, 4] });
+  assert.deepEqual(options(blocked, 1), ['0:0']);
+});
+
+test('a move may not strand the other die, and when only one die can be used it is the larger', () => {
+  const blockade = onSquare(2, entryIndex(1) + 7);
+  const both = playing({ pawns: { 1: [0, 66, NEST, NEST], 2: [blockade, blockade, NEST, NEST] }, dice: [6, 2] });
+  assert.deepEqual(options(both, 1), ['0:0', '1:1']);
+
+  const one = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [blockade, blockade, NEST, NEST] }, dice: [3, 6] });
+  assert.deepEqual(options(one, 1), ['0:1']);
+});
+
+test('doubles with every pawn out of the nest add the faces underneath', () => {
+  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [10, 20, 30, HOME] }, dice: [1, 2] });
+  const next = move(state, 1, 0, 'total', rolls(3, 3));
+  assert.deepEqual(next.dice.map(die => die.value), [3, 3, 4, 4]);
+  assert.match(next.gameStatus, /Bob rolled 3 and 3 with 4 and 4 underneath, doubles, and rolls again if every die is used$/);
+  assert.deepEqual(options(next, 2), ['0:0', '1:0', '2:0', '0:2', '1:2', '2:2']);
+
+  const nested = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [10, 20, 30, NEST] }, dice: [1, 2] });
+  assert.deepEqual(move(nested, 1, 0, 'total', rolls(3, 3)).dice.map(die => die.value), [3, 3]);
+});
+
+test('doubles roll again once every die is used', () => {
+  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: IN_NEST }, dice: [2, 2], doublesRolled: 1 });
+  const next = move(move(state, 1, 0, 0), 1, 0, 1, rolls(6, 1));
+  assert.equal(next.currentPlayer, 1);
+  assert.deepEqual(next.dice.map(die => die.value), [6, 1]);
+  assert.equal(next.doublesRolled, 0);
+});
+
+test('doubles that cannot all be used do not roll again', () => {
+  const blockade = onSquare(2, entryIndex(1) + 3);
+  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: [blockade, blockade, NEST, NEST] }, dice: [2, 2] });
+  const next = move(state, 1, 0, 0, rolls(6, 1));
+  assert.equal(next.currentPlayer, 2);
+  assert.deepEqual(next.dice.map(die => die.value), [6, 1]);
+});
+
+test('a capture earns a 20 square bonus, taken whole by one pawn after the dice', () => {
+  const state = playing({ pawns: { 1: [0, 30, NEST, NEST], 2: [onSquare(2, entryIndex(1) + 3), NEST, NEST, NEST] }, dice: [3, 1] });
   const next = move(state, 1, 0, 0);
   assert.equal(next.pawns[2][0], NEST);
   assert.deepEqual(next.bonuses, [CAPTURE_BONUS]);
-  assert.deepEqual(next.lastMove?.captured, { seat: 2, pawn: 0 });
+  assert.deepEqual(next.lastMove?.captured, [{ seat: 2, pawn: 0 }]);
   assert.equal(next.gameStatus, "Alice moved a pawn 3 squares and captured Bob's pawn (+20)");
+  assert.deepEqual(options(next, 1), ['0:1', '1:1']);
 
-  const bonus = move(next, 1, 0, 'bonus');
+  const diced = move(next, 1, 1, 1);
+  assert.deepEqual(getLegalMoves(diced, 1).map(({ pawn, die, to }) => `${pawn}:${die}:${to}`), ['0:bonus:23', '1:bonus:51']);
+  const bonus = move(diced, 1, 0, 'bonus');
   assert.equal(bonus.pawns[1][0], 23);
   assert.deepEqual(bonus.bonuses, []);
 });
 
-test('pawns share a safe square instead of capturing', () => {
+test('a safe square held by an opponent cannot be landed on', () => {
   const state = playing({ pawns: { 1: [9, NEST, NEST, NEST], 2: [onSquare(2, 17), NEST, NEST, NEST] }, dice: [3, 1] });
   assert.equal(isSafe(17), true);
-  const next = move(state, 1, 0, 0);
-  assert.equal(next.pawns[1][0], 12);
+  assert.equal(entryIndex(1) + 12, 17);
+  assert.deepEqual(getLegalMoves(state, 1).map(({ die, to }) => `${die}:${to}`), ['1:10', 'total:13']);
+  const next = move(state, 1, 0, 'total');
   assert.equal(next.pawns[2][0], onSquare(2, 17));
   assert.deepEqual(next.bonuses, []);
 });
 
-test('entering captures an opponent on the safe entry square', () => {
-  const state = playing({ pawns: { 1: IN_NEST, 2: [onSquare(2, entryIndex(1)), NEST, NEST, NEST] }, dice: [5, 1] });
+test('entering captures a single opponent on the safe entry square, but not a blockade', () => {
+  const entry = onSquare(2, entryIndex(1));
+  const state = playing({ pawns: { 1: IN_NEST, 2: [entry, NEST, NEST, NEST] }, dice: [5, 1] });
   const next = move(state, 1, 0, 0);
   assert.equal(next.pawns[2][0], NEST);
   assert.deepEqual(next.bonuses, [CAPTURE_BONUS]);
+
+  const blocked = playing({ pawns: { 1: IN_NEST, 2: [entry, entry, NEST, NEST] }, dice: [5, 1] });
+  assert.deepEqual(getLegalMoves(blocked, 1), []);
 });
 
 test('a blockade cannot be passed or landed on, even by its owner', () => {
   const blockade = onSquare(2, 8);
   const state = playing({ pawns: { 1: [1, 0, NEST, NEST], 2: [blockade, blockade, NEST, NEST] }, dice: [4, 2] });
-  const options = getLegalMoves(state, 1).map(({ pawn, die }) => `${pawn}:${die}`);
-  assert.deepEqual(options, ['1:1']);
+  assert.deepEqual(options(state, 1), ['1:1']);
 
   const own = playing({ pawns: { 1: [2, 2, 0, NEST], 2: IN_NEST }, dice: [4, 4] });
-  assert.deepEqual(getLegalMoves(own, 1).map(option => option.pawn), [0, 1, 0, 1]);
+  assert.deepEqual(options(own, 1), ['0:0', '1:0']);
+});
+
+test('blockade pawns do not move forward together on doubles', () => {
+  const state = playing({ pawns: { 1: [2, 2, 20, NEST], 2: IN_NEST }, dice: [3, 3] });
+  const next = move(state, 1, 0, 0);
+  assert.deepEqual(next.splitBlockades, [2]);
+  assert.deepEqual(options(next, 1), ['0:1', '2:1']);
 });
 
 test('home takes an exact roll and earns a 10 square bonus', () => {
@@ -164,14 +251,6 @@ test('home takes an exact roll and earns a 10 square bonus', () => {
   assert.equal(next.pawns[1][0], HOME);
   assert.deepEqual(next.bonuses, [HOME_BONUS]);
   assert.equal(next.gameStatus, 'Alice moved a pawn home (+10)');
-});
-
-test('a double rolls again after the turn', () => {
-  const state = playing({ pawns: { 1: [0, NEST, NEST, NEST], 2: IN_NEST }, dice: [2, 2], doublesRolled: 1 });
-  const next = move(move(state, 1, 0, 0), 1, 0, 1, rolls(6, 1));
-  assert.equal(next.currentPlayer, 1);
-  assert.deepEqual(next.dice.map(die => die.value), [6, 1]);
-  assert.equal(next.doublesRolled, 0);
 });
 
 test('a third double in a row sends the furthest pawn on the track back to the nest', () => {

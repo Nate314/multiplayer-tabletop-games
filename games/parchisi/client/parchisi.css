@@ -337,6 +337,16 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+[data-game="parchisi"] .die.underneath {
+  border-style: dashed;
+  box-shadow: none;
+}
+
+[data-game="parchisi"] .dice-note {
+  font-size: 13px;
+  font-style: italic;
+}
+
 [data-game="parchisi"] .die.used {
   opacity: 0.3;
   box-shadow: none;
