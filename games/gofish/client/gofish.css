@@ -1,0 +1,318 @@
+/* Go Fish's sea-blue theme. Every rule is scoped to data-game="gofish", so none of it reaches the landing page or other games.
+   The header, dialogs and vote panels use the platform defaults through the --platform-* variables. */
+
+[data-game="gofish"] {
+  color-scheme: light;
+  --page-bg: #dcecf5;
+  --text: #102a3a;
+  --muted: #4b6575;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(16, 42, 58, 0.16);
+  --accent: #1f6f9f;
+  --accent-hover: #185a82;
+  --accent-text: #ffffff;
+  --status-bg: #e8f3f9;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --current: #e08a00;
+  --picked: #1f6f9f;
+  --book-bg: #1f6f9f;
+  --book-text: #ffffff;
+  --playing-card-selected: var(--picked);
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--accent);
+  --platform-button-hover-bg: var(--accent-hover);
+  --platform-button-text: var(--accent-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="gofish"] {
+  color-scheme: dark;
+  --page-bg: #0b1a24;
+  --text: #e3eff6;
+  --muted: #9fb8c7;
+  --panel-bg: #142a38;
+  --panel-border: rgba(227, 239, 246, 0.14);
+  --accent: #2f86ba;
+  --accent-hover: #3d9ad1;
+  --status-bg: #1b3546;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --current: #ffb020;
+  --picked: #5fb4e6;
+  --book-bg: #2f86ba;
+}
+
+[data-game="gofish"] .game-id {
+  width: fit-content;
+  margin: 0 auto 12px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+[data-game="gofish"] .game-screen,
+[data-game="gofish"] .gofish-board {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* The history dialog sizes to its content, so the board asks for a width of its own */
+[data-game="gofish"] .gofish-board {
+  width: min(860px, calc(100vw - 96px));
+}
+
+[data-game="gofish"] .game-info,
+[data-game="gofish"] .table,
+[data-game="gofish"] .hand {
+  box-sizing: border-box;
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+}
+
+[data-game="gofish"] .game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-game="gofish"] .game-info {
+  text-align: center;
+}
+
+[data-game="gofish"] .player-info,
+[data-game="gofish"] .hint {
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+[data-game="gofish"] .game-status {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--status-bg);
+}
+
+[data-game="gofish"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="gofish"] .turn-message {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+[data-game="gofish"] .fished {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-game="gofish"] .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-game="gofish"] .action-buttons button {
+  min-height: 2.25rem;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 1.1rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-game="gofish"] .action-buttons button:hover:enabled {
+  background: var(--accent-hover);
+}
+
+[data-game="gofish"] .action-buttons button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Table: the players, then the stock beside the ask log */
+
+[data-game="gofish"] .table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-game="gofish"] .players {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="gofish"] .player {
+  border: 2px solid var(--panel-border);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+[data-game="gofish"] .player-current { border-color: var(--current); }
+[data-game="gofish"] .player-last { box-shadow: 0 0 0 2px var(--current) inset; }
+[data-game="gofish"] .player-target { border-style: dashed; border-color: var(--picked); }
+[data-game="gofish"] .player-picked { border-color: var(--picked); box-shadow: 0 0 0 2px var(--picked); }
+[data-game="gofish"] .player-winner { background: var(--status-bg); }
+[data-game="gofish"] .player-left { border-style: dotted; opacity: 0.75; }
+
+[data-game="gofish"] .player-body,
+[data-game="gofish"] .player-pick {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+[data-game="gofish"] .player-pick {
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+[data-game="gofish"] .player-pick:hover,
+[data-game="gofish"] .player-pick:focus-visible {
+  background: var(--status-bg);
+}
+
+[data-game="gofish"] .player-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+[data-game="gofish"] .player-count,
+[data-game="gofish"] .player-books {
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+[data-game="gofish"] .player-books { grid-column: 2; grid-row: 1; }
+[data-game="gofish"] .player-count { grid-column: 1; }
+
+[data-game="gofish"] .book-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 1.4rem;
+}
+
+[data-game="gofish"] .book {
+  min-width: 1.4rem;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--book-bg);
+  color: var(--book-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4rem;
+  text-align: center;
+}
+
+[data-game="gofish"] .table-middle {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+[data-game="gofish"] .stock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+[data-game="gofish"] .stock-empty {
+  width: 64px;
+  height: 90px;
+  box-sizing: border-box;
+  border: 2px dashed var(--panel-border);
+  border-radius: 6px;
+}
+
+[data-game="gofish"] .stock-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+[data-game="gofish"] .ask-log {
+  flex: 1;
+  min-width: 0;
+}
+
+[data-game="gofish"] .ask-log-header,
+[data-game="gofish"] .hand-header {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+[data-game="gofish"] .ask-log-list {
+  max-height: 9.5rem;
+  overflow-y: auto;
+  margin: 0;
+  padding-left: 2.2rem;
+  font-size: 0.9rem;
+}
+
+[data-game="gofish"] .ask-log-list li + li { margin-top: 2px; }
+[data-game="gofish"] .ask-log-list li:first-child { font-weight: 600; }
+
+[data-game="gofish"] .ask-log-empty,
+[data-game="gofish"] .hand-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Hand: one overlapping fan per rank */
+
+[data-game="gofish"] .hand-waiting .hand-groups { opacity: 0.85; }
+
+[data-game="gofish"] .hand-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding-top: 10px;
+}
+
+[data-game="gofish"] .rank-group {
+  display: flex;
+}
+
+[data-game="gofish"] .rank-group .playing-card + .playing-card {
+  margin-left: -36px;
+}
+
+@media (max-width: 600px) {
+  [data-game="gofish"] .table-middle { flex-direction: column; align-items: stretch; }
+  [data-game="gofish"] .stock { flex-direction: row; justify-content: center; gap: 12px; }
+}
