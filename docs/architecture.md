@@ -38,6 +38,7 @@ flowchart TD
 
 - Express static serving and SPA fallback, the WebSocket server, message parsing and routing, broadcast (`server/server.ts`)
 - The in-memory game manager, keyed by game type and game ID (`server/games.ts`)
+- Saving every started game to SQLite and loading them back on start (`server/store.ts`)
 - Seating in join order up to the game's maximum, with names unique ignoring case, and refusing new names after the game has started (`shared/seating.ts`)
 - Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name, and dismissing a disconnected player by vote
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
@@ -73,7 +74,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
    - `GameView.tsx` is the header (Back to games, History, FAQ, theme toggle) around the game's own `Screen`
    - `FaqButton.tsx` and `FaqDialog.tsx` show a game's FAQ items
-   - `HistoryButton.tsx` fetches the game's moves from `/api/history/<game type>/<game ID>` (disabled before the first move) and `HistoryDialog.tsx` shows them: a range slider over the moves, "Move k of N: <the game's `describeMove`>", and the game's read-only `HistoryBoard` for that step. It shows the history as of opening and changes nothing for other players
+   - `HistoryButton.tsx` fetches the game's steps from `/api/history/<game type>/<game ID>` (always enabled) and `HistoryDialog.tsx` shows them: a range slider over the steps, a label, and the game's read-only `HistoryBoard` for that step. Each step has a `historyStep` of `start` (the starting board, labelled "Start of the game"), `move` ("Move k of N: <the game's `describeMove`>") or `end` ("End of the game: <the game status>", drawn without a highlighted move). The slider opens on the latest step. Each step is wrapped in `StepErrorBoundary.tsx`, so a step whose board throws shows "This step could not be shown" and the slider keeps working. When the latest step is a finished game, the dialog offers Download game. It shows the history as of opening and changes nothing for other players
+   - `OpenSavedGame.tsx` is the landing page's "Open a saved game" button: it reads a `.json` file in the browser, checks it with `parseGameFile` from `shared/gameFile.ts`, shows one plain error if it is not accepted, and otherwise opens a `HistoryDialog` titled "Saved game: <game ID>" with that game's `HistoryBoard` and `describeMove` and no Download button. Nothing is uploaded and a saved game cannot be played on
    - `ThemeToggle.tsx` switches light and dark; the choice is shared across the site
    - `UndoVote.tsx` shows a running undo vote
    - `RejoinButton.tsx` is the "Back to <game> (<game ID>)" button on the landing page, shown when the remembered game was left with Back to games or a lost connection
@@ -91,18 +93,22 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Sends joins (and rejoins), moves, game actions, undo and dismiss requests and votes
    - Passes server state updates and errors to the UI
 
-3. **Remembered game (`/src/services/session.ts`)**
+3. **Download (`/src/services/download.ts`)**
+
+   - `downloadJson` saves data as a pretty-printed JSON file through the browser. The file is built from the steps the dialog already fetched with `buildGameFile` and named by `gameFileName` (`<game type>-<game ID>.json`, unsafe characters replaced by `-`)
+
+4. **Remembered game (`/src/services/session.ts`)**
 
    - Keeps the most recent game (game type, game ID, name, and whether the player was still in it) in `localStorage` under `lastGame`
    - A page that loads while the player was in the game rejoins it automatically. If the old socket still holds the seat ("<name> is already in this game"), it retries up to 5 times, 1 second apart. Any other error, such as a deleted game or a dismissal, forgets the game and shows the error on the list
    - Back to games and a lost connection keep the game but mark the player as out of it, so the list shows the rejoin button instead of rejoining by itself
    - Every storage access may fail (blocked storage); the site then works without remembering the game across page loads
 
-4. **Game screens (`/games/<id>/client`)**
+5. **Game screens (`/games/<id>/client`)**
    - Each game's board components and screen, receiving the public state, the player's seat and any error
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
-5. **Default styles for the platform pieces (`/src/App.css`)**
+6. **Default styles for the platform pieces (`/src/App.css`)**
    - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
@@ -113,7 +119,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 1. **Express and WebSocket server (`/server/server.ts`)**
 
    - Serves the built React application and handles SPA routing
-   - Reads `PORT` from the environment, default 3000
+   - Reads `PORT` from the environment, default 3000, and `DATABASE_PATH`, default `data/games.sqlite` under the repo root
    - Routes WebSocket messages to the game manager and broadcasts the results
 
 2. **Game Manager (`/server/games.ts`)**
@@ -122,10 +128,24 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
    - Keeps each game's undo history and runs unanimous undo votes
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
-   - Holds each game's full state in memory, and sends only the public view
+   - Holds each game's full state in memory, written through to SQLite, and sends only the public view
+   - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state
+   - Takes a `GameStore` as a parameter, so tests can pass an in-memory one or none
 
-3. **Game registry (`/games/registry.ts`)**
+3. **Game store (`/server/store.ts`)**
+
+   - `openGameStore(file)` opens a SQLite database with Node's built-in `node:sqlite` (no npm package; Node 22 prints an ExperimentalWarning) and creates the `rooms` table if missing. `':memory:'` or a path works, and a path's folder is created
+   - `GameStore` has `loadAll`, `save(roomId, room)` and `remove(roomId)`. A row is the room ID (`<game type>/<game ID>`), the game type, and the room's `state`, `history` and `timeline` as JSON
+   - A room is saved after every change once the game has started (moves, actions, undo and dismiss requests and votes, joins, rejoins and disconnects) and removed when the room is deleted. Lobbies are not saved
+   - A store failure is logged and play continues
+   - On start the manager loads every saved room: each active seat is marked disconnected directly, without running any game hook, so the usual rejoin works; open undo and dismiss votes are cleared; the saved status is kept; and the 10-minute empty-game timer restarts. A row that does not parse, has the wrong shape, or names a game that no longer exists is logged and deleted
+
+4. **Game registry (`/games/registry.ts`)**
    - `GAMES` lists the games, in landing page order
+
+## Game files
+
+`shared/gameFile.ts` defines the file a finished game is saved as: `format` (`multiplayer-tabletop-games`), `version` (1), `gameType`, `gameId`, `exportedAt` and `steps` (the history steps, viewer `null`, so nothing hidden is in them). `parseGameFile` accepts a file only when it parses as JSON, the format and version match, the game ID is 1 to 20 characters, `steps` is a non-empty array of steps with a valid `historyStep`, and the game type is one the site has; otherwise it returns an error message. Steps are not checked field by field; `StepErrorBoundary` covers a hand-edited step.
 
 ## Hidden state
 
@@ -185,5 +205,7 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
    ```
 
 ## Single Port
+
+With Docker, `docker-compose.yml` mounts the `game-data` named volume at `/app/data` (the container is read-only otherwise, and the Dockerfile makes `/app/data` writable by the `node` user), so started games survive restarts and rebuilds.
 
 All communication happens over port 3000: HTTP serves the React application and WebSocket carries the games. With Docker, the server still listens on 3000 inside the container and `APP_PORT` picks the host port. The browser builds the WebSocket URL from the page address, so it follows whatever host port is mapped.
