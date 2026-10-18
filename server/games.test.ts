@@ -853,3 +853,14 @@ test('deleting a room removes it from the store', (t: TestContext) => {
   t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
   assert.equal(store.loadAll().size, 0);
 });
+
+test('undo is refused once too few players are left to play', () => {
+  // A game that needs three, like Rook's four: undoing past a dismissal would leave it unplayable
+  const manager = createGameManager([{ ...testGame, info: { ...testGame.info, minPlayers: 3 } }], seededRandom);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players left to undo' });
+});
