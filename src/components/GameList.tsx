@@ -16,7 +16,7 @@ export default function GameList({ games, onSelect }: GameListProps) {
               <span className="lobby-game-name">{name}</span>
               <span className="lobby-game-description">{description}</span>
             </span>
-            <span className="lobby-game-players">{`${minPlayers} to ${maxPlayers} players`}</span>
+            <span className="lobby-game-players">{minPlayers === maxPlayers ? `${minPlayers} players` : `${minPlayers} to ${maxPlayers} players`}</span>
           </button>
         </li>
       ))}
