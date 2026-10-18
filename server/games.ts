@@ -39,16 +39,28 @@ export function createGameManager(
     return games.find(candidate => candidate.info.id === gameType);
   }
 
+  // A store failure is logged, never thrown: the game in memory stays playable
+  function writeStore(roomId: string, write: (store: GameStore) => void): void {
+    if (!store) return;
+    try {
+      write(store);
+    } catch (error) {
+      console.error(`Could not update saved game ${roomId}:`, error);
+    }
+  }
+
   // Only a started game is kept: a lobby lost in a restart is just joined again
   function save(roomId: string, room: Room): void {
     const { game, state, history, timeline } = room;
-    if (state.started) store?.save(roomId, { gameType: game.info.id, state, history, timeline });
-    else store?.remove(roomId);
+    writeStore(roomId, target => {
+      if (state.started) target.save(roomId, { gameType: game.info.id, state, history, timeline });
+      else target.remove(roomId);
+    });
   }
 
   function deleteRoom(roomId: string): void {
     rooms.delete(roomId);
-    store?.remove(roomId);
+    writeStore(roomId, target => target.remove(roomId));
   }
 
   // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS
@@ -118,16 +130,17 @@ export function createGameManager(
     room.emptyTimer = undefined;
   }
 
-  // Nobody is connected after a restart, so every seat is held for a rejoin. Open votes are cleared first:
-  // disconnecting the voters one by one could otherwise pass a vote nobody finished
+  // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
+  // No game hook runs: a game's disconnect hook may deal the next round once nobody is waiting
   for (const [roomId, saved] of store?.loadAll() ?? []) {
     const game = findGame(saved.gameType);
     if (!game) {
-      store?.remove(roomId);
+      console.error(`Dropping saved game ${roomId}: this site has no ${saved.gameType} game`);
+      writeStore(roomId, target => target.remove(roomId));
       continue;
     }
-    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null };
-    for (const seat of connectedPlayers(state)) state = disconnectPlayer(game, state, seat, random);
+    const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
+    const state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
     rooms.set(roomId, room);
     save(roomId, room);

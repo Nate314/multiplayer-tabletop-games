@@ -27,13 +27,17 @@ export function openGameStore(file: string): GameStore {
   const deleteOne = db.prepare('DELETE FROM rooms WHERE id = ?');
 
   return {
-    // A row whose data does not parse is logged and deleted, so it never blocks a start
+    // A row whose data does not parse, or lacks a state object and history and timeline arrays,
+    // is logged and deleted, so it never blocks a start
     loadAll() {
       const rooms = new Map<string, SavedRoom>();
       for (const row of selectAll.all()) {
         const id = String(row.id);
         try {
-          const { state, history, timeline } = JSON.parse(String(row.data));
+          const { state, history, timeline } = JSON.parse(String(row.data)) ?? {};
+          if (typeof state !== 'object' || state === null || !Array.isArray(history) || !Array.isArray(timeline)) {
+            throw new Error('Saved game has the wrong shape');
+          }
           rooms.set(id, { gameType: String(row.game_type), state, history, timeline });
         } catch (error) {
           console.error(`Dropping saved game ${id}:`, error);

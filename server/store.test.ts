@@ -31,19 +31,22 @@ test('saves, loads, overwrites and removes rooms', () => {
   assert.equal(store.loadAll().size, 0);
 });
 
-test('a row that does not parse is skipped and deleted', (t: TestContext) => {
+test('a row that does not parse or has the wrong shape is skipped and deleted', (t: TestContext) => {
   t.mock.method(console, 'error', () => {});
   const file = path.join(tempFolder(), 'games.sqlite');
   openGameStore(file).save('test/g1', savedRoom('kept'));
 
   const db = new DatabaseSync(file);
-  db.prepare('INSERT INTO rooms (id, game_type, data) VALUES (?, ?, ?)').run('test/bad', 'test', '{nope');
+  const insert = db.prepare('INSERT INTO rooms (id, game_type, data) VALUES (?, ?, ?)');
+  insert.run('test/bad', 'test', '{nope');
+  insert.run('test/empty', 'test', '{}');
+  insert.run('test/flat', 'test', '{"state":{},"history":{},"timeline":[]}');
   db.close();
 
   const store = openGameStore(file);
   assert.deepEqual([...store.loadAll().keys()], ['test/g1']);
   assert.deepEqual([...store.loadAll().keys()], ['test/g1']);
-  assert.equal(new DatabaseSync(file).prepare("SELECT id FROM rooms WHERE id = 'test/bad'").get(), undefined);
+  assert.deepEqual(new DatabaseSync(file).prepare('SELECT id FROM rooms').all().map(row => row.id), ['test/g1']);
 });
 
 test('creates the folder for a new database file', () => {

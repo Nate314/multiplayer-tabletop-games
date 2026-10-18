@@ -2,7 +2,7 @@ import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import type { GameStore, SavedRoom } from './store.ts';
-import { testGame, type TestPublicState } from '../shared/testGame.ts';
+import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
 import type { HistoryStep, Random, Result } from '../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
@@ -675,12 +675,42 @@ test('after a restart the empty game is deleted after the timeout, from the stor
   assert.equal(store.loadAll().has(ROOM), false);
 });
 
-test('a saved game whose type no longer exists is dropped', () => {
+test('a saved game whose type no longer exists is dropped', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
   const store = memoryStore();
   const state = { ...testGame.createGameState('g1'), started: true };
   store.save('chess/g1', { gameType: 'chess', state, history: [], timeline: [] });
   restart(store);
   assert.equal(store.loadAll().has('chess/g1'), false);
+  assert.equal(logged.mock.callCount(), 1);
+});
+
+test("loading holds every seat without running the game's disconnect hook", () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+
+  // Azul, Uno and Phase 10 deal the next round from this hook once nobody is waiting
+  const withHook = { ...testGame, onPlayerDisconnected: (state: TestState) => ({ ...state, gameStatus: 'hook ran' }) };
+  const restarted = createGameManager([withHook], seededRandom, store);
+  assert.deepEqual(current(restarted).disconnected, [1, 2]);
+  assert.equal(current(restarted).gameStatus, 'A ticked');
+  assert.equal(saved(store).state.gameStatus, 'A ticked');
+});
+
+test('a store that fails to save does not stop play', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const failing: GameStore = {
+    ...memoryStore(),
+    save: () => { throw new Error('disk full'); }
+  };
+  const manager = restart(failing);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  assert.equal(ok(manager.move(ROOM, 1, tick)).moves, 1);
+  assert.equal(logged.mock.callCount(), 1);
 });
 
 test('deleting a room removes it from the store', (t: TestContext) => {
