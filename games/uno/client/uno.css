@@ -482,6 +482,130 @@
   padding-top: 12px;
 }
 
+/* Calling UNO, catching a player who did not, and answering a Wild Draw Four */
+
+[data-game="uno"] .action-buttons {
+  flex-wrap: wrap;
+}
+
+[data-game="uno"] .action-buttons .uno-button[aria-pressed="true"] {
+  background: var(--card-yellow);
+  color: #3a2a00;
+  box-shadow: 0 0 0 2px var(--button-bg);
+}
+
+[data-game="uno"] .catch-button,
+[data-game="uno"] .four-actions button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+}
+
+[data-game="uno"] .catch-button {
+  margin-top: 10px;
+  background: var(--card-yellow);
+  color: #3a2a00;
+  overflow-wrap: anywhere;
+}
+
+[data-game="uno"] .four-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="uno"] .four-answer,
+[data-game="uno"] .revealed {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 2px solid var(--highlight);
+  background: var(--panel-bg);
+}
+
+[data-game="uno"] .four-answer p {
+  margin: 0 0 10px;
+}
+
+[data-game="uno"] .four-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+[data-game="uno"] .round {
+  font-weight: 600;
+}
+
+[data-game="uno"] .player-score {
+  font-size: 0.85rem;
+}
+
+/* The scoring after each round */
+
+[data-game="uno"] .summary-overlay {
+  z-index: 15;
+}
+
+[data-game="uno"] .round-summary {
+  max-width: 420px;
+}
+
+[data-game="uno"] .summary-result {
+  font-weight: 600;
+  color: var(--highlight);
+  margin-bottom: 12px;
+}
+
+[data-game="uno"] .summary-seats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+[data-game="uno"] .summary-seat {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--panel-border);
+  background: var(--status-bg);
+}
+
+[data-game="uno"] .summary-winner {
+  border-color: var(--highlight);
+}
+
+[data-game="uno"] .summary-name,
+[data-game="uno"] .summary-points {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+[data-game="uno"] .summary-points {
+  text-align: right;
+}
+
+[data-game="uno"] .summary-reason,
+[data-game="uno"] .summary-target,
+[data-game="uno"] .summary-waiting {
+  color: var(--muted);
+}
+
+[data-game="uno"] .summary-target,
+[data-game="uno"] .summary-waiting {
+  margin-top: 12px;
+}
+
 /* Overlays: FAQ, history, undo vote */
 
 [data-game="uno"] .overlay,

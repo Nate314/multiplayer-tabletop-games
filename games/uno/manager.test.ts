@@ -39,18 +39,26 @@ function viewOf(manager: Manager, viewer: number | null): PublicGameState {
   return state as PublicGameState;
 }
 
-// A legal move for the current player, from their own view: the card just drawn, else the first card
-// that matches, else draw (or pass once drawn). A Wild always asks for red.
+// A legal move for the current player, from their own view: name a color after a starting Wild, accept a
+// Wild Draw Four, else play the card just drawn or the first card that matches (calling UNO), else draw.
+// A Wild always asks for red.
 function anyMove(view: PublicGameState): Move {
-  const { hand, discardTop, currentColor, drawnCard } = view;
+  const { hand, discardTop, currentColor, drawnCard, pendingFour } = view;
+  if (currentColor === null) return { type: 'chooseColor', color: 'red' };
+  if (pendingFour) return { type: 'accept' };
   const card = drawnCard ?? hand.find(held => canPlay(held, discardTop, currentColor));
-  if (card) return { type: 'play', card, color: 'red' };
+  if (card) return { type: 'play', card, color: 'red', uno: true };
   return { type: 'draw' };
 }
 
-// When every card is in a hand there is nothing to draw, and the player passes instead
+// After a round everyone continues. When every card is in a hand there is nothing to draw, and the player passes instead.
 function step(manager: Manager): PublicGameState {
-  const seat = viewOf(manager, null).currentPlayer;
+  const state = viewOf(manager, null);
+  if (state.roundSummary) {
+    for (const seat of state.activePlayers) ok(manager.action(ROOM, seat, { type: 'acknowledgeRound' }));
+    return viewOf(manager, null);
+  }
+  const seat = state.currentPlayer;
   if (seat === null) assert.fail('nobody to move');
   const result = manager.move(ROOM, seat, anyMove(viewOf(manager, seat)));
   if ('error' in result && result.error === 'There are no cards left to draw') return ok(manager.move(ROOM, seat, { type: 'pass' }));
@@ -115,15 +123,31 @@ test('undo restores the hand from before the move', () => {
   assert.equal(restored.hasDrawn, false);
 });
 
-test('a whole game played with legal moves ends with one winner', () => {
+test('a whole game played with legal moves ends when someone reaches 500 points', () => {
   const manager = gameWith('A', 'B', 'C', 'D');
   let state = viewOf(manager, null);
-  for (let moves = 0; !state.isGameOver && moves < 2000; moves++) {
+  for (let moves = 0; !state.isGameOver && moves < 50000; moves++) {
     state = step(manager);
   }
   assert.equal(state.isGameOver, true);
   assert.equal(state.winners.length, 1);
   assert.equal(state.handCounts[state.winners[0]], 0);
+  assert.ok(state.scores[state.winners[0]] >= 500);
+  assert.ok(state.roundNumber > 1);
+});
+
+test('a challenged hand reaches the challenger\'s view only, never the others or the history', () => {
+  const manager = gameWith('A', 'B', 'C');
+  let state = viewOf(manager, null);
+  for (let moves = 0; !state.pendingFour && moves < 5000; moves++) state = step(manager);
+  const pending = state.pendingFour ?? assert.fail('no Wild Draw Four was played');
+  const held = viewOf(manager, pending.by).hand;
+
+  ok(manager.move(ROOM, pending.target, { type: 'challenge' }));
+  assert.deepEqual(viewOf(manager, pending.target).revealed, { of: pending.by, hand: held });
+  for (const seat of [1, 2, 3].filter(other => other !== pending.target)) assert.equal(viewOf(manager, seat).revealed, null);
+  assert.equal(viewOf(manager, null).revealed, null);
+  for (const past of manager.history('uno', 'g1') as PublicGameState[]) assert.equal(past.revealed, null);
 });
 
 test('dismissing a player mid-game skips their seat', () => {

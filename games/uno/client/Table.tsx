@@ -1,5 +1,6 @@
 import Card from './Card';
 import { DISCARD_KEY, seatKey } from './animateMove.ts';
+import { TARGET_SCORE } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -11,16 +12,22 @@ type TableProps = {
   onDraw?: () => void;
 };
 
-// Every player's card count in seat order with the direction of play, then the draw and discard piles
+// Every player's score and card count in seat order with the dealer and the direction of play, then the draw and discard piles
 export default function Table({ gameState, viewer, showLastMove = false, onDraw }: TableProps) {
-  const { handCounts, playerNames, currentPlayer, winners, direction, discardTop, currentColor, drawPileCount, lastMove } = gameState;
+  const {
+    handCounts, playerNames, currentPlayer, winners, direction, discardTop, currentColor, drawPileCount, lastMove,
+    scores, dealer, roundNumber, unoWindow
+  } = gameState;
   const seats = Object.keys(handCounts).map(Number).sort((a, b) => a - b);
   const arrow = direction === 1 ? '→' : '←';
   const lastMover = showLastMove ? lastMove?.playerNumber : undefined;
   const lastTarget = showLastMove && lastMove?.type === 'play' ? lastMove.target : null;
+  // A player who has not called UNO yet shows no badge until the window closes
+  const uncalled = unoWindow && !unoWindow.called ? unoWindow.seat : null;
 
   return (
     <div className="table">
+      <div className="round">Round {roundNumber}: first to {TARGET_SCORE} points wins</div>
       <div className="direction">
         Direction: <span className="direction-arrow" aria-hidden="true">{arrow}</span> {direction === 1 ? 'in seat order' : 'reversed'}
       </div>
@@ -40,7 +47,8 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
                 {winners.includes(seat) && ' ★'}
               </span>
               <span className="player-count">{count} {count === 1 ? 'card' : 'cards'}</span>
-              {count === 1 && <span className="uno-badge">UNO!</span>}
+              <span className="player-score">{scores[seat] ?? 0} pts{seat === dealer && ', dealer'}</span>
+              {count === 1 && seat !== uncalled && <span className="uno-badge">UNO!</span>}
             </li>
           );
         })}
