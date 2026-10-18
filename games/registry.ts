@@ -13,9 +13,10 @@ import { skipbo } from './skipbo/index.ts';
 import { gofish } from './gofish/index.ts';
 import { war } from './war/index.ts';
 import { rook } from './rook/index.ts';
+import { splendor } from './splendor/index.ts';
 
 // Landing page order, alphabetical by name. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  azul, backgammon, checkers, chess, gofish, mancala, parchisi, phase10, quoridor, rook, scrabble, skipbo, uno, war
+  azul, backgammon, checkers, chess, gofish, mancala, parchisi, phase10, quoridor, rook, scrabble, skipbo, splendor, uno, war
 ];

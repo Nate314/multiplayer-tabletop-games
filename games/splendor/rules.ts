@@ -302,7 +302,7 @@ function visit(state: GameState, seat: Seat, noble: number, lastMove: LastMove):
 export function describe(state: Pick<GameState, 'playerNames'>, move: LastMove): string {
   const name = state.playerNames[move.seat];
   const text = describeAction(name, move);
-  return move.noble === null ? text : `${text}, and a noble visited`;
+  return move.noble === null || move.type === 'chooseNoble' ? text : `${text}, and a noble visited`;
 }
 
 function cardName(id: number): string {
@@ -310,7 +310,7 @@ function cardName(id: number): string {
   return `a level ${card.level} ${card.bonus} card`;
 }
 
-function listTokens(tokens: Tokens): string {
+export function listTokens(tokens: Tokens): string {
   const parts = TOKENS.filter(token => tokens[token] > 0).map(token => `${tokens[token]} ${token}`);
   return parts.length === 0 ? 'nothing' : parts.join(', ');
 }
@@ -325,7 +325,7 @@ function describeAction(name: string, move: LastMove): string {
     }
     case 'buy': return `${name} bought ${cardName(move.card)}${move.fromReserve ? ' from their reserve' : ''} for ${listTokens(move.paid)}`;
     case 'returnTokens': return `${name} returned ${listTokens(move.tokens)}`;
-    case 'chooseNoble': return `${name} chose a noble`;
+    case 'chooseNoble': return `${name} chose a noble to visit`;
     case 'pass': return `${name} could not act and passed`;
   }
 }
