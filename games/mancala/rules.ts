@@ -1,31 +1,32 @@
-// Mancala (Kalah) rules shared by the browser (board layout, playable pits) and the server (validation).
+// Mancala (Kalah) rules shared by the browser (board layout, playable pits, move animation) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
-import type { Board, GameState, PublicGameState, Result, Seat } from './types.ts';
+import type { Board, GameState, PublicGameState, Result, Seat, Transfer } from './types.ts';
 
 export const PITS_PER_SIDE = 6;
-export const SEEDS_PER_PIT = 4;
+export const STONES_PER_PIT = 4;
 const HOLES = 2 * (PITS_PER_SIDE + 1);
+const SEATS: Seat[] = [1, 2];
 
-type Side = { firstPit: number; store: number };
+type Side = { firstPit: number; bank: number };
 
 export const SIDES: Record<Seat, Side> = {
-  1: { firstPit: 0, store: PITS_PER_SIDE },
-  2: { firstPit: PITS_PER_SIDE + 1, store: HOLES - 1 }
+  1: { firstPit: 0, bank: PITS_PER_SIDE },
+  2: { firstPit: PITS_PER_SIDE + 1, bank: HOLES - 1 }
 };
 
 export function opponentOf(seat: Seat): Seat {
   return seat === 1 ? 2 : 1;
 }
 
-// A side's pits in sowing order, which is left to right as its owner sees them
+// A side's pits in the order stones are dropped into them, which is left to right as their owner sees them
 export function pitsOf(seat: Seat): number[] {
   const { firstPit } = SIDES[seat];
   return Array.from({ length: PITS_PER_SIDE }, (_, index) => firstPit + index);
 }
 
-export function storeOf(seat: Seat): number {
-  return SIDES[seat].store;
+export function bankOf(seat: Seat): number {
+  return SIDES[seat].bank;
 }
 
 // The pit straight across the board; pits i and 12 - i face each other
@@ -33,48 +34,74 @@ export function oppositePit(pit: number): number {
   return 2 * PITS_PER_SIDE - pit;
 }
 
+export function stoneCount(count: number): string {
+  return count === 1 ? '1 stone' : `${count} stones`;
+}
+
+// Every pit starts with four stones in the color of the player whose side it is on
 export function initialBoard(): Board {
-  return Array.from({ length: HOLES }, (_, index) => (index === SIDES[1].store || index === SIDES[2].store ? 0 : SEEDS_PER_PIT));
+  return Array.from({ length: HOLES }, (_, hole) => {
+    const seat: Seat = hole < SIDES[2].firstPit ? 1 : 2;
+    return hole === bankOf(seat) ? [] : Array<Seat>(STONES_PER_PIT).fill(seat);
+  });
 }
 
 export function isPlayablePit(board: Board, seat: Seat, pit: unknown): pit is number {
-  return typeof pit === 'number' && pitsOf(seat).includes(pit) && board[pit] > 0;
+  return typeof pit === 'number' && pitsOf(seat).includes(pit) && board[pit].length > 0;
 }
 
-function seedsOnSide(board: Board, seat: Seat): number {
-  return pitsOf(seat).reduce((sum, pit) => sum + board[pit], 0);
+function stonesOnSide(board: Board, seat: Seat): number {
+  return pitsOf(seat).reduce((sum, pit) => sum + board[pit].length, 0);
 }
 
-// Sows counter-clockwise from `pit`, one seed per hole, skipping the opponent's store
-export function sow(board: Board, seat: Seat, pit: number): { board: Board; end: number } {
-  const next = [...board];
-  const skipped = storeOf(opponentOf(seat));
-  let seeds = next[pit];
-  let hole = pit;
-  next[pit] = 0;
-  while (seeds > 0) {
-    hole = (hole + 1) % HOLES;
-    if (hole === skipped) continue;
-    next[hole]++;
-    seeds--;
+// Applies the transfers in order, changing the board in place
+export function applyTransfers(board: Board, transfers: Transfer[]): void {
+  for (const { from, to } of transfers) board[to].push(board[from].shift()!);
+}
+
+// Every stone in `holes`, hole by hole, into `to`
+function emptyInto(board: Board, holes: number[], to: number): Transfer[] {
+  return holes.flatMap(from => board[from].map(() => ({ from, to })));
+}
+
+export type Turn = {
+  board: Board; // after the whole turn
+  end: number; // where the last picked-up stone landed
+  drops: Transfer[]; // the picked-up stones, one into each following hole
+  capture: Transfer[];
+  sweep: Transfer[]; // the end-of-game sweep of both rows into their banks
+  isGameOver: boolean;
+};
+
+// Picks up every stone in `pit` and drops one into each following hole counter-clockwise, skipping the opponent's bank,
+// then captures and sweeps. The move animation replays the same transfers, so every stone follows these rules.
+export function playPit(board: Board, seat: Seat, pit: number): Turn {
+  const next = board.map(hole => [...hole]);
+  const skipped = bankOf(opponentOf(seat));
+  const drops: Transfer[] = [];
+  let end = pit;
+  for (let left = board[pit].length; left > 0; left--) {
+    do end = (end + 1) % HOLES; while (end === skipped);
+    drops.push({ from: pit, to: end });
   }
-  return { board: next, end: hole };
-}
+  applyTransfers(next, drops);
 
-// When either side runs out, each player moves the seeds left on their side into their own store
-function sweepIfSideEmpty(board: Board): Board | null {
-  if (seedsOnSide(board, 1) > 0 && seedsOnSide(board, 2) > 0) return null;
-  const next = [...board];
-  for (const seat of [1, 2]) {
-    next[storeOf(seat)] += seedsOnSide(next, seat);
-    for (const pit of pitsOf(seat)) next[pit] = 0;
-  }
-  return next;
+  // The last stone made an empty pit of ours hold one, so it takes the pit across too, if that has stones
+  const across = oppositePit(end);
+  const captures = pitsOf(seat).includes(end) && next[end].length === 1 && next[across].length > 0;
+  const capture = captures ? emptyInto(next, [end, across], bankOf(seat)) : [];
+  applyTransfers(next, capture);
+
+  // When either row runs out, each player moves the stones left on their side into their own bank
+  const isGameOver = stonesOnSide(next, 1) === 0 || stonesOnSide(next, 2) === 0;
+  const sweep = isGameOver ? SEATS.flatMap(owner => emptyInto(next, pitsOf(owner), bankOf(owner))) : [];
+  applyTransfers(next, sweep);
+  return { board: next, end, drops, capture, sweep, isGameOver };
 }
 
 function finalStatus(state: GameState, board: Board): Pick<GameState, 'winners' | 'gameStatus'> {
-  const [one, two] = [board[storeOf(1)], board[storeOf(2)]];
-  if (one === two) return { winners: [], gameStatus: `Draw, ${one} seeds each` };
+  const [one, two] = [board[bankOf(1)].length, board[bankOf(2)].length];
+  if (one === two) return { winners: [], gameStatus: `Draw, ${stoneCount(one)} each` };
   const winner = one > two ? 1 : 2;
   return {
     winners: [winner],
@@ -99,30 +126,16 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   const pit = asRecord(move)?.pit;
   if (!isPlayablePit(state.board, seat, pit)) return { error: 'Invalid move' };
   const name = state.playerNames[seat];
-  const sown = state.board[pit];
-  const { board, end } = sow(state.board, seat, pit);
-
-  const extraTurn = end === storeOf(seat);
-  let captured = 0;
-  // The last seed made an empty pit of ours hold one, so it takes the pit across too, if that has seeds
-  if (pitsOf(seat).includes(end) && board[end] === 1 && board[oppositePit(end)] > 0) {
-    captured = board[end] + board[oppositePit(end)];
-    board[storeOf(seat)] += captured;
-    board[end] = 0;
-    board[oppositePit(end)] = 0;
+  const { board, end, drops, capture, isGameOver } = playPit(state.board, seat, pit);
+  const extraTurn = end === bankOf(seat);
+  const lastMove = { playerNumber: seat, pit, end, pickedUp: drops.length, captured: capture.length, extraTurn };
+  if (isGameOver) {
+    return { state: { ...state, board, lastMove, isGameOver, currentPlayer: null, ...finalStatus(state, board) } };
   }
 
-  const lastMove = { playerNumber: seat, pit, end, sown, captured, extraTurn };
-  const swept = sweepIfSideEmpty(board);
-  if (swept) {
-    return {
-      state: { ...state, board: swept, lastMove, isGameOver: true, currentPlayer: null, ...finalStatus(state, swept) }
-    };
-  }
-
-  let gameStatus = `${name} sowed ${sown} seeds`;
+  let gameStatus = `${name} picked up ${stoneCount(drops.length)}`;
   if (extraTurn) gameStatus = `${name} gets an extra turn`;
-  if (captured > 0) gameStatus = `${name} captured ${captured} seeds`;
+  if (capture.length > 0) gameStatus = `${name} captured ${stoneCount(capture.length)}`;
   return {
     state: {
       ...state,

@@ -1,16 +1,23 @@
+import { useRef } from 'react';
 import gameService from '../../../src/services/gameService';
 import Board from './Board';
 import GameStatus from './GameStatus';
 import UndoVote from '../../../src/components/UndoVote';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState } from '../types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
+  const boardAreaRef = useRef<HTMLDivElement>(null);
   const { currentPlayer, activePlayers, isGameOver, undoAvailable, undoVote, dismissVote } = gameState;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
 
-  function handleSow(pit: number) {
+  // Only the live board animates; the history dialog's board renders without this hook
+  useMoveAnimation(boardAreaRef, gameState, animateMove);
+
+  function handlePlay(pit: number) {
     const move: Move = { pit };
     gameService.makeMove(move);
   }
@@ -19,7 +26,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
       <div className="game-layout">
-        <Board gameState={gameState} playerNumber={playerNumber} isMyTurn={isMyTurn} onSow={handleSow} />
+        <div className="board-area" ref={boardAreaRef}>
+          <Board gameState={gameState} playerNumber={playerNumber} isMyTurn={isMyTurn} onPlay={handlePlay} />
+        </div>
         <div className="side-panel">
           <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} />
           <button type="button" className="undo-button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>

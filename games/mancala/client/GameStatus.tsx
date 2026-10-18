@@ -1,4 +1,4 @@
-import { storeOf } from '../rules.ts';
+import { bankOf } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type GameStatusProps = {
@@ -28,11 +28,11 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
       )}
       <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
       <div>
-        Stores:{' '}
+        Banks:{' '}
         {seats.map((seat, index) => (
           <span key={seat}>
             {index > 0 && ' · '}
-            {playerNames[seat]} {board[storeOf(seat)]}
+            {playerNames[seat]} {board[bankOf(seat)].length}
           </span>
         ))}
       </div>

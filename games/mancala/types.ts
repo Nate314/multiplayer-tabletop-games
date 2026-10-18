@@ -4,18 +4,25 @@ import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
 export type { Result, Seat } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
 
-// The board is 14 holes counter-clockwise: seat 1's pits 0-5, its store 6, seat 2's pits 7-12, its store 13
-export type Board = number[];
+// A stone's color is the seat whose side it started on, and it keeps that color wherever it goes
+export type Stone = Seat;
+
+// The board is 14 holes counter-clockwise: seat 1's pits 0-5, its bank 6, seat 2's pits 7-12, its bank 13.
+// Each hole lists its stones in the order they arrived.
+export type Board = Stone[][];
+
+// One stone taken from the front of a hole and added to the end of another
+export type Transfer = { from: number; to: number };
 
 // `pit` is a board index on the mover's side
 export type Move = { pit: number };
 
 export type LastMove = {
   playerNumber: Seat;
-  pit: number; // where the seeds were picked up
-  end: number; // where the last seed landed
-  sown: number;
-  captured: number; // seeds moved into the store by a capture, 0 when there was none
+  pit: number; // where the stones were picked up
+  end: number; // where the last stone landed
+  pickedUp: number;
+  captured: number; // stones moved into the bank by a capture, 0 when there was none
   extraTurn: boolean;
 };
 

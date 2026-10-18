@@ -18,6 +18,9 @@
   --playable: #ffd166;
   --last-from: #fff4e0;
   --last-to: #2a9d8f;
+  --seat-1: #2f6fdb;
+  --seat-2: #d63c3c;
+  --arrow: #8a5a2b;
   --status-bg: #fff4e0;
   --status-text: #3b2a1a;
   --error-bg: #fbe3e1;
@@ -40,6 +43,9 @@
   --playable: #ffc94a;
   --last-from: #f6e8d2;
   --last-to: #4fd1c0;
+  --seat-1: #4f8ef7;
+  --seat-2: #f05a5a;
+  --arrow: #c99a62;
   --status-bg: #3a2d20;
   --status-text: #f1e6d6;
   --error-bg: #4a1f1b;
@@ -71,12 +77,126 @@
   width: 100%;
 }
 
-[data-game="mancala"] .row-label {
+[data-game="mancala"] .board-area {
+  width: 100%;
+}
+
+/* Above and below the board: the row's owner in the middle, and the bank's owner over or under that bank */
+[data-game="mancala"] .board-caption {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
   margin: 6px 0;
+}
+
+[data-game="mancala"] .row-label {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
 }
 
-/* Eight columns: the two stores and the six pits between them, which shrink together on narrow screens */
+[data-game="mancala"] .bank-label {
+  grid-row: 1;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-game="mancala"] .bank-label-left {
+  grid-column: 1;
+  justify-self: start;
+}
+
+[data-game="mancala"] .bank-label-right {
+  grid-column: 3;
+  justify-self: end;
+}
+
+[data-game="mancala"] .seat-1 {
+  --seat: var(--seat-1);
+}
+
+[data-game="mancala"] .seat-2 {
+  --seat: var(--seat-2);
+}
+
+[data-game="mancala"] .bank-label.seat-1,
+[data-game="mancala"] .bank-label.seat-2 {
+  background: var(--seat);
+}
+
+/* A dashed loop around the board with arrowheads on it, so the counter-clockwise direction of play shows */
+[data-game="mancala"] .board-loop {
+  --loop: clamp(10px, 3cqi, 18px);
+  position: relative;
+  padding: var(--loop);
+}
+
+[data-game="mancala"] .board-loop::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--loop) / 2 - 1px);
+  border: 2px dashed var(--arrow);
+  border-radius: 999px;
+}
+
+[data-game="mancala"] .arrow {
+  position: absolute;
+  width: clamp(10px, 2.6cqi, 16px);
+  aspect-ratio: 1;
+  background: var(--arrow);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  translate: -50% -50%;
+}
+
+[data-game="mancala"] .arrow-top-left,
+[data-game="mancala"] .arrow-top-right {
+  top: calc(var(--loop) / 2);
+  rotate: 180deg;
+}
+
+[data-game="mancala"] .arrow-bottom-left,
+[data-game="mancala"] .arrow-bottom-right {
+  top: calc(100% - var(--loop) / 2);
+}
+
+[data-game="mancala"] .arrow-top-left,
+[data-game="mancala"] .arrow-bottom-left {
+  left: 35%;
+}
+
+[data-game="mancala"] .arrow-top-right,
+[data-game="mancala"] .arrow-bottom-right {
+  left: 65%;
+}
+
+[data-game="mancala"] .arrow-left,
+[data-game="mancala"] .arrow-right {
+  top: 50%;
+}
+
+[data-game="mancala"] .arrow-left {
+  left: calc(var(--loop) / 2);
+  rotate: 90deg;
+}
+
+[data-game="mancala"] .arrow-right {
+  left: calc(100% - var(--loop) / 2);
+  rotate: -90deg;
+}
+
+/* Eight columns: the two banks and the six pits between them, which shrink together on narrow screens */
 [data-game="mancala"] .board {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) repeat(6, minmax(0, 1fr)) minmax(0, 1.25fr);
@@ -107,10 +227,8 @@
 }
 
 [data-game="mancala"] .pit,
-[data-game="mancala"] .store {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+[data-game="mancala"] .bank {
+  position: relative;
   box-sizing: border-box;
   min-width: 0;
   margin: 0;
@@ -119,14 +237,51 @@
   background: var(--hole-bg);
   color: var(--hole-text);
   font: inherit;
-  font-weight: 700;
-  font-size: clamp(0.95rem, 3.5cqi, 1.5rem);
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.45);
 }
 
 [data-game="mancala"] .pit {
   aspect-ratio: 1;
   border-radius: 50%;
+}
+
+/* Placed by Board from stoneLayout.ts: left and top are its center (negative margins pull it back by its radius) and width its diameter.
+   Not a transform, so a scale animation grows it around its center */
+[data-game="mancala"] .stone {
+  position: absolute;
+  z-index: 1;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--seat) 45%, #fff), var(--seat) 55%,
+    color-mix(in srgb, var(--seat) 65%, #000));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+/* The exact count, small, in a corner a round pit leaves free, so it stays readable over a big pile */
+[data-game="mancala"] .count {
+  position: absolute;
+  z-index: 3;
+  right: -6%;
+  bottom: -6%;
+  min-width: 1.6em;
+  padding: 0.1em 0.25em;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: clamp(0.65rem, 2cqi, 0.85rem);
+  font-weight: 700;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+[data-game="mancala"] .bank .count {
+  top: 4%;
+  right: 50%;
+  bottom: auto;
+  translate: 50% 0;
+  font-size: clamp(0.75rem, 2.6cqi, 1rem);
 }
 
 [data-game="mancala"] .pit-top {
@@ -137,13 +292,15 @@
   grid-row: 2;
 }
 
-[data-game="mancala"] .store {
+/* Tinted and rimmed in the owner's color */
+[data-game="mancala"] .bank {
   grid-row: 1 / 3;
+  border-color: var(--seat);
   border-radius: 999px;
-  font-size: clamp(1.1rem, 4.5cqi, 2rem);
+  background: color-mix(in srgb, var(--seat) 30%, var(--hole-bg));
 }
 
-[data-game="mancala"] .store-right {
+[data-game="mancala"] .bank-right {
   grid-column: 8;
 }
 
