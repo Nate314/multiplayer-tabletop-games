@@ -154,9 +154,11 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
+/* Two fixed rows: with fewer than three pawns a lone implicit row would stretch to the full height and the pawns with it */
 [data-game="parchisi"] .nest-pawns {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 10%;
   width: 50%;
   aspect-ratio: 1;
