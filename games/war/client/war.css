@@ -83,8 +83,9 @@
 [data-game="war"] .war-seat,
 [data-game="war"] .war-summary {
   box-sizing: border-box;
-  width: 100%;
-  max-width: 640px;
+  /* A fixed width, so the History dialog keeps its size from step to step */
+  width: 640px;
+  max-width: 100%;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 10px;
