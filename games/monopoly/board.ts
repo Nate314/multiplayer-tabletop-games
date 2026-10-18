@@ -5,7 +5,6 @@ import type { ColorGroup, OwnableSpace, Space } from './types.ts';
 export const BOARD_SIZE = 40;
 export const GO = 0;
 export const JAIL = 10;
-export const GO_TO_JAIL = 30;
 export const START_CASH = 1500;
 export const GO_SALARY = 200;
 export const JAIL_FINE = 50;

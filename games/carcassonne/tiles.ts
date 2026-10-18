@@ -94,10 +94,6 @@ export function drawTiles(): TileType[] {
   return TILE_TYPES.flatMap(type => Array.from({ length: TILES[type].count - (type === START_TILE ? 1 : 0) }, () => type));
 }
 
-export function isTileType(value: unknown): value is TileType {
-  return typeof value === 'string' && value in TILES;
-}
-
 // How the tile's own sides and half-edges sit once it is turned `rotation` quarter turns clockwise
 export function turnSide(side: number, rotation: number): Side {
   return (((side + rotation) % 4) + 4) % 4 as Side;

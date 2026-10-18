@@ -6,10 +6,6 @@ import type { Hex, Layout, PortKind, Random, Resource } from './types.ts';
 
 export const RESOURCES: Resource[] = ['wood', 'brick', 'sheep', 'wheat', 'ore'];
 
-export const RESOURCE_NAMES: Record<Resource, string> = {
-  wood: 'wood', brick: 'brick', sheep: 'sheep', wheat: 'wheat', ore: 'ore'
-};
-
 // Hexes in axial coordinates (q, r), pointy side up, row by row from the top
 export const HEX_COORDS: [number, number][] = [];
 for (let r = -2; r <= 2; r++) {

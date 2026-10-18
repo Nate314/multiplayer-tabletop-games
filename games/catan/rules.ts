@@ -1,7 +1,7 @@
 // Catan rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, building.ts, dice.ts, trades.ts, devCards.ts, roads.ts and state.ts.
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState } from '../../shared/seating.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { EDGE_COUNT, HEX_COUNT, VERTEX_COUNT, desertOf, isIndex, randomLayout } from './board.ts';
 import {
@@ -12,7 +12,7 @@ import { afterDiscards, discard, discardForAbsent, moveRobber, roll, rollDie } f
 import { roadLengths } from './roads.ts';
 import { BANK_SIZE, add, isResource, noResources, parseResources, total } from './resources.ts';
 import {
-  LOG_SIZE, checkWin, endGame, nameOf, nextPlayer, note, points, settleAwards, startTurn, syncTurn, visiblePoints
+  LOG_SIZE, checkWin, endGame, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
 } from './state.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
@@ -195,7 +195,7 @@ function playSetup(state: GameState, seat: Seat, move: Move): Result<GameState> 
 }
 
 function endTurn(state: GameState, seat: Seat): Result<GameState> {
-  return { state: note(startTurn(state, nextPlayer(state, seat)), `${nameOf(state, seat)} ended their turn`) };
+  return { state: note(startTurn(state, nextActivePlayer(state, seat)), `${nameOf(state, seat)} ended their turn`) };
 }
 
 // The turn holder's moves: a pending robber, discard or free road comes first; development cards may be played
@@ -306,7 +306,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   }
   next = setupWithout(next, seat);
   if (!next.setup && state.turnHolder === seat) {
-    const following = nextPlayer(next, seat);
+    const following = nextActivePlayer(next, seat);
     next = note(startTurn(next, following), `${nameOf(state, following)}'s turn`);
   }
   if (next.activePlayers.length < MIN_PLAYERS) {

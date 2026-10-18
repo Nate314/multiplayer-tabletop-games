@@ -192,7 +192,3 @@ export const ROUTE_POINTS: Record<number, number> = { 1: 1, 2: 2, 3: 4, 4: 7, 5:
 export function routeName(route: Route): string {
   return `${CITIES[route.a].name} to ${CITIES[route.b].name}`;
 }
-
-export function ticketName(ticket: Ticket): string {
-  return `${CITIES[ticket.a].name} to ${CITIES[ticket.b].name}`;
-}
