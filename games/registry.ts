@@ -2,6 +2,7 @@ import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { quoridor } from './quoridor/index.ts';
 import { rummikub } from './rummikub/index.ts';
 import { azul } from './azul/index.ts';
+import { carcassonne } from './carcassonne/index.ts';
 import { chess } from './chess/index.ts';
 import { checkers } from './checkers/index.ts';
 import { backgammon } from './backgammon/index.ts';
@@ -21,5 +22,5 @@ import { splendor } from './splendor/index.ts';
 // Landing page order, alphabetical by name. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  azul, backgammon, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, rook, rummikub, scrabble, skipbo, splendor, uno, war
+  azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, rook, rummikub, scrabble, skipbo, splendor, uno, war
 ];

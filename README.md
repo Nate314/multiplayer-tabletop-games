@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has eighteen games: Azul, Parchisi, Quoridor, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Catan (three to four players), Rook (four players), Go Fish, Phase 10 and Skip-Bo (two to six players), and Monopoly and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has nineteen games: Azul, Parchisi, Quoridor, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Catan (three to four players), Rook (four players), Carcassonne (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), and Monopoly and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -110,6 +110,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 
 - [Azul](games/azul/README.md): draft colored tiles and decorate your palace wall. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Azul_(board_game)).
 - [Backgammon](games/backgammon/README.md): race your fifteen checkers home and bear them off before your opponent. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Backgammon).
+- [Carcassonne](games/carcassonne/README.md): lay land tiles to build cities, roads and fields, and claim them with your meeples, for 2 to 5 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Carcassonne_(board_game)).
 - [Catan](games/catan/README.md): settle an island, trade resources and build roads, settlements and cities to reach 10 points, for 3 to 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Catan) and the official base game rules.
 - [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
 - [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
