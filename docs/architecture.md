@@ -63,7 +63,7 @@ flowchart TD
 - `games/registry.ts` lists every `GameDefinition` in landing page order
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
-- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use. Games built before them keep their own shuffle
+- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
 
@@ -133,7 +133,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
    - Creates games from the registry, seats players, and locks joining after the first move
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
-   - Keeps each game's undo history and runs unanimous undo votes. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
+   - Keeps each game's undo history and runs unanimous undo votes. An undo calls the game's `onUndo` on the restored state, where a game reshuffles its face-down piles. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
    - Holds each game's full state in memory, written through to SQLite, and sends only the public view
    - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state

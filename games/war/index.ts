@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { shuffleEach } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -13,5 +14,6 @@ export const war: GameDefinition<GameState, PublicGameState> = {
   createGameState,
   resetLobby,
   applyMove,
+  onUndo: (state, random) => ({ ...state, piles: shuffleEach(state.piles, random) }),
   toPublicState
 };

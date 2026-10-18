@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { shuffle } from '../../shared/shuffle.ts';
 import {
   MIN_PLAYERS, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState
 } from './rules.ts';
@@ -18,5 +19,6 @@ export const catan: GameDefinition<GameState, PublicGameState> = {
   onPlayerDisconnected,
   applyMove,
   applyAction,
+  onUndo: (state, random) => ({ ...state, devDeck: shuffle(state.devDeck, random) }),
   toPublicState
 };

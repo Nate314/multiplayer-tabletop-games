@@ -144,6 +144,7 @@ export function createGameManager(
       disconnected: state.disconnected,
       dismissVote: null
     };
+    if (room.game.onUndo) restored = room.game.onUndo(restored, random);
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
       restored = removePlayer(room.game, restored, seat, random);
     }
