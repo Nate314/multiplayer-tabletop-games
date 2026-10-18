@@ -111,7 +111,6 @@ export function analyzeGroup(ids: number[]): GroupInfo | null {
   return runInOrder(ids) ?? runSorted(ids) ?? setInfo(ids);
 }
 
-const groupKey = (ids: number[]) => [...ids].sort((a, b) => a - b).join(',');
 
 // Where each joker on the table stands, and in which group
 type JokerPlace = { value: number; colors: TileColor[]; group: GroupInfo };
@@ -133,18 +132,24 @@ function sharesNatural(a: GroupInfo, b: GroupInfo): boolean {
 // A joker that no longer stands for the same tile alongside the same tiles has been taken. In a set it may
 // stand for any missing color, so it stays put while one of the colors it could stand for is still missing. It is allowed only
 // if the tile it stood for now sits with the tiles it was with, from the rack or from elsewhere on the table.
+// Each taken joker needs a tile of its own: one tile never frees two jokers.
 function jokersReplaced(before: GroupInfo[], after: GroupInfo[]): boolean {
   const old = jokerPlaces(before);
   const now = jokerPlaces(after);
+  const used = new Set<number>();
   return [...old].every(([id, was]) => {
     const is = now.get(id);
     const stayed = is !== undefined && is.value === was.value && is.colors.some(color => was.colors.includes(color)) &&
       sharesNatural(is.group, was.group);
     if (stayed) return true;
-    return after.some(group => sharesNatural(group, was.group) && group.tiles.some(tileId => {
+    const replacement = after.filter(group => sharesNatural(group, was.group)).flatMap(group => group.tiles).find(tileId => {
       const tile = tileOf(tileId);
-      return tile.kind === 'number' && !was.group.tiles.includes(tileId) && tile.value === was.value && was.colors.includes(tile.color);
-    }));
+      return tile.kind === 'number' && !used.has(tileId) && !was.group.tiles.includes(tileId) &&
+        tile.value === was.value && was.colors.includes(tile.color);
+    });
+    if (replacement === undefined) return false;
+    used.add(replacement);
+    return true;
   });
 }
 
@@ -169,9 +174,10 @@ export function checkPlay(table: Table, melded: boolean, rack: number[], propose
 
   let meld: number | null = null;
   if (!melded) {
-    const keys = groups.map(group => groupKey(group.tiles));
+    // In exact order, since reordering a group can change what its jokers stand for
+    const keys = groups.map(group => group.tiles.join(','));
     const unchanged = table.every(ids => {
-      const at = keys.indexOf(groupKey(ids));
+      const at = keys.indexOf(ids.join(','));
       if (at >= 0) keys[at] = '';
       return at >= 0;
     });

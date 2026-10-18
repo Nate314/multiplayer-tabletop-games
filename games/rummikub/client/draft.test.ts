@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { heldTiles, moveTo as move, rackOrder, resetDraft, sortRack, splitGroup } from './draft.ts';
+import { canReturnToRack, clickTile, heldTiles, moveTo as move, placeHeld, rackOrder, resetDraft, sortRack, splitGroup } from './draft.ts';
 import { COLORS, JOKERS } from '../rules.ts';
 import type { TileColor } from '../types.ts';
 
@@ -56,6 +56,35 @@ test('tiles from the table cannot go to the rack, but this turn\'s rack tiles ca
     table: [[r(1), r(2), r(3)]], rack: [r(4), r(8)]
   });
   assert.deepEqual(moveTo(placed, { kind: 'tile', id: r(4) }, { kind: 'rack' }, committed), { table: [[r(1), r(2), r(3)]], rack: [r(8), r(4)] });
+});
+
+test('clicking picks a tile up, puts it in front of another, or puts it down; a refused drop keeps its message', () => {
+  const idle = { draft, held: null, hint: null };
+  const holding = clickTile(idle, r(4), committed, true);
+  assert.deepEqual(holding.held, { kind: 'tile', id: r(4) });
+  assert.deepEqual(clickTile(holding, r(4), committed, true), idle);
+  const placed = clickTile(holding, r(5), committed, true);
+  assert.deepEqual(placed.draft.table[1], [r(4), r(5), r(6), r(7)]);
+  assert.equal(placed.held, null);
+
+  // A table tile dropped in front of a rack tile is refused, and the message stays
+  const refused = clickTile(clickTile(idle, r(1), committed, true), r(8), committed, true);
+  assert.deepEqual(refused, { draft, held: null, hint: 'Tiles from the table must stay on the table' });
+
+  // Off turn, rack tiles move about the rack but not onto the table
+  const offTurn = clickTile(clickTile(idle, r(4), committed, false), r(5), committed, false);
+  assert.equal(offTurn.hint, 'Wait for your turn to put tiles on the table');
+  assert.deepEqual(clickTile(clickTile(idle, r(8), committed, false), r(4), committed, false).draft.rack, [r(8), r(4), t('blue', 9)]);
+});
+
+test('a group of this turn\'s own tiles can go back to the rack', () => {
+  const own = { table: [[r(1), r(2), r(3)], [t('blue', 9), t('blue', 10), t('blue', 11)]], rack: [r(8)] };
+  const held = { draft: own, held: { kind: 'group', index: 1 } as const, hint: null };
+  assert.deepEqual(placeHeld(held, { kind: 'rack' }, committed, true).draft, {
+    table: [[r(1), r(2), r(3)]], rack: [r(8), t('blue', 9), t('blue', 10), t('blue', 11)]
+  });
+  assert.equal(canReturnToRack(own, { kind: 'group', index: 1 }, committed), true);
+  assert.equal(canReturnToRack(own, { kind: 'group', index: 0 }, committed), false);
 });
 
 test('dropping a tile on itself changes nothing', () => {

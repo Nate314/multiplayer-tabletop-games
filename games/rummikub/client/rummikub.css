@@ -295,6 +295,11 @@
   color: #fff;
   font-size: 1rem;
   cursor: grab;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  user-select: none;
 }
 
 [data-game="rummikub"] .rk-group-end {
@@ -379,12 +384,21 @@
 }
 
 [data-game="rummikub"] .rk-tile-button {
-  padding: 0;
-  border: none;
+  display: inline-flex;
   border-radius: 7px;
-  background: none;
-  cursor: pointer;
-  line-height: 0;
+  cursor: grab;
+  line-height: 1;
+}
+
+[data-game="rummikub"] .rk-tile-button:focus-visible,
+[data-game="rummikub"] .rk-group-handle:focus-visible {
+  outline: 3px solid var(--held);
+  outline-offset: 2px;
+}
+
+/* Controls that appear only while something is held keep their space, so nothing moves under a drag */
+[data-game="rummikub"] .rk-hidden {
+  visibility: hidden;
 }
 
 [data-game="rummikub"] .rk-tile-button:hover .rk-tile {

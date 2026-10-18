@@ -167,6 +167,11 @@ test('first meld must reach 30 from own tiles and may not touch the table', () =
   const longRun = [...blackRun, t('black', 4)];
   const taking = game({ 1: [...RED_RUN, t('blue', 4), t('orange', 4)], 2: [t('orange', 5)] }, [longRun], [2]);
   assert.deepEqual(play(taking, 1, [blackRun, [t('black', 4), t('blue', 4), t('orange', 4)], RED_RUN]), meldError);
+
+  // Nor is reordering a table group, which would change what its joker stands for (a 6 here, a 3 after)
+  const withJoker = game({ 1: RED_RUN, 2: [t('orange', 5)] }, [[t('blue', 4), t('blue', 5), J1]], [2]);
+  assert.deepEqual(play(withJoker, 1, [[J1, t('blue', 4), t('blue', 5)], RED_RUN]), meldError);
+  assert.ok('state' in play(withJoker, 1, [[t('blue', 4), t('blue', 5), J1], RED_RUN]));
 });
 
 test('a joker in a first meld counts as the tile it stands for', () => {
@@ -256,6 +261,19 @@ test('a joker taken from the table must be replaced by its tile and played again
     const fromSet = game({ 1: [t(color, 9), t('red', 2), t('red', 3)], 2: [t('orange', 5)] }, set);
     assert.ok('state' in play(fromSet, 1, [[t('red', 9), t('blue', 9), t(color, 9)], [J2, t('red', 2), t('red', 3)]]), color);
   }
+
+  // One tile frees only one joker: with two jokers in a set of 5s, the black 5 frees one, and the other then
+  // stands only for the orange 5, which must be put in too
+  const twoJokers = [[t('red', 5), t('blue', 5), J1, J2]];
+  const oneTile = game({ 1: [t('black', 5), t('orange', 9), t('orange', 10)], 2: [t('orange', 1)] }, twoJokers);
+  assert.deepEqual(
+    play(oneTile, 1, [[t('red', 5), t('blue', 5), t('black', 5)], [t('orange', 9), t('orange', 10), J1, J2]]),
+    { error: 'A joker taken from the table must be replaced by the tile it stands for' }
+  );
+  const twoTiles = game({ 1: [t('black', 5), t('orange', 5), t('orange', 9), t('orange', 10)], 2: [t('orange', 1)] }, twoJokers);
+  assert.ok('state' in play(twoTiles, 1, [
+    [t('red', 5), t('blue', 5), t('black', 5), t('orange', 5)], [t('orange', 9), t('orange', 10), J1, J2]
+  ]));
 
   // Taking a tile out of a set of four that holds a joker leaves the joker where it is
   const four = [[t('red', 8), t('blue', 8), t('black', 8), J2]];

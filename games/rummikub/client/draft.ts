@@ -42,6 +42,34 @@ export function moveTo(draft: Draft, held: Held, target: Target, committed: Read
   return { state: { table: table.filter(group => group.length > 0), rack } };
 }
 
+// Whether what is held may go back to the rack: only tiles put on the table this turn
+export function canReturnToRack(draft: Draft, held: Held, committed: ReadonlySet<number>): boolean {
+  const tiles = heldTiles(draft, held);
+  return tiles.length > 0 && tiles.every(id => !committed.has(id));
+}
+
+// The draft, what is held and the message for the player, as clicks and drops change them
+export type Interaction = { draft: Draft; held: Held | null; hint: string | null };
+
+const WAIT_FOR_TURN = 'Wait for your turn to put tiles on the table';
+
+// Puts what is held at the target. Off turn, only the rack can be rearranged.
+export function placeHeld(state: Interaction, target: Target, committed: ReadonlySet<number>, isMyTurn: boolean): Interaction {
+  if (!state.held) return state;
+  const onRack = target.kind === 'rack' || (target.kind === 'before' && state.draft.rack.includes(target.id));
+  if (!isMyTurn && !onRack) return { ...state, hint: WAIT_FOR_TURN };
+  const result = moveTo(state.draft, state.held, target, committed);
+  if ('error' in result) return { ...state, held: null, hint: result.error };
+  return { draft: result.state, held: null, hint: null };
+}
+
+// A click picks a tile up, puts it down again, or drops the held tile or group in front of the clicked tile
+export function clickTile(state: Interaction, id: number, committed: ReadonlySet<number>, isMyTurn: boolean): Interaction {
+  if (state.held?.kind === 'tile' && state.held.id === id) return { ...state, held: null, hint: null };
+  if (state.held) return placeHeld(state, { kind: 'before', id }, committed, isMyTurn);
+  return { ...state, held: { kind: 'tile', id }, hint: null };
+}
+
 // Splits a group in two before its tile at `at`
 export function splitGroup(draft: Draft, index: number, at: number): Draft {
   const group = draft.table[index];

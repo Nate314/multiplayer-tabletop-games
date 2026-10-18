@@ -20,7 +20,7 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 
 - On your turn, click a tile on your rack or the table to pick it up (it lifts and is outlined), then click the tile it should go in front of, the + at the end of a group, or New group. Click a held tile again to put it down. Dragging a tile and dropping it in the same places works too
 - The handle at the start of a group picks up the whole group; put it at the end of another group to merge them. The thin bar between two tiles of a group splits the group there
-- A tile you put on the table this turn can go back to your rack: drop it in front of a rack tile or click End of rack. Tiles that were on the table at the start of the turn cannot
+- A tile you put on the table this turn, or a group made only of such tiles, can go back to your rack: drop it in front of a rack tile or click End of rack. Tiles that were on the table at the start of the turn cannot
 - A group that is not a valid set or run has a dashed red border. The line under your rack says what is wrong with the play, or that it is ready. Click Play to send it
 - Reset puts the table and your rack back as they were at the start of the turn. Draw a tile (Pass when the pool is empty) ends your turn and drops any changes
 - Color and Number sort your rack. You can also move rack tiles about at any time, even on other players' turns. Only you see the order, and it is kept from turn to turn
@@ -37,4 +37,5 @@ These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Ru
 - **The lowest rack wins when nobody can play.** Wikipedia says the player with the fewest tiles wins when the pool is empty and nobody can play. Here the lowest rack total wins (published rule sheets differ on this point), and "nobody can play" is taken to mean every player has passed in turn with the pool empty
 - **Drawing for the first turn.** Wikipedia says only that the highest number starts. Here a joker counts lowest and tied players draw again
 - **When a joker counts as taken.** A joker counts as taken when, after the play, it stands for a different tile or is no longer with any of the tiles it was with. Wikipedia does not say how to read a group of one number tile and two jokers, which could be a run or a set; here it counts as a run
+- **Where a freed joker goes.** Wikipedia says a joker taken from the table must be used in a new set that turn. Here it only has to stay on the table in a valid group, which may be one already there. Each taken joker needs its own replacing tile
 - **Leaving.** The rules do not cover a player leaving mid-game. Here their tiles go back into the pool

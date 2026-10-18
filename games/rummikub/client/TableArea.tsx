@@ -1,4 +1,5 @@
 import type { DragEvent } from 'react';
+import Pickable from './Pickable';
 import Tile from './Tile';
 import { allowDrop } from './dragDrop.ts';
 import { analyzeGroup, tileName } from '../rules.ts';
@@ -14,6 +15,7 @@ export type TableEditing = {
   onPickGroup: (index: number) => void;
   onSplit: (index: number, at: number) => void;
   onDragStart: (event: DragEvent, held: Held) => void;
+  onDragEnd: () => void;
   onDrop: (event: DragEvent, target: Target) => void;
 };
 
@@ -29,6 +31,12 @@ function standsFor(group: GroupInfo | null, index: number): string | undefined {
   return group.kind === 'run' ? `${group.colors[index][0]} ${group.values[index]}` : `${group.values[index]}`;
 }
 
+// Hidden but still taking its space, so picking something up never moves anything on screen
+// (a drag is canceled when the page under it shifts)
+function shown(visible: boolean): string {
+  return visible ? '' : ' rk-hidden';
+}
+
 // The table as rows of groups. While editing, tiles and groups can be picked up and put down,
 // a group can be split between two tiles, and a group that is not a valid set or run is marked.
 export default function TableArea({ table, highlighted, edit }: TableAreaProps) {
@@ -39,64 +47,61 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
       {table.map((ids, index) => {
         const group = analyzeGroup(ids);
         const classes = ['rk-group', group ? '' : 'rk-group-invalid', edit?.held?.kind === 'group' && edit.held.index === index ? 'rk-held' : ''];
-        const label = `Group ${index + 1}`;
+        const label = `group ${index + 1}`;
         return (
           <div
             key={index}
             className={classes.filter(Boolean).join(' ')}
-            aria-label={group ? label : `${label} (not a valid set or run)`}
+            aria-label={group ? `Group ${index + 1}` : `Group ${index + 1} (not a valid set or run)`}
             role="group"
             onDragOver={edit && allowDrop}
             onDrop={edit && (event => edit.onDrop(event, { kind: 'groupEnd', index }))}
           >
             {edit && (
-              <button
-                type="button"
-                className="rk-group-handle"
-                aria-label={`Pick up ${label.toLowerCase()}`}
+              <Pickable
+                label={`Pick up ${label}`}
                 title="Pick up the whole group"
-                draggable
+                className="rk-group-handle"
+                onActivate={() => edit.onPickGroup(index)}
                 onDragStart={event => edit.onDragStart(event, { kind: 'group', index })}
-                onClick={() => edit.onPickGroup(index)}
+                onDragEnd={edit.onDragEnd}
               >
                 ⠿
-              </button>
+              </Pickable>
             )}
             {ids.map((id, at) => {
               const face = <Tile id={id} standsFor={standsFor(group, at)} highlighted={highlighted.includes(id)} />;
               return (
                 <span key={id} className="rk-slot">
-                  {edit && at > 0 && !holding && (
+                  {edit && at > 0 && (
                     <button
                       type="button"
-                      className="rk-split"
-                      aria-label={`Split ${label.toLowerCase()} before ${tileName(id)}`}
+                      className={`rk-split${shown(!holding)}`}
+                      aria-label={`Split ${label} before ${tileName(id)}`}
                       title="Split the group here"
                       onClick={() => edit.onSplit(index, at)}
                     />
                   )}
                   {edit ? (
-                    <button
-                      type="button"
+                    <Pickable
+                      label={tileName(id)}
                       className={edit.held?.kind === 'tile' && edit.held.id === id ? 'rk-tile-button rk-held' : 'rk-tile-button'}
-                      aria-label={tileName(id)}
-                      draggable
+                      onActivate={() => edit.onTile(id)}
                       onDragStart={event => edit.onDragStart(event, { kind: 'tile', id })}
-                      onDragOver={allowDrop}
+                      onDragEnd={edit.onDragEnd}
                       onDrop={event => edit.onDrop(event, { kind: 'before', id })}
-                      onClick={() => edit.onTile(id)}
                     >
                       {face}
-                    </button>
+                    </Pickable>
                   ) : face}
                 </span>
               );
             })}
-            {edit && holding && (
+            {edit && (
               <button
                 type="button"
-                className="rk-group-end"
-                aria-label={`Put at the end of ${label.toLowerCase()}`}
+                className={`rk-group-end${shown(holding)}`}
+                aria-label={`Put at the end of ${label}`}
                 onClick={() => edit.onTarget({ kind: 'groupEnd', index })}
               >
                 +
