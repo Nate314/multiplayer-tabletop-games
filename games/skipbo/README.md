@@ -18,8 +18,8 @@ Build piles from 1 to 12 with your hand, your stock and your discard piles, and 
 ## Controls
 
 - On your turn, click a card in your hand, your stock top or the top card of one of your discard piles to pick it. The building piles it fits are outlined; click one to play the card there
-- With a hand card picked, your four discard piles are outlined too; click one to discard the card there and end your turn
-- Click the picked card again, or Put back, to pick something else
+- With a hand card picked, each of your discard piles shows a Pile button. Click one to choose that pile, then click Discard here to put the card there and end your turn
+- Click the picked card again, or Put back, to pick something else. Clicking your stock top or a discard top switches the pick to that card
 - With no cards in your hand and none to draw, click End turn
 - Each building pile shows its top card (a Skip-Bo shows the number it stands for) and the number it needs next. The draw pile shows how many cards are left
 - Every player is shown with their hand size, stock size and stock top, and their four discard piles. The player whose turn it is is outlined, and the winner is outlined at the end

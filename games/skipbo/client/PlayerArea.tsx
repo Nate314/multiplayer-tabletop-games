@@ -7,9 +7,12 @@ type PlayerAreaProps = {
   gameState: PublicGameState;
   seat: Seat;
   // Your own area on your turn: the stock top and discard tops can be picked, and a picked hand card discarded
+  // in two steps: choose a discard pile, then confirm with Discard here
   interactive?: boolean;
   picked?: Source | null;
   onPick?: (source: Source) => void;
+  discardTarget?: PileIndex | null;
+  onChooseDiscard?: (pile: PileIndex) => void;
   onDiscard?: (pile: PileIndex) => void;
   // The move to highlight, in the history dialog
   lastMove?: LastMove | null;
@@ -19,7 +22,7 @@ const samePick = (a: Source | null, b: Source) =>
   a !== null && a.kind === b.kind && (a.kind !== 'discard' || (b.kind === 'discard' && a.pile === b.pile));
 
 // One player's stock (top card and count), hand size and four discard piles, fanned so every card shows
-export default function PlayerArea({ gameState, seat, interactive = false, picked = null, onPick, onDiscard, lastMove = null }: PlayerAreaProps) {
+export default function PlayerArea({ gameState, seat, interactive = false, picked = null, onPick, discardTarget = null, onChooseDiscard, onDiscard, lastMove = null }: PlayerAreaProps) {
   const { playerNames, stockTops, stockCounts, handCounts, discards, currentPlayer, winners } = gameState;
   const stockTop = stockTops[seat] ?? null;
   const piles = discards[seat] ?? [];
@@ -54,23 +57,30 @@ export default function PlayerArea({ gameState, seat, interactive = false, picke
             const top = pile.at(-1) ?? null;
             const used = mine && ((lastMove?.type === 'discard' && lastMove.pile === index)
               || (lastMove?.type === 'play' && lastMove.from.kind === 'discard' && lastMove.from.pile === index));
-            const fan = (
-              <span className="fan">
-                {pile.length === 0 && <span className="card card-small card-empty" aria-hidden="true" />}
-                {pile.map((card, position) => position === pile.length - 1 && !discarding
-                  ? <CardView key={card.id} card={card} small {...pickable({ kind: 'discard', pile: index }, top)} />
-                  : <CardView key={card.id} card={card} small />)}
-              </span>
+            const chosen = discarding && discardTarget === index;
+            const pileClass = ['discard-pile'];
+            if (used) pileClass.push('pile-last');
+            if (chosen) pileClass.push('pile-target');
+            return (
+              <div key={index} className={pileClass.join(' ')} aria-label={`Discard pile ${index + 1}`}>
+                <span className="fan">
+                  {pile.length === 0 && <span className="card card-small card-empty" aria-hidden="true" />}
+                  {pile.map((card, position) => position === pile.length - 1
+                    ? <CardView key={card.id} card={card} small {...pickable({ kind: 'discard', pile: index }, top)} />
+                    : <CardView key={card.id} card={card} small />)}
+                </span>
+                {discarding && (
+                  <button
+                    type="button"
+                    className={chosen ? 'discard-choice discard-confirm' : 'discard-choice'}
+                    onClick={() => (chosen ? onDiscard?.(index) : onChooseDiscard?.(index))}
+                    aria-label={chosen ? `Discard here on pile ${index + 1} and end your turn` : `Choose discard pile ${index + 1}`}
+                  >
+                    {chosen ? 'Discard here' : `Pile ${index + 1}`}
+                  </button>
+                )}
+              </div>
             );
-            const pileClass = used ? 'discard-pile pile-last' : 'discard-pile';
-            if (discarding) {
-              return (
-                <button key={index} type="button" className={`${pileClass} pile-target`} onClick={() => onDiscard?.(index)} aria-label={`Discard on pile ${index + 1}`}>
-                  {fan}
-                </button>
-              );
-            }
-            return <div key={index} className={pileClass} aria-label={`Discard pile ${index + 1}`}>{fan}</div>;
           })}
         </div>
       </div>

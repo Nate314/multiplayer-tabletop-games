@@ -23,7 +23,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I play a card?',
-    answer: 'On your turn, click a card in your hand, your stock top or the top of one of your discard piles. The building piles it fits light up; click one to play it. With a hand card picked, your discard piles light up too; click one to discard and end your turn. Click the card again or Put back to change your mind.'
+    answer: 'On your turn, click a card in your hand, your stock top or the top of one of your discard piles. The building piles it fits light up; click one to play it. With a hand card picked, each of your discard piles shows a Pile button: click one to choose it, then Discard here to discard and end your turn. Click the card again or Put back to change your mind, or click another card to pick it instead.'
   },
   {
     question: 'What if the draw pile runs out?',

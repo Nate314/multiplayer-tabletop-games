@@ -29,6 +29,8 @@ function turnMessage(state: PublicGameState, isMe: boolean): string {
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [picked, setPicked] = useState<Source | null>(null);
+  // The discard pile chosen for the picked hand card, waiting for Discard here
+  const [discardTarget, setDiscardTarget] = useState<PileIndex | null>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, myHand, moveCount, gameStatus } = gameState;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
@@ -40,10 +42,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   useEffect(() => {
     // Nothing stays picked across moves or undos
     setPicked(null);
+    setDiscardTarget(null);
   }, [moveCount]);
 
-  const toggle = (source: Source) =>
+  // A new pick starts the discard choice again
+  const toggle = (source: Source) => {
+    setDiscardTarget(null);
     setPicked(current => (JSON.stringify(current) === JSON.stringify(source) ? null : source));
+  };
   const play = (to: PileIndex) => {
     if (picked) gameService.makeMove({ type: 'play', from: picked, to });
   };
@@ -53,7 +59,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   let hint = '';
   if (isMyTurn && myHand.length === 0) hint = 'No cards to draw: play from your stock or discard piles, then End turn';
-  else if (isMyTurn && picked?.kind === 'hand') hint = 'Click a highlighted building pile to play it, or one of your discard piles to end your turn';
+  else if (isMyTurn && picked?.kind === 'hand' && discardTarget !== null) hint = `Click Discard here to put it on discard pile ${discardTarget + 1} and end your turn`;
+  else if (isMyTurn && picked?.kind === 'hand') hint = 'Click a highlighted building pile to play it, or choose a discard pile to end your turn';
   else if (isMyTurn && card) hint = 'Click a highlighted building pile to play it';
   else if (isMyTurn) hint = 'Pick a card from your stock, hand or discard piles';
 
@@ -76,7 +83,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             {isMyTurn && myHand.length === 0 && (
               <button type="button" onClick={() => gameService.makeMove({ type: 'endTurn' })}>End turn</button>
             )}
-            {picked && isMyTurn && <button type="button" onClick={() => setPicked(null)}>Put back</button>}
+            {picked && isMyTurn && <button type="button" onClick={() => { setPicked(null); setDiscardTarget(null); }}>Put back</button>}
           </div>
         </div>
 
@@ -96,6 +103,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               interactive={isMyTurn}
               picked={picked}
               onPick={toggle}
+              discardTarget={discardTarget}
+              onChooseDiscard={setDiscardTarget}
               onDiscard={discard}
             />
           </div>
