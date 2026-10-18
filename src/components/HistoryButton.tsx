@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 import HistoryDialog, { type History } from './HistoryDialog';
+import { downloadJson } from '../services/download';
+import { buildGameFile, gameFileName } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 
@@ -31,12 +33,17 @@ export default function HistoryButton({ gameType, gameState, client }: HistoryBu
     setHistory(current => (current?.status === 'loading' ? result : current));
   }
 
+  function download(steps: HistoryStep[]) {
+    const { gameId } = gameState;
+    downloadJson(gameFileName(gameType, gameId), buildGameFile(gameType, gameId, steps, new Date()));
+  }
+
   return (
     <>
       <button type="button" className="history-button" onClick={open}>
         History
       </button>
-      {history && <HistoryDialog client={client} history={history} title="History" onClose={close} />}
+      {history && <HistoryDialog client={client} history={history} title="History" onClose={close} onDownload={download} />}
     </>
   );
 }

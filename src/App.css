@@ -557,3 +557,20 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+:where(.open-saved-game) {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+  background: var(--lobby-surface);
+  color: var(--lobby-text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+:where(.open-saved-game:hover, .open-saved-game:focus-visible) {
+  border-color: var(--lobby-accent);
+}

@@ -5,6 +5,7 @@ import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
 import JoinDialog from './components/JoinDialog'
+import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
 import ThemeToggle from './components/ThemeToggle'
@@ -75,6 +76,7 @@ function App() {
         {session && !session.inGame && sessionGame && (
           <RejoinButton gameName={sessionGame.info.name} gameId={session.gameId} onRejoin={rejoin} />
         )}
+        <OpenSavedGame games={PLAYABLE_GAMES} />
         <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
       </main>
       {selected && (
