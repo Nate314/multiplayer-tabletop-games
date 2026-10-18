@@ -54,6 +54,7 @@ flowchart TD
 - Its public view, `toPublicState`, which removes hidden information
 - Its screen, read-only history board, move descriptions, FAQ content, icon and styles (`client/`), with CSS scoped under `[data-game="<id>"]`
 - Its rules tests
+- Its `README.md`, with the rules and controls for players, linked from the main README
 
 ## Contracts
 
