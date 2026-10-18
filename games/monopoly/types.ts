@@ -95,6 +95,9 @@ export type GameState = BaseGameState & {
   lastMove: LastMove | null;
 };
 
-export type PublicGameState = Omit<GameState, 'decks'> & BasePublicState & {
+// Everything but the deck order, which is what the browser sees and what read-only rule checks need
+export type TableState = Omit<GameState, 'decks'>;
+
+export type PublicGameState = TableState & BasePublicState & {
   deckCounts: Record<DeckName, number>;
 };

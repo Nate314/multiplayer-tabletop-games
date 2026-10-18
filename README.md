@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has sixteen games: Azul, Parchisi, Quoridor, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Rook (four players), Go Fish, Phase 10 and Skip-Bo (two to six players), and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has seventeen games: Azul, Parchisi, Quoridor, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Rook (four players), Go Fish, Phase 10 and Skip-Bo (two to six players), and Monopoly and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -114,6 +114,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
 - [Go Fish](games/gofish/README.md): ask for ranks, go fish, and collect the most books of four, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Go_Fish).
 - [Mancala](games/mancala/README.md): drop stones around the board, keep going from every full pit, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
+- [Monopoly](games/monopoly/README.md): buy, trade and build on properties, and bankrupt every other player, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Monopoly_(game)).
 - [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Parcheesi).
 - [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Phase_10).
 - [Quoridor](games/quoridor/README.md): race your pawn to the far side and block opponents with walls. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Quoridor).

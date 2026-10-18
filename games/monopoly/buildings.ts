@@ -4,7 +4,7 @@ import { BOARD, HOTEL, HOTEL_SUPPLY, HOUSE_SUPPLY, groupSpaces, ownable, streetA
 import { giveCash } from './money.ts';
 import { ownsGroup } from './movement.ts';
 import { money, nameOf, note } from './state.ts';
-import type { GameState, Result, Seat } from './types.ts';
+import type { GameState, Result, Seat, TableState } from './types.ts';
 
 const HOUSES_PER_HOTEL = 4;
 
@@ -17,7 +17,7 @@ export function hotelsLeft(state: Pick<GameState, 'buildings'>): number {
   return HOTEL_SUPPLY - Object.values(state.buildings).filter(level => level === HOTEL).length;
 }
 
-const levelOf = (state: GameState, space: number) => state.buildings[space] ?? 0;
+const levelOf = (state: TableState, space: number) => state.buildings[space] ?? 0;
 
 // Every space of the color group that `space` is in, or just `space` for a railroad or utility
 function groupOf(space: number): number[] {
@@ -25,7 +25,7 @@ function groupOf(space: number): number[] {
   return street ? groupSpaces(street.group) : [space];
 }
 
-export function groupHasBuildings(state: GameState, space: number): boolean {
+export function groupHasBuildings(state: TableState, space: number): boolean {
   return groupOf(space).some(index => levelOf(state, index) > 0);
 }
 
@@ -35,7 +35,7 @@ function withLevel(state: GameState, space: number, level: number): GameState {
 }
 
 // Why `seat` may not build on `space` now, or null if they may
-export function buildError(state: GameState, seat: Seat, space: number): string | null {
+export function buildError(state: TableState, seat: Seat, space: number): string | null {
   const street = streetAt(space);
   if (!street) return 'Only streets take houses';
   if (state.owners[space] !== seat) return 'You do not own that street';
@@ -63,7 +63,7 @@ export function build(state: GameState, seat: Seat, space: number): Result<GameS
   return { state: note(built, `${nameOf(state, seat)} built ${what} on ${street.name} for ${money(street.houseCost)}`) };
 }
 
-export function sellError(state: GameState, seat: Seat, space: number): string | null {
+export function sellError(state: TableState, seat: Seat, space: number): string | null {
   const street = streetAt(space);
   if (!street || state.owners[space] !== seat) return 'You have no buildings there';
   const level = levelOf(state, space);
@@ -103,7 +103,7 @@ export function sellAllBuildings(state: GameState, seat: Seat): { state: GameSta
   return { state: giveCash({ ...state, buildings }, seat, raised), raised };
 }
 
-export function mortgageError(state: GameState, seat: Seat, space: number): string | null {
+export function mortgageError(state: TableState, seat: Seat, space: number): string | null {
   if (!ownable(space) || state.owners[space] !== seat) return 'You do not own that property';
   if (state.mortgaged.includes(space)) return 'That property is already mortgaged';
   if (groupHasBuildings(state, space)) return 'Sell every building in the color group first';
@@ -118,7 +118,7 @@ export function mortgage(state: GameState, seat: Seat, space: number): Result<Ga
   return { state: note(next, `${nameOf(state, seat)} mortgaged ${property.name} for ${money(property.mortgage)}`) };
 }
 
-export function unmortgageError(state: GameState, seat: Seat, space: number): string | null {
+export function unmortgageError(state: TableState, seat: Seat, space: number): string | null {
   if (!ownable(space) || state.owners[space] !== seat) return 'You do not own that property';
   if (!state.mortgaged.includes(space)) return 'That property is not mortgaged';
   if ((state.cash[seat] ?? 0) < unmortgageCost(space)) return `You need ${money(unmortgageCost(space))} to lift the mortgage`;

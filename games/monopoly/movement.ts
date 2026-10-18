@@ -6,7 +6,7 @@ import {
 import { DECKS, DECK_NAMES, jailCardIndex } from './cards.ts';
 import { charge, giveCash } from './money.ts';
 import { inGame, money, nameOf, note } from './state.ts';
-import type { DeckName, GameState, Random, Seat } from './types.ts';
+import type { DeckName, GameState, Random, Seat, TableState } from './types.ts';
 
 export const MAX_DOUBLES = 3;
 export const MAX_JAIL_ROLLS = 3;
@@ -24,19 +24,19 @@ export function rollDice(random: Random): [number, number] {
 
 const total = (dice: [number, number] | null) => dice ? dice[0] + dice[1] : 0;
 
-export function ownsGroup(state: GameState, seat: Seat, space: number): boolean {
+export function ownsGroup(state: TableState, seat: Seat, space: number): boolean {
   const target = BOARD[space];
   if (target.kind !== 'street') return false;
   return groupSpaces(target.group).every(index => state.owners[index] === seat);
 }
 
-function ownedOfKind(state: GameState, seat: Seat, kind: 'railroad' | 'utility'): number {
+function ownedOfKind(state: TableState, seat: Seat, kind: 'railroad' | 'utility'): number {
   return spacesOfKind(kind).filter(index => state.owners[index] === seat).length;
 }
 
 // What landing on `space` costs, with the dice that got there for a utility. Mortgaged and bank-owned spaces cost nothing.
 // A whole color group doubles the rent of its unimproved streets, even when another street of the group is mortgaged.
-export function rentFor(state: GameState, space: number, diceTotal: number): number {
+export function rentFor(state: TableState, space: number, diceTotal: number): number {
   const owner = state.owners[space];
   const target = BOARD[space];
   if (owner === undefined || state.mortgaged.includes(space)) return 0;

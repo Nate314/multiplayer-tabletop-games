@@ -5,7 +5,7 @@ import { ownable, streetAt } from './board.ts';
 import { buildError, mortgageError, sellError } from './buildings.ts';
 import { inGame } from './state.ts';
 import { monopoly } from './index.ts';
-import type { GameState, PublicGameState } from './types.ts';
+import type { PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
@@ -49,11 +49,10 @@ function step(manager: Manager, buyer = 1): PublicGameState {
   const seat = state.currentPlayer ?? assert.fail('nobody to act');
   const debt = state.debts[0];
   if (debt) {
-    const full = state as unknown as GameState; // these checks never read the hidden decks
     const spaces = Object.keys(state.owners).map(Number);
-    const sellable = spaces.find(space => sellError(full, seat, space) === null);
+    const sellable = spaces.find(space => sellError(state, seat, space) === null);
     if (sellable !== undefined) return ok(manager.move(ROOM, seat, { type: 'sellBuilding', space: sellable }));
-    const mortgageable = spaces.find(space => mortgageError(full, seat, space) === null);
+    const mortgageable = spaces.find(space => mortgageError(state, seat, space) === null);
     if (mortgageable !== undefined) return ok(manager.move(ROOM, seat, { type: 'mortgage', space: mortgageable }));
     return ok(manager.move(ROOM, seat, { type: 'declareBankruptcy' }));
   }
@@ -69,9 +68,8 @@ function step(manager: Manager, buyer = 1): PublicGameState {
     const price = ownable(state.pendingBuy)?.price ?? 0;
     return ok(manager.move(ROOM, seat, { type: seat === buyer && state.cash[seat] >= price ? 'buy' : 'decline' }));
   }
-  const full = state as unknown as GameState; // building checks never read the hidden decks
   const buildable = Object.keys(state.owners).map(Number)
-    .find(space => buildError(full, seat, space) === null && state.cash[seat] - (streetAt(space)?.houseCost ?? 0) >= 100);
+    .find(space => buildError(state, seat, space) === null && state.cash[seat] - (streetAt(space)?.houseCost ?? 0) >= 100);
   if (buildable !== undefined) return ok(manager.move(ROOM, seat, { type: 'build', space: buildable }));
   return ok(manager.move(ROOM, seat, { type: state.canRoll ? 'roll' : 'endTurn' }));
 }
