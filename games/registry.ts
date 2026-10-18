@@ -10,8 +10,8 @@ import { scrabble } from './scrabble/index.ts';
 import { uno } from './uno/index.ts';
 import { phase10 } from './phase10/index.ts';
 
-// Landing page order. Games differ in their state types, so the list holds them type-erased.
+// Landing page order, alphabetical by name. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  quoridor, azul, chess, checkers, backgammon, mancala, parchisi, scrabble, uno, phase10
+  azul, backgammon, checkers, chess, mancala, parchisi, phase10, quoridor, scrabble, uno
 ];

@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has ten games: Quoridor, Azul, Parchisi and Scrabble (two to four players), Chess, Checkers, Backgammon and Mancala (two players), UNO (two to eight players) and Phase 10 (two to six players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has ten games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Phase 10 (two to six players) and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -101,18 +101,18 @@ See `docs/architecture.md` for more.
 
 ## Games
 
-Each game's rules and controls are in its own README:
+Each game's rules and controls are in its own README. The rules follow the Wikipedia page linked for each game; any difference is listed in that game's README.
 
-- [Quoridor](games/quoridor/README.md): race your pawn to the far side and block opponents with walls.
-- [Azul](games/azul/README.md): draft colored tiles and decorate your palace wall.
-- [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game.
-- [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row.
-- [Backgammon](games/backgammon/README.md): race your fifteen checkers home and bear them off before your opponent.
-- [Mancala](games/mancala/README.md): sow seeds around the board and capture the most in your store.
-- [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home.
-- [Scrabble](games/scrabble/README.md): build crossing words from your letter tiles on the premium-square board.
-- [UNO](games/uno/README.md): match colors and numbers and be the first to empty your hand, for 2 to 8 players.
-- [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first.
+- [Azul](games/azul/README.md): draft colored tiles and decorate your palace wall. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Azul_(board_game)).
+- [Backgammon](games/backgammon/README.md): race your fifteen checkers home and bear them off before your opponent. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Backgammon).
+- [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
+- [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
+- [Mancala](games/mancala/README.md): sow seeds around the board and capture the most in your store. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Kalah).
+- [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Parcheesi).
+- [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Phase_10).
+- [Quoridor](games/quoridor/README.md): race your pawn to the far side and block opponents with walls. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Quoridor).
+- [Scrabble](games/scrabble/README.md): build crossing words from your letter tiles on the premium-square board. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Scrabble).
+- [UNO](games/uno/README.md): match colors and numbers and be the first to empty your hand, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)).
 
 ## Inspirations
 
