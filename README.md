@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has eleven games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Phase 10 and Skip-Bo (two to six players) and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has twelve games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Go Fish, Phase 10 and Skip-Bo (two to six players) and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -112,6 +112,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Backgammon](games/backgammon/README.md): race your fifteen checkers home and bear them off before your opponent. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Backgammon).
 - [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
 - [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
+- [Go Fish](games/gofish/README.md): ask for ranks, go fish, and collect the most books of four, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Go_Fish).
 - [Mancala](games/mancala/README.md): drop stones around the board, keep going from every full pit, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
 - [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Parcheesi).
 - [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Phase_10).
