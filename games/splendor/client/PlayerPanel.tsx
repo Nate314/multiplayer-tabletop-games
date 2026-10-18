@@ -62,7 +62,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
                     level={held.level}
                     animKey={reservedKey(seat, index, held)}
                     selected={selection?.kind === 'card' && selection.source.kind === 'reserved' && selection.source.index === index}
-                    affordable={isMe && canBuy(gameState, seat, held.card)}
+                    affordable={isMe && !gameState.isGameOver && canBuy(gameState, seat, held.card)}
                     onClick={clickable ? () => onReserved(index) : undefined}
                   />
                 );

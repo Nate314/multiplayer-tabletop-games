@@ -69,7 +69,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="play-area">
           <Table
             gameState={gameState}
-            seat={hasSeat ? playerNumber : null}
+            seat={hasSeat && !isGameOver ? playerNumber : null}
             active={canPick}
             selection={selection}
             onGem={gem => setSelection(previous => toggleGem(previous, gem, gameState))}

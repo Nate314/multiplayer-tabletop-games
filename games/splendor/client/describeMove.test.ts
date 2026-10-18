@@ -29,6 +29,10 @@ test('describes a purchase with its payment and a noble visit', () => {
   );
 });
 
+test('a purchase paid entirely by bonuses is free', () => {
+  assert.equal(say({ seat: 1, noble: null, type: 'buy', card: 0, fromReserve: false, paid: emptyTokens() }), 'Alice bought a level 1 white card for free');
+});
+
 test('describes returning tokens, choosing a noble and passing', () => {
   assert.equal(say({ seat: 1, noble: null, type: 'returnTokens', tokens: { ...emptyTokens(), blue: 1 } }), 'Alice returned 1 blue');
   assert.equal(say({ seat: 1, noble: 3, type: 'chooseNoble' }), 'Alice chose a noble to visit');

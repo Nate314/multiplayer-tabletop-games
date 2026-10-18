@@ -269,7 +269,7 @@ function passTurn(state: GameState, seat: Seat): GameState {
   const passed: GameState = { ...state, finalRound, pending: null };
   if (finalRound && roundOver) return endGame(passed);
   const status = reached && !state.finalRound
-    ? `${state.playerNames[seat]} reached ${WINNING_PRESTIGE} prestige. The round finishes, then the game ends.`
+    ? `${state.gameStatus}. ${state.playerNames[seat]} has ${WINNING_PRESTIGE} prestige: the round finishes, then the game ends.`
     : state.gameStatus;
   return { ...passed, currentPlayer: next, turnHolder: next, gameStatus: status };
 }
@@ -323,7 +323,7 @@ function describeAction(name: string, move: LastMove): string {
       const what = move.card === null ? `the top level ${move.level} card` : cardName(move.card);
       return `${name} reserved ${what}${move.gold ? ' and took a gold' : ''}`;
     }
-    case 'buy': return `${name} bought ${cardName(move.card)}${move.fromReserve ? ' from their reserve' : ''} for ${listTokens(move.paid)}`;
+    case 'buy': return `${name} bought ${cardName(move.card)}${move.fromReserve ? ' from their reserve' : ''}${tokenTotal(move.paid) === 0 ? ' for free' : ` for ${listTokens(move.paid)}`}`;
     case 'returnTokens': return `${name} returned ${listTokens(move.tokens)}`;
     case 'chooseNoble': return `${name} chose a noble to visit`;
     case 'pass': return `${name} could not act and passed`;

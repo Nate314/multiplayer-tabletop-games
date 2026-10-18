@@ -400,11 +400,12 @@
   border: 1px solid rgba(0, 0, 0, 0.35);
 }
 
+/* Up to four costs, two to a row, so they always fit on the card */
 [data-game="splendor"] .cost {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
   gap: 2px;
+  align-self: flex-start;
 }
 
 [data-game="splendor"] .cost-pip,
@@ -533,6 +534,12 @@
 
 [data-game="splendor"] .player-current {
   border: 2px solid var(--highlight);
+}
+
+/* The player who made the last move, for the history dialog and the live table */
+[data-game="splendor"] .player-last {
+  outline: 2px dashed var(--highlight);
+  outline-offset: 2px;
 }
 
 [data-game="splendor"] .player-me .player-name {

@@ -39,7 +39,7 @@ function ReturnTokens({ gameState, seat, count, onMove }: { gameState: PublicGam
         ))}
       </div>
       <button type="button" className="primary-action" onClick={() => onMove({ type: 'returnTokens', tokens: chosen })} disabled={total !== count}>
-        Return {listTokens(chosen)}
+        Return{total > 0 ? ` ${listTokens(chosen)}` : ''}
       </button>
     </div>
   );
@@ -123,7 +123,7 @@ export default function TurnPanel({ gameState, seat, selection, onMove, onClear 
   return (
     <div className="turn-panel">
       <p className="turn-panel-title">
-        {paid ? `Buying pays ${listTokens(paid)}.` : 'You cannot afford this card yet.'}
+        {!paid ? 'You cannot afford this card yet.' : tokenTotal(paid) === 0 ? 'Your bonuses pay for all of it.' : `Buying pays ${listTokens(paid)}.`}
       </p>
       <div className="turn-actions">
         <button type="button" className="primary-action" disabled={!canBuy(gameState, seat, card)} onClick={() => onMove({ type: 'buy', source })}>
