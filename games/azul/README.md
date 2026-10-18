@@ -24,3 +24,7 @@ Each round, players take turns picking tiles and placing them on their own board
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
 - After each round, read the scoring screen and click Continue; the next round starts once everyone has
 - Click FAQ at the top of the page for a short guide to the rules and controls
+
+## Differences from Wikipedia
+
+None. Wikipedia only summarizes the rules; where it is silent (tile counts, factories per player count, the first-player marker, the floor line, point values and the tiebreak) the game follows the published rulebook. The advanced variant Wikipedia mentions, with free placement on the wall, is not offered.

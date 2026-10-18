@@ -25,3 +25,7 @@ Two players. The first to join moves first.
 - The status shows extra turns, captures and the final score
 - Click Undo to ask the other player to undo the last turn
 - Click FAQ at the top of the page for the rules and controls
+
+## Differences from Wikipedia
+
+None. This is Kalah with six pits and four seeds per pit, the standard rules Wikipedia describes, without its optional variants (empty capture, other end-of-game counting).

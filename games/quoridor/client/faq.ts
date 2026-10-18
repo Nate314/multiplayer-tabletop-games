@@ -10,7 +10,9 @@ export const FAQS: FaqItem[] = [
     question: 'How do I move?',
     answer: 'On your turn, with Move selected, click one of the highlighted squares. Move is selected at the ' +
       'start of every turn. You can move one square up, down, left or right, or jump straight over a pawn ' +
-      'next to you if the square behind it is free.'
+      'next to you if the square behind it is free. If a wall, another pawn or the board edge is behind that ' +
+      'pawn, you can step diagonally to either side of it instead, as long as no wall or pawn is in the way. ' +
+      'You can never jump over a wall or over two pawns.'
   },
   {
     question: 'How do I place a wall?',
@@ -26,8 +28,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How many walls do I get?',
-    answer: 'Ten each in a two-player game, five each with three or four players. The count is shown under ' +
-      '"Walls left".'
+    answer: 'The twenty walls are shared out equally: ten each with two players, six each with three (two ' +
+      'stay unused) and five each with four. The count is shown under "Walls left".'
   },
   {
     question: 'How do I win?',

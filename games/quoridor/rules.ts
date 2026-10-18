@@ -4,6 +4,7 @@ import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { BoardState, GameState, Position, PublicGameState, Result, Seat, Wall, WallInput } from './types.ts';
 
 export const BOARD_SIZE = 9;
+const TOTAL_WALLS = 20;
 
 type SeatInfo = { start: Position; goal: { row: number } | { col: number }; goalLabel: string };
 
@@ -21,8 +22,9 @@ const DIRECTIONS: Position[] = [
   { row: 0, col: 1 }   // right
 ];
 
+// The twenty walls are shared out equally; with three players the two left over stay in the box
 export function wallsPerPlayer(playerCount: number): number {
-  return playerCount <= 2 ? 10 : 5;
+  return Math.floor(TOTAL_WALLS / Math.max(playerCount, 2));
 }
 
 export function isAtGoal(seat: Seat, position: Position): boolean {
@@ -60,23 +62,38 @@ export function isBlockedByWall(from: Position, to: Position, walls: Wall[]): bo
   );
 }
 
+// A pawn may enter `to` from the orthogonally adjacent `from` if it is on the board, free and not walled off
+function canEnter(state: BoardState, from: Position, to: Position): boolean {
+  return isOnBoard(to) && !isBlockedByWall(from, to, state.walls) && !isOccupied(state.pawns, to);
+}
+
 export function getValidMoves(state: BoardState, seat: Seat): Position[] {
   const pawn = state.pawns[seat];
   const moves: Position[] = [];
+  const add = (move: Position) => {
+    if (!moves.some(existing => isSamePosition(existing, move))) moves.push(move);
+  };
 
   for (const dir of DIRECTIONS) {
     const step = { row: pawn.row + dir.row, col: pawn.col + dir.col };
     if (!isOnBoard(step) || isBlockedByWall(pawn, step, state.walls)) continue;
 
     if (!isOccupied(state.pawns, step)) {
-      moves.push(step);
+      add(step);
       continue;
     }
 
     // Jump straight over the adjacent pawn if the square beyond is free and reachable
     const jump = { row: step.row + dir.row, col: step.col + dir.col };
-    if (isOnBoard(jump) && !isBlockedByWall(step, jump, state.walls) && !isOccupied(state.pawns, jump)) {
-      moves.push(jump);
+    if (canEnter(state, step, jump)) {
+      add(jump);
+      continue;
+    }
+
+    // Otherwise move diagonally to either side of the jumped pawn, unless a wall or pawn is in the way
+    for (const side of [{ row: -dir.col, col: -dir.row }, { row: dir.col, col: dir.row }]) {
+      const diagonal = { row: step.row + side.row, col: step.col + side.col };
+      if (canEnter(state, step, diagonal)) add(diagonal);
     }
   }
 
