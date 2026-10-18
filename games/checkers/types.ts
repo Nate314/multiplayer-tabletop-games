@@ -1,5 +1,6 @@
 // Data shapes shared by the browser and the server
 import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
+import type { DrawOfferState } from '../../shared/drawOffer.ts';
 
 export type { Result, Seat } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
@@ -16,10 +17,9 @@ export type Move = { type: 'move'; path: Position[] };
 
 export type LastMove = { playerNumber: Seat; path: Position[]; captured: Position[]; crowned: boolean };
 
-export type GameState = BaseGameState & {
+// Resigning and draw offers are the shared EndingAction (shared/drawOffer.ts)
+export type GameState = BaseGameState & DrawOfferState & {
   board: Board;
-  // Plies in a row with no capture and no man moving; DRAW_PLIES of them is a draw
-  quietPlies: number;
   lastMove: LastMove | null;
 };
 

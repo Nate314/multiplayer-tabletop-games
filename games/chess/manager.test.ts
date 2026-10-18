@@ -45,3 +45,35 @@ test('a checkmate can be undone', () => {
   assert.deepEqual(restored.board[0][3], { color: 'black', type: 'queen' });
   assert.equal(restored.currentPlayer, 2);
 });
+
+test('the waiting player can resign through a game action, which is not a move', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move('chess/g1', 1, mv('e2', 'e4')));
+  const resigned = ok(manager.action('chess/g1', 1, { type: 'resign' }));
+  assert.equal(resigned.isGameOver, true);
+  assert.deepEqual(resigned.winners, [2]);
+  assert.equal(resigned.moveCount, 1);
+  assert.deepEqual(manager.action('chess/g1', 2, { type: 'resign' }), { error: 'The game is over' });
+});
+
+test('a draw offer is answered through game actions, and refused while an undo vote runs', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move('chess/g1', 1, mv('e2', 'e4')));
+  ok(manager.requestUndo('chess/g1', 2));
+  assert.deepEqual(manager.action('chess/g1', 1, { type: 'offerDraw' }), { error: 'A vote is in progress' });
+  ok(manager.voteUndo('chess/g1', 1, false));
+
+  assert.equal(ok(manager.action('chess/g1', 1, { type: 'offerDraw' })).drawOffer, 1);
+  const agreed = ok(manager.action('chess/g1', 2, { type: 'answerDraw', accept: true }));
+  assert.equal(agreed.isGameOver, true);
+  assert.equal(agreed.gameStatus, 'Draw by agreement');
+});
+
+test('a claim is a game action by the player to move', () => {
+  const manager = gameWith('A', 'B');
+  const shuffle = [mv('g1', 'f3'), mv('g8', 'f6'), mv('f3', 'g1'), mv('f6', 'g8')];
+  [...shuffle, ...shuffle].forEach((move, index) => ok(manager.move('chess/g1', index % 2 === 0 ? 1 : 2, move)));
+  assert.deepEqual(manager.action('chess/g1', 2, { type: 'claimDraw' }), { error: 'You can claim a draw only on your turn' });
+  const claimed = ok(manager.action('chess/g1', 1, { type: 'claimDraw' }));
+  assert.equal(claimed.gameStatus, 'A claimed a draw by threefold repetition');
+});

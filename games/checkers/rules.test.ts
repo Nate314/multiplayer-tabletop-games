@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOARD_SIZE, DRAW_PLIES, createBoard, getLegalMoves, isDarkSquare, isJump, moveSummary } from './rules.ts';
+import { BOARD_SIZE, applyAction, createBoard, getLegalMoves, isDarkSquare, isJump, moveSummary } from './rules.ts';
 import { checkers } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Board, GameState, Move, Position, Seat } from './types.ts';
@@ -27,6 +27,12 @@ function lobby(...names: string[]): GameState {
 
 function play(state: GameState, seat: Seat, move: Move): GameState {
   const result = applyMove(checkers, state, seat, move);
+  if ('error' in result) assert.fail(result.error);
+  return result.state;
+}
+
+function act(state: GameState, seat: Seat, action: unknown): GameState {
+  const result = applyAction(state, seat, action);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -163,21 +169,34 @@ test('leaving the other side with no legal move wins', () => {
   assert.equal(won.gameStatus, 'A wins! B has no legal moves.');
 });
 
-test('king moves without captures count toward a draw; a man move resets the count', () => {
-  const start = {
-    ...lobby('A', 'B'),
-    board: boardWith([7, 0, 1, true], [0, 7, 2, true], [3, 0, 1]),
-    quietPlies: DRAW_PLIES - 2
-  };
-  const almost = play(start, 1, move(at(7, 0), at(6, 1)));
-  assert.equal(almost.quietPlies, DRAW_PLIES - 1);
-  const drawn = play(almost, 2, move(at(0, 7), at(1, 6)));
-  assert.equal(drawn.isGameOver, true);
-  assert.deepEqual(drawn.winners, []);
-  assert.equal(drawn.gameStatus, 'Draw: 40 moves each without a capture or a man moving.');
+test('king moves without captures never draw by themselves', () => {
+  const kings = { ...lobby('A', 'B'), board: boardWith([7, 0, 1, true], [0, 7, 2, true]) };
+  const shuffle = [move(at(7, 0), at(6, 1)), move(at(0, 7), at(1, 6)), move(at(6, 1), at(7, 0)), move(at(1, 6), at(0, 7))];
+  const moves = Array.from({ length: 50 }, () => shuffle).flat();
+  const state = moves.reduce((current, next) => play(current, current.currentPlayer as Seat, next), kings);
+  assert.equal(state.isGameOver, false);
+});
 
-  const reset = play(start, 1, move(at(3, 0), at(2, 1)));
-  assert.equal(reset.quietPlies, 0);
+test("a player may resign at any time, even on the opponent's turn", () => {
+  const state = play(lobby('A', 'B'), 1, move(at(5, 0), at(4, 1)));
+  const resigned = act(state, 1, { type: 'resign' });
+  assert.equal(resigned.isGameOver, true);
+  assert.deepEqual(resigned.winners, [2]);
+  assert.equal(resigned.gameStatus, 'A resigned. B wins!');
+});
+
+test('a draw is agreed when the opponent accepts the offer; a move by the opponent declines it', () => {
+  const state = play(lobby('A', 'B'), 1, move(at(5, 0), at(4, 1)));
+  const offered = act(state, 1, { type: 'offerDraw' });
+  assert.equal(offered.drawOffer, 1);
+  const agreed = act(offered, 2, { type: 'answerDraw', accept: true });
+  assert.equal(agreed.isGameOver, true);
+  assert.deepEqual(agreed.winners, []);
+  assert.equal(agreed.gameStatus, 'Draw by agreement');
+
+  const lapsed = play(offered, 2, move(at(2, 1), at(3, 0)));
+  assert.equal(lapsed.drawOffer, null);
+  assert.equal(lapsed.isGameOver, false);
 });
 
 test('exactly two players can sit; a dismissal leaves the other the winner', () => {

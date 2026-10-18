@@ -48,3 +48,17 @@ test('a capture can be undone', () => {
   assert.deepEqual(restored.board[4][3], { seat: 1, king: false });
   assert.equal(restored.currentPlayer, 1);
 });
+
+test('the waiting player can resign, and draw offers are answered, through game actions', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move('checkers/g1', 1, move(at(5, 0), at(4, 1))));
+  assert.equal(ok(manager.action('checkers/g1', 1, { type: 'offerDraw' })).drawOffer, 1);
+  const declined = ok(manager.action('checkers/g1', 2, { type: 'answerDraw', accept: false }));
+  assert.equal(declined.drawOffer, null);
+  assert.equal(declined.gameStatus, 'B declined the draw');
+
+  const resigned = ok(manager.action('checkers/g1', 1, { type: 'resign' }));
+  assert.equal(resigned.isGameOver, true);
+  assert.deepEqual(resigned.winners, [2]);
+  assert.equal(resigned.moveCount, 1);
+});

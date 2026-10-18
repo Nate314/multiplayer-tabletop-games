@@ -11,8 +11,8 @@ type PromotionPickerProps = {
 // Shown over the board when a pawn reaches the last rank
 export default function PromotionPicker({ color, onPick, onCancel }: PromotionPickerProps) {
   return (
-    <div className="promotion">
-      <div className="promotion-panel">
+    <div className="board-prompt">
+      <div className="board-prompt-panel">
         <div className="panel-title">Promote to</div>
         <div className="promotion-choices">
           {PROMOTION_TYPES.map(type => (
@@ -21,7 +21,7 @@ export default function PromotionPicker({ color, onPick, onCancel }: PromotionPi
             </button>
           ))}
         </div>
-        <button type="button" className="promotion-cancel" onClick={onCancel}>Cancel</button>
+        <button type="button" className="board-prompt-cancel" onClick={onCancel}>Cancel</button>
       </div>
     </div>
   );

@@ -47,16 +47,30 @@ export const FAQS: FaqItem[] = [
       'player wins.'
   },
   {
-    question: 'How can the game be drawn?',
-    answer: 'The game ends in a draw by stalemate (the player to move is not in check but has no legal move), by ' +
-      'insufficient material (neither side has enough pieces left to checkmate), by threefold repetition (the ' +
-      'same position with the same player to move happens three times), or by the 50-move rule (fifty moves ' +
-      'each without a capture or a pawn move). These draws happen automatically.'
+    question: 'Which draws happen by themselves?',
+    answer: 'The game ends in a draw at once by stalemate (the player to move is not in check but has no legal ' +
+      'move), by a dead position (no series of legal moves could ever checkmate: kings alone, a lone bishop or ' +
+      'knight, bishops all on one square color, or pawns locked together that neither king can ever reach), by ' +
+      'fivefold repetition (the same position with the same player to move five times), or by the 75-move rule ' +
+      '(seventy-five moves each without a capture or a pawn move). Checkmate on the last of those moves still wins.'
+  },
+  {
+    question: 'How do I claim a draw?',
+    answer: 'On your turn, when the same position with you to move has happened three times, or fifty moves ' +
+      'each have passed without a capture or a pawn move, a Claim draw button appears. If the move you pick ' +
+      'would itself make the third repetition or the fiftieth move, a box asks whether to make the move and claim ' +
+      'the draw, or just move. Nobody has to claim, and the game goes on until someone does.'
+  },
+  {
+    question: 'How do I offer a draw?',
+    answer: 'Click Offer draw at any time. Your opponent sees Accept draw and Decline; accepting ends the game in ' +
+      'a draw. The offer lapses if they decline or make a move instead.'
   },
   {
     question: 'How do I resign?',
-    answer: 'On your turn, click Resign and then Confirm resign. Your opponent wins. Click Keep playing to ' +
-      'change your mind.'
+    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins, ' +
+      'unless they could never checkmate you (they have only their king left), in which case it is a draw. Click ' +
+      'Keep playing to change your mind.'
   },
   {
     question: 'What do the highlights and the side panel show?',

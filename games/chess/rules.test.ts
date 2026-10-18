@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOARD_SIZE, isInCheck, isInsufficientMaterial, legalMoves, pieceAt, positionKey, squareName } from './rules.ts';
+import {
+  BOARD_SIZE, applyAction, claimableAfterMove, claimableDraw, isDeadPosition, isInCheck, isInsufficientMaterial, legalMoves,
+  pieceAt, positionKey, squareName
+} from './rules.ts';
 import { chess } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Board, CastlingRights, GameState, Move, Piece, PieceType, PromotionType, Seat, Square } from './types.ts';
@@ -45,6 +48,16 @@ function position(pieces: Record<string, string>, { seat = 1, castling = NO_CAST
 
 function play(state: GameState, seat: Seat, move: Move): GameState {
   const result = applyMove(chess, state, seat, move);
+  if ('error' in result) assert.fail(result.error);
+  return result.state;
+}
+
+function act(state: GameState, seat: Seat, action: unknown) {
+  return applyAction(state, seat, action);
+}
+
+function actOk(state: GameState, seat: Seat, action: unknown): GameState {
+  const result = act(state, seat, action);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -98,7 +111,7 @@ test('a move updates the board, last move, status and turn', () => {
   const state = play(lobby('A', 'B'), 1, mv('e2', 'e4'));
   assert.equal(at(state, 'e2'), null);
   assert.deepEqual(at(state, 'e4'), { color: 'white', type: 'pawn' });
-  assert.deepEqual(state.lastMove, { type: 'move', playerNumber: 1, from: sq('e2'), to: sq('e4'), notation: 'e4' });
+  assert.deepEqual(state.lastMove, { playerNumber: 1, from: sq('e2'), to: sq('e4'), notation: 'e4' });
   assert.equal(state.gameStatus, 'A played e4');
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.started, true);
@@ -110,7 +123,7 @@ test("fool's mate ends the game with a win for black", () => {
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [2]);
   assert.equal(state.gameStatus, 'Checkmate! B wins!');
-  assert.equal(state.lastMove?.type === 'move' && state.lastMove.notation, 'Qh4#');
+  assert.equal(state.lastMove?.notation, 'Qh4#');
   assert.deepEqual(applyMove(chess, state, 1, mv('a2', 'a3')), { error: 'The game is over' });
 });
 
@@ -132,7 +145,7 @@ test('a pinned piece cannot expose its king', () => {
 test('captures are recorded for the captured color', () => {
   const state = playAll(lobby('A', 'B'), mv('e2', 'e4'), mv('d7', 'd5'), mv('e4', 'd5'));
   assert.deepEqual(state.captured, { white: [], black: ['pawn'] });
-  assert.equal(state.lastMove?.type === 'move' && state.lastMove.notation, 'exd5');
+  assert.equal(state.lastMove?.notation, 'exd5');
 });
 
 test('castling moves the rook and needs empty squares that are not attacked', () => {
@@ -144,11 +157,11 @@ test('castling moves the rook and needs empty squares that are not attacked', ()
   assert.deepEqual(at(castled, 'f1'), { color: 'white', type: 'rook' });
   assert.equal(at(castled, 'h1'), null);
   assert.deepEqual(castled.castling.white, { kingSide: false, queenSide: false });
-  assert.equal(castled.lastMove?.type === 'move' && castled.lastMove.notation, 'O-O');
+  assert.equal(castled.lastMove?.notation, 'O-O');
 
   const long = play(open, 1, mv('e1', 'c1'));
   assert.deepEqual(at(long, 'd1'), { color: 'white', type: 'rook' });
-  assert.equal(long.lastMove?.type === 'move' && long.lastMove.notation, 'O-O-O');
+  assert.equal(long.lastMove?.notation, 'O-O-O');
 
   // Through check (f1), into check (c1), out of check, and with a piece in the way (b1)
   assert.deepEqual(destinations(position({ e1: 'K', h1: 'R', e8: 'k', f8: 'r' }, { castling: rights }), 'e1').includes('g1'), false);
@@ -173,7 +186,7 @@ test('en passant captures the pawn that just moved two squares, only right away'
   assert.equal(at(taken, 'd5'), null);
   assert.deepEqual(at(taken, 'd6'), { color: 'white', type: 'pawn' });
   assert.deepEqual(taken.captured.black, ['pawn']);
-  assert.equal(taken.lastMove?.type === 'move' && taken.lastMove.notation, 'exd6');
+  assert.equal(taken.lastMove?.notation, 'exd6');
 
   const late = playAll(ready, mv('h2', 'h3'), mv('h7', 'h6'));
   assert.deepEqual(destinations(late, 'e5'), ['e6']);
@@ -185,16 +198,16 @@ test('a pawn on the last rank promotes to the chosen piece', () => {
   assert.deepEqual(applyMove(chess, state, 1, mv('a7', 'a8', 'king' as PromotionType)), { error: 'Choose a piece to promote to' });
   const knighted = play(state, 1, mv('a7', 'a8', 'knight'));
   assert.deepEqual(at(knighted, 'a8'), { color: 'white', type: 'knight' });
-  assert.equal(knighted.lastMove?.type === 'move' && knighted.lastMove.notation, 'a8=N');
+  assert.equal(knighted.lastMove?.notation, 'a8=N');
   const queened = play(state, 1, mv('a7', 'a8', 'queen'));
-  assert.equal(queened.lastMove?.type === 'move' && queened.lastMove.notation, 'a8=Q+');
+  assert.equal(queened.lastMove?.notation, 'a8=Q+');
 });
 
 test('notation names the file or rank when two pieces could move', () => {
   const knights = play(position({ b1: 'N', f1: 'N', e3: 'K', h8: 'k' }), 1, mv('b1', 'd2'));
-  assert.equal(knights.lastMove?.type === 'move' && knights.lastMove.notation, 'Nbd2');
+  assert.equal(knights.lastMove?.notation, 'Nbd2');
   const rooks = play(position({ a1: 'R', a5: 'R', h1: 'K', h8: 'k' }), 1, mv('a1', 'a3'));
-  assert.equal(rooks.lastMove?.type === 'move' && rooks.lastMove.notation, 'R1a3');
+  assert.equal(rooks.lastMove?.notation, 'R1a3');
 });
 
 test('stalemate is a draw', () => {
@@ -220,35 +233,146 @@ test('insufficient material covers lone minor pieces and same-colored bishops', 
   assert.equal(isInsufficientMaterial(boardOf({ e1: 'K', e8: 'k', a2: 'P' })), false);
 });
 
-test('the same position three times is a draw', () => {
-  const shuffle = [mv('g1', 'f3'), mv('g8', 'f6'), mv('f3', 'g1'), mv('f6', 'g8')];
-  const twice = playAll(lobby('A', 'B'), ...shuffle);
-  assert.equal(twice.isGameOver, false);
-  const thrice = playAll(twice, ...shuffle);
-  assert.equal(thrice.isGameOver, true);
-  assert.deepEqual(thrice.winners, []);
-  assert.equal(thrice.gameStatus, 'Draw by threefold repetition');
+// Knights out and back: four half-moves that bring back the starting position
+const SHUFFLE = [mv('g1', 'f3'), mv('g8', 'f6'), mv('f3', 'g1'), mv('f6', 'g8')];
+
+test('threefold repetition is a draw only when claimed, by the player to move', () => {
+  const twice = playAll(lobby('A', 'B'), ...SHUFFLE);
+  assert.equal(claimableDraw(twice), null);
+  assert.deepEqual(act(twice, 1, { type: 'claimDraw' }), { error: 'There is no draw to claim' });
+
+  const thrice = playAll(twice, ...SHUFFLE);
+  assert.equal(thrice.isGameOver, false);
+  assert.equal(claimableDraw(thrice), 'threefold repetition');
+  assert.deepEqual(act(thrice, 2, { type: 'claimDraw' }), { error: 'You can claim a draw only on your turn' });
+
+  const claimed = actOk(thrice, 1, { type: 'claimDraw' });
+  assert.equal(claimed.isGameOver, true);
+  assert.deepEqual(claimed.winners, []);
+  assert.equal(claimed.gameStatus, 'A claimed a draw by threefold repetition');
 });
 
-test('fifty moves each without a capture or pawn move is a draw', () => {
-  const start = position({ e1: 'K', a1: 'R', e8: 'k', h7: 'p' });
-  const history = Array.from({ length: 99 }, (_, index) => `earlier ${index}`);
-  const state = { ...start, positions: [...history, ...start.positions] };
-  const drawn = play(state, 1, mv('a1', 'a2'));
-  assert.equal(drawn.gameStatus, 'Draw by the 50-move rule');
-  assert.deepEqual(drawn.winners, []);
+test('a draw can be claimed with the move that produces the third repetition', () => {
+  const state = playAll(lobby('A', 'B'), ...SHUFFLE, ...SHUFFLE.slice(0, 3));
+  assert.equal(claimableAfterMove(state, sq('f6'), sq('g8')), 'threefold repetition');
+  assert.equal(claimableAfterMove(state, sq('f6'), sq('h5')), null);
+  assert.deepEqual(applyMove(chess, state, 2, { ...mv('f6', 'h5'), claimDraw: true }), { error: 'That move gives no draw to claim' });
+
+  const claimed = play(state, 2, { ...mv('f6', 'g8'), claimDraw: true });
+  assert.equal(claimed.isGameOver, true);
+  assert.deepEqual(claimed.winners, []);
+  assert.equal(claimed.gameStatus, 'B played Ng8 and claimed a draw by threefold repetition');
+});
+
+test('fivefold repetition ends the game at once', () => {
+  const four = playAll(lobby('A', 'B'), ...SHUFFLE, ...SHUFFLE, ...SHUFFLE, ...SHUFFLE.slice(0, 3));
+  assert.equal(four.isGameOver, false);
+  const five = play(four, 2, mv('f6', 'g8'));
+  assert.equal(five.isGameOver, true);
+  assert.deepEqual(five.winners, []);
+  assert.equal(five.gameStatus, 'Draw by fivefold repetition');
+});
+
+// `plies` half-moves have passed without a capture or pawn move, counting the one that reached `start`
+function quietFor(start: GameState, plies: number): GameState {
+  const history = Array.from({ length: plies }, (_, index) => `earlier ${index}`);
+  return { ...start, positions: [...history, ...start.positions] };
+}
+
+test('fifty moves each without a capture or pawn move may be claimed; a pawn move starts the count over', () => {
+  const state = quietFor(position({ e1: 'K', a1: 'R', e8: 'k', h7: 'p' }), 99);
+  const fifty = play(state, 1, mv('a1', 'a2'));
+  assert.equal(fifty.isGameOver, false);
+  assert.equal(claimableDraw(fifty), 'the 50-move rule');
+  const claimed = actOk(fifty, 2, { type: 'claimDraw' });
+  assert.deepEqual(claimed.winners, []);
+  assert.equal(claimed.gameStatus, 'B claimed a draw by the 50-move rule');
 
   const reset = playAll({ ...state, currentPlayer: 2 }, mv('h7', 'h6'));
   assert.equal(reset.positions.length, 1);
-  assert.equal(reset.isGameOver, false);
+  assert.equal(claimableDraw(reset), null);
 });
 
-test('a player may resign on their turn', () => {
-  const state = play(play(lobby('A', 'B'), 1, mv('e2', 'e4')), 2, { type: 'resign' });
-  assert.equal(state.isGameOver, true);
-  assert.deepEqual(state.winners, [1]);
-  assert.deepEqual(state.lastMove, { type: 'resign', playerNumber: 2 });
-  assert.equal(state.gameStatus, 'B resigned. A wins!');
+test('seventy-five moves each without a capture or pawn move ends the game, unless the last move mates', () => {
+  const drawn = play(quietFor(position({ e1: 'K', a1: 'R', e8: 'k', h7: 'p' }), 149), 1, mv('a1', 'a2'));
+  assert.equal(drawn.isGameOver, true);
+  assert.deepEqual(drawn.winners, []);
+  assert.equal(drawn.gameStatus, 'Draw by the 75-move rule');
+
+  const mated = play(quietFor(position({ g6: 'K', a1: 'R', g8: 'k' }), 149), 1, mv('a1', 'a8'));
+  assert.deepEqual(mated.winners, [1]);
+  assert.equal(mated.gameStatus, 'Checkmate! A wins!');
+});
+
+// Interlocked pawns across the whole board; every king square below and above the wall is cut off
+const WALL = {
+  a3: 'P', b4: 'P', c3: 'P', d4: 'P', e3: 'P', f4: 'P', g3: 'P', h4: 'P',
+  a4: 'p', b5: 'p', c4: 'p', d5: 'p', e4: 'p', f5: 'p', g4: 'p', h5: 'p'
+};
+
+test('locked pawns that no king can reach are a dead position, and the game ends at once', () => {
+  assert.equal(isDeadPosition(position({ ...WALL, e1: 'K', e8: 'k' })), true);
+  const drawn = play(position({ ...WALL, d1: 'K', e8: 'k' }), 1, mv('d1', 'e1'));
+  assert.equal(drawn.isGameOver, true);
+  assert.deepEqual(drawn.winners, []);
+  assert.equal(drawn.gameStatus, 'Draw by dead position: the pawns are locked and neither king can reach one');
+});
+
+test('a dead position is never declared while a pawn or a king can still make progress', () => {
+  // The white king is behind the black pawns and can take h5
+  assert.equal(isDeadPosition(position({ ...WALL, f6: 'K', e8: 'k' })), false);
+  // Without e4 the e3 pawn can advance
+  const { e4: _e4, ...open } = WALL;
+  assert.equal(isDeadPosition(position({ ...open, e1: 'K', e8: 'k' })), false);
+  // A pawn that can capture is not locked
+  assert.equal(isDeadPosition(position({ e4: 'P', e5: 'p', d5: 'p', a1: 'K', a8: 'k' })), false);
+  // Any other piece can still help to mate
+  assert.equal(isDeadPosition(position({ ...WALL, e1: 'K', e8: 'k', h1: 'N' })), false);
+  // An en passant capture on offer is not looked into
+  assert.equal(isDeadPosition({ ...position({ ...WALL, e1: 'K', e8: 'k' }), enPassant: sq('h3') }), false);
+});
+
+test("a player may resign at any time, even on the opponent's turn", () => {
+  const state = play(lobby('A', 'B'), 1, mv('e2', 'e4'));
+  const resigned = actOk({ ...state, currentPlayer: 2 }, 1, { type: 'resign' });
+  assert.equal(resigned.isGameOver, true);
+  assert.deepEqual(resigned.winners, [2]);
+  assert.equal(resigned.currentPlayer, null);
+  assert.equal(resigned.gameStatus, 'A resigned. B wins!');
+  assert.deepEqual(act(lobby('A', 'B'), 1, { type: 'resign' }), { error: 'The game has not started' });
+  assert.deepEqual(act(resigned, 2, { type: 'resign' }), { error: 'The game is over' });
+});
+
+test('resigning is a draw when the opponent could never checkmate', () => {
+  const loneKing = { ...position({ e1: 'K', a2: 'Q', e8: 'k' }), started: true };
+  const drawn = actOk(loneKing, 1, { type: 'resign' });
+  assert.deepEqual(drawn.winners, []);
+  assert.equal(drawn.gameStatus, 'A resigned, but B could never checkmate. Draw.');
+
+  // A knight can still help to mate a king boxed in by its own queen, so this resignation loses
+  const knight = { ...position({ e1: 'K', a2: 'Q', e8: 'k', b8: 'n' }), started: true };
+  assert.deepEqual(actOk(knight, 1, { type: 'resign' }).winners, [2]);
+});
+
+test('a draw offer is accepted, declined, or lapses when the opponent moves', () => {
+  const state = play(lobby('A', 'B'), 1, mv('e2', 'e4'));
+  const offered = actOk(state, 2, { type: 'offerDraw' });
+  assert.equal(offered.drawOffer, 2);
+  assert.equal(offered.gameStatus, 'B offers a draw');
+
+  const agreed = actOk(offered, 1, { type: 'answerDraw', accept: true });
+  assert.equal(agreed.isGameOver, true);
+  assert.deepEqual(agreed.winners, []);
+  assert.equal(agreed.gameStatus, 'Draw by agreement');
+
+  const declined = actOk(offered, 1, { type: 'answerDraw', accept: false });
+  assert.equal(declined.drawOffer, null);
+  assert.equal(declined.isGameOver, false);
+
+  const ownMove = play(offered, 2, mv('e7', 'e5'));
+  assert.equal(ownMove.drawOffer, 2);
+  const lapsed = play(ownMove, 1, mv('g1', 'f3'));
+  assert.equal(lapsed.drawOffer, null);
 });
 
 test('the player left after a dismissal wins', () => {
