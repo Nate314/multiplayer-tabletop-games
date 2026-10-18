@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import {
-  addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, nextActivePlayer, reconnectPlayer,
+  addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
@@ -134,21 +134,20 @@ export function createGameManager(
     if (!previous) return; // Unreachable: a vote only opens when there is history
     room.timeline.pop();
 
-    const restored: BaseGameState = {
+    // The restored state is from before any dismissal since, so each dismissed player is removed from it again,
+    // through the game's own onPlayerLeft, which also moves a turn they held on
+    let restored: BaseGameState = {
       ...previous,
       started: true,
-      activePlayers: state.activePlayers,
       playerNames: state.playerNames,
       undoVote: null,
       disconnected: state.disconnected,
-      dismissVote: null,
-      gameStatus: 'Last turn undone'
+      dismissVote: null
     };
-    const current = restored.currentPlayer;
-    if (current !== null && !restored.activePlayers.includes(current)) {
-      restored.currentPlayer = nextActivePlayer(restored, current);
+    for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
+      restored = removePlayer(room.game, restored, seat, random);
     }
-    room.state = restored;
+    room.state = { ...restored, gameStatus: 'Last turn undone' };
     return { type: 'pop', index: room.history.length };
   }
 

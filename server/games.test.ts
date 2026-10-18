@@ -864,3 +864,21 @@ test('undo is refused once too few players are left to play', () => {
   ok(manager.voteDismiss(ROOM, 2, true));
   assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players left to undo' });
 });
+
+test('an undo past a dismissal runs the game hook for the dismissed player again', () => {
+  // The restored state is from before the dismissal, so the game must clear the leaver out of it once more
+  const leaveHook = { ...testGame, onPlayerLeft: (state: TestState) => ({ ...state, moves: state.moves + 100 }) };
+  const manager = createGameManager([leaveHook], seededRandom);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(restored.moves, 101);
+  assert.equal(restored.currentPlayer, 3);
+  assert.deepEqual(restored.activePlayers, [1, 3]);
+  assert.equal(restored.gameStatus, 'Last turn undone');
+});
