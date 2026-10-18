@@ -1,5 +1,5 @@
 import { setValue } from '../cards.ts';
-import { continentsHeld, reinforcementsFor, territoriesHeld } from '../state.ts';
+import { continentsHeld, plural, reinforcementsFor, territoriesHeld } from '../state.ts';
 import { continentShort, seatClass } from './layout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -31,9 +31,9 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
               {status && <span className="player-status">{status}</span>}
             </div>
             <div className="player-stats">
-              <span>{held.length} territories</span>
-              <span>{total} armies</span>
-              <span>{handCounts[seat] ?? 0} cards</span>
+              <span>{plural(held.length, 'territory', 'territories')}</span>
+              <span>{plural(total, 'army', 'armies')}</span>
+              <span>{plural(handCounts[seat] ?? 0, 'card')}</span>
               {held.length > 0 && !status && <span>+{reinforcementsFor(gameState, seat)} a turn</span>}
             </div>
             {continents.length > 0 && (
@@ -49,8 +49,8 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
             <span className="player-name">Neutral</span>
           </div>
           <div className="player-stats">
-            <span>{neutral.length} territories</span>
-            <span>{neutral.reduce((sum, id) => sum + (armies[id] ?? 0), 0)} armies</span>
+            <span>{plural(neutral.length, 'territory', 'territories')}</span>
+            <span>{plural(neutral.reduce((sum, id) => sum + (armies[id] ?? 0), 0), 'army', 'armies')}</span>
           </div>
         </div>
       )}

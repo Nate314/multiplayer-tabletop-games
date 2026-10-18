@@ -377,6 +377,13 @@ test('a dismissal that leaves two of three players ends the game: the most terri
   assert.match(state.gameStatus, /Too few players are left to go on. Bob wins with the most territories \(15\)/);
   const tied = removePlayer(risk, game({ phase: 'attack', reinforcements: 0 }), 3, dice());
   assert.deepEqual(tied.winners, [1, 2]);
+
+  // Alice was about to move into a capture: the dice she rolled move in, so no territory is left empty
+  let capturing = game({ phase: 'attack', reinforcements: 0, armies: { ...game().armies, alaska: 5, northwestTerritory: 1 } });
+  capturing = played(capturing, 1, { type: 'attack', from: 'alaska', to: 'northwestTerritory', dice: 3 }, dice(6, 1, 1, 2));
+  const ended = removePlayer(risk, capturing, 3, dice());
+  assert.equal(ended.isGameOver, true);
+  assert.deepEqual([ended.armies.alaska, ended.armies.northwestTerritory, ended.phase, ended.conquest], [2, 3, 'attack', null]);
 });
 
 test('a player dismissed during the setup is skipped, and the last one left holding territory wins', () => {

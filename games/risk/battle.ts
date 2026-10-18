@@ -74,10 +74,7 @@ function capture(state: GameState, battle: Battle, minimum: number): GameState {
     next = note({ ...next, eliminated: [...next.eliminated, defender] }, `${nameOf(state, defender)} was eliminated`);
     next = takeCards(next, defender, attacker);
   }
-  const over = checkGameOver(next);
-  // The last capture of the game moves in the dice that won it, so the map shows no empty territory
-  if (over.isGameOver) return { ...over, phase: 'attack', armies: { ...over.armies, [from]: over.armies[from] - minimum, [to]: minimum } };
-  return over;
+  return checkGameOver(next);
 }
 
 function finishBattle(state: GameState, battle: Battle, dice: number): GameState {

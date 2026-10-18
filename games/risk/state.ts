@@ -67,8 +67,14 @@ export function startTurn(state: GameState, seat: Seat | null): GameState {
   return note(started, `${nameOf(state, seat)} receives ${plural(armies, 'army', 'armies')}`);
 }
 
+// A capture still waiting for its armies gets the dice that won it, so the map shows no empty territory
 function endGame(state: GameState, winners: Seat[], text: string): GameState {
-  return note({ ...state, isGameOver: true, winners, currentPlayer: null, turnHolder: null, conquest: null, reinforcements: 0 }, text);
+  const { conquest } = state;
+  const armies = conquest
+    ? { ...state.armies, [conquest.from]: state.armies[conquest.from] - conquest.minimum, [conquest.to]: conquest.minimum }
+    : state.armies;
+  const phase = state.phase === 'conquer' ? 'attack' : state.phase;
+  return note({ ...state, armies, phase, isGameOver: true, winners, currentPlayer: null, turnHolder: null, conquest: null, reinforcements: 0 }, text);
 }
 
 // The game ends when one player holds every territory, or is the only player left holding any
