@@ -3,7 +3,7 @@
 // A pass is final, and the auction ends when everyone but the high bidder has passed.
 import { BOARD } from './board.ts';
 import { charge } from './money.ts';
-import { inGame, money, nameOf, note } from './state.ts';
+import { inGame, money, nameOf, note, waitError } from './state.ts';
 import type { Auction, GameState, Result, Seat } from './types.ts';
 
 export function startAuction(state: GameState, space: number): GameState {
@@ -43,7 +43,8 @@ function bidderError(state: GameState, seat: Seat): string | null {
   if (!auction) return 'There is no auction';
   if (!inGame(state).includes(seat)) return 'You are out of the game';
   if (auction.passed.includes(seat)) return 'You have passed in this auction';
-  if (state.debts.length > 0) return `Wait for ${nameOf(state, state.debts[0].debtor)} to pay`;
+  const waiting = waitError(state);
+  if (waiting) return waiting;
   return null;
 }
 

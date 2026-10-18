@@ -46,12 +46,25 @@ export function checkGameOver(state: GameState): GameState {
     auction: null,
     auctionQueue: [],
     debts: [],
-    trade: null
+    trade: null,
+    mortgageDecisions: []
   }, `${nameOf(state, winner)} wins: everyone else is bankrupt`);
 }
 
-// Whoever must act now: the first debtor, else the turn holder
+// Who the game waits for before anything else: the first debtor, then the first player deciding about received mortgages
+export function waitingOn(state: Pick<GameState, 'debts' | 'mortgageDecisions'>): Seat | null {
+  return state.debts[0]?.debtor ?? state.mortgageDecisions[0]?.seat ?? null;
+}
+
+// Why nobody else may act yet, or null
+export function waitError(state: GameState): string | null {
+  if (state.debts.length > 0) return `Wait for ${nameOf(state, state.debts[0].debtor)} to pay`;
+  const decision = state.mortgageDecisions[0];
+  return decision ? `Wait for ${nameOf(state, decision.seat)} to decide about the mortgages` : null;
+}
+
+// Whoever must act now: a debtor or a player deciding about mortgages, else the turn holder
 export function syncTurn(state: GameState): GameState {
   if (state.isGameOver) return { ...state, currentPlayer: null };
-  return { ...state, currentPlayer: state.debts[0]?.debtor ?? state.turnHolder };
+  return { ...state, currentPlayer: waitingOn(state) ?? state.turnHolder };
 }

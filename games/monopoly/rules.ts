@@ -7,7 +7,7 @@ import { JAIL_FINE, START_CASH, isSpace, ownable } from './board.ts';
 import { DECKS } from './cards.ts';
 import { bid, closeAuctionIfDone, nextAuction, passBid, startAuction } from './auctions.ts';
 import { declareBankruptcy, goBankrupt } from './bankruptcy.ts';
-import { build, mortgage, sellBuilding, unmortgage } from './buildings.ts';
+import { build, liftMortgages, mortgage, sellBuilding, unmortgage } from './buildings.ts';
 import { giveCash, settleDebts } from './money.ts';
 import { leaveJail, returnJailCards, roll, rollDice } from './movement.ts';
 import { LOG_SIZE, checkGameOver, inGame, money, nameOf, nextInGame, note, startTurn, syncTurn } from './state.ts';
@@ -42,6 +42,7 @@ export function createGameState(gameId: string): GameState {
     auctionQueue: [],
     debts: [],
     trade: null,
+    mortgageDecisions: [],
     drawnCard: null,
     log: [],
     lastMove: null
@@ -86,6 +87,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     auctionQueue: [],
     debts: [],
     trade: null,
+    mortgageDecisions: [],
     drawnCard: null,
     log: [],
     lastMove: null
@@ -108,6 +110,11 @@ function parseMove(move: unknown): Move | null {
   const input = asRecord(move);
   const type = SPACE_MOVES.find(candidate => candidate === input?.type);
   if (type) return isSpace(input?.space) ? { type, space: input.space } : null;
+  if (input?.type === 'liftMortgages') {
+    const spaces = input.spaces;
+    if (!Array.isArray(spaces) || !spaces.every(isSpace) || new Set(spaces).size !== spaces.length) return null;
+    return { type: 'liftMortgages', spaces: [...spaces] };
+  }
   const plain = PLAIN_MOVES.find(candidate => candidate === input?.type);
   return plain ? { type: plain } : null;
 }
@@ -189,6 +196,8 @@ function play(state: GameState, seat: Seat, move: Move, random: Random): Result<
   if (move.type === 'sellBuilding') return sellBuilding(state, seat, move.space);
   if (move.type === 'mortgage') return mortgage(state, seat, move.space);
   if (state.debts.length > 0) return { error: 'Pay what you owe first: sell buildings, mortgage, trade, or declare bankruptcy' };
+  if (move.type === 'liftMortgages') return liftMortgages(state, seat, move.spaces);
+  if (state.mortgageDecisions.length > 0) return { error: 'Lift or keep the mortgages you received first' };
   if (state.auction) return { error: 'Wait for the auction to finish' };
   switch (move.type) {
     case 'build': return build(state, seat, move.space);
@@ -243,11 +252,21 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   return { state: finish(state, result.state) };
 }
 
-// A dismissed player is out as if bankrupt to the bank: their properties are auctioned among the others
+// A dismissed player is out as if bankrupt: to the player they owe, if they owe one still in the game, otherwise
+// to the bank, whose auctions sell their properties to the others
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const working = { ...state, log: [] };
-  const out = state.bankrupt.includes(seat)
-    ? dropTradesOf(working, seat)
-    : goBankrupt(working, seat, null, 'left the game, so their properties go to auction');
-  return finish(state, out);
+  if (state.bankrupt.includes(seat)) return finish(state, dropTradesOf(working, seat));
+  const owed = state.debts.find(debt => debt.debtor === seat)?.creditor ?? null;
+  const creditor = owed !== null && inGame(state).includes(owed) ? owed : null;
+  const reason = creditor === null
+    ? 'left the game, so their properties go to auction'
+    : `left the game owing ${nameOf(state, creditor)}, who takes everything`;
+  return finish(state, goBankrupt(working, seat, creditor, reason));
+}
+
+// A trade offer from or to a player who disconnects is dropped, so it never holds up other trades
+export function onPlayerDisconnected(state: GameState, seat: Seat): GameState {
+  if (state.trade?.from !== seat && state.trade?.to !== seat) return state;
+  return finish(state, note(dropTradesOf({ ...state, log: [] }, seat), 'The open trade offer was dropped'));
 }

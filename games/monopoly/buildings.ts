@@ -1,7 +1,9 @@
 // Houses, hotels and mortgages. Building and selling go evenly across a color group, and the bank has
 // only 32 houses and 12 hotels. Buildings sell back for half their cost; a mortgage lifts for its value plus 10%.
-import { BOARD, HOTEL, HOTEL_SUPPLY, HOUSE_SUPPLY, groupSpaces, ownable, streetAt, unmortgageCost } from './board.ts';
-import { giveCash } from './money.ts';
+import {
+  BOARD, HOTEL, HOTEL_SUPPLY, HOUSE_SUPPLY, groupSpaces, mortgageInterest, ownable, streetAt, unmortgageCost
+} from './board.ts';
+import { charge, giveCash } from './money.ts';
 import { ownsGroup } from './movement.ts';
 import { money, nameOf, note } from './state.ts';
 import type { GameState, Result, Seat, TableState } from './types.ts';
@@ -131,4 +133,43 @@ export function unmortgage(state: GameState, seat: Seat, space: number): Result<
   const cost = unmortgageCost(space);
   const next = giveCash({ ...state, mortgaged: state.mortgaged.filter(index => index !== space) }, seat, -cost);
   return { state: note(next, `${nameOf(state, seat)} lifted the mortgage on ${BOARD[space].name} for ${money(cost)}`) };
+}
+
+// `seat` has just received these properties; the mortgaged ones wait for them to lift or keep each mortgage
+export function receiveProperties(state: GameState, seat: Seat, spaces: number[]): GameState {
+  const mortgaged = spaces.filter(space => state.mortgaged.includes(space)).sort((a, b) => a - b);
+  if (mortgaged.length === 0) return state;
+  return { ...state, mortgageDecisions: [...state.mortgageDecisions, { seat, spaces: mortgaged }] };
+}
+
+// The 10% that keeping every mortgaged one of `spaces` costs, the least a receiver pays
+export function interestOn(state: TableState, spaces: number[]): number {
+  return spaces.filter(space => state.mortgaged.includes(space)).reduce((sum, space) => sum + mortgageInterest(space), 0);
+}
+
+// Lifting a received mortgage at once costs its value plus 10%; keeping one costs the 10% now, and the full
+// 110% again whenever it is lifted later. Keeping every one is always allowed, as a debt if need be.
+export function liftMortgages(state: GameState, seat: Seat, lift: number[]): Result<GameState> {
+  const decision = state.mortgageDecisions[0];
+  if (!decision || decision.seat !== seat) return { error: 'There are no received mortgages to decide about' };
+  if (lift.some(space => !decision.spaces.includes(space))) return { error: 'You did not just receive that property' };
+  const kept = decision.spaces.filter(space => !lift.includes(space));
+  const cost = lift.reduce((sum, space) => sum + unmortgageCost(space), 0) + interestOn(state, kept);
+  if (lift.length > 0 && (state.cash[seat] ?? 0) < cost) return { error: `That costs ${money(cost)}, more than you have` };
+
+  let next: GameState = {
+    ...state,
+    mortgageDecisions: state.mortgageDecisions.slice(1),
+    mortgaged: state.mortgaged.filter(space => !lift.includes(space))
+  };
+  const name = nameOf(state, seat);
+  for (const space of lift) {
+    const lifted = note(next, `${name} lifted the mortgage on ${BOARD[space].name}`);
+    next = charge(lifted, seat, null, unmortgageCost(space), `mortgage on ${BOARD[space].name}`);
+  }
+  for (const space of kept) {
+    const held = note(next, `${name} kept ${BOARD[space].name} mortgaged`);
+    next = charge(held, seat, null, mortgageInterest(space), `10% interest on ${BOARD[space].name}`);
+  }
+  return { state: next };
 }

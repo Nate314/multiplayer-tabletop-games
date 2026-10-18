@@ -56,6 +56,7 @@ function step(manager: Manager, buyer = 1): PublicGameState {
     if (mortgageable !== undefined) return ok(manager.move(ROOM, seat, { type: 'mortgage', space: mortgageable }));
     return ok(manager.move(ROOM, seat, { type: 'declareBankruptcy' }));
   }
+  if (state.mortgageDecisions.length > 0) return ok(manager.move(ROOM, seat, { type: 'liftMortgages', spaces: [] }));
   if (state.auction) {
     const { auction } = state;
     const bidders = inGame(state).filter(other => !auction.passed.includes(other) && other !== auction.highBidder);

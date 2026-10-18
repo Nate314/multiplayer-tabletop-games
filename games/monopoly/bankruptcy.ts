@@ -1,10 +1,9 @@
 // Bankruptcy. Owing a player: buildings are sold to the bank at half price, then the creditor takes all cash,
-// properties (paying 10% interest on each mortgaged one) and Get Out of Jail Free cards. Owing the bank, or leaving
+// properties (lifting each mortgaged one for 110% or keeping it for 10%) and Get Out of Jail Free cards. Owing the bank, or leaving
 // the game: buildings go back to the bank, jail cards to the bottom of their decks, and every property is auctioned unmortgaged.
-import { BOARD, mortgageInterest } from './board.ts';
 import { dropBidder, nextAuction } from './auctions.ts';
-import { sellAllBuildings } from './buildings.ts';
-import { charge, giveCash } from './money.ts';
+import { receiveProperties, sellAllBuildings } from './buildings.ts';
+import { giveCash } from './money.ts';
 import { leaveJail, returnJailCards } from './movement.ts';
 import { checkGameOver, nameOf, nextInGame, note, startTurn } from './state.ts';
 import { dropTradesOf } from './trades.ts';
@@ -24,9 +23,7 @@ function toPlayer(state: GameState, seat: Seat, creditor: Seat): GameState {
     owners,
     jailCards: { ...state.jailCards, [seat]: [], [creditor]: [...(state.jailCards[creditor] ?? []), ...(state.jailCards[seat] ?? [])] }
   }, seat, -cash), creditor, cash);
-  return spaces
-    .filter(space => state.mortgaged.includes(space))
-    .reduce((next, space) => charge(next, creditor, null, mortgageInterest(space), `10% interest on ${BOARD[space].name}`), handed);
+  return receiveProperties(handed, creditor, spaces);
 }
 
 function toBank(state: GameState, seat: Seat): GameState {
@@ -47,7 +44,8 @@ function toBank(state: GameState, seat: Seat): GameState {
 // `seat` is out of the game, owing `creditor` (null for the bank). Their other debts are dropped, as are debts owed to them.
 export function goBankrupt(state: GameState, seat: Seat, creditor: Seat | null, reason: string): GameState {
   const debts = state.debts.filter(debt => debt.debtor !== seat && debt.creditor !== seat);
-  const sold = sellAllBuildings({ ...leaveJail(state, seat), debts }, seat).state;
+  const mortgageDecisions = state.mortgageDecisions.filter(decision => decision.seat !== seat);
+  const sold = sellAllBuildings({ ...leaveJail(state, seat), debts, mortgageDecisions }, seat).state;
   const handed = creditor === null ? toBank(sold, seat) : toPlayer(sold, seat, creditor);
   const out = note(dropTradesOf({ ...handed, bankrupt: [...handed.bankrupt, seat], pendingBuy: state.turnHolder === seat ? null : handed.pendingBuy }, seat),
     `${nameOf(state, seat)} ${reason}`);

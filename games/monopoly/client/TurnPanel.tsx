@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { JAIL_FINE, ownable } from '../board.ts';
+import MortgageChoice from './MortgageChoice';
 import type { Move, PublicGameState, Seat } from '../types.ts';
 
 type TurnPanelProps = {
@@ -12,10 +13,11 @@ type TurnPanelProps = {
 // What the player who must act now can do: pay a debt, buy or decline, get out of jail, roll, end the turn, or give up
 export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: TurnPanelProps) {
   const [confirming, setConfirming] = useState(false);
-  const { debts, auction, pendingBuy, canRoll, doublesRolled, jailed, jailCards, cash, playerNames, currentPlayer, isGameOver } = gameState;
+  const { debts, mortgageDecisions, auction, pendingBuy, canRoll, doublesRolled, jailed, jailCards, cash, playerNames, currentPlayer, isGameOver } = gameState;
   if (isGameOver || currentPlayer === null) return null;
 
   const debt = debts[0];
+  const decision = debt ? undefined : mortgageDecisions[0];
   const giveUp = (
     <div className="bankruptcy">
       {confirming ? (
@@ -33,8 +35,10 @@ export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: 
   );
 
   if (!canMove) {
-    const waiting = debt ? `Waiting for ${playerNames[debt.debtor]} to pay` : `Waiting for ${playerNames[currentPlayer]}`;
-    return <section className="panel turn-panel" aria-label="Turn"><div className="turn-waiting">{auction ? 'Auction in progress' : waiting}</div></section>;
+    let waiting = auction ? 'Auction in progress' : `Waiting for ${playerNames[currentPlayer]}`;
+    if (decision) waiting = `Waiting for ${playerNames[decision.seat]} to lift or keep the mortgages received`;
+    if (debt) waiting = `Waiting for ${playerNames[debt.debtor]} to pay`;
+    return <section className="panel turn-panel" aria-label="Turn"><div className="turn-waiting">{waiting}</div></section>;
   }
 
   let body;
@@ -46,6 +50,8 @@ export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: 
         property on the board), or trade for cash. The debt is paid as soon as you have enough.
       </p>
     );
+  } else if (decision) {
+    body = <MortgageChoice decision={decision} cash={cash[playerNumber] ?? 0} onMove={onMove} />;
   } else if (auction) {
     body = <p className="turn-note">Your turn goes on once the auction is over.</p>;
   } else if (pendingBuy !== null) {
@@ -82,9 +88,10 @@ export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: 
 
   return (
     <section className="panel turn-panel" aria-label="Your turn">
-      <div className="panel-title">{debt ? 'You owe money' : 'Your turn'}</div>
+      <div className="panel-title">{debt ? 'You owe money' : decision ? 'Mortgaged property received' : 'Your turn'}</div>
       {body}
-      {!auction && giveUp}
+      {/* A debtor may always give up; otherwise not while an auction runs */}
+      {(debt || !auction) && giveUp}
     </section>
   );
 }

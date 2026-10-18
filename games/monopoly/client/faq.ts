@@ -57,8 +57,9 @@ export const FAQS: FaqItem[] = [
     question: 'How do I trade?',
     answer: 'Click Propose a trade, choose a player, and tick what each side gives: properties (none in a color group ' +
       'with buildings), cash and Get Out of Jail Free cards. Any player may trade at any time, one offer at a time. ' +
-      'Nothing moves until the other player clicks Accept. Whoever receives a mortgaged property pays the bank 10% of its ' +
-      'mortgage value at once and may lift the mortgage later.'
+      'Nothing moves until the other player clicks Accept. Whoever receives a mortgaged property chooses for each one: ' +
+      'lift the mortgage now for its value plus 10%, or pay the 10% now and keep it mortgaged. An offer is refused if ' +
+      'the receiver could not pay that 10%, and an offer from or to a player who disconnects is dropped.'
   },
   {
     question: 'What if I cannot pay?',
@@ -80,7 +81,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What happens if someone leaves?',
-    answer: 'A player who is dismissed is out as if bankrupt to the bank: their properties are auctioned to everyone ' +
+    answer: 'A player who is dismissed is out as if bankrupt: to a player they owe money, who takes everything, ' +
+      'or otherwise to the bank, and then their properties are auctioned to everyone ' +
       'left, and their open trade or debts are dropped. The last player left wins.'
   }
 ];

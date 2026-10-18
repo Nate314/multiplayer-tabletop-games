@@ -39,6 +39,9 @@ export type Debt = { debtor: Seat; creditor: Seat | null; amount: number; reason
 // Bidding is open to every player still in the game; a pass is final, and the last bidder standing buys
 export type Auction = { space: number; highBid: number; highBidder: Seat | null; passed: Seat[] };
 
+// Who just received mortgaged properties (in a trade or a bankruptcy) and must lift or keep each mortgage
+export type MortgageDecision = { seat: Seat; spaces: number[] };
+
 export type TradeSide = { properties: number[]; cash: number; jailCards: number };
 
 // `from` offers to give `give` and asks for `get` from `to`
@@ -55,7 +58,8 @@ export type Move =
   | { type: 'payJailFine' }
   | { type: 'useJailCard' }
   | { type: 'endTurn' }
-  | { type: 'declareBankruptcy' };
+  | { type: 'declareBankruptcy' }
+  | { type: 'liftMortgages'; spaces: number[] }; // lifts these received mortgages for 110%, keeps the rest for 10%
 
 // Not turn-bound and not undoable
 export type Action =
@@ -90,6 +94,7 @@ export type GameState = BaseGameState & {
   auctionQueue: number[]; // spaces of a player bankrupt to the bank, auctioned one after another
   debts: Debt[];
   trade: Trade | null; // one open offer at a time
+  mortgageDecisions: MortgageDecision[]; // the game waits for the first, after any debts
   drawnCard: DrawnCard | null; // the last card drawn, shown until the next one
   log: string[]; // the most recent events, newest last
   lastMove: LastMove | null;
