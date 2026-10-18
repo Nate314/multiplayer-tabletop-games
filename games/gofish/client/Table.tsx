@@ -19,6 +19,21 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
   const booksDown = Object.values(books).flat().length;
   const asker = showLastMove ? lastMove?.asker : undefined;
   const asked = showLastMove ? lastMove?.target : undefined;
+  // Dismissed players keep their books, which still count toward the 13
+  const left = Object.keys(books).map(Number).filter(seat => !activePlayers.includes(seat)).sort((a, b) => a - b);
+  const bookParts = (seat: Seat) => {
+    const held = books[seat] ?? [];
+    return (
+      <>
+        <span className="player-books">{held.length} {held.length === 1 ? 'book' : 'books'}</span>
+        <span className="book-list">
+          {held.map(rank => (
+            <span key={rank} className="book" data-anim-key={bookKey(rank)} title={`Book of ${rankPlural(rank)}`}>{rank}</span>
+          ))}
+        </span>
+      </>
+    );
+  };
 
   return (
     <div className="table">
@@ -40,14 +55,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
               <span className="player-count">
                 {count === 0 && stockCount === 0 ? 'out of cards' : `${count} ${count === 1 ? 'card' : 'cards'}`}
               </span>
-              <span className="player-books">
-                {(books[seat] ?? []).length} {(books[seat] ?? []).length === 1 ? 'book' : 'books'}
-              </span>
-              <span className="book-list">
-                {(books[seat] ?? []).map(rank => (
-                  <span key={rank} className="book" data-anim-key={bookKey(rank)} title={`Book of ${rankPlural(rank)}`}>{rank}</span>
-                ))}
-              </span>
+              {bookParts(seat)}
             </>
           );
           return (
@@ -58,6 +66,15 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
             </li>
           );
         })}
+        {left.map(seat => (
+          <li key={seat} className="player player-left">
+            <div className="player-body">
+              <span className="player-name">{playerNames[seat]} (left)</span>
+              <span className="player-count">no longer playing</span>
+              {bookParts(seat)}
+            </div>
+          </li>
+        ))}
       </ol>
       <div className="table-middle">
         <div className="stock">

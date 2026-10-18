@@ -18,6 +18,7 @@
   --picked: #1f6f9f;
   --book-bg: #1f6f9f;
   --book-text: #ffffff;
+  --playing-card-selected: var(--picked);
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--accent);
@@ -174,6 +175,7 @@
 [data-game="gofish"] .player-target { border-style: dashed; border-color: var(--picked); }
 [data-game="gofish"] .player-picked { border-color: var(--picked); box-shadow: 0 0 0 2px var(--picked); }
 [data-game="gofish"] .player-winner { background: var(--status-bg); }
+[data-game="gofish"] .player-left { border-style: dotted; opacity: 0.75; }
 
 [data-game="gofish"] .player-body,
 [data-game="gofish"] .player-pick {
