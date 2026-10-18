@@ -312,7 +312,7 @@
 
 [data-game="skipbo"] .other-seats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 12px;
   width: 100%;
 }
@@ -362,7 +362,7 @@
 
 [data-game="skipbo"] .discard-piles {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 [data-game="skipbo"] .discard-pile {
@@ -370,7 +370,8 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  min-width: 52px;
+  box-sizing: border-box;
+  width: 56px;
   padding: 4px;
   border: 2px solid transparent;
   border-radius: 8px;
@@ -387,8 +388,10 @@
 }
 
 /* Discarding takes two clicks: choose a pile, then Discard here */
+/* Fills the pile's fixed width and wraps, so choosing a pile does not shift the others */
 [data-game="skipbo"] .discard-choice {
-  padding: 2px 6px;
+  width: 100%;
+  padding: 2px 4px;
   border: 1px solid var(--highlight);
   border-radius: 5px;
   background: var(--panel-bg);
