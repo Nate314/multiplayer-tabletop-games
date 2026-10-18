@@ -12,6 +12,10 @@
   --lobby-accent-text: #ffffff;
   --lobby-error-bg: #fbe4e1;
   --lobby-error-text: #8a1c12;
+  --playing-card-face-default: #ffffff;
+  --playing-card-back-default: #2b4c7e;
+  --playing-card-red-default: #c0262d;
+  --playing-card-black-default: #1d1d1b;
 }
 
 :root[data-theme="dark"] {
@@ -26,6 +30,10 @@
   --lobby-accent-text: #ffffff;
   --lobby-error-bg: #4a1d18;
   --lobby-error-text: #ffd6d0;
+  --playing-card-face-default: #f2f1ec;
+  --playing-card-back-default: #3a5f99;
+  --playing-card-red-default: #c42a31;
+  --playing-card-black-default: #1d1d1b;
 }
 
 .lobby {
@@ -611,4 +619,90 @@
 
 :where(.open-saved-game:hover, .open-saved-game:focus-visible) {
   border-color: var(--lobby-accent);
+}
+
+/*
+ * The standard playing card (src/components/PlayingCard.tsx). A game can retheme it on [data-game="<id>"] with
+ * --playing-card-face, --playing-card-back, --playing-card-red and --playing-card-black.
+ */
+
+:where(.playing-card) {
+  --card-width: 64px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--card-width);
+  height: calc(var(--card-width) * 1.4);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: calc(var(--card-width) * 0.1);
+  background: var(--playing-card-face, var(--playing-card-face-default));
+  color: var(--playing-card-black, var(--playing-card-black-default));
+  font: inherit;
+  font-size: calc(var(--card-width) * 0.22);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+:where(.playing-card-small) { --card-width: 44px; }
+:where(.playing-card-large) { --card-width: 88px; }
+
+:where(.playing-card-red) {
+  color: var(--playing-card-red, var(--playing-card-red-default));
+}
+
+:where(.playing-card-back) {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 4px, transparent 4px 8px),
+    var(--playing-card-back, var(--playing-card-back-default));
+}
+
+:where(.playing-card-corner) {
+  position: absolute;
+  top: 6%;
+  left: 8%;
+  font-size: 0.8em;
+}
+
+:where(.playing-card-corner-bottom) {
+  top: auto;
+  left: auto;
+  right: 8%;
+  bottom: 6%;
+  transform: rotate(180deg);
+}
+
+:where(.playing-card-pip) {
+  font-size: 1.9em;
+}
+
+:where(button.playing-card) {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+:where(button.playing-card:hover:not(:disabled), button.playing-card:focus-visible) {
+  transform: translateY(-4px);
+}
+
+:where(button.playing-card:disabled) {
+  cursor: default;
+  opacity: 0.6;
+}
+
+:where(.playing-card-selected) {
+  transform: translateY(-8px);
+  outline: 3px solid var(--lobby-accent);
+  outline-offset: 1px;
+}
+
+:where(.playing-card-highlighted) {
+  outline: 3px solid #e0a800;
+  outline-offset: 1px;
 }
