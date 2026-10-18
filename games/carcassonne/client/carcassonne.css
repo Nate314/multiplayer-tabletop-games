@@ -1,0 +1,258 @@
+/* Carcassonne's countryside. Every rule is scoped to data-game="carcassonne", so none of it reaches the landing page or other games. */
+
+[data-game="carcassonne"] {
+  color-scheme: light;
+  --page-bg: #f1ede2;
+  --text: #2b261c;
+  --muted: #6b6250;
+  --panel-bg: #fffdf7;
+  --panel-border: #d8cfb8;
+  --button-bg: #8a5a2b;
+  --button-hover-bg: #714822;
+  --button-text: #ffffff;
+  --status-bg: #ece4cf;
+  --error-bg: #fbe4e1;
+  --error-text: #8a1c12;
+  --board-bg: #d9d2bd;
+  --field: #8fbf5a;
+  --field-dark: #6f9c40;
+  --road: #f2ead2;
+  --road-edge: #9a8a66;
+  --city: #c9a46a;
+  --city-wall: #6e4d24;
+  --pennant: #2457a6;
+  --pennant-mark: #ffffff;
+  --monastery: #e9dcc0;
+  --monastery-roof: #9b3d2a;
+  --cell: rgba(255, 214, 64, 0.35);
+  --cell-edge: #d29a00;
+  --highlight: #ff7a00;
+  --spot: rgba(255, 255, 255, 0.75);
+  --spot-edge: #2b261c;
+  --seat1: #d32f2f;
+  --seat2: #1e64c8;
+  --seat3: #f2c100;
+  --seat4: #2e8b3e;
+  --seat5: #3a3a3a;
+  --meeple-edge: #1b1712;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="carcassonne"] {
+  color-scheme: dark;
+  --page-bg: #17150f;
+  --text: #ece6d6;
+  --muted: #b0a68e;
+  --panel-bg: #24211a;
+  --panel-border: #433c2e;
+  --button-bg: #b07a3e;
+  --button-hover-bg: #c48b4b;
+  --status-bg: #342e22;
+  --error-bg: #4a1d18;
+  --error-text: #ffd6d0;
+  --board-bg: #2b281f;
+  --field: #6f9a45;
+  --field-dark: #557a32;
+  --road: #ddd3b6;
+  --city: #b38d55;
+  --cell: rgba(255, 214, 64, 0.28);
+  --spot-edge: #000000;
+  --seat5: #9e9e9e;
+}
+
+[data-game="carcassonne"] .game-id {
+  width: fit-content;
+  margin: 0 auto 8px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+[data-game="carcassonne"] .cc-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16px;
+  padding: 4px 8px 12px;
+}
+
+[data-game="carcassonne"] .cc-board-area {
+  flex: 1 1 560px;
+  min-width: 0;
+  max-width: 1000px;
+}
+
+[data-game="carcassonne"] .cc-side-panel {
+  display: flex;
+  flex: 0 1 340px;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The board fills the height of the window below the header, and is never too small to use */
+[data-game="carcassonne"] .cc-board {
+  position: relative;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--board-bg);
+}
+
+[data-game="carcassonne"] .cc-board-svg {
+  display: block;
+  width: 100%;
+  height: max(340px, calc(100vh - 170px));
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+[data-game="carcassonne"] .cc-board-svg:active { cursor: grabbing; }
+
+[data-game="carcassonne"] .cc-zoom {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+[data-game="carcassonne"] .cc-zoom button {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Tile artwork */
+[data-game="carcassonne"] .cc-field { fill: var(--field); }
+[data-game="carcassonne"] .cc-tile-edge { fill: none; stroke: var(--field-dark); stroke-width: 1.5; }
+[data-game="carcassonne"] .cc-road-edge { fill: none; stroke: var(--road-edge); stroke-width: 14; }
+[data-game="carcassonne"] .cc-road { fill: none; stroke: var(--road); stroke-width: 9; }
+[data-game="carcassonne"] .cc-city { fill: var(--city); stroke: var(--city-wall); stroke-width: 3.5; stroke-linejoin: round; }
+[data-game="carcassonne"] .cc-junction { fill: var(--monastery); stroke: var(--city-wall); stroke-width: 2; }
+[data-game="carcassonne"] .cc-monastery path:first-child { fill: var(--monastery); stroke: var(--monastery-roof); stroke-width: 3; stroke-linejoin: round; }
+[data-game="carcassonne"] .cc-monastery-door { fill: var(--monastery-roof); }
+[data-game="carcassonne"] .cc-monastery-cross { fill: none; stroke: var(--monastery-roof); stroke-width: 3; }
+[data-game="carcassonne"] .cc-pennant path:first-child { fill: var(--pennant); stroke: var(--pennant-mark); stroke-width: 1.2; }
+[data-game="carcassonne"] .cc-pennant-mark { fill: none; stroke: var(--pennant-mark); stroke-width: 1.6; }
+
+/* Placement */
+[data-game="carcassonne"] .cc-cell { fill: var(--cell); stroke: var(--cell-edge); stroke-width: 3; stroke-dasharray: 8 6; cursor: pointer; }
+[data-game="carcassonne"] .cc-cell:hover { fill: rgba(255, 214, 64, 0.6); }
+[data-game="carcassonne"] .cc-cell-selected { stroke-dasharray: none; }
+[data-game="carcassonne"] .cc-preview { opacity: 0.92; }
+[data-game="carcassonne"] .cc-preview-edge { fill: none; stroke: var(--highlight); stroke-width: 5; }
+[data-game="carcassonne"] .cc-highlight { fill: none; stroke: var(--highlight); stroke-width: 5; pointer-events: none; }
+
+/* Meeples and the spots for one */
+[data-game="carcassonne"] .cc-meeple { stroke: var(--meeple-edge); stroke-width: 1.2; stroke-linejoin: round; }
+[data-game="carcassonne"] .cc-seat1 { fill: var(--seat1); }
+[data-game="carcassonne"] .cc-seat2 { fill: var(--seat2); }
+[data-game="carcassonne"] .cc-seat3 { fill: var(--seat3); }
+[data-game="carcassonne"] .cc-seat4 { fill: var(--seat4); }
+[data-game="carcassonne"] .cc-seat5 { fill: var(--seat5); }
+[data-game="carcassonne"] .cc-spot { cursor: pointer; }
+[data-game="carcassonne"] .cc-spot circle { fill: var(--spot); stroke: var(--spot-edge); stroke-width: 2; stroke-dasharray: 4 3; }
+[data-game="carcassonne"] .cc-spot:hover circle { stroke-dasharray: none; }
+[data-game="carcassonne"] .cc-spot-selected circle { stroke: var(--highlight); stroke-width: 3; stroke-dasharray: none; }
+[data-game="carcassonne"] .cc-meeple-icon { width: 22px; height: 22px; flex: none; }
+
+/* Side panel */
+[data-game="carcassonne"] .cc-status {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--status-bg);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+[data-game="carcassonne"] .cc-status-error { background: var(--error-bg); color: var(--error-text); }
+[data-game="carcassonne"] .cc-turn-message { font-weight: 700; }
+
+[data-game="carcassonne"] .cc-panel {
+  padding: 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+[data-game="carcassonne"] .cc-panel-title { margin-bottom: 6px; font-weight: 700; }
+[data-game="carcassonne"] .cc-turn-body { display: flex; align-items: center; gap: 12px; }
+[data-game="carcassonne"] .cc-current-tile { width: 96px; height: 96px; flex: none; }
+[data-game="carcassonne"] .cc-turn-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+[data-game="carcassonne"] .cc-tiles-left { color: var(--muted); font-size: 14px; }
+
+[data-game="carcassonne"] .cc-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+[data-game="carcassonne"] .cc-side-panel button {
+  padding: 6px 12px;
+  border: 1px solid var(--button-bg);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+[data-game="carcassonne"] .cc-side-panel button.cc-primary { background: var(--button-bg); color: var(--button-text); }
+[data-game="carcassonne"] .cc-side-panel button.cc-primary:hover:not(:disabled) { background: var(--button-hover-bg); }
+[data-game="carcassonne"] .cc-side-panel button:disabled { opacity: 0.45; cursor: not-allowed; }
+[data-game="carcassonne"] .cc-undo { align-self: flex-start; }
+
+[data-game="carcassonne"] .cc-player-list { margin: 0; padding: 0; list-style: none; }
+
+[data-game="carcassonne"] .cc-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+
+[data-game="carcassonne"] .cc-player-current { background: var(--status-bg); font-weight: 700; }
+[data-game="carcassonne"] .cc-player-left { opacity: 0.55; }
+[data-game="carcassonne"] .cc-player-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+[data-game="carcassonne"] .cc-player-status { color: var(--muted); font-weight: 400; font-size: 13px; }
+[data-game="carcassonne"] .cc-player-meeples { color: var(--muted); font-size: 13px; white-space: nowrap; }
+[data-game="carcassonne"] .cc-player-score { min-width: 2.5em; text-align: right; font-size: 18px; font-weight: 700; }
+
+[data-game="carcassonne"] .cc-final { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 13px; }
+[data-game="carcassonne"] .cc-final caption { margin-bottom: 4px; color: var(--muted); text-align: left; }
+[data-game="carcassonne"] .cc-final th,
+[data-game="carcassonne"] .cc-final td { padding: 3px 4px; border-top: 1px solid var(--panel-border); text-align: right; }
+[data-game="carcassonne"] .cc-final th[scope="row"],
+[data-game="carcassonne"] .cc-final thead th:first-child { text-align: left; overflow-wrap: anywhere; }
+
+/* History dialog */
+[data-game="carcassonne"] .cc-history { display: flex; flex-direction: column; gap: 8px; width: min(640px, 82vw); text-align: left; }
+[data-game="carcassonne"] .cc-history .cc-board-area { flex: none; }
+[data-game="carcassonne"] .cc-history .cc-board-svg { height: min(52vh, 480px); min-height: 240px; }
+
+/* Stacked under the board on a narrow window: a shorter board keeps the turn controls in view */
+@media (max-width: 919px) {
+  [data-game="carcassonne"] .cc-board-area { flex-basis: 100%; }
+  [data-game="carcassonne"] .cc-side-panel { flex: 1 1 100%; max-width: 720px; }
+  [data-game="carcassonne"] .cc-board-svg { height: max(300px, 55vh); }
+}

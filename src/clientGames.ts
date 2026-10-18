@@ -4,6 +4,7 @@ import type { BasePublicState, Seat } from '../shared/types.ts';
 import type { MoveChange } from './animation/useMoveAnimation.ts';
 import { quoridorClient } from '../games/quoridor/client/index.ts';
 import { azulClient } from '../games/azul/client/index.ts';
+import { carcassonneClient } from '../games/carcassonne/client/index.ts';
 import { chessClient } from '../games/chess/client/index.ts';
 import { checkersClient } from '../games/checkers/client/index.ts';
 import { backgammonClient } from '../games/backgammon/client/index.ts';
@@ -47,6 +48,7 @@ export type ClientGame = {
 export const CLIENT_GAMES: Record<string, ClientGame> = {
   [quoridorClient.id]: quoridorClient,
   [azulClient.id]: azulClient,
+  [carcassonneClient.id]: carcassonneClient,
   [chessClient.id]: chessClient,
   [checkersClient.id]: checkersClient,
   [backgammonClient.id]: backgammonClient,
