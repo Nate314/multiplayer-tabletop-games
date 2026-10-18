@@ -623,6 +623,20 @@ test('a tie on points goes to the player with more complete rows, or is shared',
   assert.equal(shared.gameStatus, 'Alice and Bob share the win with 7 points!');
 });
 
+test('a full row on the board of a player who left does not end the game', () => {
+  const state = game({
+    factories: [['red'], [], [], [], [], [], []],
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cara' },
+    boards: {
+      1: board(), 2: board(),
+      3: board({ wall: wallOf([0, 1], [0, 2], [0, 3], [0, 4]), patternLines: linesOf({ 0: { color: 'blue', count: 1 } }) })
+    }
+  });
+  const next = ok(applyMove(azul, state, 1, take(factory(0), 'red', 'floor')));
+  assert.equal(next.isGameOver, false);
+  assert.ok(next.roundSummary);
+});
+
 test('a player who left cannot win', () => {
   const state = game({
     factories: [['blue'], [], [], [], [], [], []],

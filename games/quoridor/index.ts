@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
+import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const quoridor: GameDefinition<GameState, PublicGameState> = {
@@ -12,6 +12,7 @@ export const quoridor: GameDefinition<GameState, PublicGameState> = {
   },
   createGameState,
   resetLobby,
+  onPlayerLeft,
   applyMove,
   toPublicState
 };

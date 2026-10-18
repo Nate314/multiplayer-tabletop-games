@@ -307,7 +307,8 @@ function endRound(state: GameState): GameState {
     roundSummary: { round: state.round, seats: mapSeats(tiled, result => result.summary), acknowledged: [] },
     gameStatus: `Round ${state.round} scored. Waiting for everyone to continue.`
   };
-  return Object.values(boards).some(board => completeRows(board.wall) > 0) ? endGame(scored) : scored;
+  // A board of a player who left is still tiled, but only a seated player's full row ends the game
+  return state.activePlayers.some(seat => completeRows(boards[seat].wall) > 0) ? endGame(scored) : scored;
 }
 
 // The next round may have been waiting only for the player who left

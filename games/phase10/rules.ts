@@ -374,10 +374,10 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
       gameStatus: `${state.playerNames[tiebreak[0]]} wins! Everyone else in the tiebreaker left.`
     };
   }
-  if (next.currentPlayer !== null && !handPlayers(next).includes(next.currentPlayer)) {
-    next.currentPlayer = nextHandPlayer(next, seat);
-  }
-  return startNextHandIfReady(next, random);
+  // The platform moved a turn the leaver held to the next seat, who may be out of the hand or due to be skipped
+  const current = next.currentPlayer;
+  const moveOn = current !== null && (!handPlayers(next).includes(current) || next.skipped.includes(current));
+  return startNextHandIfReady(moveOn ? passTurn(next, seat) : next, random);
 }
 
 // The next hand may have been waiting only for the player who disconnected

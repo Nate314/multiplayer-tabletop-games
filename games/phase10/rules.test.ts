@@ -15,7 +15,7 @@ import {
   onPlayerLeft
 } from './rules.ts';
 import { phase10 } from './index.ts';
-import { applyMove } from '../../shared/seating.ts';
+import { applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Card, CardColor, GameState, Group, Result } from './types.ts';
 
 // A repeatable random, so dealing and reshuffles are the same every run
@@ -441,6 +441,16 @@ test('in the tiebreaker the tied player who completes phase 10 wins; otherwise a
   assert.equal(again.isGameOver, false);
   assert.deepEqual(again.tiebreak, [1, 2]);
   assert.deepEqual(again.phases, { 1: 10, 2: 10, 3: 4 });
+});
+
+test('a player dismissed on their turn passes it on past a player due to be skipped', () => {
+  const state = game({
+    currentPlayer: 2, activePlayers: [1, 2, 3], playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cy' },
+    hands: { 1: [num(1)], 2: [num(2)], 3: [num(3)] }, phases: { 1: 1, 2: 1, 3: 1 }, scores: { 1: 0, 2: 0, 3: 0 }, skipped: [3]
+  });
+  const next = removePlayer(phase10, state, 2, seeded(3));
+  assert.equal(next.currentPlayer, 1);
+  assert.deepEqual(next.skipped, []);
 });
 
 test('if all but one tied player leaves, the one left wins the tiebreaker', () => {

@@ -207,6 +207,15 @@ test('a capture earns a 20 square bonus, taken whole by one pawn after the dice'
   assert.deepEqual(bonus.bonuses, []);
 });
 
+test('a bonus no pawn can move is dropped, and the one after it can still be taken', () => {
+  // The pawn home earns 10 behind the 20 already owed; from 56, 20 overshoots home but 10 fits
+  const state = playing({ pawns: { 1: [55, 68, NEST, NEST], 2: IN_NEST }, dice: [3, 1], bonuses: [CAPTURE_BONUS] });
+  const next = move(move(state, 1, 1, 0), 1, 0, 1);
+  assert.deepEqual(next.bonuses, [HOME_BONUS]);
+  assert.equal(next.currentPlayer, 1);
+  assert.equal(move(next, 1, 0, 'bonus').pawns[1][0], 66);
+});
+
 test('a safe square held by an opponent cannot be landed on', () => {
   const state = playing({ pawns: { 1: [9, NEST, NEST, NEST], 2: [onSquare(2, 17), NEST, NEST, NEST] }, dice: [3, 1] });
   assert.equal(isSafe(17), true);
