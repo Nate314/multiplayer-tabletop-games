@@ -80,7 +80,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 7. To rejoin, enter the same game ID and the same name (capitalization does not matter), from any device. After a refresh the page rejoins by itself, and after Back to games the list shows a "Back to <game> (<game ID>)" button that rejoins with one click. A name that is still connected cannot be taken; a device that drops off without closing its connection frees the seat within about 30 seconds
 8. The other players can vote to dismiss a disconnected player with the Dismiss button next to their name. Every connected player must approve; one decline cancels it. A dismissed player is out for good: their turns are skipped, they cannot rejoin, and if only one player is left, that player wins
 9. A game whose players have all disconnected is kept for 10 minutes, then deleted
-10. The History button shows the starting board, every move, and, if the game ended by resigning, a draw or everyone else leaving, the end of the game. When a game is over, Download game in that dialog saves it as a `.json` file. Anyone can open that file with Open a saved game on the landing page and step through it, without joining anything. A saved game is for review only
+10. The History button shows the starting board, every move, and, if the game ended by resigning, a draw or everyone else leaving, the end of the game. When a game is over, Download game in that dialog saves it as a `.json` file, which includes every player's view of the game. Anyone can open that file with Open a saved game on the landing page and step through it, without joining anything. A saved game is for review only. In an opened file, View as shows the game from any player's seat, including their hand in Uno, Phase 10 and Scrabble, or Table only. The Animations checkbox animates each step forward, and Play steps through the game on its own, one step every 1.5 seconds. The Animations setting and the name and game ID you last joined with are remembered in this browser
 
 ## Saved games
 
@@ -135,8 +135,8 @@ The platform (server, landing page, join dialog, undo voting, Docker, CI) needs 
    - tests, for example `rules.test.ts` and `manager.test.ts`
    - `README.md`: the game's rules and controls, linked from the Games list above
 2. Create `games/<id>/client/` with:
-   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `icon`, `HistoryBoard` and `describeMove`
-   - a `HistoryBoard` component: a read-only board for one public state from the history, with its `lastMove` highlighted
+   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `icon`, `HistoryBoard` and `describeMove`, and optionally `animateMove`
+   - a `HistoryBoard` component: a read-only board for one public state from the history, with its `lastMove` highlighted. It receives `viewer` (a seat, or `null` for the table only), so a game with hands shows that player's hand
    - `describeMove.ts`: one line about the move that produced a public state, such as `Alice placed a wall`, shown as "Move 7 of 23: ..." in the history dialog
    - `faq.ts`: the FAQ items shown by the FAQ button
    - optionally a CSS file whose rules are all scoped under `[data-game="<id>"]`, so the game's colors never leak into other games or the landing page
