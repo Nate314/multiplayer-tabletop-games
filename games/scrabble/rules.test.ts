@@ -219,23 +219,85 @@ test('an exchange needs seven tiles in the bag and tiles you hold', () => {
   assert.deepEqual(move(game({ 1: 'QQZZXXA', 2: 'AAAAAAA' }), 1, { type: 'exchange', letters: ['E'] }), { error: 'You do not have those tiles' });
 });
 
-test('six scoreless turns in a row end the game, each losing their rack', () => {
+test('after six scoreless turns in a row play goes on until a player ends the game, each losing their rack', () => {
   let state = game({ 1: 'QAAAAAA', 2: 'ZEEEEEE' });
   for (let turn = 0; turn < 5; turn++) state = ok(move(state, state.currentPlayer ?? 0, { type: 'pass' }));
-  assert.equal(state.isGameOver, false);
   assert.equal(state.gameStatus, 'A passed');
+  assert.deepEqual(scrabble.applyAction?.(state, 1, { type: 'endGame' }, first), {
+    error: 'The game can end only after 6 scoreless turns in a row'
+  });
+
   state = ok(move(state, 2, { type: 'pass' }));
-  assert.equal(state.isGameOver, true);
-  assert.deepEqual(state.scores, { 1: -16, 2: -16 });
-  assert.deepEqual(state.endAdjustments, { 1: -16, 2: -16 });
-  assert.deepEqual(state.winners, [1, 2]);
-  assert.equal(state.gameStatus, 'A and B share the win with -16 points!');
+  assert.equal(state.isGameOver, false);
+  assert.equal(state.currentPlayer, 1);
+  assert.equal(state.gameStatus, 'B passed. 6 scoreless turns in a row: any player may end the game.');
+  const seventh = ok(move(state, 1, { type: 'pass' }));
+  assert.equal(seventh.isGameOver, false);
+  assert.equal(seventh.scorelessTurns, 7);
+
+  // Either player may end it, not only the one whose turn it is
+  const ended = ok(scrabble.applyAction?.(seventh, 1, { type: 'endGame' }, first) ?? { error: 'no actions' });
+  assert.equal(ended.isGameOver, true);
+  assert.equal(ended.currentPlayer, null);
+  assert.deepEqual(ended.scores, { 1: -16, 2: -16 });
+  assert.deepEqual(ended.endAdjustments, { 1: -16, 2: -16 });
+  assert.deepEqual(ended.winners, [1, 2]);
+  assert.equal(ended.gameStatus, 'A ended the game. A and B share the win with -16 points!');
+  assert.deepEqual(scrabble.applyAction?.(ended, 2, { type: 'endGame' }, first), {
+    error: 'The game can end only after 6 scoreless turns in a row'
+  });
+  assert.deepEqual(scrabble.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first), {
+    error: 'An undo vote is in progress'
+  });
+  assert.deepEqual(scrabble.applyAction?.(seventh, 1, { type: 'resign' }, first), { error: 'Unknown action' });
+
+  // A scoring play starts the count again
+  const scored = ok(move({ ...game({ 1: 'CATAAAA', 2: 'AAAAAAA' }), scorelessTurns: 7 }, 1, { type: 'play', tiles: CAT }));
+  assert.equal(scored.scorelessTurns, 0);
+  assert.equal(scored.gameStatus, 'A played CAT for 10 points');
 });
 
-test('a scoring play resets the scoreless count', () => {
-  const state = ok(move({ ...game({ 1: 'CATAAAA', 2: 'AAAAAAA' }), scorelessTurns: 5 }, 1, { type: 'play', tiles: CAT }));
-  assert.equal(state.scorelessTurns, 0);
-  assert.equal(state.isGameOver, false);
+// Returns the given numbers in turn, then 0
+function sequence(...values: number[]): () => number {
+  let index = 0;
+  return () => values[index++] ?? 0;
+}
+
+// Bo joins Ann, drawing for first with `random`
+function boJoinsAnn(random: () => number): GameState {
+  const result = addPlayer(scrabble, lobby('Ann'), 'Bo', random);
+  if ('error' in result) assert.fail(result.error);
+  return result.state;
+}
+
+test('the tile drawn closest to A goes first, and the tiles go back before the deal', () => {
+  // The bag starts A x9, B x2, C x2, D x4, E x12: Ann draws an E, then Bo a B
+  const state = boJoinsAnn(sequence(17.5 / 100, 9.5 / 99));
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(state.gameStatus, 'Bo joined (2/4 players). Ann drew E, Bo drew B. Bo goes first.');
+  assert.equal(state.bag.length, 86);
+});
+
+test('a blank beats every letter in the draw for first', () => {
+  // Ann draws the Z, the last letter before the two blanks; Bo draws a blank
+  const state = boJoinsAnn(sequence(97.5 / 100, 97.5 / 99));
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(state.gameStatus, 'Bo joined (2/4 players). Ann drew Z, Bo drew a blank. Bo goes first.');
+});
+
+test('tied players draw again for first, and only they do', () => {
+  // Drawing the first tile left every time: three rounds of A, then Ann and Bo tie on B against Cy's C
+  const state = lobby('Ann', 'Bo', 'Cy');
+  assert.equal(state.currentPlayer, 1);
+  assert.equal(state.gameStatus, 'Cy joined (3/4 players). ' + [
+    'Ann drew A, Bo drew A, Cy drew A',
+    'Ann drew A, Bo drew A, Cy drew A',
+    'Ann drew A, Bo drew A, Cy drew A',
+    'Ann drew B, Bo drew B, Cy drew C',
+    'Ann drew C, Bo drew D'
+  ].join('; tie, so they draw again: ') + '. Ann goes first.');
+  assert.deepEqual(Object.values(state.racks).map(rack => rack.length), [7, 7, 7]);
+  assert.equal(state.bag.length, 79);
 });
 
 test('going out with the bag empty ends the game and takes the other racks', () => {
