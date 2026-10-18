@@ -4,7 +4,7 @@ import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
-import { viewOf } from './historyView.ts';
+import { seatOptions, viewFor } from './historyView.ts';
 import { PLAY_STEP_MS, nextPlayIndex } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
@@ -51,20 +51,20 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const last = steps.length - 1;
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
-  const view = viewOf(step, viewer);
+  const { step: view, viewer: shownViewer } = viewFor(step, viewer);
   const boardState = view.historyStep === 'move' ? view : { ...view, lastMove: null };
-  const seatNames = Object.entries(steps[0].playerNames);
+  const seatNames = seatOptions(steps[0]);
   const { HistoryBoard } = client;
 
   // A step the game cannot animate snaps instead of breaking the dialog
   const animate = useCallback((change: MoveChange<BasePublicState>) => {
     if (!animations) return;
     try {
-      client.animateMove?.(change, viewer);
+      client.animateMove?.(change, shownViewer);
     } catch {
       // the step is already drawn in its place
     }
-  }, [client, viewer, animations]);
+  }, [client, shownViewer, animations]);
   useMoveAnimation(boardRef, boardState, animate);
 
   // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
@@ -117,13 +117,13 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
             onChange={(e) => setViewer(e.target.value === '' ? null : Number(e.target.value))}
           >
             <option value="">Table only</option>
-            {seatNames.map(([seat, name]) => <option key={seat} value={seat}>{name}</option>)}
+            {seatNames.map(({ seat, name }) => <option key={seat} value={seat}>{name}</option>)}
           </select>
         )}
       </div>
       <div className="history-board" ref={boardRef}>
         <StepErrorBoundary key={`${index}-${viewer}`}>
-          <HistoryBoard gameState={boardState} viewer={viewer} />
+          <HistoryBoard gameState={boardState} viewer={shownViewer} />
         </StepErrorBoundary>
       </div>
     </>
@@ -133,11 +133,17 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
 // The moves as they were when the dialog opened; reopening fetches them again
 export default function HistoryDialog({ client, history, title, onClose, onDownload }: HistoryDialogProps) {
   const [downloadFailed, setDownloadFailed] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   useEscapeKey(onClose);
 
   async function download() {
     setDownloadFailed(false);
-    setDownloadFailed(!(await onDownload?.()));
+    setDownloading(true);
+    try {
+      setDownloadFailed(!(await onDownload?.()));
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const canDownload = onDownload && history.status === 'loaded' && history.steps.at(-1)?.isGameOver === true;
@@ -158,7 +164,7 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
         {body}
         <div className="modal-buttons">
           {canDownload && (
-            <button type="button" className="primary-button" onClick={download}>Download game</button>
+            <button type="button" className="primary-button" disabled={downloading} onClick={download}>Download game</button>
           )}
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>

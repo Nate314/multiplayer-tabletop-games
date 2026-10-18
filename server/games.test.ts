@@ -606,6 +606,7 @@ test('gameFile gives every step a table view and a view per seat', () => {
     const views = step.views as Record<string, HistoryStep & TestPublicState>;
     assert.deepEqual(Object.keys(views), ['1', '2']);
     assert.equal(views['2'].viewer, 2);
+    for (const view of Object.values(views)) assert.equal('secret' in view, false);
     assert.equal(views['1'].moveCount, step.moveCount);
     assert.equal(views['1'].historyStep, step.historyStep);
   }
