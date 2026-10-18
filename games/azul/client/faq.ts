@@ -47,6 +47,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens if someone leaves?',
-    answer: 'Their board stays and is still scored, but their turns are skipped and they cannot win. The last player left wins. Nobody can join after the first move.'
+    answer: 'Their board stays and is still scored, but their turns are skipped, they cannot win, and a full row on their board does not end the game. The last player left wins. Nobody can join after the first move.'
   }
 ];

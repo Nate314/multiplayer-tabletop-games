@@ -6,7 +6,7 @@ import { longestRoadOf } from './roads.ts';
 import { createGameState, toPublicState } from './rules.ts';
 import { resources, total } from './resources.ts';
 import { catan } from './index.ts';
-import { addPlayer, removePlayer } from '../../shared/seating.ts';
+import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { act, acted, dice, game, holding, move, ok, played } from './testing.ts';
 import type { Building, GameState, Seat } from './types.ts';
 
@@ -419,6 +419,18 @@ test('invalid moves', () => {
   assert.deepEqual(act(state, 9, { type: 'cancelTrade' }), { error: 'You are not in this game' });
   assert.deepEqual(act(state, 1, { type: 'cancelTrade' }), { error: 'You have no open offer' });
   assert.deepEqual(act({ ...state, isGameOver: true }, 1, { type: 'cancelTrade' }), { error: 'The game is over' });
+});
+
+test('a disconnected player owing a discard has it made for them at random', () => {
+  const buildings = { [corner(4, 0)]: settlement(2), [corner(4, 3)]: settlement(3) };
+  let state = holding(holding(game({ buildings }), 1, { wood: 5, brick: 4 }), 3, { ore: 8 });
+  // Cara is already gone when the 7 is rolled, and Alice drops while she still owes hers
+  state = played({ ...state, disconnected: [3] }, 1, { type: 'roll' }, dice(3, 4));
+  assert.deepEqual(state.pending, { kind: 'discard', counts: { 1: 4 } });
+  assert.equal(total(state.hands[3]), 4);
+  state = disconnectPlayer(catan, state, 1, dice());
+  assert.deepEqual(state.pending, { kind: 'robber' });
+  assert.equal(total(state.hands[1]), 5);
 });
 
 test('dismissed player mid-turn', () => {

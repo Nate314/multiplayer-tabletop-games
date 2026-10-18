@@ -8,7 +8,7 @@ import {
   advanceSetup, buildCity, buildRoad, buildSettlement, placeFreeRoad, placeSetupRoad, placeSetupSettlement
 } from './building.ts';
 import { DEV_DECK, buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
-import { afterDiscards, discard, moveRobber, roll, rollDie } from './dice.ts';
+import { afterDiscards, discard, discardForAbsent, moveRobber, roll, rollDie } from './dice.ts';
 import { roadLengths } from './roads.ts';
 import { BANK_SIZE, add, isResource, noResources, parseResources, total } from './resources.ts';
 import {
@@ -238,7 +238,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = play({ ...state, log: [], steal: null }, seat, parsed, random);
   if ('error' in result) return result;
-  return { state: finish(state, result.state, { type: parsed.type, playerNumber: seat }) };
+  return { state: finish(state, discardForAbsent(result.state, random), { type: parsed.type, playerNumber: seat }) };
 }
 
 function act(state: GameState, seat: Seat, action: unknown): Result<GameState> {
@@ -321,8 +321,10 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 }
 
 // An offer from or to a player who disconnects is dropped, so it never holds up the turn
-export function onPlayerDisconnected(state: GameState, seat: Seat): GameState {
-  const { trade } = state;
-  if (!trade || (trade.from !== seat && trade.to !== seat)) return state;
-  return finish(state, note({ ...state, log: [], trade: null }, 'The open trade offer was dropped'));
+// A trade with the player is dropped, and a discard they owe is made for them
+export function onPlayerDisconnected(state: GameState, seat: Seat, random: Random): GameState {
+  let next: GameState = { ...state, log: [] };
+  if (state.trade?.from === seat || state.trade?.to === seat) next = note({ ...next, trade: null }, 'The open trade offer was dropped');
+  next = discardForAbsent(next, random);
+  return next.log.length > 0 ? finish(state, next) : state;
 }

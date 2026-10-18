@@ -13,7 +13,7 @@ Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2
 - Walls block pawn movement but cannot completely block a player's path to their goal
 - The twenty walls are shared out equally: 10 each with two players, 6 each with three (two stay unused), 5 each with four
 - First player to reach their opposite edge wins
-- If a player leaves mid-game, their pawn and walls stay on the board and their turns are skipped
+- If a player leaves mid-game, their pawn leaves the board, their walls stay, and their turns are skipped
 - Any player can ask to undo the last turn. It is undone only if every player still in the game approves
 
 ## Controls

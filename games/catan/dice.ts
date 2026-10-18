@@ -1,4 +1,5 @@
 // Rolling: production on the rolled number, or on a 7 the discards and the robber, which also moves for a Knight
+import { shuffle } from '../../shared/shuffle.ts';
 import { HEX_VERTICES, RESOURCES } from './board.ts';
 import { add, covers, describeResources, noResources, subtract, total } from './resources.ts';
 import { nameOf, note } from './state.ts';
@@ -91,6 +92,22 @@ export function discard(state: GameState, seat: Seat, cards: Resources): Result<
     bank: add(state.bank, cards)
   }, `${nameOf(state, seat)} discarded ${describeResources(cards)}`);
   return { state: { ...discarded, pending: afterDiscards(counts) } };
+}
+
+// A disconnected player who owes a discard has random cards discarded for them, so the table never waits on them
+export function discardForAbsent(state: GameState, random: Random): GameState {
+  let next = state;
+  for (const seat of state.disconnected) {
+    const { pending } = next;
+    if (pending?.kind !== 'discard' || !(seat in pending.counts)) continue;
+    const hand = next.hands[seat] ?? noResources();
+    const cards = shuffle(RESOURCES.flatMap(resource => Array<Resource>(hand[resource]).fill(resource)), random)
+      .slice(0, pending.counts[seat]);
+    const chosen = cards.reduce((sum, resource) => ({ ...sum, [resource]: sum[resource] + 1 }), noResources());
+    const result = discard(next, seat, chosen);
+    if ('state' in result) next = result.state;
+  }
+  return next;
 }
 
 export function afterDiscards(counts: Record<Seat, number>): GameState['pending'] {
