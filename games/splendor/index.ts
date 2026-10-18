@@ -1,0 +1,18 @@
+import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import type { GameState, PublicGameState } from './types.ts';
+
+export const splendor: GameDefinition<GameState, PublicGameState> = {
+  info: {
+    id: 'splendor',
+    name: 'Splendor',
+    description: 'Collect gems, buy development cards and attract nobles to reach 15 prestige',
+    minPlayers: 2,
+    maxPlayers: 4
+  },
+  createGameState,
+  resetLobby,
+  onPlayerLeft,
+  applyMove,
+  toPublicState
+};
