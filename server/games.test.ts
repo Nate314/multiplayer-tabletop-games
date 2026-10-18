@@ -1,6 +1,7 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
+import type { GameStore, SavedRoom } from './store.ts';
 import { testGame, type TestPublicState } from '../shared/testGame.ts';
 import type { HistoryStep, Random, Result } from '../shared/types.ts';
 
@@ -580,4 +581,118 @@ test('a game ended by an action gets an end step, and an undo removes it', () =>
 test('a game won by a move has no end step', () => {
   const steps = wonGame().history('test', 'g1') as HistoryStep[];
   assert.deepEqual(steps.map(s => s.historyStep), ['start', 'move', 'move', 'move']);
+});
+
+// A store over a Map; copies on save and load, as the database does, so shared references fail the tests
+function memoryStore(): GameStore {
+  const rooms = new Map<string, SavedRoom>();
+  return {
+    loadAll: () => structuredClone(rooms),
+    save: (roomId, room) => { rooms.set(roomId, structuredClone(room)); },
+    remove: roomId => { rooms.delete(roomId); }
+  };
+}
+
+// A new manager over the same store, as after a server restart
+function restart(store: GameStore): Manager {
+  return createGameManager([testGame], seededRandom, store);
+}
+
+function saved(store: GameStore): SavedRoom {
+  const room = store.loadAll().get(ROOM);
+  assert.ok(room, 'expected the game to be saved');
+  return room;
+}
+
+test('a started game is saved after each change and a lobby is not', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  assert.equal(store.loadAll().size, 0);
+
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal(saved(store).timeline.length, 1);
+  ok(manager.action(ROOM, 1, { type: 'ping' }));
+  assert.equal(saved(store).state.gameStatus, 'A pinged');
+});
+
+test('a restart keeps the game and holds every seat', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+
+  const restarted = restart(store);
+  assert.deepEqual(current(restarted).disconnected, [1, 2]);
+  assert.equal(current(restarted).moveCount, 1);
+  assert.equal(joined(restarted.join('test', 'g1', 'A', true)).seat, 1);
+  assert.equal(restarted.history('test', 'g1')?.length, 2);
+});
+
+test('a restart clears open votes and dismisses nobody', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.ok(saved(store).state.dismissVote);
+
+  const restarted = restart(store);
+  assert.deepEqual(current(restarted).activePlayers, [1, 2, 3]);
+  assert.equal(current(restarted).dismissVote, null);
+  assert.equal(current(restarted).undoVote, null);
+});
+
+test('a restart clears an open undo vote', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 2));
+  assert.ok(saved(store).state.undoVote);
+
+  const restarted = restart(store);
+  assert.equal(current(restarted).undoVote, null);
+  assert.equal(current(restarted).moveCount, 1);
+});
+
+test('after a restart the empty game is deleted after the timeout, from the store too', (t: TestContext) => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const restarted = restart(store);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  assert.ok(restarted.getState(ROOM));
+  t.mock.timers.tick(1);
+  assert.equal(restarted.getState(ROOM), undefined);
+  assert.equal(store.loadAll().has(ROOM), false);
+});
+
+test('a saved game whose type no longer exists is dropped', () => {
+  const store = memoryStore();
+  const state = { ...testGame.createGameState('g1'), started: true };
+  store.save('chess/g1', { gameType: 'chess', state, history: [], timeline: [] });
+  restart(store);
+  assert.equal(store.loadAll().has('chess/g1'), false);
+});
+
+test('deleting a room removes it from the store', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  assert.equal(store.loadAll().size, 1);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.equal(store.loadAll().size, 0);
 });

@@ -3,6 +3,7 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, nextActivePlayer, reconnectPlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
+import type { GameStore } from './store.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
@@ -27,12 +28,36 @@ function cleanName(value: unknown): string {
 }
 
 // Holds every game in memory, keyed by game type and game ID. Only the public view of a game ever leaves this module.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createGameManager(games: readonly GameDefinition<any, any>[], random: Random = Math.random) {
+// With a `store`, started games are saved after every change and come back on creation with every seat held.
+export function createGameManager(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore
+) {
   const rooms = new Map<string, Room>();
 
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
+  }
+
+  // Only a started game is kept: a lobby lost in a restart is just joined again
+  function save(roomId: string, room: Room): void {
+    const { game, state, history, timeline } = room;
+    if (state.started) store?.save(roomId, { gameType: game.info.id, state, history, timeline });
+    else store?.remove(roomId);
+  }
+
+  function deleteRoom(roomId: string): void {
+    rooms.delete(roomId);
+    store?.remove(roomId);
+  }
+
+  // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS
+  function startEmptyTimer(roomId: string, room: Room): void {
+    if (!room.state.started || room.emptyTimer || connectedPlayers(room.state).length > 0) return;
+    room.emptyTimer = setTimeout(() => {
+      if (rooms.get(roomId) === room) deleteRoom(roomId);
+    }, EMPTY_ROOM_TIMEOUT_MS);
+    room.emptyTimer.unref(); // never keeps the process alive on its own
   }
 
   // The one place a public state is built: the game hides its secrets and the platform adds the move count
@@ -93,6 +118,22 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
     room.emptyTimer = undefined;
   }
 
+  // Nobody is connected after a restart, so every seat is held for a rejoin. Open votes are cleared first:
+  // disconnecting the voters one by one could otherwise pass a vote nobody finished
+  for (const [roomId, saved] of store?.loadAll() ?? []) {
+    const game = findGame(saved.gameType);
+    if (!game) {
+      store?.remove(roomId);
+      continue;
+    }
+    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null };
+    for (const seat of connectedPlayers(state)) state = disconnectPlayer(game, state, seat, random);
+    const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
+    rooms.set(roomId, room);
+    save(roomId, room);
+    startEmptyTimer(roomId, room);
+  }
+
   return {
     // `rejoin` only takes back a held seat; it never creates a game or takes a new seat
     join(gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown): JoinResult {
@@ -116,6 +157,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         if (!state.disconnected.includes(known)) return { error: `${state.playerNames[known]} is already in this game` };
         room.state = reconnectPlayer(state, known);
         clearEmptyTimer(room);
+        save(roomId, room);
         return { roomId, seat: known, state: view(room, known) };
       }
       if (rejoin === true) return { error: 'You are not in this game' };
@@ -125,6 +167,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
 
       room.state = result.state;
       rooms.set(roomId, room);
+      save(roomId, room);
       return { roomId, seat: result.seat, state: view(room, result.seat) };
     },
 
@@ -136,17 +179,12 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
 
       room.state = disconnectPlayer(room.game, room.state, seat, random);
       if (room.state.activePlayers.length === 0) {
-        rooms.delete(roomId);
+        deleteRoom(roomId);
         return null;
       }
       resolveUndoVote(room);
-
-      if (room.state.started && !room.emptyTimer && connectedPlayers(room.state).length === 0) {
-        room.emptyTimer = setTimeout(() => {
-          if (rooms.get(roomId) === room) rooms.delete(roomId);
-        }, EMPTY_ROOM_TIMEOUT_MS);
-        room.emptyTimer.unref(); // never keeps the process alive on its own
-      }
+      save(roomId, room);
+      startEmptyTimer(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -161,6 +199,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       room.history.push(room.state);
       room.timeline.push(result.state);
       room.state = result.state;
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -175,6 +214,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       if ('error' in result) return result;
 
       room.state = result.state;
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -194,6 +234,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         undoVote: { requestedBy: seat, votes: { [seat]: true } },
         gameStatus: `${state.playerNames[seat]} wants to undo the last turn`
       };
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -209,11 +250,13 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
 
       if (approve !== true) {
         room.state = { ...state, undoVote: null, gameStatus: `${state.playerNames[seat]} declined the undo` };
+        save(roomId, room);
         return { state: view(room, seat) };
       }
 
       room.state = { ...state, undoVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
       resolveUndoVote(room);
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -233,6 +276,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         gameStatus: `${state.playerNames[seat]} wants to dismiss ${state.playerNames[held]}`
       };
       room.state = resolveDismissVote(room.game, opened, random); // a lone connected player passes it at once
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -249,11 +293,13 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       if (approve !== true) {
         const gameStatus = `${state.playerNames[seat]} declined to dismiss ${state.playerNames[vote.target]}`;
         room.state = { ...state, dismissVote: null, gameStatus };
+        save(roomId, room);
         return { state: view(room, seat) };
       }
 
       const approved = { ...state, dismissVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
       room.state = resolveDismissVote(room.game, approved, random);
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
