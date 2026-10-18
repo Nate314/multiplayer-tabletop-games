@@ -7,13 +7,13 @@ type GameStatusProps = {
 };
 
 function turnMessage(state: PublicGameState): string {
-  const { currentPlayer, playerNames, activePlayers, started, isGameOver, handNumber, handSummary } = state;
+  const { currentPlayer, playerNames, activePlayers, started, isGameOver, handNumber, handSummary, tiebreak } = state;
   const currentName = currentPlayer === null ? '' : playerNames[currentPlayer];
   if (isGameOver) return 'Game over';
   if (handSummary) return `Hand ${handNumber} is over`;
   if (activePlayers.length < 2) return 'Waiting for at least one more player';
   if (!started) return `${currentName} goes first. Joining closes after the first move.`;
-  return `Hand ${handNumber}: ${currentName}'s turn`;
+  return `${tiebreak.length > 0 ? 'Tiebreaker hand' : 'Hand'} ${handNumber}: ${currentName}'s turn`;
 }
 
 export default function GameStatus({ gameState, error, hint }: GameStatusProps) {

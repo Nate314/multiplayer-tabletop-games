@@ -12,7 +12,11 @@ type HandSummaryProps = {
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 export default function HandSummary({ summary, gameState, playerNumber, seats, onContinue, onClose }: HandSummaryProps) {
-  const { playerNames, isGameOver, winners, gameStatus } = gameState;
+  const { playerNames, isGameOver, winners, gameStatus, tiebreak } = gameState;
+  const tied = tiebreak.map(seat => playerNames[seat]).join(' and ');
+  const result = isGameOver
+    ? gameStatus
+    : `${playerNames[summary.wentOut]} went out${tiebreak.length > 0 ? `. Tiebreaker next: ${tied} attempt phase 10 again` : ''}`;
   const acknowledged = summary.acknowledged.includes(playerNumber);
   const waitingFor = gameState.activePlayers
     .filter(seat => !summary.acknowledged.includes(seat) && !gameState.disconnected.includes(seat))
@@ -22,7 +26,7 @@ export default function HandSummary({ summary, gameState, playerNumber, seats, o
     <div className="overlay summary-overlay">
       <div className="modal hand-summary" role="dialog" aria-label="Hand scoring">
         <h2>{isGameOver ? 'Final scoring' : `Hand ${summary.handNumber} scoring`}</h2>
-        <div className="summary-result">{isGameOver ? gameStatus : `${playerNames[summary.wentOut]} went out`}</div>
+        <div className="summary-result">{result}</div>
         <ul className="summary-seats">
           {seats.filter(seat => summary.seats[seat]).map(seat => {
             const { phase, completed, cardsLeft, points, scoreAfter } = summary.seats[seat];

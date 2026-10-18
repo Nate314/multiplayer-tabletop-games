@@ -176,9 +176,18 @@ export function hasLaidDown(state: Pick<GameState, 'groups'>, seat: Seat): boole
   return state.groups.some(group => group.owner === seat);
 }
 
-// Who a Skip may skip: any other player still in the game who is not already being skipped
-export function skipTargets(state: Pick<GameState, 'activePlayers' | 'skipped'>, seat: Seat): Seat[] {
-  return state.activePlayers.filter(other => other !== seat && !state.skipped.includes(other));
+// The players dealt into this hand: everyone, or in a tiebreaker only the tied players
+export function handPlayers(state: Pick<GameState, 'activePlayers' | 'tiebreak'>): Seat[] {
+  return state.tiebreak.length > 0 ? state.activePlayers.filter(seat => state.tiebreak.includes(seat)) : state.activePlayers;
+}
+
+function nextHandPlayer(state: Pick<GameState, 'activePlayers' | 'tiebreak'>, from: Seat): Seat | null {
+  return nextActivePlayer({ activePlayers: handPlayers(state) }, from);
+}
+
+// Who a Skip may skip: any other player in this hand who is not already being skipped
+export function skipTargets(state: Pick<GameState, 'activePlayers' | 'skipped' | 'tiebreak'>, seat: Seat): Seat[] {
+  return handPlayers(state).filter(other => other !== seat && !state.skipped.includes(other));
 }
 
 // The status line and the history describe a move in the same words
@@ -213,6 +222,11 @@ function deal(seats: Seat[], random: Random): Deal {
   return { hands, discardPile: [deck[dealt]], drawPile: deck.slice(dealt + 1) };
 }
 
+// Mattel's rule: a Skip turned up to start the discard pile skips the first player
+function opensWithSkip(discardPile: Card[]): boolean {
+  return discardPile[0]?.kind === 'skip';
+}
+
 export function createGameState(gameId: string): GameState {
   return {
     ...baseGameState(gameId),
@@ -225,6 +239,7 @@ export function createGameState(gameId: string): GameState {
     phases: {},
     scores: {},
     skipped: [],
+    tiebreak: [],
     drawnBy: null,
     lastMove: null,
     handSummary: null
@@ -236,16 +251,22 @@ export function createGameState(gameId: string): GameState {
 export function resetLobby(state: GameState, random: Random): GameState {
   const seats = state.activePlayers;
   const dealt: Deal = seats.length >= 2 ? deal(seats, random) : { hands: {}, drawPile: [], discardPile: [] };
+  const skipsFirst = opensWithSkip(dealt.discardPile);
   return {
     ...state,
     ...dealt,
     handNumber: 1,
     dealer: seats.length >= 2 ? seats[seats.length - 1] : null,
+    currentPlayer: skipsFirst ? seats[1] : state.currentPlayer,
     groups: [],
     phases: Object.fromEntries(seats.map(seat => [seat, 1])),
     scores: Object.fromEntries(seats.map(seat => [seat, 0])),
     skipped: [],
-    drawnBy: null
+    tiebreak: [],
+    drawnBy: null,
+    gameStatus: skipsFirst
+      ? `${state.gameStatus}. The first discard is a Skip, so ${state.playerNames[seats[0]]} is skipped.`
+      : state.gameStatus
   };
 }
 
@@ -310,8 +331,9 @@ function mapSeats<T, U>(record: Record<Seat, T>, change: (value: T, seat: Seat) 
 
 // Scores the hand once someone has gone out. Everyone who laid down moves on a phase.
 // The game ends after a hand in which someone completed phase 10: the lowest score among them wins.
+// If that score is shared, the tied players play a tiebreaker hand, attempting phase 10 again.
 function endHand(state: GameState, wentOut: Seat): GameState {
-  const seats = Object.fromEntries(state.activePlayers.map((seat): [Seat, SeatSummary] => {
+  const seats = Object.fromEntries(handPlayers(state).map((seat): [Seat, SeatSummary] => {
     const cards = state.hands[seat] ?? [];
     const points = handPoints(cards);
     return [seat, {
@@ -327,27 +349,42 @@ function endHand(state: GameState, wentOut: Seat): GameState {
   const handSummary: HandSummary = { handNumber: state.handNumber, wentOut, seats, acknowledged: [] };
   const scored: GameState = { ...state, phases, scores, handSummary, currentPlayer: null, drawnBy: null, skipped: [] };
 
-  const finishers = state.activePlayers.filter(seat => seats[seat].completed && seats[seat].phase === LAST_PHASE);
+  const finishers = handPlayers(state).filter(seat => seats[seat].completed && seats[seat].phase === LAST_PHASE);
   if (finishers.length === 0) {
     return { ...scored, gameStatus: `${state.playerNames[wentOut]} went out. Hand ${state.handNumber} scored. Waiting for everyone to continue.` };
   }
 
   const best = Math.min(...finishers.map(seat => scores[seat]));
   const winners = finishers.filter(seat => scores[seat] === best);
-  const names = winners.map(seat => state.playerNames[seat]);
-  return {
-    ...scored,
-    isGameOver: true,
-    winners,
-    gameStatus: winners.length === 1
-      ? `${names[0]} wins with ${best} points!`
-      : `${names.join(' and ')} share the win with ${best} points!`
-  };
+  if (winners.length > 1) {
+    const names = winners.map(seat => state.playerNames[seat]).join(' and ');
+    return {
+      ...scored,
+      tiebreak: winners,
+      phases: { ...phases, ...Object.fromEntries(winners.map(seat => [seat, LAST_PHASE])) },
+      gameStatus: `${names} tie with ${best} points, so they play a tiebreaker hand of phase 10. Waiting for everyone to continue.`
+    };
+  }
+  return { ...scored, isGameOver: true, winners, gameStatus: `${state.playerNames[winners[0]]} wins with ${best} points!` };
 }
 
-// The next hand may have been waiting only for the player who left
+// The next hand may have been waiting only for the player who left. In a tiebreaker the turn
+// stays among the tied players, and the last of them left wins.
 export function onPlayerLeft(state: GameState, seat: Seat, random: Random): GameState {
-  const next = { ...state, skipped: state.skipped.filter(other => other !== seat) };
+  const tiebreak = state.tiebreak.filter(other => other !== seat);
+  const next = { ...state, skipped: state.skipped.filter(other => other !== seat), tiebreak };
+  if (state.tiebreak.length > 0 && tiebreak.length === 1) {
+    return {
+      ...next,
+      isGameOver: true,
+      currentPlayer: null,
+      winners: tiebreak,
+      gameStatus: `${state.playerNames[tiebreak[0]]} wins! Everyone else in the tiebreaker left.`
+    };
+  }
+  if (next.currentPlayer !== null && !handPlayers(next).includes(next.currentPlayer)) {
+    next.currentPlayer = nextHandPlayer(next, seat);
+  }
   return startNextHandIfReady(next, random);
 }
 
@@ -363,19 +400,23 @@ function startNextHandIfReady(state: GameState, random: Random): GameState {
   if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
 
   const dealer = state.dealer === null ? state.activePlayers[0] : nextActivePlayer(state, state.dealer);
-  const starter = dealer === null ? null : nextActivePlayer(state, dealer);
-  const starterName = starter === null ? '' : state.playerNames[starter];
+  const starter = dealer === null ? null : nextHandPlayer(state, dealer);
+  const dealt = deal(handPlayers(state), random);
+  const skipsFirst = starter !== null && opensWithSkip(dealt.discardPile);
+  const first = skipsFirst ? nextHandPlayer(state, starter) : starter;
+  const hand = `${state.tiebreak.length > 0 ? 'the tiebreaker, ' : ''}hand ${state.handNumber + 1}`;
+  const starts = `${first === null ? '' : state.playerNames[first]} starts ${hand}.`;
   return {
     ...state,
-    ...deal(state.activePlayers, random),
+    ...dealt,
     handNumber: state.handNumber + 1,
     dealer,
-    currentPlayer: starter,
+    currentPlayer: first,
     groups: [],
     skipped: [],
     drawnBy: null,
     handSummary: null,
-    gameStatus: `${starterName} starts hand ${state.handNumber + 1}.`
+    gameStatus: skipsFirst ? `The first discard is a Skip, so ${state.playerNames[starter]} is skipped. ${starts}` : starts
   };
 }
 
@@ -401,11 +442,11 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
 // The turn passes on, past anyone a Skip made lose their turn; each Skip is used up as it is passed
 function passTurn(state: GameState, from: Seat): GameState {
   let skipped = state.skipped;
-  let next = nextActivePlayer(state, from);
+  let next = nextHandPlayer(state, from);
   while (next !== null && skipped.includes(next)) {
     const passed = next;
     skipped = skipped.filter(seat => seat !== passed);
-    next = nextActivePlayer(state, passed);
+    next = nextHandPlayer(state, passed);
   }
   return { ...state, skipped, currentPlayer: next, drawnBy: null };
 }

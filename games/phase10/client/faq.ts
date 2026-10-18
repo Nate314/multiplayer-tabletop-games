@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Complete the ten phases in order, one per hand at most. The game ends after a hand in which someone completes phase 10. Among the players who completed it, the lowest score wins, and a tie shares the win.'
+    answer: 'Complete the ten phases in order, one per hand at most. The game ends after a hand in which someone completes phase 10. Among the players who completed it, the lowest score wins. If that score is tied, the tied players play a tiebreaker hand of phase 10 on their own, decided the same way.'
   },
   {
     question: 'What are the ten phases?',
@@ -35,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What does a Skip do?',
-    answer: 'Discard a Skip and choose another player: they lose their next turn. A player already waiting to be skipped cannot be chosen again. A Skip cannot be picked up from the discard pile, and it cannot go in a group.'
+    answer: 'Discard a Skip and choose another player: they lose their next turn. A player already waiting to be skipped cannot be chosen again. A Skip cannot be picked up from the discard pile, and it cannot go in a group. If the card turned up to start the discard pile is a Skip, the first player of the hand is skipped.'
   },
   {
     question: 'How does a hand end?',
