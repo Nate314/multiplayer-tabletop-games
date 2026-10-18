@@ -5,7 +5,7 @@ Collect gems, buy development cards and attract nobles to reach 15 prestige, for
 ## Rules
 
 - **Components.** Gem tokens in five colors (white diamond, blue sapphire, green emerald, red ruby and black onyx): 7 of each with 4 players, 5 with 3 and 4 with 2, plus 5 gold jokers. The 90 published development cards in three levels (40, 30 and 20), each with a bonus color, a prestige value and a cost. The 10 published nobles, each worth 3 prestige
-- **Setup.** One noble more than the number of players is laid out, and four cards of each level are dealt face up beside that level's deck. The first player to join goes first, and play goes up the seats
+- **Setup.** One noble more than the number of players is laid out, and four cards of each level are dealt face up beside that level's deck. The player in the first seat goes first, and play goes up the seats
 - **A turn** is one of:
   - take 3 gems of different colors (when fewer than three colors are left in the supply, one of each color that is left)
   - take 2 gems of one color, only if at least 4 of that color are left before you take them
@@ -38,7 +38,7 @@ The rules follow [Wikipedia](https://en.wikipedia.org/wiki/Splendor_(game)). Whe
 
 - **Token counts by player count.** Wikipedia gives 7 of each color. As in the rulebook, 2 players use 4 of each and 3 players use 5
 - **Taking three gems.** Wikipedia says "up to three" gems of different colors. Here a player takes exactly three, and fewer only when fewer than three colors are left in the supply
-- **Who goes first.** Wikipedia does not say, and the rulebook picks the youngest player. Here the first player to join goes first
+- **Who goes first.** Wikipedia does not say, and the rulebook picks the youngest player. Here the player in the first seat goes first
 - **Paying.** The game pays for you: your colored gems first, and gold only for what you are short. At a table a player may spend gold while holding the colored gem; here they cannot
 - **No legal action.** Neither Wikipedia nor the rulebook covers a player who can do nothing. Here that player passes
 - **Leaving.** The rules do not cover a player leaving mid-game; see Leaving above

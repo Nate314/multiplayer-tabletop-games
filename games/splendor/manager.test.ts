@@ -154,6 +154,36 @@ test('undo puts a bought card back on the table', () => {
   assert.equal(restored.currentPlayer, buyer);
 });
 
+test('an undo past a dismissed player\'s token return does not hand their step to the next player', () => {
+  const manager = gameWith('A', 'B', 'C');
+  let state = viewOf(manager, null);
+  // A takes gems and the others reserve from a deck, until A must give tokens back
+  for (let moves = 0; state.pending?.kind !== 'returnTokens' && moves < 60; moves++) {
+    const seat = state.currentPlayer ?? assert.fail('nobody to move');
+    const colors = [...GEMS].sort((a, b) => state.supply[b] - state.supply[a]).slice(0, 3);
+    const next: Move = seat === 1 ? { type: 'takeThree', colors } : { type: 'reserve', source: { kind: 'deck', level: 1 } };
+    state = ok(manager.move(ROOM, seat, next));
+  }
+  assert.equal(state.currentPlayer, 1);
+  ok(manager.move(ROOM, 1, anyMove(viewOf(manager, 1), 1)));
+
+  // A is dismissed during B's turn, then B and C undo A's token return
+  manager.disconnect(ROOM, 1);
+  ok(manager.requestDismiss(ROOM, 2, 1));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 2));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+
+  assert.deepEqual(restored.activePlayers, [2, 3]);
+  assert.equal(restored.pending, null);
+  assert.equal(restored.currentPlayer, 2);
+  assert.equal(tokenTotal(restored.players[1].tokens), 0);
+  const held = [2, 3].reduce((total, seat) => total + tokenTotal(restored.players[seat].tokens), 0);
+  assert.equal(tokenTotal(restored.supply) + held, 5 * 5 + 5);
+  const moved = ok(manager.move(ROOM, 2, anyMove(viewOf(manager, 2), 2)));
+  assert.equal(moved.pending?.kind === 'returnTokens' || moved.currentPlayer === 3, true);
+});
+
 test('dismissing the last opponent hands the win to the player left', () => {
   const manager = gameWith('A', 'B');
   step(manager);
