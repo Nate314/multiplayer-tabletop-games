@@ -9,6 +9,7 @@
   --muted: #4c6460;
   --panel-bg: rgba(255, 255, 255, 0.93);
   --panel-border: rgba(16, 35, 31, 0.15);
+  --modal-bg: #fbfefd;
   --felt: #1f6b5c;
   --felt-text: #f2fbf8;
   --button-bg: #17594c;
@@ -37,6 +38,7 @@
   --muted: #a1bbb5;
   --panel-bg: rgba(24, 44, 40, 0.95);
   --panel-border: rgba(230, 243, 240, 0.14);
+  --modal-bg: #182c28;
   --felt: #164c41;
   --button-bg: #2a8a76;
   --button-hover-bg: #34a58e;
@@ -141,6 +143,18 @@
 [data-game="rook"] .game-info {
   width: 480px;
   padding: 14px 20px;
+}
+
+/* Wide screens: the status beside the table, so the hand stays in view */
+@media (min-width: 960px) {
+  [data-game="rook"] .game-screen {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    align-items: start;
+  }
+
+  [data-game="rook"] .game-info { width: auto; }
+  [data-game="rook"] .hand { grid-column: 1 / -1; }
 }
 
 [data-game="rook"] .player-info {
@@ -282,6 +296,11 @@
 [data-game="rook"] .rook-card-middle {
   font-size: calc(var(--card-w) * 0.44);
   line-height: 1;
+}
+
+[data-game="rook"] .rook-card-word {
+  font-size: calc(var(--card-w) * 0.22);
+  letter-spacing: 0.04em;
 }
 
 [data-game="rook"] .rook-card-points {
@@ -532,7 +551,7 @@
   overflow-y: auto;
   padding: 20px;
   border-radius: 10px;
-  background: var(--panel-bg);
+  background: var(--modal-bg);
   color: var(--text);
   text-align: left;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);

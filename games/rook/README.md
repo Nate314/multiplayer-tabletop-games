@@ -24,7 +24,7 @@ Bid for the nest, name trump and take counters in tricks with your partner, firs
 - When it is your turn to bid, choose an amount and click Bid, or click Pass
 - If you win the bid, click 5 cards in your hand to pick them (click again to put one back), then click Lay aside. Then click a color to name trump
 - In a trick, the cards you may play are raised and outlined; click one to play it
-- The table shows both teams' scores and tricks, the hand number, the bid and trump, and the four seats with you at the bottom and your partner across. Each seat shows its card count, the dealer and its bid or pass. The middle shows the nest during bidding, then the trick being played, or the last trick taken with who took it
+- The table shows both teams' scores and tricks, the hand number, the bid and trump, and the four seats with you at the bottom and your partner across. Each seat shows its card count, the dealer and its bid or pass. The middle shows the nest until trump is named, then the trick being played, or the last trick taken with who took it
 - The bidder sees the cards they laid aside below their hand
 - After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
 - Click Undo to ask everyone to undo the last move

@@ -39,6 +39,9 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
   const takenBy = trick.length === 0 && lastTrick ? lastTrick.winner : null;
   const lastPlayed = showLastMove && lastMove?.type === 'play' ? lastMove.playerNumber : null;
   const myTeam: Team | null = viewer === null ? null : teamOf(viewer);
+  const bidderName = bidder === null ? '' : playerNames[bidder];
+  const nestLabel = phase === 'bidding' ? `Nest: ${nestCount} cards`
+    : phase === 'discard' ? `${bidderName} took the nest` : `${bidderName} laid aside ${nestCount} cards`;
 
   return (
     <div className="table">
@@ -78,10 +81,10 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
             );
           })}
           <div className="trick" aria-label="The trick">
-            {phase === 'bidding' || phase === 'discard' ? (
+            {phase === 'bidding' || phase === 'discard' || phase === 'trump' ? (
               <div className="nest">
                 <Card card={null} />
-                <span className="nest-label">{phase === 'bidding' ? `Nest: ${nestCount} cards` : `${playerNames[bidder ?? 1]} took the nest`}</span>
+                <span className="nest-label">{nestLabel}</span>
               </div>
             ) : (
               <>

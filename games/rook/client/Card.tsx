@@ -25,7 +25,7 @@ export default function Card({ card, animKey, playable = false, selected = false
   const face = card && (
     <>
       <span className="rook-card-corner">{mark}</span>
-      <span className="rook-card-middle">{card.color === 'rook' ? <span aria-hidden="true">🐦</span> : card.number}</span>
+      <span className="rook-card-middle">{card.color === 'rook' ? <span className="rook-card-word">ROOK</span> : card.number}</span>
       {points > 0 && <span className="rook-card-points">{points}</span>}
     </>
   );

@@ -55,7 +55,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   }
 
   let hint: string | null = null;
-  if (!full) hint = `Rook needs exactly 4 players (${activePlayers.length} seated)`;
+  if (isGameOver) hint = null;
+  else if (!full) hint =`Rook needs exactly 4 players (${activePlayers.length} seated)`;
   else if (isMyTurn) {
     if (phase === 'bidding') hint = bidding.high ? `Bid more than ${bidding.high.amount}, or pass for this hand` : `Open the bidding at ${MIN_BID} or more, or pass`;
     else if (phase === 'discard') hint = `The nest is in your hand: pick ${NEST_SIZE} cards to lay aside`;
