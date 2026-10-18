@@ -23,3 +23,6 @@ export type BasePublicState = BaseGameState & {
   undoAvailable: boolean;
   moveCount: number; // moves on the timeline; undo lowers it
 };
+
+// One step of a game's history: the starting board, the board after each move, and the end if no move ended it
+export type HistoryStep = BasePublicState & { historyStep: 'start' | 'move' | 'end' };

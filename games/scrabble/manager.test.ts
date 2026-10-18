@@ -54,14 +54,14 @@ test('the history shows no rack', () => {
   const manager = gameWith('A', 'B');
   ok(manager.move(ROOM, 1, FIRST_WORD));
   ok(manager.move(ROOM, 2, SECOND_WORD));
-  const steps = manager.history('scrabble', 'g1') as PublicGameState[] | null;
-  assert.equal(steps?.length, 2);
+  const steps = manager.history('scrabble', 'g1') as unknown as PublicGameState[] | null;
+  assert.equal(steps?.length, 3);
   for (const step of steps ?? []) {
     assert.deepEqual(step.rack, []);
     assert.equal('racks' in step, false);
     assert.equal('bag' in step, false);
   }
-  assert.deepEqual(steps?.[1].lastMove, {
+  assert.deepEqual(steps?.[2].lastMove, {
     type: 'play', playerNumber: 2, tiles: [{ row: 8, col: 7, letter: 'B', blank: false }],
     words: [{ word: 'AB', points: 4 }], bingo: false, points: 4
   });

@@ -2,7 +2,7 @@ import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import { testGame, type TestPublicState } from '../shared/testGame.ts';
-import type { Random, Result } from '../shared/types.ts';
+import type { HistoryStep, Random, Result } from '../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
@@ -288,7 +288,7 @@ test('an undo vote is canceled when a disconnect leaves one connected player', (
   assert.equal(state.moveCount, 1);
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.gameStatus, 'B disconnected');
-  assert.equal(manager.history('test', 'g1')?.length, 1);
+  assert.equal(manager.history('test', 'g1')?.length, 2);
 });
 
 test('an undo vote after a win is canceled when the requester disconnects', () => {
@@ -486,19 +486,22 @@ test('a dismiss vote ends when its target rejoins', () => {
   assert.deepEqual(manager.voteDismiss(ROOM, 2, true), { error: 'No dismiss vote in progress' });
 });
 
-test('history lists the state after each move, hides secrets, and drops undone moves', () => {
+test('history starts at the starting board, lists each move, hides secrets, and drops undone moves', () => {
   const manager = gameWith('A', 'B', 'C');
-  assert.deepEqual(manager.history('test', 'g1'), []);
+  const before = manager.history('test', 'g1') as (TestPublicState & HistoryStep)[];
+  assert.deepEqual(before.map(step => step.historyStep), ['start']);
+  assert.equal(before[0].moveCount, 0);
+  assert.equal(before[0].moves, 0);
   ok(manager.move(ROOM, 1, tick));
   ok(manager.move(ROOM, 2, tick));
   const last = ok(manager.move(ROOM, 3, tick));
   assert.equal(last.moveCount, 3);
 
-  const steps = manager.history('test', ' g1 ') as TestPublicState[] | null;
+  const steps = manager.history('test', ' g1 ') as (TestPublicState & HistoryStep)[] | null;
   assert.ok(steps);
-  assert.deepEqual(steps.map(step => step.moveCount), [1, 2, 3]);
-  assert.deepEqual(steps.map(step => step.moves), [1, 2, 3]);
-  assert.deepEqual(steps.map(step => step.gameStatus), ['A ticked', 'B ticked', 'C ticked']);
+  assert.deepEqual(steps.map(step => step.historyStep), ['start', 'move', 'move', 'move']);
+  assert.deepEqual(steps.map(step => step.moveCount), [0, 1, 2, 3]);
+  assert.deepEqual(steps.map(step => step.moves), [0, 1, 2, 3]);
   for (const step of steps) {
     assert.equal('secret' in step, false);
     assert.equal(step.undoAvailable, false);
@@ -509,7 +512,7 @@ test('history lists the state after each move, hides secrets, and drops undone m
   ok(manager.voteUndo(ROOM, 2, true));
   const undone = ok(manager.voteUndo(ROOM, 3, true));
   assert.equal(undone.moveCount, 2);
-  assert.equal(manager.history('test', 'g1')?.length, 2);
+  assert.equal(manager.history('test', 'g1')?.length, 3);
 
   assert.equal(manager.history('chess', 'g1'), null);
   assert.equal(manager.history('test', 'nope'), null);
@@ -532,5 +535,49 @@ test('actions add no history steps', () => {
   ok(manager.move(ROOM, 1, tick));
   const pinged = ok(manager.action(ROOM, 2, { type: 'ping' }));
   assert.equal(pinged.moveCount, 1);
-  assert.equal(manager.history('test', 'g1')?.length, 1);
+  assert.equal(manager.history('test', 'g1')?.length, 2);
+});
+
+test('the start step is the board before the first move, also after undoing back to zero', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  const [start] = manager.history('test', 'g1') as unknown as TestPublicState[];
+  assert.equal(start.moves, 0);
+  assert.deepEqual(start.playerNames, { 1: 'A', 2: 'B' });
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  const steps = manager.history('test', 'g1') as HistoryStep[];
+  assert.deepEqual(steps.map(step => step.historyStep), ['start']);
+});
+
+test('a game that ends outside a move gets an end step built from the live state', () => {
+  const manager = gameWith('A', 'B', 'C');
+  ok(manager.move(ROOM, 1, tick));
+  left(manager.disconnect(ROOM, 2));
+  left(manager.disconnect(ROOM, 3));
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  const steps = manager.history('test', 'g1') as HistoryStep[];
+  assert.deepEqual(steps.map(step => step.historyStep), ['start', 'move', 'end']);
+  const end = steps[2];
+  assert.equal(end.isGameOver, true);
+  assert.equal(end.moveCount, 1);
+  assert.equal(end.gameStatus, 'A wins! Everyone else left.');
+  assert.equal('secret' in end, false);
+});
+
+test('a game ended by an action gets an end step, and an undo removes it', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  assert.deepEqual((manager.history('test', 'g1') as HistoryStep[]).map(s => s.historyStep), ['start', 'move']);
+  ok(manager.action(ROOM, 2, { type: 'concede' }));
+  assert.deepEqual((manager.history('test', 'g1') as HistoryStep[]).map(s => s.historyStep), ['start', 'move', 'end']);
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.deepEqual((manager.history('test', 'g1') as HistoryStep[]).map(s => s.historyStep), ['start']);
+});
+
+test('a game won by a move has no end step', () => {
+  const steps = wonGame().history('test', 'g1') as HistoryStep[];
+  assert.deepEqual(steps.map(s => s.historyStep), ['start', 'move', 'move', 'move']);
 });

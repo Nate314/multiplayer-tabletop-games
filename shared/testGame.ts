@@ -28,7 +28,12 @@ export const testGame: GameDefinition<TestState, TestPublicState> = {
   },
 
   applyAction(state, seat, action): Result<TestState> {
-    if (asRecord(action)?.type !== 'ping') return { error: 'Unknown action' };
+    const type = asRecord(action)?.type;
+    if (type === 'concede') { // stands in for resigning
+      const winners = state.activePlayers.filter(player => player !== seat);
+      return { state: { ...state, isGameOver: true, currentPlayer: null, winners, gameStatus: `${state.playerNames[seat]} conceded` } };
+    }
+    if (type !== 'ping') return { error: 'Unknown action' };
     return { state: { ...state, gameStatus: `${state.playerNames[seat]} pinged` } };
   },
 

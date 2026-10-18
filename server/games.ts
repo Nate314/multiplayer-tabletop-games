@@ -3,7 +3,7 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, nextActivePlayer, reconnectPlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
-import type { BaseGameState, BasePublicState, Random, Result, Seat } from '../shared/types.ts';
+import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
@@ -257,12 +257,21 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       return { state: view(room, seat) };
     },
 
-    // The public state right after each move, oldest first; null when the game does not exist
-    history(gameType: unknown, gameId: unknown): BasePublicState[] | null {
+    // The starting board, the state right after each move, and the live state when the game ended without a move
+    // (everyone else left, a resignation); oldest first. Null when the game does not exist
+    history(gameType: unknown, gameId: unknown): HistoryStep[] | null {
       const game = findGame(gameType);
       const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
       if (!room) return null;
-      return room.timeline.map((state, index) => publicView(room, state, false, index + 1, null));
+      const step = (state: BaseGameState, moveCount: number, historyStep: HistoryStep['historyStep']): HistoryStep =>
+        ({ ...publicView(room, state, false, moveCount, null), historyStep });
+      const steps = [
+        step(room.history[0] ?? room.state, 0, 'start'),
+        ...room.timeline.map((state, index) => step(state, index + 1, 'move'))
+      ];
+      const last = room.timeline.at(-1);
+      if (room.state.isGameOver && !last?.isGameOver) steps.push(step(room.state, room.timeline.length, 'end'));
+      return steps;
     },
 
     // As `viewer` sees it; null sees no player's hidden information
