@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has twelve games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Go Fish, Phase 10 and Skip-Bo (two to six players), and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has thirteen games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Go Fish, Phase 10 and Skip-Bo (two to six players), and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -120,6 +120,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Scrabble](games/scrabble/README.md): build crossing words from your letter tiles on the premium-square board. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Scrabble).
 - [Skip-Bo](games/skipbo/README.md): build piles from 1 to 12 with your hand, stock and discard piles, and be first to empty your stock, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Skip-Bo).
 - [UNO](games/uno/README.md): match colors and numbers, empty your hand to score the cards left in the others, and reach 500 points first, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)).
+- [War](games/war/README.md): flip cards, the higher card takes both, and win the whole deck, for 2 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/War_(card_game)).
 
 ## Inspirations
 

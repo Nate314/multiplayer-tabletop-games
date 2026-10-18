@@ -1,0 +1,254 @@
+/* War's green felt table. Every rule is scoped to data-game="war", so none of it reaches the landing page or other games.
+   The header, FAQ dialog and vote panels use the platform defaults, rethemed through the --platform-* variables. */
+
+[data-game="war"] {
+  color-scheme: light;
+  --felt: #2f6b45;
+  --felt-dark: #23543a;
+  --text: #1f2a22;
+  --muted: #536257;
+  --panel-bg: rgba(255, 255, 255, 0.94);
+  --panel-border: rgba(31, 42, 34, 0.15);
+  --button-bg: #8c2a1f;
+  --button-hover-bg: #6f2017;
+  --button-text: #fff;
+  --status-bg: #e7f0e9;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --current: #f2c14e;
+  --winner: #f7e08a;
+  --platform-page-bg: var(--felt);
+  --platform-text: #fff;
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: #fff;
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="war"] {
+  color-scheme: dark;
+  --felt: #173825;
+  --felt-dark: #0f2618;
+  --text: #e8efe9;
+  --muted: #a9b8ad;
+  --panel-bg: rgba(30, 40, 33, 0.95);
+  --panel-border: rgba(232, 239, 233, 0.14);
+  --button-bg: #b23a2c;
+  --button-hover-bg: #cc4b3c;
+  --status-bg: #263a2c;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --current: #e0aa2e;
+  --winner: #b49a3a;
+  --platform-panel-bg: #1e2821;
+  --platform-panel-text: var(--text);
+}
+
+.game-root[data-game="war"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-dark)) fixed;
+}
+
+[data-game="war"] .game-header {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+[data-game="war"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+[data-game="war"] .game-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+[data-game="war"] .game-info,
+[data-game="war"] .war-seat,
+[data-game="war"] .war-summary {
+  box-sizing: border-box;
+  /* A fixed width, so the History dialog keeps its size from step to step */
+  width: 640px;
+  max-width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+[data-game="war"] .game-info {
+  padding: 14px 20px;
+}
+
+[data-game="war"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="war"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="war"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="war"] .turn-message {
+  font-weight: 600;
+}
+
+[data-game="war"] .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+[data-game="war"] .action-buttons button,
+[data-game="war"] .undo-vote-actions button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-game="war"] .action-buttons button:not(:disabled):hover,
+[data-game="war"] .undo-vote-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="war"] .action-buttons button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+[data-game="war"] .auto-flip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* The table: one side per player with the battle summary between them */
+
+[data-game="war"] .war-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: var(--text);
+}
+
+[data-game="war"] .war-seat {
+  padding: 10px 14px 14px;
+  border: 2px solid transparent;
+}
+
+[data-game="war"] .war-seat-current {
+  border-color: var(--current);
+}
+
+[data-game="war"] .war-seat-winner {
+  background: color-mix(in srgb, var(--winner) 35%, var(--panel-bg));
+}
+
+[data-game="war"] .war-seat-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+[data-game="war"] .war-seat-count {
+  color: var(--muted);
+}
+
+[data-game="war"] .war-seat-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: calc(88px * 1.4);
+}
+
+[data-game="war"] .war-pile {
+  flex: none;
+}
+
+[data-game="war"] .war-pile-empty {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 88px;
+  height: calc(88px * 1.4);
+  border: 2px dashed var(--panel-border);
+  border-radius: 9px;
+}
+
+[data-game="war"] .war-battle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+[data-game="war"] .war-summary {
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+[data-game="war"] .faq dd {
+  color: var(--muted);
+}
+
+/* Narrow windows: smaller cards so a long war still fits */
+
+@media (max-width: 520px) {
+  [data-game="war"] .war-seat-row {
+    gap: 10px;
+    min-height: calc(64px * 1.4);
+  }
+
+  [data-game="war"] .war-pile .playing-card,
+  [data-game="war"] .war-battle .playing-card-large {
+    --card-width: 64px;
+  }
+
+  [data-game="war"] .war-battle .playing-card-medium {
+    --card-width: 44px;
+  }
+
+  [data-game="war"] .war-pile-empty {
+    width: 64px;
+    height: calc(64px * 1.4);
+  }
+}
