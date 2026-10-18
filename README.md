@@ -112,7 +112,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Phase_10).
 - [Quoridor](games/quoridor/README.md): race your pawn to the far side and block opponents with walls. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Quoridor).
 - [Scrabble](games/scrabble/README.md): build crossing words from your letter tiles on the premium-square board. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Scrabble).
-- [UNO](games/uno/README.md): match colors and numbers and be the first to empty your hand, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)).
+- [UNO](games/uno/README.md): match colors and numbers, empty your hand to score the cards left in the others, and reach 500 points first, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)).
 
 ## Inspirations
 
