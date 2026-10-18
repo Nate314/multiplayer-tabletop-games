@@ -211,8 +211,36 @@ export function createGameState(gameId: string): GameState {
   };
 }
 
-// Before the first move, a full bag is dealt afresh to everyone seated
+// Closest to A ranks lowest, and a blank beats every letter
+function drawRank(tile: RackTile): number {
+  return tile === BLANK ? -1 : LETTERS.indexOf(tile);
+}
+
+function tileName(tile: RackTile): string {
+  return tile === BLANK ? 'a blank' : tile;
+}
+
+// Each player draws a tile and the one closest to A goes first; tied players draw again.
+// Drawn tiles stay out until the order is settled, so the draw always ends.
+function drawForFirst(state: GameState, random: Random): { first: Seat; status: string } {
+  let bag = fullBag();
+  let contenders = state.activePlayers;
+  const rounds: string[] = [];
+  while (contenders.length > 1 && bag.length >= contenders.length) {
+    const draw = drawTiles(bag, contenders.length, random);
+    bag = draw.bag;
+    rounds.push(contenders.map((seat, index) => `${state.playerNames[seat]} drew ${tileName(draw.drawn[index])}`).join(', '));
+    const best = Math.min(...draw.drawn.map(drawRank));
+    contenders = contenders.filter((_, index) => drawRank(draw.drawn[index]) === best);
+  }
+  const first = contenders[0];
+  return { first, status: `${rounds.join('; tie, so they draw again: ')}. ${state.playerNames[first]} goes first.` };
+}
+
+// Before the first move, the players draw for who goes first, the tiles go back,
+// and a full bag is dealt afresh to everyone seated
 export function resetLobby(state: GameState, random: Random): GameState {
+  const opening = state.activePlayers.length >= 2 ? drawForFirst(state, random) : null;
   let bag = fullBag();
   const racks: Record<Seat, RackTile[]> = {};
   for (const seat of state.activePlayers) {
@@ -228,7 +256,9 @@ export function resetLobby(state: GameState, random: Random): GameState {
     scores: Object.fromEntries(state.activePlayers.map(seat => [seat, 0])),
     scorelessTurns: 0,
     lastMove: null,
-    endAdjustments: null
+    endAdjustments: null,
+    currentPlayer: opening ? opening.first : state.currentPlayer,
+    gameStatus: opening ? `${state.gameStatus}. ${opening.status}` : state.gameStatus
   };
 }
 
@@ -317,12 +347,24 @@ function endGame(state: GameState, wentOut: Seat | null): GameState {
   };
 }
 
-// Passes the turn on, or ends the game after too many scoreless turns in a row
+export function canEndGame(state: Pick<GameState, 'scorelessTurns' | 'isGameOver'>): boolean {
+  return !state.isGameOver && state.scorelessTurns >= MAX_SCORELESS_TURNS;
+}
+
+// Passes the turn on. After six scoreless turns in a row play goes on until a player chooses to end the game.
 function finishTurn(state: GameState, seat: Seat, scored: boolean): GameState {
-  const scorelessTurns = scored ? 0 : state.scorelessTurns + 1;
-  const next = { ...state, scorelessTurns };
-  if (scorelessTurns >= MAX_SCORELESS_TURNS) return endGame(next, null);
-  return { ...next, currentPlayer: nextActivePlayer(next, seat) };
+  const next = { ...state, scorelessTurns: scored ? 0 : state.scorelessTurns + 1, currentPlayer: nextActivePlayer(state, seat) };
+  if (!canEndGame(next)) return next;
+  return { ...next, gameStatus: `${next.gameStatus}. ${next.scorelessTurns} scoreless turns in a row: any player may end the game.` };
+}
+
+// Any player may end the game once six scoreless turns in a row have been played
+export function applyAction(state: GameState, seat: Seat, action: unknown): Result<GameState> {
+  if (asRecord(action)?.type !== 'endGame') return { error: 'Unknown action' };
+  if (state.undoVote) return { error: 'An undo vote is in progress' };
+  if (!canEndGame(state)) return { error: `The game can end only after ${MAX_SCORELESS_TURNS} scoreless turns in a row` };
+  const ended = endGame(state, null);
+  return { state: { ...ended, gameStatus: `${state.playerNames[seat]} ended the game. ${ended.gameStatus}` } };
 }
 
 function play(state: GameState, seat: Seat, tiles: Placement[], random: Random): Result<GameState> {

@@ -39,11 +39,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'When does the game end?',
-    answer: 'When a player uses their last tile while the bag is empty, that player adds the value of every other rack to their score, and each other player loses the value of their own rack. The game also ends after six scoreless turns in a row (passes, exchanges or plays worth 0), and then everyone loses the value of their rack. The highest score wins; tied players share the win.'
+    answer: 'When a player uses their last tile while the bag is empty, that player adds the value of every other rack to their score, and each other player loses the value of their own rack. After six scoreless turns in a row (passes, exchanges or plays worth 0), any player may click End game, and then everyone loses the value of their rack; until someone does, play goes on. The highest score wins; tied players share the win.'
   },
   {
     question: 'Who goes first?',
-    answer: 'Player 1, the first to join. Play passes in seat order. Nobody can join after the first move.'
+    answer: 'Each player draws a tile from the bag, and the one closest to A goes first; a blank beats every letter. Tied players draw again. The tiles go back in the bag before the racks are dealt, and the status line shows the draw. Play then passes in seat order. The draw is redone whenever someone joins or leaves before the first move, and nobody can join after it.'
   },
   {
     question: 'Can I take back a move?',

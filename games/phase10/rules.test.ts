@@ -333,7 +333,7 @@ test('the next hand is dealt once everyone has continued, and the deal moves on 
   assert.equal(ok(acknowledgeHand(one, 2)), one);
   assert.deepEqual(acknowledgeHand({ ...one, undoVote: { requestedBy: 1, votes: {} } }, 1), { error: 'An undo vote is in progress' });
 
-  const next = ok(acknowledgeHand(one, 1, seeded(3)));
+  const next = ok(acknowledgeHand(one, 1, seeded(4)));
   assert.equal(next.handSummary, null);
   assert.equal(next.handNumber, 2);
   assert.equal(next.dealer, 1);
@@ -369,9 +369,121 @@ test('the game ends after a hand in which someone completes phase 10; the lowest
   const both = ok(move({ ...state, groups: [...state.groups, bobs], hands: { 1: [last], 2: [] }, scores: { 1: 30, 2: 20 } }, 1, discardOf(last)));
   assert.deepEqual(both.winners, [2]);
 
-  const tied = ok(move({ ...state, groups: [...state.groups, bobs], hands: { 1: [last], 2: [] }, scores: { 1: 20, 2: 20 } }, 1, discardOf(last)));
-  assert.deepEqual(tied.winners, [1, 2]);
-  assert.equal(tied.gameStatus, 'Alice and Bob share the win with 20 points!');
+});
+
+// Alice, Bob and Cy: Alice goes out on phase 10 with Bob, tying him on 20 points; Cy is far behind
+function tiedOnPhase10() {
+  const last = num(9);
+  const state = game({
+    activePlayers: [1, 2, 3],
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cy' },
+    dealer: 3,
+    hands: { 1: [last], 2: [], 3: [num(4)] },
+    groups: [
+      { owner: 1, kind: 'set', value: 9, cards: [num(9), num(9), num(9)] },
+      { owner: 2, kind: 'set', value: 1, cards: [num(1), num(1), num(1)] }
+    ],
+    phases: { 1: 10, 2: 10, 3: 4 },
+    scores: { 1: 20, 2: 20, 3: 90 },
+    drawnBy: 1
+  });
+  return ok(move(state, 1, discardOf(last)));
+}
+
+test('a tie for the lowest score on phase 10 is settled by a tiebreaker hand of phase 10', () => {
+  const tied = tiedOnPhase10();
+  assert.equal(tied.isGameOver, false);
+  assert.deepEqual(tied.winners, []);
+  assert.deepEqual(tied.tiebreak, [1, 2]);
+  assert.deepEqual(tied.phases, { 1: 10, 2: 10, 3: 4 });
+  assert.equal(tied.gameStatus, 'Alice and Bob tie with 20 points, so they play a tiebreaker hand of phase 10. Waiting for everyone to continue.');
+
+  // Only the tied players are dealt in, and the turn passes between them alone
+  const all = [1, 2, 3].reduce((state, seat) => ok(acknowledgeHand(state, seat, seeded(4))), tied);
+  assert.equal(all.handNumber, 2);
+  assert.deepEqual(Object.keys(all.hands), ['1', '2']);
+  assert.equal(all.dealer, 1);
+  assert.equal(all.currentPlayer, 2);
+  assert.match(all.gameStatus, /Bob starts the tiebreaker, hand 2\./);
+  assert.deepEqual(skipTargets(all, 2), [1]);
+  const drawn = ok(move(all, 2, drawPile));
+  const card = drawn.hands[2].find(candidate => candidate.kind === 'number');
+  assert.ok(card);
+  assert.equal(ok(move(drawn, 2, discardOf(card))).currentPlayer, 1);
+});
+
+test('in the tiebreaker the tied player who completes phase 10 wins; otherwise another tiebreaker follows', () => {
+  const tied = tiedOnPhase10();
+  // Bob discards his last card in the tiebreaker hand
+  const bobGoesOut = (groups: Group[], aliceHand: Card[]) => {
+    const last = num(9);
+    const state: GameState = {
+      ...tied,
+      handSummary: null,
+      currentPlayer: 2,
+      drawnBy: 2,
+      hands: { 1: aliceHand, 2: [last] },
+      groups
+    };
+    return ok(move(state, 2, discardOf(last)));
+  };
+  const bobs: Group = { owner: 2, kind: 'set', value: 9, cards: [num(9), num(9), num(9)] };
+  const alices: Group = { owner: 1, kind: 'set', value: 5, cards: [num(5), num(5), num(5)] };
+
+  const won = bobGoesOut([bobs], [num(5), wild()]);
+  assert.equal(won.isGameOver, true);
+  assert.deepEqual(won.winners, [2]);
+  assert.equal(won.gameStatus, 'Bob wins with 20 points!');
+  assert.deepEqual(Object.keys(won.handSummary?.seats ?? {}), ['1', '2']);
+
+  // Both complete it with nothing left over: still tied, so they play again
+  const again = bobGoesOut([alices, bobs], []);
+  assert.equal(again.isGameOver, false);
+  assert.deepEqual(again.tiebreak, [1, 2]);
+  assert.deepEqual(again.phases, { 1: 10, 2: 10, 3: 4 });
+});
+
+test('if all but one tied player leaves, the one left wins the tiebreaker', () => {
+  const tied = tiedOnPhase10();
+  const left = onPlayerLeft({ ...tied, activePlayers: [1, 3] }, 2, seeded(3));
+  assert.equal(left.isGameOver, true);
+  assert.deepEqual(left.winners, [1]);
+  assert.equal(left.gameStatus, 'Alice wins! Everyone else in the tiebreaker left.');
+
+  // A player outside the tiebreaker leaving changes nothing for it, and the turn stays with the tied players
+  const midHand = { ...tied, handSummary: null, activePlayers: [1, 2], currentPlayer: 3 };
+  const outsider = onPlayerLeft(midHand, 3, seeded(3));
+  assert.equal(outsider.isGameOver, false);
+  assert.equal(outsider.currentPlayer, 1);
+});
+
+// The first seed whose deal turns up a Skip to start the discard pile
+function skipSeed(deal: (random: () => number) => GameState): number {
+  const seed = Array.from({ length: 1000 }, (_, n) => n).find(n => deal(seeded(n)).discardPile[0].kind === 'skip');
+  assert.ok(seed !== undefined);
+  return seed;
+}
+
+test('a Skip turned up to start the discard pile skips the first player', () => {
+  const lobby = (random: () => number) => resetLobby({
+    ...createGameState('g1'),
+    activePlayers: [1, 2, 3],
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cy' },
+    currentPlayer: 1,
+    gameStatus: 'Cy joined (3/6 players)'
+  }, random);
+  const opened = lobby(seeded(skipSeed(lobby)));
+  assert.equal(opened.currentPlayer, 2);
+  assert.equal(opened.gameStatus, 'Cy joined (3/6 players). The first discard is a Skip, so Alice is skipped.');
+  assert.deepEqual(opened.skipped, []);
+
+  const { state, last } = aboutToGoOut();
+  const scored = ok(move(state, 1, discardOf(last)));
+  const nextHand = (random: () => number) => ok(acknowledgeHand(ok(acknowledgeHand(scored, 1)), 2, random));
+  const skippedStart = nextHand(seeded(skipSeed(nextHand)));
+  assert.equal(skippedStart.dealer, 1);
+  assert.equal(skippedStart.currentPlayer, 1);
+  assert.equal(skippedStart.gameStatus, 'The first discard is a Skip, so Bob is skipped. Alice starts hand 2.');
 });
 
 test('a player sees only their own hand; the history sees none', () => {

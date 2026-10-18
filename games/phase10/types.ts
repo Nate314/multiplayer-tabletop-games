@@ -63,6 +63,7 @@ export type GameState = BaseGameState & {
   phases: Record<Seat, number>;    // the phase each player is on; 11 once phase 10 is done
   scores: Record<Seat, number>;
   skipped: Seat[];                 // players who lose their next turn
+  tiebreak: Seat[];                // the tied players replaying phase 10 in a tiebreaker hand; empty otherwise
   drawnBy: Seat | null;            // the current player once they have drawn this turn
   lastMove: LastMove | null;
   handSummary: HandSummary | null;

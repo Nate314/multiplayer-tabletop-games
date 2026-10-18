@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyAction, applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const scrabble: GameDefinition<GameState, PublicGameState> = {
@@ -14,5 +14,6 @@ export const scrabble: GameDefinition<GameState, PublicGameState> = {
   resetLobby,
   onPlayerLeft,
   applyMove,
+  applyAction,
   toPublicState
 };

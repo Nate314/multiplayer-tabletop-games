@@ -7,9 +7,9 @@ Collect sets and runs to complete ten phases first.
 - 108 cards: 1 to 12 in red, blue, green and yellow, twice each, plus 8 Wilds and 4 Skips. Each player is dealt 10 cards and one card starts the discard pile
 - The phases, in order: 1: 2 sets of 3. 2: 1 set of 3 + 1 run of 4. 3: 1 set of 4 + 1 run of 4. 4: 1 run of 7. 5: 1 run of 8. 6: 1 run of 9. 7: 2 sets of 4. 8: 7 cards of one color. 9: 1 set of 5 + 1 set of 2. 10: 1 set of 5 + 1 set of 3
 - **A turn.** Draw one card from the draw pile or the top of the discard pile (a Skip cannot be picked up). You may then lay down your current phase, once per hand, using exactly the cards it asks for. Once your phase is down you may hit: add cards to any group on the table. End your turn by discarding one card
-- **Wilds and Skips.** A Wild stands for any card in a group, but every group needs at least one real number card. Discarding a Skip makes the player you choose lose their next turn
+- **Wilds and Skips.** A Wild stands for any card in a group, but every group needs at least one real number card. Discarding a Skip makes the player you choose lose their next turn. If the card turned up to start the discard pile is a Skip, the first player of the hand is skipped
 - **End of a hand.** A hand ends when a player has no cards left, by discarding or hitting their last card. Everyone else scores the cards left in their hand: 5 points for each 1 to 9, 10 for each 10 to 12, 15 for a Skip and 25 for a Wild. Everyone who laid down their phase moves on to the next one. A scoring screen shows the results, and the next hand is dealt once every connected player has pressed Continue. The deal moves one seat on
-- **End of the game.** The game ends after a hand in which someone completes phase 10. Among those who completed it, the lowest score wins, and a tie shares the win
+- **End of the game.** The game ends after a hand in which someone completes phase 10. Among those who completed it, the lowest score wins. If that score is tied, the tied players play a tiebreaker hand of phase 10 on their own while everyone else waits; it is scored the same way and replayed while they are still tied. If all but one of them leave, that one wins
 - When the draw pile runs out, the discards under the top card are shuffled into a new draw pile
 - You see only your own hand and how many cards everyone else holds
 - If a player leaves mid-game, their groups stay on the table and their turns are skipped. The last player left wins
@@ -26,3 +26,7 @@ Collect sets and runs to complete ten phases first.
 - After each hand, read the scoring screen and click Continue; the next hand starts once everyone has
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
 - Click FAQ at the top of the page for the rules, the ten phases and the controls
+
+## Differences from Wikipedia
+
+None. The [Wikipedia article](https://en.wikipedia.org/wiki/Phase_10) covers only the goal, the phases, hitting, scoring and the tiebreaker, and the game follows it. Where it is silent, the game follows the published Mattel rules, including one Wikipedia does not mention: a Skip turned up to start the discard pile skips the first player (Mattel's Phase 10 instructions).

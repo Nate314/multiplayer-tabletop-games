@@ -3,6 +3,7 @@ import GameStatus from './GameStatus';
 import PlayArea from './PlayArea';
 import Scores from './Scores';
 import UndoVote from '../../../src/components/UndoVote';
+import { canEndGame } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
 
@@ -25,6 +26,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
               Undo
             </button>
+            {canEndGame(gameState) && activePlayers.includes(playerNumber) && (
+              <button type="button" onClick={() => gameService.sendAction({ type: 'endGame' })} disabled={undoVote !== null}>
+                End game
+              </button>
+            )}
           </div>
         </div>
         {/* A new move or a new rack starts the turn's placing afresh */}

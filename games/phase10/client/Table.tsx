@@ -1,5 +1,5 @@
 import CardView from './CardView';
-import { LAST_PHASE, phaseName, runValue } from '../rules.ts';
+import { LAST_PHASE, handPlayers, phaseName, runValue } from '../rules.ts';
 import type { Group, LastMove, PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -32,6 +32,7 @@ function highlighted(lastMove: LastMove | null, groups: Group[]): number[] {
 export default function Table({ gameState, seats, playerNumber, canHit, onHit, lastMove = null }: TableProps) {
   const { groups, phases, scores, handCounts, playerNames, currentPlayer, activePlayers, winners, skipped, dealer } = gameState;
   const lit = highlighted(lastMove, groups);
+  const playing = handPlayers(gameState);
 
   return (
     <div className="table">
@@ -60,6 +61,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
                 {handCounts[seat] ?? 0} {handCounts[seat] === 1 ? 'card' : 'cards'}
                 {seat === dealer && ' · dealer'}
                 {skipped.includes(seat) && ' · skipped next'}
+                {!playing.includes(seat) && activePlayers.includes(seat) && ' · not in the tiebreaker'}
               </span>
             </div>
             {own.length > 0 && (
