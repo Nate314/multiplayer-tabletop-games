@@ -15,7 +15,7 @@ export const MESSAGE_TYPES = {
 } as const;
 
 export type ClientMessage =
-  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean }
+  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string }
   | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown } }
   | { type: typeof MESSAGE_TYPES.GAME_ACTION; payload: { action: unknown } }
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }
@@ -24,7 +24,7 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } };
 
 export type ServerMessage =
-  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat; gameState: BasePublicState } }
+  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat; seatKey: string; gameState: BasePublicState } }
   | { type: typeof MESSAGE_TYPES.GAME_STATE; payload: BasePublicState }
   | { type: typeof MESSAGE_TYPES.GAME_ERROR; payload: { message: string } };
 

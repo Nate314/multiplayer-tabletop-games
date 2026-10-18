@@ -1,7 +1,8 @@
 import { readJson, removeKey, writeJson } from './storage.ts'
 
 // The most recent game this tab joined, so a refresh can rejoin it and the list can offer it again
-export type Session = { gameType: string; gameId: string; playerName: string; inGame: boolean };
+// `seatKey` is the secret the server gave the seat, which taking it back needs
+export type Session = { gameType: string; gameId: string; playerName: string; seatKey?: string; inGame: boolean };
 
 type SavedGame = Omit<Session, 'inGame'>;
 
@@ -16,7 +17,8 @@ function read(storage: () => Storage, key: string): SavedGame | null {
   if (typeof saved?.gameType !== 'string' || typeof saved.gameId !== 'string' || typeof saved.playerName !== 'string') {
     return null
   }
-  return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName }
+  const seatKey = typeof saved.seatKey === 'string' ? saved.seatKey : undefined
+  return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, seatKey }
 }
 
 const local = () => localStorage;

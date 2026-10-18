@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { canPlay } from './rules.ts';
 import { uno } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -22,7 +23,7 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([uno], seeded(1));
+  const manager = rememberingKeys(createGameManager([uno], seeded(1)));
   for (const name of names) manager.join('uno', 'g1', name);
   return manager;
 }
@@ -85,7 +86,7 @@ test('each player sees only their own hand, and the history sees none', () => {
 });
 
 test('the joining player gets their own hand straight away', () => {
-  const manager = createGameManager([uno], seeded(2));
+  const manager = rememberingKeys(createGameManager([uno], seeded(2)));
   manager.join('uno', 'g1', 'A');
   const joined = manager.join('uno', 'g1', 'B');
   if ('error' in joined) assert.fail(joined.error);

@@ -40,7 +40,7 @@ flowchart TD
 - The in-memory game manager, keyed by game type and game ID (`server/games.ts`)
 - Saving every started game to SQLite and loading them back on start (`server/store.ts`)
 - Seating in join order up to the game's maximum, with names unique ignoring case, and refusing new names after the game has started (`shared/seating.ts`)
-- Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name, and dismissing a disconnected player by vote
+- Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name with the seat's key, and dismissing a disconnected player by vote
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
 - A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
 - Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
@@ -167,12 +167,12 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
 1. **Joining**
 
    ```
-   Client -> Server: JOIN_GAME (gameType, gameId, playerName, rejoin)
-   Server -> Client: GAME_JOINED (playerNumber, gameState) or GAME_ERROR
+   Client -> Server: JOIN_GAME (gameType, gameId, playerName, rejoin, seatKey)
+   Server -> Client: GAME_JOINED (playerNumber, seatKey, gameState) or GAME_ERROR
    Server -> All clients in the game: GAME_STATE
    ```
 
-   A join with a name already seated in the game, ignoring case, takes back that seat if it is held. `rejoin: true` (sent by the automatic and one-click rejoins) only takes back a held seat; it never creates a game or takes a new seat, and fails with "Game not found", "You are not in this game", "You were removed from this game" or "<name> is already in this game".
+   Each seat gets a random `seatKey` when it is taken, kept in the game state (and so saved) but stripped from every view. The browser remembers it with the game. A join with a name already seated in the game, ignoring case, takes back that seat if it is held and the join sends its key; a wrong or missing key fails with "That name is taken in this game". A game saved before keys existed gives its seat a key on the first rejoin by name. `rejoin: true` (sent by the automatic and one-click rejoins) only takes back a held seat; it never creates a game or takes a new seat, and fails with "Game not found", "You are not in this game", "You were removed from this game", "That name is taken in this game" or "<name> is already in this game".
 
 2. **Playing**
 

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { anyMove, seeded } from './testing.ts';
 import { tickettoride } from './index.ts';
 import type { PublicGameState } from './types.ts';
@@ -11,7 +12,7 @@ type Manager = ReturnType<typeof createGameManager>;
 const ROOM = 'tickettoride/g1';
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = createGameManager([tickettoride], seeded(seed));
+  const manager = rememberingKeys(createGameManager([tickettoride], seeded(seed)));
   for (const name of names) manager.join('tickettoride', 'g1', name);
   return manager;
 }

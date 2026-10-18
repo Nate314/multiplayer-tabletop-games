@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { checkers } from './index.ts';
 import type { Move, Position, PublicGameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -11,7 +12,7 @@ const at = (row: number, col: number): Position => ({ row, col });
 const move = (...path: Position[]): Move => ({ type: 'move', path });
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([checkers]);
+  const manager = rememberingKeys(createGameManager([checkers]));
   for (const name of names) manager.join('checkers', 'g1', name);
   return manager;
 }

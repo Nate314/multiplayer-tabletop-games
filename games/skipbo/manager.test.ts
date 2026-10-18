@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { skipbo } from './index.ts';
 import { fits } from './rules.ts';
 import type { PublicGameState } from './types.ts';
@@ -20,7 +21,7 @@ function seeded(seed: number): () => number {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([skipbo], seeded(42));
+  const manager = rememberingKeys(createGameManager([skipbo], seeded(42)));
   for (const name of names) manager.join('skipbo', 'g1', name);
   return manager;
 }

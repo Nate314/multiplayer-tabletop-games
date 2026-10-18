@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { mancala } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -8,7 +9,7 @@ import type { Result } from '../../shared/types.ts';
 type Manager = ReturnType<typeof createGameManager>;
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([mancala]);
+  const manager = rememberingKeys(createGameManager([mancala]));
   for (const name of names) manager.join('mancala', 'g1', name);
   return manager;
 }

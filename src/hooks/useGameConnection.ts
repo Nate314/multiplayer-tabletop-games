@@ -21,6 +21,7 @@ export default function useGameConnection() {
   const sessionRef = useRef(session);
   const joiningGameType = useRef<string | null>(null); // the game a pending or current join is for
   const rejoining = useRef<Rejoining | null>(null); // set until a rejoin succeeds or gives up
+  const seatKey = useRef<string | undefined>(undefined); // the key of the seat joined last
 
   const updateSession = useCallback((next: Session | null) => {
     const previous = sessionRef.current;
@@ -38,10 +39,10 @@ export default function useGameConnection() {
   const rememberIfStarted = useCallback((state: BasePublicState, seat: Seat) => {
     const type = joiningGameType.current;
     if (!type || !state.started) return;
-    const next = { gameType: type, gameId: state.gameId, playerName: state.playerNames[seat], inGame: true };
+    const next = { gameType: type, gameId: state.gameId, playerName: state.playerNames[seat], seatKey: seatKey.current, inGame: true };
     const current = sessionRef.current;
     const unchanged = current?.inGame && current.gameType === next.gameType &&
-      current.gameId === next.gameId && current.playerName === next.playerName;
+      current.gameId === next.gameId && current.playerName === next.playerName && current.seatKey === next.seatKey;
     if (!unchanged) updateSession(next);
   }, [updateSession]);
 
@@ -52,7 +53,10 @@ export default function useGameConnection() {
 
   const connect = useCallback((type: string, gameId: string, playerName: string, rejoin: boolean) => {
     joiningGameType.current = type;
-    gameService.connect(type, gameId, playerName, rejoin);
+    // The remembered game's key, sent with any join to that game so a held seat can be taken back
+    const remembered = sessionRef.current;
+    const key = remembered?.gameType === type && remembered.gameId === gameId ? remembered.seatKey : undefined;
+    gameService.connect(type, gameId, playerName, rejoin, key);
   }, []);
 
   const rejoin = useCallback(() => {
@@ -71,6 +75,7 @@ export default function useGameConnection() {
     gameService.onGameJoined = (data) => {
       stopRejoining();
       seat = data.playerNumber;
+      seatKey.current = data.seatKey;
       setPlayerNumber(data.playerNumber);
       setGameState(data.gameState);
       setGameType(joiningGameType.current);

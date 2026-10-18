@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { placementOptions, tileFeatures } from './board.ts';
 import { carcassonne } from './index.ts';
 import { meepleError } from './rules.ts';
@@ -23,7 +24,7 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = createGameManager([carcassonne], seeded(seed));
+  const manager = rememberingKeys(createGameManager([carcassonne], seeded(seed)));
   for (const name of names) manager.join('carcassonne', 'g1', name);
   return manager;
 }

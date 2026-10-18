@@ -1,7 +1,7 @@
 import { MESSAGE_TYPES, type ClientMessage, type ServerMessage } from '../../shared/messages.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
-type GameJoined = { playerNumber: Seat; gameState: BasePublicState };
+type GameJoined = { playerNumber: Seat; seatKey: string; gameState: BasePublicState };
 
 class GameService {
   ws: WebSocket | null;
@@ -18,8 +18,10 @@ class GameService {
     this.onDisconnect = null;
   }
 
-  // `rejoin` only takes back a held seat, so it never starts a new game
-  connect(gameType: string, gameId: string, playerName: string, rejoin = false, serverUrl = window.location.host): void {
+  // `rejoin` only takes back a held seat, so it never starts a new game; taking one back needs its `seatKey`
+  connect(
+    gameType: string, gameId: string, playerName: string, rejoin = false, seatKey?: string, serverUrl = window.location.host
+  ): void {
     // Drop any earlier socket, e.g. after a refused join, without reporting a disconnect
     this.disconnect();
 
@@ -29,7 +31,7 @@ class GameService {
     this.ws = ws;
 
     ws.onopen = () => {
-      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName, rejoin });
+      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName, rejoin, seatKey });
     };
 
     ws.onmessage = (event) => {
