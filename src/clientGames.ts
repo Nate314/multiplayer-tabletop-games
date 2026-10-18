@@ -12,6 +12,7 @@ import { parchisiClient } from '../games/parchisi/client/index.ts';
 import { scrabbleClient } from '../games/scrabble/client/index.ts';
 import { unoClient } from '../games/uno/client/index.ts';
 import { phase10Client } from '../games/phase10/client/index.ts';
+import { skipboClient } from '../games/skipbo/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -46,7 +47,8 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [parchisiClient.id]: parchisiClient,
   [scrabbleClient.id]: scrabbleClient,
   [unoClient.id]: unoClient,
-  [phase10Client.id]: phase10Client
+  [phase10Client.id]: phase10Client,
+  [skipboClient.id]: skipboClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
