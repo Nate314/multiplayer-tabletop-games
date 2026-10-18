@@ -14,6 +14,7 @@ import { unoClient } from '../games/uno/client/index.ts';
 import { phase10Client } from '../games/phase10/client/index.ts';
 import { skipboClient } from '../games/skipbo/client/index.ts';
 import { gofishClient } from '../games/gofish/client/index.ts';
+import { warClient } from '../games/war/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -50,7 +51,8 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [unoClient.id]: unoClient,
   [phase10Client.id]: phase10Client,
   [skipboClient.id]: skipboClient,
-  [gofishClient.id]: gofishClient
+  [gofishClient.id]: gofishClient,
+  [warClient.id]: warClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
