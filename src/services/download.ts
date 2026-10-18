@@ -8,5 +8,6 @@ export function downloadJson(fileName: string, data: unknown): void {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  // Safari and iOS may still be reading the file just after the click
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -81,13 +81,15 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
 
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="modal history" role="dialog" aria-label="Move history" onClick={(e) => e.stopPropagation()}>
+      <div className="modal history" role="dialog" aria-label="History" onClick={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
         {body}
-        {canDownload && (
-          <button type="button" className="primary-button" onClick={() => onDownload(history.steps)}>Download game</button>
-        )}
-        <button type="button" className="primary-button" onClick={onClose}>Close</button>
+        <div className="modal-buttons">
+          {canDownload && (
+            <button type="button" className="primary-button" onClick={() => onDownload(history.steps)}>Download game</button>
+          )}
+          <button type="button" className="primary-button" onClick={onClose}>Close</button>
+        </div>
       </div>
     </div>
   );

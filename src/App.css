@@ -416,6 +416,14 @@
   margin-top: 16px;
 }
 
+/* A dialog's row of buttons; they wrap on a narrow window */
+:where([data-game] .modal-buttons) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
 :where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
