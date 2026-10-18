@@ -36,12 +36,15 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
   }
 
   // The one place a public state is built: the game hides its secrets and the platform adds the move count
-  function publicView(room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number): BasePublicState {
-    return { ...room.game.toPublicState(state, undoAvailable), moveCount };
+  function publicView(
+    room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
+  ): BasePublicState {
+    return { ...room.game.toPublicState(state, undoAvailable, viewer), moveCount };
   }
 
-  function view(room: Room): BasePublicState {
-    return publicView(room, room.state, room.history.length > 0, room.timeline.length);
+  // The current state as `viewer` may see it
+  function view(room: Room, viewer: Seat | null): BasePublicState {
+    return publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
@@ -113,7 +116,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         if (!state.disconnected.includes(known)) return { error: `${state.playerNames[known]} is already in this game` };
         room.state = reconnectPlayer(state, known);
         clearEmptyTimer(room);
-        return { roomId, seat: known, state: view(room) };
+        return { roomId, seat: known, state: view(room, known) };
       }
       if (rejoin === true) return { error: 'You are not in this game' };
 
@@ -122,7 +125,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
 
       room.state = result.state;
       rooms.set(roomId, room);
-      return { roomId, seat: result.seat, state: view(room) };
+      return { roomId, seat: result.seat, state: view(room, result.seat) };
     },
 
     // Before the first move this frees the seat; after it the seat is held for a rejoin
@@ -144,7 +147,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         }, EMPTY_ROOM_TIMEOUT_MS);
         room.emptyTimer.unref(); // never keeps the process alive on its own
       }
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     move(roomId: string, seat: Seat, move: unknown): Result<BasePublicState> {
@@ -152,13 +155,13 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       if ('error' in found) return found;
       const { room } = found;
 
-      const result = applyMove(room.game, room.state, seat, move);
+      const result = applyMove(room.game, room.state, seat, move, random);
       if ('error' in result) return result;
 
       room.history.push(room.state);
       room.timeline.push(result.state);
       room.state = result.state;
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     // Not turn-bound and never pushed to `history` or `timeline`, so an undo skips over it
@@ -172,7 +175,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       if ('error' in result) return result;
 
       room.state = result.state;
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     requestUndo(roomId: string, seat: Seat): Result<BasePublicState> {
@@ -191,7 +194,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         undoVote: { requestedBy: seat, votes: { [seat]: true } },
         gameStatus: `${state.playerNames[seat]} wants to undo the last turn`
       };
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     voteUndo(roomId: string, seat: Seat, approve: unknown): Result<BasePublicState> {
@@ -206,12 +209,12 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
 
       if (approve !== true) {
         room.state = { ...state, undoVote: null, gameStatus: `${state.playerNames[seat]} declined the undo` };
-        return { state: view(room) };
+        return { state: view(room, seat) };
       }
 
       room.state = { ...state, undoVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
       resolveUndoVote(room);
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     requestDismiss(roomId: string, seat: Seat, target: unknown): Result<BasePublicState> {
@@ -230,7 +233,7 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
         gameStatus: `${state.playerNames[seat]} wants to dismiss ${state.playerNames[held]}`
       };
       room.state = resolveDismissVote(room.game, opened, random); // a lone connected player passes it at once
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     voteDismiss(roomId: string, seat: Seat, approve: unknown): Result<BasePublicState> {
@@ -246,12 +249,12 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       if (approve !== true) {
         const gameStatus = `${state.playerNames[seat]} declined to dismiss ${state.playerNames[vote.target]}`;
         room.state = { ...state, dismissVote: null, gameStatus };
-        return { state: view(room) };
+        return { state: view(room, seat) };
       }
 
       const approved = { ...state, dismissVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
       room.state = resolveDismissVote(room.game, approved, random);
-      return { state: view(room) };
+      return { state: view(room, seat) };
     },
 
     // The public state right after each move, oldest first; null when the game does not exist
@@ -259,12 +262,13 @@ export function createGameManager(games: readonly GameDefinition<any, any>[], ra
       const game = findGame(gameType);
       const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
       if (!room) return null;
-      return room.timeline.map((state, index) => publicView(room, state, false, index + 1));
+      return room.timeline.map((state, index) => publicView(room, state, false, index + 1, null));
     },
 
-    getState(roomId: string): BasePublicState | undefined {
+    // As `viewer` sees it; null sees no player's hidden information
+    getState(roomId: string, viewer: Seat | null = null): BasePublicState | undefined {
       const room = rooms.get(roomId);
-      return room && view(room);
+      return room && view(room, viewer);
     }
   };
 }

@@ -122,7 +122,7 @@ test('moves are validated and recorded for undo', () => {
   assert.equal(state.started, true);
   assert.equal(state.moves, 1);
   assert.equal(state.undoAvailable, true);
-  assert.deepEqual(current(manager), state);
+  assert.deepEqual(manager.getState(ROOM, 1), state);
 });
 
 test('disconnecting in the lobby frees the seat and the last one out deletes the game', () => {
@@ -502,6 +502,7 @@ test('history lists the state after each move, hides secrets, and drops undone m
   for (const step of steps) {
     assert.equal('secret' in step, false);
     assert.equal(step.undoAvailable, false);
+    assert.equal(step.viewer, null);
   }
 
   ok(manager.requestUndo(ROOM, 1));
@@ -514,6 +515,16 @@ test('history lists the state after each move, hides secrets, and drops undone m
   assert.equal(manager.history('test', 'nope'), null);
   assert.equal(manager.history('test', 'a/b'), null);
   assert.equal(manager.history(undefined, undefined), null);
+});
+
+test('each view is built for the seat it is sent to', () => {
+  const manager = gameWith('A', 'B');
+  assert.equal(ok(manager.move(ROOM, 1, tick)).viewer, 1);
+  assert.equal(ok(manager.move(ROOM, 2, tick)).viewer, 2);
+  assert.equal(current(manager).viewer, null);
+  assert.equal((manager.getState(ROOM, 2) as TestPublicState).viewer, 2);
+  left(manager.disconnect(ROOM, 2));
+  assert.equal((joined(manager.join('test', 'g1', 'b')).state as TestPublicState).viewer, 2);
 });
 
 test('actions add no history steps', () => {
