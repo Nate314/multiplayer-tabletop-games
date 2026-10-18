@@ -17,7 +17,7 @@ Bid for the nest, name trump and take counters in tricks with your partner, firs
 - **Winning.** The first team to reach 500 wins. If both teams reach it in the same hand the higher total wins; if the totals are equal another hand is played
 - You see only your own hand and how many cards everyone else holds. The nest, the cards laid aside and the counters each team has taken stay hidden until the hand is scored; the number of tricks each team has taken is shown
 - **Leaving.** A disconnected player keeps their seat and the game waits for them on their turn. A dismissed player breaks their partnership, so the game ends and the other team wins
-- Any player can ask to undo the last move. It is undone only if every player still in the game approves. Continue is not a move, so an undo goes back past it
+- Any player can ask to undo the last move. It is undone only if every connected player approves, and only while all four seats are filled. Continue is not a move, so an undo goes back past it
 
 ## Controls
 

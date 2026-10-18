@@ -21,7 +21,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   } = gameState;
   const full = activePlayers.length === SEATS.length;
   const isMyTurn = currentPlayer === playerNumber && full && !isGameOver && !undoVote && !dismissVote;
-  const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
+  const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && full;
   const lowestBid = bidding.high ? bidding.high.amount + BID_STEP : MIN_BID;
   const bids: number[] = [];
   for (let value = lowestBid; value <= MAX_BID; value += BID_STEP) bids.push(value);
