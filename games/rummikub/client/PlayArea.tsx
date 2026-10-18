@@ -106,7 +106,7 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
   } else if (!message && currentPlayer !== null) {
     message = `Waiting for ${playerNames[currentPlayer]}. You can sort and arrange your rack.`;
   }
-  const isError = hint !== null || (check !== null && 'error' in check);
+  const isError = hint !== null || (held === null && check !== null && 'error' in check);
 
   return (
     <div className={isMyTurn ? 'rk-play-area' : 'rk-play-area rk-play-area-waiting'} ref={rootRef}>

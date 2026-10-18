@@ -257,6 +257,11 @@ test('a joker taken from the table must be replaced by its tile and played again
     assert.ok('state' in play(fromSet, 1, [[t('red', 9), t('blue', 9), t(color, 9)], [J2, t('red', 2), t('red', 3)]]), color);
   }
 
+  // Taking a tile out of a set of four that holds a joker leaves the joker where it is
+  const four = [[t('red', 8), t('blue', 8), t('black', 8), J2]];
+  const fromFour = game({ 1: [t('red', 6), t('red', 7), t('blue', 1)], 2: [t('orange', 5)] }, four);
+  assert.ok('state' in play(fromFour, 1, [[t('blue', 8), t('black', 8), J2], [t('red', 6), t('red', 7), t('red', 8)]]));
+
   // Adding to a run that holds a joker leaves the joker standing for the same tile, which needs no replacing
   const adding = game({ 1: [t('red', 7), t('blue', 1)], 2: [t('orange', 5)] }, table);
   assert.deepEqual(ok(play(adding, 1, [[t('red', 4), J1, t('red', 6), t('red', 7)]])).table, [[t('red', 4), J1, t('red', 6), t('red', 7)]]);

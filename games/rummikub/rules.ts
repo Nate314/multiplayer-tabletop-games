@@ -130,14 +130,15 @@ function sharesNatural(a: GroupInfo, b: GroupInfo): boolean {
   return a.tiles.some(id => !isJoker(id) && b.tiles.includes(id));
 }
 
-// A joker that no longer stands for the same tile alongside the same tiles has been taken. It is allowed only
+// A joker that no longer stands for the same tile alongside the same tiles has been taken. In a set it may
+// stand for any missing color, so it stays put while one of the colors it could stand for is still missing. It is allowed only
 // if the tile it stood for now sits with the tiles it was with, from the rack or from elsewhere on the table.
 function jokersReplaced(before: GroupInfo[], after: GroupInfo[]): boolean {
   const old = jokerPlaces(before);
   const now = jokerPlaces(after);
   return [...old].every(([id, was]) => {
     const is = now.get(id);
-    const stayed = is !== undefined && is.value === was.value && is.colors.every(color => was.colors.includes(color)) &&
+    const stayed = is !== undefined && is.value === was.value && is.colors.some(color => was.colors.includes(color)) &&
       sharesNatural(is.group, was.group);
     if (stayed) return true;
     return after.some(group => sharesNatural(group, was.group) && group.tiles.some(tileId => {
