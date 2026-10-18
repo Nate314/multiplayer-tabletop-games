@@ -10,7 +10,9 @@ export default function HistoryBoard({ gameState, viewer }: { gameState: PublicG
   const highlight = mover === undefined ? null : gameState.positions[mover] ?? null;
   return (
     <div className="history-layout">
-      <Board gameState={gameState} highlight={highlight} />
+      <div className="board-area">
+        <Board gameState={gameState} highlight={highlight} />
+      </div>
       <PlayerList gameState={gameState} viewer={viewer} />
     </div>
   );

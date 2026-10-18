@@ -108,6 +108,7 @@
 [data-game="monopoly"] .board-area {
   width: min(100%, 720px, calc(100vh - 110px));
   min-width: min(100%, 480px);
+  container-type: inline-size;
 }
 
 [data-game="monopoly"] .side-panel {
@@ -126,7 +127,6 @@
   grid-template-rows: 1.5fr repeat(9, 1fr) 1.5fr;
   width: 100%;
   aspect-ratio: 1;
-  container-type: inline-size;
   box-sizing: border-box;
   border: 2px solid var(--space-border);
   background: var(--board-bg);
@@ -220,15 +220,20 @@
   white-space: nowrap;
 }
 
+/* Tokens sit over the bottom of the space (the top on the top row), so a full space never hides them */
 [data-game="monopoly"] .space-tokens {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.3cqw;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.2cqw;
-  margin-top: auto;
 }
 
-[data-game="monopoly"] .side-top .space-tokens { margin-top: 0; margin-bottom: auto; order: -1; }
+[data-game="monopoly"] .side-top .space-tokens { top: 0.3cqw; bottom: auto; }
 
 [data-game="monopoly"] .in-jail {
   display: flex;
@@ -269,6 +274,7 @@
   padding: 0.6cqw 3cqw;
   background: #D62828;
   color: #FFFFFF;
+  margin-bottom: 2cqw;
   font-size: 6cqw;
   font-weight: 800;
   letter-spacing: 0.4cqw;
@@ -328,7 +334,7 @@
 [data-game="monopoly"] .game-status-error { background: var(--error-bg); color: var(--error-text); }
 [data-game="monopoly"] .turn-message { font-weight: 700; }
 
-[data-game="monopoly"] .side-panel button:not(.chip):not(.deed-close) {
+[data-game="monopoly"] .side-panel button:where(:not(.chip, .deed-close)) {
   padding: 6px 12px;
   border: 1px solid var(--button-bg);
   border-radius: 6px;
@@ -468,4 +474,15 @@
 
 /* The history dialog: the board with every player's holdings below it */
 [data-game="monopoly"] .history-layout { display: flex; flex-direction: column; gap: 8px; }
-[data-game="monopoly"] .history-layout .board { max-width: 560px; margin: 0 auto; }
+[data-game="monopoly"] .history-layout { width: min(560px, 82vw); text-align: left; }
+[data-game="monopoly"] .history-layout .board-area { width: 100%; min-width: 0; }
+
+/* Stacked under the board on a narrow window: a smaller board keeps the turn controls in view */
+@media (max-width: 899px) {
+  [data-game="monopoly"] .board-area {
+    width: min(100%, 720px, calc(100vh - 290px));
+    min-width: min(100%, 360px);
+  }
+
+  [data-game="monopoly"] .side-panel { max-width: 720px; }
+}
