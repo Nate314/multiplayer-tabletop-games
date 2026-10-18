@@ -47,11 +47,29 @@ test('checker moves are validated and each one is recorded for undo', () => {
   assert.equal(half.currentPlayer, 1);
   const done = ok(manager.move(ROOM, 1, move(pointIndex(1, 6), pointIndex(1, 5))));
   assert.equal(done.currentPlayer, 2);
-  assert.deepEqual(done.dice, [6, 5]);
+  assert.deepEqual(done.dice, []);
 
   ok(manager.requestUndo(ROOM, 2));
   const restored = ok(manager.voteUndo(ROOM, 1, true));
   assert.equal(restored.currentPlayer, 1);
   assert.deepEqual(restored.remaining, [1]);
   assert.deepEqual(restored.points[pointIndex(1, 5)], { seat: 1, count: 1 });
+});
+
+test('rolls and the doubling cube are moves recorded for undo, and a drop ends the game with points', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, move(pointIndex(1, 8), pointIndex(1, 5))));
+  ok(manager.move(ROOM, 1, move(pointIndex(1, 6), pointIndex(1, 5))));
+  assert.deepEqual(ok(manager.move(ROOM, 2, { type: 'roll' })).remaining, [6, 5]);
+
+  ok(manager.requestUndo(ROOM, 1));
+  const unrolled = ok(manager.voteUndo(ROOM, 2, true));
+  assert.deepEqual(unrolled.remaining, []);
+
+  const offered = ok(manager.move(ROOM, 2, { type: 'double' }));
+  assert.equal(offered.currentPlayer, 1);
+  const dropped = ok(manager.move(ROOM, 1, { type: 'drop' }));
+  assert.equal(dropped.isGameOver, true);
+  assert.deepEqual(dropped.winners, [2]);
+  assert.equal(dropped.pointsWon, 1);
 });

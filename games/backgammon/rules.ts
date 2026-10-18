@@ -1,15 +1,12 @@
 // Backgammon rules shared by the browser (legal move hints) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
+import { baseGameState } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import type { GameState, LastMove, PointStack, Position, PublicGameState, Result, Seat, Step } from './types.ts';
 
 export const POINT_COUNT = 24;
 export const CHECKERS_PER_PLAYER = 15;
 const HOME_SIZE = 6;
-
-// Enough to rule out a run of bad rolls; only a position where neither player can ever move reaches it
-const MAX_PASSES = 50;
 
 // The standard opening layout, as point numbers counted from the owner's side (their checkers bear off past point 1)
 const START_LAYOUT: Record<number, number> = { 24: 2, 13: 5, 8: 3, 6: 5 };
@@ -48,8 +45,8 @@ export function diceToPlay(dice: number[]): number[] {
   return dice[0] === dice[1] ? [dice[0], dice[0], dice[0], dice[0]] : [...dice];
 }
 
-function rollDice(random: Random): number[] {
-  return [1 + Math.floor(random() * 6), 1 + Math.floor(random() * 6)];
+function rollDie(random: Random): number {
+  return 1 + Math.floor(random() * 6);
 }
 
 function isOpenFor(point: PointStack | null, seat: Seat): boolean {
@@ -123,7 +120,7 @@ function withoutOne(dice: number[], die: number): number[] {
   return [...dice.slice(0, index), ...dice.slice(index + 1)];
 }
 
-// Distinct values, smallest first, so a bear-off that two dice could make uses the smaller one
+// Distinct values, smallest first, so a bear-off that two dice could make uses the smaller one by default
 function distinctDice(dice: number[]): number[] {
   return [...new Set(dice)].sort((a, b) => a - b);
 }
@@ -158,78 +155,158 @@ export function legalSteps(state: Position & { remaining: number[] }, seat: Seat
   return steps;
 }
 
-// One line about a checker move, with points numbered from the mover's side
-export function moveText(name: string, { playerNumber, from, to, hit }: LastMove): string {
-  const fromNumber = from === 'bar' ? 0 : pointNumber(playerNumber, from);
+// A turn starts with a roll or a double; once the dice are rolled, only checker moves remain
+export function canRoll(state: Pick<GameState, 'remaining' | 'doubleOffer'>): boolean {
+  return state.doubleOffer === null && state.remaining.length === 0;
+}
+
+// The cube's owner may double, or either player while it is in the middle
+export function canDouble(state: Pick<GameState, 'remaining' | 'doubleOffer' | 'cubeOwner'>, seat: Seat): boolean {
+  return canRoll(state) && (state.cubeOwner === null || state.cubeOwner === seat);
+}
+
+export function pointsText(points: number): string {
+  return `${points} ${points === 1 ? 'point' : 'points'}`;
+}
+
+// One line about a move, with points numbered from the mover's side
+export function moveText(name: string, lastMove: LastMove): string {
+  if (lastMove.type === 'roll') return `${name} rolled ${lastMove.dice.join(' and ')}${lastMove.blocked ? ' and could not move' : ''}`;
+  if (lastMove.type === 'double') return `${name} offered to double to ${lastMove.cube}`;
+  if (lastMove.type === 'take') return `${name} took the double. The cube is at ${lastMove.cube}`;
+  if (lastMove.type === 'drop') return `${name} dropped the double`;
+  const { playerNumber, from, to, hit } = lastMove;
   const text = from === 'bar'
     ? `${name} entered on ${pointNumber(playerNumber, to as number)}`
     : to === 'off'
-      ? `${name} bore off from ${fromNumber}`
-      : `${name} moved ${fromNumber} to ${pointNumber(playerNumber, to)}`;
+      ? `${name} bore off from ${pointNumber(playerNumber, from)}`
+      : `${name} moved ${pointNumber(playerNumber, from)} to ${pointNumber(playerNumber, to)}`;
   return hit ? `${text} and hit` : text;
 }
 
-// A gammon when the loser has borne off nothing, a backgammon when they also still have a checker on the bar or in the winner's home board
-function winText(position: Position, winner: Seat, name: string): string {
+// A single game is worth the cube's value, a gammon (the loser has borne off nothing) twice that, and a
+// backgammon (the loser also still has a checker on the bar or in the winner's home board) three times
+function winKind(position: Position, winner: Seat): { multiplier: number; kind: string } {
   const loser = otherSeat(winner);
-  if (position.borneOff[loser] > 0) return `${name} wins!`;
+  if (position.borneOff[loser] > 0) return { multiplier: 1, kind: '' };
   const stuckBehind = position.bar[loser] > 0 || position.points.some((point, index) =>
     point?.seat === loser && pointNumber(winner, index) <= HOME_SIZE
   );
-  return `${name} wins with a ${stuckBehind ? 'backgammon' : 'gammon'}!`;
+  return stuckBehind ? { multiplier: 3, kind: ' with a backgammon' } : { multiplier: 2, kind: ' with a gammon' };
 }
 
-// Rolls for `seat`; a player who cannot use their roll passes, and the roll goes to the next player
-function startTurn(state: GameState, seat: Seat, random: Random): GameState {
-  const passes: string[] = [];
-  let player = seat;
-  for (let attempt = 0; attempt < MAX_PASSES; attempt++) {
-    const dice = rollDice(random);
-    const remaining = diceToPlay(dice);
-    if (maxDiceUsable(state, player, remaining) > 0) {
-      const gameStatus = [state.gameStatus, ...passes].filter(Boolean).join('. ');
-      return { ...state, currentPlayer: player, dice, remaining, gameStatus };
-    }
-    passes.push(`${state.playerNames[player]} rolled ${dice.join(' and ')} and could not move`);
-    player = nextActivePlayer(state, player) ?? player;
-  }
-  return { ...state, dice: [], remaining: [], isGameOver: true, gameStatus: 'Neither player can move. The game is a draw.' };
+function gameWon(state: GameState, winner: Seat, points: number, kind = ''): GameState {
+  const gameStatus = `${state.gameStatus}. ${state.playerNames[winner]} wins${kind}: ${pointsText(points)}!`;
+  return { ...state, remaining: [], isGameOver: true, winners: [winner], pointsWon: points, gameStatus };
+}
+
+// The other player's turn starts with no dice: they roll, or double first
+function passTurn(state: GameState, seat: Seat): GameState {
+  return { ...state, currentPlayer: otherSeat(seat), dice: [], remaining: [] };
+}
+
+// Each player rolls one die, again on a tie; the higher roller moves first with both numbers, so never a double
+function openingRoll(state: GameState, random: Random): GameState {
+  const [first, second] = state.activePlayers;
+  let rolls: number[];
+  do rolls = [rollDie(random), rollDie(random)]; while (rolls[0] === rolls[1]);
+  const opener = rolls[0] > rolls[1] ? first : second;
+  const dice = [Math.max(...rolls), Math.min(...rolls)];
+  const { playerNames } = state;
+  const opening = `${playerNames[first]} rolled ${rolls[0]} and ${playerNames[second]} rolled ${rolls[1]}, ` +
+    `so ${playerNames[opener]} moves first`;
+  const gameStatus = [state.gameStatus, opening].filter(Boolean).join('. ');
+  return { ...state, currentPlayer: opener, dice, remaining: dice, gameStatus };
+}
+
+// Everything a new game starts with besides the seats: the cube in the middle at 1 and no dice yet
+function freshGame(seats: Seat[]) {
+  return { ...startingPosition(seats), dice: [], remaining: [], cube: 1, cubeOwner: null, doubleOffer: null, pointsWon: 0, lastMove: null };
 }
 
 export function createGameState(gameId: string): GameState {
-  return { ...baseGameState(gameId), ...startingPosition([]), dice: [], remaining: [], lastMove: null };
+  return { ...baseGameState(gameId), ...freshGame([]) };
 }
 
-// Before the first move, every seat's checkers are in the opening layout and, with two players seated, the first player has rolled
+// Before the first move, every seat's checkers are in the opening layout and, with two players seated, the opening roll is made
 export function resetLobby(state: GameState, random: Random): GameState {
-  const fresh: GameState = { ...state, ...startingPosition(state.activePlayers), dice: [], remaining: [], lastMove: null };
-  return state.activePlayers.length === 2 && fresh.currentPlayer !== null
-    ? startTurn(fresh, fresh.currentPlayer, random)
-    : fresh;
+  const fresh: GameState = { ...state, ...freshGame(state.activePlayers) };
+  return state.activePlayers.length === 2 ? openingRoll(fresh, random) : fresh;
 }
 
 export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
   return { ...state, undoAvailable };
 }
 
-export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
-  const input = asRecord(move);
-  if (input?.type !== 'move') return { error: 'Unknown move type' };
+function withLastMove(state: GameState, lastMove: LastMove): GameState {
+  return { ...state, lastMove, gameStatus: moveText(state.playerNames[lastMove.playerNumber], lastMove) };
+}
 
-  // Steps come smallest die first, so a bear-off that two dice could make keeps the higher die
-  const step = legalSteps(state, seat).find(legal => legal.from === input.from && legal.to === input.to);
+// A roll the player cannot use at all passes the turn
+function roll(state: GameState, seat: Seat, random: Random): Result<GameState> {
+  if (!canRoll(state)) return { error: 'You cannot roll now' };
+  const dice = [rollDie(random), rollDie(random)];
+  const remaining = diceToPlay(dice);
+  const blocked = maxDiceUsable(state, seat, remaining) === 0;
+  const next = withLastMove({ ...state, dice, remaining }, { type: 'roll', playerNumber: seat, dice, blocked });
+  return { state: blocked ? passTurn(next, seat) : next };
+}
+
+// The opponent answers the offer before the doubler rolls
+function double(state: GameState, seat: Seat): Result<GameState> {
+  if (!canDouble(state, seat)) return { error: 'You cannot double now' };
+  const next = withLastMove(state, { type: 'double', playerNumber: seat, cube: state.cube * 2 });
+  return { state: { ...next, doubleOffer: seat, currentPlayer: otherSeat(seat) } };
+}
+
+// Taking doubles the stake and gives the taker the cube; the doubler then rolls
+function take(state: GameState, seat: Seat, doubler: Seat): GameState {
+  const cube = state.cube * 2;
+  const next = withLastMove(state, { type: 'take', playerNumber: seat, cube });
+  return { ...next, cube, cubeOwner: seat, doubleOffer: null, currentPlayer: doubler };
+}
+
+// Dropping concedes the game at the cube's value before the double
+function drop(state: GameState, seat: Seat, doubler: Seat): GameState {
+  const next = withLastMove(state, { type: 'drop', playerNumber: seat, cube: state.cube });
+  return gameWon({ ...next, doubleOffer: null }, doubler, state.cube);
+}
+
+function answerDouble(state: GameState, seat: Seat, answer: unknown): Result<GameState> {
+  const doubler = state.doubleOffer;
+  if (doubler === null) return { error: 'No double has been offered' };
+  return { state: answer === 'take' ? take(state, seat, doubler) : drop(state, seat, doubler) };
+}
+
+function moveChecker(state: GameState, seat: Seat, input: Record<string, unknown>): Result<GameState> {
+  if (state.remaining.length === 0) return { error: 'Roll the dice first' };
+
+  // Steps come smallest die first, so without `die` a bear-off that two dice could make uses the smaller one
+  const step = legalSteps(state, seat).find(legal =>
+    legal.from === input.from && legal.to === input.to && (input.die === undefined || legal.die === input.die)
+  );
   if (!step) return { error: 'Invalid move' };
 
-  const name = state.playerNames[seat];
-  const lastMove: LastMove = { playerNumber: seat, from: step.from, to: step.to, hit: isHit(state, seat, step) };
   const position = applyStep(state, seat, step);
   const remaining = withoutOne(state.remaining, step.die);
-  const next: GameState = { ...state, ...position, remaining, lastMove, gameStatus: moveText(name, lastMove) };
+  const next = withLastMove({ ...state, ...position, remaining },
+    { type: 'move', playerNumber: seat, from: step.from, to: step.to, hit: isHit(state, seat, step) });
 
   if (position.borneOff[seat] === CHECKERS_PER_PLAYER) {
-    return { state: { ...next, remaining: [], isGameOver: true, winners: [seat], gameStatus: winText(position, seat, name) } };
+    const { multiplier, kind } = winKind(position, seat);
+    return { state: gameWon(next, seat, state.cube * multiplier, kind) };
   }
-  if (maxDiceUsable(position, seat, remaining) > 0) return { state: next };
-  const following = nextActivePlayer(next, seat) ?? seat;
-  return { state: startTurn(next, following, random) };
+  return { state: maxDiceUsable(position, seat, remaining) > 0 ? next : passTurn(next, seat) };
+}
+
+export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
+  const input = asRecord(move);
+  switch (input?.type) {
+    case 'roll': return roll(state, seat, random);
+    case 'double': return double(state, seat);
+    case 'take':
+    case 'drop': return answerDouble(state, seat, input.type);
+    case 'move': return moveChecker(state, seat, input);
+    default: return { error: 'Unknown move type' };
+  }
 }

@@ -6,7 +6,9 @@ import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
-import type { PublicGameState } from '../types.ts';
+import type { Move, PublicGameState } from '../types.ts';
+
+const makeMove = (move: Move) => gameService.makeMove(move);
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const boardAreaRef = useRef<HTMLDivElement>(null);
@@ -22,12 +24,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       <div className="game-id">Game ID: {gameState.gameId}</div>
       <div className="bg-layout">
         <div className="bg-board-area" ref={boardAreaRef}>
-          <Board gameState={gameState} playerNumber={playerNumber} isMyTurn={isMyTurn} onMove={move => gameService.makeMove(move)} />
+          <Board gameState={gameState} playerNumber={playerNumber} isMyTurn={isMyTurn} onMove={makeMove} />
           <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
         </div>
         <div className="bg-panel">
-          <GameStatus gameState={gameState} playerNumber={playerNumber} isMyTurn={isMyTurn} error={error} />
-          <button type="button" className="bg-undo" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
+          <GameStatus gameState={gameState} playerNumber={playerNumber} isMyTurn={isMyTurn} error={error} onMove={makeMove} />
+          <button type="button" className="bg-button bg-undo" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
             Undo
           </button>
         </div>
