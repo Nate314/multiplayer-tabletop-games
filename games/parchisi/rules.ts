@@ -233,11 +233,11 @@ function rollDie(random: Random): number {
   return Math.min(DIE_FACES, 1 + Math.floor(random() * DIE_FACES));
 }
 
-// Three doubles in a row send the pawn furthest along the track (not in its home column) back to the nest
+// Three doubles in a row send the pawn closest to home (on the track or in the home column) back to the nest
 function sendFurthestHome(state: GameState, seat: Seat): GameState {
   const pawns = state.pawns[seat];
   const furthest = pawns.reduce((best, progress, pawn) =>
-    isOnTrack(progress) && (best < 0 || progress > pawns[best]) ? pawn : best, -1);
+    progress !== NEST && progress !== HOME && (best < 0 || progress > pawns[best]) ? pawn : best, -1);
   if (furthest < 0) return state;
   return { ...state, pawns: { ...state.pawns, [seat]: pawns.map((progress, pawn) => pawn === furthest ? NEST : progress) } };
 }

@@ -44,8 +44,8 @@ export const FAQS: FaqItem[] = [
     question: 'What happens when I roll doubles?',
     answer: 'Each die is a move. If all four of your pawns are out of the nest (home counts as out), you also get ' +
       'the two faces underneath, 7 minus the top face, shown with dashed edges: double 2 gives 2, 2, 5 and 5. ' +
-      'You roll again only if you used every die. If you roll doubles three times in a row, your pawn furthest ' +
-      'along the track (not one in your home column) goes back to your nest and your turn ends.'
+      'You roll again only if you used every die. If you roll doubles three times in a row, your pawn closest ' +
+      'to home, even one in your home column, goes back to your nest and your turn ends.'
   },
   {
     question: 'How do I capture?',

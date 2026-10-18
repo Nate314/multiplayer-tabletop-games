@@ -253,10 +253,10 @@ test('home takes an exact roll and earns a 10 square bonus', () => {
   assert.equal(next.gameStatus, 'Alice moved a pawn home (+10)');
 });
 
-test('a third double in a row sends the furthest pawn on the track back to the nest', () => {
+test('a third double in a row sends the pawn closest to home back to the nest, even from the home column', () => {
   const state = playing({ pawns: { 1: [10, 30, 66, NEST], 2: IN_NEST }, dice: [1, 1], doublesRolled: 2 });
   const next = move(move(state, 1, 0, 0), 1, 0, 1, rolls(3, 3, 5, 1));
-  assert.deepEqual(next.pawns[1], [12, NEST, 66, NEST]);
+  assert.deepEqual(next.pawns[1], [12, 30, NEST, NEST]);
   assert.equal(next.currentPlayer, 2);
   assert.match(next.gameStatus, /Alice rolled a third double in a row and lost the turn and a pawn to the nest\. Bob rolled 5 and 1$/);
 });
