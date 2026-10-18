@@ -1,3 +1,4 @@
+import { BAG_KEY, seatKey } from './animateMove.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type ScoresProps = {
@@ -27,7 +28,7 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
           ];
           const adjustment = endAdjustments?.[seat];
           return (
-            <li key={seat} className={classes.filter(Boolean).join(' ')}>
+            <li key={seat} className={classes.filter(Boolean).join(' ')} data-anim-key={seatKey(seat)}>
               <span className="score-name">
                 {playerNames[seat]}{seat === playerNumber && ' (you)'}{hasLeft && ' (left)'}
               </span>
@@ -40,7 +41,7 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
           );
         })}
       </ul>
-      <div className="bag-count">Tiles in the bag: {bagCount}</div>
+      <div className="bag-count" data-anim-key={BAG_KEY}>Tiles in the bag: {bagCount}</div>
     </div>
   );
 }

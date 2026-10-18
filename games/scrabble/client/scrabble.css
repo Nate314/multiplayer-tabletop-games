@@ -298,7 +298,9 @@
   user-select: none;
 }
 
+/* Above every square, so a tile sliding in is not hidden under the squares after its own */
 [data-game="scrabble"] .square .tile {
+  z-index: 1;
   font-size: 3.6cqw;
 }
 
