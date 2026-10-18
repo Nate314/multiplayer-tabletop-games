@@ -1,8 +1,9 @@
 import Board from './Board';
 import type { PublicGameState } from '../types.ts';
+import type { Seat } from '../../../shared/types.ts';
 
 // The board right after one move, from Red's side, with that move highlighted. Nothing is clickable.
-export default function HistoryBoard({ gameState }: { gameState: PublicGameState }) {
+export default function HistoryBoard({ gameState }: { gameState: PublicGameState; viewer: Seat | null }) {
   return (
     <Board
       gameState={gameState}

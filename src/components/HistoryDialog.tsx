@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
-import type { HistoryStep } from '../../shared/types.ts';
+import type { GameFileStep } from '../../shared/gameFile.ts';
+import type { HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
+import { viewOf } from './historyView.ts';
 
 export type History =
   | { status: 'loading' }
   | { status: 'failed' }
-  | { status: 'loaded'; steps: HistoryStep[] };
+  | { status: 'loaded'; steps: GameFileStep[] };
 
 type HistoryDialogProps = {
   client: ClientGame;
@@ -19,7 +21,7 @@ type HistoryDialogProps = {
 
 type HistoryStepsProps = {
   client: ClientGame;
-  steps: HistoryStep[];
+  steps: GameFileStep[];
 };
 
 const STEP_FAILED = 'This step could not be shown';
@@ -37,9 +39,12 @@ function stepLabel(client: ClientGame, step: HistoryStep, moveTotal: number): st
 // The slider starts on the latest step; start and end steps highlight no move
 function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [index, setIndex] = useState(steps.length - 1);
+  const [viewer, setViewer] = useState<Seat | null>(null);
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
-  const boardState = step.historyStep === 'move' ? step : { ...step, lastMove: null };
+  const view = viewOf(step, viewer);
+  const boardState = view.historyStep === 'move' ? view : { ...view, lastMove: null };
+  const seatNames = Object.entries(steps[0].playerNames);
   const { HistoryBoard } = client;
 
   return (
@@ -55,9 +60,21 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
         autoFocus
         onChange={(e) => setIndex(Number(e.target.value))}
       />
+      {steps[0].views && (
+        <div className="history-controls">
+          <select
+            aria-label="View as"
+            value={viewer === null ? '' : String(viewer)}
+            onChange={(e) => setViewer(e.target.value === '' ? null : Number(e.target.value))}
+          >
+            <option value="">Table only</option>
+            {seatNames.map(([seat, name]) => <option key={seat} value={seat}>{name}</option>)}
+          </select>
+        </div>
+      )}
       <div className="history-board">
         <StepErrorBoundary key={index}>
-          <HistoryBoard gameState={boardState} />
+          <HistoryBoard gameState={boardState} viewer={viewer} />
         </StepErrorBoundary>
       </div>
     </>

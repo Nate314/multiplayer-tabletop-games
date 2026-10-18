@@ -1,10 +1,11 @@
 import Piles from './Piles';
 import Table from './Table';
 import type { DrawSource, PublicGameState } from '../types.ts';
+import type { Seat } from '../../../shared/types.ts';
 
 // The piles and every player's laid-down groups right after one move, with the pile or groups it used highlighted.
 // No hand is shown and nothing is clickable.
-export default function HistoryBoard({ gameState }: { gameState: PublicGameState }) {
+export default function HistoryBoard({ gameState }: { gameState: PublicGameState; viewer: Seat | null }) {
   const { lastMove, phases } = gameState;
   let lastPile: DrawSource | null = null;
   if (lastMove?.type === 'draw') lastPile = lastMove.source;

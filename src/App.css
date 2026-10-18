@@ -397,6 +397,10 @@
   margin: 0 0 16px;
 }
 
+:where([data-game] .history-controls) {
+  margin: 0 0 16px;
+}
+
 :where([data-game] .history-board) {
   max-width: 100%;
   overflow-x: auto;
