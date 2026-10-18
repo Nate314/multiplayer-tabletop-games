@@ -17,14 +17,15 @@ function center(rect: DOMRect): { x: number; y: number } {
 
 // Moves the element from where `from` is to where it is now, center to center, so a pawn can start from its old square.
 // Animates `translate`, which adds to any `transform` the element's CSS already has.
-export function slideFrom(element: Element, from: DOMRect, durationMs = MOVE_DURATION_MS): void {
+// A delayed slide waits at `from`, so pieces can follow one another.
+export function slideFrom(element: Element, from: DOMRect, durationMs = MOVE_DURATION_MS, delayMs = 0): void {
   cancelAnimations(element);
   if (prefersReducedMotion()) return;
   const start = center(from);
   const end = center(element.getBoundingClientRect());
   element.animate(
     [{ translate: `${start.x - end.x}px ${start.y - end.y}px` }, { translate: '0 0' }],
-    { duration: durationMs, easing: 'ease-in-out' }
+    { duration: durationMs, delay: delayMs, easing: 'ease-in-out', fill: 'backwards' }
   );
 }
 

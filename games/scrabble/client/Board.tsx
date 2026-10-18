@@ -1,4 +1,5 @@
 import Tile from './Tile';
+import { squareKey } from './animateMove.ts';
 import { CENTER, premiumAt } from '../rules.ts';
 import type { Board as BoardCells, Placement } from '../types.ts';
 
@@ -24,9 +25,16 @@ export default function Board({ board, pending = [], highlighted = [], onSquare 
 
           let content = null;
           if (cell) {
-            content = <Tile letter={cell.letter} blank={cell.blank} className={has(highlighted, row, col) ? 'tile-last' : ''} />;
+            content = (
+              <Tile
+                letter={cell.letter}
+                blank={cell.blank}
+                className={has(highlighted, row, col) ? 'tile-last' : ''}
+                animKey={squareKey(row, col)}
+              />
+            );
           } else if (placed) {
-            content = <Tile letter={placed.letter} blank={placed.blank} className="tile-pending" />;
+            content = <Tile letter={placed.letter} blank={placed.blank} className="tile-pending" animKey={squareKey(row, col)} />;
           } else if (isCenter) {
             content = <span className="square-label square-star">★</span>;
           } else if (premium) {
