@@ -115,7 +115,7 @@
   color: var(--highlight);
   font-weight: 600;
   margin-top: 4px;
-  min-height: 1.5em;
+  min-height: 3em;
 }
 
 /* Buttons */
@@ -372,6 +372,17 @@
   background: none;
   color: inherit;
   font: inherit;
+}
+
+[data-game="skipbo"] .discard-pile.pile-target,
+[data-game="skipbo"] .discard-pile.pile-last,
+[data-game="skipbo"] .stock.pile-last {
+  border-color: var(--highlight);
+}
+
+[data-game="skipbo"] .discard-pile.pile-target {
+  cursor: pointer;
+  background: var(--slot-bg);
 }
 
 /* A discard pile fans downwards, so every card in it shows */
