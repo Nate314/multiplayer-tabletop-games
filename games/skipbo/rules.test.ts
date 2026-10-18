@@ -51,7 +51,7 @@ function game(overrides: Partial<GameState> = {}): GameState {
 }
 
 const move = (state: GameState, seat: Seat, input: unknown, random = seeded(1)) => applyMove(skipbo, state, seat, input, random);
-const fromHand = (index: number, to: number) => ({ type: 'play', from: { kind: 'hand', index }, to });
+const fromHand = (index: unknown, to: unknown) => ({ type: 'play', from: { kind: 'hand', index }, to });
 const fromStock = (to: number) => ({ type: 'play', from: { kind: 'stock' }, to });
 const fromDiscard = (pile: number, to: number) => ({ type: 'play', from: { kind: 'discard', pile }, to });
 const discard = (handIndex: number, pile: number) => ({ type: 'discard', handIndex, pile });
@@ -130,7 +130,7 @@ test('a building pile starts with 1 or Skip-Bo and takes the next number', () =>
   const two = ok(move(one, 1, fromHand(0, 0)));
   assert.equal(two.building[0].length, 2);
   assert.equal(two.currentPlayer, 1);
-  assert.deepEqual(two.lastMove, { playerNumber: 1, type: 'play', from: 'hand', to: 0, card: one.hands[1][0], value: 2, completed: false });
+  assert.deepEqual(two.lastMove, { playerNumber: 1, type: 'play', from: { kind: 'hand', index: 0 }, to: 0, card: one.hands[1][0], value: 2, completed: false });
   ok(move(game({ hands: { 1: [sb()], 2: [] } }), 1, fromHand(0, 3)));
 });
 

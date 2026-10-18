@@ -44,17 +44,23 @@ function sourceText(from: Source['kind']): string {
   return from === 'stock' ? 'their stock' : 'a discard pile';
 }
 
+// 'a Skip-Bo', 'a 4', 'an 8', 'an 11'
+function withArticle(card: Card): string {
+  const name = cardName(card);
+  return `${card.kind === 'number' && (card.value === 8 || card.value === 11) ? 'an' : 'a'} ${name}`;
+}
+
 // The status line and the history describe a move in the same words
 export function moveText(lastMove: LastMove, playerNames: Record<Seat, string>): string {
   const name = playerNames[lastMove.playerNumber];
   switch (lastMove.type) {
     case 'play': {
-      const card = lastMove.card.kind === 'skipbo' ? `a Skip-Bo as ${lastMove.value}` : `${lastMove.value}`;
+      const card = lastMove.card.kind === 'skipbo' ? `a Skip-Bo as ${lastMove.value}` : withArticle(lastMove.card);
       const done = lastMove.completed ? ` and completed building pile ${lastMove.to + 1}` : '';
-      return `${name} played ${card} from ${sourceText(lastMove.from)} on building pile ${lastMove.to + 1}${done}`;
+      return `${name} played ${card} from ${sourceText(lastMove.from.kind)} on building pile ${lastMove.to + 1}${done}`;
     }
     case 'discard':
-      return `${name} discarded ${lastMove.card.kind === 'skipbo' ? 'a Skip-Bo' : `a ${cardName(lastMove.card)}`} on discard pile ${lastMove.pile + 1}`;
+      return `${name} discarded ${withArticle(lastMove.card)} on discard pile ${lastMove.pile + 1}`;
     case 'endTurn':
       return `${name} had no cards to discard and ended their turn`;
   }
@@ -213,7 +219,7 @@ function play(state: GameState, seat: Seat, from: Source, to: PileIndex, random:
   const value = nextValue(pile);
   const completed = value === MAX_VALUE;
   const built = [...pile, card];
-  const lastMove: LastMove = { playerNumber: seat, type: 'play', from: from.kind, to, card, value, completed };
+  const lastMove: LastMove = { playerNumber: seat, type: 'play', from, to, card, value, completed };
   let next: GameState = {
     ...taken.state,
     building: state.building.map((existing, index) => (index === to ? (completed ? [] : built) : existing)),

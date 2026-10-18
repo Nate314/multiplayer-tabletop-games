@@ -1,0 +1,423 @@
+/* Skip-Bo's card table theme. Every rule is scoped to data-game="skipbo", so none of it reaches the landing page or other games. */
+
+[data-game="skipbo"] {
+  color-scheme: light;
+  color: var(--text);
+  --page-bg: #f3ece0;
+  --text: #2a2118;
+  --muted: #6b5d4c;
+  --panel-bg: #fffaf2;
+  --panel-border: rgba(42, 33, 24, 0.16);
+  --button-bg: #c2551f;
+  --button-hover-bg: #a44516;
+  --button-text: #fff;
+  --status-bg: #f6e3cf;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --slot-bg: rgba(42, 33, 24, 0.06);
+  --highlight: #1f78c8;
+  --card-w: 50px;
+  --card-h: 72px;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="skipbo"] {
+  color-scheme: dark;
+  --page-bg: #1a1510;
+  --text: #f0e7da;
+  --muted: #b3a48f;
+  --panel-bg: #2a221a;
+  --panel-border: rgba(240, 231, 218, 0.14);
+  --button-bg: #d0662f;
+  --button-hover-bg: #e07a43;
+  --button-text: #fff;
+  --status-bg: #3a2c1f;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --slot-bg: rgba(240, 231, 218, 0.07);
+  --highlight: #5cb0ff;
+}
+
+[data-game="skipbo"] .game-header {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+[data-game="skipbo"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+[data-game="skipbo"] .game-screen,
+[data-game="skipbo"] .skipbo-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Panels */
+
+[data-game="skipbo"] .game-info,
+[data-game="skipbo"] .my-hand,
+[data-game="skipbo"] .seat {
+  box-sizing: border-box;
+  max-width: 100%;
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+[data-game="skipbo"] .game-info {
+  width: 460px;
+}
+
+[data-game="skipbo"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="skipbo"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="skipbo"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="skipbo"] .turn-message {
+  font-weight: 600;
+}
+
+/* Always rendered, so the layout does not jump when the turn changes */
+[data-game="skipbo"] .hint {
+  color: var(--highlight);
+  font-weight: 600;
+  margin-top: 4px;
+  min-height: 1.5em;
+}
+
+/* Buttons */
+
+[data-game="skipbo"] .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+[data-game="skipbo"] .action-buttons button,
+[data-game="skipbo"] .undo-vote-actions button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+}
+
+[data-game="skipbo"] .action-buttons button:not(:disabled):hover,
+[data-game="skipbo"] .undo-vote-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="skipbo"] button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Cards: blue 1 to 4, green 5 to 8, red 9 to 12, as on the real cards */
+
+[data-game="skipbo"] .card {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--card-w);
+  height: var(--card-h);
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 7px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-weight: 800;
+  font-size: calc(var(--card-w) * 0.46);
+  line-height: 1;
+  user-select: none;
+  transition: transform 0.12s;
+}
+
+[data-game="skipbo"] .card-small {
+  --card-w: 32px;
+  --card-h: 44px;
+  border-width: 1px;
+  border-radius: 5px;
+}
+
+[data-game="skipbo"] .card-low { background: #1f62c4; }
+[data-game="skipbo"] .card-mid { background: #2c8a3c; }
+[data-game="skipbo"] .card-high { background: #c7302a; }
+[data-game="skipbo"] .card-skipbo { background: linear-gradient(160deg, #f08a24, #d8471f); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+[data-game="skipbo"] .card-back {
+  background: repeating-linear-gradient(45deg, #c2551f, #c2551f 6px, #a44516 6px, #a44516 12px);
+  font-size: calc(var(--card-w) * 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+[data-game="skipbo"] .card-empty {
+  background: var(--slot-bg);
+  border: 2px dashed var(--panel-border);
+  box-shadow: none;
+  color: var(--muted);
+  font-size: calc(var(--card-w) * 0.3);
+}
+
+[data-game="skipbo"] .card-face-wild {
+  font-size: 0.6em;
+}
+
+[data-game="skipbo"] .card-stands-for {
+  margin-top: 2px;
+  font-size: 0.6em;
+}
+
+[data-game="skipbo"] button.card:not(:disabled) {
+  cursor: pointer;
+}
+
+[data-game="skipbo"] button.card:not(:disabled):hover {
+  transform: translateY(-3px);
+}
+
+[data-game="skipbo"] .card-selected,
+[data-game="skipbo"] button.card-selected:not(:disabled):hover {
+  transform: translateY(-8px);
+  outline: 3px solid var(--highlight);
+  outline-offset: 1px;
+}
+
+/* Piles */
+
+[data-game="skipbo"] .board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+[data-game="skipbo"] .pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+[data-game="skipbo"] .draw-pile {
+  margin-right: 12px;
+}
+
+[data-game="skipbo"] .pile:disabled {
+  opacity: 1;
+}
+
+[data-game="skipbo"] .pile-target,
+[data-game="skipbo"] .pile-last {
+  border-color: var(--highlight);
+}
+
+[data-game="skipbo"] .pile-target {
+  cursor: pointer;
+  background: var(--slot-bg);
+}
+
+[data-game="skipbo"] .pile-target:hover {
+  border-style: dashed;
+}
+
+[data-game="skipbo"] .pile-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Your hand and your own piles */
+
+[data-game="skipbo"] .my-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  transition: opacity 0.2s;
+}
+
+[data-game="skipbo"] .my-area-waiting {
+  opacity: 0.7;
+}
+
+[data-game="skipbo"] .my-hand {
+  min-width: 300px;
+}
+
+[data-game="skipbo"] .my-hand-header {
+  font-weight: 600;
+}
+
+[data-game="skipbo"] .hand-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 4px;
+  min-height: var(--card-h);
+}
+
+[data-game="skipbo"] .hand-empty {
+  color: var(--muted);
+}
+
+/* Every player's stock and discard piles */
+
+[data-game="skipbo"] .other-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+[data-game="skipbo"] .seat {
+  text-align: left;
+}
+
+[data-game="skipbo"] .seat-current {
+  border-color: var(--button-bg);
+}
+
+[data-game="skipbo"] .seat-winner {
+  border-color: var(--highlight);
+}
+
+[data-game="skipbo"] .seat-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-weight: 600;
+}
+
+[data-game="skipbo"] .seat-counts {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+[data-game="skipbo"] .seat-cards {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+[data-game="skipbo"] .stock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+
+[data-game="skipbo"] .discard-piles {
+  display: flex;
+  gap: 6px;
+}
+
+[data-game="skipbo"] .discard-pile {
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+/* A discard pile fans downwards, so every card in it shows */
+[data-game="skipbo"] .fan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+[data-game="skipbo"] .fan > .card + .card {
+  margin-top: -28px;
+}
+
+/* History dialog */
+
+[data-game="skipbo"] .modal {
+  width: 100%;
+  border: 1px solid var(--panel-border);
+}
+
+[data-game="skipbo"] .modal.history {
+  max-width: 1100px;
+}
+
+[data-game="skipbo"] .faq dd {
+  color: var(--muted);
+}
+
+/* Narrow windows: smaller cards, and every seat in one column */
+
+@media (max-width: 520px) {
+  [data-game="skipbo"] {
+    --card-w: 40px;
+    --card-h: 58px;
+  }
+
+  [data-game="skipbo"] .other-seats {
+    grid-template-columns: 1fr;
+  }
+
+  [data-game="skipbo"] .my-hand {
+    min-width: 0;
+    width: 100%;
+  }
+
+  [data-game="skipbo"] .game-info {
+    width: 100%;
+  }
+}

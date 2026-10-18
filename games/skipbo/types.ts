@@ -27,7 +27,7 @@ export type LastMove =
   | {
     playerNumber: Seat;
     type: 'play';
-    from: Source['kind'];
+    from: Source;
     to: PileIndex;
     card: Card;
     value: number; // the number it counts as on the building pile
