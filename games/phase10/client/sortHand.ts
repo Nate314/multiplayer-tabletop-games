@@ -3,6 +3,9 @@ import type { Card } from '../types.ts';
 
 export type SortOrder = 'number' | 'color';
 
+// The order a hand is shown in until its player picks another
+export const DEFAULT_SORT_ORDER: SortOrder = 'number';
+
 // Numbers first, then wilds, then skips
 function rank(card: Card, order: SortOrder): number[] {
   if (card.kind === 'wild') return [1, 0, 0];

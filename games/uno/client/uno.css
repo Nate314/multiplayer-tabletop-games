@@ -646,9 +646,14 @@
   margin: 0 0 12px;
 }
 
-/* The history shows the table on its own, without its panel frame */
-[data-game="uno"] .history-board .table {
+/* The history shows the table and any hand without their panel shadow */
+[data-game="uno"] .history-board .table,
+[data-game="uno"] .history-board .hand {
   box-shadow: none;
+}
+
+[data-game="uno"] .history-board .hand {
+  margin-top: 12px;
 }
 
 [data-game="uno"] .undo-vote-panel {
