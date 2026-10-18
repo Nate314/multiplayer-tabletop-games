@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has twelve games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Go Fish, Phase 10 and Skip-Bo (two to six players) and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has twelve games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Go Fish, Phase 10 and Skip-Bo (two to six players), and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
