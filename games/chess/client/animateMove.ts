@@ -19,7 +19,7 @@ function slide(root: HTMLElement, rectOf: MoveChange<PublicGameState>['rectOf'],
 // The moved piece glides from its old square; when castling, the rook glides too
 export default function animateMove({ next, root, rectOf }: MoveChange<PublicGameState>) {
   const { lastMove } = next;
-  if (lastMove?.type !== 'move') return;
+  if (!lastMove) return;
 
   const { from, to, notation } = lastMove;
   slide(root, rectOf, from, to);

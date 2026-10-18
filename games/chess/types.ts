@@ -1,5 +1,6 @@
 // Data shapes shared by the browser and the server
 import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
+import type { DrawOfferState } from '../../shared/drawOffer.ts';
 
 export type { Result, Seat } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
@@ -19,13 +20,13 @@ export type Board = (Piece | null)[][];
 
 export type CastlingRights = Record<Color, { kingSide: boolean; queenSide: boolean }>;
 
-export type Move =
-  | { type: 'move'; from: Square; to: Square; promotion?: PromotionType }
-  | { type: 'resign' };
+// `claimDraw` claims a draw by repetition or the fifty-move rule for the position this move produces
+export type Move = { type: 'move'; from: Square; to: Square; promotion?: PromotionType; claimDraw?: boolean };
 
-export type LastMove =
-  | { type: 'move'; playerNumber: Seat; from: Square; to: Square; notation: string }
-  | { type: 'resign'; playerNumber: Seat };
+// Resigning and draw offers are the shared EndingAction; a claim stands on the position on the board
+export type Action = { type: 'claimDraw' };
+
+export type LastMove = { playerNumber: Seat; from: Square; to: Square; notation: string };
 
 // The parts of the state that move generation reads
 export type BoardState = {
@@ -34,8 +35,8 @@ export type BoardState = {
   enPassant: Square | null; // the square a pawn just skipped over, which an enemy pawn may capture onto
 };
 
-export type GameState = BaseGameState & BoardState & {
-  // Position keys since the last capture or pawn move, the current one last: for threefold repetition and the 50-move rule
+export type GameState = BaseGameState & BoardState & DrawOfferState & {
+  // Position keys since the last capture or pawn move, the current one last: for repetition and the 50- and 75-move rules
   positions: string[];
   captured: Record<Color, PieceType[]>; // pieces of each color taken so far
   lastMove: LastMove | null;

@@ -10,6 +10,8 @@
   --status-bg: #F3EADC;
   --error-bg: #FBE4E1;
   --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
   --frame: #5A3A22;
   --square-light: #F0D9B5;
   --square-dark: #8C5A3C;
@@ -279,9 +281,32 @@
   font-size: 14px;
 }
 
-[data-game="checkers"] .undo-button {
-  align-self: center;
-  padding: 10px 24px;
+[data-game="checkers"] .ending-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+[data-game="checkers"] .ending-buttons,
+[data-game="checkers"] .draw-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+[data-game="checkers"] .draw-offer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--status-bg);
+  font-weight: bold;
+}
+
+[data-game="checkers"] .ending-controls button {
+  padding: 10px 18px;
   border: none;
   border-radius: 6px;
   background: var(--button-bg);
@@ -290,11 +315,19 @@
   cursor: pointer;
 }
 
-[data-game="checkers"] .undo-button:hover:enabled {
+[data-game="checkers"] .ending-controls button:hover:enabled {
   background: var(--button-hover-bg);
 }
 
-[data-game="checkers"] .undo-button:disabled {
+[data-game="checkers"] .ending-controls button.danger {
+  background: var(--danger-bg);
+}
+
+[data-game="checkers"] .ending-controls button.danger:hover {
+  background: var(--danger-hover-bg);
+}
+
+[data-game="checkers"] .ending-controls button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

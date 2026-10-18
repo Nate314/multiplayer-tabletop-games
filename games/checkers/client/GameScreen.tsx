@@ -3,6 +3,7 @@ import gameService from '../../../src/services/gameService';
 import Board from './Board';
 import GameStatus from './GameStatus';
 import UndoVote from '../../../src/components/UndoVote';
+import DrawAndResign from '../../../src/components/DrawAndResign';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
 import { includesPosition, isCompleteMove, nextSquares } from './selection.ts';
@@ -80,9 +81,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="side-panel">
           <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} />
           {isMyTurn && <div className="hint">{hint()}</div>}
-          <button type="button" className="undo-button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
-            Undo
-          </button>
+          <DrawAndResign gameState={gameState} playerNumber={playerNumber} onAction={(action) => gameService.sendAction(action)}>
+            <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
+              Undo
+            </button>
+          </DrawAndResign>
         </div>
       </div>
     </>

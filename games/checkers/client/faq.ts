@@ -37,8 +37,17 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I win?',
-    answer: 'Capture all of your opponent\'s pieces, or leave them with no legal move on their turn. If both sides ' +
-      'make 40 moves each with no capture and no man moving, the game is a draw.'
+    answer: 'Capture all of your opponent\'s pieces, or leave them with no legal move on their turn.'
+  },
+  {
+    question: 'Can the game be drawn?',
+    answer: 'Only by agreement. Click Offer draw at any time; your opponent sees Accept draw and Decline. The ' +
+      'offer lapses if they decline or make a move instead.'
+  },
+  {
+    question: 'How do I resign?',
+    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins. ' +
+      'Click Keep playing to change your mind.'
   },
   {
     question: 'What does Undo do?',

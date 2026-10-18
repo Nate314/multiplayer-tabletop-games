@@ -12,7 +12,8 @@ Exactly two players: Player 1 plays Red and moves first, Player 2 plays White. E
 - Capturing is mandatory. If the piece can jump again from where it lands, it must keep jumping in the same turn; where the jumps branch, you choose the way
 - A man that reaches the far row is crowned a king. A man crowned by a jump ends the turn there
 - You win by capturing all of your opponent's pieces or leaving them with no legal move on their turn
-- If both sides make 40 moves each with no capture and no man moving, the game is a draw
+- A player may resign at any time, on either player's turn, and the opponent wins
+- The game is drawn only by agreement: either player may offer a draw at any time, and the opponent accepts or declines. The offer lapses when they decline or make a move
 - If a player is dismissed mid-game, the other player wins
 - Either player can ask to undo the last turn. It is undone only if the other player approves
 
@@ -24,4 +25,10 @@ Exactly two players: Player 1 plays Red and moves first, Player 2 plays White. E
 - The squares of the last move are outlined in yellow, and captured pieces' squares are marked with a cross
 - The board is dimmed when it is not your turn
 - Click Undo to ask your opponent to undo the last turn
+- Click Offer draw to offer a draw; the button reads Draw offered until it is answered. When your opponent offers, Accept draw and Decline appear in the side panel
+- Click Resign and then Confirm resign to resign, at any time; click Keep playing to change your mind
 - Click FAQ at the top of the page for a short guide to the rules and controls
+
+## Differences from Wikipedia
+
+- None in the rules of play. Wikipedia also calls a game drawn when neither side can force a win; with no referee to judge that, such a game ends in a draw only when the players agree to one

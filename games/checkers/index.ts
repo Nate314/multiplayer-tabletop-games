@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
+import { applyAction, applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const checkers: GameDefinition<GameState, PublicGameState> = {
@@ -13,5 +13,6 @@ export const checkers: GameDefinition<GameState, PublicGameState> = {
   createGameState,
   resetLobby,
   applyMove,
+  applyAction,
   toPublicState
 };

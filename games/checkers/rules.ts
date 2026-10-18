@@ -1,12 +1,10 @@
 // Checkers rules shared by the browser (move hints) and the server (validation).
+import { applyEndingAction, endGame, lapseDrawOffer } from '../../shared/drawOffer.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Board, GameState, LastMove, Piece, Position, PublicGameState, Result, Seat } from './types.ts';
 
 export const BOARD_SIZE = 8;
-
-// 40 moves per side with no capture and no man moving
-export const DRAW_PLIES = 80;
 
 const ROWS_PER_SIDE = 3;
 
@@ -137,7 +135,7 @@ export function moveSummary(name: string, { captured, crowned }: Pick<LastMove, 
 }
 
 export function createGameState(gameId: string): GameState {
-  return { ...baseGameState(gameId), board: createBoard(), quietPlies: 0, lastMove: null };
+  return { ...baseGameState(gameId), board: createBoard(), lastMove: null, drawOffer: null };
 }
 
 // The board never changes before the first move, whoever joins or leaves
@@ -167,39 +165,24 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
     { seat, king: piece.king || crowned }
   );
   const lastMove: LastMove = { playerNumber: seat, path, captured, crowned };
-  const quietPlies = captured.length > 0 || !piece.king ? 0 : state.quietPlies + 1;
   const name = state.playerNames[seat];
-  const next: GameState = {
+  const next: GameState = lapseDrawOffer({
     ...state,
     board,
-    quietPlies,
     lastMove,
     gameStatus: moveSummary(name, lastMove),
     currentPlayer: nextActivePlayer(state, seat)
-  };
+  }, seat);
 
   const opponent = next.currentPlayer as Seat;
   if (getLegalMoves(board, opponent).length === 0) {
     const reason = squaresOf(board, opponent).length === 0 ? 'has no pieces left' : 'has no legal moves';
-    return {
-      state: {
-        ...next,
-        isGameOver: true,
-        currentPlayer: null,
-        winners: [seat],
-        gameStatus: `${name} wins! ${state.playerNames[opponent]} ${reason}.`
-      }
-    };
-  }
-  if (quietPlies >= DRAW_PLIES) {
-    return {
-      state: {
-        ...next,
-        isGameOver: true,
-        currentPlayer: null,
-        gameStatus: `Draw: ${DRAW_PLIES / 2} moves each without a capture or a man moving.`
-      }
-    };
+    return { state: endGame(next, [seat], `${name} wins! ${state.playerNames[opponent]} ${reason}.`) };
   }
   return { state: next };
+}
+
+// Resigning and draws by agreement, the shared ending actions
+export function applyAction(state: GameState, seat: Seat, action: unknown): Result<GameState> {
+  return applyEndingAction(state, seat, action);
 }

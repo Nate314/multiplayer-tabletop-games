@@ -1,4 +1,5 @@
 // Chess rules shared by the browser (legal move hints, check) and the server (validation).
+import { applyEndingAction, endGame, endingRefusal, lapseDrawOffer } from '../../shared/drawOffer.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type {
@@ -43,8 +44,13 @@ const KNIGHT_STEPS: Step[] = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1,
 // Pieces that slide any distance along their steps; the king and knight take one step
 const SLIDES: Partial<Record<PieceType, Step[]>> = { rook: ROOK_STEPS, bishop: BISHOP_STEPS, queen: KING_STEPS };
 
-// Fifty moves by each side is 100 half-moves without a capture or pawn move
-const FIFTY_MOVE_LIMIT = 100;
+// Moves by each side without a capture or pawn move, in half-moves: fifty may be claimed, seventy-five ends the game
+const FIFTY_MOVE_PLIES = 100;
+const SEVENTY_FIVE_MOVE_PLIES = 150;
+
+// Times the same position has stood: three may be claimed, five ends the game
+const CLAIMED_REPETITIONS = 3;
+const AUTOMATIC_REPETITIONS = 5;
 
 // Seat 1 plays white and moves first
 export function colorOf(seat: Seat): Color {
@@ -239,6 +245,62 @@ export function isInsufficientMaterial(board: Board): boolean {
     new Set(others.map(({ row, col }) => (row + col) % 2)).size === 1;
 }
 
+// Only kings and pawns, no pawn can ever move again and no king can ever take a pawn, so only the kings move from now on
+// and neither can ever be checked. Unsure cases count as not dead: a king in check or an en passant capture on offer.
+function isLockedPawnPosition(state: BoardState): boolean {
+  const { board } = state;
+  const pieces = ALL_SQUARES.filter(square => pieceAt(board, square));
+  const pawns = pieces.filter(square => pieceAt(board, square)?.type === 'pawn');
+  const kingsAndPawns = pieces.every(square => ['king', 'pawn'].includes((pieceAt(board, square) as Piece).type));
+  if (pawns.length === 0 || !kingsAndPawns || state.enPassant !== null) return false;
+  if (isInCheck(board, 'white') || isInCheck(board, 'black')) return false;
+
+  // A pawn is stuck when a pawn stands right in front of it and no enemy pawn stands where it captures
+  const stuck = pawns.every(from => {
+    const { color } = pieceAt(board, from) as Piece;
+    const ahead = pieceAt(board, { row: from.row + FORWARD[color], col: from.col });
+    return ahead?.type === 'pawn' &&
+      attackedSquares(board, from).every(square => !isPiece(pieceAt(board, square), opponent(color), 'pawn'));
+  });
+  return stuck && !kingCanReachPawn(board, 'white') && !kingCanReachPawn(board, 'black');
+}
+
+// Whether the king could ever walk onto an enemy pawn, never stepping onto a square an enemy pawn attacks.
+// The enemy king is treated as no obstacle, which only lets the king reach more, so a false answer is certain.
+function kingCanReachPawn(board: Board, color: Color): boolean {
+  const enemy = opponent(color);
+  const start = findKing(board, color);
+  if (!start) return true;
+  const guarded = new Set(squaresOf(board, enemy)
+    .filter(from => pieceAt(board, from)?.type === 'pawn')
+    .flatMap(from => attackedSquares(board, from).map(squareName)));
+  const seen = new Set([squareName(start)]);
+  const queue = [start];
+  for (let square = queue.shift(); square; square = queue.shift()) {
+    for (const [dRow, dCol] of KING_STEPS) {
+      const next = { row: square.row + dRow, col: square.col + dCol };
+      if (!isOnBoard(next) || seen.has(squareName(next)) || guarded.has(squareName(next))) continue;
+      const piece = pieceAt(board, next);
+      if (isPiece(piece, enemy, 'pawn')) return true;
+      if (isPiece(piece, color, 'pawn')) continue;
+      seen.add(squareName(next));
+      queue.push(next);
+    }
+  }
+  return false;
+}
+
+// No sequence of legal moves can end in checkmate: insufficient material, or locked pawns (see isLockedPawnPosition)
+export function isDeadPosition(state: BoardState): boolean {
+  return isInsufficientMaterial(state.board) || isLockedPawnPosition(state);
+}
+
+// A lone king can never checkmate, and nobody can in a dead position
+export function canEverCheckmate(state: BoardState, color: Color): boolean {
+  const hasHelp = squaresOf(state.board, color).some(square => pieceAt(state.board, square)?.type !== 'king');
+  return hasHelp && !isDeadPosition(state);
+}
+
 // Identifies a position for repetition: pieces, side to move, castling rights, and en passant only when it can be played
 export function positionKey(state: BoardState, toMove: Color): string {
   const pieces = state.board.map(row => row.map(piece => {
@@ -293,7 +355,8 @@ export function createGameState(gameId: string): GameState {
     ...position,
     positions: [positionKey(position, 'white')],
     captured: { white: [], black: [] },
-    lastMove: null
+    lastMove: null,
+    drawOffer: null
   };
 }
 
@@ -314,35 +377,49 @@ function asSquare(value: unknown): Square | null {
     : null;
 }
 
+
 // Both seats are filled whenever a move is allowed
 function otherSeat(state: GameState, seat: Seat): Seat {
   return state.activePlayers.find(other => other !== seat) as Seat;
 }
 
-function resign(state: GameState, seat: Seat): GameState {
-  const winner = otherSeat(state, seat);
-  return {
-    ...state,
-    isGameOver: true,
-    winners: [winner],
-    lastMove: { type: 'resign', playerNumber: seat },
-    gameStatus: `${state.playerNames[seat]} resigned. ${state.playerNames[winner]} wins!`
-  };
+function repetitions(positions: string[]): number {
+  const current = positions[positions.length - 1];
+  return positions.filter(key => key === current).length;
 }
 
-// How the game ended after the move, or null while it goes on
-function drawReason(next: GameState, toMove: Color): string | null {
+// The draw the player to move may claim in this position, or null
+export function claimableDraw({ positions }: Pick<GameState, 'positions'>): string | null {
+  if (repetitions(positions) >= CLAIMED_REPETITIONS) return 'threefold repetition';
+  if (positions.length > FIFTY_MOVE_PLIES) return 'the 50-move rule';
+  return null;
+}
+
+// The draw that ends the game at once after a move that is not checkmate, or null while it goes on
+function automaticDraw(next: GameState, toMove: Color): string | null {
   if (!hasLegalMove(next, toMove)) return 'Draw by stalemate';
   if (isInsufficientMaterial(next.board)) return 'Draw by insufficient material';
-  const current = next.positions[next.positions.length - 1];
-  if (next.positions.filter(key => key === current).length >= 3) return 'Draw by threefold repetition';
-  if (next.positions.length > FIFTY_MOVE_LIMIT) return 'Draw by the 50-move rule';
+  if (isLockedPawnPosition(next)) return 'Draw by dead position: the pawns are locked and neither king can reach one';
+  if (repetitions(next.positions) >= AUTOMATIC_REPETITIONS) return 'Draw by fivefold repetition';
+  if (next.positions.length > SEVENTY_FIVE_MOVE_PLIES) return 'Draw by the 75-move rule';
   return null;
+}
+
+// The position keys once the legal move from `from` to `to` has produced `position`; a capture or pawn move starts them over
+function positionsAfter(state: GameState, from: Square, to: Square, position: BoardState): string[] {
+  const mover = pieceAt(state.board, from) as Piece;
+  const key = positionKey(position, opponent(mover.color));
+  const resetsCount = mover.type === 'pawn' || pieceAt(state.board, to) !== null;
+  return resetsCount ? [key] : [...state.positions, key];
+}
+
+// The draw the mover may claim along with this legal move, for the position it produces, or null
+export function claimableAfterMove(state: GameState, from: Square, to: Square): string | null {
+  return claimableDraw({ positions: positionsAfter(state, from, to, play(state, from, to).next) });
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const input = asRecord(move);
-  if (input?.type === 'resign') return { state: resign(state, seat) };
   if (input?.type !== 'move') return { error: 'Unknown move type' };
 
   const color = colorOf(seat);
@@ -356,29 +433,53 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   const promotion = PROMOTION_TYPES.find(type => type === input.promotion);
   if (promotes && !promotion) return { error: 'Choose a piece to promote to' };
 
-  const mover = pieceAt(state.board, from) as Piece;
   const { next: position, captured } = play(state, from, to, promotion);
+  const positions = positionsAfter(state, from, to, position);
+  const claim = input.claimDraw === true ? claimableDraw({ positions }) : null;
+  if (input.claimDraw === true && !claim) return { error: 'That move gives no draw to claim' };
+
   const toMove = opponent(color);
-  const resetsCount = captured !== null || mover.type === 'pawn';
-  const key = positionKey(position, toMove);
   const check = isInCheck(position.board, toMove);
   const mate = check && !hasLegalMove(position, toMove);
   const played = notation(state, from, to, promotion ?? 'queen') + (mate ? '#' : check ? '+' : '');
   const name = state.playerNames[seat];
 
-  const next: GameState = {
+  const next: GameState = lapseDrawOffer({
     ...state,
     ...position,
-    positions: resetsCount ? [key] : [...state.positions, key],
+    positions,
     captured: captured ? { ...state.captured, [captured.color]: [...state.captured[captured.color], captured.type] } : state.captured,
-    lastMove: { type: 'move', playerNumber: seat, from, to, notation: played },
+    lastMove: { playerNumber: seat, from, to, notation: played },
     gameStatus: check
       ? `${name} played ${played}. ${state.playerNames[otherSeat(state, seat)]} is in check`
       : `${name} played ${played}`
-  };
+  }, seat);
 
-  if (mate) return { state: { ...next, isGameOver: true, winners: [seat], gameStatus: `Checkmate! ${name} wins!` } };
-  const draw = drawReason(next, toMove);
-  if (draw) return { state: { ...next, isGameOver: true, winners: [], gameStatus: draw } };
+  // Checkmate wins even on the move that would draw by repetition or the 75-move rule
+  if (mate) return { state: endGame(next, [seat], `Checkmate! ${name} wins!`) };
+  const draw = automaticDraw(next, toMove);
+  if (draw) return { state: endGame(next, [], draw) };
+  if (claim) return { state: endGame(next, [], `${name} played ${played} and claimed a draw by ${claim}`) };
   return { state: { ...next, currentPlayer: nextActivePlayer(next, seat) } };
+}
+
+// A claim by the player to move, for the position on the board
+function claimDraw(state: GameState, seat: Seat): Result<GameState> {
+  const refusal = endingRefusal(state);
+  if (refusal) return { error: refusal };
+  if (state.currentPlayer !== seat) return { error: 'You can claim a draw only on your turn' };
+  const claim = claimableDraw(state);
+  if (!claim) return { error: 'There is no draw to claim' };
+  return { state: endGame(state, [], `${state.playerNames[seat]} claimed a draw by ${claim}`) };
+}
+
+// Resigning is a draw when the opponent could never checkmate by any series of legal moves
+function resignationDraws(state: GameState, seat: Seat): boolean {
+  return !canEverCheckmate(state, opponent(colorOf(seat)));
+}
+
+// Claiming a draw is chess's own action; resigning and draw offers are the shared ending actions
+export function applyAction(state: GameState, seat: Seat, action: unknown): Result<GameState> {
+  if (asRecord(action)?.type === 'claimDraw') return claimDraw(state, seat);
+  return applyEndingAction(state, seat, action, resignationDraws);
 }
