@@ -4,7 +4,12 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do I join a game?',
     answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Backgammon ' +
-      'is for exactly two players. The first player to join plays white and moves first; the second plays red.'
+      'is for exactly two players. The first player to join plays white; the second plays red.'
+  },
+  {
+    question: 'Who moves first?',
+    answer: 'Once both players are seated, each rolls one die, again on a tie. The higher roller moves first ' +
+      'using both numbers, so the opening move is never a double. The status line shows both rolls.'
   },
   {
     question: 'How is the board laid out?',
@@ -15,9 +20,16 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How are the dice rolled?',
-    answer: 'The dice are rolled for you at the start of every turn and shown beside the board, with the used ' +
-      'ones faded. Each die moves one checker that many points. You may move one checker for both dice. A ' +
-      'double is played four times.'
+    answer: 'After the opening roll, click Roll at the start of your turn. The dice are shown beside the board, ' +
+      'with the used ones faded. Each die moves one checker that many points. You may move one checker for ' +
+      'both dice. A double is played four times.'
+  },
+  {
+    question: 'How does the doubling cube work?',
+    answer: 'The game is played for the value on the cube, which starts in the middle at 1. Before rolling, ' +
+      'you may click Double if the cube is in the middle or it is yours. Your opponent clicks Take to play on ' +
+      'for twice the stake and own the cube, so only they can redouble next, or Drop to concede the game at ' +
+      'the value before the double. There is no limit on redoubles.'
   },
   {
     question: 'How do I move?',
@@ -41,24 +53,26 @@ export const FAQS: FaqItem[] = [
     question: 'Do I have to use both dice?',
     answer: 'Yes, whenever you can. Only moves that let you use as many of your dice as possible are ' +
       'highlighted. If you can use either die but not both, you must use the higher one. If you cannot move ' +
-      'at all, your turn passes automatically and the status line says so.'
+      'at all, you forfeit the roll, the turn passes and the status line says so.'
   },
   {
     question: 'How do I bear off?',
     answer: 'Once all fifteen of your checkers are in your home board, a die can take a checker off from the ' +
       'point with its number. A higher die can bear off from your highest occupied point. Select the checker ' +
-      'and click your highlighted tray.'
+      'and click your highlighted tray. When either die could bear it off, buttons under the board ask which ' +
+      'die to use.'
   },
   {
-    question: 'How do I win?',
-    answer: 'Be the first to bear off all fifteen checkers. It is a gammon if your opponent has borne off ' +
-      'none, and a backgammon if they also still have a checker on the bar or in your home board. This is a ' +
-      'single game with no doubling cube and no points kept.'
+    question: 'How do I win, and how many points is it worth?',
+    answer: 'Be the first to bear off all fifteen checkers, or have your opponent drop your double. Bearing ' +
+      'off wins the cube\'s value, twice that for a gammon (your opponent has borne off none) and three times ' +
+      'for a backgammon (they also still have a checker on the bar or in your home board). A drop wins the ' +
+      'value before the double. The points won are shown when the game ends.'
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last checker move. It happens only if they approve. ' +
-      'Undoing the move that ended a turn takes back the new roll too, so the dice may come up differently.'
+    answer: 'Undo asks your opponent to take back the last move: a checker move, a roll, a double, a take or ' +
+      'a drop. It happens only if they approve. A roll that is undone may come up differently when rolled again.'
   },
   {
     question: 'What happens if someone leaves?',

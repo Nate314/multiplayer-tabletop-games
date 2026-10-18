@@ -14,10 +14,10 @@ function slide(change: MoveChange<PublicGameState>, fromKey: string, toKey: stri
   if (element && from) slideFrom(element, from);
 }
 
-// The moved checker glides to its new place; a checker it hit glides to the bar
+// The moved checker glides to its new place; a checker it hit glides to the bar. Rolls and the cube do not animate.
 export default function animateMove(change: MoveChange<PublicGameState>) {
   const { lastMove } = change.next;
-  if (!lastMove) return;
+  if (lastMove?.type !== 'move') return;
   const { playerNumber, from, to, hit } = lastMove;
   slide(change, checkerKey(from, playerNumber), checkerKey(to, playerNumber));
   if (hit) slide(change, checkerKey(to, playerNumber), checkerKey('bar', otherSeat(playerNumber)));

@@ -82,7 +82,7 @@
   margin: 0 auto;
 }
 
-/* Side panel: status, turn, dice, players and Undo */
+/* Side panel: status, turn, dice, Roll and the cube, players and Undo */
 
 [data-game="backgammon"] .bg-panel {
   display: flex;
@@ -189,8 +189,18 @@
   border-radius: 50%;
 }
 
-[data-game="backgammon"] .bg-undo {
-  align-self: center;
+[data-game="backgammon"] .bg-cube {
+  font-weight: 600;
+}
+
+[data-game="backgammon"] .bg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-game="backgammon"] .bg-button {
   padding: 10px 24px;
   border: none;
   border-radius: 6px;
@@ -200,11 +210,15 @@
   cursor: pointer;
 }
 
-[data-game="backgammon"] .bg-undo:hover:enabled {
+[data-game="backgammon"] .bg-undo {
+  align-self: center;
+}
+
+[data-game="backgammon"] .bg-button:hover:enabled {
   background: var(--button-hover-bg);
 }
 
-[data-game="backgammon"] .bg-undo:disabled {
+[data-game="backgammon"] .bg-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -227,6 +241,21 @@
   border: 6px solid var(--frame);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   user-select: none;
+}
+
+/* Asks which die bears off when either one could */
+[data-game="backgammon"] .bg-die-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  font-weight: 600;
 }
 
 [data-game="backgammon"] .bg-board.not-your-turn {
