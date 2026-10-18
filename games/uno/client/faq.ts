@@ -51,7 +51,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I see other players\' cards or the draw pile?',
-    answer: 'No. You see only your own hand, and how many cards each other player holds. The only exception is the hand of a player you challenge, shown to you alone until the next move. The order of the draw pile is hidden from everyone.'
+    answer: 'No. You see only your own hand, and how many cards each other player holds. The only exception is the hand of a player you challenge, shown to you alone until your next move. The order of the draw pile is hidden from everyone.'
   },
   {
     question: 'How do I know whose turn it is and which way play goes?',

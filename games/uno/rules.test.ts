@@ -361,7 +361,16 @@ test('a lost challenge makes the challenger draw 6 and lose their turn', () => {
   assert.equal(challenged.gameStatus, 'Bob challenged Alice\'s Wild Draw Four and lost; Bob draws 6 and is skipped');
 });
 
-test('the challenged hand is shown to the challenger only, and hidden again after the next move', () => {
+test('a lost challenge still shows the hand to the challenger, through other players\' moves', () => {
+  const lost = ok(move(fourOn([blue('5'), blue('9')]), 2, { type: 'challenge' }));
+  assert.equal(lost.currentPlayer, 3);
+  const later = ok(draw(lost, 3));
+  assert.deepEqual(toPublicState(later, true, 2).revealed, { of: 1, hand: [blue('5'), blue('9')] });
+  assert.equal(toPublicState(later, true, 3).revealed, null);
+  assert.equal(toPublicState(later, false, null).revealed, null);
+});
+
+test('the challenged hand is shown to the challenger only, and hidden again after their next move', () => {
   const challenged = ok(move(fourOn([red('7'), blue('9')]), 2, { type: 'challenge' }));
   const shown = [red('7'), blue('9')];
   assert.deepEqual(toPublicState(challenged, true, 2).revealed, { of: 1, hand: shown });

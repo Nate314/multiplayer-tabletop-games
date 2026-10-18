@@ -404,12 +404,12 @@ function challenge(state: GameState, seat: Seat, pending: PendingFour, random: R
   return recorded(next, { type: 'challenge', playerNumber: seat, challenged: pending.by, guilty, drew });
 }
 
-// Any move closes the UNO window and hides a challenged hand again
+// Any move closes the UNO window, and the challenger's next move hides a challenged hand again
 export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
   const pending = state.pendingFour;
-  const next: GameState = { ...state, unoWindow: null, revealed: null };
+  const next: GameState = { ...state, unoWindow: null, revealed: state.revealed?.to === seat ? null : state.revealed };
 
   if (parsed.type === 'chooseColor') return chooseColor(next, seat, parsed.color);
   if (state.currentColor === null) return { error: 'Choose the first color' };

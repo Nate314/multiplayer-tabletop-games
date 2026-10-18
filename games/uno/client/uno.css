@@ -488,7 +488,9 @@
   flex-wrap: wrap;
 }
 
-[data-game="uno"] .action-buttons .uno-button[aria-pressed="true"] {
+/* Pressed: UNO is called with the next play. Beats the shared hover color, which would hide the dark text. */
+[data-game="uno"] .action-buttons .uno-button[aria-pressed="true"],
+[data-game="uno"] .action-buttons .uno-button[aria-pressed="true"]:hover {
   background: var(--card-yellow);
   color: #3a2a00;
   box-shadow: 0 0 0 2px var(--button-bg);

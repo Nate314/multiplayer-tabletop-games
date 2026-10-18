@@ -70,7 +70,7 @@ export type GameState = BaseGameState & {
   turnHolder: Seat | null;
   pendingFour: PendingFour | null;
   unoWindow: UnoWindow | null;
-  // The challenged player's hand, shown to the challenger only, until the next move
+  // The challenged player's hand as it was, shown to the challenger only, until the challenger's next move
   revealed: { to: Seat; of: Seat; hand: Card[] } | null;
   roundSummary: RoundSummary | null;
   lastMove: LastMove | null;

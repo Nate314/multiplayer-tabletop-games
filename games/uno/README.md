@@ -24,7 +24,7 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 - To play a Wild, click it and then pick a color, or click Cancel to put it back. After a starting Wild the color buttons appear for the first player
 - Click Draw, or the draw pile, to draw a card. After drawing, play the highlighted card or click Pass to keep it
 - With two cards in your hand, click UNO! before playing your next-to-last card; it stays pressed until you play. If you forgot, click UNO! right after playing. When another player has not called UNO, a Catch button appears for everyone else until the next move
-- When a Wild Draw Four is played on you, click Challenge or Accept and draw 4. After a challenge, the challenged hand is shown to you below the table until the next move
+- When a Wild Draw Four is played on you, click Challenge or Accept and draw 4. After a challenge, the challenged hand is shown to you below the table until your next move
 - The table shows the round, every player's card count and score in seat order, the dealer, an arrow for the direction of play, the top discard and the current color. The player whose turn it is is outlined
 - After each round, read the scoring screen and click Continue; after the last round click Close, and Show Scoring opens it again
 - Click Undo to ask everyone to undo the last move
