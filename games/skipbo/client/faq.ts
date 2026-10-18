@@ -27,7 +27,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What if the draw pile runs out?',
-    answer: 'Completed building piles go back into the draw pile, so it usually refills. If it is empty, you simply draw fewer cards. With no cards in your hand you cannot discard, so click End turn after playing what you can. If every player in a row has to end their turn this way, nobody can ever play again, and the players with the fewest stock cards left win.'
+    answer: 'Completed building piles go back into the draw pile, so it usually refills. If it is empty, you simply draw fewer cards. With no cards in your hand you cannot discard, so click End turn after playing what you can. If every player in a row has to end their turn this way without playing anything, and none of them could have played their stock top or a discard top, nobody can ever play again, and the players with the fewest stock cards left win.'
   },
   {
     question: 'How do I read the screen?',

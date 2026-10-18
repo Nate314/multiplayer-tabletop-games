@@ -116,15 +116,14 @@ export function resetLobby(state: GameState, random: Random): GameState {
 
 export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
   const { hands, stocks, drawPile, ...view } = state;
-  const perSeat = <T>(change: (cards: Card[]) => T) =>
-    Object.fromEntries(Object.entries(stocks).map(([seat, cards]) => [seat, change(cards)]));
+  const perSeat = <T>(change: (seat: Seat) => T) => Object.fromEntries(state.activePlayers.map(seat => [seat, change(seat)]));
   return {
     ...view,
     undoAvailable,
     myHand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, cards]) => [seat, cards.length])),
-    stockTops: perSeat(cards => cards.at(-1) ?? null),
-    stockCounts: perSeat(cards => cards.length),
+    handCounts: perSeat(seat => hands[seat]?.length ?? 0),
+    stockTops: perSeat(seat => stocks[seat]?.at(-1) ?? null),
+    stockCounts: perSeat(seat => stocks[seat]?.length ?? 0),
     drawCount: drawPile.length
   };
 }
@@ -262,12 +261,21 @@ function discard(state: GameState, seat: Seat, handIndex: number, pile: PileInde
   }, seat) };
 }
 
+// Whether the top of this player's stock or of any of their discard piles fits a building pile
+function canPlay(state: GameState, seat: Seat): boolean {
+  const tops = [state.stocks[seat].at(-1), ...state.discards[seat].map(pile => pile.at(-1))];
+  return tops.some(card => card !== undefined && state.building.some(pile => fits(card, pile)));
+}
+
 // With an empty hand and an empty draw pile there is nothing to discard, so the turn just ends.
-// If every player in a row does so, nobody can ever play again: the fewest stock cards left win.
+// The turn counts as stuck only if the player played nothing this turn (the turn's moves are theirs since the
+// last discard or end of turn, so a play this turn is the last move) and had nothing they could play.
+// If every player in a row is stuck, nobody can ever play again: the fewest stock cards left win.
 function endTurn(state: GameState, seat: Seat): Result<GameState> {
   if (state.hands[seat].length > 0) return { error: 'You can end your turn only by discarding' };
   const lastMove: LastMove = { playerNumber: seat, type: 'endTurn' };
-  const passes = state.passes + 1;
+  const playedThisTurn = state.lastMove?.type === 'play' && state.lastMove.playerNumber === seat;
+  const passes = playedThisTurn || canPlay(state, seat) ? 0 : state.passes + 1;
   const next: GameState = { ...state, passes, lastMove, gameStatus: moveText(lastMove, state.playerNames) };
   if (passes < state.activePlayers.length) return { state: passTurn(next, seat) };
 
@@ -284,10 +292,12 @@ function endTurn(state: GameState, seat: Seat): Result<GameState> {
   } };
 }
 
-// A turn is any number of plays onto the building piles, ended by one discard
-export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
+// A turn is any number of plays onto the building piles, ended by one discard.
+// A turn not yet set up (an undo across a dismissal can restore one) is set up first, so its player still draws.
+export function applyMove(input: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
+  const state = input.turnOf === input.currentPlayer ? input : startTurn(input);
   switch (parsed.type) {
     case 'play': return play(state, seat, parsed.from, parsed.to, random);
     case 'discard': return discard(state, seat, parsed.handIndex, parsed.pile);

@@ -280,6 +280,58 @@ test('when every player ends a turn in a row with nothing to play, the fewest st
   assert.equal(played.passes, 0);
 });
 
+test('an ended turn counts toward nobody can play only with nothing played and nothing playable', () => {
+  const stuck = game({ hands: { 1: [], 2: [] }, stocks: { 1: nums(5, 5, 1), 2: nums(5) }, drawPile: [] });
+  // Alice could play her stock 1, so ending her turn does not count
+  const aliceCould = ok(move(stuck, 1, endTurn));
+  assert.equal(aliceCould.passes, 0);
+  // Bob has nothing to play
+  const bobStuck = ok(move(aliceCould, 2, endTurn));
+  assert.equal(bobStuck.passes, 1);
+  assert.equal(bobStuck.isGameOver, false);
+  // Alice plays her 1, leaving a 5 she cannot play: she played this turn, so the count starts again
+  const played = ok(move(ok(move(bobStuck, 1, fromStock(0))), 1, endTurn));
+  assert.equal(played.passes, 0);
+  assert.equal(played.isGameOver, false);
+  const bobAgain = ok(move(played, 2, endTurn));
+  assert.equal(bobAgain.passes, 1);
+  const over = ok(move(bobAgain, 1, endTurn));
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [2]);
+  assert.equal(over.gameStatus, 'Nobody can play. Bob wins with the fewest stock cards left.');
+
+  // A playable discard top counts as a play left too
+  const discardTop = game({
+    hands: { 1: [], 2: [] },
+    stocks: { 1: nums(5), 2: nums(5) },
+    discards: { 1: [[], [], nums(1), []], 2: emptyPiles() },
+    drawPile: [],
+    passes: 1
+  });
+  const notCounted = ok(move(discardTop, 1, endTurn));
+  assert.equal(notCounted.passes, 0);
+  assert.equal(notCounted.isGameOver, false);
+});
+
+test('a turn that was never set up, as after an undo across a dismissal, is set up before the move', () => {
+  const state = game({ turnOf: 3, hands: { 1: [], 2: [] } });
+  const done = ok(move(state, 1, discard(0, 0)));
+  assert.deepEqual(done.discards[1][0].map(card => card.kind === 'number' && card.value), [12]);
+  assert.equal(done.hands[1].length, 4);
+  assert.equal(done.currentPlayer, 2);
+});
+
+test('the public counts list only seated players', () => {
+  const state = game({
+    stocks: { 1: nums(1), 2: nums(2), 3: nums(3) },
+    hands: { 1: nums(4), 2: [], 3: nums(5) }
+  });
+  const view = toPublicState(state, false, 1);
+  assert.deepEqual(Object.keys(view.stockCounts), ['1', '2']);
+  assert.deepEqual(Object.keys(view.stockTops), ['1', '2']);
+  assert.deepEqual(Object.keys(view.handCounts), ['1', '2']);
+});
+
 test('turns go round the table in seat order', () => {
   const state = game({
     activePlayers: [1, 3, 4],
