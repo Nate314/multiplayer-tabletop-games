@@ -3,6 +3,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
+import animateMove from './animateMove.ts';
 import './azul.css';
 
 export const azulClient: ClientGame = {
@@ -11,5 +12,6 @@ export const azulClient: ClientGame = {
   faq: QUESTIONS,
   icon: '◆',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

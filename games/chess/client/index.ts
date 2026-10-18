@@ -3,6 +3,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
+import animateMove from './animateMove.ts';
 import './chess.css';
 
 export const chessClient: ClientGame = {
@@ -11,5 +12,6 @@ export const chessClient: ClientGame = {
   faq: FAQS,
   icon: '♚',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import type { GameFileStep } from '../../shared/gameFile.ts';
-import type { HistoryStep, Seat } from '../../shared/types.ts';
+import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
 import { viewOf } from './historyView.ts';
+import { PLAY_STEP_MS, nextPlayIndex } from './playback.ts';
+import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
+import type { MoveChange } from '../animation/useMoveAnimation.ts';
+import { loadAnimations, saveAnimations } from '../services/settings.ts';
 
 export type History =
   | { status: 'loading' }
@@ -36,16 +40,57 @@ function stepLabel(client: ClientGame, step: HistoryStep, moveTotal: number): st
   }
 }
 
-// The slider starts on the latest step; start and end steps highlight no move
+// The slider starts on the latest step; start and end steps highlight no move.
+// One step forward animates when Animations is on; Play steps forward on its own until the last step.
 function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [index, setIndex] = useState(steps.length - 1);
   const [viewer, setViewer] = useState<Seat | null>(null);
+  const [animations, setAnimations] = useState(loadAnimations);
+  const [playing, setPlaying] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const last = steps.length - 1;
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
   const view = viewOf(step, viewer);
   const boardState = view.historyStep === 'move' ? view : { ...view, lastMove: null };
   const seatNames = Object.entries(steps[0].playerNames);
   const { HistoryBoard } = client;
+
+  // A step the game cannot animate snaps instead of breaking the dialog
+  const animate = useCallback((change: MoveChange<BasePublicState>) => {
+    if (!animations) return;
+    try {
+      client.animateMove?.(change, viewer);
+    } catch {
+      // the step is already drawn in its place
+    }
+  }, [client, viewer, animations]);
+  useMoveAnimation(boardRef, boardState, animate);
+
+  // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
+  useEffect(() => {
+    if (!playing) return;
+    if (index >= last) {
+      setPlaying(false);
+      return;
+    }
+    const timeout = setTimeout(() => setIndex(i => i + 1), PLAY_STEP_MS);
+    return () => clearTimeout(timeout);
+  }, [playing, index, last]);
+
+  function togglePlay() {
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    setIndex(nextPlayIndex(index, last));
+    setPlaying(true);
+  }
+
+  function toggleAnimations(on: boolean) {
+    setAnimations(on);
+    saveAnimations(on);
+  }
 
   return (
     <>
@@ -54,14 +99,18 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
         type="range"
         className="history-slider"
         min={0}
-        max={steps.length - 1}
+        max={last}
         value={index}
         aria-label="Step"
         autoFocus
         onChange={(e) => setIndex(Number(e.target.value))}
       />
-      {steps[0].views && (
-        <div className="history-controls">
+      <div className="history-controls">
+        <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
+        <label className="history-animations">
+          <input type="checkbox" checked={animations} onChange={(e) => toggleAnimations(e.target.checked)} /> Animations
+        </label>
+        {steps[0].views && (
           <select
             aria-label="View as"
             value={viewer === null ? '' : String(viewer)}
@@ -70,10 +119,10 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
             <option value="">Table only</option>
             {seatNames.map(([seat, name]) => <option key={seat} value={seat}>{name}</option>)}
           </select>
-        </div>
-      )}
-      <div className="history-board">
-        <StepErrorBoundary key={index}>
+        )}
+      </div>
+      <div className="history-board" ref={boardRef}>
+        <StepErrorBoundary key={`${index}-${viewer}`}>
           <HistoryBoard gameState={boardState} viewer={viewer} />
         </StepErrorBoundary>
       </div>

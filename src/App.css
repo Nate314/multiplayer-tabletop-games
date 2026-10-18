@@ -397,8 +397,34 @@
   margin: 0 0 16px;
 }
 
+/* Play, Animations and View as in one row, which wraps on a narrow window */
 :where([data-game] .history-controls) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: center;
   margin: 0 0 16px;
+}
+
+:where([data-game] .history-play) {
+  min-width: 80px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+}
+
+:where([data-game] .history-play:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where([data-game] .history-animations) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 :where([data-game] .history-board) {
