@@ -1,0 +1,470 @@
+/* Scrabble's green and wood theme. Every rule is scoped to data-game="scrabble", so none of it reaches the landing page or other games. */
+
+[data-game="scrabble"] {
+  color-scheme: light;
+  --page-bg: #ece6d6;
+  --text: #2a241c;
+  --muted: #6b6152;
+  --panel-bg: #fffaf0;
+  --panel-border: rgba(42, 36, 28, 0.15);
+  --button-bg: #2f6b4f;
+  --button-hover-bg: #24563f;
+  --button-text: #fff;
+  --status-bg: #e3ede6;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --board-frame: #2f6b4f;
+  --square-bg: #e9e1c8;
+  --square-text: rgba(42, 36, 28, 0.7);
+  --tw-bg: #d8504a;
+  --dw-bg: #f2aaa2;
+  --tl-bg: #3f7fcf;
+  --dl-bg: #acd3ef;
+  --tile-bg: #f3d59b;
+  --tile-border: #b98f4c;
+  --tile-text: #2a1d0c;
+  --blank-text: #b0361f;
+  --highlight: #e08a00;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="scrabble"] {
+  color-scheme: dark;
+  --page-bg: #141a16;
+  --text: #e8e4da;
+  --muted: #a39c8d;
+  --panel-bg: #222a25;
+  --panel-border: rgba(232, 228, 218, 0.14);
+  --button-bg: #2f7a57;
+  --button-hover-bg: #3a916a;
+  --status-bg: #2b3a31;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --board-frame: #1d3d2e;
+  --square-bg: #3a4039;
+  --square-text: rgba(232, 228, 218, 0.75);
+  --tw-bg: #a3403b;
+  --dw-bg: #84524d;
+  --tl-bg: #2d5d96;
+  --dl-bg: #3b6987;
+  --tile-bg: #e4c68d;
+  --tile-border: #9c7a40;
+  --highlight: #ffb020;
+}
+
+[data-game="scrabble"] .game-header {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+[data-game="scrabble"] .game-id {
+  width: fit-content;
+  margin: 0 auto 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+/* The board on the left and the side panel on the right; on narrow screens the panel goes on top */
+[data-game="scrabble"] .game-layout {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+[data-game="scrabble"] .game-info {
+  flex: 0 1 300px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+[data-game="scrabble"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="scrabble"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="scrabble"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="scrabble"] .turn-message {
+  font-weight: 600;
+}
+
+/* Scores */
+
+[data-game="scrabble"] .score-list {
+  list-style: none;
+  margin: 12px 0 8px;
+  padding: 0;
+  text-align: left;
+}
+
+[data-game="scrabble"] .score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+}
+
+[data-game="scrabble"] .score-current {
+  border-color: var(--button-bg);
+}
+
+[data-game="scrabble"] .score-winner {
+  border-color: var(--highlight);
+}
+
+[data-game="scrabble"] .score-left {
+  opacity: 0.55;
+}
+
+[data-game="scrabble"] .score-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+[data-game="scrabble"] .score-tiles,
+[data-game="scrabble"] .score-adjustment,
+[data-game="scrabble"] .bag-count {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+[data-game="scrabble"] .score-points {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons */
+
+[data-game="scrabble"] .action-buttons,
+[data-game="scrabble"] .turn-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+[data-game="scrabble"] .action-buttons button,
+[data-game="scrabble"] .turn-buttons button,
+[data-game="scrabble"] .blank-picker button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+}
+
+[data-game="scrabble"] .action-buttons button:not(:disabled):hover,
+[data-game="scrabble"] .turn-buttons button:not(:disabled):hover,
+[data-game="scrabble"] .blank-picker button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="scrabble"] .action-buttons button:disabled,
+[data-game="scrabble"] .turn-buttons button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+[data-game="scrabble"] .turn-buttons .play-button {
+  background: var(--highlight);
+  color: #2a1d0c;
+}
+
+[data-game="scrabble"] .turn-buttons .play-button:not(:disabled):hover {
+  background: var(--highlight);
+  filter: brightness(1.1);
+}
+
+/* Board, rack and the turn's controls */
+
+[data-game="scrabble"] .play-area {
+  flex: 1 1 560px;
+  max-width: 620px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Not your turn: the board and rack are dimmed and take no clicks */
+[data-game="scrabble"] .play-area-waiting .board-wrap,
+[data-game="scrabble"] .play-area-waiting .rack {
+  opacity: 0.7;
+}
+
+/* The board scales with its width: square text is sized in container units */
+[data-game="scrabble"] .board-wrap {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 620px;
+}
+
+[data-game="scrabble"] .board {
+  display: grid;
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+  gap: 0.4cqw;
+  padding: 0.8cqw;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--board-frame);
+}
+
+[data-game="scrabble"] .square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 0.6cqw;
+  background: var(--square-bg);
+  color: var(--square-text);
+  font-size: 2.1cqw;
+  font-weight: 700;
+  line-height: 1;
+}
+
+[data-game="scrabble"] .square:disabled {
+  cursor: default;
+}
+
+[data-game="scrabble"] .square:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+[data-game="scrabble"] .square-tw { background: var(--tw-bg); color: #fff; }
+[data-game="scrabble"] .square-dw { background: var(--dw-bg); }
+[data-game="scrabble"] .square-tl { background: var(--tl-bg); color: #fff; }
+[data-game="scrabble"] .square-dl { background: var(--dl-bg); }
+
+[data-game="scrabble"] .square-star {
+  font-size: 4cqw;
+}
+
+/* Tiles: on the board they fill their square; on the rack the slot sets the size */
+[data-game="scrabble"] .tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 12%;
+  border: 1px solid var(--tile-border);
+  background: var(--tile-bg);
+  color: var(--tile-text);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+  user-select: none;
+}
+
+/* Above every square, so a tile sliding in is not hidden under the squares after its own */
+[data-game="scrabble"] .square .tile {
+  z-index: 1;
+  font-size: 3.6cqw;
+}
+
+[data-game="scrabble"] .tile-letter {
+  font-size: 1em;
+  font-weight: 700;
+}
+
+[data-game="scrabble"] .tile-value {
+  position: absolute;
+  right: 8%;
+  bottom: 4%;
+  font-size: 0.42em;
+  font-weight: 600;
+}
+
+[data-game="scrabble"] .tile-blank .tile-letter {
+  color: var(--blank-text);
+}
+
+[data-game="scrabble"] .tile-pending {
+  outline: 0.5cqw solid var(--highlight);
+  outline-offset: -0.5cqw;
+  filter: brightness(1.06);
+}
+
+[data-game="scrabble"] .tile-last {
+  box-shadow: inset 0 0 0 0.5cqw var(--highlight);
+}
+
+[data-game="scrabble"] .rack {
+  --rack-tile: min(46px, calc((100vw - 68px) / 7));
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  min-height: var(--rack-tile);
+  margin-top: 12px;
+}
+
+[data-game="scrabble"] .rack-slot {
+  width: var(--rack-tile);
+  height: var(--rack-tile);
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-size: calc(var(--rack-tile) * 0.5);
+  line-height: 1;
+}
+
+[data-game="scrabble"] .rack-slot:disabled {
+  cursor: default;
+}
+
+[data-game="scrabble"] .rack-slot-selected .tile {
+  outline: 3px solid var(--highlight);
+  outline-offset: 1px;
+  transform: translateY(-4px);
+}
+
+[data-game="scrabble"] .rack-slot-placed .tile {
+  opacity: 0.25;
+}
+
+[data-game="scrabble"] .blank-picker {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 10px;
+}
+
+[data-game="scrabble"] .blank-picker button {
+  padding: 6px 0;
+}
+
+[data-game="scrabble"] .blank-picker .blank-cancel {
+  grid-column: span 3;
+}
+
+/* Always rendered, so the layout does not jump as tiles are placed */
+[data-game="scrabble"] .hint {
+  min-height: 1.5em;
+  margin-top: 8px;
+  color: var(--highlight);
+  font-weight: 600;
+  text-align: center;
+}
+
+[data-game="scrabble"] .hint-error {
+  color: var(--error-text);
+}
+
+:root[data-theme="dark"] [data-game="scrabble"] .hint-error {
+  color: #ff9d92;
+}
+
+/* Dialogs: FAQ, history, undo vote */
+
+[data-game="scrabble"] .modal {
+  width: 100%;
+  border: 1px solid var(--panel-border);
+}
+
+[data-game="scrabble"] .modal.history {
+  max-width: 640px;
+}
+
+[data-game="scrabble"] .history-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-game="scrabble"] .history-layout .scores {
+  width: 100%;
+  max-width: 360px;
+}
+
+[data-game="scrabble"] .faq dd {
+  color: var(--muted);
+}
+
+[data-game="scrabble"] .undo-vote {
+  padding: 16px;
+}
+
+[data-game="scrabble"] .undo-vote-panel {
+  max-width: 340px;
+  border: 1px solid var(--panel-border);
+}
+
+/* Narrow screens: the side panel sits above the board */
+
+@media (max-width: 860px) {
+  [data-game="scrabble"] .game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  [data-game="scrabble"] .game-info,
+  [data-game="scrabble"] .play-area {
+    flex: none;
+    width: 100%;
+    max-width: 620px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-root[data-game="scrabble"] {
+    padding: 0 8px 16px;
+  }
+
+  [data-game="scrabble"] .game-header h1 {
+    font-size: 1.4rem;
+  }
+
+  [data-game="scrabble"] .score-list {
+    margin-top: 8px;
+  }
+
+  [data-game="scrabble"] .turn-buttons button {
+    padding: 8px 10px;
+  }
+}

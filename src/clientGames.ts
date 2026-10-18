@@ -3,6 +3,14 @@ import type { GameInfo } from '../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../shared/types.ts';
 import { quoridorClient } from '../games/quoridor/client/index.ts';
 import { azulClient } from '../games/azul/client/index.ts';
+import { chessClient } from '../games/chess/client/index.ts';
+import { checkersClient } from '../games/checkers/client/index.ts';
+import { backgammonClient } from '../games/backgammon/client/index.ts';
+import { mancalaClient } from '../games/mancala/client/index.ts';
+import { parchisiClient } from '../games/parchisi/client/index.ts';
+import { scrabbleClient } from '../games/scrabble/client/index.ts';
+import { unoClient } from '../games/uno/client/index.ts';
+import { phase10Client } from '../games/phase10/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -26,7 +34,15 @@ export type ClientGame = {
 
 export const CLIENT_GAMES: Record<string, ClientGame> = {
   [quoridorClient.id]: quoridorClient,
-  [azulClient.id]: azulClient
+  [azulClient.id]: azulClient,
+  [chessClient.id]: chessClient,
+  [checkersClient.id]: checkersClient,
+  [backgammonClient.id]: backgammonClient,
+  [mancalaClient.id]: mancalaClient,
+  [parchisiClient.id]: parchisiClient,
+  [scrabbleClient.id]: scrabbleClient,
+  [unoClient.id]: unoClient,
+  [phase10Client.id]: phase10Client
 };
 
 // A game's rules and screen together, as the landing list and game view use them

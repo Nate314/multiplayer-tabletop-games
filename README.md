@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It currently has two games, Quoridor (two to four players) and Azul (two to four players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has ten games: Azul, Parchisi, Quoridor and Scrabble (two to four players), Backgammon, Checkers, Chess and Mancala (two players), Phase 10 (two to six players) and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -71,7 +71,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 
 ## How to Play Multiplayer
 
-1. Open the site in two to four browser windows
+1. Open the site in one browser window per player
 2. In each window, click a game in the list. The join dialog asks for your name and a game ID (any string); use the same game ID to join the same game. The dialog has an FAQ button, so you can read a game's rules before joining
 3. Players are seated in join order. The lowest-numbered player moves first once at least two players have joined. Nobody can join after the first move
 4. Game IDs are separate per game: Azul "friday" and Quoridor "friday" are different games
@@ -85,7 +85,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 
 The server handles both the web pages and the WebSocket connections on one port (3000 by default).
 
-- On the same machine, open `http://localhost:3000` in two to four browser windows
+- On the same machine, open `http://localhost:3000` in one browser window per player
 - Across computers on the same network, find the IP address of the computer running the server (for example with `ipconfig` or `ifconfig`) and open `http://<server-ip>:3000` on each one (for example `http://192.168.1.100:3000`)
 
 Make sure every player can reach the server computer over the network.
@@ -101,59 +101,18 @@ See `docs/architecture.md` for more.
 
 ## Games
 
-### Quoridor
+Each game's rules and controls are in its own README. The rules follow the Wikipedia page linked for each game; any difference is listed in that game's README.
 
-Race your pawn to the far side and block opponents with walls.
-
-Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2 (red) at the top, Player 3 (green) on the left, Player 4 (purple) on the right.
-
-#### Rules
-
-- Players take turns either moving their pawn or placing a wall
-- Pawns can move one square orthogonally (up, down, left, right)
-- Pawns can jump straight over an adjacent pawn if the square beyond is free and not walled off
-- Walls block pawn movement but cannot completely block a player's path to their goal
-- Each player has 10 walls in a two-player game, or 5 walls with three or four players
-- First player to reach their opposite edge wins
-- If a player leaves mid-game, their pawn and walls stay on the board and their turns are skipped
-- Any player can ask to undo the last turn. It is undone only if every player still in the game approves
-
-#### Controls
-
-- Click "Move" and then click a valid square to move your pawn
-- Click "Horizontal Wall" or "Vertical Wall" to place walls
-- Valid moves and wall placements are highlighted
-- The game board is dimmed when it's not your turn; its frame stays colored to show each player's goal side
-- Click "FAQ" at the top of the page for FAQs on moving, placing walls and the rules
-- Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
-- Hover or click Show Last Move to highlight the previous move
-
-### Azul
-
-Draft colored tiles and decorate your palace wall.
-
-#### Rules
-
-Each round, players take turns picking tiles and placing them on their own board.
-
-- **Picking.** Take every tile of one color from one factory; the factory's other tiles move to the center. Or take every tile of one color from the center. The first player to take from the center in a round also takes the first-player marker, which goes on their floor line.
-- **Placing.** Put the tiles on one of your five pattern lines. A line holds one color, and line 1 holds one tile up to line 5 holding five. You cannot use a line whose wall row already has that color. Tiles that do not fit go to your floor line. You may also put all of them on the floor line.
-- **End of the round.** When the factories and the center are empty, each full pattern line moves one tile onto the wall, and lines that are not full stay as they are. A tile placed alone scores 1. Otherwise it scores the length of the row of tiles it joins plus the length of the column it joins. Then the floor line costs 1, 1, 2, 2, 2, 3 and 3 points for its seven spaces. A score never drops below zero. A scoring screen shows why everyone scored what they did, and the next round is dealt once every player has pressed Continue. Whoever holds the marker starts the next round.
-- **End of the game.** The game ends after the round in which someone completes a horizontal row of their wall. Bonuses: 2 points for each complete row, 7 for each complete column, and 10 for each color placed five times. The highest score wins. A tie goes to the player with more complete rows.
-- If a player leaves mid-game, their board stays and their turns are skipped. The last player left wins.
-- Any player can ask to undo the last turn. It is undone only if every player still in the game approves.
-
-#### Controls
-
-- On your turn, click a tile in a factory or the center to pick up every tile of that color there. Click it again to put them back
-- Your legal pattern lines and your floor line are outlined. Click one to place the tiles
-- The table is dimmed when it is not your turn
-- The source of the last move is outlined
-- Boards are shown in turn order starting with yours, so play always passes to the board on the right
-- In the center, each color stays together on one row
-- Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
-- After each round, read the scoring screen and click Continue; the next round starts once everyone has
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- [Azul](games/azul/README.md): draft colored tiles and decorate your palace wall. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Azul_(board_game)).
+- [Backgammon](games/backgammon/README.md): race your fifteen checkers home and bear them off before your opponent. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Backgammon).
+- [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
+- [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
+- [Mancala](games/mancala/README.md): drop stones around the board, keep going from every full pit, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
+- [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Parcheesi).
+- [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Phase_10).
+- [Quoridor](games/quoridor/README.md): race your pawn to the far side and block opponents with walls. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Quoridor).
+- [Scrabble](games/scrabble/README.md): build crossing words from your letter tiles on the premium-square board. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Scrabble).
+- [UNO](games/uno/README.md): match colors and numbers, empty your hand to score the cards left in the others, and reach 500 points first, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)).
 
 ## Inspirations
 
@@ -166,21 +125,23 @@ The platform (server, landing page, join dialog, undo voting, Docker, CI) needs 
 1. Create `games/<id>/` with:
    - `types.ts`: the game's state and public state, extending `BaseGameState` and `BasePublicState` from `shared/types.ts`
    - `rules.ts`: pure functions over immutable state
-   - `index.ts`: exports a `GameDefinition` object (see `shared/gameDefinition.ts`). Its properties are `info` (`id`, `name`, `description`, `minPlayers`, `maxPlayers`), `createGameState`, `resetLobby`, `applyMove`, `toPublicState`, and optionally `onPlayerLeft` and `applyAction`. The platform does not block `applyAction` during an undo vote or after the game is over, so refuse actions there yourself if the game needs to
+   - `index.ts`: exports a `GameDefinition` object (see `shared/gameDefinition.ts`). Its properties are `info` (`id`, `name`, `description`, `minPlayers`, `maxPlayers`), `createGameState`, `resetLobby`, `applyMove`, `toPublicState`, and optionally `onPlayerLeft` and `applyAction`. `applyMove` receives a `random` function for dice and reshuffles. `toPublicState` receives the seat the view is for (`null` for the history), so a game can show each player only their own hand The platform does not block `applyAction` during an undo vote or after the game is over, so refuse actions there yourself if the game needs to
+   - optionally resigning and draws by agreement, for a two-player game: add `DrawOfferState` (`shared/drawOffer.ts`) to the state with `drawOffer: null`, pass actions to `applyEndingAction` from `applyAction` (it refuses them before the first move, after the game is over and during a vote), and wrap each move's new state in `lapseDrawOffer(state, seat)`. Show the controls with `src/components/DrawAndResign.tsx` in the side panel; it takes the game's own buttons, such as Undo, as children. Chess and Checkers do this
    - tests, for example `rules.test.ts` and `manager.test.ts`
+   - `README.md`: the game's rules and controls, linked from the Games list above
 2. Create `games/<id>/client/` with:
    - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `icon`, `HistoryBoard` and `describeMove`
    - a `HistoryBoard` component: a read-only board for one public state from the history, with its `lastMove` highlighted
    - `describeMove.ts`: one line about the move that produced a public state, such as `Alice placed a wall`, shown as "Move 7 of 23: ..." in the history dialog
    - `faq.ts`: the FAQ items shown by the FAQ button
    - optionally a CSS file whose rules are all scoped under `[data-game="<id>"]`, so the game's colors never leak into other games or the landing page
-   - optionally move animations: give the elements to animate a `data-anim-key` and call `useMoveAnimation(rootRef, gameState, animate)` (`src/animation/useMoveAnimation.ts`) in the game's screen, not in its `HistoryBoard`. It calls `animate({ previous, next, root, rectOf })` only when exactly one move was added, so the first render, a rejoin and an undo snap into place. `rectOf(key)` is where that keyed element was before the move. `slideFrom` and `fadeIn` (`src/animation/motion.ts`) last `MOVE_DURATION_MS` (300 ms) and do nothing under `prefers-reduced-motion: reduce`. Nothing animates unless the game asks for it
+   - optionally move animations: give the elements to animate a `data-anim-key` and call `useMoveAnimation(rootRef, gameState, animate)` (`src/animation/useMoveAnimation.ts`) in the game's screen, not in its `HistoryBoard`. It calls `animate({ previous, next, root, rectOf })` only when exactly one move was added, so the first render, a rejoin and an undo snap into place. `rectOf(key)` is where that keyed element was before the move. `slideFrom` and `fadeIn` (`src/animation/motion.ts`) last `MOVE_DURATION_MS` (300 ms), `slideFrom` can wait a delay first so pieces follow one another, and do nothing under `prefers-reduced-motion: reduce`. Nothing animates unless the game asks for it
 3. Add one line to `games/registry.ts`: put the game in the `GAMES` array.
 4. Add one line to `src/clientGames.ts`: put the client in `CLIENT_GAMES`.
 
 The platform styles its own pieces by default (in `src/App.css`): the game header with Back to games, History, FAQ and the theme toggle, the FAQ and history dialogs, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
 
 - set any of these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`; or
-- write your own rules for the classes: `.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`, `.overlay`, `.modal`, `.faq` (`dl`, `dt`, `dd`), `.history` (`.history-move`, `.history-slider`, `.history-board`), `.primary-button`, `.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`. The defaults have no specificity, so any rule scoped under `[data-game="<id>"]` wins. Quoridor and Azul do this.
+- write your own rules for the classes: `.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`, `.overlay`, `.modal`, `.faq` (`dl`, `dt`, `dd`), `.history` (`.history-move`, `.history-slider`, `.history-board`), `.primary-button`, `.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`, and, for `DrawAndResign`, `.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions` (the Confirm resign button also has `.danger`). The defaults have no specificity, so any rule scoped under `[data-game="<id>"]` wins. Quoridor and Azul do this.
 
 Server code (`server/`, `shared/`, and the non-client files of a game) must not import from `src/` or any `games/<id>/client/`.

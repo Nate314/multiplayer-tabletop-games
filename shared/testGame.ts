@@ -1,11 +1,12 @@
 import type { GameDefinition } from './gameDefinition.ts';
 import { asRecord } from './messages.ts';
 import { baseGameState, nextActivePlayer } from './seating.ts';
-import type { BaseGameState, BasePublicState, Result } from './types.ts';
+import type { BaseGameState, BasePublicState, Result, Seat } from './types.ts';
 
-// A fake game for platform tests: every valid move is a tick, and the third tick wins
+// A fake game for platform tests: every valid move is a tick, and the third tick wins.
+// `secret` is hidden from everyone; `viewer` echoes who the view was built for.
 export type TestState = BaseGameState & { moves: number; secret: string };
-export type TestPublicState = BasePublicState & { moves: number };
+export type TestPublicState = BasePublicState & { moves: number; viewer: Seat | null };
 
 const WINNING_MOVES = 3;
 
@@ -31,8 +32,8 @@ export const testGame: GameDefinition<TestState, TestPublicState> = {
     return { state: { ...state, gameStatus: `${state.playerNames[seat]} pinged` } };
   },
 
-  toPublicState(state, undoAvailable) {
+  toPublicState(state, undoAvailable, viewer) {
     const { secret: _secret, ...view } = state;
-    return { ...view, undoAvailable };
+    return { ...view, undoAvailable, viewer };
   }
 };

@@ -25,9 +25,9 @@ const at = (row: number, col: number): Position => ({ row, col });
 const hWall = (row: number, col: number): Wall => ({ row, col, orientation: 'horizontal' });
 const vWall = (row: number, col: number): Wall => ({ row, col, orientation: 'vertical' });
 
-test('wall count depends on player count', () => {
+test('the twenty walls are shared out equally', () => {
   assert.equal(wallsPerPlayer(2), 10);
-  assert.equal(wallsPerPlayer(3), 5);
+  assert.equal(wallsPerPlayer(3), 6);
   assert.equal(wallsPerPlayer(4), 5);
 });
 
@@ -50,14 +50,40 @@ test('a pawn jumps straight over an adjacent pawn', () => {
   assert.deepEqual(getValidMoves(state, 1), [at(6, 4), at(8, 3), at(8, 5)]);
 });
 
-test('no jump when the landing square holds another pawn', () => {
+test('a pawn behind the jumped pawn turns the jump diagonal', () => {
   const state = board({ pawns: { 1: at(8, 4), 2: at(7, 4), 3: at(6, 4) } });
+  assert.deepEqual(getValidMoves(state, 1), [at(7, 5), at(7, 3), at(8, 3), at(8, 5)]);
+});
+
+test('a wall behind the jumped pawn turns the jump diagonal', () => {
+  const state = board({ pawns: { 1: at(8, 4), 2: at(7, 4) }, walls: [hWall(6, 4)] });
+  assert.deepEqual(getValidMoves(state, 1), [at(7, 5), at(7, 3), at(8, 3), at(8, 5)]);
+});
+
+test('the board edge behind the jumped pawn turns the jump diagonal', () => {
+  const state = board({ pawns: { 1: at(1, 4), 2: at(0, 4) } });
+  assert.deepEqual(getValidMoves(state, 1), [at(0, 5), at(0, 3), at(2, 4), at(1, 3), at(1, 5)]);
+});
+
+test('diagonal moves cannot cross a wall beside the jumped pawn or land on a pawn', () => {
+  const state = board({
+    pawns: { 1: at(8, 4), 2: at(7, 4), 3: at(7, 3) },
+    walls: [hWall(6, 3), vWall(6, 4)]
+  });
   assert.deepEqual(getValidMoves(state, 1), [at(8, 3), at(8, 5)]);
 });
 
-test('no jump when a wall is behind the pawn', () => {
-  const state = board({ pawns: { 1: at(8, 4), 2: at(7, 4) }, walls: [hWall(6, 4)] });
-  assert.deepEqual(getValidMoves(state, 1), [at(8, 3), at(8, 5)]);
+test('a diagonal reachable past two pawns is listed once', () => {
+  const state = board({
+    pawns: { 1: at(8, 4), 2: at(7, 4), 3: at(8, 5) },
+    walls: [hWall(6, 4), vWall(7, 5)]
+  });
+  assert.deepEqual(getValidMoves(state, 1), [at(7, 5), at(7, 3), at(8, 3)]);
+});
+
+test('no diagonal move when the straight jump is open', () => {
+  const state = board({ pawns: { 1: at(8, 4), 2: at(7, 4) } });
+  assert.equal(getValidMoves(state, 1).some(move => move.row === 7), false);
 });
 
 test('walls block steps in both orientations', () => {
@@ -126,7 +152,7 @@ test('lobby wall counts follow the player count', () => {
   let state = lobby('A', 'B');
   assert.deepEqual(state.wallCounts, { 1: 10, 2: 10 });
   state = seated(addPlayer(quoridor, state, 'C')).state;
-  assert.deepEqual(state.wallCounts, { 1: 5, 2: 5, 3: 5 });
+  assert.deepEqual(state.wallCounts, { 1: 6, 2: 6, 3: 6 });
   state = removePlayer(quoridor, state, 3);
   assert.deepEqual(state.wallCounts, { 1: 10, 2: 10 });
 });

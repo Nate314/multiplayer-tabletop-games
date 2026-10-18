@@ -159,7 +159,8 @@ export function applyMove<S extends BaseGameState>(
   game: GameDefinition<S, BasePublicState>,
   state: S,
   seat: Seat,
-  move: unknown
+  move: unknown,
+  random: Random = Math.random
 ): Result<S> {
   if (state.isGameOver) return { error: 'The game is over' };
   if (state.activePlayers.length < game.info.minPlayers) return { error: 'Waiting for more players' };
@@ -167,7 +168,7 @@ export function applyMove<S extends BaseGameState>(
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   if (state.currentPlayer !== seat) return { error: 'Not your turn' };
 
-  const result = game.applyMove(state, seat, move);
+  const result = game.applyMove(state, seat, move, random);
   if ('error' in result) return result;
   return { state: { ...result.state, started: true } };
 }

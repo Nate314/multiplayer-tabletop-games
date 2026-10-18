@@ -1,0 +1,460 @@
+/* Backgammon's felt and wood theme. Every rule is scoped to data-game="backgammon", so none of it reaches the landing page or other games. */
+
+[data-game="backgammon"] {
+  color-scheme: light;
+  --page-bg: #dde7dd;
+  --text: #1d2b22;
+  --muted: #4f6155;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(29, 43, 34, 0.15);
+  --button-bg: #6b4226;
+  --button-hover-bg: #573420;
+  --button-text: #fff;
+  --status-bg: #e8efe6;
+  --status-text: #1d2b22;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --frame: #6b4226;
+  --felt: #2e6a4a;
+  --bar: #5a3720;
+  --point-light: #e8d8b0;
+  --point-dark: #8a5530;
+  --label: rgba(255, 255, 255, 0.85);
+  --white-checker: #f8f4ea;
+  --white-checker-edge: #9a9284;
+  --red-checker: #c62828;
+  --red-checker-edge: #7f1414;
+  --movable: #fff59d;
+  --selected: #ffca28;
+  --target: rgba(129, 199, 132, 0.85);
+  --last-move: #ffd54f;
+  --die-bg: #fff;
+  --die-pip: #1d2b22;
+  /* Twelve points, the bar at 0.8 and the tray at 1 make 13.8 cells; the rest is the page and board padding and a scrollbar */
+  --cell: min(44px, calc((100vw - 72px) / 13.8));
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="backgammon"] {
+  color-scheme: dark;
+  --page-bg: #121a15;
+  --text: #e6efe8;
+  --muted: #a3b5a8;
+  --panel-bg: rgba(30, 42, 35, 0.95);
+  --panel-border: rgba(230, 239, 232, 0.14);
+  --button-bg: #7a4c2c;
+  --button-hover-bg: #8f5a35;
+  --status-bg: #263a2e;
+  --status-text: #e6efe8;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --frame: #3a2616;
+  --felt: #1d3d2c;
+  --bar: #2e1d11;
+  --point-light: #b8a682;
+  --point-dark: #5e3a20;
+  --die-bg: #e6efe8;
+}
+
+[data-game="backgammon"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+[data-game="backgammon"] .bg-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Side panel: status, turn, dice, Roll and the cube, players and Undo */
+
+[data-game="backgammon"] .bg-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 300px;
+  max-width: 100%;
+  padding: 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+[data-game="backgammon"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--status-bg);
+  color: var(--status-text);
+  font-weight: 600;
+}
+
+[data-game="backgammon"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="backgammon"] .bg-turn {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+[data-game="backgammon"] .bg-hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+[data-game="backgammon"] .bg-dice {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-game="backgammon"] .bg-die {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  background: var(--die-bg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+[data-game="backgammon"] .bg-die.used {
+  opacity: 0.3;
+}
+
+[data-game="backgammon"] .bg-pip {
+  width: 7px;
+  height: 7px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--die-pip);
+}
+
+[data-game="backgammon"] .bg-players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="backgammon"] .bg-players li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-game="backgammon"] .bg-you {
+  font-weight: 600;
+}
+
+[data-game="backgammon"] .bg-off {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+[data-game="backgammon"] .player-left {
+  opacity: 0.5;
+}
+
+[data-game="backgammon"] .bg-swatch {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+[data-game="backgammon"] .bg-cube {
+  font-weight: 600;
+}
+
+[data-game="backgammon"] .bg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-game="backgammon"] .bg-button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-game="backgammon"] .bg-undo {
+  align-self: center;
+}
+
+[data-game="backgammon"] .bg-button:hover:enabled {
+  background: var(--button-hover-bg);
+}
+
+[data-game="backgammon"] .bg-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Board: two rows of six points, the bar and a tray, on felt inside a wooden frame */
+
+[data-game="backgammon"] .bg-board-area {
+  position: relative;
+  max-width: 100%;
+}
+
+[data-game="backgammon"] .bg-board {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cell) * 0.6);
+  width: fit-content;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--felt);
+  border: 6px solid var(--frame);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  user-select: none;
+}
+
+/* Asks which die bears off when either one could */
+[data-game="backgammon"] .bg-die-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  font-weight: 600;
+}
+
+[data-game="backgammon"] .bg-board.not-your-turn {
+  opacity: 0.8;
+}
+
+[data-game="backgammon"] .bg-board:is(.not-your-turn, .game-over) {
+  pointer-events: none;
+}
+
+[data-game="backgammon"] .bg-half {
+  display: grid;
+  grid-template-columns: repeat(6, var(--cell)) calc(var(--cell) * 0.8) repeat(6, var(--cell)) var(--cell);
+  height: calc(var(--cell) * 5.5);
+}
+
+[data-game="backgammon"] .bg-point,
+[data-game="backgammon"] .bg-tray {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-game="backgammon"] .bg-half-bottom .bg-point,
+[data-game="backgammon"] .bg-half-bottom .bg-tray {
+  flex-direction: column-reverse;
+}
+
+[data-game="backgammon"] .bg-point-label {
+  height: calc(var(--cell) * 0.5);
+  color: var(--label);
+  font-size: max(9px, calc(var(--cell) * 0.3));
+  line-height: calc(var(--cell) * 0.5);
+  text-align: center;
+}
+
+/* The triangle sits under the checkers, between the label and the middle of the board */
+[data-game="backgammon"] .bg-point::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: calc(var(--cell) * 4.8);
+  background: var(--point-light);
+}
+
+[data-game="backgammon"] .bg-point.odd::after {
+  background: var(--point-dark);
+}
+
+[data-game="backgammon"] .bg-point-top::after {
+  top: calc(var(--cell) * 0.5);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+[data-game="backgammon"] .bg-point-bottom::after {
+  bottom: calc(var(--cell) * 0.5);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+[data-game="backgammon"] .bg-point.target::after {
+  background: var(--target);
+}
+
+[data-game="backgammon"] .bg-stack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-game="backgammon"] .bg-half-bottom .bg-stack {
+  flex-direction: column-reverse;
+}
+
+/* The bar runs down the middle; each player's checkers wait on their half, next to the center */
+/* Each half of the bar reaches into the board's padding and halfway across the gap, so the bar looks like one strip */
+[data-game="backgammon"] .bg-bar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bar);
+}
+
+[data-game="backgammon"] .bg-half-top .bg-bar {
+  justify-content: flex-end;
+  margin: -6px 0 calc(var(--cell) * -0.3);
+}
+
+[data-game="backgammon"] .bg-half-bottom .bg-bar {
+  justify-content: flex-start;
+  margin: calc(var(--cell) * -0.3) 0 -6px;
+}
+
+[data-game="backgammon"] .bg-half-bottom .bg-bar .bg-stack {
+  flex-direction: column;
+}
+
+[data-game="backgammon"] .bg-half-top .bg-bar .bg-stack {
+  flex-direction: column-reverse;
+}
+
+[data-game="backgammon"] .bg-tray {
+  margin-left: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-game="backgammon"] .bg-tray-slabs {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+[data-game="backgammon"] .bg-half-bottom .bg-tray-slabs {
+  flex-direction: column-reverse;
+}
+
+[data-game="backgammon"] .bg-slab {
+  height: calc((var(--cell) * 4.8 - 15px) / 15);
+  margin: 0 3px;
+  border-radius: 2px;
+}
+
+[data-game="backgammon"] .bg-tray.target,
+[data-game="backgammon"] .bg-bar.target {
+  background: var(--target);
+}
+
+/* Checkers */
+
+[data-game="backgammon"] .bg-checker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(var(--cell) - 2px);
+  height: calc(var(--cell) - 2px);
+  margin: 1px auto 0;
+  border-radius: 50%;
+  font-size: calc(var(--cell) * 0.42);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-game="backgammon"] .bg-bar .bg-checker {
+  width: calc(var(--cell) * 0.8 - 2px);
+  height: calc(var(--cell) * 0.8 - 2px);
+}
+
+[data-game="backgammon"] .white {
+  background: radial-gradient(circle at 35% 35%, #fff 0%, var(--white-checker) 60%, #ddd6c6 100%);
+  border: 2px solid var(--white-checker-edge);
+  color: #333;
+}
+
+[data-game="backgammon"] .red {
+  background: radial-gradient(circle at 35% 35%, #ef5350 0%, var(--red-checker) 70%);
+  border: 2px solid var(--red-checker-edge);
+  color: #fff;
+}
+
+[data-game="backgammon"] .bg-slab.white,
+[data-game="backgammon"] .bg-slab.red {
+  border-width: 1px;
+}
+
+/* The outermost checker of a stack is the one that moves */
+[data-game="backgammon"] .movable .bg-stack .bg-checker:last-child {
+  outline: 3px solid var(--movable);
+  outline-offset: 0;
+  cursor: pointer;
+}
+
+[data-game="backgammon"] .selected .bg-stack .bg-checker:last-child {
+  outline: 3px solid var(--selected);
+  box-shadow: 0 0 10px var(--selected);
+}
+
+[data-game="backgammon"] .movable,
+[data-game="backgammon"] .selected,
+[data-game="backgammon"] .target {
+  cursor: pointer;
+}
+
+[data-game="backgammon"] .last-from {
+  outline: 2px dashed var(--last-move);
+  outline-offset: -2px;
+}
+
+[data-game="backgammon"] .last-to {
+  outline: 2px solid var(--last-move);
+  outline-offset: -2px;
+}
+
+/* History dialog: the board at full strength, though nothing on it can be clicked */
+[data-game="backgammon"] .history-board .bg-board {
+  margin: 0 auto;
+}
+
+[data-game="backgammon"] .history-board .bg-board:is(.not-your-turn, .game-over) {
+  opacity: 1;
+}

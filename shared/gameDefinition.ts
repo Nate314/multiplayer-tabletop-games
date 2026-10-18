@@ -19,10 +19,12 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   // Mid-game, after the platform marked `seat` disconnected and settled votes.
   onPlayerDisconnected?(state: S, seat: Seat, random: Random): S;
   // Called only after the platform's turn guards pass. Validates untrusted `move`.
-  applyMove(state: S, seat: Seat, move: unknown): Result<S>;
+  // `random` is for dice and reshuffles; an undo restores the state before the move, so a replayed move may roll differently.
+  applyMove(state: S, seat: Seat, move: unknown, random: Random): Result<S>;
   // Not turn-bound and not recorded for undo. Validates untrusted `action`.
   // The platform does not block actions during an undo vote or after the game is over; the game must refuse them itself where needed.
   applyAction?(state: S, seat: Seat, action: unknown, random: Random): Result<S>;
-  // The platform adds moveCount; a game never supplies it
-  toPublicState(state: S, undoAvailable: boolean): Omit<P, 'moveCount'>;
+  // The platform adds moveCount; a game never supplies it.
+  // `viewer` is the seat the view is sent to, so a game can show a player their own hand; null (the history) sees no hand.
+  toPublicState(state: S, undoAvailable: boolean, viewer: Seat | null): Omit<P, 'moveCount'>;
 };

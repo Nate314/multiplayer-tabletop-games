@@ -243,7 +243,7 @@
 
 /*
  * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
- * the disconnected players bar and the dismiss vote.
+ * the disconnected players bar, the dismiss vote, and resign and draw offers.
  * Every selector sits in :where(), so it has no specificity and any rule in a game's own CSS wins.
  * A game can restyle these pieces with its own rules, or just set these variables on [data-game="<id>"]:
  *   --platform-page-bg, --platform-text, --platform-button-bg, --platform-button-hover-bg, --platform-button-text,
@@ -455,6 +455,51 @@
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* Resign and draw offers (DrawAndResign), in a two-player game's side panel */
+
+:where([data-game] .ending-controls) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+:where([data-game] .ending-buttons, [data-game] .draw-offer-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+:where([data-game] .draw-offer) {
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  font-weight: 600;
+}
+
+:where([data-game] .draw-offer-actions) {
+  margin-top: 8px;
+}
+
+:where([data-game] .ending-controls button) {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+}
+
+:where([data-game] .ending-controls button:hover:enabled) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where([data-game] .ending-controls button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Disconnected players, above the game screen */

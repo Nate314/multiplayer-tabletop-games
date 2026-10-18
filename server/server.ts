@@ -130,7 +130,7 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
 
   connections.set(ws, { roomId: result.roomId, seat: result.seat });
   send(ws, { type: MESSAGE_TYPES.GAME_JOINED, payload: { playerNumber: result.seat, gameState: result.state } });
-  broadcast(result.roomId, result.state);
+  broadcast(result.roomId);
 }
 
 function handleDisconnect(ws: WebSocket): void {
@@ -139,20 +139,23 @@ function handleDisconnect(ws: WebSocket): void {
 
   connections.delete(ws);
   const result = manager.disconnect(connection.roomId, connection.seat);
-  if (result) broadcast(connection.roomId, result.state);
+  if (result) broadcast(connection.roomId);
 }
 
 function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>): void {
   if ('error' in result) {
     sendError(ws, result.error);
   } else {
-    broadcast(roomId, result.state);
+    broadcast(roomId);
   }
 }
 
-function broadcast(roomId: string, state: BasePublicState): void {
+// Each player gets their own view, so a game can show them their own hand
+function broadcast(roomId: string): void {
   for (const [ws, connection] of connections) {
-    if (connection.roomId === roomId) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
+    if (connection.roomId !== roomId) continue;
+    const state = manager.getState(roomId, connection.seat);
+    if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
   }
 }
 
