@@ -11,6 +11,9 @@ services:
     # Forwards SIGTERM to node (which ignores it as PID 1), so `docker compose down` is immediate.
     init: true
     read_only: true
+    volumes:
+      # Started games survive restarts and rebuilds
+      - game-data:/app/data
     cap_drop:
       - ALL
     security_opt:
@@ -22,3 +25,6 @@ services:
       retries: 3
       start_period: 10s
       start_interval: 1s
+
+volumes:
+  game-data:

@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createGameManager } from './games.ts';
+import { openGameStore } from './store.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, Result, Seat } from '../shared/types.ts';
@@ -12,6 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
 const HEARTBEAT_MS = 15_000; // a socket that misses one ping is dead within about 30 s
+const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data/games.sqlite');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,7 +21,7 @@ const wss = new WebSocketServer({ server });
 
 type Connection = { roomId: string; seat: Seat };
 
-const manager = createGameManager(GAMES);
+const manager = createGameManager(GAMES, Math.random, openGameStore(DATABASE_PATH));
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
 
@@ -31,6 +33,17 @@ app.get('/api/history/:gameType/:gameId', (req, res) => {
     return;
   }
   res.json({ steps });
+});
+
+app.get('/api/game-file/:gameType/:gameId', (req, res) => {
+  const result = manager.gameFile(req.params.gameType, req.params.gameId, new Date());
+  if (!result) {
+    res.status(404).json({ error: 'Game not found' });
+  } else if ('error' in result) {
+    res.status(409).json({ error: result.error });
+  } else {
+    res.json(result.file);
+  }
 });
 
 app.use(express.static(path.join(__dirname, '../dist')));
@@ -172,5 +185,6 @@ function sendError(ws: WebSocket, message: string): void {
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`WebSocket server active on ws://localhost:${PORT}`);
+  console.log(`Saving started games to ${DATABASE_PATH}`);
   console.log('Use Ctrl+C to stop the server');
 });

@@ -417,6 +417,15 @@
   gap: 8px;
 }
 
+[data-game="scrabble"] .history-rack-header {
+  font-weight: 600;
+  text-align: center;
+}
+
+[data-game="scrabble"] .history-rack .rack-slot {
+  display: block;
+}
+
 [data-game="scrabble"] .history-layout .scores {
   width: 100%;
   max-width: 360px;

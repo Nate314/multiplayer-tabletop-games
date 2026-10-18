@@ -27,5 +27,7 @@ COPY games ./games
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
+# Started games are kept here (see the volume in docker-compose.yml); the node user must be able to write it
+RUN mkdir -p /app/data && chown node:node /app/data
 USER node
 CMD ["node", "server/server.ts"]

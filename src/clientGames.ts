@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { GameInfo } from '../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../shared/types.ts';
+import type { MoveChange } from './animation/useMoveAnimation.ts';
 import { quoridorClient } from '../games/quoridor/client/index.ts';
 import { azulClient } from '../games/azul/client/index.ts';
 import { chessClient } from '../games/chess/client/index.ts';
@@ -26,10 +27,13 @@ export type ClientGame = {
   icon: string; // a short glyph or emoji shown in the landing row
   // A read-only board of one public state with its lastMove highlighted, for the history dialog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  HistoryBoard: ComponentType<{ gameState: any }>;
+  HistoryBoard: ComponentType<{ gameState: any; viewer: Seat | null }>;
   // The move that produced a public state, from its lastMove and playerNames, e.g. 'Alice placed a wall'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   describeMove(gameState: any): string;
+  // Animates one step forward in the history dialog, as seen by the chosen seat (null for the table only)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  animateMove?: (change: MoveChange<any>, viewer: Seat | null) => void;
 };
 
 export const CLIENT_GAMES: Record<string, ClientGame> = {

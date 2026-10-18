@@ -1,10 +1,11 @@
 import Factories from './Factories';
 import PlayerBoard from './PlayerBoard';
 import type { PublicGameState } from '../types.ts';
+import type { Seat } from '../../../shared/types.ts';
 
 // The table and every board right after one move, with where the tiles came from and went highlighted.
-// Nothing is clickable and the round summary stays hidden; a round-ending move shows the scored walls.
-export default function HistoryBoard({ gameState }: { gameState: PublicGameState }) {
+// The chosen seat is marked as you. Nothing is clickable and the round summary stays hidden; a round-ending move shows the scored walls.
+export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   const { boards, playerNames, currentPlayer, activePlayers, winners, lastMove } = gameState;
 
   return (
@@ -17,7 +18,7 @@ export default function HistoryBoard({ gameState }: { gameState: PublicGameState
             board={boards[seat]}
             seat={seat}
             name={playerNames[seat]}
-            isMe={false}
+            isMe={seat === viewer}
             isCurrent={currentPlayer === seat}
             hasLeft={!activePlayers.includes(seat)}
             isWinner={winners.includes(seat)}

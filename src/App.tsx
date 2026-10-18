@@ -5,9 +5,11 @@ import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
 import JoinDialog from './components/JoinDialog'
+import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
 import ThemeToggle from './components/ThemeToggle'
+import { loadJoinForm, saveJoinForm } from './services/settings.ts'
 import './App.css'
 
 // Every game needs a screen as well as rules; a missing one fails at startup instead of hiding the game
@@ -20,8 +22,10 @@ const PLAYABLE_GAMES: PlayableGame[] = GAMES.map(({ info }) => {
 function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   // Kept here so the form is still filled in after leaving or a disconnect
-  const [playerName, setPlayerName] = useState('')
-  const [gameId, setGameId] = useState('')
+  // The last name and game ID used to join, read once
+  const [initialForm] = useState(loadJoinForm)
+  const [playerName, setPlayerName] = useState(initialForm.playerName)
+  const [gameId, setGameId] = useState(initialForm.gameId)
   const { playerNumber, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection()
   const joined = gameState !== null && playerNumber !== null
   // The game on screen however it was joined: dialog, refresh or rejoin button
@@ -75,6 +79,7 @@ function App() {
         {session && !session.inGame && sessionGame && (
           <RejoinButton gameName={sessionGame.info.name} gameId={session.gameId} onRejoin={rejoin} />
         )}
+        <OpenSavedGame games={PLAYABLE_GAMES} />
         <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
       </main>
       {selected && (
@@ -86,7 +91,10 @@ function App() {
           error={error}
           onPlayerNameChange={setPlayerName}
           onGameIdChange={setGameId}
-          onJoin={() => join(selected.info.id, gameId, playerName)}
+          onJoin={() => {
+            saveJoinForm({ playerName, gameId })
+            join(selected.info.id, gameId, playerName)
+          }}
           onCancel={closeDialog}
         />
       )}

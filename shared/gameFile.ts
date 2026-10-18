@@ -1,0 +1,81 @@
+// The saved-game file a player downloads from a finished game and opens later on the landing page.
+import { asRecord } from './messages.ts';
+import { MAX_NAME_LENGTH } from './types.ts';
+import type { HistoryStep } from './types.ts';
+
+export const GAME_FILE_FORMAT = 'multiplayer-tabletop-games';
+export const GAME_FILE_VERSION = 2;
+
+const HISTORY_STEPS = ['start', 'move', 'end'];
+const NOT_A_SAVED_GAME = 'This file is not a saved game';
+
+// `views` holds the step as each seat saw it, keyed by seat number; version 1 files have none
+export type GameFileStep = HistoryStep & { views?: Record<string, HistoryStep> };
+
+export type GameFile = {
+  format: typeof GAME_FILE_FORMAT;
+  version: 1 | 2;
+  gameType: string;
+  gameId: string;
+  exportedAt: string;
+  steps: GameFileStep[];
+};
+
+export function buildGameFile(gameType: string, gameId: string, steps: GameFileStep[], now: Date): GameFile {
+  return {
+    format: GAME_FILE_FORMAT,
+    version: GAME_FILE_VERSION,
+    gameType,
+    gameId,
+    exportedAt: now.toISOString(),
+    steps
+  };
+}
+
+export function gameFileName(gameType: string, gameId: string): string {
+  return `${gameType}-${gameId}`.replace(/[^A-Za-z0-9_-]/g, '-') + '.json';
+}
+
+function isHistoryStep(value: unknown): boolean {
+  const step = asRecord(value);
+  return !Array.isArray(value) && step !== null && HISTORY_STEPS.includes(step.historyStep as string);
+}
+
+function isGameFileStep(value: unknown): boolean {
+  if (!isHistoryStep(value)) return false;
+  const { views } = value as { views?: unknown };
+  if (views === undefined) return true;
+  const record = asRecord(views);
+  return !Array.isArray(views) && record !== null && Object.values(record).every(isHistoryStep);
+}
+
+function isGameFile(value: unknown): value is GameFile {
+  const file = asRecord(value);
+  if (file === null) return false;
+  return (
+    file.format === GAME_FILE_FORMAT &&
+    (file.version === 1 || file.version === GAME_FILE_VERSION) &&
+    typeof file.gameType === 'string' &&
+    typeof file.gameId === 'string' &&
+    file.gameId.length > 0 &&
+    file.gameId.length <= MAX_NAME_LENGTH &&
+    typeof file.exportedAt === 'string' &&
+    Array.isArray(file.steps) &&
+    file.steps.length > 0 &&
+    file.steps.every(isGameFileStep)
+  );
+}
+
+export function parseGameFile(text: string, knownGameTypes: readonly string[]): { file: GameFile } | { error: string } {
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    return { error: NOT_A_SAVED_GAME };
+  }
+  if (!isGameFile(value)) return { error: NOT_A_SAVED_GAME };
+  if (!knownGameTypes.includes(value.gameType)) {
+    return { error: 'This saved game is for a game this site does not have' };
+  }
+  return { file: value };
+}

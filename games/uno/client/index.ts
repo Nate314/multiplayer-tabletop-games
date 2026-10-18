@@ -3,6 +3,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
+import animateMove from './animateMove.ts';
 import './uno.css';
 
 export const unoClient: ClientGame = {
@@ -11,5 +12,6 @@ export const unoClient: ClientGame = {
   faq: QUESTIONS,
   icon: '🃏',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

@@ -64,13 +64,13 @@ test('each player sees only their own hand, and the history sees no hand', () =>
   playTurn(manager, 1);
   const history = manager.history('phase10', 'g1');
   assert.ok(history);
-  assert.equal(history.length, 2);
-  for (const step of history as PublicGameState[]) {
+  assert.equal(history.length, 3);
+  for (const step of history as unknown as PublicGameState[]) {
     assert.deepEqual(step.myHand, []);
     assert.equal('hands' in step, false);
   }
   // A card drawn from the pile is not named in the history
-  assert.deepEqual((history[0] as PublicGameState).lastMove, { playerNumber: 1, type: 'draw', source: 'pile' });
+  assert.deepEqual((history[1] as unknown as PublicGameState).lastMove, { playerNumber: 1, type: 'draw', source: 'pile' });
 });
 
 test('a turn stays with the player until they discard', () => {

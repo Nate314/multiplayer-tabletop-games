@@ -397,6 +397,36 @@
   margin: 0 0 16px;
 }
 
+/* Play, Animations and View as in one row, which wraps on a narrow window */
+:where([data-game] .history-controls) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 16px;
+}
+
+:where([data-game] .history-play) {
+  min-width: 80px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+}
+
+:where([data-game] .history-play:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where([data-game] .history-animations) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 :where([data-game] .history-board) {
   max-width: 100%;
   overflow-x: auto;
@@ -414,6 +444,14 @@
 :where([data-game] .primary-button) {
   min-width: 140px;
   margin-top: 16px;
+}
+
+/* A dialog's row of buttons; they wrap on a narrow window */
+:where([data-game] .modal-buttons) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
 :where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
@@ -556,4 +594,21 @@
 :where([data-game] .dismiss-button:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+:where(.open-saved-game) {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+  background: var(--lobby-surface);
+  color: var(--lobby-text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+:where(.open-saved-game:hover, .open-saved-game:focus-visible) {
+  border-color: var(--lobby-accent);
 }

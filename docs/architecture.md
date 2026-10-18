@@ -38,6 +38,7 @@ flowchart TD
 
 - Express static serving and SPA fallback, the WebSocket server, message parsing and routing, broadcast (`server/server.ts`)
 - The in-memory game manager, keyed by game type and game ID (`server/games.ts`)
+- Saving every started game to SQLite and loading them back on start (`server/store.ts`)
 - Seating in join order up to the game's maximum, with names unique ignoring case, and refusing new names after the game has started (`shared/seating.ts`)
 - Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name, and dismissing a disconnected player by vote
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
@@ -60,7 +61,7 @@ flowchart TD
 
 - `shared/gameDefinition.ts` defines `GameDefinition` and `GameInfo`, which the server uses
 - `games/registry.ts` lists every `GameDefinition` in landing page order
-- `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`) and lists them in `CLIENT_GAMES`
+- `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
@@ -73,7 +74,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
    - `GameView.tsx` is the header (Back to games, History, FAQ, theme toggle) around the game's own `Screen`
    - `FaqButton.tsx` and `FaqDialog.tsx` show a game's FAQ items
-   - `HistoryButton.tsx` fetches the game's moves from `/api/history/<game type>/<game ID>` (disabled before the first move) and `HistoryDialog.tsx` shows them: a range slider over the moves, "Move k of N: <the game's `describeMove`>", and the game's read-only `HistoryBoard` for that step. It shows the history as of opening and changes nothing for other players
+   - `HistoryButton.tsx` fetches the game's steps from `/api/history/<game type>/<game ID>` (always enabled) and `HistoryDialog.tsx` shows them: a range slider over the steps, a label, and the game's read-only `HistoryBoard` for that step. Each step has a `historyStep` of `start` (the starting board, labelled "Start of the game"), `move` ("Move k of N: <the game's `describeMove`>") or `end` ("End of the game: <the game status>", drawn without a highlighted move). The slider opens on the latest step. Each step is wrapped in `StepErrorBoundary.tsx`, so a step whose board throws shows "This step could not be shown" and the slider keeps working. When the latest step is a finished game, the dialog offers Download game, which fetches the file from the server (see Game files) and saves it; if that fails it shows "Could not download the game". The live dialog has no "View as" picker and never shows hands. Below the slider are Play/Pause, an Animations checkbox and, for a file with `views`, the picker. Play moves one step every `PLAY_STEP_MS` (1500 ms, `playback.ts`) and stops on the last step. With Animations on, a step forward calls the game's optional `ClientGame.animateMove(change, viewer)` through `useMoveAnimation`; a step the game cannot animate snaps. It shows the history as of opening and changes nothing for other players
+   - `OpenSavedGame.tsx` is the landing page's "Open a saved game" button: it reads a `.json` file in the browser, checks it with `parseGameFile` from `shared/gameFile.ts`, shows one plain error if it is not accepted, and otherwise opens a `HistoryDialog` titled "Saved game: <game ID>" with that game's `HistoryBoard` and `describeMove` and no Download button. For a version 2 file the dialog has a "View as" picker ("Table only" plus one option per player) and draws each step from that player's `views` entry; a version 1 file has none, so the picker is hidden. Nothing is uploaded and a saved game cannot be played on
    - `ThemeToggle.tsx` switches light and dark; the choice is shared across the site
    - `UndoVote.tsx` shows a running undo vote
    - `RejoinButton.tsx` is the "Back to <game> (<game ID>)" button on the landing page, shown when the remembered game was left with Back to games or a lost connection
@@ -82,7 +84,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
    - `DrawAndResign.tsx` is the Offer draw, Accept draw and Decline, and Resign (with Confirm resign) controls for two-player games that use `shared/drawOffer.ts`; the game passes its own buttons, such as Undo, as children
    - `/src/hooks/useEscapeKey.ts` closes the topmost dialog on Escape
-   - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. Quoridor glides the moved pawn from its old square and fades in a new wall; history boards never animate
+   - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. Quoridor glides the moved pawn from its old square and fades in a new wall; the History dialog animates only through a game's `animateMove`, when Animations is on
    - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service, remembers the game, rejoins it after a refresh, and offers it again after Back to games
 
 2. **Game Service (`/src/services/gameService.ts`)**
@@ -91,18 +93,27 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Sends joins (and rejoins), moves, game actions, undo and dismiss requests and votes
    - Passes server state updates and errors to the UI
 
-3. **Remembered game (`/src/services/session.ts`)**
+3. **Download (`/src/services/download.ts`)**
+
+   - `downloadJson` saves data as a pretty-printed JSON file through the browser. The file comes from the server (`GET /api/game-file`) and is named by `gameFileName` (`<game type>-<game ID>.json`, unsafe characters replaced by `-`)
+
+4. **Remembered game (`/src/services/session.ts`)**
 
    - Keeps the most recent game (game type, game ID, name, and whether the player was still in it) in `localStorage` under `lastGame`
    - A page that loads while the player was in the game rejoins it automatically. If the old socket still holds the seat ("<name> is already in this game"), it retries up to 5 times, 1 second apart. Any other error, such as a deleted game or a dismissal, forgets the game and shows the error on the list
    - Back to games and a lost connection keep the game but mark the player as out of it, so the list shows the rejoin button instead of rejoining by itself
    - Every storage access may fail (blocked storage); the site then works without remembering the game across page loads
 
-4. **Game screens (`/games/<id>/client`)**
+   **Settings (`/src/services/settings.ts`, on `/src/services/storage.ts`)**
+
+   - `storage.ts` has `readJson`, `writeJson` and `removeKey`, which swallow storage errors
+   - `historyAnimations` (the History dialog's Animations checkbox, off by default) and `joinForm` (the name and game ID last used to join, shared by every game, saved when Join is pressed) are kept in `localStorage`
+
+5. **Game screens (`/games/<id>/client`)**
    - Each game's board components and screen, receiving the public state, the player's seat and any error
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
-5. **Default styles for the platform pieces (`/src/App.css`)**
+6. **Default styles for the platform pieces (`/src/App.css`)**
    - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
@@ -113,7 +124,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 1. **Express and WebSocket server (`/server/server.ts`)**
 
    - Serves the built React application and handles SPA routing
-   - Reads `PORT` from the environment, default 3000
+   - Reads `PORT` from the environment, default 3000, and `DATABASE_PATH`, default `data/games.sqlite` under the repo root
    - Routes WebSocket messages to the game manager and broadcasts the results
 
 2. **Game Manager (`/server/games.ts`)**
@@ -122,14 +133,32 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
    - Keeps each game's undo history and runs unanimous undo votes
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
-   - Holds each game's full state in memory, and sends only the public view
+   - Holds each game's full state in memory, written through to SQLite, and sends only the public view
+   - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state
+   - Takes a `GameStore` as a parameter, so tests can pass an in-memory one or none
 
-3. **Game registry (`/games/registry.ts`)**
+3. **Game store (`/server/store.ts`)**
+
+   - `openGameStore(file)` opens a SQLite database with Node's built-in `node:sqlite` (no npm package; Node 22 prints an ExperimentalWarning) and creates the `rooms` and `room_steps` tables if missing. `':memory:'` or a path works, and a path's folder is created
+   - `GameStore` has `loadAll`, `save(roomId, gameType, state, step?)` and `remove(roomId)`. A `rooms` row is the room ID (`<game type>/<game ID>`), the game type, and the live `state` as JSON. A `room_steps` row is one step of the room's history: the room ID, the step index `idx`, `before` (`history[idx]`, the state before move `idx + 1`) and `after` (`timeline[idx]`, the state right after it), both JSON
+   - A save writes the live state and at most one step in one transaction, so its cost does not grow with the length of the game: a move inserts a step, an approved undo deletes the last one, and every other change only rewrites the state. `loadAll` puts `history` and `timeline` back together from the steps, in `idx` order. Removing a room deletes its steps too
+   - A room is saved after every change once the game has started (moves, actions, undo and dismiss requests and votes, joins, rejoins and disconnects) and removed when the room is deleted. Lobbies are not saved
+   - A store failure is logged and play continues
+   - With Docker, `docker-compose.yml` mounts the `game-data` named volume at `/app/data` (the container is read-only otherwise, and the Dockerfile makes `/app/data` writable by the `node` user), so started games survive restarts and rebuilds
+   - On start the manager loads every saved room: each active seat is marked disconnected directly, without running any game hook, so the usual rejoin works; open undo and dismiss votes are cleared; the saved status is kept; and the 10-minute empty-game timer restarts. A room whose state or steps do not parse, have the wrong shape or skip an index, that names a game that no longer exists, or that fails to load for any other reason is logged and deleted with its steps
+
+4. **Game registry (`/games/registry.ts`)**
    - `GAMES` lists the games, in landing page order
+
+## Game files
+
+`shared/gameFile.ts` defines the file a finished game is saved as: `format` (`multiplayer-tabletop-games`), `version` (2), `gameType`, `gameId`, `exportedAt` and `steps`. Each step is the table's view (viewer `null`, no hands) plus `views`, the same step as each seat saw it, keyed by seat number. The server builds the file in `GET /api/game-file/<game type>/<game ID>`, which needs no credentials and answers 404 for an unknown game and 409 "The game is not over yet" until game over. `parseGameFile` accepts a file only when it parses as JSON, the format is right, the version is 1 or 2 (version 1 files have no `views`), `views`, when present, holds valid steps, the game ID is 1 to 20 characters, `steps` is a non-empty array of steps with a valid `historyStep`, and the game type is one the site has; otherwise it returns an error message. Steps are not checked field by field; `StepErrorBoundary` covers a hand-edited step.
+
+Accepted risk: undo is still allowed after game over, so players could download the file, undo the final move and play on knowing every hand. The file is meant for a finished game and the site does not prevent this.
 
 ## Hidden state
 
-Every state sent to a browser goes through the game's `toPublicState`, which is told the seat it is building the view for (`viewer`). The server builds a separate view for each connected player, so a card game can send each player their own hand and only the size of everyone else's. The history endpoint builds its views with `viewer` set to `null`, which sees no hand. A game that hides nothing returns its state as is. Azul removes the bag, the lid and round bookkeeping, so nobody can count what is left in the bag, as in the physical game.
+Every state sent to a browser goes through the game's `toPublicState`, which is told the seat it is building the view for (`viewer`). The server builds a separate view for each connected player, so a card game can send each player their own hand and only the size of everyone else's. The history endpoint builds its views with `viewer` set to `null`, which sees no hand. A game file also builds one view per seat, which is how a saved game can show a chosen player's hand. Each game's `HistoryBoard` takes `viewer: Seat | null` and shows that player's hand (Uno, Phase 10, Scrabble) or none for `null`. A game that hides nothing returns its state as is. Azul removes the bag, the lid and round bookkeeping, so nobody can count what is left in the bag, as in the physical game.
 
 ## Communication Flow
 

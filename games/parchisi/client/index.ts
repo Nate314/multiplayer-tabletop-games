@@ -3,6 +3,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
+import animateMove from './animateMove.ts';
 import './parchisi.css';
 
 export const parchisiClient: ClientGame = {
@@ -11,5 +12,6 @@ export const parchisiClient: ClientGame = {
   faq: FAQS,
   icon: '⚄',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

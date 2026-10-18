@@ -1,8 +1,10 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
-import { testGame, type TestPublicState } from '../shared/testGame.ts';
-import type { Random, Result } from '../shared/types.ts';
+import type { GameStore, SavedRoom } from './store.ts';
+import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
+import { nextActivePlayer } from '../shared/seating.ts';
+import type { BaseGameState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
@@ -288,7 +290,7 @@ test('an undo vote is canceled when a disconnect leaves one connected player', (
   assert.equal(state.moveCount, 1);
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.gameStatus, 'B disconnected');
-  assert.equal(manager.history('test', 'g1')?.length, 1);
+  assert.equal(manager.history('test', 'g1')?.length, 2);
 });
 
 test('an undo vote after a win is canceled when the requester disconnects', () => {
@@ -486,19 +488,22 @@ test('a dismiss vote ends when its target rejoins', () => {
   assert.deepEqual(manager.voteDismiss(ROOM, 2, true), { error: 'No dismiss vote in progress' });
 });
 
-test('history lists the state after each move, hides secrets, and drops undone moves', () => {
+test('history starts at the starting board, lists each move, hides secrets, and drops undone moves', () => {
   const manager = gameWith('A', 'B', 'C');
-  assert.deepEqual(manager.history('test', 'g1'), []);
+  const before = manager.history('test', 'g1') as (TestPublicState & HistoryStep)[];
+  assert.deepEqual(before.map(step => step.historyStep), ['start']);
+  assert.equal(before[0].moveCount, 0);
+  assert.equal(before[0].moves, 0);
   ok(manager.move(ROOM, 1, tick));
   ok(manager.move(ROOM, 2, tick));
   const last = ok(manager.move(ROOM, 3, tick));
   assert.equal(last.moveCount, 3);
 
-  const steps = manager.history('test', ' g1 ') as TestPublicState[] | null;
+  const steps = manager.history('test', ' g1 ') as (TestPublicState & HistoryStep)[] | null;
   assert.ok(steps);
-  assert.deepEqual(steps.map(step => step.moveCount), [1, 2, 3]);
-  assert.deepEqual(steps.map(step => step.moves), [1, 2, 3]);
-  assert.deepEqual(steps.map(step => step.gameStatus), ['A ticked', 'B ticked', 'C ticked']);
+  assert.deepEqual(steps.map(step => step.historyStep), ['start', 'move', 'move', 'move']);
+  assert.deepEqual(steps.map(step => step.moveCount), [0, 1, 2, 3]);
+  assert.deepEqual(steps.map(step => step.moves), [0, 1, 2, 3]);
   for (const step of steps) {
     assert.equal('secret' in step, false);
     assert.equal(step.undoAvailable, false);
@@ -509,7 +514,7 @@ test('history lists the state after each move, hides secrets, and drops undone m
   ok(manager.voteUndo(ROOM, 2, true));
   const undone = ok(manager.voteUndo(ROOM, 3, true));
   assert.equal(undone.moveCount, 2);
-  assert.equal(manager.history('test', 'g1')?.length, 2);
+  assert.equal(manager.history('test', 'g1')?.length, 3);
 
   assert.equal(manager.history('chess', 'g1'), null);
   assert.equal(manager.history('test', 'nope'), null);
@@ -532,5 +537,319 @@ test('actions add no history steps', () => {
   ok(manager.move(ROOM, 1, tick));
   const pinged = ok(manager.action(ROOM, 2, { type: 'ping' }));
   assert.equal(pinged.moveCount, 1);
-  assert.equal(manager.history('test', 'g1')?.length, 1);
+  assert.equal(manager.history('test', 'g1')?.length, 2);
+});
+
+test('the start step is the board before the first move, also after undoing back to zero', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  const [start] = manager.history('test', 'g1') as unknown as TestPublicState[];
+  assert.equal(start.moves, 0);
+  assert.deepEqual(start.playerNames, { 1: 'A', 2: 'B' });
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  const steps = manager.history('test', 'g1') as HistoryStep[];
+  assert.deepEqual(steps.map(step => step.historyStep), ['start']);
+});
+
+test('a game that ends outside a move gets an end step built from the live state', () => {
+  const manager = gameWith('A', 'B', 'C');
+  ok(manager.move(ROOM, 1, tick));
+  left(manager.disconnect(ROOM, 2));
+  left(manager.disconnect(ROOM, 3));
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  const steps = manager.history('test', 'g1') as HistoryStep[];
+  assert.deepEqual(steps.map(step => step.historyStep), ['start', 'move', 'end']);
+  const end = steps[2];
+  assert.equal(end.isGameOver, true);
+  assert.equal(end.moveCount, 1);
+  assert.equal(end.gameStatus, 'A wins! Everyone else left.');
+  assert.equal('secret' in end, false);
+});
+
+test('a game ended by an action gets an end step, and an undo removes it', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  assert.deepEqual((manager.history('test', 'g1') as HistoryStep[]).map(s => s.historyStep), ['start', 'move']);
+  ok(manager.action(ROOM, 2, { type: 'concede' }));
+  assert.deepEqual((manager.history('test', 'g1') as HistoryStep[]).map(s => s.historyStep), ['start', 'move', 'end']);
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.deepEqual((manager.history('test', 'g1') as HistoryStep[]).map(s => s.historyStep), ['start']);
+});
+
+test('a game won by a move has no end step', () => {
+  const steps = wonGame().history('test', 'g1') as HistoryStep[];
+  assert.deepEqual(steps.map(s => s.historyStep), ['start', 'move', 'move', 'move']);
+});
+
+test('gameFile refuses until the game is over', () => {
+  const now = new Date('2026-10-18T20:15:00.000Z');
+  assert.deepEqual(gameWith('A', 'B').gameFile('test', 'g1', now), { error: 'The game is not over yet' });
+  assert.equal(gameWith('A', 'B').gameFile('test', 'nope', now), null);
+  assert.equal(newManager().gameFile('chess', 'g1', now), null);
+});
+
+test('gameFile gives every step a table view and a view per seat', () => {
+  const result = wonGame().gameFile('test', 'g1', new Date('2026-10-18T20:15:00.000Z'));
+  assert.ok(result && 'file' in result);
+  const { file } = result;
+  assert.equal(file.version, 2);
+  assert.equal(file.gameType, 'test');
+  assert.equal(file.gameId, 'g1');
+  assert.equal(file.exportedAt, '2026-10-18T20:15:00.000Z');
+  assert.equal(file.steps.length, 4);
+  for (const step of file.steps) {
+    assert.equal((step as unknown as TestPublicState).viewer, null);
+    assert.equal('secret' in step, false);
+    const views = step.views as Record<string, HistoryStep & TestPublicState>;
+    assert.deepEqual(Object.keys(views), ['1', '2']);
+    assert.equal(views['2'].viewer, 2);
+    for (const view of Object.values(views)) assert.equal('secret' in view, false);
+    assert.equal(views['1'].moveCount, step.moveCount);
+    assert.equal(views['1'].historyStep, step.historyStep);
+  }
+});
+
+test('gameFile gives the end step views when the game ended by an action', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.action(ROOM, 2, { type: 'concede' }));
+  const result = manager.gameFile('test', 'g1', new Date());
+  assert.ok(result && 'file' in result);
+  const last = result.file.steps.at(-1);
+  assert.equal(last?.historyStep, 'end');
+  assert.equal(last?.views?.['1'].isGameOver, true);
+});
+
+// A store over Maps laid out like the database's two tables; copies on save and load, as the database does,
+// so shared references fail the tests. `written` counts the states each save wrote
+type MemoryStore = GameStore & { written: number[] };
+
+function memoryStore(): MemoryStore {
+  const rooms = new Map<string, { gameType: string; state: BaseGameState }>();
+  const steps = new Map<string, { before: BaseGameState; after: BaseGameState }[]>();
+  const written: number[] = [];
+  return {
+    written,
+    loadAll: () => new Map([...rooms].map(([roomId, { gameType, state }]) => {
+      const roomSteps = steps.get(roomId) ?? [];
+      const history = roomSteps.map(step => step.before);
+      const timeline = roomSteps.map(step => step.after);
+      return [roomId, structuredClone({ gameType, state, history, timeline })];
+    })),
+    save: (roomId, gameType, state, step) => {
+      rooms.set(roomId, structuredClone({ gameType, state }));
+      const roomSteps = steps.get(roomId) ?? [];
+      if (step?.type === 'push') roomSteps[step.index] = structuredClone({ before: step.before, after: step.after });
+      if (step?.type === 'pop') roomSteps.length = step.index;
+      steps.set(roomId, roomSteps);
+      written.push(step?.type === 'push' ? 3 : 1);
+    },
+    remove: roomId => { rooms.delete(roomId); steps.delete(roomId); }
+  };
+}
+
+// A new manager over the same store, as after a server restart
+function restart(store: GameStore): Manager {
+  return createGameManager([testGame], seededRandom, store);
+}
+
+function saved(store: GameStore): SavedRoom {
+  const room = store.loadAll().get(ROOM);
+  assert.ok(room, 'expected the game to be saved');
+  return room;
+}
+
+test('a started game is saved after each change and a lobby is not', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  assert.equal(store.loadAll().size, 0);
+
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal(saved(store).timeline.length, 1);
+  ok(manager.action(ROOM, 1, { type: 'ping' }));
+  assert.equal(saved(store).state.gameStatus, 'A pinged');
+});
+
+test('a save late in a long game writes one step, not the whole history', () => {
+  // Never ends, so the game can run long
+  const endless = {
+    ...testGame,
+    applyMove: (state: TestState, seat: Seat) =>
+      ({ state: { ...state, moves: state.moves + 1, currentPlayer: nextActivePlayer(state, seat) } })
+  };
+  const store = memoryStore();
+  const manager = createGameManager([endless], seededRandom, store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  for (let move = 0; move < 50; move++) ok(manager.move(ROOM, (move % 2) + 1, tick));
+
+  assert.equal(saved(store).timeline.length, 50);
+  assert.equal(store.written.at(-1), 3); // the live state, and the one step's before and after
+  assert.ok(store.written.every(count => count <= 3));
+});
+
+test('an approved undo removes the last saved step', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.equal(saved(store).timeline.length, 1);
+  assert.equal(saved(store).history.length, 1);
+  assert.equal(saved(store).state.gameStatus, 'Last turn undone');
+  assert.equal(restart(store).history('test', 'g1')?.length, 2);
+});
+
+test('a dismiss vote, a disconnect and a rejoin are saved', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+
+  manager.disconnect(ROOM, 3);
+  assert.deepEqual(saved(store).state.disconnected, [3]);
+  manager.disconnect(ROOM, 2);
+  assert.deepEqual(saved(store).state.disconnected, [2, 3]);
+  joined(manager.join('test', 'g1', 'B', true));
+  assert.deepEqual(saved(store).state.disconnected, [3]);
+
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(saved(store).state.activePlayers, [1, 2]);
+  assert.equal(saved(store).state.dismissVote, null);
+});
+
+test('a restart keeps the game and holds every seat', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+
+  const restarted = restart(store);
+  assert.deepEqual(current(restarted).disconnected, [1, 2]);
+  assert.equal(current(restarted).moveCount, 1);
+  assert.equal(joined(restarted.join('test', 'g1', 'A', true)).seat, 1);
+  assert.equal(restarted.history('test', 'g1')?.length, 2);
+});
+
+test('a restart clears open votes and dismisses nobody', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.ok(saved(store).state.dismissVote);
+
+  const restarted = restart(store);
+  assert.deepEqual(current(restarted).activePlayers, [1, 2, 3]);
+  assert.equal(current(restarted).dismissVote, null);
+  assert.equal(current(restarted).undoVote, null);
+});
+
+test('a restart clears an open undo vote', () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 2));
+  assert.ok(saved(store).state.undoVote);
+
+  const restarted = restart(store);
+  assert.equal(current(restarted).undoVote, null);
+  assert.equal(current(restarted).moveCount, 1);
+});
+
+test('after a restart the empty game is deleted after the timeout, from the store too', (t: TestContext) => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const restarted = restart(store);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  assert.ok(restarted.getState(ROOM));
+  t.mock.timers.tick(1);
+  assert.equal(restarted.getState(ROOM), undefined);
+  assert.equal(store.loadAll().has(ROOM), false);
+});
+
+test('a saved game whose type no longer exists is dropped', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const store = memoryStore();
+  const state = { ...testGame.createGameState('g1'), started: true };
+  store.save('chess/g1', 'chess', state);
+  restart(store);
+  assert.equal(store.loadAll().has('chess/g1'), false);
+  assert.equal(logged.mock.callCount(), 1);
+});
+
+test('a saved game that fails to load is dropped and the others still load', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  const { activePlayers: _activePlayers, ...broken } = { ...testGame.createGameState('g2'), started: true };
+  store.save('test/g2', 'test', broken as unknown as BaseGameState);
+
+  const restarted = restart(store);
+  assert.equal(restarted.getState('test/g2'), undefined);
+  assert.equal(store.loadAll().has('test/g2'), false);
+  assert.equal(current(restarted).moveCount, 1);
+  assert.equal(logged.mock.callCount(), 1);
+});
+
+test("loading holds every seat without running the game's disconnect hook", () => {
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+
+  // Azul, Uno and Phase 10 deal the next round from this hook once nobody is waiting
+  const withHook = { ...testGame, onPlayerDisconnected: (state: TestState) => ({ ...state, gameStatus: 'hook ran' }) };
+  const restarted = createGameManager([withHook], seededRandom, store);
+  assert.deepEqual(current(restarted).disconnected, [1, 2]);
+  assert.equal(current(restarted).gameStatus, 'A ticked');
+  assert.equal(saved(store).state.gameStatus, 'A ticked');
+});
+
+test('a store that fails to save does not stop play', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const failing: GameStore = {
+    ...memoryStore(),
+    save: () => { throw new Error('disk full'); }
+  };
+  const manager = restart(failing);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  assert.equal(ok(manager.move(ROOM, 1, tick)).moves, 1);
+  assert.equal(logged.mock.callCount(), 1);
+});
+
+test('deleting a room removes it from the store', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const store = memoryStore();
+  const manager = restart(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  assert.equal(store.loadAll().size, 1);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.equal(store.loadAll().size, 0);
 });

@@ -1,3 +1,5 @@
+export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
+
 export type Seat = number; // 1-based, seated in join order
 export type Result<T> = { state: T } | { error: string };
 export type Random = () => number;
@@ -23,3 +25,6 @@ export type BasePublicState = BaseGameState & {
   undoAvailable: boolean;
   moveCount: number; // moves on the timeline; undo lowers it
 };
+
+// One step of a game's history: the starting board, the board after each move, and the end if no move ended it
+export type HistoryStep = BasePublicState & { historyStep: 'start' | 'move' | 'end' };
