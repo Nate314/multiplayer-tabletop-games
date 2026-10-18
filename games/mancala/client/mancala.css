@@ -1,0 +1,219 @@
+/* Mancala's wooden theme. Every rule is scoped to data-game="mancala", so none of it reaches the landing page or other games.
+   The header, dialogs and vote panels use the platform defaults, recolored by the --platform-* variables. */
+
+[data-game="mancala"] {
+  color-scheme: light;
+  --platform-page-bg: #efe4d2;
+  --platform-text: #3b2a1a;
+  --platform-button-bg: #8a5a2b;
+  --platform-button-hover-bg: #6f4620;
+  --platform-button-text: #fff;
+  --platform-panel-bg: #fffaf2;
+  --platform-panel-text: #3b2a1a;
+  --muted: #6b5640;
+  --board-bg: #b5803f;
+  --board-edge: #7a4f22;
+  --hole-bg: #7d5126;
+  --hole-text: #fff4e0;
+  --playable: #ffd166;
+  --last-from: #fff4e0;
+  --last-to: #2a9d8f;
+  --status-bg: #fff4e0;
+  --status-text: #3b2a1a;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+}
+
+:root[data-theme="dark"] [data-game="mancala"] {
+  color-scheme: dark;
+  --platform-page-bg: #1c1610;
+  --platform-text: #f1e6d6;
+  --platform-button-bg: #8a5a2b;
+  --platform-button-hover-bg: #a06a35;
+  --platform-panel-bg: #2b2219;
+  --platform-panel-text: #f1e6d6;
+  --muted: #bba78e;
+  --board-bg: #5a3c1e;
+  --board-edge: #3a2612;
+  --hole-bg: #2e1e0e;
+  --hole-text: #f6e8d2;
+  --playable: #ffc94a;
+  --last-from: #f6e8d2;
+  --last-to: #4fd1c0;
+  --status-bg: #3a2d20;
+  --status-text: #f1e6d6;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+}
+
+.game-root[data-game="mancala"] {
+  text-align: center;
+}
+
+[data-game="mancala"] .game-id {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+[data-game="mancala"] .game-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 0;
+}
+
+/* Sizes inside scale with this width, so the board fits the game screen and the narrower history dialog alike */
+[data-game="mancala"] .board-wrap {
+  container-type: inline-size;
+  width: 100%;
+}
+
+[data-game="mancala"] .row-label {
+  margin: 6px 0;
+  font-weight: 600;
+}
+
+/* Eight columns: the two stores and the six pits between them, which shrink together on narrow screens */
+[data-game="mancala"] .board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) repeat(6, minmax(0, 1fr)) minmax(0, 1.25fr);
+  gap: clamp(4px, 1.5cqi, 12px);
+  box-sizing: border-box;
+  width: 100%;
+  padding: clamp(6px, 2cqi, 16px);
+  border: 3px solid var(--board-edge);
+  border-radius: 999px;
+  background: var(--board-bg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.3s ease;
+}
+
+[data-game="mancala"] .board.not-your-turn {
+  opacity: 0.7;
+}
+
+/* The dialog shrinks to fit its content, and a size container has no content width of its own, so it gets one */
+[data-game="mancala"] .history-board .board-wrap {
+  width: 520px;
+  max-width: 100%;
+}
+
+/* The history board at full strength, though nothing on it can be clicked */
+[data-game="mancala"] .history-board .board.not-your-turn {
+  opacity: 1;
+}
+
+[data-game="mancala"] .pit,
+[data-game="mancala"] .store {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 3px solid transparent;
+  background: var(--hole-bg);
+  color: var(--hole-text);
+  font: inherit;
+  font-weight: 700;
+  font-size: clamp(0.95rem, 3.5cqi, 1.5rem);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.45);
+}
+
+[data-game="mancala"] .pit {
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+[data-game="mancala"] .pit-top {
+  grid-row: 1;
+}
+
+[data-game="mancala"] .pit-bottom {
+  grid-row: 2;
+}
+
+[data-game="mancala"] .store {
+  grid-row: 1 / 3;
+  border-radius: 999px;
+  font-size: clamp(1.1rem, 4.5cqi, 2rem);
+}
+
+[data-game="mancala"] .store-right {
+  grid-column: 8;
+}
+
+[data-game="mancala"] .pit:disabled {
+  cursor: default;
+}
+
+[data-game="mancala"] .pit.playable {
+  border-color: var(--playable);
+  cursor: pointer;
+}
+
+[data-game="mancala"] .pit.playable:hover {
+  filter: brightness(1.25);
+}
+
+/* Outlines, so the last move still shows on a pit whose border marks it playable */
+[data-game="mancala"] .last-move-from {
+  outline: 3px dashed var(--last-from);
+  outline-offset: 2px;
+}
+
+[data-game="mancala"] .last-move-to {
+  outline: 3px solid var(--last-to);
+  outline-offset: 2px;
+}
+
+[data-game="mancala"] .side-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+
+[data-game="mancala"] .game-status {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: var(--status-bg);
+  color: var(--status-text);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+[data-game="mancala"] .game-status.game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="mancala"] .turn-message {
+  font-weight: 600;
+}
+
+[data-game="mancala"] .undo-button {
+  padding: 8px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg);
+  color: var(--platform-button-text, #fff);
+  font-weight: 600;
+}
+
+[data-game="mancala"] .undo-button:hover:enabled {
+  background: var(--platform-button-hover-bg);
+}
+
+[data-game="mancala"] .undo-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
