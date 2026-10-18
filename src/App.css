@@ -14,6 +14,7 @@
   --lobby-error-text: #8a1c12;
   --playing-card-face-default: #ffffff;
   --playing-card-back-default: #2b4c7e;
+  --playing-card-stripe-default: rgba(255, 255, 255, 0.18);
   --playing-card-red-default: #c0262d;
   --playing-card-black-default: #1d1d1b;
 }
@@ -32,6 +33,7 @@
   --lobby-error-text: #ffd6d0;
   --playing-card-face-default: #f2f1ec;
   --playing-card-back-default: #3a5f99;
+  --playing-card-stripe-default: rgba(255, 255, 255, 0.3);
   --playing-card-red-default: #c42a31;
   --playing-card-black-default: #1d1d1b;
 }
@@ -623,7 +625,8 @@
 
 /*
  * The standard playing card (src/components/PlayingCard.tsx). A game can retheme it on [data-game="<id>"] with
- * --playing-card-face, --playing-card-back, --playing-card-red and --playing-card-black.
+ * --playing-card-face, --playing-card-back, --playing-card-stripe, --playing-card-red, --playing-card-black,
+ * --playing-card-selected and --playing-card-highlight.
  */
 
 :where(.playing-card) {
@@ -659,7 +662,7 @@
 
 :where(.playing-card-back) {
   background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 4px, transparent 4px 8px),
+    repeating-linear-gradient(45deg, var(--playing-card-stripe, var(--playing-card-stripe-default)) 0 4px, transparent 4px 8px),
     var(--playing-card-back, var(--playing-card-back-default));
 }
 
@@ -698,11 +701,11 @@
 
 :where(.playing-card-selected) {
   transform: translateY(-8px);
-  outline: 3px solid var(--lobby-accent);
+  outline: 3px solid var(--playing-card-selected, var(--lobby-accent));
   outline-offset: 1px;
 }
 
 :where(.playing-card-highlighted) {
-  outline: 3px solid #e0a800;
+  outline: 3px solid var(--playing-card-highlight, #e0a800);
   outline-offset: 1px;
 }
