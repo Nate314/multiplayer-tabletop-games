@@ -882,3 +882,35 @@ test('an undo past a dismissal runs the game hook for the dismissed player again
   assert.deepEqual(restored.activePlayers, [1, 3]);
   assert.equal(restored.gameStatus, 'Last turn undone');
 });
+
+test('an undo that ends the game again keeps the ending in the status', () => {
+  // The re-run hook ends the game, as Phase 10 does when a tiebreak loses all but one player
+  const endsOnLeave = {
+    ...testGame,
+    onPlayerLeft: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [3], gameStatus: 'C wins!' })
+  };
+  const manager = createGameManager([endsOnLeave], seededRandom);
+  for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(restored.isGameOver, true);
+  assert.equal(restored.gameStatus, 'Last turn undone. C wins!');
+});
+
+test('undoing the first move past a dismissal keeps the game started', () => {
+  const manager = gameWith('A', 'B', 'C');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  ok(manager.requestDismiss(ROOM, 1, 2));
+  ok(manager.voteDismiss(ROOM, 3, true));
+  ok(manager.requestUndo(ROOM, 1));
+  const restored = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(restored.started, true);
+  assert.deepEqual(restored.activePlayers, [1, 3]);
+  assert.equal(restored.currentPlayer, 1);
+  assert.equal(restored.moves, 0);
+});

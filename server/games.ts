@@ -147,7 +147,10 @@ export function createGameManager(
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
       restored = removePlayer(room.game, restored, seat, random);
     }
-    room.state = { ...restored, gameStatus: 'Last turn undone' };
+    // Dismissed seats are removed in seat order, which may differ from the order they were dismissed in.
+    // A hook that ends the game again keeps its ending in the status
+    const gameStatus = restored.isGameOver ? `Last turn undone. ${restored.gameStatus}` : 'Last turn undone';
+    room.state = { ...restored, gameStatus };
     return { type: 'pop', index: room.history.length };
   }
 

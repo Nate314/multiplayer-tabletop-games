@@ -35,7 +35,7 @@ export default function PlayingCard({ card, size = 'medium', animKey, highlighte
   }
   return (
     <button type="button" className={classes.join(' ')} aria-label={label} title={label}
-      data-anim-key={animKey} disabled={disabled} onClick={onClick}>
+      aria-pressed={selected} data-anim-key={animKey} disabled={disabled} onClick={onClick}>
       {face}
     </button>
   );

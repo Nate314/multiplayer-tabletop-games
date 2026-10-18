@@ -709,3 +709,8 @@
   outline: 3px solid var(--playing-card-highlight, #e0a800);
   outline-offset: 1px;
 }
+
+/* After the selected and highlighted outlines, so keyboard focus still shows on a picked card */
+:where(button.playing-card:focus-visible) {
+  box-shadow: 0 0 0 5px var(--lobby-bg), 0 0 0 8px var(--lobby-text);
+}
