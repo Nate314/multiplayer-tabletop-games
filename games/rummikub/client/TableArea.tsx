@@ -54,6 +54,7 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
             className={classes.filter(Boolean).join(' ')}
             aria-label={group ? `Group ${index + 1}` : `Group ${index + 1} (not a valid set or run)`}
             role="group"
+            onDragEnter={edit && allowDrop}
             onDragOver={edit && allowDrop}
             onDrop={edit && (event => edit.onDrop(event, { kind: 'groupEnd', index }))}
           >
@@ -114,7 +115,8 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
         <button
           type="button"
           className={holding ? 'rk-new-group rk-new-group-ready' : 'rk-new-group'}
-          disabled={!holding}
+          aria-disabled={!holding}
+          onDragEnter={allowDrop}
           onDragOver={allowDrop}
           onDrop={event => edit.onDrop(event, { kind: 'newGroup' })}
           onClick={() => edit.onTarget({ kind: 'newGroup' })}

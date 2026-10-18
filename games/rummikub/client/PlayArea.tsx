@@ -114,6 +114,7 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
       <section
         className="rk-rack-area"
         aria-label="Your rack"
+        onDragEnter={allowDrop}
         onDragOver={allowDrop}
         onDrop={event => drop(event, { kind: 'rack' })}
       >

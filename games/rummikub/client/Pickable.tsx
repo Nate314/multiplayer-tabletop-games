@@ -32,6 +32,7 @@ export default function Pickable({ label, className, title, onActivate, onDragSt
       onKeyDown={keyDown}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onDragEnter={onDrop && allowDrop}
       onDragOver={onDrop && allowDrop}
       onDrop={onDrop}
     >

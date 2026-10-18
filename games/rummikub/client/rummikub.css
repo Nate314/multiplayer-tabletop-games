@@ -340,7 +340,7 @@
   font-weight: 600;
 }
 
-[data-game="rummikub"] .rk-new-group:disabled {
+[data-game="rummikub"] .rk-new-group[aria-disabled="true"] {
   opacity: 0.45;
 }
 
