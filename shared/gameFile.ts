@@ -4,21 +4,24 @@ import { MAX_NAME_LENGTH } from './types.ts';
 import type { HistoryStep } from './types.ts';
 
 export const GAME_FILE_FORMAT = 'multiplayer-tabletop-games';
-export const GAME_FILE_VERSION = 1;
+export const GAME_FILE_VERSION = 2;
 
 const HISTORY_STEPS = ['start', 'move', 'end'];
 const NOT_A_SAVED_GAME = 'This file is not a saved game';
 
+// `views` holds the step as each seat saw it, keyed by seat number; version 1 files have none
+export type GameFileStep = HistoryStep & { views?: Record<string, HistoryStep> };
+
 export type GameFile = {
   format: typeof GAME_FILE_FORMAT;
-  version: typeof GAME_FILE_VERSION;
+  version: 1 | 2;
   gameType: string;
   gameId: string;
   exportedAt: string;
-  steps: HistoryStep[];
+  steps: GameFileStep[];
 };
 
-export function buildGameFile(gameType: string, gameId: string, steps: HistoryStep[], now: Date): GameFile {
+export function buildGameFile(gameType: string, gameId: string, steps: GameFileStep[], now: Date): GameFile {
   return {
     format: GAME_FILE_FORMAT,
     version: GAME_FILE_VERSION,
@@ -38,12 +41,20 @@ function isHistoryStep(value: unknown): boolean {
   return !Array.isArray(value) && step !== null && HISTORY_STEPS.includes(step.historyStep as string);
 }
 
+function isGameFileStep(value: unknown): boolean {
+  if (!isHistoryStep(value)) return false;
+  const { views } = value as { views?: unknown };
+  if (views === undefined) return true;
+  const record = asRecord(views);
+  return !Array.isArray(views) && record !== null && Object.values(record).every(isHistoryStep);
+}
+
 function isGameFile(value: unknown): value is GameFile {
   const file = asRecord(value);
   if (file === null) return false;
   return (
     file.format === GAME_FILE_FORMAT &&
-    file.version === GAME_FILE_VERSION &&
+    (file.version === 1 || file.version === GAME_FILE_VERSION) &&
     typeof file.gameType === 'string' &&
     typeof file.gameId === 'string' &&
     file.gameId.length > 0 &&
@@ -51,7 +62,7 @@ function isGameFile(value: unknown): value is GameFile {
     typeof file.exportedAt === 'string' &&
     Array.isArray(file.steps) &&
     file.steps.length > 0 &&
-    file.steps.every(isHistoryStep)
+    file.steps.every(isGameFileStep)
   );
 }
 

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import HistoryDialog, { type History } from './HistoryDialog';
 import { downloadJson } from '../services/download';
-import { buildGameFile, gameFileName } from '../../shared/gameFile.ts';
+import { gameFileName } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 
@@ -33,9 +33,17 @@ export default function HistoryButton({ gameType, gameState, client }: HistoryBu
     setHistory(current => (current?.status === 'loading' ? result : current));
   }
 
-  function download(steps: HistoryStep[]) {
+  // The server builds the file; false when it could not be fetched
+  async function download(): Promise<boolean> {
     const { gameId } = gameState;
-    downloadJson(gameFileName(gameType, gameId), buildGameFile(gameType, gameId, steps, new Date()));
+    try {
+      const response = await fetch(`/api/game-file/${gameType}/${encodeURIComponent(gameId)}`);
+      if (!response.ok) return false;
+      downloadJson(gameFileName(gameType, gameId), await response.json());
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   return (

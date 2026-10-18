@@ -3,6 +3,7 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, nextActivePlayer, reconnectPlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
+import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
@@ -20,6 +21,8 @@ type Room = {
   timeline: BaseGameState[];
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
 };
+
+type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
 export type JoinResult = { roomId: string; seat: Seat; state: BasePublicState } | { error: string };
 
@@ -83,6 +86,28 @@ export function createGameManager(
   // The current state as `viewer` may see it
   function view(room: Room, viewer: Seat | null): BasePublicState {
     return publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
+  }
+
+  function findHistoryRoom(gameType: unknown, gameId: unknown) {
+    const game = findGame(gameType);
+    const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
+    return room ? { game, room } : null;
+  }
+
+  // The states a history shows, oldest first: the start, each move, and the live state when the game ended without one
+  function historyMoments(room: Room): HistoryMoment[] {
+    const moments: HistoryMoment[] = [
+      { state: room.history[0] ?? room.state, moveCount: 0, historyStep: 'start' },
+      ...room.timeline.map((state, index): HistoryMoment => ({ state, moveCount: index + 1, historyStep: 'move' }))
+    ];
+    if (room.state.isGameOver && !room.timeline.at(-1)?.isGameOver) {
+      moments.push({ state: room.state, moveCount: room.timeline.length, historyStep: 'end' });
+    }
+    return moments;
+  }
+
+  function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
+    return { ...publicView(room, state, false, moveCount, viewer), historyStep };
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
@@ -327,18 +352,23 @@ export function createGameManager(
     // The starting board, the state right after each move, and the live state when the game ended without a move
     // (everyone else left, a resignation); oldest first. Null when the game does not exist
     history(gameType: unknown, gameId: unknown): HistoryStep[] | null {
-      const game = findGame(gameType);
-      const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
-      if (!room) return null;
-      const step = (state: BaseGameState, moveCount: number, historyStep: HistoryStep['historyStep']): HistoryStep =>
-        ({ ...publicView(room, state, false, moveCount, null), historyStep });
-      const steps = [
-        step(room.history[0] ?? room.state, 0, 'start'),
-        ...room.timeline.map((state, index) => step(state, index + 1, 'move'))
-      ];
-      const last = room.timeline.at(-1);
-      if (room.state.isGameOver && !last?.isGameOver) steps.push(step(room.state, room.timeline.length, 'end'));
-      return steps;
+      const found = findHistoryRoom(gameType, gameId);
+      return found && historyMoments(found.room).map(moment => historyStep(found.room, moment, null));
+    },
+
+    // The finished game as a version 2 file: each step as the table sees it plus one view per seat
+    gameFile(gameType: unknown, gameId: unknown, now: Date): { file: GameFile } | { error: string } | null {
+      const found = findHistoryRoom(gameType, gameId);
+      if (!found) return null;
+      const { game, room } = found;
+      if (!room.state.isGameOver) return { error: 'The game is not over yet' };
+      const steps = historyMoments(room).map(moment => ({
+        ...historyStep(room, moment, null),
+        views: Object.fromEntries(
+          Object.keys(moment.state.playerNames).map(seat => [seat, historyStep(room, moment, Number(seat))])
+        )
+      }));
+      return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };
     },
 
     // As `viewer` sees it; null sees no player's hidden information

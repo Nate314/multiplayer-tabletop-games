@@ -584,6 +584,44 @@ test('a game won by a move has no end step', () => {
   assert.deepEqual(steps.map(s => s.historyStep), ['start', 'move', 'move', 'move']);
 });
 
+test('gameFile refuses until the game is over', () => {
+  const now = new Date('2026-10-18T20:15:00.000Z');
+  assert.deepEqual(gameWith('A', 'B').gameFile('test', 'g1', now), { error: 'The game is not over yet' });
+  assert.equal(gameWith('A', 'B').gameFile('test', 'nope', now), null);
+  assert.equal(newManager().gameFile('chess', 'g1', now), null);
+});
+
+test('gameFile gives every step a table view and a view per seat', () => {
+  const result = wonGame().gameFile('test', 'g1', new Date('2026-10-18T20:15:00.000Z'));
+  assert.ok(result && 'file' in result);
+  const { file } = result;
+  assert.equal(file.version, 2);
+  assert.equal(file.gameType, 'test');
+  assert.equal(file.gameId, 'g1');
+  assert.equal(file.exportedAt, '2026-10-18T20:15:00.000Z');
+  assert.equal(file.steps.length, 4);
+  for (const step of file.steps) {
+    assert.equal((step as unknown as TestPublicState).viewer, null);
+    assert.equal('secret' in step, false);
+    const views = step.views as Record<string, HistoryStep & TestPublicState>;
+    assert.deepEqual(Object.keys(views), ['1', '2']);
+    assert.equal(views['2'].viewer, 2);
+    assert.equal(views['1'].moveCount, step.moveCount);
+    assert.equal(views['1'].historyStep, step.historyStep);
+  }
+});
+
+test('gameFile gives the end step views when the game ended by an action', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.action(ROOM, 2, { type: 'concede' }));
+  const result = manager.gameFile('test', 'g1', new Date());
+  assert.ok(result && 'file' in result);
+  const last = result.file.steps.at(-1);
+  assert.equal(last?.historyStep, 'end');
+  assert.equal(last?.views?.['1'].isGameOver, true);
+});
+
 // A store over Maps laid out like the database's two tables; copies on save and load, as the database does,
 // so shared references fail the tests. `written` counts the states each save wrote
 type MemoryStore = GameStore & { written: number[] };

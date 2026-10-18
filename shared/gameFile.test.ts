@@ -1,16 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildGameFile, gameFileName, parseGameFile } from './gameFile.ts';
+import type { GameFileStep } from './gameFile.ts';
 import type { HistoryStep } from './types.ts';
 
 const steps = [{ historyStep: 'start' }, { historyStep: 'end' }] as unknown as HistoryStep[];
 const notSaved = { error: 'This file is not a saved game' };
 
+test('buildGameFile writes version 2', () => {
+  assert.equal(buildGameFile('chess', 'friday', steps, new Date()).version, 2);
+});
+
 test('buildGameFile records the format, version and export time', () => {
   const file = buildGameFile('chess', 'friday', steps, new Date('2026-10-18T20:15:00.000Z'));
   assert.deepEqual(file, {
     format: 'multiplayer-tabletop-games',
-    version: 1,
+    version: 2,
     gameType: 'chess',
     gameId: 'friday',
     exportedAt: '2026-10-18T20:15:00.000Z',
@@ -28,6 +33,20 @@ test('parseGameFile reads back a file built by buildGameFile', () => {
   assert.deepEqual(parseGameFile(JSON.stringify(file), ['chess']), { file });
 });
 
+test('parseGameFile reads a version 1 file', () => {
+  const file = { ...buildGameFile('chess', 'friday', steps, new Date('2026-10-18T20:15:00.000Z')), version: 1 };
+  assert.deepEqual(parseGameFile(JSON.stringify(file), ['chess']), { file });
+});
+
+test('parseGameFile reads a version 2 file with views', () => {
+  const withViews = [
+    { historyStep: 'start', views: { '1': { historyStep: 'start' }, '2': { historyStep: 'start' } } },
+    { historyStep: 'end' }
+  ] as unknown as GameFileStep[];
+  const file = buildGameFile('chess', 'friday', withViews, new Date('2026-10-18T20:15:00.000Z'));
+  assert.deepEqual(parseGameFile(JSON.stringify(file), ['chess']), { file });
+});
+
 test('parseGameFile rejects anything that is not a saved game', () => {
   const valid = buildGameFile('chess', 'friday', steps, new Date('2026-10-18T20:15:00.000Z'));
   const withChange = (change: Record<string, unknown>) => JSON.stringify({ ...valid, ...change });
@@ -41,7 +60,10 @@ test('parseGameFile rejects anything that is not a saved game', () => {
     '[]',
     'null',
     withChange({ format: 'other' }),
-    withChange({ version: 2 }),
+    withChange({ version: 3 }),
+    withChange({ steps: [{ historyStep: 'start', views: [] }] }),
+    withChange({ steps: [{ historyStep: 'start', views: { '1': 'x' } }] }),
+    withChange({ steps: [{ historyStep: 'start', views: { '1': { historyStep: 'middle' } } }] }),
     without('steps'),
     withChange({ steps: [] }),
     withChange({ steps: [1, null] }),

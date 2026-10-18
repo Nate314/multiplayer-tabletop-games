@@ -35,6 +35,17 @@ app.get('/api/history/:gameType/:gameId', (req, res) => {
   res.json({ steps });
 });
 
+app.get('/api/game-file/:gameType/:gameId', (req, res) => {
+  const result = manager.gameFile(req.params.gameType, req.params.gameId, new Date());
+  if (!result) {
+    res.status(404).json({ error: 'Game not found' });
+  } else if ('error' in result) {
+    res.status(409).json({ error: result.error });
+  } else {
+    res.json(result.file);
+  }
+});
+
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // Serve index.html for any routes that don't match static files

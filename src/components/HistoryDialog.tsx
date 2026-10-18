@@ -14,7 +14,7 @@ type HistoryDialogProps = {
   history: History;
   title: string;
   onClose: () => void;
-  onDownload?: (steps: HistoryStep[]) => void;
+  onDownload?: () => Promise<boolean>;
 };
 
 type HistoryStepsProps = {
@@ -66,7 +66,13 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
 
 // The moves as they were when the dialog opened; reopening fetches them again
 export default function HistoryDialog({ client, history, title, onClose, onDownload }: HistoryDialogProps) {
+  const [downloadFailed, setDownloadFailed] = useState(false);
   useEscapeKey(onClose);
+
+  async function download() {
+    setDownloadFailed(false);
+    setDownloadFailed(!(await onDownload?.()));
+  }
 
   const canDownload = onDownload && history.status === 'loaded' && history.steps.at(-1)?.isGameOver === true;
 
@@ -86,10 +92,11 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
         {body}
         <div className="modal-buttons">
           {canDownload && (
-            <button type="button" className="primary-button" onClick={() => onDownload(history.steps)}>Download game</button>
+            <button type="button" className="primary-button" onClick={download}>Download game</button>
           )}
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>
+        {downloadFailed && <p className="history-move">Could not download the game</p>}
       </div>
     </div>
   );
