@@ -83,6 +83,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               selected: choice.meeple?.kind === feature.kind && choice.meeple.index === feature.index
             }))}
             onMeeple={pickMeeple}
+            focus={canMove && placed ? board[board.length - 1] : null}
           />
         </div>
         <div className="cc-side-panel">

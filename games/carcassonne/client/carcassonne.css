@@ -113,7 +113,7 @@
 [data-game="carcassonne"] .cc-board-svg {
   display: block;
   width: 100%;
-  height: max(340px, calc(100vh - 150px));
+  height: max(340px, calc(100vh - 170px));
   touch-action: none;
   cursor: grab;
   user-select: none;
@@ -247,6 +247,7 @@
 
 /* History dialog */
 [data-game="carcassonne"] .cc-history { display: flex; flex-direction: column; gap: 8px; width: min(640px, 82vw); text-align: left; }
+[data-game="carcassonne"] .cc-history .cc-board-area { flex: none; }
 [data-game="carcassonne"] .cc-history .cc-board-svg { height: min(52vh, 480px); min-height: 240px; }
 
 /* Stacked under the board on a narrow window: a shorter board keeps the turn controls in view */

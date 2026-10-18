@@ -10,6 +10,7 @@ export const CELL = 100;
 const MARGIN = 1.5; // cells of space around the tiles when fitting the board
 const MIN_SPAN = 4 * CELL;
 const MAX_SPAN = 40 * CELL;
+const FOCUS_SPAN = 5; // cells across the close view of one square
 const DRAG_THRESHOLD = 5; // pixels before a press counts as a drag rather than a click
 
 export type Cell = { x: number; y: number };
@@ -25,6 +26,7 @@ type BoardProps = {
   meepleSeat?: Seat; // the player choosing a meeple spot on the last tile
   meepleChoices?: MeepleChoice[];
   onMeeple?: (feature: FeatureRef) => void;
+  focus?: Cell | null; // a square to show up close, such as the tile waiting for its meeple
 };
 
 type View = { x: number; y: number; w: number; h: number };
@@ -39,14 +41,23 @@ function fit(board: Placement[], extra: Cell[]): View {
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
 
+// A close view of one square and the squares around it
+function around(cell: Cell): View {
+  const span = FOCUS_SPAN * CELL;
+  return { x: (cell.x + 0.5) * CELL - span / 2, y: (cell.y + 0.5) * CELL - span / 2, w: span, h: span };
+}
+
 // The board as an SVG map: drag to pan, the wheel or the buttons to zoom, Fit to see every tile again.
-// While the player has not moved the view, it refits by itself as the board grows.
-export default function Board({ board, highlight = null, cells = [], preview = null, onCell, meepleSeat, meepleChoices = [], onMeeple }: BoardProps) {
+// While the player has not moved the view, it refits by itself as the board grows, or shows `focus` up close.
+export default function Board({ board, highlight = null, cells = [], preview = null, onCell, meepleSeat, meepleChoices = [], onMeeple, focus = null }: BoardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const fitted = useMemo(() => fit(board, cells), [board, cells]);
-  const [view, setView] = useState<View | null>(null); // null follows the fitted view
+  const fitted = useMemo(() => (focus ? around(focus) : fit(board, cells)), [board, cells, focus]);
+  // A view the player moved to, kept until the focus comes or goes; null follows the fitted view
+  const focusKey = focus ? `${focus.x},${focus.y}` : '';
+  const [moved, setMoved] = useState<{ view: View; focusKey: string } | null>(null);
+  const shown = moved && moved.focusKey === focusKey ? moved.view : fitted;
+  const setView = (view: View | null) => setMoved(view && { view, focusKey });
   const drag = useRef<{ id: number; x: number; y: number; view: View; moved: boolean } | null>(null);
-  const shown = view ?? fitted;
 
   // Scale from screen pixels to board units, as the SVG keeps its aspect ratio
   const unitsPerPixel = (current: View) => {
@@ -55,15 +66,12 @@ export default function Board({ board, highlight = null, cells = [], preview = n
     return Math.max(current.w / rect.width, current.h / rect.height);
   };
 
-  const zoom = (factor: number, around?: { x: number; y: number }) => {
-    setView(current => {
-      const from = current ?? fitted;
-      const w = Math.min(MAX_SPAN, Math.max(MIN_SPAN, from.w * factor));
-      const scale = w / from.w;
-      const h = from.h * scale;
-      const cx = around?.x ?? from.x + from.w / 2, cy = around?.y ?? from.y + from.h / 2;
-      return { x: cx - (cx - from.x) * scale, y: cy - (cy - from.y) * scale, w, h };
-    });
+  const zoom = (factor: number, pivot?: { x: number; y: number }) => {
+    const from = shown;
+    const w = Math.min(MAX_SPAN, Math.max(MIN_SPAN, from.w * factor));
+    const scale = w / from.w;
+    const cx = pivot?.x ?? from.x + from.w / 2, cy = pivot?.y ?? from.y + from.h / 2;
+    setView({ x: cx - (cx - from.x) * scale, y: cy - (cy - from.y) * scale, w, h: from.h * scale });
   };
 
   // The wheel zooms about the pointer; React's wheel listener is passive, so scrolling the page is stopped here
