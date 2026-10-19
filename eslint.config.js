@@ -41,4 +41,12 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Playwright fixtures take an empty `{}` and hand their value on through a `use` that is not React's
+    files: ['e2e/**/*.ts'],
+    rules: {
+      'no-empty-pattern': 'off',
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
 )

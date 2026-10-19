@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createGameManager } from './games.ts';
 import { openGameStore } from './store.ts';
+import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, Result, Seat } from '../shared/types.ts';
@@ -14,6 +15,7 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
 const HEARTBEAT_MS = 15_000; // a socket that misses one ping is dead within about 30 s
 const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data/games.sqlite');
+const E2E = process.env.E2E === '1'; // test hooks for the Playwright suite; never set on a real server
 
 const app = express();
 const server = http.createServer(app);
@@ -21,7 +23,8 @@ const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real mess
 
 type Connection = { roomId: string; seat: Seat };
 
-const manager = createGameManager(GAMES, Math.random, openGameStore(DATABASE_PATH));
+const e2eRandom = E2E ? createE2eRandom() : null;
+const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH));
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
 
@@ -45,6 +48,8 @@ app.get('/api/game-file/:gameType/:gameId', (req, res) => {
     res.json(result.file);
   }
 });
+
+if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
 
 app.use(express.static(path.join(__dirname, '../dist')));
 

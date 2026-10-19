@@ -386,6 +386,20 @@ export function createGameManager(
     getState(roomId: string, viewer: Seat | null = null): BasePublicState | undefined {
       const room = rooms.get(roomId);
       return room && view(room, viewer);
+    },
+
+    // Only for the end-to-end test hooks in e2e.ts: the full state, secrets included
+    rawState(roomId: string): BaseGameState | undefined {
+      return rooms.get(roomId)?.state;
+    },
+
+    // Only for the end-to-end test hooks in e2e.ts: swaps in a crafted state, keeping each seat's key
+    replaceState(roomId: string, state: BaseGameState): boolean {
+      const room = rooms.get(roomId);
+      if (!room) return false;
+      room.state = { ...state, seatKeys: room.state.seatKeys };
+      save(roomId, room);
+      return true;
     }
   };
 }
