@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { HEX_COUNT, RESOURCES, VERTEX_COUNT, VERTEX_EDGES } from './board.ts';
 import { cityError, roadSpots, settlementError, settlementSpotError } from './building.ts';
 import { robberVictims } from './dice.ts';
@@ -27,7 +28,7 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(seed: number, names = NAMES): Manager {
-  const manager = createGameManager([catan], seeded(seed));
+  const manager = rememberingKeys(createGameManager([catan], seeded(seed)));
   for (const name of names) manager.join('catan', 'g1', name);
   return manager;
 }

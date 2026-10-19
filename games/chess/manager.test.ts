@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { chess } from './index.ts';
 import type { Move, PublicGameState, Square } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -11,7 +12,7 @@ const sq = (name: string): Square => ({ row: 8 - Number(name[1]), col: name.char
 const mv = (from: string, to: string): Move => ({ type: 'move', from: sq(from), to: sq(to) });
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([chess]);
+  const manager = rememberingKeys(createGameManager([chess]));
   for (const name of names) manager.join('chess', 'g1', name);
   return manager;
 }

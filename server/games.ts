@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
@@ -24,7 +25,7 @@ type Room = {
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
-export type JoinResult = { roomId: string; seat: Seat; state: BasePublicState } | { error: string };
+export type JoinResult = { roomId: string; seat: Seat; seatKey: string; state: BasePublicState } | { error: string };
 
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
@@ -80,7 +81,8 @@ export function createGameManager(
   function publicView(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
-    return { ...room.game.toPublicState(state, undoAvailable, viewer), moveCount };
+    const { seatKeys: _seatKeys, ...view } = room.game.toPublicState(state, undoAvailable, viewer);
+    return { ...view, moveCount };
   }
 
   // The current state as `viewer` may see it
@@ -144,6 +146,7 @@ export function createGameManager(
       disconnected: state.disconnected,
       dismissVote: null
     };
+    if (room.game.onUndo) restored = room.game.onUndo(restored, random);
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
       restored = removePlayer(room.game, restored, seat, random);
     }
@@ -184,8 +187,9 @@ export function createGameManager(
   }
 
   return {
-    // `rejoin` only takes back a held seat; it never creates a game or takes a new seat
-    join(gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown): JoinResult {
+    // `rejoin` only takes back a held seat; it never creates a game or takes a new seat.
+    // A held seat is taken back only with the `seatKey` its player was given on joining
+    join(gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown): JoinResult {
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
 
@@ -204,20 +208,25 @@ export function createGameManager(
       if (known !== undefined) {
         if (!state.activePlayers.includes(known)) return { error: 'You were removed from this game' };
         if (!state.disconnected.includes(known)) return { error: `${state.playerNames[known]} is already in this game` };
-        room.state = reconnectPlayer(state, known);
+        // A game saved before seat keys existed has none, so its first rejoin by name is given one
+        const expected = state.seatKeys?.[known];
+        if (expected !== undefined && seatKey !== expected) return { error: 'That name is taken in this game' };
+        const key = expected ?? randomUUID();
+        room.state = { ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } };
         clearEmptyTimer(room);
         save(roomId, room);
-        return { roomId, seat: known, state: view(room, known) };
+        return { roomId, seat: known, seatKey: key, state: view(room, known) };
       }
       if (rejoin === true) return { error: 'You are not in this game' };
 
       const result = addPlayer(game, state, name, random);
       if ('error' in result) return result;
 
-      room.state = result.state;
+      const key = randomUUID();
+      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
       rooms.set(roomId, room);
       save(roomId, room);
-      return { roomId, seat: result.seat, state: view(room, result.seat) };
+      return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
     },
 
     // Before the first move this frees the seat; after it the seat is held for a rejoin
@@ -277,8 +286,6 @@ export function createGameManager(
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
       if (connectedPlayers(state).length < 2) return { error: 'Not enough players to vote' };
-      // An undo keeps today's seats, so below the game's minimum no move could be made after it
-      if (state.activePlayers.length < room.game.info.minPlayers) return { error: 'Not enough players left to undo' };
 
       room.state = {
         ...state,

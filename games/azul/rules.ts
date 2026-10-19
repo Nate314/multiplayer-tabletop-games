@@ -1,6 +1,7 @@
 // Azul rules shared by the browser (legal picks and lines) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
+import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
   Bonus,
@@ -101,15 +102,6 @@ export function endGameBonus(wall: boolean[][]): Bonus {
   const colors = COLORS.filter(color => lines.every(row => wall[row][wallColumn(row, color)])).length;
   const rows = completeRows(wall);
   return { rows, columns, colors, points: rows * 2 + columns * 7 + colors * 10 };
-}
-
-function shuffle<T>(items: T[], random: Random): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }
 
 function emptyBoard(): PlayerBoard {
@@ -315,7 +307,8 @@ function endRound(state: GameState): GameState {
     roundSummary: { round: state.round, seats: mapSeats(tiled, result => result.summary), acknowledged: [] },
     gameStatus: `Round ${state.round} scored. Waiting for everyone to continue.`
   };
-  return Object.values(boards).some(board => completeRows(board.wall) > 0) ? endGame(scored) : scored;
+  // A board of a player who left is still tiled, but only a seated player's full row ends the game
+  return state.activePlayers.some(seat => completeRows(boards[seat].wall) > 0) ? endGame(scored) : scored;
 }
 
 // The next round may have been waiting only for the player who left

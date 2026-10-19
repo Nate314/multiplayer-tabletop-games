@@ -321,7 +321,7 @@ test('illegal moves are refused', () => {
   assert.deepEqual(applyMove(azul, state, 1, take(CENTER, 'blue', 1)), { error: 'No tiles of that color there' });
   assert.deepEqual(applyMove(azul, state, 1, take(factory(0), 'blue', 3)), { error: 'Those tiles cannot go on that line' });
   assert.deepEqual(applyMove(azul, { ...state, isGameOver: true }, 1, take(factory(0), 'blue', 1)), { error: 'The game is over' });
-  assert.deepEqual(applyMove(azul, { ...state, activePlayers: [1] }, 1, take(factory(0), 'blue', 1)), { error: 'Waiting for more players' });
+  assert.deepEqual(applyMove(azul, { ...state, started: false, activePlayers: [1] }, 1, take(factory(0), 'blue', 1)), { error: 'Waiting for more players' });
 });
 
 test('malformed moves are refused', () => {
@@ -621,6 +621,20 @@ test('a tie on points goes to the player with more complete rows, or is shared',
   assert.equal(shared.boards[2].score, 7);
   assert.deepEqual(shared.winners, [1, 2]);
   assert.equal(shared.gameStatus, 'Alice and Bob share the win with 7 points!');
+});
+
+test('a full row on the board of a player who left does not end the game', () => {
+  const state = game({
+    factories: [['red'], [], [], [], [], [], []],
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cara' },
+    boards: {
+      1: board(), 2: board(),
+      3: board({ wall: wallOf([0, 1], [0, 2], [0, 3], [0, 4]), patternLines: linesOf({ 0: { color: 'blue', count: 1 } }) })
+    }
+  });
+  const next = ok(applyMove(azul, state, 1, take(factory(0), 'red', 'floor')));
+  assert.equal(next.isGameOver, false);
+  assert.ok(next.roundSummary);
 });
 
 test('a player who left cannot win', () => {

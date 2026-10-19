@@ -1,18 +1,18 @@
 // Catan rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, building.ts, dice.ts, trades.ts, devCards.ts, roads.ts and state.ts.
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState } from '../../shared/seating.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { EDGE_COUNT, HEX_COUNT, VERTEX_COUNT, desertOf, isIndex, randomLayout } from './board.ts';
 import {
   advanceSetup, buildCity, buildRoad, buildSettlement, placeFreeRoad, placeSetupRoad, placeSetupSettlement
 } from './building.ts';
 import { DEV_DECK, buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
-import { afterDiscards, discard, moveRobber, roll, rollDie } from './dice.ts';
+import { afterDiscards, discard, discardForAbsent, moveRobber, roll, rollDie } from './dice.ts';
 import { roadLengths } from './roads.ts';
 import { BANK_SIZE, add, isResource, noResources, parseResources, total } from './resources.ts';
 import {
-  LOG_SIZE, checkWin, endGame, nameOf, nextPlayer, note, points, settleAwards, startTurn, syncTurn, visiblePoints
+  LOG_SIZE, checkWin, endGame, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
 } from './state.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
@@ -195,7 +195,7 @@ function playSetup(state: GameState, seat: Seat, move: Move): Result<GameState> 
 }
 
 function endTurn(state: GameState, seat: Seat): Result<GameState> {
-  return { state: note(startTurn(state, nextPlayer(state, seat)), `${nameOf(state, seat)} ended their turn`) };
+  return { state: note(startTurn(state, nextActivePlayer(state, seat)), `${nameOf(state, seat)} ended their turn`) };
 }
 
 // The turn holder's moves: a pending robber, discard or free road comes first; development cards may be played
@@ -238,7 +238,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = play({ ...state, log: [], steal: null }, seat, parsed, random);
   if ('error' in result) return result;
-  return { state: finish(state, result.state, { type: parsed.type, playerNumber: seat }) };
+  return { state: finish(state, discardForAbsent(result.state, random), { type: parsed.type, playerNumber: seat }) };
 }
 
 function act(state: GameState, seat: Seat, action: unknown): Result<GameState> {
@@ -306,7 +306,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   }
   next = setupWithout(next, seat);
   if (!next.setup && state.turnHolder === seat) {
-    const following = nextPlayer(next, seat);
+    const following = nextActivePlayer(next, seat);
     next = note(startTurn(next, following), `${nameOf(state, following)}'s turn`);
   }
   if (next.activePlayers.length < MIN_PLAYERS) {
@@ -321,8 +321,10 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 }
 
 // An offer from or to a player who disconnects is dropped, so it never holds up the turn
-export function onPlayerDisconnected(state: GameState, seat: Seat): GameState {
-  const { trade } = state;
-  if (!trade || (trade.from !== seat && trade.to !== seat)) return state;
-  return finish(state, note({ ...state, log: [], trade: null }, 'The open trade offer was dropped'));
+// A trade with the player is dropped, and a discard they owe is made for them
+export function onPlayerDisconnected(state: GameState, seat: Seat, random: Random): GameState {
+  let next: GameState = { ...state, log: [] };
+  if (state.trade?.from === seat || state.trade?.to === seat) next = note({ ...next, trade: null }, 'The open trade offer was dropped');
+  next = discardForAbsent(next, random);
+  return next.log.length > 0 ? finish(state, next) : state;
 }

@@ -18,6 +18,9 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   onPlayerLeft?(state: S, seat: Seat, random: Random): S;
   // Mid-game, after the platform marked `seat` disconnected and settled votes.
   onPlayerDisconnected?(state: S, seat: Seat, random: Random): S;
+  // After an approved undo, on the restored state. A game reshuffles its face-down piles here, so a player cannot
+  // undo a draw to learn what comes next.
+  onUndo?(state: S, random: Random): S;
   // Called only after the platform's turn guards pass. Validates untrusted `move`.
   // `random` is for dice and reshuffles; an undo restores the state before the move, so a replayed move may roll differently.
   applyMove(state: S, seat: Seat, move: unknown, random: Random): Result<S>;

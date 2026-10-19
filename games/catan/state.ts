@@ -13,11 +13,6 @@ export function note(state: GameState, text: string): GameState {
   return { ...state, log: [...state.log, text] };
 }
 
-// The next seat still in the game after `from`, which need not be in it itself
-export function nextPlayer(state: Pick<GameState, 'activePlayers'>, from: Seat): Seat | null {
-  return state.activePlayers.find(seat => seat > from) ?? state.activePlayers[0] ?? null;
-}
-
 // Points everyone can see: buildings and award cards
 export function visiblePoints(state: Pick<GameState, 'buildings' | 'longestRoad' | 'largestArmy'>, seat: Seat): number {
   const buildings = Object.values(state.buildings).filter(building => building.seat === seat)

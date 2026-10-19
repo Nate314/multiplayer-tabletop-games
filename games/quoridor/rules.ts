@@ -166,6 +166,13 @@ export function resetLobby(state: GameState): GameState {
   };
 }
 
+// A dismissed player's pawn leaves the board, so it no longer blocks a square or can be jumped
+export function onPlayerLeft(state: GameState, seat: Seat): GameState {
+  const pawns = { ...state.pawns };
+  delete pawns[seat];
+  return { ...state, pawns };
+}
+
 export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
   return { ...state, undoAvailable };
 }

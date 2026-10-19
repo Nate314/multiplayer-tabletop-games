@@ -40,7 +40,7 @@ flowchart TD
 - The in-memory game manager, keyed by game type and game ID (`server/games.ts`)
 - Saving every started game to SQLite and loading them back on start (`server/store.ts`)
 - Seating in join order up to the game's maximum, with names unique ignoring case, and refusing new names after the game has started (`shared/seating.ts`)
-- Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name, and dismissing a disconnected player by vote
+- Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name with the seat's key, and dismissing a disconnected player by vote
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
 - A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
 - Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
@@ -63,7 +63,7 @@ flowchart TD
 - `games/registry.ts` lists every `GameDefinition` in landing page order
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
-- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use. Games built before them keep their own shuffle
+- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
 
@@ -133,7 +133,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
    - Creates games from the registry, seats players, and locks joining after the first move
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
-   - Keeps each game's undo history and runs unanimous undo votes. An undo is refused once fewer players are seated than the game's minimum, since an undo keeps today's seats and no move could follow it. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
+   - Keeps each game's undo history and runs unanimous undo votes. An undo calls the game's `onUndo` on the restored state, where a game reshuffles its face-down piles. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
    - Holds each game's full state in memory, written through to SQLite, and sends only the public view
    - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state
@@ -167,12 +167,12 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
 1. **Joining**
 
    ```
-   Client -> Server: JOIN_GAME (gameType, gameId, playerName, rejoin)
-   Server -> Client: GAME_JOINED (playerNumber, gameState) or GAME_ERROR
+   Client -> Server: JOIN_GAME (gameType, gameId, playerName, rejoin, seatKey)
+   Server -> Client: GAME_JOINED (playerNumber, seatKey, gameState) or GAME_ERROR
    Server -> All clients in the game: GAME_STATE
    ```
 
-   A join with a name already seated in the game, ignoring case, takes back that seat if it is held. `rejoin: true` (sent by the automatic and one-click rejoins) only takes back a held seat; it never creates a game or takes a new seat, and fails with "Game not found", "You are not in this game", "You were removed from this game" or "<name> is already in this game".
+   Each seat gets a random `seatKey` when it is taken, kept in the game state (and so saved) but stripped from every view. The browser remembers it with the game. A join with a name already seated in the game, ignoring case, takes back that seat if it is held and the join sends its key; a wrong or missing key fails with "That name is taken in this game". A game saved before keys existed gives its seat a key on the first rejoin by name. `rejoin: true` (sent by the automatic and one-click rejoins) only takes back a held seat; it never creates a game or takes a new seat, and fails with "Game not found", "You are not in this game", "You were removed from this game", "That name is taken in this game" or "<name> is already in this game".
 
 2. **Playing**
 

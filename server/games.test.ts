@@ -1,6 +1,7 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
+import { rememberingKeys } from './testing.ts';
 import type { GameStore, SavedRoom } from './store.ts';
 import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
@@ -10,12 +11,13 @@ type Manager = ReturnType<typeof createGameManager>;
 
 const tick = { type: 'tick' };
 const ROOM = 'test/g1';
+const keys = new Map<string, string>(); // seat keys, kept across a restart
 
 // Deterministic stand-in for Math.random
 const seededRandom: Random = () => 0.5;
 
 function newManager(): Manager {
-  return createGameManager([testGame], seededRandom);
+  return rememberingKeys(createGameManager([testGame], seededRandom), keys);
 }
 
 function gameWith(...names: string[]): Manager {
@@ -83,7 +85,7 @@ test('an unknown or missing game type is refused', () => {
 
 test('the same game ID in two game types is two rooms', () => {
   const copy = { ...testGame, info: { ...testGame.info, id: 'test2' } };
-  const manager = createGameManager([testGame, copy], seededRandom);
+  const manager = rememberingKeys(createGameManager([testGame, copy], seededRandom), keys);
   const first = joined(manager.join('test', 'friday', 'A'));
   const second = joined(manager.join('test2', 'friday', 'B'));
   assert.equal(first.seat, 1);
@@ -319,7 +321,7 @@ test('actions are not recorded for undo', () => {
 
 test('a game without actions refuses them', () => {
   const withoutActions = { ...testGame, applyAction: undefined };
-  const manager = createGameManager([withoutActions], seededRandom);
+  const manager = rememberingKeys(createGameManager([withoutActions], seededRandom), keys);
   manager.join('test', 'g1', 'A');
   manager.join('test', 'g1', 'B');
   assert.deepEqual(manager.action(ROOM, 1, { type: 'ping' }), { error: 'This game has no actions' });
@@ -349,6 +351,22 @@ test('a connected name cannot be taken', () => {
   assert.deepEqual(manager.join('test', 'g1', 'a'), { error: 'A is already in this game' });
   assert.deepEqual(manager.join('test', 'g1', 'A', true), { error: 'A is already in this game' });
   assert.deepEqual(gameWith('Bob').join('test', 'g1', 'BOB '), { error: 'Bob is already in this game' });
+});
+
+test('a held seat is taken back only with its key, which no view shows', () => {
+  const manager = createGameManager([testGame], seededRandom);
+  const alice = joined(manager.join('test', 'g1', 'A'));
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  assert.deepEqual(manager.join('test', 'g1', 'A', true), { error: 'That name is taken in this game' });
+  assert.deepEqual(manager.join('test', 'g1', 'a', false, 'guess'), { error: 'That name is taken in this game' });
+  const back = joined(manager.join('test', 'g1', 'A', true, alice.seatKey));
+  assert.equal(back.seat, 1);
+  assert.equal(back.seatKey, alice.seatKey);
+  for (const view of [back.state, manager.getState(ROOM, 2), ...(manager.history('test', 'g1') ?? [])]) {
+    assert.equal(JSON.stringify(view).includes(alice.seatKey), false);
+  }
 });
 
 test('a dismissed player cannot rejoin', () => {
@@ -653,7 +671,7 @@ function memoryStore(): MemoryStore {
 
 // A new manager over the same store, as after a server restart
 function restart(store: GameStore): Manager {
-  return createGameManager([testGame], seededRandom, store);
+  return rememberingKeys(createGameManager([testGame], seededRandom, store), keys);
 }
 
 function saved(store: GameStore): SavedRoom {
@@ -683,7 +701,7 @@ test('a save late in a long game writes one step, not the whole history', () => 
       ({ state: { ...state, moves: state.moves + 1, currentPlayer: nextActivePlayer(state, seat) } })
   };
   const store = memoryStore();
-  const manager = createGameManager([endless], seededRandom, store);
+  const manager = rememberingKeys(createGameManager([endless], seededRandom, store), keys);
   manager.join('test', 'g1', 'A');
   manager.join('test', 'g1', 'B');
   for (let move = 0; move < 50; move++) ok(manager.move(ROOM, (move % 2) + 1, tick));
@@ -821,7 +839,7 @@ test("loading holds every seat without running the game's disconnect hook", () =
 
   // Azul, Uno and Phase 10 deal the next round from this hook once nobody is waiting
   const withHook = { ...testGame, onPlayerDisconnected: (state: TestState) => ({ ...state, gameStatus: 'hook ran' }) };
-  const restarted = createGameManager([withHook], seededRandom, store);
+  const restarted = rememberingKeys(createGameManager([withHook], seededRandom, store), keys);
   assert.deepEqual(current(restarted).disconnected, [1, 2]);
   assert.equal(current(restarted).gameStatus, 'A ticked');
   assert.equal(saved(store).state.gameStatus, 'A ticked');
@@ -854,21 +872,23 @@ test('deleting a room removes it from the store', (t: TestContext) => {
   assert.equal(store.loadAll().size, 0);
 });
 
-test('undo is refused once too few players are left to play', () => {
-  // A game that needs three, like Rook's four: undoing past a dismissal would leave it unplayable
-  const manager = createGameManager([{ ...testGame, info: { ...testGame.info, minPlayers: 3 } }], seededRandom);
+test('a started game plays on and can undo after dismissals take it below its minimum', () => {
+  // Only the start needs the minimum; a game that cannot go on ends itself in onPlayerLeft, as Rook does
+  const manager = rememberingKeys(createGameManager([{ ...testGame, info: { ...testGame.info, minPlayers: 3 } }], seededRandom), keys);
   for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
   ok(manager.move(ROOM, 1, tick));
   manager.disconnect(ROOM, 3);
   ok(manager.requestDismiss(ROOM, 1, 3));
   ok(manager.voteDismiss(ROOM, 2, true));
-  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players left to undo' });
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  assert.equal(ok(manager.voteUndo(ROOM, 2, true)).currentPlayer, 2);
 });
 
 test('an undo past a dismissal runs the game hook for the dismissed player again', () => {
   // The restored state is from before the dismissal, so the game must clear the leaver out of it once more
   const leaveHook = { ...testGame, onPlayerLeft: (state: TestState) => ({ ...state, moves: state.moves + 100 }) };
-  const manager = createGameManager([leaveHook], seededRandom);
+  const manager = rememberingKeys(createGameManager([leaveHook], seededRandom), keys);
   for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
   ok(manager.move(ROOM, 1, tick));
   ok(manager.move(ROOM, 2, tick));
@@ -889,7 +909,7 @@ test('an undo that ends the game again keeps the ending in the status', () => {
     ...testGame,
     onPlayerLeft: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [3], gameStatus: 'C wins!' })
   };
-  const manager = createGameManager([endsOnLeave], seededRandom);
+  const manager = rememberingKeys(createGameManager([endsOnLeave], seededRandom), keys);
   for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
   ok(manager.move(ROOM, 1, tick));
   manager.disconnect(ROOM, 2);

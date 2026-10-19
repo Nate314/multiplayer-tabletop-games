@@ -24,7 +24,7 @@ function isSamePosition(a: Position, b: Position): boolean {
 export default function Board({ gameState, playerNumber, isMyTurn, selectedAction, showLastMove, onMove }: BoardProps) {
   const [hoveredSquare, setHoveredSquare] = useState<Position | null>(null);
   const { pawns, walls, playerNames, wallCounts, lastMove, isGameOver } = gameState;
-  const seats = Object.keys(playerNames).map(Number);
+  const seats = Object.keys(pawns).map(Number); // a dismissed player's pawn is off the board
   const validMoves = isMyTurn ? getValidMoves(gameState, playerNumber) : [];
   const placingWall = isMyTurn && selectedAction !== 'move';
   const hoveredWall = placingWall && hoveredSquare ? wallAt(hoveredSquare) : null;

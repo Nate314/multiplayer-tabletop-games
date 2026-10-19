@@ -243,13 +243,13 @@ test('reaching the goal edge wins, for every seat', () => {
   }
 });
 
-test('turns skip players who left', () => {
+test('turns skip players who left, and their pawn leaves the board', () => {
   let state = play(lobby('A', 'B', 'C'), 1, step(7, 4));
   assert.equal(state.currentPlayer, 2);
   state = removePlayer(quoridor, state, 2);
   assert.equal(state.currentPlayer, 3);
   assert.equal(state.gameStatus, 'B was dismissed');
-  assert.deepEqual(state.pawns[2], { row: 0, col: 4 });
+  assert.equal(state.pawns[2], undefined);
   assert.equal(state.playerNames[2], 'B');
   state = play(state, 3, step(4, 1));
   assert.equal(state.currentPlayer, 1);

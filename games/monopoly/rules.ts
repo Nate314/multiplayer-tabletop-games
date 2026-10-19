@@ -266,7 +266,10 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 }
 
 // A trade offer from or to a player who disconnects is dropped, so it never holds up other trades
+// A trade with the player is dropped, and an auction waiting only on them closes
 export function onPlayerDisconnected(state: GameState, seat: Seat): GameState {
-  if (state.trade?.from !== seat && state.trade?.to !== seat) return state;
-  return finish(state, note(dropTradesOf({ ...state, log: [] }, seat), 'The open trade offer was dropped'));
+  let next: GameState = { ...state, log: [] };
+  if (state.trade?.from === seat || state.trade?.to === seat) next = note(dropTradesOf(next, seat), 'The open trade offer was dropped');
+  next = closeAuctionIfDone(next);
+  return next.log.length > 0 ? finish(state, next) : state;
 }

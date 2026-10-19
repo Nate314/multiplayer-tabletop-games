@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { anyMove, seeded } from './testing.ts';
 import { tickettoride } from './index.ts';
 import type { PublicGameState } from './types.ts';
@@ -11,7 +12,7 @@ type Manager = ReturnType<typeof createGameManager>;
 const ROOM = 'tickettoride/g1';
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = createGameManager([tickettoride], seeded(seed));
+  const manager = rememberingKeys(createGameManager([tickettoride], seeded(seed)));
   for (const name of names) manager.join('tickettoride', 'g1', name);
   return manager;
 }
@@ -118,4 +119,16 @@ test('dismissing a player mid-turn keeps their routes and drops them from the sc
   for (let moves = 0; !state.isGameOver && moves < 3000; moves++) state = step(manager);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(Object.keys(state.final ?? {}).map(Number), [1, 2]);
+});
+
+test('an undone blind draw is reshuffled, so undo cannot show the next card', () => {
+  const manager = gameWith(5, 'A', 'B');
+  for (let moves = 0; viewOf(manager).phase === 'setup'; moves++) step(manager);
+  const drawn = new Set<string>();
+  for (let tries = 0; tries < 6; tries++) {
+    drawn.add(JSON.stringify(ok(manager.move(ROOM, 1, { type: 'drawCard', source: 'deck' })).players[1].hand));
+    ok(manager.requestUndo(ROOM, 1));
+    ok(manager.voteUndo(ROOM, 2, true));
+  }
+  assert.ok(drawn.size > 1);
 });

@@ -1,6 +1,7 @@
 // UNO rules shared by the browser (playable cards) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
+import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
   Card, Color, Direction, GameState, LastMove, Move, PendingFour, PublicGameState, Result, Seat, Value
@@ -66,15 +67,6 @@ export function cardName(card: Card): string {
 export function stepFrom(players: Seat[], from: Seat, direction: Direction): Seat {
   if (direction === 1) return players.find(seat => seat > from) ?? players[0];
   return [...players].reverse().find(seat => seat < from) ?? players[players.length - 1];
-}
-
-function shuffle<T>(items: T[], random: Random): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }
 
 type Piles = Pick<GameState, 'drawPile' | 'discardPile'>;

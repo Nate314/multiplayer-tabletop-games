@@ -44,6 +44,6 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What happens if someone leaves?',
-    answer: 'Their pawn and walls stay on the board and their turns are skipped.'
+    answer: 'Their pawn leaves the board, their walls stay, and their turns are skipped.'
   }
 ];

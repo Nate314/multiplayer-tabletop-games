@@ -118,6 +118,16 @@ test('declining to buy starts an auction for every player and the high bid buys'
   assert.equal(state.currentPlayer, 2);
 });
 
+test('an auction does not wait on a disconnected player', () => {
+  let state = played(played(game(), 1, { type: 'roll' }, dice(1, 2)), 1, { type: 'decline' });
+  state = acted(state, 2, { type: 'bid', amount: 10 });
+  state = acted(state, 1, { type: 'passBid' });
+  assert.notEqual(state.auction, null); // Cara has not passed yet
+  state = disconnectPlayer(monopoly, state, 3);
+  assert.equal(state.auction, null);
+  assert.equal(state.owners[3], 2);
+});
+
 test('an auction nobody bids in leaves the property with the bank', () => {
   let state = played(played(game(), 1, { type: 'roll' }, dice(1, 2)), 1, { type: 'decline' });
   for (const seat of [1, 2, 3]) state = acted(state, seat, { type: 'passBid' });

@@ -1,6 +1,7 @@
 // Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
+import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
   Card,
@@ -87,15 +88,6 @@ export function createDeck(): Card[] {
     ...Array.from({ length: WILD_COUNT }, (_, index): Card => ({ id: numbers.length + index, kind: 'wild' })),
     ...Array.from({ length: SKIP_COUNT }, (_, index): Card => ({ id: numbers.length + WILD_COUNT + index, kind: 'skip' }))
   ];
-}
-
-function shuffle<T>(items: T[], random: Random): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }
 
 type NumberCard = Extract<Card, { kind: 'number' }>;
@@ -382,10 +374,10 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
       gameStatus: `${state.playerNames[tiebreak[0]]} wins! Everyone else in the tiebreaker left.`
     };
   }
-  if (next.currentPlayer !== null && !handPlayers(next).includes(next.currentPlayer)) {
-    next.currentPlayer = nextHandPlayer(next, seat);
-  }
-  return startNextHandIfReady(next, random);
+  // The platform moved a turn the leaver held to the next seat, who may be out of the hand or due to be skipped
+  const current = next.currentPlayer;
+  const moveOn = current !== null && (!handPlayers(next).includes(current) || next.skipped.includes(current));
+  return startNextHandIfReady(moveOn ? passTurn(next, seat) : next, random);
 }
 
 // The next hand may have been waiting only for the player who disconnected

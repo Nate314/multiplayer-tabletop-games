@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { scrabble } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
@@ -17,7 +18,7 @@ const FIRST_WORD: Move = { type: 'play', tiles: [{ row: 7, col: 7, letter: 'A' }
 const SECOND_WORD: Move = { type: 'play', tiles: [{ row: 8, col: 7, letter: 'B' }] };
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([scrabble], first);
+  const manager = rememberingKeys(createGameManager([scrabble], first));
   for (const name of names) manager.join('scrabble', 'g1', name);
   return manager;
 }

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { backgammon } from './index.ts';
 import { pointIndex } from './rules.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -18,7 +19,7 @@ function dice(...values: number[]): Random {
 
 // Seat 1 opens with 3 and 1, every later roll is 6 and 5
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([backgammon], dice(3, 1, 6, 5));
+  const manager = rememberingKeys(createGameManager([backgammon], dice(3, 1, 6, 5)));
   for (const name of names) manager.join('backgammon', 'g1', name);
   return manager;
 }

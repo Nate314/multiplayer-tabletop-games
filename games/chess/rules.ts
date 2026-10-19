@@ -1,5 +1,5 @@
 // Chess rules shared by the browser (legal move hints, check) and the server (validation).
-import { applyEndingAction, endGame, endingRefusal, lapseDrawOffer } from '../../shared/drawOffer.ts';
+import { applyEndingAction, endGame, endingRefusal, lapseDrawOffer, otherSeat } from '../../shared/drawOffer.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type {
@@ -377,11 +377,6 @@ function asSquare(value: unknown): Square | null {
     : null;
 }
 
-
-// Both seats are filled whenever a move is allowed
-function otherSeat(state: GameState, seat: Seat): Seat {
-  return state.activePlayers.find(other => other !== seat) as Seat;
-}
 
 function repetitions(positions: string[]): number {
   const current = positions[positions.length - 1];

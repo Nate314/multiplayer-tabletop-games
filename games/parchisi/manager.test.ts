@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { NEST } from './rules.ts';
 import { parchisi } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -18,7 +19,7 @@ function fiveAndTwo(): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([parchisi], fiveAndTwo());
+  const manager = rememberingKeys(createGameManager([parchisi], fiveAndTwo()));
   for (const name of names) manager.join('parchisi', 'g1', name);
   return manager;
 }

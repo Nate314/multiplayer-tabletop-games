@@ -16,7 +16,7 @@ import type { Move, Placements, PublicGameState } from '../types.ts';
 function turnMessage(state: PublicGameState, playerNumber: number): string {
   const { isGameOver, winners, playerNames, activePlayers, started, turnHolder, phase } = state;
   if (isGameOver) return winners.length > 0 ? `Game over: ${playerNames[winners[0]]} wins` : 'Game over';
-  if (activePlayers.length < 3) return `Waiting for ${3 - activePlayers.length} more ${activePlayers.length === 2 ? 'player' : 'players'} (3 to 6 play)`;
+  if (state.firstPlayer === null) return `Waiting for ${3 - activePlayers.length} more ${activePlayers.length === 2 ? 'player' : 'players'} (3 to 6 play)`;
   if (turnHolder === null) return '';
   const you = turnHolder === playerNumber;
   if (!started) return `${you ? 'You place' : `${playerNames[turnHolder]} places`} first. Joining closes after the first move.`;
@@ -34,8 +34,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [placeStep, setPlaceStep] = useState<PlaceStep>(1);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, phase, moveCount, hand } = gameState;
   const noVote = !undoVote && !dismissVote;
-  const canMove = activePlayers.length >= 3 && !isGameOver && noVote && currentPlayer === playerNumber;
-  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= 3;
+  // Three are needed to deal, but a game that loses players to dismissals plays on with two
+  const canMove = gameState.firstPlayer !== null && !isGameOver && noVote && currentPlayer === playerNumber;
+  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber);
 
   useMoveAnimation(mapRef, gameState, animateMove);
 

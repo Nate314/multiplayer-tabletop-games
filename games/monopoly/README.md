@@ -39,7 +39,7 @@ Buy, trade and build on properties, charge rent, and bankrupt every other player
 These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Monopoly_(game)) and, where it is silent, the current official Hasbro rules. What remains different:
 
 - **Rent is collected for the owner.** At a table the owner must ask for rent before the next roll or it is lost. Here rent is always paid on landing
-- **Auctions.** Wikipedia gives no auction procedure. Here bids are limited to the cash a player holds, a pass is final, and an auction with no bids leaves the property with the bank. While an auction runs, the player who must act can only sell buildings, mortgage or declare bankruptcy, and everyone can still trade
+- **Auctions.** Wikipedia gives no auction procedure. Here bids are limited to the cash a player holds, a pass is final, a disconnected player counts as passed unless they hold the high bid, and an auction with no bids leaves the property with the bank. While an auction runs, the player who must act can only sell buildings, mortgage or declare bankruptcy, and everyone can still trade
 - **No house auctions.** When several players want the last houses, the rules auction them. Here houses go to whoever builds first
 - **Building and mortgaging off-turn.** The rules allow building and mortgaging between other players' turns. Here they are moves made on your own turn, or while you owe money (selling and mortgaging only)
 - **Selling a hotel when the bank is short of houses** is not covered by Wikipedia. Here the hotel then sells outright for half its whole cost

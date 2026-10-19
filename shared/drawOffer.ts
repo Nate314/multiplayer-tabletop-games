@@ -14,7 +14,7 @@ type EndingState = BaseGameState & DrawOfferState;
 // Whether a resignation by `seat` is scored as a draw, as in chess when the opponent could never checkmate
 export type ResignationDraws<S> = (state: S, seat: Seat) => boolean;
 
-function otherSeat(state: EndingState, seat: Seat): Seat {
+export function otherSeat(state: Pick<BaseGameState, 'activePlayers'>, seat: Seat): Seat {
   return state.activePlayers.find(other => other !== seat) as Seat; // both seats are filled while the game runs
 }
 

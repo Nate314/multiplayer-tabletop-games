@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { isSet } from './cards.ts';
 import { NEIGHBORS } from './map.ts';
 import { territoriesHeld } from './state.ts';
@@ -24,7 +25,7 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = createGameManager([risk], seeded(seed));
+  const manager = rememberingKeys(createGameManager([risk], seeded(seed)));
   for (const name of names) manager.join('risk', 'g1', name);
   return manager;
 }

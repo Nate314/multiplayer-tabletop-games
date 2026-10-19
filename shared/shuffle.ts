@@ -9,3 +9,8 @@ export function shuffle<T>(items: readonly T[], random: Random): T[] {
   }
   return result;
 }
+
+// Shuffles each pile of a record on its own, such as one deck per level or one pile per seat
+export function shuffleEach<K extends PropertyKey, T>(piles: Record<K, T[]>, random: Random): Record<K, T[]> {
+  return Object.fromEntries(Object.entries<T[]>(piles).map(([key, pile]) => [key, shuffle(pile, random)])) as Record<K, T[]>;
+}

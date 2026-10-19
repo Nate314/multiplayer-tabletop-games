@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { shuffle } from '../../shared/shuffle.ts';
 import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -16,5 +17,6 @@ export const azul: GameDefinition<GameState, PublicGameState> = {
   onPlayerDisconnected,
   applyMove,
   applyAction,
+  onUndo: (state, random) => ({ ...state, bag: shuffle(state.bag, random) }),
   toPublicState
 };

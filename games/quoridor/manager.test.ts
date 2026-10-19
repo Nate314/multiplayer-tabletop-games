@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { rememberingKeys } from '../../server/testing.ts';
 import { quoridor } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -10,7 +11,7 @@ type Manager = ReturnType<typeof createGameManager>;
 const step = (row: number, col: number): Move => ({ type: 'move', row, col });
 
 function gameWith(...names: string[]): Manager {
-  const manager = createGameManager([quoridor]);
+  const manager = rememberingKeys(createGameManager([quoridor]));
   for (const name of names) manager.join('quoridor', 'g1', name);
   return manager;
 }

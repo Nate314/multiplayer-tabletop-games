@@ -368,22 +368,19 @@ test('a player dismissed while not their turn changes nobody\'s turn', () => {
   assert.equal(state.owners.greenland, null);
 });
 
-test('a dismissal that leaves two of three players ends the game: the most territories wins', () => {
-  // Alice holds 14 and Bob 14 plus Kamchatka
-  const state = removePlayer(risk, game({ phase: 'attack', reinforcements: 0, owners: { ...game().owners, kamchatka: 2 } }), 3, dice());
-  assert.equal(state.isGameOver, true);
-  assert.deepEqual(state.winners, [2]);
-  assert.equal(state.currentPlayer, null);
-  assert.match(state.gameStatus, /Too few players are left to go on. Bob wins with the most territories \(15\)/);
-  const tied = removePlayer(risk, game({ phase: 'attack', reinforcements: 0 }), 3, dice());
-  assert.deepEqual(tied.winners, [1, 2]);
+test('a dismissal that leaves two of three players lets the two play on', () => {
+  const state = removePlayer(risk, game({ phase: 'attack', reinforcements: 0 }), 3, dice());
+  assert.equal(state.isGameOver, false);
+  assert.equal(state.currentPlayer, 1);
+  const ended = played(state, 1, { type: 'endAttack' });
+  assert.equal(ended.phase, 'fortify');
+});
 
-  // Alice was about to move into a capture: the dice she rolled move in, so no territory is left empty
-  let capturing = game({ phase: 'attack', reinforcements: 0, armies: { ...game().armies, alaska: 5, northwestTerritory: 1 } });
-  capturing = played(capturing, 1, { type: 'attack', from: 'alaska', to: 'northwestTerritory', dice: 3 }, dice(6, 1, 1, 2));
-  const ended = removePlayer(risk, capturing, 3, dice());
-  assert.equal(ended.isGameOver, true);
-  assert.deepEqual([ended.armies.alaska, ended.armies.northwestTerritory, ended.phase, ended.conquest], [2, 3, 'attack', null]);
+test('dismissing an eliminated player leaves the last two at war', () => {
+  const state = removePlayer(risk, attacking({ owners: ownership(1, { greenland: 2 }), eliminated: [3] }), 3, dice());
+  assert.equal(state.isGameOver, false);
+  assert.deepEqual(state.activePlayers, [1, 2]);
+  assert.equal(state.currentPlayer, 1);
 });
 
 test('a player dismissed during the setup is skipped, and the last one left holding territory wins', () => {

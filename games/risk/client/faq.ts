@@ -60,8 +60,7 @@ export const FAQS: FaqItem[] = [
     answer: 'A player who disconnects keeps their seat, and their turn waits for them. A player dismissed by vote leaves their ' +
       'territories neutral (grey): neutral armies never attack and count for nobody, but they defend and can be captured. ' +
       'Their cards are discarded. If it was their turn, the next player\'s turn begins. When only one player holding ' +
-      'territory is left, they win. A dismissal that leaves fewer than three players ends the game, and whoever holds the ' +
-      'most territories wins.'
+      'territory is left, they win, so two players left keep fighting.'
   },
   {
     question: 'Can I undo?',

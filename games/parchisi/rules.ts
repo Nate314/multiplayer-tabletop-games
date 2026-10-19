@@ -348,11 +348,13 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
 
   const { pawn, steps, to, captured } = legal;
   const lastMove: LastMove = { playerNumber: seat, pawn, from: state.pawns[seat][pawn], to, steps, captured };
-  const next: GameState = { ...settle(state, seat, legal), lastMove, gameStatus: describeLastMove(lastMove, state.playerNames) };
+  let next: GameState = { ...settle(state, seat, legal), lastMove, gameStatus: describeLastMove(lastMove, state.playerNames) };
 
   if (next.pawns[seat].every(progress => progress === HOME)) {
     return { state: { ...next, isGameOver: true, winners: [seat], currentPlayer: null, gameStatus: `${state.playerNames[seat]} wins!` } };
   }
+  // Bonuses are taken oldest first, so one no pawn can move is lost, but a later one may still fit
+  while (next.bonuses.length > 0 && getLegalMoves(next, seat).length === 0) next = { ...next, bonuses: next.bonuses.slice(1) };
   if (getLegalMoves(next, seat).length > 0) return { state: next };
 
   // The turn is over: doubles roll again only if every die was used, anything else passes the dice on

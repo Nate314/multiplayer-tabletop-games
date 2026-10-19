@@ -19,6 +19,7 @@ export type BaseGameState = {
   undoVote: UndoVote | null;
   disconnected: Seat[]; // held seats, sorted ascending; always a subset of activePlayers
   dismissVote: DismissVote | null;
+  seatKeys?: Record<Seat, string>; // the secret each seat's rejoin must send; the server strips it from every view
 };
 
 export type BasePublicState = BaseGameState & {

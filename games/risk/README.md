@@ -16,7 +16,7 @@ Raise armies, roll for battles and conquer the world, for 3 to 6 players.
 - **Elimination.** A player who loses their last territory is out, and the player who took it takes all their cards. If that leaves 6 or more, they trade sets at once until they hold 4 or fewer, place those armies, and attack on
 - **Winning.** Control all 42 territories. A player who is the only one left holding any territory also wins
 - Hidden: each player's cards (the others see how many) and the order of the deck. A traded set is shown to everyone. The History dialog and the table view of a saved game show no cards; a saved game viewed as a player shows that player's cards
-- A dismissed player's territories turn neutral (grey), keeping their armies: neutral armies never attack or move and count for nobody, but they defend with the usual dice and can be captured. Their cards are discarded. If it was their turn, the next player's turn begins; during the setup, the next player places. If they were moving into a captured territory, the dice they rolled move in first. A dismissal that leaves fewer than 3 players seated ends the game, and whoever holds the most territories wins (a tie shares the win), since the site plays no move with fewer than the game's minimum seated
+- A dismissed player's territories turn neutral (grey), keeping their armies: neutral armies never attack or move and count for nobody, but they defend with the usual dice and can be captured. Their cards are discarded. If it was their turn, the next player's turn begins; during the setup, the next player places. If they were moving into a captured territory, the dice they rolled move in first. Play goes on with two players left, and ends when only one player still holds territory
 - Any player can ask to undo the last move. It is undone only if every player still in the game approves. An attack played again rolls new dice
 
 ## Controls
@@ -45,4 +45,4 @@ These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Ri
 - **Fortify** follows the current official rules: armies may move through any chain of your own territories. Older rules allowed only a move to a bordering territory
 - **Two players, secret missions and the other variants** are not offered
 - **Winning** also comes to the only player left holding territory, which matters only once neutral territories are on the map
-- **Leaving.** The rules do not cover a player leaving. Here a dismissed player's territories turn neutral and their cards are discarded, and a dismissal that leaves fewer than 3 players ends the game, won by the most territories
+- **Leaving.** The rules do not cover a player leaving. Here a dismissed player's territories turn neutral and their cards are discarded, and play goes on with as few as 2 players

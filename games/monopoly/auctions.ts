@@ -18,8 +18,10 @@ export function nextAuction(state: GameState): GameState {
   return startAuction({ ...state, auctionQueue }, space);
 }
 
+// A disconnected player counts as passed, unless they hold the high bid, so the auction never waits on them
 function stillBidding(state: GameState, auction: Auction): Seat[] {
-  return inGame(state).filter(seat => !auction.passed.includes(seat));
+  return inGame(state).filter(seat =>
+    !auction.passed.includes(seat) && (!state.disconnected.includes(seat) || seat === auction.highBidder));
 }
 
 // Sells to the high bidder once everyone else has passed; with no bid at all the bank keeps it

@@ -17,7 +17,7 @@ const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real messages are well under 1 KB
 
 type Connection = { roomId: string; seat: Seat };
 
@@ -135,14 +135,14 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin);
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
   }
 
   connections.set(ws, { roomId: result.roomId, seat: result.seat });
-  send(ws, { type: MESSAGE_TYPES.GAME_JOINED, payload: { playerNumber: result.seat, gameState: result.state } });
+  send(ws, { type: MESSAGE_TYPES.GAME_JOINED, payload: { playerNumber: result.seat, seatKey: result.seatKey, gameState: result.state } });
   broadcast(result.roomId);
 }
 

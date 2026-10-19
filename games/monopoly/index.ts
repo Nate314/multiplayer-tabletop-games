@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { shuffleEach } from '../../shared/shuffle.ts';
 import {
   applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState
 } from './rules.ts';
@@ -18,5 +19,6 @@ export const monopoly: GameDefinition<GameState, PublicGameState> = {
   onPlayerDisconnected,
   applyMove,
   applyAction,
+  onUndo: (state, random) => ({ ...state, decks: shuffleEach(state.decks, random) }),
   toPublicState
 };
