@@ -30,3 +30,7 @@ dist-ssr
 data
 
 .superpowers/
+
+# Playwright output
+test-results
+playwright-report

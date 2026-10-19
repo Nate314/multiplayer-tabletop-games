@@ -90,8 +90,8 @@ export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: 
     <section className="panel turn-panel" aria-label="Your turn">
       <div className="panel-title">{debt ? 'You owe money' : decision ? 'Mortgaged property received' : 'Your turn'}</div>
       {body}
-      {/* A debtor may always give up; otherwise not while an auction runs */}
-      {(debt || !auction) && giveUp}
+      {/* A debtor may always give up, and the turn holder may leave the game during an auction too */}
+      {giveUp}
     </section>
   );
 }

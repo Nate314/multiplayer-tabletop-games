@@ -1,7 +1,7 @@
 import { CardView, GemToken, NobleView } from './pieces';
 import { bonusKey, nobleKey, reservedKey, tokenKey } from './animateMove.ts';
 import { canBuy } from './selection.ts';
-import { GEMS } from '../cards.ts';
+import { CARDS, GEMS } from '../cards.ts';
 import { TOKENS, bonuses, prestige, tokenTotal } from '../rules.ts';
 import type { Selection } from './selection.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -26,6 +26,10 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
   if (winners.includes(seat)) classes.push('player-winner');
   if (lastMove?.seat === seat) classes.push('player-last');
   const status = !activePlayers.includes(seat) ? ' (left)' : winners.includes(seat) ? ' (winner)' : '';
+  // The last move's card has left the market: a reserved one is the newest reserved card, a bought one its bonus
+  const mine = lastMove?.seat === seat ? lastMove : null;
+  const boughtBonus = mine?.type === 'buy' ? CARDS[mine.card].bonus : null;
+  const reservedLast = mine?.type === 'reserve' ? player.reserved.length - 1 : -1;
 
   return (
     <section className={classes.join(' ')} aria-label={playerNames[seat]}>
@@ -43,7 +47,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
         <span className="player-row-label">Cards {player.cards.length}</span>
         <span className="player-bonuses">
           {GEMS.map(gem => (
-            <span key={gem} className={`bonus gem-${gem}`} data-anim-key={bonusKey(seat, gem)} title={`${owned[gem]} ${gem} bonus`}>
+            <span key={gem} className={`bonus gem-${gem}${gem === boughtBonus ? ' bonus-highlighted' : ''}`} data-anim-key={bonusKey(seat, gem)} title={`${owned[gem]} ${gem} bonus`}>
               {owned[gem]}
             </span>
           ))}
@@ -62,6 +66,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
                     level={held.level}
                     animKey={reservedKey(seat, index, held)}
                     selected={selection?.kind === 'card' && selection.source.kind === 'reserved' && selection.source.index === index}
+                    highlighted={index === reservedLast}
                     affordable={isMe && !gameState.isGameOver && canBuy(gameState, seat, held.card)}
                     onClick={clickable ? () => onReserved(index) : undefined}
                   />

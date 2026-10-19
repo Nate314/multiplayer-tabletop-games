@@ -122,7 +122,9 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
     steal: steal && { ...steal, resource: viewer === steal.thief || viewer === steal.victim ? steal.resource : null },
     handCounts: Object.fromEntries(seats.map(seat => [seat, total(hands[seat])])),
     devCounts: Object.fromEntries(seats.map(seat => [seat, (devCards[seat] ?? []).length + newCards(seat).length])),
-    points: Object.fromEntries(seats.map(seat => [seat, state.isGameOver || seat === viewer ? points(state, seat) : visiblePoints(state, seat)])),
+    // A dismissed player's pieces are dead, so they score nothing
+    points: Object.fromEntries(seats.map(seat => [seat, !state.activePlayers.includes(seat) ? 0
+      : state.isGameOver || seat === viewer ? points(state, seat) : visiblePoints(state, seat)])),
     roadLengths: roadLengths({ ...state, activePlayers: seats }),
     devDeckCount: devDeck.length,
     viewer,

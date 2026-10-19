@@ -28,7 +28,7 @@ Collect gems, buy development cards and attract nobles to reach 15 prestige, for
 - When several nobles qualify, click the one you want
 - When you cannot take, reserve or buy anything, a Pass button appears
 - Each player's panel shows their prestige, tokens, card bonuses by color, reserved cards and nobles. The player whose turn it is is outlined
-- The card bought or reserved in the last move is outlined, and pieces slide to where they went
+- The last move is outlined: a reserved card among its player's reserved cards, and for a bought card the bonus it added. Pieces slide to where they went
 - Click Undo to ask everyone to undo the last move
 - Click FAQ at the top of the page for a short guide to the rules and controls
 

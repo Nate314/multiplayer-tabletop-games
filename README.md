@@ -65,6 +65,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 ## Development
 
 - `npm test` runs the unit tests
+- `npm run test:e2e` runs the end-to-end tests: every rule and control in each game's README, played in real browsers. Run `npx playwright install chromium` once first. It builds the client, then each worker starts its own server with test hooks on (`E2E=1`, see `server/e2e.ts`), so a test can set up a game state and pick the next dice before playing it in the browser. Set `E2E_SKIP_BUILD=1` to reuse the last build. Each run also writes an HTML report to `playwright-report/`; open it with `npx playwright show-report`
 - `npm run typecheck` checks the TypeScript types for the browser and server code
 - `npm run lint` runs ESLint
 - `npm run dev` starts the Vite dev server for the browser code (UI only; play games through `npm start`)
