@@ -1,26 +1,10 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test as base, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/uno/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
 
 // One test per rule, control and difference in games/uno/README.md. Players are seated in join order:
 // Alice is seat 1, Bob seat 2, Cara seat 3. Piles keep their top card last, as the server does.
-
-// Joins one more player after the table is seated, so random numbers can be queued for the deal their join makes
-type Late = (table: Table, name: string) => Promise<Page>;
-
-const test = base.extend<{ late: Late }>({
-  late: async ({ browser, server }, use) => {
-    const pages: Page[] = [];
-    await use(async (table, name) => {
-      const page = await newPlayer(browser, server);
-      pages.push(page);
-      await joinGame(page, table.gameType, table.gameId, name);
-      return page;
-    });
-    for (const page of pages) await page.context().close().catch(() => {});
-  }
-});
 
 const c = (color: Color | 'wild', value: Value): Card => ({ color, value });
 const WILD = c('wild', 'wild');
@@ -44,10 +28,10 @@ function stacked(top: Card[]): number[] {
 
 // Seats everyone but the last player, then queues the cut for the dealer (each player's card in seat order) and the
 // deal's starting card, which the last player's join uses
-async function cutAndDeal(seat: Seat, late: Late, cut: Card[], starter: Card, names: string[]) {
+async function cutAndDeal(seat: Seat, cut: Card[], starter: Card, names: string[]) {
   const table = await seat('uno', names.slice(0, -1));
   await table.random(...stacked(cut), ...stacked([starter]));
-  const last = await late(table, names[names.length - 1]);
+  const last = await table.join(names[names.length - 1]);
   return { table, pages: [...table.pages, last] };
 }
 
@@ -115,22 +99,22 @@ async function playWild(page: Page, name: string, color: Color) {
 const scenarios = {
   // Each player draws a card for the deal: the highest number deals, a card that is not a number counts lowest,
   // and tied players draw again
-  async cutForDealer(seat: Seat, late: Late) {
-    const high = await cutAndDeal(seat, late, [c('red', '9'), c('red', '3')], c('blue', '5'), ['Alice', 'Bob']);
+  async cutForDealer(seat: Seat) {
+    const high = await cutAndDeal(seat, [c('red', '9'), c('red', '3')], c('blue', '5'), ['Alice', 'Bob']);
     await expect(player(high.pages[1], 'Alice').locator('.player-score')).toHaveText('0 pts, dealer');
     await expect(player(high.pages[1], 'Bob').locator('.player-score')).toHaveText('0 pts');
 
-    const action = await cutAndDeal(seat, late, [c('red', 'skip'), c('red', '0')], c('blue', '5'), ['Alice', 'Bob']);
+    const action = await cutAndDeal(seat, [c('red', 'skip'), c('red', '0')], c('blue', '5'), ['Alice', 'Bob']);
     await expect(player(action.pages[0], 'Bob').locator('.player-score')).toHaveText('0 pts, dealer');
 
-    const tie = await cutAndDeal(seat, late, [c('red', '5'), c('blue', '5'), c('red', '2'), c('green', '8')], c('blue', '5'), ['Alice', 'Bob']);
+    const tie = await cutAndDeal(seat, [c('red', '5'), c('blue', '5'), c('red', '2'), c('green', '8')], c('blue', '5'), ['Alice', 'Bob']);
     await expect(player(tie.pages[0], 'Bob').locator('.player-score')).toHaveText('0 pts, dealer');
     return high;
   },
 
   // Alice deals to Bob and Cara, with `starter` turned up
-  dealtByAlice(seat: Seat, late: Late, starter: Card) {
-    return cutAndDeal(seat, late, [c('red', '9'), c('red', '3'), c('red', '2')], starter, ['Alice', 'Bob', 'Cara']);
+  dealtByAlice(seat: Seat, starter: Card) {
+    return cutAndDeal(seat, [c('red', '9'), c('red', '3'), c('red', '2')], starter, ['Alice', 'Bob', 'Cara']);
   },
 
   // Alice plays her second-to-last card without calling UNO, and Bob and Cara may catch her
@@ -180,8 +164,8 @@ test.describe('UNO rules', () => {
     expect(shown + held + 1).toBe(108);
   });
 
-  test('the highest cut deals, everyone gets 7, the top card starts the discards, the dealer\'s left goes first, and the deal passes on', async ({ seat, late }) => {
-    const { pages: [alice, bob] } = await scenarios.cutForDealer(seat, late);
+  test('the highest cut deals, everyone gets 7, the top card starts the discards, the dealer\'s left goes first, and the deal passes on', async ({ seat }) => {
+    const { pages: [alice, bob] } = await scenarios.cutForDealer(seat);
     await expect(hand(alice).getByRole('button')).toHaveCount(7);
     await expect(countOf(alice, 'Bob')).toHaveText('7 cards');
     await expect(discardTop(alice)).toHaveAttribute('title', 'blue 5');
@@ -198,20 +182,20 @@ test.describe('UNO rules', () => {
     await expect(player(pages[0], 'Dan').locator('.player-score')).toHaveText('1 pts, dealer');
   });
 
-  test('a starting card acts as if the dealer played it, and a starting Wild Draw Four is shuffled back', async ({ seat, late }) => {
-    const skip = await scenarios.dealtByAlice(seat, late, c('red', 'skip'));
+  test('a starting card acts as if the dealer played it, and a starting Wild Draw Four is shuffled back', async ({ seat }) => {
+    const skip = await scenarios.dealtByAlice(seat, c('red', 'skip'));
     await expect(turn(skip.pages[2])).toHaveText('You go first. Joining closes after the first move.');
     await expect(countOf(skip.pages[2], 'Bob')).toHaveText('7 cards');
 
-    const drawTwo = await scenarios.dealtByAlice(seat, late, c('red', 'drawTwo'));
+    const drawTwo = await scenarios.dealtByAlice(seat, c('red', 'drawTwo'));
     await expect(countOf(drawTwo.pages[2], 'Bob')).toHaveText('9 cards');
     await expect(turn(drawTwo.pages[2])).toHaveText('You go first. Joining closes after the first move.');
 
-    const reverse = await scenarios.dealtByAlice(seat, late, c('red', 'reverse'));
+    const reverse = await scenarios.dealtByAlice(seat, c('red', 'reverse'));
     await expect(turn(reverse.pages[0])).toHaveText('You go first. Joining closes after the first move.');
     await expect(reverse.pages[0].locator('.direction')).toHaveText('Direction: ← reversed');
 
-    const wild = await scenarios.dealtByAlice(seat, late, WILD);
+    const wild = await scenarios.dealtByAlice(seat, WILD);
     const bob = wild.pages[1];
     await expect(colorName(bob)).toHaveText('any');
     await expect(bob.locator('.hint')).toHaveText('The game starts on a Wild: name the first color');
@@ -220,7 +204,7 @@ test.describe('UNO rules', () => {
     await expect(status(wild.pages[0])).toHaveText('Bob chose green to start');
     await expect(turn(bob)).toHaveText('Your turn');
 
-    const four = await scenarios.dealtByAlice(seat, late, FOUR);
+    const four = await scenarios.dealtByAlice(seat, FOUR);
     await expect(discardTop(four.pages[0])).not.toHaveAttribute('title', 'Wild Draw Four');
     const state = await four.table.state<GameState>();
     expect([...state.drawPile, ...Object.values(state.hands).flat()].filter(held => sameCard(held, FOUR))).toHaveLength(4);
@@ -668,7 +652,7 @@ test.describe('UNO differences from Wikipedia', () => {
     await expect(turn(bob)).toHaveText("Cara's turn");
   });
 
-  test('the classic rules are kept: play goes on to 500 points, and starting cards take effect', async ({ seat, late }) => {
+  test('the classic rules are kept: play goes on to 500 points, and starting cards take effect', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
     await deal(table, { hands: { 1: [c('red', '7')], 2: [c('blue', '1')] }, discard: [c('red', '5')] });
     await play(alice, 'red 7');
@@ -676,12 +660,12 @@ test.describe('UNO differences from Wikipedia', () => {
     await expect(scoring(bob).getByRole('button', { name: 'Continue' })).toBeVisible();
     await expect(turn(bob)).toHaveText('Round 1 is over');
 
-    const skip = await scenarios.dealtByAlice(seat, late, c('red', 'skip'));
+    const skip = await scenarios.dealtByAlice(seat, c('red', 'skip'));
     await expect(turn(skip.pages[2])).toHaveText('You go first. Joining closes after the first move.');
   });
 
-  test('cutting for the dealer: a card that is not a number counts lowest, and tied players draw again', async ({ seat, late }) => {
-    await scenarios.cutForDealer(seat, late);
+  test('cutting for the dealer: a card that is not a number counts lowest, and tied players draw again', async ({ seat }) => {
+    await scenarios.cutForDealer(seat);
   });
 
   test('UNO is a button, and the catch window closes when any move is made', async ({ seat }) => {

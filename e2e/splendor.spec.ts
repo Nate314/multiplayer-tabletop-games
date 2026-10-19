@@ -612,17 +612,24 @@ test.describe('Splendor controls', () => {
     await expect(panel(alice, 'Alice')).toHaveCSS('border-top-style', 'solid');
   });
 
-  test('the card bought or reserved in the last move is outlined', async ({ seat }) => {
-    // bug: only face-up cards can carry the outline (Table.tsx), and the card bought or reserved has just left the
-    // market, so nothing is ever outlined. Steps: Alice clicks a face-up card, then Reserve and take a gold; no card
-    // on either page has the dev-card-highlighted class.
-    test.fail();
+  test('the last move is outlined: a reserved card among the player reserved cards, a bought card by its bonus', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    await craft(table, fresh(2, { faceUp: { 1: [0] } }));
+    // Card 6 costs 3 blue and gives a white bonus
+    await craft(table, { ...fresh(2, { faceUp: { 1: [0, 6] } }), players: players(2, { 2: { tokens: tokens({ blue: 3 }) } }) });
     await marketCard(alice, 0).click();
     await button(alice, 'Reserve and take a gold').click();
-    await expect(turnMessage(bob)).toHaveText('Your turn');
-    await expect(bob.locator('.dev-card-highlighted')).toHaveCount(1, { timeout: 2000 });
+    for (const page of [alice, bob]) {
+      await expect(page.locator('.dev-card-highlighted')).toHaveCount(1);
+      await expect(reservedOf(page, 'Alice').locator('.dev-card-highlighted')).toHaveCount(1);
+    }
+
+    await marketCard(bob, 6).click();
+    await button(bob, 'Buy').click();
+    for (const page of [alice, bob]) {
+      await expect(page.locator('.dev-card-highlighted')).toHaveCount(0);
+      await expect(page.locator('.bonus-highlighted')).toHaveCount(1);
+      await expect(bonus(page, 'Bob', 'white')).toHaveClass(/bonus-highlighted/);
+    }
   });
 
   test('pieces slide to where they went, and nothing animates with reduced motion', async ({ seat }) => {

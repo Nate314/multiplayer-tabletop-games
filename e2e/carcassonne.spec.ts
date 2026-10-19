@@ -399,16 +399,12 @@ test.describe('Carcassonne controls', () => {
   });
 
   test('the tile placed last stays outlined after the turn ends', async ({ seat }) => {
-    // bug: the outline is drawn only while the meeple is being chosen or once the game is over (GameScreen.tsx passes
-    // highlight only when placed or isGameOver). Steps: Alice places a tile and clicks No meeple; on Bob's page, while
-    // he places his tile, no square has the cc-highlight outline.
-    test.fail();
     const { table, alice, bob } = await start(seat);
     await craft(table, { board: [START], currentTile: 'E', drawPile: ['U'] });
     await placeTile(alice, 0, -1);
     await button(alice, 'No meeple').click();
     await expect(turnMessage(bob)).toHaveText('Your turn');
-    await expect(bob.locator('.cc-highlight')).toHaveCount(1, { timeout: 2000 });
+    await expect(bob.locator('.cc-highlight')).toHaveCount(1);
   });
 
   test('the side panel shows the tile being placed, the tiles left and the scores highest first with each player\'s meeples in hand', async ({ seat }) => {

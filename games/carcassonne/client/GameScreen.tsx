@@ -73,7 +73,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="cc-board-area" ref={boardRef}>
           <Board
             board={board}
-            highlight={isGameOver || placed ? board.length - 1 : null}
+            highlight={board.length > 1 ? board.length - 1 : null} // the start tile alone was placed by nobody
             cells={options}
             preview={chosen && currentTile ? { x: chosen.x, y: chosen.y, tile: currentTile, rotation: choice.rotation } : null}
             onCell={pickCell}

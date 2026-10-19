@@ -7,6 +7,10 @@ type PlayerListProps = {
   viewer: Seat | null;
 };
 
+function count(value: number, word: string): string {
+  return `${value} ${word}${value === 1 ? '' : 's'}`;
+}
+
 // Everyone's score track, trains left and card and ticket counts, in seat order
 export default function PlayerList({ gameState, viewer }: PlayerListProps) {
   const { players, playerNames, activePlayers, claimed, currentPlayer, final, lastTurns } = gameState;
@@ -25,9 +29,9 @@ export default function PlayerList({ gameState, viewer }: PlayerListProps) {
             </span>
             <span className="player-stats">
               <span title="Points">{final?.[seat]?.total ?? routePoints(claimed, seat)} pts</span>
-              <span title="Trains left">{player.trains} trains</span>
-              <span title="Train cards">{player.cardCount} cards</span>
-              <span title="Destination tickets">{player.ticketCount + player.offeredCount} tickets</span>
+              <span title="Trains left">{count(player.trains, 'train')}</span>
+              <span title="Train cards">{count(player.cardCount, 'card')}</span>
+              <span title="Destination tickets">{count(player.ticketCount + player.offeredCount, 'ticket')}</span>
             </span>
           </div>
         );

@@ -417,7 +417,7 @@ test.describe('Ticket to Ride rules', () => {
     await expect(myHand(alice).locator('.card-black')).toHaveCount(0);
     await expect(alice.getByText(ticketName(14))).toHaveCount(0);
     await expect(stat(alice, 'Bob', 'Train cards')).toHaveText('3 cards');
-    await expect(stat(alice, 'Bob', 'Destination tickets')).toHaveText('1 tickets');
+    await expect(stat(alice, 'Bob', 'Destination tickets')).toHaveText('1 ticket');
     await expect(myHand(bob).locator('.card-blue')).toHaveCount(0);
     await expect(bob.getByText(ticketName(BOSTON_MIAMI_TICKET))).toHaveCount(0);
 
@@ -597,7 +597,7 @@ test.describe('Ticket to Ride controls', () => {
       1: { hand: { red: 2 }, tickets: [0, 3] },
       2: { trains: 2, tickets: [6] }
     });
-    await expect(row(alice, 'Bob').locator('.player-stats')).toHaveText('7 pts2 trains0 cards1 tickets');
+    await expect(row(alice, 'Bob').locator('.player-stats')).toHaveText('7 pts2 trains0 cards1 ticket');
     await expect(row(alice, 'Alice').locator('.player-stats')).toHaveText('0 pts45 trains2 cards2 tickets');
     await expect(row(bob, 'Alice')).toHaveClass(/current/);
     await expect(row(bob, 'Bob')).not.toHaveClass(/current/);

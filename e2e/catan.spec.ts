@@ -698,9 +698,6 @@ test.describe('Catan rules', () => {
   });
 
   test('a dismissed player\'s dead pieces score nothing', async ({ seat }) => {
-    test.fail();
-    // bug: the player list still counts a dismissed player's buildings, so Dan's row shows 1 pts for his dead
-    // settlement (toPublicState gives every seat in `hands` its visible points, active or not)
     const { pages: [alice, bob, cara, dan] } = await start(seat, { buildings: { [corner(9, 0)]: settlement(4) } }, FOUR);
     await expect(row(alice, 'Dan').locator('.player-points')).toHaveText('1 pts');
     await leave(dan);

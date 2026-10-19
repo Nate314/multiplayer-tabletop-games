@@ -136,7 +136,7 @@ export function paymentOptions(hand: Hand, route: Route): Payment[] {
 export function claimError(board: Board, seat: Seat, player: { hand: Hand; trains: number }, route: Route): string | null {
   const blocked = routeBlocked(board, seat, route);
   if (blocked) return blocked;
-  if (player.trains < route.length) return `You have only ${player.trains} trains left`;
+  if (player.trains < route.length) return `You have only ${player.trains} ${player.trains === 1 ? 'train' : 'trains'} left`;
   return paymentOptions(player.hand, route).length === 0 ? 'You do not have the cards for that route' : null;
 }
 

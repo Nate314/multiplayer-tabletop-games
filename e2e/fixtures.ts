@@ -20,6 +20,8 @@ export type Table = {
   random(...values: number[]): Promise<void>;
   // Queues six-sided die faces, as every game here rolls a die: Math.floor(random * 6) + 1
   dice(...faces: number[]): Promise<void>;
+  // Seats one more player after the table was made, so a test can first queue the random numbers their join uses
+  join(name: string): Promise<Page>;
 };
 
 // `motion: true` lets moves animate; by default every player asks for reduced motion, so nothing animates
@@ -113,7 +115,13 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
         state: async <S>() => await call(`state/${gameType}/${gameId}`) as S,
         patch: async fields => { await call(`state/${gameType}/${gameId}`, fields); },
         random: async (...values) => { await call('random', { values }); },
-        dice: async (...faces) => { await call('random', { values: faces.map(face => (face - 0.5) / 6) }); }
+        dice: async (...faces) => { await call('random', { values: faces.map(face => (face - 0.5) / 6) }); },
+        join: async name => {
+          const page = await newPlayer(browser, server, motion);
+          pages.push(page);
+          await joinGame(page, gameType, gameId, name);
+          return page;
+        }
       };
     });
     for (const page of pages) await page.context().close().catch(() => {}); // a test may have closed it already

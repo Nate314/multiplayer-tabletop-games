@@ -107,10 +107,13 @@ test.describe('Skip-Bo rules', () => {
       discards: { 1: [nums(3), [], [], []] },
       drawPile: run(5, 12)
     });
+    // Each play waits for the server's update, which clears the selection, before the next card is picked
     await handCard(alice, '1').click();
     await building(alice, 0).click();
+    await expect(building(alice, 0).locator('.pile-label')).toHaveText('Needs 2');
     await stockTop(alice, 'Alice').click();
     await building(alice, 0).click();
+    await expect(building(alice, 0).locator('.pile-label')).toHaveText('Needs 3');
     await discardPile(alice, 'Alice', 0).getByRole('button', { name: '3' }).click();
     await building(alice, 0).click();
     await expect(building(alice, 0).locator('.pile-label')).toHaveText('Needs 4');

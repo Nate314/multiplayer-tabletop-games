@@ -17,9 +17,8 @@ type TableProps = {
 
 // The nobles, the three levels of cards with their decks, and the gem supply
 export default function Table({ gameState, seat, active, selection, onGem, onCard }: TableProps) {
-  const { nobles, market, deckCounts, supply, lastMove } = gameState;
+  const { nobles, market, deckCounts, supply } = gameState;
   const picked = selection?.kind === 'gems' ? selection.colors : [];
-  const lastCard = lastMove?.type === 'buy' || lastMove?.type === 'reserve' ? lastMove.card : null;
 
   return (
     <section className={active ? 'table' : 'table table-idle'} aria-label="Table">
@@ -55,7 +54,6 @@ export default function Table({ gameState, seat, active, selection, onGem, onCar
                   animKey={cardKey(card)}
                   selected={isSelected}
                   affordable={seat !== null && canBuy(gameState, seat, card)}
-                  highlighted={card === lastCard}
                   onClick={active && onCard ? () => onCard({ kind: 'card', source: { kind: 'market', level, slot } }) : undefined}
                 />
               );

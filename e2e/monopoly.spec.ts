@@ -1046,12 +1046,10 @@ test.describe('Monopoly differences from Wikipedia', () => {
   });
 
   test('while an auction runs the player to act may declare bankruptcy', async ({ seat }) => {
-    test.fail();
-    // bug: the README says the player who must act during an auction may declare bankruptcy, and the server allows it,
-    // but TurnPanel shows Declare bankruptcy during an auction only to a player who owes money
     const game = await start(seat, 3, { auction: { space: 6, highBid: 0, highBidder: null, passed: [] } });
-    const [alice] = game.pages;
-    await expect(button(alice, 'Declare bankruptcy')).toBeVisible({ timeout: 2000 });
+    const [alice, bob] = game.pages;
+    await expect(button(alice, 'Declare bankruptcy')).toBeVisible();
+    await expect(button(bob, 'Declare bankruptcy')).toHaveCount(0);
   });
 
   test('there are no house auctions: the last houses go to whoever builds first', async ({ seat }) => {

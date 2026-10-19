@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test as base, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, newPlayer, openFaq, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/risk/map.ts';
 import { game, ownership } from '../games/risk/testing.ts';
 import type { ContinentId, GameState } from '../games/risk/types.ts';
@@ -11,23 +11,12 @@ import type { ContinentId, GameState } from '../games/risk/types.ts';
 
 type Seat = (gameType: string, names: string[]) => Promise<Table>;
 
-// `join` seats one more player after the table was made, so a test can queue the random numbers the deal uses first
 // `visitor` is a browser that has joined nothing, as a player's own page goes back to their game
-const test = base.extend<{ join: (table: Table, name: string) => Promise<Page>; visitor: Page }>({
+const test = base.extend<{ visitor: Page }>({
   visitor: async ({ browser, server }, use) => {
     const page = await newPlayer(browser, server);
     await use(page);
     await page.context().close();
-  },
-  join: async ({ browser, server }, use) => {
-    const pages: Page[] = [];
-    await use(async (table, name) => {
-      const page = await newPlayer(browser, server);
-      pages.push(page);
-      await joinGame(page, 'risk', table.gameId, name);
-      return page;
-    });
-    for (const page of pages) await page.context().close().catch(() => {});
   }
 });
 
@@ -162,10 +151,10 @@ test.describe('Risk rules', () => {
     }
   });
 
-  test('setup: a random player goes first and the territories are dealt from them, one army each, the first players getting one more', async ({ seat, join }) => {
+  test('setup: a random player goes first and the territories are dealt from them, one army each, the first players getting one more', async ({ seat }) => {
     const table = await seat('risk', ['Alice', 'Bob', 'Cara']);
     await table.random(0.99); // the last of four seats
-    const dan = await join(table, 'Dan');
+    const dan = await table.join('Dan');
     await expect(turn(dan)).toHaveText('You place first. Joining closes after the first move.');
     await expect(turn(table.pages[0])).toHaveText('Dan places first. Joining closes after the first move.');
     await expect(dan.locator('.game-status')).toContainText('Dan was drawn to go first');
@@ -176,10 +165,10 @@ test.describe('Risk rules', () => {
     await expect(dan.locator('.territory[aria-label*="unclaimed"]')).toHaveCount(0);
   });
 
-  test('setup: in turn order each player places all their starting armies in one move, then the first player starts and turns go up the seats', async ({ seat, join }) => {
+  test('setup: in turn order each player places all their starting armies in one move, then the first player starts and turns go up the seats', async ({ seat }) => {
     const table = await seat('risk', ['Alice', 'Bob']);
     await table.random(0.5); // the second of three seats
-    const cara = await join(table, 'Cara');
+    const cara = await table.join('Cara');
     const [alice, bob] = table.pages;
 
     await expect(panel(alice)).toHaveText('Waiting for Bob to place their starting armies');
@@ -534,10 +523,10 @@ test.describe('Risk rules', () => {
     await expect(turn(alice)).toHaveText('Your turn');
   });
 
-  test('dismissed during the setup: the next player places', async ({ seat, join }) => {
+  test('dismissed during the setup: the next player places', async ({ seat }) => {
     const table = await seat('risk', ['Alice', 'Bob']);
     await table.random(0); // Alice goes first
-    const cara = await join(table, 'Cara');
+    const cara = await table.join('Cara');
     const [alice, bob] = table.pages;
     await placeAllStarting(alice);
     await expect(turn(bob)).toHaveText('Place your starting armies');
@@ -770,10 +759,10 @@ test.describe('Risk controls', () => {
 });
 
 test.describe('Risk differences from Wikipedia', () => {
-  test('the territories are dealt at random with one army each, and each player places all their starting armies in a single move', async ({ seat, join }) => {
+  test('the territories are dealt at random with one army each, and each player places all their starting armies in a single move', async ({ seat }) => {
     const table = await seat('risk', ['Alice', 'Bob']);
     await table.random(0); // Alice goes first
-    await join(table, 'Cara');
+    await table.join('Cara');
     const [alice, bob] = table.pages;
     await expect(alice.locator('.army-count')).toHaveText(Array(42).fill('1'));
     await expect(alice.locator('.territory[aria-label*="unclaimed"]')).toHaveCount(0);
@@ -785,10 +774,10 @@ test.describe('Risk differences from Wikipedia', () => {
     await expect(turn(bob)).toHaveText('Place your starting armies');
   });
 
-  test('who goes first is drawn at random', async ({ seat, join }) => {
+  test('who goes first is drawn at random', async ({ seat }) => {
     const table = await seat('risk', ['Alice', 'Bob']);
     await table.random(0.99); // the last of three seats
-    const cara = await join(table, 'Cara');
+    const cara = await table.join('Cara');
     await expect(cara.locator('.game-status')).toContainText('Cara was drawn to go first');
     await expect(turn(cara)).toHaveText('You place first. Joining closes after the first move.');
   });

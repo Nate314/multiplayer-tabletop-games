@@ -1,26 +1,10 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test as base, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { standardDeck, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { Ask, GameState } from '../games/gofish/types.ts';
 
 // One test per rule, control and difference in games/gofish/README.md. Players are seated in join order:
 // Alice is seat 1, Bob seat 2, Cara seat 3. The stock's top card is its last one, as the server keeps it.
-
-// Joins one more player after the table is seated, so random numbers can be queued for the deal their join makes
-type Late = (table: Table, name: string) => Promise<Page>;
-
-const test = base.extend<{ late: Late }>({
-  late: async ({ browser, server }, use) => {
-    const pages: Page[] = [];
-    await use(async (table, name) => {
-      const page = await newPlayer(browser, server);
-      pages.push(page);
-      await joinGame(page, table.gameType, table.gameId, name);
-      return page;
-    });
-    for (const page of pages) await page.context().close().catch(() => {});
-  }
-});
 
 const card = (rank: Rank, suit: Suit): PlayingCard => ({ rank, suit });
 // Leaves a shuffled 52-card deck in order: Fisher-Yates swaps each index with itself
@@ -71,10 +55,10 @@ async function ask(page: Page, cardName: string, target?: string) {
 }
 
 test.describe('Go Fish rules', () => {
-  test('a 52-card deck deals 7 each to 2 or 3 players and 5 each to 4 to 6, and the rest is the face-down stock', async ({ seat, late }) => {
+  test('a 52-card deck deals 7 each to 2 or 3 players and 5 each to 4 to 6, and the rest is the face-down stock', async ({ seat }) => {
     const two = await seat('gofish', ['Alice']);
     await two.random(...UNSHUFFLED, 0);
-    const bob = await late(two, 'Bob');
+    const bob = await two.join('Bob');
     await expect(handCards(bob)).toHaveCount(7);
     await expect(player(bob, 'Alice').locator('.player-count')).toHaveText('7 cards');
     await expect(bob.getByText('Stock: 38')).toBeVisible();
@@ -82,17 +66,17 @@ test.describe('Go Fish rules', () => {
 
     const four = await seat('gofish', ['Alice', 'Bob', 'Cara']);
     await four.random(...UNSHUFFLED, 0);
-    const dan = await late(four, 'Dan');
+    const dan = await four.join('Dan');
     await expect(handCards(dan)).toHaveCount(5);
     for (const name of ['Alice', 'Bob', 'Cara']) await expect(player(dan, name).locator('.player-count')).toHaveText('5 cards');
     await expect(dan.getByText('Stock: 32')).toBeVisible();
   });
 
-  test('a random player goes first, and play goes up the seats', async ({ seat, late }) => {
+  test('a random player goes first, and play goes up the seats', async ({ seat }) => {
     // The number after the shuffle picks the first player: 0.5 of three seats is Bob
     const table = await seat('gofish', ['Alice', 'Bob']);
     await table.random(...UNSHUFFLED, 0.5);
-    const cara = await late(table, 'Cara');
+    const cara = await table.join('Cara');
     const bob = table.pages[1];
     await expect(turn(bob)).toHaveText('You go first. Joining closes after the first ask.');
     await expect(turn(cara)).toHaveText('Bob goes first. Joining closes after the first ask.');
@@ -103,7 +87,7 @@ test.describe('Go Fish rules', () => {
 
     const other = await seat('gofish', ['Alice', 'Bob']);
     await other.random(...UNSHUFFLED, 0.9);
-    const last = await late(other, 'Cara');
+    const last = await other.join('Cara');
     await expect(turn(last)).toHaveText('You go first. Joining closes after the first ask.');
     await expect(turn(other.pages[0])).toHaveText('Cara goes first. Joining closes after the first ask.');
   });
@@ -155,7 +139,7 @@ test.describe('Go Fish rules', () => {
     await expect(turn(alice)).toHaveText('Your turn');
   });
 
-  test('four of a rank are laid down as a book at once, including books made by the deal', async ({ seat, late }) => {
+  test('four of a rank are laid down as a book at once, including books made by the deal', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await deal(table, { hands: { 1: [card('7', 'clubs'), card('7', 'diamonds'), card('7', 'hearts'), card('2', 'clubs')], 2: [card('7', 'spades'), card('3', 'clubs')] } });
     await ask(alice, '7 of clubs');
@@ -170,7 +154,7 @@ test.describe('Go Fish rules', () => {
     const wanted = [card('A', 'clubs'), card('A', 'diamonds'), card('A', 'hearts'), card('A', 'spades'), ...deck.slice(1, 4)];
     const order = [...wanted, ...deck.filter(held => !wanted.some(other => other.rank === held.rank && other.suit === held.suit))];
     await dealt.random(...randomsFor(deck, order), 0);
-    const late2 = await late(dealt, 'Bob');
+    const late2 = await dealt.join('Bob');
     await expect(player(late2, 'Alice').locator('.player-books')).toHaveText('1 book');
     await expect(player(late2, 'Alice').getByTitle('Book of aces')).toBeVisible();
     await expect(player(late2, 'Alice').locator('.player-count')).toHaveText('3 cards');
@@ -412,10 +396,10 @@ test.describe('Go Fish differences from Wikipedia', () => {
     await expect(turn(cara)).toHaveText("Bob's turn");
   });
 
-  test('a random player starts', async ({ seat, late }) => {
+  test('a random player starts', async ({ seat }) => {
     const table = await seat('gofish', ['Alice']);
     await table.random(...UNSHUFFLED, 0.9);
-    const bob = await late(table, 'Bob');
+    const bob = await table.join('Bob');
     await expect(turn(bob)).toHaveText('You go first. Joining closes after the first ask.');
     await expect(turn(table.pages[0])).toHaveText('Bob goes first. Joining closes after the first ask.');
   });
@@ -430,10 +414,10 @@ test.describe('Go Fish differences from Wikipedia', () => {
     await expect(askButton(alice)).toHaveText('Ask Bob for 2s');
   });
 
-  test('six players can play, dealt 5 cards each', async ({ seat, late }) => {
+  test('six players can play, dealt 5 cards each', async ({ seat }) => {
     const table = await seat('gofish', ['Alice', 'Bob', 'Cara', 'Dan', 'Eve']);
     await table.random(...UNSHUFFLED, 0);
-    const finn = await late(table, 'Finn');
+    const finn = await table.join('Finn');
     await expect(finn.locator('.players .player')).toHaveCount(6);
     await expect(finn.locator('.players .player-count')).toHaveText(Array(6).fill('5 cards'));
     await expect(finn.getByText('Stock: 22')).toBeVisible();

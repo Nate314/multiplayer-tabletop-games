@@ -346,7 +346,8 @@
   box-shadow: 0 0 0 3px var(--gem-gold);
 }
 
-[data-game="splendor"] .dev-card-highlighted {
+[data-game="splendor"] .dev-card-highlighted,
+[data-game="splendor"] .bonus-highlighted {
   box-shadow: 0 0 0 3px var(--highlight);
 }
 
