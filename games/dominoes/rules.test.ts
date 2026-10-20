@@ -58,9 +58,9 @@ function ok(result: Result<GameState>): GameState {
   return result.state;
 }
 
-const move = (state: GameState, seat: number, made: object) => applyMove(dominoes, state, seat, made, noShuffle);
+const move = (state: GameState, seat: number, made: unknown) => applyMove(dominoes, state, seat, made, noShuffle);
 const play = (state: GameState, seat: number, tile: number, end: 'left' | 'right') => move(state, seat, { type: 'play', tile, end });
-const act = (state: GameState, seat: number, action: object, random: Random = noShuffle) =>
+const act = (state: GameState, seat: number, action: unknown, random: Random = noShuffle) =>
   dominoes.applyAction?.(state, seat, action, random) ?? assert.fail('Dominoes has actions');
 
 test('double-six has 28 tiles and double-nine 55', () => {
