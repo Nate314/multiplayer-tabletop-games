@@ -31,14 +31,14 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
           {drawCount > 0 || discardCount > 1
             ? <Tile label={`Draw pile, ${drawCount} cards`} onClick={onDraw && !holding ? () => onDraw('deck') : undefined} disabled={!onDraw || holding} />
             : <Tile label="Draw pile, empty" disabled />}
-          <span className="pile-count">{drawCount} cards</span>
+          <span className="pile-count">{drawCount} {drawCount === 1 ? 'card' : 'cards'}</span>
         </div>
         <div className="pile">
           <span className="pile-name">Discard pile</span>
           {discardTop === null
             ? <span className="tile tile-empty" aria-label="Discard pile, empty" />
             : <Tile card={discardTop} label={`Discard pile, top card ${discardTop}`} onClick={onDraw && !holding ? () => onDraw('discard') : undefined} disabled={!onDraw || holding} />}
-          <span className="pile-count">{discardCount} cards</span>
+          <span className="pile-count">{discardCount} {discardCount === 1 ? 'card' : 'cards'}</span>
         </div>
         {holding && (
           <div className="pile held" aria-label="The card in hand">

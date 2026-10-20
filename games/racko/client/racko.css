@@ -176,8 +176,8 @@
 }
 
 [data-game="racko"] .tile-small {
-  --tile-w: 26px;
-  --tile-h: 36px;
+  --tile-w: 24px;
+  --tile-h: 34px;
   border-width: 1px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -270,7 +270,7 @@
 
 [data-game="racko"] .other-racks {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 12px;
   width: 100%;
 }
