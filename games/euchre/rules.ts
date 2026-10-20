@@ -30,6 +30,7 @@ export const HAND_SIZE = 5;
 export const KITTY_SIZE = 3; // face down under the turned-up card
 export const TRICKS = 5;
 export const TARGET_SCORE = 10;
+export const SUIT_SYMBOLS: Record<Suit, string> = { clubs: '♣', diamonds: '♦', hearts: '♥', spades: '♠' };
 
 export function buildDeck(): Card[] {
   return standardDeck().filter(card => RANKS.includes(card.rank));
