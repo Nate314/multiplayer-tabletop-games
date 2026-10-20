@@ -30,6 +30,7 @@ import { splendorClient } from '../games/splendor/client/index.ts';
 import { farkleClient } from '../games/farkle/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
 import { dominoesClient } from '../games/dominoes/client/index.ts';
+import { yahtzeeClient } from '../games/yahtzee/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -84,6 +85,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [dominoesClient.id]: dominoesClient
   [farkleClient.id]: farkleClient,
   [tickettorideClient.id]: tickettorideClient
+  [yahtzeeClient.id]: yahtzeeClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
