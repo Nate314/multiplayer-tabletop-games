@@ -268,7 +268,7 @@
   color: var(--muted);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 900px) {
   [data-game="yahtzee"] .yz-sheet th,
   [data-game="yahtzee"] .yz-sheet td {
     padding: 4px 6px;
