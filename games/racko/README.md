@@ -13,7 +13,7 @@ Draw and swap cards to put the ten cards of your rack in ascending order, first 
 - **Empty draw pile.** The discard pile, except its top card, is shuffled to make a new draw pile
 - You see only your own rack. Other racks, the draw pile and a card taken from the draw pile and not yet placed or discarded are hidden. The scoring screen shows every finished rack
 - **Leaving.** A disconnected player keeps their seat and the game waits for them on their turn. A dismissed player's rack goes back into the draw pile (shuffled) and their turns are skipped; the last player left wins
-- Any player can ask to undo the last move. It is undone only if every connected player approves. The draw pile is reshuffled after an undo. Continue is not a move, so an undo goes back past it Undoing a Rack-O call (by everyone's vote) lets play continue with racks everyone has already seen on the scoring screen.
+- Any player can ask to undo the last move. It is undone only if every connected player approves. The draw pile is reshuffled after an undo. Continue is not a move, so an undo goes back past it. Undoing a Rack-O call (by everyone's vote) lets play continue, with the other players' racks being the ones everyone saw on the scoring screen.
 
 ## Controls
 
