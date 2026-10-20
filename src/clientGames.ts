@@ -24,6 +24,7 @@ import { riskClient } from '../games/risk/client/index.ts';
 import { rookClient } from '../games/rook/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
+import { dominoesClient } from '../games/dominoes/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -70,7 +71,8 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [riskClient.id]: riskClient,
   [rookClient.id]: rookClient,
   [splendorClient.id]: splendorClient,
-  [tickettorideClient.id]: tickettorideClient
+  [tickettorideClient.id]: tickettorideClient,
+  [dominoesClient.id]: dominoesClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
