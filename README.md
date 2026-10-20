@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has twenty-one games: Azul, Parchisi, Quoridor, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Catan (three to four players), Rook (four players), Carcassonne and Ticket to Ride (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), Risk (three to six players), and Monopoly and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has twenty-two games: Azul, Parchisi, Quoridor, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Mancala and War (two players), Catan (three to four players), Euchre and Rook (four players), Carcassonne and Ticket to Ride (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), Risk (three to six players), and Monopoly and UNO (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -115,6 +115,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Catan](games/catan/README.md): settle an island, trade resources and build roads, settlements and cities to reach 10 points, for 3 to 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Catan) and the official base game rules.
 - [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
 - [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
+- [Euchre](games/euchre/README.md): make trump with your partner and take three of five tricks, with the jacks on top, first team to 10, for exactly 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Euchre).
 - [Go Fish](games/gofish/README.md): ask for ranks, go fish, and collect the most books of four, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Go_Fish).
 - [Mancala](games/mancala/README.md): drop stones around the board, keep going from every full pit, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
 - [Monopoly](games/monopoly/README.md): buy, trade and build on properties, and bankrupt every other player, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Monopoly_(game)).
