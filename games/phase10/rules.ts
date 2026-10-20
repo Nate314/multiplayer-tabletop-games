@@ -1,6 +1,8 @@
 // Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
@@ -385,11 +387,15 @@ export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Rand
   return startNextHandIfReady(state, random);
 }
 
+const ROUND: RoundAccess<GameState, HandSummary> = {
+  get: state => state.handSummary,
+  set: (state, handSummary) => ({ ...state, handSummary }),
+  noun: 'hand'
+};
+
 // Deals the next hand once every connected player has acknowledged the summary. The dealer moves on one seat.
 function startNextHandIfReady(state: GameState, random: Random): GameState {
-  const summary = state.handSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
 
   const dealer = state.dealer === null ? state.activePlayers[0] : nextActivePlayer(state, state.dealer);
   const starter = dealer === null ? null : nextHandPlayer(state, dealer);
@@ -413,17 +419,9 @@ function startNextHandIfReady(state: GameState, random: Random): GameState {
 }
 
 export function acknowledgeHand(state: GameState, seat: Seat, random: Random = Math.random): Result<GameState> {
-  const summary = state.handSummary;
-  if (!summary || state.isGameOver) return { error: 'Nothing to continue' };
+  if (!state.handSummary || state.isGameOver) return { error: 'Nothing to continue' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
-  if (summary.acknowledged.includes(seat)) return { state };
-
-  const next: GameState = {
-    ...state,
-    handSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next hand`
-  };
-  return { state: startNextHandIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextHandIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
