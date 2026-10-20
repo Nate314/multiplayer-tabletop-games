@@ -252,9 +252,9 @@ test('side pots split correctly with three different all-in amounts', () => {
   state = move(state, 4, { type: 'call' });
   const result = state.handResult ?? assert.fail('no showdown');
   assert.deepEqual(result.pots, [
-    { amount: 400, winners: [1], hand: 'Pair of aces' },
-    { amount: 600, winners: [2], hand: 'Pair of kings' },
-    { amount: 600, winners: [3], hand: 'Pair of queens' }
+    { amount: 400, winners: [1], hand: 'Pair of aces', uncalled: 0 },
+    { amount: 600, winners: [2], hand: 'Pair of kings', uncalled: 0 },
+    { amount: 600, winners: [3], hand: 'Pair of queens', uncalled: 0 }
   ]);
   assert.deepEqual(state.chips, { 1: 400, 2: 600, 3: 600, 4: 400 });
   // An uncalled bet goes back without a contest
@@ -262,9 +262,48 @@ test('side pots split correctly with three different all-in amounts', () => {
   uncalled = move(uncalled, 1, { type: 'raise', to: 500 });
   uncalled = move(uncalled, 2, { type: 'call' });
   assert.deepEqual(uncalled.handResult?.pots, [
-    { amount: 400, winners: [1], hand: 'Pair of aces' },
-    { amount: 300, winners: [1], hand: null }
+    { amount: 400, winners: [1], hand: 'Pair of aces', uncalled: 0 },
+    { amount: 300, winners: [1], hand: null, uncalled: 300 }
   ]);
+  assert.match(uncalled.gameStatus, /Alice wins 400 with Pair of aces; Alice gets back 300 uncalled. Alice has every chip and wins!$/);
+});
+
+test("an uncontested side pot with a folded player's chips is split into what was won and what was uncalled", () => {
+  // Alice is all in for 100, Bob puts in 300 and folds, Cara puts in 600
+  let state = river([100, 1000, 1000], ['3d 4h', 'Kh Ks', 'Ah As'], '2c 7d 9h Jc 8s');
+  state = move(state, 1, { type: 'raise', to: 100 });
+  state = move(state, 2, { type: 'raise', to: 300 });
+  state = move(state, 3, { type: 'raise', to: 600 });
+  state = move(state, 2, { type: 'fold' });
+  assert.deepEqual(state.handResult?.pots, [
+    { amount: 300, winners: [3], hand: 'Pair of aces', uncalled: 0 },
+    { amount: 700, winners: [3], hand: null, uncalled: 300 }
+  ]);
+  assert.match(state.gameStatus, /Cara wins 300 with Pair of aces; Cara wins 400; Cara gets back 300 uncalled. Alice is out of chips$/);
+  assert.equal(state.chips[3], 1400);
+});
+
+test('a blind that puts the small blind all in deals the board out, and keeps the result', () => {
+  // Between hands 3 and 4; Bob takes the button and can post only 5 of the small blind
+  const between = (): GameState => river([1995, 5], ['Ah As', 'Kh Ks'], '2c 7d 9h Jc 8s', {
+    button: 1, handNumber: 3, currentPlayer: null,
+    handResult: { handNumber: 3, showdown: false, shown: {}, pots: [], won: {}, acknowledged: [] }
+  });
+  // Mid-game: Bob wins the 10 he could match and plays on
+  let mid = act(between(), 1, { type: 'acknowledgeRound' }, seeded(1));
+  mid = act(mid, 2, { type: 'acknowledgeRound' }, seeded(1));
+  assert.equal(mid.handNumber, 4);
+  assert.equal(mid.board.length, 5);
+  assert.equal(mid.isGameOver, false);
+  assert.deepEqual(mid.chips, { 1: 1990, 2: 10 });
+  assert.equal(mid.gameStatus, 'Hand 4: Bob has the button. The board is dealt out. Bob wins 10 with Pair of aces; Alice gets back 15 uncalled');
+  // Game-ending: Alice wins it and has every chip
+  let end = act(between(), 1, { type: 'acknowledgeRound' }, seeded(2));
+  end = act(end, 2, { type: 'acknowledgeRound' }, seeded(2));
+  assert.equal(end.isGameOver, true);
+  assert.deepEqual(end.winners, [1]);
+  assert.equal(end.gameStatus,
+    'Hand 4: Bob has the button. The board is dealt out. Alice wins 10 with Pair of fours; Alice gets back 15 uncalled. Alice has every chip and wins!');
 });
 
 test('a split pot gives the odd chip as the article says', () => {
@@ -278,7 +317,7 @@ test('a split pot gives the odd chip as the article says', () => {
   });
   state = move(state, 1, { type: 'check' });
   state = move(state, 2, { type: 'check' });
-  assert.deepEqual(state.handResult?.pots, [{ amount: 35, winners: [1, 2], hand: 'Straight, nine high' }]);
+  assert.deepEqual(state.handResult?.pots, [{ amount: 35, winners: [1, 2], hand: 'Straight, nine high', uncalled: 0 }]);
   assert.deepEqual(state.handResult?.won, { 1: 18, 2: 17 });
   assert.match(state.gameStatus, /Alice and Bob split 35 with Straight, nine high$/);
 });

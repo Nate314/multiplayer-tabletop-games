@@ -26,8 +26,9 @@ export type LastMove = { type: Move['type']; playerNumber: Seat; to: number; pai
 // One pot: the main pot first, then each side pot. Only `eligible` players can win it.
 export type Pot = { amount: number; eligible: Seat[] };
 
-// A pot as it was paid out; hand is null when nobody else could contest it (everyone else folded, or an uncalled bet)
-export type PaidPot = { amount: number; winners: Seat[]; hand: string | null };
+// A pot as it was paid out; hand is null when nobody else could contest it (everyone else folded, or an uncalled bet).
+// `uncalled` is the part of an uncontested pot that was the winner's own bet nobody matched; the rest was won.
+export type PaidPot = { amount: number; winners: Seat[]; hand: string | null; uncalled: number };
 
 // How the last hand went, shown until everyone with chips presses Continue
 export type HandResult = {

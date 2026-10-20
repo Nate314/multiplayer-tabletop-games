@@ -185,7 +185,10 @@ export function dealHand(state: GameState, random: Random): GameState {
   next = putIn(next, small, Math.min(SMALL_BLIND, next.chips[small]));
   next = putIn(next, big, Math.min(BIG_BLIND, next.chips[big]));
   // Blinds that put everyone all in leave nothing to bet
-  if (roundComplete(next)) return { ...nextStreet(next), gameStatus: next.gameStatus };
+  if (roundComplete(next)) {
+    const done = nextStreet(next);
+    return { ...done, gameStatus: `${next.gameStatus}. The board is dealt out. ${done.gameStatus}` };
+  }
   return { ...next, currentPlayer: nextToAct(next, big) };
 }
 
@@ -198,6 +201,13 @@ export function resetLobby(state: GameState, random: Random): GameState {
   return dealHand(empty, random);
 }
 
+// At a showdown an uncontested pot is told apart into what was won and the bet nobody called. A player who won
+// because everyone else folded simply wins it all.
+export function uncalledPart(pot: PaidPot, showdown: boolean): { won: number; uncalled: number } {
+  const uncalled = showdown ? pot.uncalled : 0;
+  return { won: pot.amount - uncalled, uncalled };
+}
+
 // Every live hand at the showdown, and each pot to the best of the hands that may win it.
 // Without a showdown each pot has one player left in it.
 function endHand(state: GameState, showdown: boolean): GameState {
@@ -207,10 +217,14 @@ function endHand(state: GameState, showdown: boolean): GameState {
     ? Object.fromEntries(live.map(seat => [seat, bestHand([...state.holeCards[seat], ...state.board])]))
     : {};
   const pots: PaidPot[] = computePots(state).map(({ amount, eligible }) => {
-    if (eligible.length === 1) return { amount, winners: eligible, hand: null };
+    if (eligible.length === 1) {
+      const [only] = eligible;
+      const matched = Math.max(0, ...Object.entries(state.contributed).filter(([seat]) => Number(seat) !== only).map(([, put]) => put));
+      return { amount, winners: eligible, hand: null, uncalled: Math.min(amount, Math.max(0, state.contributed[only] - matched)) };
+    }
     const top = eligible.reduce((best, seat) => compareHands(ranks[seat], ranks[best]) > 0 ? seat : best);
     const winners = eligible.filter(seat => compareHands(ranks[seat], ranks[top]) === 0);
-    return { amount, winners, hand: ranks[top].name };
+    return { amount, winners, hand: ranks[top].name, uncalled: 0 };
   });
   const won: Record<Seat, number> = {};
   for (const pot of pots) {
@@ -226,10 +240,13 @@ function endHand(state: GameState, showdown: boolean): GameState {
   const handResult: HandResult = { handNumber: state.handNumber, showdown, shown, pots, won, acknowledged: [] };
 
   const names = (seats: Seat[]) => seats.map(seat => state.playerNames[seat]).join(' and ');
-  const paid = pots.map(pot => {
-    if (showdown && pot.hand === null) return `${names(pot.winners)} gets back ${chipText(pot.amount)} uncalled`;
+  const paid = pots.flatMap(pot => {
     const verb = pot.winners.length === 1 ? 'wins' : 'split';
-    return `${names(pot.winners)} ${verb} ${chipText(pot.amount)}${pot.hand ? ` with ${pot.hand}` : ''}`;
+    const { won, uncalled } = uncalledPart(pot, showdown);
+    return [
+      won > 0 ? `${names(pot.winners)} ${verb} ${chipText(won)}${pot.hand ? ` with ${pot.hand}` : ''}` : '',
+      uncalled > 0 ? `${names(pot.winners)} gets back ${chipText(uncalled)} uncalled` : ''
+    ].filter(Boolean);
   }).join('; ');
 
   const ended: GameState = {

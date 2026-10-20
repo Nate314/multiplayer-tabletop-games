@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What are the button and the blinds?',
-    answer: 'The D marks the dealer button, which moves one player to the left each hand. The player left of it posts the small blind of 10 and the next player the big blind of 20. With two players the button posts the small blind and acts first before the flop. The first player to join has the first button.'
+    answer: 'The D marks the dealer button, which moves one player to the left each hand, skipping players who are out of chips. The player left of it posts the small blind of 10 and the next player the big blind of 20. With two players the button posts the small blind and acts first before the flop. The first player to join has the first button.'
   },
   {
     question: 'Who acts first?',

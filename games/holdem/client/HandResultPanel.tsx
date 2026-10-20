@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { chipText } from '../rules.ts';
+import { chipText, uncalledPart } from '../rules.ts';
 import type { PublicGameState } from '../types.ts';
 
 type HandResultPanelProps = {
@@ -19,13 +19,14 @@ export default function HandResultPanel({ gameState, children }: HandResultPanel
     <section className="holdem-result" aria-label="Hand result">
       <h2>{isGameOver ? 'Final chips' : `Hand ${handResult.handNumber} result`}</h2>
       <ul className="holdem-result-pots">
-        {handResult.pots.map((pot, index) => (
-          <li key={index}>
-            {pot.hand === null && handResult.showdown
-              ? `${names(pot.winners)} gets back ${chipText(pot.amount)} uncalled`
-              : `${index === 0 ? 'Pot' : `Side pot ${index}`} of ${chipText(pot.amount)}: ${names(pot.winners)}${pot.hand ? ` with ${pot.hand}` : ''}`}
-          </li>
-        ))}
+        {handResult.pots.flatMap((pot, index) => {
+          const { won, uncalled } = uncalledPart(pot, handResult.showdown);
+          const title = index === 0 ? 'Pot' : `Side pot ${index}`;
+          return [
+            won > 0 && <li key={`${index}-won`}>{title} of {chipText(won)}: {names(pot.winners)}{pot.hand ? ` with ${pot.hand}` : ''}</li>,
+            uncalled > 0 && <li key={`${index}-uncalled`}>{names(pot.winners)} gets back {chipText(uncalled)} uncalled</li>
+          ].filter(Boolean);
+        })}
       </ul>
       {isGameOver && (
         <ol className="holdem-standings">

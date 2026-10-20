@@ -163,6 +163,26 @@ test.describe("Texas Hold'em rules", () => {
     await expect(result(alice)).toBeVisible();
   });
 
+  test('a blind that puts a player all in deals the board out, and the result and History show that hand', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat, 2);
+    await fold(alice);
+    // Bob takes the button and can post only 5; an unshuffled deck gives Alice a king-high flush
+    await table.patch({ chips: { 1: 1995, 2: 5 } });
+    await table.random(...Array.from({ length: 51 }, () => 0.999999));
+    await continueAll(alice, bob);
+    await expect(status(bob)).toHaveText(
+      'Hand 2: Bob has the button. The board is dealt out. Alice wins 10 with Flush, king high; Alice gets back 15 uncalled. Alice has every chip and wins!'
+    );
+    await expect(board(bob)).toHaveCount(5);
+    await expect(result(bob).locator('.holdem-result-pots li')).toHaveText(['Pot of 10: Alice with Flush, king high', 'Alice gets back 15 uncalled']);
+    // The hand was dealt by Continue, not a move, so History shows it as the end of the game
+    await bob.getByRole('button', { name: 'History' }).click();
+    const dialog = bob.getByRole('dialog', { name: 'History' });
+    await expect(dialog.locator('.history-move')).toHaveText(/^End of the game: Hand 2: Bob has the button\. The board is dealt out\./);
+    await expect(dialog.locator('.holdem-board .playing-card')).toHaveCount(5);
+    await expect(dialog.getByRole('region', { name: 'Hand result' })).toContainText('Alice gets back 15 uncalled');
+  });
+
   test('side pots split correctly with three different all-in amounts, and an uncalled bet goes back', async ({ seat }) => {
     const { table, pages, alice, bob, cara, dan } = await start(seat, 4);
     await river(table, [100, 300, 600, 1000], ['Ah As', 'Kh Ks', 'Qh Qs', '3d 4h'], '2c 7d 9h Jc 8s');
@@ -186,6 +206,17 @@ test.describe("Texas Hold'em rules", () => {
     await call(uncalled.bob);
     await expect(result(uncalled.bob).locator('.holdem-result-pots li')).toHaveText([
       'Pot of 400: Alice with Pair of aces', 'Alice gets back 300 uncalled'
+    ]);
+
+    // Bob put in 300 and folded: of Cara's side pot, 400 was won and only 300 was uncalled
+    const folded = await start(seat);
+    await river(folded.table, [100, 1000, 1000], ['3d 4h', 'Kh Ks', 'Ah As'], '2c 7d 9h Jc 8s');
+    await raise(folded.alice, 100);
+    await raise(folded.bob, 300);
+    await raise(folded.cara, 600);
+    await fold(folded.bob);
+    await expect(result(folded.alice).locator('.holdem-result-pots li')).toHaveText([
+      'Pot of 300: Cara with Pair of aces', 'Side pot 1 of 400: Cara', 'Cara gets back 300 uncalled'
     ]);
   });
 
