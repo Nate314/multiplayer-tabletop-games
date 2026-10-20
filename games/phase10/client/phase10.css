@@ -450,7 +450,6 @@
 }
 
 [data-game="phase10"] .summary-result {
-  font-weight: 600;
   color: var(--highlight);
   margin-bottom: 12px;
 }
@@ -490,10 +489,6 @@
 
 [data-game="phase10"] .summary-phase,
 [data-game="phase10"] .summary-reason,
-[data-game="phase10"] .summary-waiting {
-  color: var(--muted);
-}
-
 [data-game="phase10"] .summary-waiting {
   margin-top: 16px;
 }

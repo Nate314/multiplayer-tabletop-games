@@ -444,7 +444,6 @@
 
 [data-game="hearts"] .summary-result {
   margin-bottom: 8px;
-  font-weight: 600;
   text-align: center;
 }
 
@@ -475,7 +474,6 @@
 [data-game="hearts"] .summary-target,
 [data-game="hearts"] .summary-waiting {
   margin-bottom: 12px;
-  color: var(--muted);
   text-align: center;
 }
 

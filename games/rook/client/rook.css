@@ -575,7 +575,6 @@
 
 [data-game="rook"] .summary-result {
   margin-bottom: 8px;
-  font-weight: 600;
   text-align: center;
 }
 
@@ -613,7 +612,6 @@
 [data-game="rook"] .summary-target,
 [data-game="rook"] .summary-waiting {
   margin-bottom: 12px;
-  color: var(--muted);
   text-align: center;
 }
 

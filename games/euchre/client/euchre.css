@@ -472,7 +472,6 @@
 
 [data-game="euchre"] .summary-result {
   margin-bottom: 8px;
-  font-weight: 600;
   text-align: center;
 }
 
@@ -510,7 +509,6 @@
 [data-game="euchre"] .summary-target,
 [data-game="euchre"] .summary-waiting {
   margin-bottom: 12px;
-  color: var(--muted);
   text-align: center;
 }
 

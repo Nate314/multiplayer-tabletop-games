@@ -294,7 +294,6 @@
 }
 
 [data-game="racko"] .summary-result {
-  font-weight: 600;
   color: var(--highlight);
   margin-bottom: 12px;
 }
@@ -335,10 +334,6 @@
 
 [data-game="racko"] .summary-reason,
 [data-game="racko"] .summary-target,
-[data-game="racko"] .summary-waiting {
-  color: var(--muted);
-}
-
 [data-game="racko"] .summary-rack {
   grid-column: 1 / -1;
   display: flex;

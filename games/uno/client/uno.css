@@ -558,7 +558,6 @@
 }
 
 [data-game="uno"] .summary-result {
-  font-weight: 600;
   color: var(--highlight);
   margin-bottom: 12px;
 }
@@ -599,10 +598,6 @@
 
 [data-game="uno"] .summary-reason,
 [data-game="uno"] .summary-target,
-[data-game="uno"] .summary-waiting {
-  color: var(--muted);
-}
-
 [data-game="uno"] .summary-target,
 [data-game="uno"] .summary-waiting {
   margin-top: 12px;

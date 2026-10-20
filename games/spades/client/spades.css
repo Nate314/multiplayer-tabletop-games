@@ -433,7 +433,6 @@
 
 [data-game="spades"] .summary-result {
   margin-bottom: 8px;
-  font-weight: 600;
   text-align: center;
 }
 
@@ -474,7 +473,6 @@
 [data-game="spades"] .summary-target,
 [data-game="spades"] .summary-waiting {
   margin-bottom: 12px;
-  color: var(--muted);
   text-align: center;
 }
 
