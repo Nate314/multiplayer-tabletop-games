@@ -473,6 +473,7 @@
 [data-game="spades"] .summary-target,
 [data-game="spades"] .summary-waiting {
   margin-bottom: 12px;
+  color: var(--muted);
   text-align: center;
 }
 

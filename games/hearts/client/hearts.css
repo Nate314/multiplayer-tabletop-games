@@ -474,6 +474,7 @@
 [data-game="hearts"] .summary-target,
 [data-game="hearts"] .summary-waiting {
   margin-bottom: 12px;
+  color: var(--muted);
   text-align: center;
 }
 

@@ -612,6 +612,7 @@
 [data-game="rook"] .summary-target,
 [data-game="rook"] .summary-waiting {
   margin-bottom: 12px;
+  color: var(--muted);
   text-align: center;
 }
 
