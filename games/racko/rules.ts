@@ -1,7 +1,9 @@
 // Rack-O rules shared by the browser (move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Rack-O, and the target score of 500 from the official rules.
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, GameState, LastMove, Move, Pile, PublicGameState, Result, RoundSummary, Seat } from './types.ts';
@@ -211,25 +213,22 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   }
 }
 
+const ROUND: RoundAccess<GameState, RoundSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'round'
+};
+
 // Deals the next round once every connected player has pressed Continue. The first turn passes to the starter's left.
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
   const starter = nextActivePlayer(state, state.starter ?? 0) as Seat;
   const round = state.round + 1;
   return { ...dealRound({ ...state, round }, starter, random), gameStatus: `Round ${round}: ${state.playerNames[starter]} goes first` };
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  return { state: startNextRoundIfReady({
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next round`
-  }, random) };
+  return acknowledge(state, seat, ROUND, next => startNextRoundIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
