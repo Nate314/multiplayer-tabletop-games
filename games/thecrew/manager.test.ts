@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys } from '../../server/testing.ts';
-import { canPlayCard } from './rules.ts';
+import { canPlayCard, trueTokens } from './rules.ts';
 import { thecrew } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -93,7 +93,7 @@ test('a rejoin mid-turn shows the same half-finished trick, hand and communicati
   const hand = viewOf(manager, commander).hand;
   const card = hand.find(held => held.suit !== 'rocket' && !hand.some(other => other.suit === held.suit && other.value > held.value))
     ?? assert.fail('no card to communicate');
-  ok(manager.action(ROOM, commander, { type: 'communicate', card, token: 'highest' }));
+  ok(manager.action(ROOM, commander, { type: 'communicate', card, token: trueTokens(hand, card)[0] }));
   step(manager);
   step(manager);
   const seat = viewOf(manager, null).currentPlayer ?? assert.fail('nobody to move');

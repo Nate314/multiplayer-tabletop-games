@@ -72,10 +72,10 @@ export function canPlayCard(hand: Card[], card: Card, trick: Play[]): boolean {
 export function trueTokens(hand: Card[], card: Card): CommToken[] {
   if (isRocket(card)) return [];
   const same = hand.filter(held => held.suit === card.suit);
+  if (same.length === 1) return ['only'];
   const tokens: CommToken[] = [];
   if (same.every(held => held.value <= card.value)) tokens.push('highest');
   if (same.every(held => held.value >= card.value)) tokens.push('lowest');
-  if (same.length === 1) tokens.push('only');
   return tokens;
 }
 
@@ -185,13 +185,25 @@ export function resetLobby(state: GameState, random: Random): GameState {
   return state.activePlayers.length < MIN_PLAYERS ? empty : dealMission(empty, random);
 }
 
+// Face down: every task during a commander's decision, and the tasks after the one being handed out
+function faceDownTasks(state: GameState): (index: number) => boolean {
+  const firstOpen = state.tasks.findIndex(t => t.owner === null);
+  const deciding = state.phase === 'decision' && missionOf(state.mission).rule?.kind === 'takesAll';
+  return index => deciding || (state.phase === 'distribute' && state.tasks[index].owner === null && index !== firstOpen);
+}
+
+// After an undo the face-down tasks are drawn again from the task cards not on the table, keeping each place's order
+// token, so undoing a commander's pick cannot show the crew what was face down
+export function onUndo(state: GameState, random: Random): GameState {
+  const faceDown = faceDownTasks(state);
+  if (!state.tasks.some((_, index) => faceDown(index))) return state;
+  const unused = shuffle(taskDeck().filter(card => !state.tasks.some(t => sameCard(t.card, card))), random);
+  return { ...state, tasks: state.tasks.map((t, index) => (faceDown(index) ? { ...t, card: unused.pop() ?? t.card } : t)) };
+}
+
 export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
   const { hands, tasks, tricks, distress, communications, ...view } = state;
-  const rule = missionOf(state.mission).rule;
-  const firstOpen = tasks.findIndex(t => t.owner === null);
-  // Face down: every task during a commander's decision, and the tasks after the one being handed out
-  const faceDown = (index: number) => (state.phase === 'decision' && rule?.kind === 'takesAll')
-    || (state.phase === 'distribute' && tasks[index].owner === null && index !== firstOpen);
+  const faceDown = faceDownTasks(state);
   return {
     ...view,
     hand: viewer === null ? [] : hands[viewer] ?? [],

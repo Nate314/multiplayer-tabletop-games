@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDeck, cardName, createGameState, dealMission, describeMove, totalTricks, toPublicState } from './rules.ts';
+import { buildDeck, cardName, createGameState, dealMission, describeMove, totalTricks, toPublicState, trueTokens } from './rules.ts';
 import { MISSIONS } from './missions.ts';
 import { thecrew } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -242,6 +242,40 @@ test('communication is allowed only between tricks, once per mission, and must b
   // Not before the tasks are shared out, and not after the mission
   assert.ok('error' in say({ ...state, phase: 'choose' }, 1, p(9), 'highest'));
   assert.ok('error' in say({ ...state, phase: 'missionOver' }, 1, p(9), 'highest'));
+});
+
+test('an only card is communicated as only, not as highest or lowest', () => {
+  const hands = { 1: [p(9), y(4), b(1)], 2: [p(1), g(2), b(2)], 3: [p(5), g(3), b(3)], 4: [y(2), p(3), b(4)] };
+  assert.deepEqual(trueTokens(hands[1], y(4)), ['only']);
+  assert.deepEqual(trueTokens([p(9), p(4)], p(9)), ['highest']);
+  const state = game({ hands, tasks: [task(p(1), 1)] });
+  for (const token of ['highest', 'lowest']) {
+    assert.deepEqual(act(state, 1, { type: 'communicate', card: y(4), token }), { error: `That is not true: yellow 4 is not your ${token} yellow` });
+  }
+  assert.ok('state' in act(state, 1, { type: 'communicate', card: y(4), token: 'only' }));
+});
+
+test('undo reshuffles', () => {
+  // A commander's decision: undoing it puts other face-down tasks on the table, so the crew cannot learn them
+  const decision = dealMission({ ...lobby(4), mission: 20, startMission: 20 }, seeded(1));
+  const undone = thecrew.onUndo?.(decision, seeded(9)) ?? assert.fail('no onUndo');
+  assert.equal(undone.tasks.length, 2);
+  assert.notDeepEqual(undone.tasks.map(t => cardName(t.card)), decision.tasks.map(t => cardName(t.card)));
+  for (const t of undone.tasks) assert.ok(!decision.tasks.some(old => cardName(old.card) === cardName(t.card)));
+
+  // A distribution: the task on show and those already handed out stay, the face-down rest is redrawn, tokens kept by place
+  let dealt = dealMission({ ...lobby(4), mission: 36, startMission: 36 }, seeded(1));
+  dealt = ok(move({ ...dealt, commander: 1, currentPlayer: 1 }, 1, { type: 'assignTask', seat: 2 }));
+  const again = thecrew.onUndo?.(dealt, seeded(9)) ?? assert.fail('no onUndo');
+  assert.deepEqual(again.tasks.slice(0, 2), dealt.tasks.slice(0, 2));
+  assert.deepEqual(again.tasks.map(t => t.token), dealt.tasks.map(t => t.token));
+  const names = again.tasks.map(t => cardName(t.card));
+  assert.equal(new Set(names).size, 7);
+  assert.notDeepEqual(names.slice(2), dealt.tasks.slice(2).map(t => cardName(t.card)));
+
+  // Anywhere else nothing face down is left, so nothing changes
+  const playing = game();
+  assert.equal(thecrew.onUndo?.(playing, seeded(9)), playing);
 });
 
 test('a dead spot shows no token, and a disruption holds communication off until its trick', () => {

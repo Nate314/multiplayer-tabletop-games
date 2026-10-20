@@ -189,6 +189,14 @@ test.describe('The Crew rules', () => {
     await expect(button(bob, 'Communicate')).toBeVisible();
   });
 
+  test('your only card of a color is communicated as only', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await playing(table, { hands: { 1: [p(9), y(4), b(1)], 2: [p(1), b(2)], 3: [p(2), b(3)] }, tasks: [task(p(1), 1)] });
+    await button(alice, 'Communicate').click();
+    await handCard(alice, y(4)).click();
+    await expect(alice.locator('.action-buttons button').filter({ hasText: 'is my' })).toHaveText(['yellow 4 is my only']);
+  });
+
   test('a dead spot shows no token, and a disruption holds communication off until its trick', async ({ seat }) => {
     const { table, pages } = await start(seat);
     const [alice, bob, cara] = pages;
@@ -461,6 +469,20 @@ test.describe('The Crew mission rules', () => {
     await button(alice, 'Give to Bob').click();
     await button(alice, 'Give to Cara').click();
     await expect(seatOf(bob, 'Cara').getByLabel('task green 1')).toBeVisible();
+  });
+
+  test("an undo during a commander's distribution puts new face-down tasks on the table", async ({ seat }) => {
+    const { table, pages } = await start(seat);
+    const [alice, bob, cara] = pages;
+    const tasks = [task(p(1), null), task(b(1), null), task(g(1), null), task(y(1), null)];
+    await playing(table, { mission: 24, phase: 'distribute', hands: { 1: [p(9)], 2: [p(1)], 3: [p(2)] }, tasks });
+    await button(alice, 'Give to Bob').click();
+    await expect(alice.getByLabel('Open tasks').getByLabel('task blue 1')).toBeVisible(); // now on show
+    await undo(alice, bob, cara);
+    await expect(alice.getByLabel('Open tasks').getByLabel('task pink 1')).toBeVisible();
+    const state = await table.state<GameState>();
+    expect(state.tasks[0].card).toEqual(p(1));
+    for (const card of [b(1), g(1), y(1)]) expect(state.tasks.slice(1).map(t => label(t.card))).not.toContain(label(card));
   });
 
   test('missions 29 and 34: nobody may have won two tricks more than another', async ({ seat }) => {

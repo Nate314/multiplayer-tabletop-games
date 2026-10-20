@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I communicate?',
-    answer: 'Once per mission, between tricks (before the first trick too), click Communicate, pick a color card from your hand and say whether it is your highest, lowest or only card of that color. Only true statements are offered, and rockets cannot be communicated. Talking about your cards is not allowed; the site has no chat.'
+    answer: 'Once per mission, between tricks (before the first trick too), click Communicate, pick a color card from your hand and say whether it is your highest, lowest or only card of that color. Only true statements are offered (your only card of a color is always "only"), and rockets cannot be communicated. Talking about your cards is not allowed; the site has no chat.'
   },
   {
     question: 'What are dead spots and disruptions?',
