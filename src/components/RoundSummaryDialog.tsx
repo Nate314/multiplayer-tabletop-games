@@ -7,6 +7,7 @@ type RoundSummaryDialogProps = {
   gameState: Pick<BasePublicState, 'isGameOver' | 'gameStatus' | 'activePlayers' | 'disconnected' | 'playerNames'>;
   result?: ReactNode; // the line under the title; defaults to the game status, null leaves it out
   acknowledged: Seat[];
+  listDisconnected?: boolean; // Azul's waiting line also names disconnected players
   playerNumber: Seat;
   onContinue: () => void;
   onClose: () => void;
@@ -16,11 +17,11 @@ type RoundSummaryDialogProps = {
 // The scoring after a round: the game's own rows as children, then Continue.
 // Until the game is over, everyone connected clicks Continue to start the next round.
 export default function RoundSummaryDialog({
-  label, title, gameState, result = gameState.gameStatus, acknowledged, playerNumber, onContinue, onClose, children
+  label, title, gameState, result = gameState.gameStatus, acknowledged, listDisconnected = false, playerNumber, onContinue, onClose, children
 }: RoundSummaryDialogProps) {
   const { playerNames, isGameOver, activePlayers, disconnected } = gameState;
   const waitingFor = activePlayers
-    .filter(seat => !acknowledged.includes(seat) && !disconnected.includes(seat))
+    .filter(seat => !acknowledged.includes(seat) && (listDisconnected || !disconnected.includes(seat)))
     .map(seat => playerNames[seat]);
 
   return (

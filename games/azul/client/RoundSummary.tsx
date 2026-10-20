@@ -83,6 +83,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, seats, 
       gameState={gameState}
       result={isGameOver ? gameStatus : null}
       acknowledged={summary.acknowledged}
+      listDisconnected
       playerNumber={playerNumber}
       onContinue={onContinue}
       onClose={onClose}

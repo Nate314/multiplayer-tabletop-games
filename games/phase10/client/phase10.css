@@ -490,6 +490,10 @@
 [data-game="phase10"] .summary-phase,
 [data-game="phase10"] .summary-reason,
 [data-game="phase10"] .summary-waiting {
+  color: var(--muted);
+}
+
+[data-game="phase10"] .summary-waiting {
   margin-top: 16px;
 }
 

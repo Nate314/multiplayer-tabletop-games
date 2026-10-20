@@ -286,6 +286,10 @@
 
 [data-game="dominoes"] .summary-reason,
 [data-game="dominoes"] .summary-target,
+[data-game="dominoes"] .summary-waiting {
+  color: var(--muted);
+}
+
 [data-game="dominoes"] .summary-target,
 [data-game="dominoes"] .summary-waiting {
   margin-top: 12px;

@@ -334,6 +334,10 @@
 
 [data-game="racko"] .summary-reason,
 [data-game="racko"] .summary-target,
+[data-game="racko"] .summary-waiting {
+  color: var(--muted);
+}
+
 [data-game="racko"] .summary-rack {
   grid-column: 1 / -1;
   display: flex;

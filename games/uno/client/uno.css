@@ -598,6 +598,10 @@
 
 [data-game="uno"] .summary-reason,
 [data-game="uno"] .summary-target,
+[data-game="uno"] .summary-waiting {
+  color: var(--muted);
+}
+
 [data-game="uno"] .summary-target,
 [data-game="uno"] .summary-waiting {
   margin-top: 12px;
