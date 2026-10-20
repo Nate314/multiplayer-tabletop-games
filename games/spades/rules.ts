@@ -227,7 +227,7 @@ function play(state: GameState, seat: Seat, card: Card): Result<GameState> {
   return { state: endHand(taken) };
 }
 
-export function applyMove(state: GameState, seat: Seat, move: unknown, _random: Random): Result<GameState> {
+export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
   if (parsed.type === 'bid') {
