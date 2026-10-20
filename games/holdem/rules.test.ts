@@ -145,19 +145,19 @@ test('heads-up the button posts the small blind and acts first before the flop',
 
 test('a raise must be at least the last raise', () => {
   let state = lobby(4);
-  assert.deepEqual(applyMove(state, 4, { type: 'raise', to: 39 }, seeded(1)), { error: 'The smallest raise is to 40' });
+  assert.deepEqual(applyMove(state, 4, { type: 'raise', to: 39 }), { error: 'The smallest raise is to 40' });
   state = move(state, 4, { type: 'raise', to: 40 });
   assert.deepEqual(options(state, 1), { toCall: 40, canCheck: false, canRaise: true, minTo: 60, maxTo: 1000 });
   // A bigger raise sets the new minimum
   state = move(state, 1, { type: 'raise', to: 100 });
-  assert.deepEqual(applyMove(state, 2, { type: 'raise', to: 150 }, seeded(1)), { error: 'The smallest raise is to 160' });
+  assert.deepEqual(applyMove(state, 2, { type: 'raise', to: 150 }), { error: 'The smallest raise is to 160' });
   state = move(state, 2, { type: 'raise', to: 160 });
   assert.equal(state.raiseSize, 60);
 
   // After the flop the first bet must be at least the big blind
   let flop = lobby(2);
   flop = move(move(flop, 1, { type: 'call' }), 2, { type: 'check' });
-  assert.deepEqual(applyMove(flop, 2, { type: 'raise', to: 10 }, seeded(1)), { error: 'The smallest bet is 20' });
+  assert.deepEqual(applyMove(flop, 2, { type: 'raise', to: 10 }), { error: 'The smallest bet is 20' });
   flop = move(flop, 2, { type: 'raise', to: 20 });
   assert.equal(flop.lastMove?.bet, true);
 
@@ -170,7 +170,7 @@ test('a raise must be at least the last raise', () => {
   short = move(short, 3, { type: 'call' });
   // Alice already acted and faces only 10 more: she may call or fold, not raise
   assert.equal(options(short, 1).canRaise, false);
-  assert.deepEqual(applyMove(short, 1, { type: 'raise', to: 90 }, seeded(1)), { error: 'The betting is not open to you' });
+  assert.deepEqual(applyMove(short, 1, { type: 'raise', to: 90 }), { error: 'The betting is not open to you' });
   short = move(short, 1, { type: 'call' });
   assert.equal(short.street, 'flop');
 });
@@ -422,9 +422,9 @@ test('invalid moves', () => {
     [{ type: 'raise', to: 1001 }, 'You have only 1,000 chips'],
     [{ type: 'raise', to: 20 }, 'The smallest raise is to 40']
   ];
-  for (const [bad, error] of tries) assert.deepEqual(applyMove(state, 1, bad, seeded(1)), { error });
+  for (const [bad, error] of tries) assert.deepEqual(applyMove(state, 1, bad), { error });
   const flop = move(move(move(state, 1, { type: 'call' }), 2, { type: 'call' }), 3, { type: 'check' });
-  assert.deepEqual(applyMove(flop, 2, { type: 'call' }, seeded(1)), { error: 'Nothing to call: check instead' });
+  assert.deepEqual(applyMove(flop, 2, { type: 'call' }), { error: 'Nothing to call: check instead' });
   // Between hands nobody moves
   const done = move(move(state, 1, { type: 'fold' }), 2, { type: 'fold' });
   assert.deepEqual(platformMove(holdem, done, 3, { type: 'check' }, seeded(1)), { error: 'Not your turn' });
@@ -433,7 +433,7 @@ test('invalid moves', () => {
   // Raising when nobody could answer it
   let allIn = lobby(2);
   allIn = move(allIn, 1, { type: 'raise', to: 1000 });
-  assert.deepEqual(applyMove(allIn, 2, { type: 'raise', to: 1000 }, seeded(1)), { error: 'The smallest raise is to 1,980' });
+  assert.deepEqual(applyMove(allIn, 2, { type: 'raise', to: 1000 }), { error: 'The smallest raise is to 1,980' });
   assert.equal(options(allIn, 2).canRaise, false);
 });
 

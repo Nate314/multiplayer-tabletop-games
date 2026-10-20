@@ -347,7 +347,7 @@ function betTo(state: GameState, seat: Seat, move: Move): number | { error: stri
   }
 }
 
-export function applyMove(state: GameState, seat: Seat, move: unknown, _random: Random): Result<GameState> {
+export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
   if (state.handResult || !needsToAct(state, seat)) return { error: 'Not your turn' };

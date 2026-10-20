@@ -1,0 +1,359 @@
+/* The poker table. Every rule is scoped to data-game="holdem", so none of it reaches the landing page or other games.
+   The header, FAQ dialog and vote panels use the platform defaults, rethemed through the --platform-* variables. */
+
+[data-game="holdem"] {
+  color-scheme: light;
+  --felt: #1f6a5a;
+  --felt-dark: #154c40;
+  --text: #1f2a22;
+  --muted: #536257;
+  --panel-bg: rgba(255, 255, 255, 0.94);
+  --panel-border: rgba(31, 42, 34, 0.15);
+  --button-bg: #8c2a1f;
+  --button-hover-bg: #6f2017;
+  --button-text: #fff;
+  --status-bg: #e7f0e9;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --current: #f2c14e;
+  --winner: #f7e08a;
+  --platform-page-bg: var(--felt);
+  --platform-text: #fff;
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: #fff;
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="holdem"] {
+  color-scheme: dark;
+  --felt: #12352d;
+  --felt-dark: #0b221d;
+  --text: #e8efe9;
+  --muted: #a9b8ad;
+  --panel-bg: rgba(30, 40, 33, 0.95);
+  --panel-border: rgba(232, 239, 233, 0.14);
+  --button-bg: #b23a2c;
+  --button-hover-bg: #cc4b3c;
+  --status-bg: #263a2c;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --current: #e0aa2e;
+  --winner: #b49a3a;
+  --platform-panel-bg: #1e2821;
+  --platform-panel-text: var(--text);
+}
+
+.game-root[data-game="holdem"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-dark)) fixed;
+}
+
+[data-game="holdem"] .game-header {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+[data-game="holdem"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+[data-game="holdem"] .game-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+[data-game="holdem"] .game-info,
+[data-game="holdem"] .holdem-result,
+[data-game="holdem"] .holdem-seat,
+[data-game="holdem"] .holdem-middle {
+  box-sizing: border-box;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+[data-game="holdem"] .game-info,
+[data-game="holdem"] .holdem-result {
+  width: 680px;
+  max-width: 100%;
+  padding: 14px 20px;
+}
+
+[data-game="holdem"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="holdem"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="holdem"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="holdem"] .turn-message {
+  font-weight: 600;
+}
+
+[data-game="holdem"] .hint {
+  min-height: 1.3em;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+[data-game="holdem"] .action-buttons,
+[data-game="holdem"] .holdem-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+[data-game="holdem"] .holdem-raise {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-game="holdem"] .holdem-raise input {
+  width: 6em;
+  padding: 7px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+}
+
+[data-game="holdem"] .action-buttons button,
+[data-game="holdem"] .holdem-result-actions button,
+[data-game="holdem"] .undo-vote-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-game="holdem"] .action-buttons button:not(:disabled):hover,
+[data-game="holdem"] .holdem-result-actions button:hover,
+[data-game="holdem"] .undo-vote-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="holdem"] .action-buttons button:disabled,
+[data-game="holdem"] .holdem-raise input:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The hand result and final chips */
+
+[data-game="holdem"] .holdem-result h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+[data-game="holdem"] .holdem-result ul,
+[data-game="holdem"] .holdem-result ol {
+  margin: 0;
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+[data-game="holdem"] .holdem-result-pots {
+  list-style: none;
+}
+
+[data-game="holdem"] .holdem-waiting,
+[data-game="holdem"] .holdem-end-votes {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* The table: one box per seat, then the board and the pots */
+
+[data-game="holdem"] .holdem-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+[data-game="holdem"] .holdem-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="holdem"] .holdem-seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 2px solid transparent;
+  color: var(--text);
+}
+
+[data-game="holdem"] .holdem-seat-current {
+  border-color: var(--current);
+}
+
+[data-game="holdem"] .holdem-seat-last {
+  outline: 3px dashed var(--current);
+}
+
+[data-game="holdem"] .holdem-seat-winner {
+  background: color-mix(in srgb, var(--winner) 35%, var(--panel-bg));
+}
+
+[data-game="holdem"] .holdem-seat-out {
+  opacity: 0.6;
+}
+
+[data-game="holdem"] .holdem-seat-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+[data-game="holdem"] .holdem-button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  background: #fff;
+  color: #1f2a22;
+  border: 2px solid #1f2a22;
+  font-size: 0.8rem;
+}
+
+[data-game="holdem"] .holdem-seat-chips,
+[data-game="holdem"] .holdem-seat-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+[data-game="holdem"] .holdem-seat-cards {
+  display: flex;
+  gap: 4px;
+  min-height: calc(44px * 1.4);
+}
+
+[data-game="holdem"] .holdem-seat-bet,
+[data-game="holdem"] .holdem-seat-won,
+[data-game="holdem"] .holdem-seat-hand {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+[data-game="holdem"] .holdem-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 680px;
+  max-width: 100%;
+  padding: 12px;
+  color: var(--text);
+}
+
+[data-game="holdem"] .holdem-hand-number {
+  font-weight: 600;
+}
+
+[data-game="holdem"] .holdem-board {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+[data-game="holdem"] .holdem-board-empty {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 64px;
+  height: calc(64px * 1.4);
+  border: 2px dashed var(--panel-border);
+  border-radius: 8px;
+}
+
+[data-game="holdem"] .holdem-pots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  min-height: 1.3em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+}
+
+[data-game="holdem"] .holdem-pot-players {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+[data-game="holdem"] .holdem-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+[data-game="holdem"] .faq dd {
+  color: var(--muted);
+}
+
+/* Narrow windows: smaller board cards so all five fit */
+
+@media (max-width: 520px) {
+  [data-game="holdem"] .holdem-board .playing-card {
+    --card-width: 48px;
+  }
+
+  [data-game="holdem"] .holdem-board-empty {
+    width: 48px;
+    height: calc(48px * 1.4);
+  }
+}

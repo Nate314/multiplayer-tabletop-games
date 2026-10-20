@@ -22,6 +22,7 @@ import { warClient } from '../games/war/client/index.ts';
 import { riskClient } from '../games/risk/client/index.ts';
 import { rookClient } from '../games/rook/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
+import { holdemClient } from '../games/holdem/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
@@ -68,6 +69,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [riskClient.id]: riskClient,
   [rookClient.id]: rookClient,
   [splendorClient.id]: splendorClient,
+  [holdemClient.id]: holdemClient,
   [tickettorideClient.id]: tickettorideClient
 };
 
