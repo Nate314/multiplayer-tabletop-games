@@ -21,6 +21,7 @@
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
+import { FOUR_SEATS as SEATS, nextSeat, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
@@ -29,10 +30,11 @@ import type {
   TeamScores
 } from './types.ts';
 
+export { SEATS, nextSeat, teamNames, teamOf, teamSeats };
+
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'black'];
 export const NUMBERS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 export const ROOK: RookCard = { color: 'rook' };
-export const SEATS: Seat[] = [1, 2, 3, 4];
 export const HAND_SIZE = 9;
 export const NEST_SIZE = 5;
 export const MIN_BID = 70;
@@ -64,19 +66,6 @@ export function handPoints(cards: Card[]): number {
   return cards.reduce((sum, card) => sum + cardPoints(card), 0);
 }
 
-export function teamOf(seat: Seat): Team {
-  return seat % 2 === 1 ? 0 : 1;
-}
-
-export function teamSeats(team: Team): Seat[] {
-  return SEATS.filter(seat => teamOf(seat) === team);
-}
-
-// The seat to the left, which plays next
-export function nextSeat(seat: Seat): Seat {
-  return seat % 4 + 1;
-}
-
 // The Rook belongs to the trump suit
 export function suitOf(card: Card, trump: Color | null): Color | null {
   return card.color === 'rook' ? trump : card.color;
@@ -100,11 +89,6 @@ export function trickWinner(plays: Play[], trump: Color | null): Seat {
   const led = suitOf(plays[0].card, trump);
   return plays.reduce((best, play) =>
     strength(play.card, led, trump) > strength(best.card, led, trump) ? play : best).seat;
-}
-
-// The two partners' names, e.g. 'Alice and Cara'
-export function teamNames(team: Team, playerNames: Record<Seat, string>): string {
-  return teamSeats(team).map(seat => playerNames[seat]).join(' and ');
 }
 
 const NO_BIDDING: Bidding = { high: null, passed: [] };
@@ -408,17 +392,8 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
   return { error: 'Unknown action' };
 }
 
-// A player leaving breaks their partnership, so the game ends and the other team wins
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
-  const winner: Team = teamOf(seat) === 0 ? 1 : 0;
-  return {
-    ...state,
-    isGameOver: true,
-    currentPlayer: null,
-    winners: teamSeats(winner),
-    undoVote: null,
-    gameStatus: `${state.playerNames[seat]} left, so the partnership is broken: ${teamNames(winner, state.playerNames)} win`
-  };
+  return partnershipBroken(state, seat);
 }
 
 // The next hand may have been waiting only for the player who disconnected

@@ -9,7 +9,7 @@ import type { Seat } from '../../shared/types.ts';
 type Card = PlayingCard;
 
 // The partnerships: team 0 is seats 1 and 3, team 1 is seats 2 and 4
-export type Team = 0 | 1;
+export type { Team } from '../../shared/partnerships.ts';
 export type TeamScores = [number, number];
 
 // 'order': the first round of making trump, on the turned-up card. 'name': the second round, any other suit.

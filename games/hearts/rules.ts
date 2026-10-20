@@ -18,13 +18,15 @@ import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
+import { FOUR_SEATS as SEATS, nextSeat } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
 import type { GameState, HandSummary, LastMove, PassDirection, Play, PlayingCard, PublicGameState, Result, Seat } from './types.ts';
 
-export const SEATS: Seat[] = [1, 2, 3, 4];
+export { SEATS, nextSeat };
+
 export const HAND_SIZE = 13;
 export const PASS_SIZE = 3;
 export const TARGET_SCORE = 100;
@@ -45,11 +47,6 @@ export function cardPoints(card: PlayingCard): number {
 export function sortHand(hand: PlayingCard[]): PlayingCard[] {
   const order = (card: PlayingCard) => SUITS.indexOf(card.suit) * 100 + rankOf(card);
   return [...hand].sort((a, b) => order(a) - order(b));
-}
-
-// The seat to the left, which plays next
-export function nextSeat(seat: Seat): Seat {
-  return seat % 4 + 1;
 }
 
 export function passDirection(handNumber: number): PassDirection {
@@ -153,7 +150,7 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
 }
 
 // The names of the seats with the lowest score, and that score
-function lowest(state: GameState, seats: Seat[]): { winners: Seat[]; text: string } {
+function lowest(state: GameState, seats: readonly Seat[]): { winners: Seat[]; text: string } {
   const low = Math.min(...seats.map(seat => state.scores[seat]));
   const winners = seats.filter(seat => state.scores[seat] === low);
   const names = winners.map(seat => state.playerNames[seat]);

@@ -19,13 +19,15 @@ import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
+import { FOUR_SEATS as SEATS, nextSeat, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, Seat, Team, TeamResult, TeamScores } from './types.ts';
 
-export const SEATS: Seat[] = [1, 2, 3, 4];
+export { SEATS, nextSeat, teamNames, teamOf, teamSeats };
+
 export const HAND_SIZE = 13;
 export const MAX_BID = 13;
 export const TARGET_SCORE = 500;
@@ -33,24 +35,6 @@ export const LOSING_SCORE = -200;
 export const BAG_LIMIT = 10;
 const BAG_PENALTY = 100;
 const NIL_POINTS = 100;
-
-export function teamOf(seat: Seat): Team {
-  return seat % 2 === 1 ? 0 : 1;
-}
-
-export function teamSeats(team: Team): Seat[] {
-  return SEATS.filter(seat => teamOf(seat) === team);
-}
-
-// The seat to the left, which plays next
-export function nextSeat(seat: Seat): Seat {
-  return seat % 4 + 1;
-}
-
-// The two partners' names, e.g. 'Alice and Cara'
-export function teamNames(team: Team, playerNames: Record<Seat, string>): string {
-  return teamSeats(team).map(seat => playerNames[seat]).join(' and ');
-}
 
 const suitOf = (card: Card) => card.suit;
 const rankOf = (card: Card) => rankValue(card.rank, true);
@@ -268,17 +252,8 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
   return { error: 'Unknown action' };
 }
 
-// A player leaving breaks their partnership, so the game ends and the other team wins
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
-  const winner: Team = teamOf(seat) === 0 ? 1 : 0;
-  return {
-    ...state,
-    isGameOver: true,
-    currentPlayer: null,
-    winners: teamSeats(winner),
-    undoVote: null,
-    gameStatus: `${state.playerNames[seat]} left, so the partnership is broken: ${teamNames(winner, state.playerNames)} win`
-  };
+  return partnershipBroken(state, seat);
 }
 
 // The next hand may have been waiting only for the player who disconnected
