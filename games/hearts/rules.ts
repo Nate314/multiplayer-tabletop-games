@@ -16,7 +16,9 @@
 // - The game ends when a player reaches 100; the lowest score wins, and equal lowest scores share the win.
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
-import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
@@ -248,24 +250,20 @@ function passCards(state: GameState, seat: Seat, cards: unknown): Result<GameSta
   return { state: { ...playing, gameStatus: `Everyone passed. ${state.playerNames[leader]} leads the 2 of clubs` } };
 }
 
+const ROUND: RoundAccess<GameState, HandSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'hand'
+};
+
 // Deals the next hand once every connected player has acknowledged the summary
 function startNextHandIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
   return dealHand({ ...state, handNumber: state.handNumber + 1 }, random);
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next hand`
-  };
-  return { state: startNextHandIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextHandIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {

@@ -16,7 +16,9 @@
 //   are euchred and the defenders score 2. Games are played to 5, 7 or 10; this game plays to 10.
 import { asRecord } from '../../shared/messages.ts';
 import { cardName, rankValue, sameCard, standardDeck, SUITS } from '../../shared/playingCards.ts';
-import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, trickWinner as sharedTrickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
@@ -345,11 +347,15 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   }
 }
 
+const ROUND: RoundAccess<GameState, HandSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'hand'
+};
+
 // Deals the next hand once every connected player has acknowledged the summary. The deal passes to the left.
 function startNextHandIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
   const dealer = nextSeat(state.dealer ?? 4);
   const handNumber = state.handNumber + 1;
   const next = dealHand({ ...state, handNumber }, dealer, random);
@@ -357,15 +363,7 @@ function startNextHandIfReady(state: GameState, random: Random): GameState {
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next hand`
-  };
-  return { state: startNextHandIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextHandIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
