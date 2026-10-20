@@ -18,7 +18,6 @@ Each round, players take turns picking tiles and placing them on their own board
 - On your turn, click a tile in a factory or the center to pick up every tile of that color there. Click it again to put them back
 - Your legal pattern lines and your floor line are outlined. Click one to place the tiles
 - The table is dimmed when it is not your turn
-- The source of the last move is outlined
 - Boards are shown in turn order starting with yours, so play always passes to the board on the right
 - In the center, each color stays together on one row
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves

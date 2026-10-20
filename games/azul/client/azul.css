@@ -335,10 +335,6 @@
   aspect-ratio: 1;
 }
 
-[data-game="azul"] .last-source {
-  border-color: var(--highlight);
-}
-
 /* Player boards */
 
 [data-game="azul"] .boards {

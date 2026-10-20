@@ -14,12 +14,9 @@ import type { Action } from './types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [selectedAction, setSelectedAction] = useState<Action>('move');
-  const [lastMoveHovered, setLastMoveHovered] = useState(false);
-  const [lastMovePinned, setLastMovePinned] = useState(false);
   const boardAreaRef = useRef<HTMLDivElement>(null);
-  const { currentPlayer, activePlayers, lastMove, isGameOver, undoVote, dismissVote } = gameState;
+  const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote } = gameState;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
-  const showLastMove = Boolean(lastMove) && (lastMoveHovered || lastMovePinned);
 
   // Only the live board animates; the history dialog's board renders without this hook
   useMoveAnimation(boardAreaRef, gameState, animateMove);
@@ -44,7 +41,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             playerNumber={playerNumber}
             isMyTurn={isMyTurn}
             selectedAction={selectedAction}
-            showLastMove={showLastMove}
             onMove={handleMove}
           />
           <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
@@ -55,10 +51,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           <ActionButtons
             gameState={gameState}
             playerNumber={playerNumber}
-            lastMovePinned={lastMovePinned}
             onUndo={() => gameService.requestUndo()}
-            onToggleLastMovePinned={() => setLastMovePinned(prev => !prev)}
-            onLastMoveHover={setLastMoveHovered}
           />
           <GoalList gameState={gameState} playerNumber={playerNumber} />
         </div>
