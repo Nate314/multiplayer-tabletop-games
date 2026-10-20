@@ -238,17 +238,18 @@
 [data-game="hearts"] .score {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 3px 10px;
   border-radius: 8px;
   border: 2px solid var(--panel-border);
   background: var(--status-bg);
+  font-size: 0.9rem;
 }
 
 [data-game="hearts"] .score-winner { border-color: var(--highlight); }
 [data-game="hearts"] .score-name { font-weight: 600; overflow-wrap: anywhere; }
-[data-game="hearts"] .score-total { font-size: 1.3rem; font-weight: 800; }
-[data-game="hearts"] .score-taken { color: var(--muted); font-size: 0.85rem; }
+[data-game="hearts"] .score-total { font-size: 1.15rem; font-weight: 800; }
+[data-game="hearts"] .score-taken { color: var(--muted); font-size: 0.75rem; }
 
 [data-game="hearts"] .hand-info {
   display: flex;
@@ -325,7 +326,7 @@
   align-items: center;
   justify-items: center;
   gap: 4px;
-  min-height: 210px;
+  min-height: 190px;
   color: var(--felt-text);
 }
 
@@ -407,6 +408,9 @@
   padding: 16px;
   background: rgba(0, 0, 0, 0.5);
 }
+
+/* Under the History and FAQ dialogs, which open on top of it */
+[data-game="hearts"] .summary-overlay { z-index: 90; }
 
 [data-game="hearts"] .modal,
 [data-game="hearts"] .undo-vote-panel {
