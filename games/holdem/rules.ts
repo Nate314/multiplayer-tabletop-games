@@ -1,5 +1,7 @@
 // No-limit Texas Hold'em rules shared by the browser (what the viewer may do) and the server (validation)
 import { asRecord } from '../../shared/messages.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { standardDeck } from '../../shared/playingCards.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -388,13 +390,16 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   return { state: { ...settled, gameStatus: after ? `${said}. ${after}` : said } };
 }
 
+const ROUND: RoundAccess<GameState, HandResult> = {
+  get: state => state.handResult,
+  set: (state, handResult) => ({ ...state, handResult }),
+  noun: 'hand',
+  waitsFor: state => connectedPlayers(state).filter(seat => (state.chips[seat] ?? 0) > 0)
+};
+
 // Deals the next hand once every connected player with chips has pressed Continue
 function startNextHandIfReady(state: GameState, random: Random): GameState {
-  const result = state.handResult;
-  if (!result || state.isGameOver) return state;
-  if (!connectedPlayers(state).filter(seat => (state.chips[seat] ?? 0) > 0).every(seat => result.acknowledged.includes(seat))) {
-    return state;
-  }
+  if (!everyoneReady(state, ROUND)) return state;
   return dealHand(state, random);
 }
 
@@ -414,15 +419,7 @@ function settleEndVote(state: GameState): GameState {
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const result = state.handResult;
-  if (!result) return { error: 'Nothing to continue' };
-  if (result.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    handResult: { ...result, acknowledged: [...result.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next hand`
-  };
-  return { state: startNextHandIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextHandIfReady(next, random));
 }
 
 function voteEnd(state: GameState, seat: Seat, yes: boolean): Result<GameState> {
