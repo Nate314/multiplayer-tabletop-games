@@ -1,4 +1,4 @@
-// The standard 52-card deck, shared by the games that use one (War, Go Fish)
+// The standard 52-card deck, shared by the games that use a standard deck, with options for a smaller deck and jokers
 
 export type Suit = 'clubs' | 'diamonds' | 'hearts' | 'spades';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
