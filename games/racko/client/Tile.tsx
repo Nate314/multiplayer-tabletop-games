@@ -19,7 +19,7 @@ export default function Tile({ card, small = false, selected = false, label, onC
   if (selected) classes.push('tile-selected');
   const style = card === undefined ? undefined : ({ '--hue': Math.round(((card - 1) / 60) * 300) } as CSSProperties);
   const name = label ?? (card === undefined ? 'Face-down card' : `Card ${card}`);
-  if (!onClick) return <span className={classes.join(' ')} style={style} aria-label={name} title={name}>{card}</span>;
+  if (!onClick && !disabled) return <span className={classes.join(' ')} style={style} aria-label={name} title={name}>{card}</span>;
   return (
     <button type="button" className={classes.join(' ')} style={style} aria-label={name} disabled={disabled} onClick={onClick}>
       {card}
