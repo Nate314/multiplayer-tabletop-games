@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const holdem: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'holdem',
+    category: 'card',
     name: "Texas Hold'em",
     description: 'Two private cards, five shared ones, and betting with play chips',
     minPlayers: 2,

@@ -31,7 +31,7 @@ import { dominoes } from './dominoes/index.ts';
 import { yahtzee } from './yahtzee/index.ts';
 import { thecrew } from './thecrew/index.ts';
 
-// Landing page order, alphabetical by name. Games differ in their state types, so the list holds them type-erased.
+// Registry order, alphabetical by name; the landing page groups them by category. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
   azul, backgammon, carcassonne, catan, checkers, chess, connectfour, dominoes, euchre, farkle, gofish, hearts, mancala, monopoly, parchisi, phase10,

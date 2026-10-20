@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const euchre: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'euchre',
+    category: 'card',
     name: 'Euchre',
     description: 'Make trump with your partner in a fast trick-taking game where jacks are on top',
     minPlayers: 4,

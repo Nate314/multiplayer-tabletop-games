@@ -11,7 +11,7 @@ export type TestPublicState = BasePublicState & { moves: number; viewer: Seat | 
 const WINNING_MOVES = 3;
 
 export const testGame: GameDefinition<TestState, TestPublicState> = {
-  info: { id: 'test', name: 'Test', description: 'A fake game for platform tests', minPlayers: 2, maxPlayers: 4 },
+  info: { id: 'test', name: 'Test', description: 'A fake game for platform tests', category: 'classic', minPlayers: 2, maxPlayers: 4 },
 
   createGameState: gameId => ({ ...baseGameState(gameId), moves: 0, secret: 'hidden' }),
 

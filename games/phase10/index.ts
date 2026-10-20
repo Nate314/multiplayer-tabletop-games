@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const phase10: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'phase10',
+    category: 'card',
     name: 'Phase 10',
     description: 'Collect sets and runs to complete ten phases first',
     minPlayers: 2,

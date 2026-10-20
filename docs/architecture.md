@@ -60,7 +60,8 @@ flowchart TD
 ## Contracts
 
 - `shared/gameDefinition.ts` defines `GameDefinition` and `GameInfo`, which the server uses
-- `games/registry.ts` lists every `GameDefinition` in landing page order
+- `games/registry.ts` lists every `GameDefinition`
+- `shared/categories.ts` defines `GameCategory` (every `GameInfo` has one), `CATEGORIES` (the landing page groups, in order) and `groupByCategory`
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 - `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use, and `shared/tricks.ts` the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions
@@ -71,7 +72,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
 1. **React components (`/src/components`)**
 
-   - `GameList.tsx` is the landing page: one row per game, in registry order
+   - `GameList.tsx` is the landing page: one row per game, in a section per category (`groupByCategory`), alphabetical within a section
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
    - `GameView.tsx` is the header (Back to games, History, FAQ, theme toggle) around the game's own `Screen`
    - `FaqButton.tsx` and `FaqDialog.tsx` show a game's FAQ items
@@ -151,7 +152,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - On start the manager loads every saved room: each active seat is marked disconnected directly, without running any game hook, so the usual rejoin works; open undo and dismiss votes are cleared; the saved status is kept; and the 10-minute empty-game timer restarts. A room whose state or steps do not parse, have the wrong shape or skip an index, that names a game that no longer exists, or that fails to load for any other reason is logged and deleted with its steps
 
 4. **Game registry (`/games/registry.ts`)**
-   - `GAMES` lists the games, in landing page order
+   - `GAMES` lists the games, alphabetical by name
 
 ## Game files
 

@@ -98,6 +98,19 @@
   color: var(--lobby-text);
 }
 
+.lobby-category {
+  margin-bottom: 24px;
+}
+
+.lobby-category-heading {
+  margin: 0 0 12px;
+  color: var(--lobby-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .lobby-games {
   display: flex;
   flex-direction: column;

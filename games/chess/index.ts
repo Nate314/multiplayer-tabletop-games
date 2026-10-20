@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const chess: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'chess',
+    category: 'classic',
     name: 'Chess',
     description: 'Checkmate the enemy king in the classic two-player strategy game',
     minPlayers: 2,
