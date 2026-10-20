@@ -689,6 +689,10 @@
   color: var(--playing-card-red, var(--playing-card-red-default));
 }
 
+:where(.playing-card-joker) {
+  color: var(--playing-card-red, var(--playing-card-red-default));
+}
+
 :where(.playing-card-back) {
   background:
     repeating-linear-gradient(45deg, var(--playing-card-stripe, var(--playing-card-stripe-default)) 0 4px, transparent 4px 8px),
@@ -712,6 +716,12 @@
 
 :where(.playing-card-pip) {
   font-size: 1.9em;
+}
+
+:where(.playing-card-joker .playing-card-pip) {
+  font-size: 0.75em;
+  letter-spacing: 0.05em;
+  writing-mode: vertical-rl;
 }
 
 :where(button.playing-card) {

@@ -38,7 +38,7 @@ export const TARGET_SCORE = 10;
 export const SUIT_SYMBOLS: Record<Suit, string> = { clubs: '♣', diamonds: '♦', hearts: '♥', spades: '♠' };
 
 export function buildDeck(): Card[] {
-  return standardDeck().filter(card => RANKS.includes(card.rank));
+  return standardDeck({ ranks: RANKS });
 }
 
 const SAME_COLOR: Record<Suit, Suit> = { clubs: 'spades', spades: 'clubs', hearts: 'diamonds', diamonds: 'hearts' };

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cardName, rankValue, sameCard, standardDeck, SUITS } from './playingCards.ts';
+import { cardName, isJoker, rankValue, sameCard, standardDeck, SUITS } from './playingCards.ts';
 
 test('standard deck has 52 different cards, 13 per suit', () => {
   const deck = standardDeck();
@@ -25,4 +25,38 @@ test('cardName spells out face cards', () => {
 test('sameCard compares suit and rank', () => {
   assert.ok(sameCard({ suit: 'clubs', rank: '7' }, { suit: 'clubs', rank: '7' }));
   assert.ok(!sameCard({ suit: 'clubs', rank: '7' }, { suit: 'spades', rank: '7' }));
+});
+
+test('the default deck is unchanged', () => {
+  const deck = standardDeck();
+  assert.equal(deck.length, 52);
+  assert.deepEqual(deck[0], { suit: 'clubs', rank: 'A' });
+  assert.deepEqual(deck[51], { suit: 'spades', rank: 'K' });
+});
+
+test("ranks filter keeps Euchre's 24", () => {
+  const deck = standardDeck({ ranks: ['9', '10', 'J', 'Q', 'K', 'A'] });
+  assert.equal(deck.length, 24);
+  assert.ok(deck.every(card => ['9', '10', 'J', 'Q', 'K', 'A'].includes(card.rank)));
+  assert.deepEqual(deck[0], { suit: 'clubs', rank: 'A' });
+});
+
+test('suits filter keeps one suit', () => {
+  const deck = standardDeck({ suits: ['hearts'] });
+  assert.equal(deck.length, 13);
+  assert.ok(deck.every(card => card.suit === 'hearts'));
+});
+
+test('jokers are appended and named', () => {
+  const deck = standardDeck({ jokers: 2 });
+  assert.equal(deck.length, 54);
+  assert.deepEqual(deck.slice(52), [{ joker: 1 }, { joker: 2 }]);
+  assert.ok(isJoker(deck[53]) && !isJoker(deck[0]));
+  assert.equal(cardName(deck[53]), 'joker');
+});
+
+test('jokers compare by index', () => {
+  assert.ok(sameCard({ joker: 1 }, { joker: 1 }));
+  assert.ok(!sameCard({ joker: 1 }, { joker: 2 }));
+  assert.ok(!sameCard({ joker: 1 }, { suit: 'clubs', rank: 'A' }));
 });

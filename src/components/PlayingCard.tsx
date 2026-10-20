@@ -1,10 +1,10 @@
-import { cardName } from '../../shared/playingCards.ts';
-import type { PlayingCard as CardData, Suit } from '../../shared/playingCards.ts';
+import { cardName, isJoker } from '../../shared/playingCards.ts';
+import type { DeckCard, Suit } from '../../shared/playingCards.ts';
 
 const SUIT_SYMBOLS: Record<Suit, string> = { clubs: '♣', diamonds: '♦', hearts: '♥', spades: '♠' };
 
 type PlayingCardProps = {
-  card: CardData | null; // null draws the back of a face-down card
+  card: DeckCard | null; // null draws the back of a face-down card
   size?: 'small' | 'medium' | 'large';
   animKey?: string; // for move animations
   highlighted?: boolean;
@@ -18,17 +18,24 @@ type PlayingCardProps = {
 export default function PlayingCard({ card, size = 'medium', animKey, highlighted = false, selected = false, onClick, disabled = false }: PlayingCardProps) {
   const classes = ['playing-card', `playing-card-${size}`];
   if (!card) classes.push('playing-card-back');
+  else if (isJoker(card)) classes.push('playing-card-joker');
   else if (card.suit === 'hearts' || card.suit === 'diamonds') classes.push('playing-card-red');
   if (highlighted) classes.push('playing-card-highlighted');
   if (selected) classes.push('playing-card-selected');
   const label = card ? cardName(card) : 'face-down card';
-  const face = card && (
+  const face = card && (isJoker(card) ? (
+    <>
+      <span className="playing-card-corner">★</span>
+      <span className="playing-card-pip">JOKER</span>
+      <span className="playing-card-corner playing-card-corner-bottom">★</span>
+    </>
+  ) : (
     <>
       <span className="playing-card-corner">{card.rank}{SUIT_SYMBOLS[card.suit]}</span>
       <span className="playing-card-pip">{SUIT_SYMBOLS[card.suit]}</span>
       <span className="playing-card-corner playing-card-corner-bottom">{card.rank}{SUIT_SYMBOLS[card.suit]}</span>
     </>
-  );
+  ));
 
   if (!onClick) {
     return <span className={classes.join(' ')} title={label} aria-label={label} role="img" data-anim-key={animKey}>{face}</span>;
