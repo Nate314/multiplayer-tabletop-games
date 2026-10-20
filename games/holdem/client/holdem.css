@@ -213,8 +213,9 @@
 }
 
 [data-game="holdem"] .holdem-seats {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   width: 100%;
   margin: 0;
@@ -223,6 +224,7 @@
 }
 
 [data-game="holdem"] .holdem-seat {
+  width: 150px;
   display: flex;
   flex-direction: column;
   align-items: center;

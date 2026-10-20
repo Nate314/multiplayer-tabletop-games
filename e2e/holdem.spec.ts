@@ -53,8 +53,14 @@ const fold = (page: Page) => button(page, 'Fold').click();
 const check = (page: Page) => button(page, 'Check').click();
 const call = (page: Page) => button(page, /^Call \d/).click();
 const allIn = (page: Page) => button(page, 'All in').click();
+// Waits for the turn first: a new turn resets the amount to the smallest raise
 async function raise(page: Page, to: number) {
-  await page.getByLabel('Amount').fill(String(to));
+  const amount = page.getByLabel('Amount');
+  await expect(amount).toBeEnabled();
+  await expect(async () => {
+    await amount.fill(String(to));
+    await expect(amount).toHaveValue(String(to), { timeout: 200 });
+  }).toPass();
   await page.locator('.holdem-raise button').first().click();
 }
 // Every page with chips clicks Continue

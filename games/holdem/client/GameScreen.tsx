@@ -85,7 +85,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                 min={lowest}
                 max={maxTo}
                 step={1}
-                value={amount}
+                value={isMyTurn && canRaise ? amount : ''}
                 disabled={!isMyTurn || !canRaise}
                 onChange={event => setAmount(event.target.value)}
               />
