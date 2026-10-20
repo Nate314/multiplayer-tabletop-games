@@ -4,13 +4,24 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- data-light and data-dark are the browser bar colors for each theme; ThemeToggle reads them too -->
+    <meta name="theme-color" content="#2d6a4f" data-light="#2d6a4f" data-dark="#161616" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Tabletop Games" />
     <title>Multiplayer Tabletop Games</title>
     <script>
-      // Storage can be blocked; the default theme is used then
-      try {
-        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
-      } catch {
-        document.documentElement.setAttribute('data-theme', 'light');
+      {
+        // Storage can be blocked; the default theme is used then
+        let theme = 'light';
+        try {
+          theme = localStorage.getItem('theme') || 'light';
+        } catch {
+          // keep the default
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        themeColor.content = themeColor.dataset[theme] || themeColor.dataset.light;
       }
     </script>
   </head>

@@ -96,6 +96,16 @@ The server handles both the web pages and the WebSocket connections on one port 
 
 Make sure every player can reach the server computer over the network.
 
+## Installing as an app
+
+The site can be installed and then opens full screen like an app:
+
+- **Android (Chrome):** open the site, then choose "Install app" or "Add to Home screen" from the menu.
+- **iPhone (Safari):** open the site, tap Share, then "Add to Home Screen".
+- **Desktop (Chrome):** click the install icon at the right of the address bar.
+
+Installing needs HTTPS, or `localhost` on the server computer itself; over plain `http://<server-ip>:3000` the browser offers only a shortcut. The site always loads fresh when the server answers, so a new version shows on the next reload. Without a connection the installed app only opens its start screen: games need the server.
+
 ## Technical Details
 
 - Built with React, Vite and TypeScript
