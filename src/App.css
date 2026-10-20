@@ -487,6 +487,16 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
+/* Round scoring dialog (RoundSummaryDialog); a game sets --muted for the waiting line */
+
+:where([data-game] .summary-result) {
+  font-weight: 600;
+}
+
+:where([data-game] .summary-waiting) {
+  color: var(--muted);
+}
+
 /* Undo and dismiss votes */
 
 :where([data-game] .undo-vote, [data-game] .dismiss-vote) {
