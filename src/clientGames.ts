@@ -7,6 +7,8 @@ import { azulClient } from '../games/azul/client/index.ts';
 import { carcassonneClient } from '../games/carcassonne/client/index.ts';
 import { chessClient } from '../games/chess/client/index.ts';
 import { checkersClient } from '../games/checkers/client/index.ts';
+import { connectfourClient } from '../games/connectfour/client/index.ts';
+import { euchreClient } from '../games/euchre/client/index.ts';
 import { backgammonClient } from '../games/backgammon/client/index.ts';
 import { catanClient } from '../games/catan/client/index.ts';
 import { mancalaClient } from '../games/mancala/client/index.ts';
@@ -18,11 +20,19 @@ import { unoClient } from '../games/uno/client/index.ts';
 import { phase10Client } from '../games/phase10/client/index.ts';
 import { skipboClient } from '../games/skipbo/client/index.ts';
 import { gofishClient } from '../games/gofish/client/index.ts';
+import { heartsClient } from '../games/hearts/client/index.ts';
 import { warClient } from '../games/war/client/index.ts';
 import { riskClient } from '../games/risk/client/index.ts';
+import { rackoClient } from '../games/racko/client/index.ts';
 import { rookClient } from '../games/rook/client/index.ts';
+import { spadesClient } from '../games/spades/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
+import { farkleClient } from '../games/farkle/client/index.ts';
+import { holdemClient } from '../games/holdem/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
+import { dominoesClient } from '../games/dominoes/client/index.ts';
+import { yahtzeeClient } from '../games/yahtzee/client/index.ts';
+import { thecrewClient } from '../games/thecrew/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
@@ -53,6 +63,8 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [carcassonneClient.id]: carcassonneClient,
   [chessClient.id]: chessClient,
   [checkersClient.id]: checkersClient,
+  [connectfourClient.id]: connectfourClient,
+  [euchreClient.id]: euchreClient,
   [backgammonClient.id]: backgammonClient,
   [catanClient.id]: catanClient,
   [mancalaClient.id]: mancalaClient,
@@ -64,11 +76,19 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [phase10Client.id]: phase10Client,
   [skipboClient.id]: skipboClient,
   [gofishClient.id]: gofishClient,
+  [heartsClient.id]: heartsClient,
   [warClient.id]: warClient,
   [riskClient.id]: riskClient,
+  [rackoClient.id]: rackoClient,
   [rookClient.id]: rookClient,
+  [spadesClient.id]: spadesClient,
   [splendorClient.id]: splendorClient,
-  [tickettorideClient.id]: tickettorideClient
+  [tickettorideClient.id]: tickettorideClient,
+  [dominoesClient.id]: dominoesClient,
+  [farkleClient.id]: farkleClient,
+  [holdemClient.id]: holdemClient,
+  [yahtzeeClient.id]: yahtzeeClient,
+  [thecrewClient.id]: thecrewClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
