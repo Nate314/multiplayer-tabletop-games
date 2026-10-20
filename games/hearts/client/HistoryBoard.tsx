@@ -1,6 +1,6 @@
 import PlayingCard from '../../../src/components/PlayingCard';
 import Table from './Table';
-import { handKey } from './animateMove.ts';
+import { handKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState } from '../types.ts';
 import type { Seat } from '../../../shared/types.ts';
 

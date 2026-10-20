@@ -2,10 +2,10 @@ import { MOVE_DURATION_MS, prefersReducedMotion, slideFrom } from '../../../src/
 import { BLANK, tileValue } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { LastMove, PublicGameState, RackTile, Seat } from '../types.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 
 export const squareKey = (row: number, col: number) => `square-${row}-${col}`;
 export const rackKey = (position: number) => `rack-${position}`; // a place on the rack, whichever tile shows there
-export const seatKey = (seat: Seat) => `seat-${seat}`;
 export const BAG_KEY = 'bag';
 
 // The gap between tiles that follow one another

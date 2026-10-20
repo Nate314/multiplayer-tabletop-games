@@ -1,4 +1,5 @@
-import { POOL_KEY, seatKey } from './animateMove.ts';
+import { POOL_KEY } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type PlayersProps = {

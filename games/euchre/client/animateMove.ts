@@ -2,10 +2,8 @@ import { slideFrom } from '../../../src/animation/motion.ts';
 import { SUITS, rankOf, sameCard, suitOf } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { Card, PublicGameState, Seat, Suit } from '../types.ts';
+import { handKey, seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 
-export const handKey = (slot: number) => `hand-${slot}`;
-export const seatKey = (seat: Seat) => `seat-${seat}`;
-export const trickKey = (seat: Seat) => `trick-${seat}`;
 
 // A hand is shown suit by suit, low to high, with trump (the left bower among it) last
 export function sortedHand(hand: Card[], trump: Suit | null): Card[] {

@@ -2,10 +2,8 @@ import { slideFrom } from '../../../src/animation/motion.ts';
 import { COLORS, sameCard } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { Card, PublicGameState, Seat } from '../types.ts';
+import { handKey, seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 
-export const handKey = (slot: number) => `hand-${slot}`;
-export const seatKey = (seat: Seat) => `seat-${seat}`;
-export const trickKey = (seat: Seat) => `trick-${seat}`;
 
 // A hand is shown color by color, low to high, with the Rook last
 const order = (card: Card) => card.color === 'rook' ? 1000 : COLORS.indexOf(card.color) * 100 + card.number;

@@ -2,10 +2,8 @@ import { slideFrom } from '../../../src/animation/motion.ts';
 import { sameCard } from '../../../shared/playingCards.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { PublicGameState, Seat } from '../types.ts';
+import { handKey, seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 
-export const handKey = (slot: number) => `hand-${slot}`;
-export const seatKey = (seat: Seat) => `seat-${seat}`;
-export const trickKey = (seat: Seat) => `trick-${seat}`;
 
 // A played card slides into its place in the middle, from your hand or from the seat of the player who played it
 export default function animateMove({ previous, next, root, rectOf }: MoveChange<PublicGameState>) {

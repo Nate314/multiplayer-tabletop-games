@@ -1,5 +1,5 @@
 import PlayingCard from '../../../src/components/PlayingCard';
-import { seatKey, trickKey } from './animateMove.ts';
+import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { SEATS, SUIT_SYMBOLS, TARGET_SCORE, cardName, nextSeat, sittingOut, teamNames, teamOf } from '../rules.ts';
 import type { PublicGameState, Seat, Team } from '../types.ts';
 

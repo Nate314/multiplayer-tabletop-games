@@ -2,10 +2,8 @@ import { slideFrom } from '../../../src/animation/motion.ts';
 import { COLORS, sameCard } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { Card, PublicGameState, Seat } from '../types.ts';
+import { handKey, seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 
-export const handKey = (slot: number) => `hand-${slot}`;
-export const seatKey = (seat: Seat) => `seat-${seat}`;
-export const trickKey = (seat: Seat) => `trick-${seat}`;
 
 // A hand is shown suit by suit, low to high, with the rockets last
 const order = (card: Card) => (card.suit === 'rocket' ? 400 : COLORS.indexOf(card.suit) * 100) + card.value;

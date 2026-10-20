@@ -1,6 +1,7 @@
 import Card from './Card';
 import Table from './Table';
-import { handKey, sortedHand } from './animateMove.ts';
+import { sortedHand } from './animateMove.ts';
+import { handKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState } from '../types.ts';
 import type { Seat } from '../../../shared/types.ts';
 
