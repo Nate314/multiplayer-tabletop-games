@@ -17,3 +17,9 @@ export function trickWinner<C, S>(trick: readonly Play<C>[], suitOf: (card: C) =
   const strength = (card: C) => (suitOf(card) === trump ? 2000 : suitOf(card) === led ? 1000 : 0) + rank(card);
   return trick.reduce((best, play) => (strength(play.card) > strength(best.card) ? play : best)).seat;
 }
+
+// A play's move text with who took the trick when it completed one, e.g. 'Dan played x; Bob took the trick'
+export function describeTrickPlay(played: string, player: Seat, trickWinner: Seat | null, playerNames: Record<Seat, string>): string {
+  if (trickWinner === null) return played;
+  return trickWinner === player ? `${played} and took the trick` : `${played}; ${playerNames[trickWinner]} took the trick`;
+}

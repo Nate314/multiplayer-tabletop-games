@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canFollow, trickWinner } from './tricks.ts';
+import { canFollow, describeTrickPlay, trickWinner } from './tricks.ts';
 import type { Play } from './tricks.ts';
 
 type Card = { suit: string; n: number };
@@ -40,4 +40,11 @@ test('trickWinner takes the highest trump', () => {
 test('trickWinner uses suitOf so a card can change suit', () => {
   const asTrump = (card: Card) => (card === h5 ? 's' : card.suit);
   assert.equal(trickWinner(trickOf(h9, h13, h5), asTrump, rank, 's'), 3);
+});
+
+test('describeTrickPlay names who took the trick', () => {
+  const names = { 1: 'Ann', 2: 'Bob', 3: 'Cy', 4: 'Dan' };
+  assert.equal(describeTrickPlay('Dan played x', 4, null, names), 'Dan played x');
+  assert.equal(describeTrickPlay('Dan played x', 4, 4, names), 'Dan played x and took the trick');
+  assert.equal(describeTrickPlay('Dan played x', 4, 2, names), 'Dan played x; Bob took the trick');
 });

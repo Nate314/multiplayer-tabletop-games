@@ -23,7 +23,7 @@ import type { RoundAccess } from '../../shared/rounds.ts';
 import { FOUR_SEATS as SEATS, nextSeat, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { canFollow, trickWinner } from '../../shared/tricks.ts';
+import { canFollow, describeTrickPlay, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, Seat, Team, TeamResult, TeamScores } from './types.ts';
 
@@ -121,9 +121,7 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
   const name = playerNames[lastMove.playerNumber];
   if (lastMove.type === 'bid') return `${name} bid ${bidName(lastMove.tricks)}`;
   const played = `${name} played the ${cardName(lastMove.card)}`;
-  if (lastMove.trickWinner === null) return played;
-  if (lastMove.trickWinner === lastMove.playerNumber) return `${played} and took the trick`;
-  return `${played}; ${playerNames[lastMove.trickWinner]} took the trick`;
+  return describeTrickPlay(played, lastMove.playerNumber, lastMove.trickWinner, playerNames);
 }
 
 function recorded(state: GameState, lastMove: LastMove): GameState {

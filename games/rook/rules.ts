@@ -24,6 +24,7 @@ import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { FOUR_SEATS as SEATS, nextSeat, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
+import { canFollow, describeTrickPlay, trickWinner as sharedTrickWinner } from '../../shared/tricks.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
@@ -74,22 +75,14 @@ export function suitOf(card: Card, trump: Color | null): Color | null {
 
 // The Rook always plays; otherwise a player who holds the suit led (the Rook counting as trump) must follow it
 export function canPlayCard(hand: Card[], card: Card, trick: Play[], trump: Color | null): boolean {
-  if (card.color === 'rook' || trick.length === 0) return true;
-  const led = suitOf(trick[0].card, trump);
-  return card.color === led || !hand.some(held => suitOf(held, trump) === led);
+  return card.color === 'rook' || canFollow(hand, card, trick, held => suitOf(held, trump));
 }
 
-// How strong a card is in this trick: any trump beats the suit led, and the Rook beats every trump
-function strength(card: Card, led: Color | null, trump: Color | null): number {
-  if (card.color === 'rook') return 200;
-  if (card.color === trump) return 100 + card.number;
-  return card.color === led ? card.number : 0;
-}
+// The Rook ranks above every number, so it beats every trump
+const rank = (card: Card) => (card.color === 'rook' ? 15 : card.number);
 
 export function trickWinner(plays: Play[], trump: Color | null): Seat {
-  const led = suitOf(plays[0].card, trump);
-  return plays.reduce((best, play) =>
-    strength(play.card, led, trump) > strength(best.card, led, trump) ? play : best).seat;
+  return sharedTrickWinner(plays, card => suitOf(card, trump), rank, trump);
 }
 
 const NO_BIDDING: Bidding = { high: null, passed: [] };
@@ -201,9 +194,7 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
       return `${name} named ${lastMove.color} trump`;
     case 'play': {
       const played = `${name} played ${cardName(lastMove.card)}`;
-      if (lastMove.trickWinner === null) return played;
-      if (lastMove.trickWinner === lastMove.playerNumber) return `${played} and took the trick`;
-      return `${played}; ${playerNames[lastMove.trickWinner]} took the trick`;
+      return describeTrickPlay(played, lastMove.playerNumber, lastMove.trickWinner, playerNames);
     }
   }
 }
