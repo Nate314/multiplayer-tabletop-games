@@ -37,7 +37,7 @@ Add ten games to the site: Connect Four, Dominoes, Euchre, Farkle, Hearts, Rack-
 On the `ten-new-games` branch (my call on placement):
 
 1. **`shared/tricks.ts`** for Hearts, Spades, Euchre and The Crew. Generic over the card type, given a `suitOf(card)` function (so Euchre can make the left bower a trump) and a `beats(a, b, ledSuit)` or rank function supplied by the game:
-   - `legalPlays(hand, trick, suitOf)`: must follow the led suit if able.
+   - `canFollow(hand, card, trick, suitOf)`: returns whether the card may be played, which means it follows the led suit if the hand can.
    - `trickWinner(trick, suitOf, rank, trump)`: the seat that won the trick.
    Game-specific restrictions (Hearts' no hearts led until broken, no points on the first trick) stay in the game. Unit tests included.
 2. **`src/components/Dice.tsx`** (CSS under `:where()` like `PlayingCard`) for Yahtzee and Farkle: draws a row of dice by face value, each optionally selectable (held or set aside), with an `aria-label` per die and `data-anim-key` passthrough for a roll animation.

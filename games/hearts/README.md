@@ -13,7 +13,7 @@ Pass three cards, then dodge the hearts and the queen of spades in tricks, or ta
 - **Scoring.** Each heart taken is 1 point and the queen of spades 13, 26 in a hand. A player who takes all 26 shoots the moon: they score nothing and every other player takes 26. A scoring screen shows the hand, and the next hand is dealt once every connected player has pressed Continue (disconnected players are not waited for)
 - **Winning.** The game ends after the hand in which someone reaches 100 or more. The lowest score wins; equal lowest scores share the win
 - You see only your own hand, the cards you passed until the pass completes, and how many cards everyone else holds. Who has passed, the points each player has taken this hand and the scores are shown to everyone
-- **Leaving.** A disconnected player keeps their seat and the game waits for them, on their turn or for their pass. The game needs four, so a dismissed player ends it: the hand in progress is not scored and the lowest score among the players left wins (ties share)
+- **Leaving.** Once the first pass has been made, a disconnected player keeps their seat and the game waits for them, on their turn or for their pass (before that, a disconnect frees the seat and the cards are redealt). The game needs four, so a dismissed player ends it: the hand in progress is not scored and the lowest score among the players left wins (ties share)
 - Any player can ask to undo the last card played. It is undone only if every connected player approves, and only while all four seats are filled. Passing and Continue are not moves, so an undo goes back past them
 
 ## Controls

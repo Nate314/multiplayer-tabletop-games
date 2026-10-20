@@ -35,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What if a player leaves?',
-    answer: 'A disconnected player keeps their seat and the game waits for them. If they are dismissed, the game ends, since it needs four, and the lowest score among those left wins. The hand in progress is not scored.'
+    answer: 'Once the first pass has been made, a disconnected player keeps their seat and the game waits for them (before that, a disconnect frees the seat and the cards are redealt). If they are dismissed, the game ends, since it needs four, and the lowest score among those left wins. The hand in progress is not scored.'
   },
   {
     question: 'Can I undo?',
