@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  HAND_SIZES, TARGET_SCORE, dealRound, legalPlays, openingTile, pipTotal, place, tilesOf, toPublicState
+  HAND_SIZES, dealRound, legalPlays, openingTile, pipTotal, place, targetScore, tilesOf, toPublicState
 } from './rules.ts';
 import { dominoes } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -72,15 +72,15 @@ test('double-six has 28 tiles and double-nine 55', () => {
   assert.equal(pipTotal(6, tilesOf(6).map((_, tile) => tile)), 168);
 });
 
-// Wikipedia, Dominoes, section "Variants" (Blocking game, Middle Eastern version): seven tiles each in the two-player and
-// four-player games, and the holder of the double-six starts. The article gives nothing for three players or the
-// double-nine set, so those use this game's table (see HAND_SIZES).
+// Wikipedia, Dominoes, section "Blocking game" (Middle Eastern version): the holder of the double-six starts, and the
+// article's hands are seven tiles. Its sections are silent on the Draw game's sizes, so they follow Pagat's Draw Dominoes
+// (see HAND_SIZES): 7 tiles, or 6 with four players, from double-six, and 9 from double-nine.
 test('hand size and first lead follow the article for each set and player count', () => {
   for (const set of [6, 9] as const) {
     for (const count of [2, 3, 4]) {
       const state = lobby(count, set);
       const size = HAND_SIZES[set][count];
-      assert.equal(size, set === 6 ? 7 : 9);
+      assert.equal(size, set === 9 ? 9 : count === 4 ? 6 : 7);
       for (const seat of state.activePlayers) assert.equal(state.hands[seat].length, size);
       const all = [...Object.values(state.hands).flat(), ...state.boneyard];
       assert.equal(new Set(all).size, set === 6 ? 28 : 55);
@@ -222,7 +222,9 @@ test('a play that blocks the game ends the round at once', () => {
 });
 
 test('the game ends at the article\'s target score', () => {
-  assert.equal(TARGET_SCORE, 100);
+  assert.equal(targetScore(2), 100);
+  assert.equal(targetScore(3), 61);
+  assert.equal(targetScore(4), 61);
   const state = game({
     scores: { 1: 90, 2: 0, 3: 0 },
     hands: { 1: [t(4, 5)], 2: [t(3, 6), t(2, 2)], 3: [t(1, 1), t(5, 5)] }
@@ -386,4 +388,24 @@ test('dealing again with a winner leads that winner, who may play any tile', () 
   assert.equal(dealt.leadTile, null);
   const any = dealt.hands[2][3];
   assert.ok(!('error' in play(dealt, 2, any, 'left')));
+});
+
+test('a dismissed leader who held the lead tile hands the opening to the tile now highest', () => {
+  // After a tied round the first-round lead rule applies; Bob must lead with 6-6, then he is dismissed
+  const state = game({
+    line: [],
+    leadTile: t(6, 6),
+    currentPlayer: 2,
+    hands: { 1: [t(5, 5), t(0, 1)], 2: [t(6, 6), t(2, 2)], 3: [t(3, 4), t(1, 1)] },
+    boneyard: [t(0, 0)]
+  });
+  const gone = removePlayer(dominoes, state, 2, seeded(1));
+  assert.equal(gone.leadTile, t(5, 5));
+  assert.equal(gone.currentPlayer, 1);
+  assert.ok(!('error' in play(gone, 1, t(5, 5), 'left')));
+  assert.ok('error' in play(gone, 1, t(0, 1), 'left'));
+  // A leader who is not the lead tile's holder leaves it alone
+  const other = removePlayer(dominoes, { ...state, currentPlayer: 2 }, 3, seeded(1));
+  assert.equal(other.leadTile, t(6, 6));
+  assert.equal(other.currentPlayer, 2);
 });

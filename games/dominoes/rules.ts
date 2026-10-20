@@ -9,14 +9,15 @@ import type {
 
 export const SETS: SetSize[] = [6, 9];
 export const DEFAULT_SET: SetSize = 6;
-export const TARGET_SCORE = 100;
+export const targetScore = (players: number) => (players === 2 ? 100 : 61);
 
-// Wikipedia's Dominoes article, section "Variants" (Blocking game and its Middle Eastern version): each player draws seven
-// tiles in the two-player game and in the four-player game, and the player holding the double-six starts. It gives no
-// hand size for a larger set or for three players, so three players also draw seven and double-nine uses nine for every
-// player count. Later rounds are led by the previous round's winner with any tile (same section).
+// Wikipedia's Dominoes article is silent on hand sizes and target scores for the Draw game, so these follow Pagat's Draw
+// Dominoes (pagat.com/domino/draw.html): with double-six each player draws 7 tiles, 6 with four players, so a boneyard is
+// left; double-nine uses 9 for every player count. The game is played to 100 points for two players, 61 for three or four.
+// Wikipedia's "Blocking game" (Middle Eastern version) has the holder of the double-six start, and later rounds are led by the
+// previous round's winner with any tile.
 export const HAND_SIZES: Record<SetSize, Record<number, number>> = {
-  6: { 2: 7, 3: 7, 4: 7 },
+  6: { 2: 7, 3: 7, 4: 6 },
   9: { 2: 9, 3: 9, 4: 9 }
 };
 
@@ -172,8 +173,8 @@ function isBlocked(state: GameState): boolean {
 
 // A round ends in a win for the player who went out, who scores the pips in every other hand and in the boneyard (Wikipedia,
 // "Scoring": the score is the pips in the losing hands plus the stock). A blocked round (`wentOut` null) goes to the lowest pip
-// total, who scores the other hands (Middle Eastern version); a tie for the lowest scores nothing.
-// The first to TARGET_SCORE wins the game.
+// total, who scores the other hands ("Blocking game", Middle Eastern version); a tie for the lowest scores nothing.
+// The first to the target score wins the game.
 function endRound(state: GameState, wentOut: Seat | null): GameState {
   const players = state.activePlayers;
   const pips = Object.fromEntries(players.map(seat => [seat, pipTotal(state.set, state.hands[seat])]));
@@ -205,7 +206,7 @@ function endRound(state: GameState, wentOut: Seat | null): GameState {
 
   const name = state.playerNames[winner];
   const total = scored.scores[winner];
-  if (total >= TARGET_SCORE) return { ...scored, isGameOver: true, winners: [winner], gameStatus: `${name} wins with ${total} points!` };
+  if (total >= targetScore(players.length)) return { ...scored, isGameOver: true, winners: [winner], gameStatus: `${name} wins with ${total} points!` };
   const cause = wentOut === null ? `The round is blocked: ${name} has the lowest total and` : `${name} went out and`;
   return { ...scored, gameStatus: `${cause} scores ${points} points. Waiting for everyone to continue.` };
 }
@@ -327,6 +328,11 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
     lastWinner: state.lastWinner === seat ? null : state.lastWinner
   };
   if (returned.roundSummary) return startNextRoundIfReady(returned, random);
+  // Nobody else can lead with a lead tile the leaver held, so the opening is chosen again among the hands left
+  if (returned.line.length === 0 && returned.leadTile !== null && hand.includes(returned.leadTile)) {
+    const opening = openingTile(returned.set, hands);
+    return { ...returned, leadTile: opening.tile, currentPlayer: opening.seat };
+  }
   return isBlocked(returned) ? endRound(returned, null) : returned;
 }
 

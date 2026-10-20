@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys } from '../../server/testing.ts';
-import { legalPlays } from './rules.ts';
+import { legalPlays, targetScore } from './rules.ts';
 import { dominoes } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -135,7 +135,7 @@ test('a whole game played with legal moves ends when someone reaches the target 
   for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
   assert.equal(state.isGameOver, true);
   assert.equal(state.winners.length, 1);
-  assert.ok(state.scores[state.winners[0]] >= 100);
+  assert.ok(state.scores[state.winners[0]] >= targetScore(4));
   assert.ok(state.roundNumber >= 1);
 });
 

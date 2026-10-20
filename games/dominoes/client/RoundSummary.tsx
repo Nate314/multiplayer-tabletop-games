@@ -1,4 +1,4 @@
-import { TARGET_SCORE } from '../rules.ts';
+import { targetScore } from '../rules.ts';
 import type { PublicGameState, RoundSummary as Summary, Seat } from '../types.ts';
 
 type RoundSummaryProps = {
@@ -49,7 +49,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           ))}
         </ul>
         {!summary.blocked && <div className="summary-target">The boneyard held {plural(summary.boneyardPips, 'pip')}, scored by the winner</div>}
-        <div className="summary-target">First to {TARGET_SCORE} points wins</div>
+        <div className="summary-target">First to {targetScore(activePlayers.length)} points wins</div>
         {isGameOver ? (
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         ) : acknowledged ? (

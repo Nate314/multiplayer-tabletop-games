@@ -185,7 +185,7 @@ test.describe('Dominoes rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
-  test('playing out the hand scores the other hands and the boneyard; Continue deals the next round led by the winner; the game ends at 100', async ({ seat }) => {
+  test('playing out the hand scores the other hands and the boneyard; Continue deals the next round led by the winner; the game ends at the target score', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat);
     await deal(table, {
       hands: { 1: [[4, 5]], 2: [[3, 6], [2, 2]], 3: [[1, 1], [5, 5]] },
@@ -207,7 +207,7 @@ test.describe('Dominoes rules', () => {
     await leave(cara);
     await dialog.getByRole('button', { name: 'Continue' }).click();
     await expect(scoring(bob)).toHaveCount(0);
-    await expect(bob.locator('.round')).toHaveText('Round 2: first to 100 points wins (double-six)');
+    await expect(bob.locator('.round')).toHaveText('Round 2: first to 61 points wins (double-six)');
     // The winner leads with any tile
     await expect(turn(alice)).toHaveText('Your turn');
     await expect(hand(alice).locator('button:not([disabled])')).toHaveCount(7);

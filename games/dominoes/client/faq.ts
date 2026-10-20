@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Play out your hand to win the round. You then score the pips on the tiles left in everyone else\'s hands, plus the pips in the boneyard, and the first player to reach 100 points wins the game.'
+    answer: 'Play out your hand to win the round. You then score the pips on the tiles left in everyone else\'s hands, plus the pips in the boneyard, and the first player to reach 100 points (61 with three or four players) wins the game.'
   },
   {
     question: 'Which set is used?',
@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How many tiles do I get, and who goes first?',
-    answer: 'With double-six everyone is dealt 7 tiles; with double-nine, 9. The rest form the boneyard. In the first round the holder of the highest double leads with it, or with the heaviest tile if nobody has a double. In later rounds the winner of the last round leads with any tile.'
+    answer: 'With double-six everyone is dealt 7 tiles (6 with four players); with double-nine, 9. The rest form the boneyard. In the first round the holder of the highest double leads with it, or with the heaviest tile if nobody has a double. In later rounds the winner of the last round leads with any tile.'
   },
   {
     question: 'Which tiles can I play?',
