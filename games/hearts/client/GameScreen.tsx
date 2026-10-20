@@ -6,7 +6,7 @@ import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import RoundSummary from './RoundSummary';
 import Table from './Table';
 import animateMove, { handKey } from './animateMove.ts';
-import { PASS_SIZE, SEATS, passDirection, passTarget, playError } from '../rules.ts';
+import { PASS_SIZE, SEATS, passDirection, passPhrase, passTarget, playError } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
 
@@ -53,7 +53,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   let hint: string | null = null;
   if (isGameOver) hint = null;
   else if (!full) hint = `Hearts needs exactly 4 players (${activePlayers.length} seated)`;
-  else if (choosing) hint = `Pick three cards to pass to the ${direction}, to ${receiver}`;
+  else if (choosing) hint = `Pick three cards to pass ${passPhrase(direction)}, to ${receiver}`;
   else if (phase === 'passing') {
     const waiting = SEATS.filter(seat => !passed.includes(seat)).map(seat => playerNames[seat]);
     hint = `Waiting for ${waiting.join(', ')} to pass`;

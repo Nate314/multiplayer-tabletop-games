@@ -54,6 +54,11 @@ export function passDirection(handNumber: number): PassDirection {
   return PASS_CYCLE[(handNumber - 1) % PASS_CYCLE.length];
 }
 
+// 'to the left', 'to the right' or 'across'
+export function passPhrase(direction: PassDirection): string {
+  return direction === 'across' ? 'across' : `to the ${direction}`;
+}
+
 export function passTarget(seat: Seat, direction: PassDirection): Seat {
   const steps = { left: 1, across: 2, right: 3, none: 0 }[direction];
   return (seat - 1 + steps) % 4 + 1;
@@ -108,7 +113,7 @@ export function dealHand(state: GameState, random: Random): GameState {
   const dealt: GameState = { ...state, ...HAND_START, hands, taken: perSeat(() => 0), currentPlayer: null };
   const direction = passDirection(state.handNumber);
   if (direction === 'none') return { ...startPlay(dealt), gameStatus: `Hand ${state.handNumber}: no pass this hand` };
-  return { ...dealt, gameStatus: `Hand ${state.handNumber}: pass three cards to the ${direction}` };
+  return { ...dealt, gameStatus: `Hand ${state.handNumber}: pass three cards ${passPhrase(direction)}` };
 }
 
 // Before the first pass completes the cards are dealt afresh, once four players are seated

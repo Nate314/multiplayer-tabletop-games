@@ -1,6 +1,6 @@
 import PlayingCard from '../../../src/components/PlayingCard';
 import { seatKey, trickKey } from './animateMove.ts';
-import { SEATS, TARGET_SCORE, nextSeat, passDirection } from '../rules.ts';
+import { SEATS, TARGET_SCORE, nextSeat, passDirection, passPhrase } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -8,6 +8,8 @@ type TableProps = {
   viewer: Seat | null; // null in the history dialog's table view
   showLastMove?: boolean; // highlights the last card played, for the history dialog
 };
+
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 const POSITIONS = ['bottom', 'left', 'top', 'right'] as const;
 
@@ -55,14 +57,14 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
             return (
               <div key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
                 <span className="seat-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
-                <span className="seat-count">{handCounts[seat]} cards, {taken[seat]} points</span>
+                <span className="seat-count">{plural(handCounts[seat], 'card')}, {plural(taken[seat], 'point')}</span>
                 {phase === 'passing' && <span className="seat-note">{passed.includes(seat) ? 'passed' : 'choosing'}</span>}
               </div>
             );
           })}
           <div className="trick" aria-label="The trick">
             {phase === 'passing' ? (
-              <div className="trick-message">Everyone passes three cards to the {direction}</div>
+              <div className="trick-message">Everyone passes three cards {passPhrase(direction)}</div>
             ) : (
               <>
                 {placed.map(({ position, seat }) => {
