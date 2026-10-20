@@ -18,6 +18,7 @@
 // - Scoring: a bidding team that takes at least its bid scores what it took, otherwise it loses its bid; the other
 //   team scores what it took. The article plays to 300 and gives the win to the higher total if both pass it.
 //   This game plays to 500 (the owner's choice); see the README.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -140,8 +141,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const laidAside = state.bidder !== null && viewer === state.bidder && state.phase !== 'discard' && state.phase !== 'bidding';
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     nestCount: nest.length,
     discards: laidAside ? nest : [],
     undoAvailable

@@ -14,6 +14,7 @@
 // - Each heart taken is 1 point and the queen of spades 13. A player who takes all 26 shoots the moon: each other
 //   player takes 26 instead.
 // - The game ends when a player reaches 100; the lowest score wins, and equal lowest scores share the win.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -126,10 +127,10 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, passes, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     passed: SEATS.filter(seat => passes[seat]),
-    myPass: viewer === null ? [] : passes[viewer] ?? [],
+    myPass: viewHand(passes, viewer),
     undoAvailable
   };
 }

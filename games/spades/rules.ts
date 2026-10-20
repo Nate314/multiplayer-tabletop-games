@@ -15,6 +15,7 @@
 //   nil bidder takes no trick and loses 100 if they take any, on top of the partner's contract. Both partners' tricks
 //   count toward the contract.
 // - The first team to 500 wins; a team that falls to -200 loses. On a tie another hand is played.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -85,8 +86,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     undoAvailable
   };
 }

@@ -1,4 +1,5 @@
 // Azul rules shared by the browser (legal picks and lines) and the server (validation).
+import { mapSeats } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -249,10 +250,6 @@ function tileWall(board: PlayerBoard): { board: PlayerBoard; discarded: Color[];
       scoreAfter: score
     }
   };
-}
-
-function mapSeats<T, U>(record: Record<Seat, T>, change: (value: T, seat: Seat) => U): Record<Seat, U> {
-  return Object.fromEntries(Object.entries(record).map(([seat, value]) => [seat, change(value, Number(seat))]));
 }
 
 // Adds the bonuses and picks the winners among the players still in the game:

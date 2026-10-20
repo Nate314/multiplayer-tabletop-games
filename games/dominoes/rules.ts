@@ -1,4 +1,5 @@
 // Dominoes rules shared by the browser (playable tiles) and the server (validation).
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -131,8 +132,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, boneyard, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     boneyardCount: boneyard.length,
     undoAvailable
   };

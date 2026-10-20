@@ -1,4 +1,5 @@
 // No-limit Texas Hold'em rules shared by the browser (what the viewer may do) and the server (validation)
+import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -471,7 +472,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { holeCards, deck: _deck, ...view } = state;
   return {
     ...view,
-    myCards: viewer === null ? [] : holeCards[viewer] ?? [],
+    myCards: viewHand(holeCards, viewer),
     pots: computePots(state),
     undoAvailable
   };

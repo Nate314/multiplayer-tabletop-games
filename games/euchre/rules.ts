@@ -14,6 +14,7 @@
 //   highest card of the suit led, wins, and the winner leads next.
 // - Scoring: makers taking 3 or 4 tricks score 1, all 5 (a march) 2, a lone march 4. Makers who take fewer than 3
 //   are euchred and the defenders score 2. Games are played to 5, 7 or 10; this game plays to 10.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { cardName, rankValue, sameCard, standardDeck, SUITS } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -116,8 +117,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, kitty: _kitty, discard, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     discard: viewer !== null && viewer === state.dealer ? discard : null,
     undoAvailable
   };

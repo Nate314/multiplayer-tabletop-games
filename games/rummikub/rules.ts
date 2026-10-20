@@ -1,5 +1,6 @@
 // Rummikub rules shared by the browser (group checks and the play preview) and the server (validation).
 // A play is the whole table as it should be at the end of the turn; the server works out which rack tiles it adds.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -243,8 +244,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   return {
     ...view,
     undoAvailable,
-    rack: viewer === null ? [] : racks[viewer] ?? [],
-    rackCounts: Object.fromEntries(Object.entries(racks).map(([seat, rack]) => [seat, rack.length])),
+    rack: viewHand(racks, viewer),
+    rackCounts: handCounts(racks),
     poolCount: pool.length
   };
 }

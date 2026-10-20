@@ -1,4 +1,5 @@
 // Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
+import { handCounts, mapSeats, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -269,8 +270,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   return {
     ...view,
     undoAvailable,
-    myHand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, cards]) => [seat, cards.length])),
+    myHand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     drawCount: drawPile.length,
     discardTop: discardPile[discardPile.length - 1] ?? null
   };
@@ -317,10 +318,6 @@ function takeCards(hand: Card[], ids: number[]): { taken: Card[]; rest: Card[] }
   const taken = ids.map(id => hand.find(card => card.id === id));
   if (taken.some(card => card === undefined)) return null;
   return { taken: taken.filter(card => card !== undefined), rest: hand.filter(card => !ids.includes(card.id)) };
-}
-
-function mapSeats<T, U>(record: Record<Seat, T>, change: (value: T, seat: Seat) => U): Record<Seat, U> {
-  return Object.fromEntries(Object.entries(record).map(([seat, value]) => [seat, change(value, Number(seat))]));
 }
 
 // Scores the hand once someone has gone out. Everyone who laid down moves on a phase.

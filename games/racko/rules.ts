@@ -1,5 +1,6 @@
 // Rack-O rules shared by the browser (move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Rack-O, and the target score of 500 from the official rules.
+import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -102,7 +103,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   return {
     ...view,
     undoAvailable,
-    myRack: viewer === null ? [] : racks[viewer] ?? [],
+    myRack: viewHand(racks, viewer),
     drawCount: drawPile.length,
     discardTop: discardPile.at(-1) ?? null,
     discardCount: discardPile.length,

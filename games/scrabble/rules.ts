@@ -1,5 +1,6 @@
 // Scrabble rules shared by the browser (score preview) and the server (validation).
 // There is no dictionary: any placement that follows the rules below is accepted, and players dispute a word with Undo.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -274,8 +275,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   return {
     ...view,
     undoAvailable,
-    rack: viewer === null ? [] : racks[viewer] ?? [],
-    rackCounts: Object.fromEntries(Object.entries(racks).map(([seat, rack]) => [seat, rack.length])),
+    rack: viewHand(racks, viewer),
+    rackCounts: handCounts(racks),
     bagCount: bag.length
   };
 }

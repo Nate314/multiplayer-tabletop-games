@@ -19,6 +19,7 @@
 // - Distress signal: before the first trick and before anyone communicates, the crew may send it: everyone passes one
 //   card, never a rocket, to the same side. It stays active for the mission's retries and counts one more attempt.
 // - The mission specials (commander's decision and distribution, dead spot, disruption and the rest) are in missions.ts.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -208,8 +209,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const faceDown = faceDownTasks(state);
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     tasks: tasks.map((t, index) => (faceDown(index) ? { ...t, card: null } : t)),
     trickWinners: tricks.map(t => t.winner),
     communications: Object.fromEntries(Object.entries(communications).map(([seat, said]) =>
