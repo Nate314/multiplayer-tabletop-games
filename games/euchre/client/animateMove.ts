@@ -1,7 +1,7 @@
 import { slideFrom } from '../../../src/animation/motion.ts';
 import { SUITS, rankOf, sameCard, suitOf } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import type { Card, PublicGameState, Seat, Suit } from '../types.ts';
+import type { Card, PublicGameState, Suit } from '../types.ts';
 import { handKey, seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 
 

@@ -42,13 +42,13 @@ export default function Factories({ gameState, isMyTurn, selection, onSelect }: 
         {factories.map((tiles, index) => {
           const source: Source = { type: 'factory', index };
           return (
-            <div key={index} className={'factory'}>
+            <div key={index} className="factory">
               {renderTiles(source, tiles, slot => factoryKey(index, slot))}
             </div>
           );
         })}
       </div>
-      <div className={'center'}>
+      <div className="center">
         <span className="center-label">Center</span>
         {centerHasMarker && <Tile kind="first" animKey={CENTER_MARKER_KEY} />}
         {/* One group per color: a group moves to the next row whole instead of wrapping */}

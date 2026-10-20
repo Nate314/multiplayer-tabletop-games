@@ -3,6 +3,7 @@
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
+import { plural } from '../../shared/text.ts';
 import {
   MARKET_SIZE, TRAIN_COLORS, addToHand, drawTop, emptyHand, fullDeck, handCards, handSize, refillMarket
 } from './cards.ts';
@@ -214,9 +215,6 @@ function parseMove(value: unknown): Move | null {
 }
 
 // The status line's words for a move, also used by the history
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
-
 export function describePayment(payment: Payment, length: number): string {
   const colored = length - payment.locomotives;
   const parts = [

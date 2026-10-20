@@ -1,7 +1,7 @@
 import { slideFrom } from '../../../src/animation/motion.ts';
 import { buildDeck, sameCard } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import type { Card, PublicGameState, Seat } from '../types.ts';
+import type { Card, PublicGameState } from '../types.ts';
 import { handKey, seatKey } from '../../../src/animation/animKeys.ts';
 
 export const DISCARD_KEY = 'discard';

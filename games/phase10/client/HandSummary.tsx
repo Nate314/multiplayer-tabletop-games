@@ -1,5 +1,5 @@
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
-import { plural } from '../../../src/text.ts';
+import { plural } from '../../../shared/text.ts';
 import type { HandSummary as Summary, PublicGameState, Seat } from '../types.ts';
 
 type HandSummaryProps = {

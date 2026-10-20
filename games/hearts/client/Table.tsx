@@ -1,5 +1,5 @@
 import PlayingCard from '../../../src/components/PlayingCard';
-import { plural } from '../../../src/text.ts';
+import { plural } from '../../../shared/text.ts';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { SEATS, TARGET_SCORE, nextSeat, passDirection, passPhrase } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';

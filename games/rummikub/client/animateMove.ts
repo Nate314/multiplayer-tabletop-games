@@ -1,6 +1,6 @@
 import { MOVE_DURATION_MS, slideFrom } from '../../../src/animation/motion.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import type { PublicGameState, Seat } from '../types.ts';
+import type { PublicGameState } from '../types.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 
 export const tileKey = (id: number) => `tile-${id}`;

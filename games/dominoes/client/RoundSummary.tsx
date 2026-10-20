@@ -1,5 +1,5 @@
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
-import { plural } from '../../../src/text.ts';
+import { plural } from '../../../shared/text.ts';
 import { targetScore } from '../rules.ts';
 import type { PublicGameState, RoundSummary as Summary, Seat } from '../types.ts';
 

@@ -1,7 +1,9 @@
 // Turn order, reinforcement counts, starting a turn, the end of the game and the event log, shared by every part of the rules
+import { plural } from '../../shared/text.ts';
 import { CONTINENTS, TERRITORIES, territoriesOf } from './map.ts';
 import type { ContinentId, GameState, Seat } from './types.ts';
 
+export { plural };
 export const LOG_SIZE = 40;
 export const MIN_PLAYERS = 3;
 
@@ -14,10 +16,6 @@ export function nameOf(state: Pick<GameState, 'playerNames'>, seat: Seat | null)
 
 export function note(state: GameState, text: string): GameState {
   return { ...state, log: [...state.log, text] };
-}
-
-export function plural(count: number, word: string, many = `${word}s`): string {
-  return `${count} ${count === 1 ? word : many}`;
 }
 
 export function territoriesHeld(state: Pick<GameState, 'owners'>, seat: Seat): string[] {
