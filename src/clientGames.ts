@@ -8,6 +8,7 @@ import { carcassonneClient } from '../games/carcassonne/client/index.ts';
 import { chessClient } from '../games/chess/client/index.ts';
 import { checkersClient } from '../games/checkers/client/index.ts';
 import { connectfourClient } from '../games/connectfour/client/index.ts';
+import { euchreClient } from '../games/euchre/client/index.ts';
 import { backgammonClient } from '../games/backgammon/client/index.ts';
 import { catanClient } from '../games/catan/client/index.ts';
 import { mancalaClient } from '../games/mancala/client/index.ts';
@@ -56,6 +57,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [chessClient.id]: chessClient,
   [checkersClient.id]: checkersClient,
   [connectfourClient.id]: connectfourClient,
+  [euchreClient.id]: euchreClient,
   [backgammonClient.id]: backgammonClient,
   [catanClient.id]: catanClient,
   [mancalaClient.id]: mancalaClient,

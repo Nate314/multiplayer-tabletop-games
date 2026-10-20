@@ -6,6 +6,7 @@ import { carcassonne } from './carcassonne/index.ts';
 import { chess } from './chess/index.ts';
 import { checkers } from './checkers/index.ts';
 import { connectfour } from './connectfour/index.ts';
+import { euchre } from './euchre/index.ts';
 import { backgammon } from './backgammon/index.ts';
 import { catan } from './catan/index.ts';
 import { mancala } from './mancala/index.ts';
@@ -28,4 +29,5 @@ import { dominoes } from './dominoes/index.ts';
 export const GAMES: GameDefinition<any, any>[] = [
   azul, backgammon, carcassonne, catan, checkers, chess, connectfour, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, tickettoride, uno, war
   azul, backgammon, carcassonne, catan, checkers, chess, dominoes, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, tickettoride, uno, war
+  azul, backgammon, carcassonne, catan, checkers, chess, euchre, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, tickettoride, uno, war
 ];
