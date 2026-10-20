@@ -84,11 +84,10 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [spadesClient.id]: spadesClient,
   [splendorClient.id]: splendorClient,
   [tickettorideClient.id]: tickettorideClient,
-  [dominoesClient.id]: dominoesClient
+  [dominoesClient.id]: dominoesClient,
   [farkleClient.id]: farkleClient,
   [holdemClient.id]: holdemClient,
-  [tickettorideClient.id]: tickettorideClient
-  [yahtzeeClient.id]: yahtzeeClient
+  [yahtzeeClient.id]: yahtzeeClient,
   [thecrewClient.id]: thecrewClient
 };
 

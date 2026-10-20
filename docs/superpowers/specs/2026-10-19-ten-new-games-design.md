@@ -106,7 +106,7 @@ The Crew's deck, Dominoes tiles and Rack-O cards belong to their games alone.
 - Each heart is 1 point and the queen of spades 13. Taking all 26 (shooting the moon) gives the other three 26 each.
 - Game ends when someone reaches 100; lowest score wins, ties share.
 - **Leaving** (my call): the game needs four, so a player leaving ends it, and the lowest score so far wins (the hand in progress is not scored).
-- The first pass happens before any move, so the game sets `started` itself when the pass completes, so nobody can join mid-pass.
+- The first pass happens before any move, so the game sets `started` itself on the first pass, so a player who refreshes after passing keeps their seat and their passed cards (changed during the build; the earlier wording set it only when the pass completed).
 - Hidden: hands and the cards passed to you until the pass completes.
 - Screen: the table and trick, your hand with legal cards marked, the pass panel, points taken this hand, scores.
 
