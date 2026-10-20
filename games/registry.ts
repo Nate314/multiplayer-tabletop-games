@@ -25,6 +25,7 @@ import { rook } from './rook/index.ts';
 import { spades } from './spades/index.ts';
 import { splendor } from './splendor/index.ts';
 import { farkle } from './farkle/index.ts';
+import { holdem } from './holdem/index.ts';
 import { tickettoride } from './tickettoride/index.ts';
 import { dominoes } from './dominoes/index.ts';
 import { yahtzee } from './yahtzee/index.ts';
@@ -42,4 +43,5 @@ export const GAMES: GameDefinition<any, any>[] = [
   azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, spades, splendor, tickettoride, uno, war
   azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, tickettoride, uno, war, yahtzee
   azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, thecrew, tickettoride, uno, war
+  azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, holdem, tickettoride, uno, war
 ];

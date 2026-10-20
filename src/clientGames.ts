@@ -28,6 +28,7 @@ import { rookClient } from '../games/rook/client/index.ts';
 import { spadesClient } from '../games/spades/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
 import { farkleClient } from '../games/farkle/client/index.ts';
+import { holdemClient } from '../games/holdem/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
 import { dominoesClient } from '../games/dominoes/client/index.ts';
 import { yahtzeeClient } from '../games/yahtzee/client/index.ts';
@@ -85,6 +86,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [tickettorideClient.id]: tickettorideClient,
   [dominoesClient.id]: dominoesClient
   [farkleClient.id]: farkleClient,
+  [holdemClient.id]: holdemClient,
   [tickettorideClient.id]: tickettorideClient
   [yahtzeeClient.id]: yahtzeeClient
   [thecrewClient.id]: thecrewClient
