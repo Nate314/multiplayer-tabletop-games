@@ -1,0 +1,269 @@
+/* Farkle's blue felt table. Every rule is scoped to data-game="farkle", so none of it reaches the landing page or other games.
+   The header, FAQ dialog and vote panels use the platform defaults, rethemed through the --platform-* variables. */
+
+[data-game="farkle"] {
+  color-scheme: light;
+  --felt: #2f5d8a;
+  --felt-dark: #234569;
+  --text: #1f2a22;
+  --muted: #536257;
+  --panel-bg: rgba(255, 255, 255, 0.94);
+  --panel-border: rgba(31, 42, 34, 0.15);
+  --button-bg: #8c2a1f;
+  --button-hover-bg: #6f2017;
+  --button-text: #fff;
+  --status-bg: #e7f0e9;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --current: #f2c14e;
+  --winner: #f7e08a;
+  --platform-page-bg: var(--felt);
+  --platform-text: #fff;
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: #fff;
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="farkle"] {
+  color-scheme: dark;
+  --felt: #172c46;
+  --felt-dark: #0e1c2e;
+  --text: #e8efe9;
+  --muted: #a9b8ad;
+  --panel-bg: rgba(30, 40, 33, 0.95);
+  --panel-border: rgba(232, 239, 233, 0.14);
+  --button-bg: #b23a2c;
+  --button-hover-bg: #cc4b3c;
+  --status-bg: #263a2c;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --current: #e0aa2e;
+  --winner: #b49a3a;
+  --platform-panel-bg: #1e2821;
+  --platform-panel-text: var(--text);
+}
+
+.game-root[data-game="farkle"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-dark)) fixed;
+}
+
+[data-game="farkle"] .game-header {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+[data-game="farkle"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+[data-game="farkle"] .game-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+[data-game="farkle"] .game-info,
+[data-game="farkle"] .farkle-turn,
+[data-game="farkle"] .farkle-scores {
+  box-sizing: border-box;
+  /* A fixed width, so the History dialog keeps its size from step to step */
+  width: 640px;
+  max-width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+[data-game="farkle"] .game-info {
+  padding: 14px 20px;
+}
+
+[data-game="farkle"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="farkle"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="farkle"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="farkle"] .turn-message {
+  font-weight: 600;
+}
+
+[data-game="farkle"] .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+[data-game="farkle"] .action-buttons button,
+[data-game="farkle"] .undo-vote-actions button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-game="farkle"] .action-buttons button:not(:disabled):hover,
+[data-game="farkle"] .undo-vote-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="farkle"] .action-buttons button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+[data-game="farkle"] .farkle-selection {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+/* The table: the turn in front of the player to move, then every score */
+
+[data-game="farkle"] .farkle-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: var(--text);
+}
+
+[data-game="farkle"] .farkle-turn {
+  padding: 10px 14px 14px;
+  --dice-selected: #c0392b;
+}
+
+[data-game="farkle"] .farkle-turn-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+[data-game="farkle"] .farkle-turn-total {
+  color: var(--muted);
+}
+
+[data-game="farkle"] .farkle-dice,
+[data-game="farkle"] .farkle-aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  /* Room for six dice, so the panel keeps its height between steps */
+  min-height: 64px;
+}
+
+[data-game="farkle"] .farkle-aside {
+  margin-top: 10px;
+  min-height: 54px;
+}
+
+[data-game="farkle"] .farkle-aside .dice-die {
+  width: 36px;
+  height: 36px;
+  padding: 4px;
+}
+
+[data-game="farkle"] .farkle-aside .dice-pip {
+  width: 6px;
+  height: 6px;
+}
+
+[data-game="farkle"] .farkle-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+[data-game="farkle"] .farkle-empty {
+  color: var(--muted);
+}
+
+[data-game="farkle"] .farkle-farkle {
+  color: var(--error-text);
+  font-weight: 700;
+}
+
+[data-game="farkle"] .farkle-scores {
+  margin: 0;
+  padding: 6px 14px;
+  list-style: none;
+}
+
+[data-game="farkle"] .farkle-score {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-left: 4px solid transparent;
+  text-align: left;
+}
+
+[data-game="farkle"] .farkle-score + .farkle-score {
+  border-top: 1px solid var(--panel-border);
+}
+
+[data-game="farkle"] .farkle-score-current {
+  border-left-color: var(--current);
+  font-weight: 600;
+}
+
+[data-game="farkle"] .farkle-score-winner {
+  background: color-mix(in srgb, var(--winner) 35%, var(--panel-bg));
+}
+
+[data-game="farkle"] .farkle-score-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+[data-game="farkle"] .farkle-score-points {
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+[data-game="farkle"] .faq dd {
+  color: var(--muted);
+}

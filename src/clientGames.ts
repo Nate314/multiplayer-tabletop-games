@@ -24,6 +24,7 @@ import { warClient } from '../games/war/client/index.ts';
 import { riskClient } from '../games/risk/client/index.ts';
 import { rookClient } from '../games/rook/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
+import { farkleClient } from '../games/farkle/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
 import { dominoesClient } from '../games/dominoes/client/index.ts';
 
@@ -75,6 +76,8 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [splendorClient.id]: splendorClient,
   [tickettorideClient.id]: tickettorideClient,
   [dominoesClient.id]: dominoesClient
+  [farkleClient.id]: farkleClient,
+  [tickettorideClient.id]: tickettorideClient
 };
 
 // A game's rules and screen together, as the landing list and game view use them
