@@ -1,0 +1,507 @@
+/* Hearts' wine-red table. Every rule is scoped to data-game="hearts", so none of it reaches the landing page or other games. */
+
+[data-game="hearts"] {
+  color-scheme: light;
+  color: var(--text);
+  --page-bg-start: #f6e3e5;
+  --page-bg-end: #dba7ad;
+  --text: #2a1014;
+  --muted: #6b4a4f;
+  --panel-bg: rgba(255, 255, 255, 0.93);
+  --panel-border: rgba(42, 16, 20, 0.15);
+  --modal-bg: #fffafa;
+  --felt: #7a1f2b;
+  --felt-text: #fdf0f1;
+  --button-bg: #8e2433;
+  --button-hover-bg: #6e1a26;
+  --button-text: #fff;
+  --status-bg: #f8e8ea;
+  --status-text: #2a1014;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #d98a00;
+  --playing-card-highlight: var(--highlight);
+  --playing-card-selected: #2b6cb0;
+  --trick-card-w: 44px;
+}
+
+:root[data-theme="dark"] [data-game="hearts"] {
+  color-scheme: dark;
+  --page-bg-start: #24100f;
+  --page-bg-end: #120707;
+  --text: #f6e7e8;
+  --muted: #c5a5a9;
+  --panel-bg: rgba(48, 24, 28, 0.95);
+  --panel-border: rgba(246, 231, 232, 0.14);
+  --modal-bg: #301a1d;
+  --felt: #561620;
+  --button-bg: #b13a4b;
+  --button-hover-bg: #c9505f;
+  --status-bg: #44242a;
+  --status-text: #f6e7e8;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --highlight: #ffb020;
+  --playing-card-selected: #63a4ff;
+}
+
+/* Page and header */
+
+.game-root[data-game="hearts"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+}
+
+[data-game="hearts"] .game-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem 0 12px;
+}
+
+[data-game="hearts"] .game-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.08em;
+}
+
+[data-game="hearts"] .back-button,
+[data-game="hearts"] .history-button,
+[data-game="hearts"] .faq-button {
+  height: 2.5rem;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+[data-game="hearts"] .theme-toggle {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--button-bg);
+  font-size: 1.2rem;
+}
+
+[data-game="hearts"] .back-button:hover,
+[data-game="hearts"] .history-button:hover:enabled,
+[data-game="hearts"] .faq-button:hover,
+[data-game="hearts"] .theme-toggle:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="hearts"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+/* Game screen: status and controls, the table, the hand */
+
+[data-game="hearts"] .game-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+[data-game="hearts"] .game-info,
+[data-game="hearts"] .table,
+[data-game="hearts"] .hand {
+  box-sizing: border-box;
+  max-width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+[data-game="hearts"] .game-info {
+  width: 480px;
+  padding: 14px 20px;
+}
+
+/* Wide screens: the status beside the table, so the hand stays in view */
+@media (min-width: 960px) {
+  [data-game="hearts"] .game-screen {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    align-items: start;
+  }
+
+  [data-game="hearts"] .game-info { width: auto; }
+  [data-game="hearts"] .hand { grid-column: 1 / -1; }
+}
+
+[data-game="hearts"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="hearts"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+  color: var(--status-text);
+}
+
+[data-game="hearts"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="hearts"] .turn-message {
+  font-weight: 600;
+}
+
+/* Always rendered, so the layout does not jump when the turn changes */
+[data-game="hearts"] .hint {
+  color: var(--highlight);
+  font-weight: 600;
+  margin-top: 4px;
+  min-height: 1.5em;
+}
+
+[data-game="hearts"] .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+}
+
+[data-game="hearts"] .primary-button,
+[data-game="hearts"] .action-buttons button,
+[data-game="hearts"] .undo-vote-actions button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+[data-game="hearts"] .primary-button:hover,
+[data-game="hearts"] .action-buttons button:not(:disabled):hover,
+[data-game="hearts"] .undo-vote-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="hearts"] .action-buttons button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The table: scores, the pass, the four seats around the trick */
+
+[data-game="hearts"] .table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+}
+
+[data-game="hearts"] .scoreboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="hearts"] .score {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 2px solid var(--panel-border);
+  background: var(--status-bg);
+  font-size: 0.9rem;
+}
+
+[data-game="hearts"] .score-winner { border-color: var(--highlight); }
+[data-game="hearts"] .score-name { font-weight: 600; overflow-wrap: anywhere; }
+[data-game="hearts"] .score-total { font-size: 1.15rem; font-weight: 800; }
+[data-game="hearts"] .score-taken { color: var(--muted); font-size: 0.75rem; }
+
+[data-game="hearts"] .hand-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+[data-game="hearts"] .seats {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(220px, 2fr) minmax(90px, 1fr);
+  grid-template-areas:
+    ". top ."
+    "left trick right"
+    ". bottom .";
+  align-items: center;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 640px;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: var(--felt);
+}
+
+[data-game="hearts"] .seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 90px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 2px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+[data-game="hearts"] .seat-top { grid-area: top; }
+[data-game="hearts"] .seat-left { grid-area: left; }
+[data-game="hearts"] .seat-right { grid-area: right; }
+[data-game="hearts"] .seat-bottom { grid-area: bottom; }
+
+[data-game="hearts"] .seat-current {
+  border-color: var(--highlight);
+  box-shadow: 0 0 0 2px var(--highlight);
+}
+
+[data-game="hearts"] .seat-winner { border-color: var(--highlight); }
+[data-game="hearts"] .seat-name { font-weight: 600; overflow-wrap: anywhere; }
+[data-game="hearts"] .seat-count { color: var(--muted); font-size: 0.8rem; }
+
+[data-game="hearts"] .seat-note {
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+[data-game="hearts"] .trick {
+  grid-area: trick;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  grid-template-areas:
+    ". top ."
+    "left taken right"
+    ". bottom .";
+  align-items: center;
+  justify-items: center;
+  gap: 4px;
+  min-height: 190px;
+  color: var(--felt-text);
+}
+
+[data-game="hearts"] .trick-slot {
+  width: var(--trick-card-w);
+  height: calc(var(--trick-card-w) * 1.4);
+}
+
+[data-game="hearts"] .trick-message {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  max-width: 200px;
+  font-weight: 600;
+}
+
+[data-game="hearts"] .trick-top { grid-area: top; }
+[data-game="hearts"] .trick-left { grid-area: left; }
+[data-game="hearts"] .trick-right { grid-area: right; }
+[data-game="hearts"] .trick-bottom { grid-area: bottom; }
+
+[data-game="hearts"] .trick-taken {
+  grid-area: taken;
+  max-width: 90px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Your hand */
+
+[data-game="hearts"] .hand {
+  width: 100%;
+  padding: 12px 12px 16px;
+}
+
+[data-game="hearts"] .hand-header {
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+[data-game="hearts"] .hand-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Cards you may play or pick are raised and outlined; the rest wait */
+[data-game="hearts"] .hand-cards button.playing-card:enabled {
+  outline: 3px solid var(--highlight);
+  outline-offset: 1px;
+  transform: translateY(-5px);
+}
+
+[data-game="hearts"] .hand-cards button.playing-card-selected:enabled {
+  outline-color: var(--playing-card-selected);
+  transform: translateY(-12px);
+}
+
+[data-game="hearts"] .hand-waiting button.playing-card:disabled { opacity: 1; }
+
+[data-game="hearts"] .my-pass {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+[data-game="hearts"] .my-pass-label { display: block; margin-bottom: 6px; }
+
+/* Hand scoring, the undo vote and the FAQ */
+
+[data-game="hearts"] .overlay,
+[data-game="hearts"] .undo-vote {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Under the History and FAQ dialogs, which open on top of it */
+[data-game="hearts"] .summary-overlay { z-index: 90; }
+
+[data-game="hearts"] .modal,
+[data-game="hearts"] .undo-vote-panel {
+  box-sizing: border-box;
+  width: min(460px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 20px;
+  border-radius: 10px;
+  background: var(--modal-bg);
+  color: var(--text);
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-game="hearts"] .modal.history {
+  width: min(760px, 100%);
+}
+
+[data-game="hearts"] .modal h2 {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+[data-game="hearts"] .history-board .table,
+[data-game="hearts"] .history-board .hand {
+  box-shadow: none;
+}
+
+[data-game="hearts"] .history-board .hand { margin-top: 10px; }
+
+[data-game="hearts"] .summary-result {
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+[data-game="hearts"] .summary-players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+[data-game="hearts"] .summary-player {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="hearts"] .summary-moon { outline: 2px solid var(--highlight); }
+[data-game="hearts"] .summary-name { font-weight: 600; }
+[data-game="hearts"] .summary-points { font-weight: 800; }
+[data-game="hearts"] .summary-reason { color: var(--muted); font-size: 0.9rem; }
+
+[data-game="hearts"] .summary-target,
+[data-game="hearts"] .summary-waiting {
+  margin-bottom: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+[data-game="hearts"] .round-summary .primary-button {
+  display: block;
+  margin: 0 auto;
+}
+
+[data-game="hearts"] .undo-vote-title { font-weight: 600; margin-bottom: 8px; }
+[data-game="hearts"] .undo-vote-list { margin: 0 0 12px; padding-left: 20px; }
+[data-game="hearts"] .undo-vote-actions { display: flex; gap: 10px; justify-content: center; }
+
+[data-game="hearts"] .faq dl { margin: 0; }
+[data-game="hearts"] .faq dt { font-weight: 600; margin-top: 12px; }
+[data-game="hearts"] .faq dd { margin: 4px 0 0; }
+
+@media (max-width: 560px) {
+  [data-game="hearts"] .hand-cards .playing-card { --card-width: 48px; }
+
+  [data-game="hearts"] .game-header h1 { font-size: 1.4rem; }
+
+  [data-game="hearts"] .seats {
+    grid-template-columns: minmax(70px, 1fr) auto minmax(70px, 1fr);
+    padding: 8px;
+  }
+
+  [data-game="hearts"] .seat { min-width: 0; padding: 4px 6px; }
+  [data-game="hearts"] .trick { min-height: 170px; }
+}
