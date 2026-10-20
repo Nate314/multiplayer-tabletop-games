@@ -1,0 +1,416 @@
+/* Rack-O's table theme. Every rule is scoped to data-game="racko", so none of it reaches the landing page or other games. */
+
+[data-game="racko"] {
+  color-scheme: light;
+  color: var(--text);
+  --page-bg: #e9f0f5;
+  --text: #1b2733;
+  --muted: #566a7c;
+  --panel-bg: #fbfdff;
+  --panel-border: rgba(27, 39, 51, 0.18);
+  --button-bg: #1f6fa8;
+  --button-hover-bg: #17598a;
+  --button-text: #fff;
+  --status-bg: #dcebf5;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --slot-bg: rgba(27, 39, 51, 0.07);
+  --highlight: #b04a00;
+  --tile-w: 52px;
+  --tile-h: 72px;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+}
+
+:root[data-theme="dark"] [data-game="racko"] {
+  color-scheme: dark;
+  --page-bg: #101a22;
+  --text: #e6eef5;
+  --muted: #9db0c1;
+  --panel-bg: #1a2832;
+  --panel-border: rgba(230, 238, 245, 0.16);
+  --button-bg: #2f87c6;
+  --button-hover-bg: #429bda;
+  --status-bg: #223646;
+  --error-bg: #4a1f1b;
+  --error-text: #ffd5d0;
+  --slot-bg: rgba(230, 238, 245, 0.08);
+  --highlight: #ffb066;
+}
+
+[data-game="racko"] .game-header {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+[data-game="racko"] .game-id {
+  width: fit-content;
+  margin: 0 auto 16px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  font-size: 0.9rem;
+}
+
+[data-game="racko"] .game-screen,
+[data-game="racko"] .racko-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Panels */
+
+[data-game="racko"] .game-info,
+[data-game="racko"] .rack,
+[data-game="racko"] .piles {
+  box-sizing: border-box;
+  max-width: 100%;
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+[data-game="racko"] .game-info {
+  width: 460px;
+}
+
+[data-game="racko"] .player-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+[data-game="racko"] .game-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--status-bg);
+}
+
+[data-game="racko"] .game-status-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+[data-game="racko"] .turn-message {
+  font-weight: 600;
+}
+
+/* Always rendered, so the layout does not jump when the turn changes */
+[data-game="racko"] .hint {
+  color: var(--highlight);
+  font-weight: 600;
+  margin-top: 4px;
+  min-height: 3em;
+}
+
+/* Buttons */
+
+[data-game="racko"] .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+[data-game="racko"] .action-buttons button,
+[data-game="racko"] .discard-button,
+[data-game="racko"] .primary-button,
+[data-game="racko"] .undo-vote-actions button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+}
+
+[data-game="racko"] .action-buttons button:not(:disabled):hover,
+[data-game="racko"] .discard-button:hover,
+[data-game="racko"] .primary-button:hover,
+[data-game="racko"] .undo-vote-actions button:hover {
+  background: var(--button-hover-bg);
+}
+
+[data-game="racko"] button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Tiles: the hue runs through the rainbow with the number, so a rack in order reads as a gradient */
+
+[data-game="racko"] .tile {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--tile-w);
+  height: var(--tile-h);
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 7px;
+  background: hsl(var(--hue, 0), 62%, 38%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-weight: 800;
+  font-size: calc(var(--tile-w) * 0.44);
+  line-height: 1;
+  user-select: none;
+  transition: transform 0.12s;
+}
+
+[data-game="racko"] .tile-small {
+  --tile-w: 26px;
+  --tile-h: 36px;
+  border-width: 1px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+[data-game="racko"] .tile-back {
+  background: repeating-linear-gradient(45deg, #1f6fa8, #1f6fa8 6px, #17598a 6px, #17598a 12px);
+}
+
+[data-game="racko"] .tile-empty {
+  background: var(--slot-bg);
+  border: 2px dashed var(--panel-border);
+  box-shadow: none;
+}
+
+[data-game="racko"] button.tile:not(:disabled) {
+  cursor: pointer;
+}
+
+[data-game="racko"] button.tile:not(:disabled):hover {
+  transform: translateY(-3px);
+  outline: 3px solid var(--highlight);
+  outline-offset: 1px;
+}
+
+[data-game="racko"] .tile-selected {
+  outline: 3px solid var(--highlight);
+  outline-offset: 1px;
+}
+
+/* Piles and the card in hand */
+
+[data-game="racko"] .piles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+[data-game="racko"] .pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+
+[data-game="racko"] .pile-name,
+[data-game="racko"] .pile-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Racks: ten slots in a row, slot 1 on the left */
+
+[data-game="racko"] .rack {
+  width: 100%;
+}
+
+[data-game="racko"] .rack-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+[data-game="racko"] .rack-slots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+[data-game="racko"] .slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 8px;
+}
+
+[data-game="racko"] .slot-last {
+  background: var(--status-bg);
+  outline: 2px solid var(--highlight);
+}
+
+[data-game="racko"] .slot-number {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+[data-game="racko"] .other-racks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+[data-game="racko"] .other-rack .slot {
+  padding: 1px;
+}
+
+[data-game="racko"] .rack-turn {
+  border-color: var(--highlight);
+}
+
+/* The scoring after each round */
+
+[data-game="racko"] .summary-overlay {
+  z-index: 15;
+}
+
+[data-game="racko"] .round-summary {
+  max-width: 460px;
+}
+
+[data-game="racko"] .summary-result {
+  font-weight: 600;
+  color: var(--highlight);
+  margin-bottom: 12px;
+}
+
+[data-game="racko"] .summary-seats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+[data-game="racko"] .summary-seat {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--panel-border);
+  background: var(--status-bg);
+}
+
+[data-game="racko"] .summary-winner {
+  border-color: var(--highlight);
+}
+
+[data-game="racko"] .summary-name,
+[data-game="racko"] .summary-points {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+[data-game="racko"] .summary-points {
+  text-align: right;
+}
+
+[data-game="racko"] .summary-reason,
+[data-game="racko"] .summary-target,
+[data-game="racko"] .summary-waiting {
+  color: var(--muted);
+}
+
+[data-game="racko"] .summary-rack {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 3px;
+}
+
+[data-game="racko"] .summary-target,
+[data-game="racko"] .summary-waiting {
+  margin-top: 12px;
+}
+
+[data-game="racko"] .primary-button {
+  min-width: 140px;
+  margin-top: 16px;
+  padding: 12px;
+}
+
+/* History dialog */
+
+[data-game="racko"] .modal {
+  width: 100%;
+  border: 1px solid var(--panel-border);
+}
+
+[data-game="racko"] .modal.history {
+  max-width: 1100px;
+}
+
+[data-game="racko"] .faq dd {
+  color: var(--muted);
+}
+
+/* Narrow windows: smaller tiles, so the ten slots still fit in a row */
+
+@media (max-width: 640px) {
+  [data-game="racko"] {
+    --tile-w: 30px;
+    --tile-h: 44px;
+  }
+
+  [data-game="racko"] .game-info {
+    width: 100%;
+  }
+
+  [data-game="racko"] .rack {
+    padding: 8px;
+  }
+
+  [data-game="racko"] .rack-slots {
+    gap: 2px;
+  }
+
+  [data-game="racko"] .slot {
+    padding: 1px;
+  }
+
+  [data-game="racko"] .tile {
+    border-width: 1px;
+    font-size: 0.8rem;
+  }
+
+  [data-game="racko"] .tile-small {
+    --tile-w: 20px;
+    --tile-h: 28px;
+    font-size: 0.6rem;
+  }
+
+  [data-game="racko"] .other-racks {
+    grid-template-columns: 1fr;
+  }
+
+  [data-game="racko"] .summary-rack .tile-small {
+    --tile-w: 22px;
+  }
+}

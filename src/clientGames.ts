@@ -20,6 +20,7 @@ import { skipboClient } from '../games/skipbo/client/index.ts';
 import { gofishClient } from '../games/gofish/client/index.ts';
 import { warClient } from '../games/war/client/index.ts';
 import { riskClient } from '../games/risk/client/index.ts';
+import { rackoClient } from '../games/racko/client/index.ts';
 import { rookClient } from '../games/rook/client/index.ts';
 import { splendorClient } from '../games/splendor/client/index.ts';
 import { tickettorideClient } from '../games/tickettoride/client/index.ts';
@@ -66,6 +67,7 @@ export const CLIENT_GAMES: Record<string, ClientGame> = {
   [gofishClient.id]: gofishClient,
   [warClient.id]: warClient,
   [riskClient.id]: riskClient,
+  [rackoClient.id]: rackoClient,
   [rookClient.id]: rookClient,
   [splendorClient.id]: splendorClient,
   [tickettorideClient.id]: tickettorideClient
