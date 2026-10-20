@@ -28,6 +28,7 @@ import { farkle } from './farkle/index.ts';
 import { tickettoride } from './tickettoride/index.ts';
 import { dominoes } from './dominoes/index.ts';
 import { yahtzee } from './yahtzee/index.ts';
+import { thecrew } from './thecrew/index.ts';
 
 // Landing page order, alphabetical by name. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,4 +41,5 @@ export const GAMES: GameDefinition<any, any>[] = [
   azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, racko, risk, rook, rummikub, scrabble, skipbo, splendor, tickettoride, uno, war
   azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, spades, splendor, tickettoride, uno, war
   azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, tickettoride, uno, war, yahtzee
+  azul, backgammon, carcassonne, catan, checkers, chess, gofish, mancala, monopoly, parchisi, phase10, quoridor, risk, rook, rummikub, scrabble, skipbo, splendor, thecrew, tickettoride, uno, war
 ];
