@@ -96,7 +96,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           )}
         </div>
         <Table gameState={gameState} viewer={playerNumber} />
-        <section className={isMyTurn ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">
+        <section className={discarding || playing ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">
           <header className="hand-header">Your hand ({hand.length})</header>
           <div className="hand-cards">
             {sortedHand(hand, trump).map((card, slot) => (
