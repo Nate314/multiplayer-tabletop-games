@@ -6,7 +6,7 @@ Pass three cards, then dodge the hearts and the queen of spades in tricks, or ta
 
 - **Players.** Exactly four, each playing for themselves
 - **Deck.** The standard 52 cards, all dealt, 13 to each player. Ace is high and two is low; there is no trump
-- **Passing.** Before play each player picks three cards and passes them: to the left (the next player) in the first hand, to the right in the second, across in the third, and no pass in the fourth, then around again. Everyone passes at once, and the cards passed to you arrive only once all four have passed. Joining closes when the first pass completes
+- **Passing.** Before play each player picks three cards and passes them: to the left (the next player) in the first hand, to the right in the second, across in the third, and no pass in the fourth, then around again. Everyone passes at once, and the cards passed to you arrive only once all four have passed. The first pass locks the seats: from then on a player who drops keeps their seat and their pass
 - **First trick.** Whoever holds the 2 of clubs leads it. On the first trick nobody may play a heart or the queen of spades unless they have nothing else
 - **Tricks.** Follow the suit led if you can; otherwise play any card. The highest card of the suit led takes the trick, and its winner leads the next
 - **Hearts broken.** A heart cannot be led until a heart has been played, unless the leader's hand is all hearts
@@ -30,7 +30,7 @@ Pass three cards, then dodge the hearts and the queen of spades in tricks, or ta
 These follow the Modern rules and the Black Lady variant in [Wikipedia's Hearts article](https://en.wikipedia.org/wiki/Hearts_(card_game)). What is different:
 
 - **The queen of spades counts 13.** The article's Modern rules count only hearts; the queen of spades is a penalty card in Black Lady, which the article calls the standard game in the United States. This game plays Black Lady
-- **Passing order.** The article says the direction changes each hand but gives no fixed order. Here it is left, right, across, then no pass, repeating. Everyone passes at once
+- **Passing order.** The article says the direction changes each hand but gives no fixed order. Here it is left, right, across, then no pass, repeating. Everyone passes at once, and the first pass of the game locks the seats
 - **The 2 of clubs leads.** The article has the player left of the dealer lead, with the 2 of clubs lead as a minor variant. This game uses the 2 of clubs lead, so there is no dealer
 - **A first trick with only penalty cards.** The article suggests a misdeal when a hand holds only penalty cards. Here a player who has nothing else may play a heart or the queen of spades on the first trick
 - **Leading hearts.** The article lets a leader holding only penalty cards lead a heart before hearts are broken. Here only a hand of all hearts may; a hand of hearts and the queen of spades leads the queen

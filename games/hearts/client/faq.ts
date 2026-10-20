@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does passing work?',
-    answer: 'Before each hand everyone picks three cards and passes them: to the left in the first hand, then to the right, then across, then no pass, and around again. The cards you are passed arrive only once all four have passed. Joining closes when the first pass completes.'
+    answer: 'Before each hand everyone picks three cards and passes them: to the left in the first hand, then to the right, then across, then no pass, and around again. The cards you are passed arrive only once all four have passed. The first pass locks the seats, so a player who drops after that keeps their seat and their pass.'
   },
   {
     question: 'Who leads?',

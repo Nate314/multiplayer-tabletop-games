@@ -65,7 +65,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   let turn = '';
   if (isGameOver) turn = 'Game over';
   else if (roundSummary) turn = 'The hand is over';
-  else if (full && phase === 'passing') turn = started ? 'Passing' : 'Passing. Joining closes once everyone has passed.';
+  else if (full && phase === 'passing') turn = started ? 'Passing' : 'Passing. The seats lock at the first pass.';
   else if (full && currentPlayer !== null) turn = currentPlayer === playerNumber ? 'Your turn' : `${playerNames[currentPlayer]}'s turn`;
 
   return (

@@ -57,12 +57,11 @@ function step(manager: Manager): PublicGameState {
   return ok(manager.move(ROOM, seat, { type: 'play', card }));
 }
 
-test('the pass waits for four players, and joining closes once it completes', () => {
+test('the pass waits for four players, and the first pass locks the seats', () => {
   const manager = gameWith('A', 'B', 'C');
   assert.deepEqual(manager.action(ROOM, 1, { type: 'pass', cards: [0, 1, 2] }), { error: 'Waiting for more players' });
   manager.join('hearts', 'g1', 'D');
   assert.equal(viewOf(manager, 1).hand.length, 13);
-  for (let i = 0; i < 3; i++) step(manager);
   assert.equal(viewOf(manager, null).started, false);
   step(manager);
   assert.equal(viewOf(manager, null).started, true);
@@ -111,6 +110,26 @@ test('a rejoin mid-trick and mid-pass shows the same half-finished turn', () => 
   assert.deepEqual(view.myPass, passing.myPass);
   assert.deepEqual(view.hand, passing.hand);
   assert.deepEqual(view.passed, [1]);
+});
+
+test('a rejoin after passing in the first hand keeps the seat and the pass', () => {
+  const manager = gameWith(...NAMES);
+  step(manager);
+  const before = viewOf(manager, 1);
+  assert.equal(before.myPass.length, 3);
+  manager.disconnect(ROOM, 1);
+  assert.deepEqual(viewOf(manager, null).disconnected, [1]);
+  const back = manager.join('hearts', 'g1', 'A', true);
+  if ('error' in back) assert.fail(back.error);
+  const after = back.state as PublicGameState;
+  assert.deepEqual(after.myPass, before.myPass);
+  assert.deepEqual(after.hand, before.hand);
+  assert.deepEqual(after.passed, [1]);
+  // A started game with no moves yet has a one-step history with no cards in it
+  const history = manager.history('hearts', 'g1') as unknown as PublicGameState[];
+  assert.equal(history.length, 1);
+  assert.deepEqual(history[0].hand, []);
+  assert.deepEqual(history[0].myPass, []);
 });
 
 test('undo restores the trick', () => {

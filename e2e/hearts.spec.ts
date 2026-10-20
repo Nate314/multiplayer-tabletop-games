@@ -84,19 +84,23 @@ test.describe('Hearts rules', () => {
     await expect(alice.locator('.trick-taken')).toHaveText('Bob took the trick');
   });
 
-  test('everyone passes three cards at once, left then right then across then none, and they arrive only once all four have passed; joining then closes', async ({ seat }) => {
+  test('everyone passes three cards at once, left then right then across then none, and they arrive only once all four have passed; the first pass locks the seats', async ({ seat }) => {
     const { table, pages } = await start(seat);
     const [alice, bob, cara, dan] = pages;
     const before = await table.state<GameState>();
     const sent = before.hands[1].slice(0, 3);
     await expect(alice.locator('.hand-info')).toContainText('Pass: left');
+    await expect(turn(alice)).toHaveText('Passing. The seats lock at the first pass.');
     await passFirstThree(alice);
+    await expect(turn(dan)).toHaveText('Passing');
+    // A refresh after passing keeps the seat and the pass
+    await alice.reload();
+    await expect(alice.locator('.my-pass .playing-card')).toHaveCount(3);
     await expect(hand(alice).getByRole('button')).toHaveCount(10);
     await expect(hand(bob).getByRole('button')).toHaveCount(13);
     for (const card of sent) await expect(handCard(bob, card)).toHaveCount(0);
     await passFirstThree(bob);
     await passFirstThree(cara);
-    await expect(turn(dan)).toHaveText('Passing. Joining closes once everyone has passed.');
     await passFirstThree(dan);
     for (const card of sent) await expect(handCard(bob, card)).toBeVisible();
     await expect(hand(alice).getByRole('button')).toHaveCount(13);

@@ -116,7 +116,7 @@ export function dealHand(state: GameState, random: Random): GameState {
   return { ...dealt, gameStatus: `Hand ${state.handNumber}: pass three cards ${passPhrase(direction)}` };
 }
 
-// Before the first pass completes the cards are dealt afresh, once four players are seated
+// Before anyone has passed the cards are dealt afresh, once four players are seated
 export function resetLobby(state: GameState, random: Random): GameState {
   const empty: GameState = { ...state, ...HAND_START, handNumber: 1, scores: perSeat(() => 0), taken: perSeat(() => 0), hands: {} };
   if (state.activePlayers.length < SEATS.length) return empty;
@@ -225,7 +225,7 @@ function parsePass(value: unknown, handSize: number): number[] | null {
 }
 
 // The cards leave the sender's hand at once, and arrive when the fourth player has passed.
-// The first time that happens the game starts, so nobody can join after the cards have moved.
+// Any pass starts the game, so the seats lock and a player who drops after passing keeps their seat and pass.
 function passCards(state: GameState, seat: Seat, cards: unknown): Result<GameState> {
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   if (state.activePlayers.length < SEATS.length) return { error: 'Waiting for more players' };
@@ -237,15 +237,15 @@ function passCards(state: GameState, seat: Seat, cards: unknown): Result<GameSta
 
   const passes = { ...state.passes, [seat]: indexes.map(index => hand[index]) };
   const hands = { ...state.hands, [seat]: hand.filter((_, index) => !indexes.includes(index)) };
-  const passed: GameState = { ...state, passes, hands, gameStatus: `${state.playerNames[seat]} passed three cards` };
+  const passed: GameState = { ...state, started: true, passes, hands, gameStatus: `${state.playerNames[seat]} passed three cards` };
   if (SEATS.some(other => !passes[other])) return { state: passed };
 
   const direction = passDirection(state.handNumber);
   const received = Object.fromEntries(SEATS.map(sender => [passTarget(sender, direction), passes[sender]]));
   const dealt = Object.fromEntries(SEATS.map(other => [other, sortHand([...hands[other], ...received[other]])]));
-  const started = startPlay({ ...passed, started: true, passes: {}, hands: dealt });
-  const leader = started.currentPlayer ?? 1;
-  return { state: { ...started, gameStatus: `Everyone passed. ${state.playerNames[leader]} leads the 2 of clubs` } };
+  const playing = startPlay({ ...passed, passes: {}, hands: dealt });
+  const leader = playing.currentPlayer ?? 1;
+  return { state: { ...playing, gameStatus: `Everyone passed. ${state.playerNames[leader]} leads the 2 of clubs` } };
 }
 
 // Deals the next hand once every connected player has acknowledged the summary

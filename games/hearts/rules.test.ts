@@ -124,7 +124,7 @@ test('passed cards arrive only after all four pass', () => {
   assert.equal(state.hands[1].length, 10);
   assert.equal(state.hands[2].length, 13);
   assert.deepEqual(state.passes[1], sent);
-  assert.equal(state.started, false);
+  assert.equal(state.started, true); // the first pass locks the seats
   assert.deepEqual(pass(state, 1), { error: 'You have passed already' });
   // The sender sees what they sent; the receiver and the table do not
   assert.deepEqual(toPublicState(state, false, 1).myPass, sent);
@@ -290,12 +290,15 @@ test('dismissed player mid-turn', () => {
   assert.equal(playing.currentPlayer, null);
 });
 
-test('a player leaving before the first pass completes deals afresh', () => {
-  let state = ok(pass(lobby(), 1));
-  state = removePlayer(hearts, state, 3, seeded(1));
-  assert.equal(state.started, false);
-  assert.deepEqual(state.passes, {});
-  assert.equal(allCards(state).length, 0);
+test('a player leaving before anyone passes deals afresh; after a pass their seat is held', () => {
+  const left = removePlayer(hearts, lobby(), 3, seeded(1));
+  assert.equal(left.started, false);
+  assert.equal(allCards(left).length, 0);
+  const passed = ok(pass(lobby(), 1));
+  const held = disconnectPlayer(hearts, passed, 1, seeded(1));
+  assert.deepEqual(held.disconnected, [1]);
+  assert.deepEqual(held.passes, passed.passes);
+  assert.deepEqual(held.hands, passed.hands);
 });
 
 test('invalid moves', () => {
