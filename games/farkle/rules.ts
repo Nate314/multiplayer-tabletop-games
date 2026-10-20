@@ -1,5 +1,6 @@
 // Farkle rules shared by the browser (the score of a selection) and the server (validation),
 // from https://en.wikipedia.org/wiki/Farkle.
+import { rollDice } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -78,10 +79,6 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const finalTurns = state.finalTurns.filter(owed => owed !== seat);
   const next = { ...state, ...(abandoned ? NEW_TURN : {}), finalTurns };
   return state.triggeredBy !== null && finalTurns.length === 0 ? finish(next) : next;
-}
-
-function rollDice(count: number, random: Random): number[] {
-  return Array.from({ length: count }, () => 1 + Math.floor(random() * 6));
 }
 
 // The indexes of the dice to set aside, each a distinct die of the roll; null when the move is malformed

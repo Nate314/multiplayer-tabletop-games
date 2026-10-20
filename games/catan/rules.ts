@@ -1,5 +1,6 @@
 // Catan rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, building.ts, dice.ts, trades.ts, devCards.ts, roads.ts and state.ts.
+import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -8,7 +9,7 @@ import {
   advanceSetup, buildCity, buildRoad, buildSettlement, placeFreeRoad, placeSetupRoad, placeSetupSettlement
 } from './building.ts';
 import { DEV_DECK, buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
-import { afterDiscards, discard, discardForAbsent, moveRobber, roll, rollDie } from './dice.ts';
+import { afterDiscards, discard, discardForAbsent, moveRobber, roll } from './dice.ts';
 import { roadLengths } from './roads.ts';
 import { BANK_SIZE, add, isResource, noResources, parseResources, total } from './resources.ts';
 import {

@@ -1,4 +1,5 @@
 // Rolling: production on the rolled number, or on a 7 the discards and the robber, which also moves for a Knight
+import { rollDie } from '../../shared/dice.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { HEX_VERTICES, RESOURCES } from './board.ts';
 import { add, covers, describeResources, noResources, subtract, total } from './resources.ts';
@@ -6,10 +7,6 @@ import { nameOf, note } from './state.ts';
 import type { GameState, Random, Resource, Resources, Result, Seat } from './types.ts';
 
 export const HAND_LIMIT = 7; // more than this on a 7 discards half
-
-export function rollDie(random: Random): number {
-  return Math.min(6, Math.floor(random() * 6) + 1);
-}
 
 export function roll(state: GameState, seat: Seat, random: Random): GameState {
   const dice: [number, number] = [rollDie(random), rollDie(random)];

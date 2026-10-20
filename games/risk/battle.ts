@@ -1,4 +1,5 @@
 // Attacks: rolling the dice, losses, capturing a territory, moving in, and eliminating a player
+import { rollDice } from '../../shared/dice.ts';
 import { adjacent, territoryName } from './map.ts';
 import { TRADE_AFTER_TAKING_AT, takeCards } from './cards.ts';
 import { checkGameOver, nameOf, note, plural, territoriesHeld } from './state.ts';
@@ -8,12 +9,8 @@ export const MAX_ATTACK_DICE = 3;
 export const MAX_DEFEND_DICE = 2;
 const MAX_BLITZ_ROLLS = 1000; // a blitz always ends; the cap only guards against a broken random
 
-function rollDie(random: Random): number {
-  return Math.min(6, Math.floor(random() * 6) + 1);
-}
-
 function roll(count: number, random: Random): number[] {
-  return Array.from({ length: count }, () => rollDie(random)).sort((a, b) => b - a);
+  return rollDice(count, random).sort((a, b) => b - a);
 }
 
 // The highest dice are paired off; each pair kills one army of the lower side, and a tie goes to the defender

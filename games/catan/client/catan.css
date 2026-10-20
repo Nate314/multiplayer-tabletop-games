@@ -207,10 +207,11 @@
   border: 1px solid #6E5A36;
   border-radius: 6px;
   background: #FFFFFF;
+  box-shadow: none;
 }
 
 [data-game="catan"] .die span { display: block; }
-[data-game="catan"] .die .pip { margin: 1px; border-radius: 50%; background: #2B2418; }
+[data-game="catan"] .die .dice-pip { place-self: stretch; width: auto; height: auto; margin: 1px; border-radius: 50%; background: #2B2418; }
 [data-game="catan"] .dice-total {
   padding: 2px 7px;
   border-radius: 10px;

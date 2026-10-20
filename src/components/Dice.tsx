@@ -8,6 +8,32 @@ const PIPS: Record<number, number[]> = {
   6: [0, 2, 3, 5, 6, 8]
 };
 
+const pips = (value: number) =>
+  Array.from({ length: 9 }, (_, spot) => <span key={spot} className={PIPS[value]?.includes(spot) ? 'dice-pip' : ''} />);
+
+type DieProps = {
+  value: number;
+  className?: string; // added to dice-die, for a game's own look
+  label?: string; // without it the die is not announced on its own, e.g. when its row has a label
+  title?: string;
+  animKey?: string;
+};
+
+// One six-sided die face
+export function Die({ value, className, label, title, animKey }: DieProps) {
+  return (
+    <span
+      className={className ? `dice-die ${className}` : 'dice-die'}
+      role={label === undefined ? undefined : 'img'}
+      aria-label={label}
+      title={title}
+      data-anim-key={animKey}
+    >
+      {pips(value)}
+    </span>
+  );
+}
+
 type DiceProps = {
   values: number[];
   selected?: boolean[]; // which dice are picked, e.g. held
@@ -23,15 +49,24 @@ export default function Dice({ values, selected = [], onToggle, disabled = false
   return (
     <div className="dice-row" role="group" aria-label={label}>
       {values.map((value, index) => {
-        const props = {
-          className: selected[index] ? 'dice-die dice-die-selected' : 'dice-die',
-          'data-anim-key': animKeyPrefix ? `${animKeyPrefix}-${index}` : undefined,
-        };
-        const pips = Array.from({ length: 9 }, (_, spot) => <span key={spot} className={PIPS[value]?.includes(spot) ? 'dice-pip' : ''} />);
+        const className = selected[index] ? 'dice-die-selected' : undefined;
+        const animKey = animKeyPrefix ? `${animKeyPrefix}-${index}` : undefined;
+        const dieLabel = `die ${index + 1}: ${value}`;
         return onToggle ? (
-          <button key={index} {...props} type="button" aria-pressed={Boolean(selected[index])} aria-label={`die ${index + 1}: ${value}`} disabled={disabled} onClick={() => onToggle(index)}>{pips}</button>
+          <button
+            key={index}
+            className={className ? `dice-die ${className}` : 'dice-die'}
+            data-anim-key={animKey}
+            type="button"
+            aria-pressed={Boolean(selected[index])}
+            aria-label={dieLabel}
+            disabled={disabled}
+            onClick={() => onToggle(index)}
+          >
+            {pips(value)}
+          </button>
         ) : (
-          <span key={index} {...props} role="img" aria-label={`die ${index + 1}: ${value}`}>{pips}</span>
+          <Die key={index} value={value} className={className} label={dieLabel} animKey={animKey} />
         );
       })}
     </div>
