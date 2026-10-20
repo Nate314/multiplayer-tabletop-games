@@ -17,6 +17,9 @@
   --playing-card-stripe-default: rgba(255, 255, 255, 0.18);
   --playing-card-red-default: #c0262d;
   --playing-card-black-default: #1d1d1b;
+  --dice-face-default: #ffffff;
+  --dice-pip-default: #1d1d1b;
+  --dice-selected-default: #2d6a4f;
 }
 
 :root[data-theme="dark"] {
@@ -36,6 +39,9 @@
   --playing-card-stripe-default: rgba(255, 255, 255, 0.3);
   --playing-card-red-default: #c42a31;
   --playing-card-black-default: #1d1d1b;
+  --dice-face-default: #f2f1ec;
+  --dice-pip-default: #1d1d1b;
+  --dice-selected-default: #3f8f6b;
 }
 
 .lobby {
@@ -712,5 +718,53 @@
 
 /* After the selected and highlighted outlines, so keyboard focus still shows on a picked card */
 :where(button.playing-card:focus-visible) {
+  box-shadow: 0 0 0 5px var(--lobby-bg), 0 0 0 8px var(--lobby-text);
+}
+
+/*
+ * The shared dice row (src/components/Dice.tsx). A game can retheme it on [data-game="<id>"] with
+ * --dice-face, --dice-pip and --dice-selected.
+ */
+
+:where(.dice-row) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:where(.dice-die) {
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  flex: none;
+  width: 48px;
+  height: 48px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  background: var(--dice-face, var(--dice-face-default));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+:where(.dice-pip) {
+  place-self: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dice-pip, var(--dice-pip-default));
+}
+
+:where(button.dice-die) { cursor: pointer; }
+
+:where(button.dice-die:disabled) { cursor: default; }
+
+:where(.dice-die-selected) {
+  outline: 3px solid var(--dice-selected, var(--dice-selected-default));
+  outline-offset: 2px;
+}
+
+:where(button.dice-die:focus-visible) {
   box-shadow: 0 0 0 5px var(--lobby-bg), 0 0 0 8px var(--lobby-text);
 }

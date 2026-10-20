@@ -63,7 +63,7 @@ flowchart TD
 - `games/registry.ts` lists every `GameDefinition` in landing page order
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
-- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use
+- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use, and `shared/tricks.ts` the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
 
@@ -84,6 +84,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `DismissVote.tsx` shows a running dismiss vote
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
    - `PlayingCard.tsx` draws a standard playing card face up, or its back for `card: null`, in three sizes; with `onClick` it is a button. Its default look is in `App.css`, and a game can retheme it with `--playing-card-face`, `--playing-card-back`, `--playing-card-stripe`, `--playing-card-red`, `--playing-card-black`, `--playing-card-selected` and `--playing-card-highlight`
+   - `Dice.tsx` draws a row of six-sided dice with pips; with `onToggle` each die is a button (for holding dice). Its default look is in `App.css`, and a game can retheme it with `--dice-face`, `--dice-pip` and `--dice-selected`
    - `DrawAndResign.tsx` is the Offer draw, Accept draw and Decline, and Resign (with Confirm resign) controls for two-player games that use `shared/drawOffer.ts`; the game passes its own buttons, such as Undo, as children
    - `/src/hooks/useEscapeKey.ts` closes the topmost dialog on Escape
    - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. Quoridor glides the moved pawn from its old square and fades in a new wall; the History dialog animates only through a game's `animateMove`, when Animations is on
