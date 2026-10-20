@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const gofish: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'gofish',
+    category: 'card',
     name: 'Go Fish',
     description: 'Ask for ranks, go fish, and collect the most books of four',
     minPlayers: 2,

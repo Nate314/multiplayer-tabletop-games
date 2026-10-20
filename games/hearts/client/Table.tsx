@@ -1,5 +1,6 @@
 import PlayingCard from '../../../src/components/PlayingCard';
-import { seatKey, trickKey } from './animateMove.ts';
+import { plural } from '../../../shared/text.ts';
+import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { SEATS, TARGET_SCORE, nextSeat, passDirection, passPhrase } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -8,8 +9,6 @@ type TableProps = {
   viewer: Seat | null; // null in the history dialog's table view
   showLastMove?: boolean; // highlights the last card played, for the history dialog
 };
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 const POSITIONS = ['bottom', 'left', 'top', 'right'] as const;
 

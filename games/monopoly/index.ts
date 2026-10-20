@@ -8,6 +8,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const monopoly: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'monopoly',
+    category: 'strategy',
     name: 'Monopoly',
     description: 'Buy, trade and build on properties and bankrupt every other player',
     minPlayers: 2,

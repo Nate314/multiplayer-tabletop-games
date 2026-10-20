@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const war: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'war',
+    category: 'card',
     name: 'War',
     description: 'Flip cards, higher card takes both, and win the whole deck',
     minPlayers: 2,

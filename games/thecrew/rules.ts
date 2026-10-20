@@ -19,7 +19,10 @@
 // - Distress signal: before the first trick and before anyone communicates, the crew may send it: everyone passes one
 //   card, never a rocket, to the same side. It stays active for the mission's retries and counts one more attempt.
 // - The mission specials (commander's decision and distribution, dead spot, disruption and the rest) are in missions.ts.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, trickWinner } from '../../shared/tricks.ts';
@@ -206,8 +209,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const faceDown = faceDownTasks(state);
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     tasks: tasks.map((t, index) => (faceDown(index) ? { ...t, card: null } : t)),
     trickWinners: tricks.map(t => t.winner),
     communications: Object.fromEntries(Object.entries(communications).map(([seat, said]) =>
@@ -641,13 +644,17 @@ function passCard(state: GameState, seat: Seat, value: unknown): Result<GameStat
   };
 }
 
+const ROUND: RoundAccess<GameState, MissionSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'mission'
+};
+
 // Deals the next attempt once every connected player has acknowledged the mission's end: the next mission after a
 // success, the same one again after a failure
 function startNextIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
-  const next: GameState = summary.success
+  if (!everyoneReady(state, ROUND)) return state;
+  const next: GameState = state.roundSummary?.success
     ? { ...state, mission: state.mission + 1, attempt: 1, distressUsed: false }
     : { ...state, attempt: state.attempt + 1 };
   return { ...dealMission(next, random), gameStatus: `Mission ${next.mission}, attempt ${next.attempt}` };
@@ -683,17 +690,8 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
       return communicate(state, seat, input);
     case 'passCard':
       return passCard(state, seat, input.card);
-    case 'acknowledgeRound': {
-      const summary = state.roundSummary;
-      if (!summary) return { error: 'Nothing to continue' };
-      if (summary.acknowledged.includes(seat)) return { state };
-      const next: GameState = {
-        ...state,
-        roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-        gameStatus: `${state.playerNames[seat]} is ready for the next mission`
-      };
-      return { state: startNextIfReady(next, random) };
-    }
+    case 'acknowledgeRound':
+      return acknowledge(state, seat, ROUND, next => startNextIfReady(next, random));
     case 'voteEnd': {
       if (typeof input.yes !== 'boolean') return { error: 'Invalid vote' };
       if (state.phase !== 'missionOver') return { error: 'Vote to end only between missions' };

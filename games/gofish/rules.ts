@@ -1,5 +1,6 @@
 // Go Fish rules shared by the browser (rank names) and the server (validation).
 // Rules: https://en.wikipedia.org/wiki/Go_Fish, played until all 13 books are down.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { RANKS, standardDeck } from '../../shared/playingCards.ts';
@@ -122,8 +123,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const shown = state.lastMove?.fished === 'asked' || (viewer !== null && viewer === asker);
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     stockCount: stock.length,
     fishedCard: shown ? fishedCard : null,
     undoAvailable

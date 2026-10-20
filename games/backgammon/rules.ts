@@ -1,4 +1,5 @@
 // Backgammon rules shared by the browser (legal move hints) and the server (validation).
+import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -43,10 +44,6 @@ export function startingPosition(seats: Seat[]): Position {
 // Doubles are played four times
 export function diceToPlay(dice: number[]): number[] {
   return dice[0] === dice[1] ? [dice[0], dice[0], dice[0], dice[0]] : [...dice];
-}
-
-function rollDie(random: Random): number {
-  return 1 + Math.floor(random() * 6);
 }
 
 function isOpenFor(point: PointStack | null, seat: Seat): boolean {

@@ -335,10 +335,6 @@
   aspect-ratio: 1;
 }
 
-[data-game="azul"] .last-source {
-  border-color: var(--highlight);
-}
-
 /* Player boards */
 
 [data-game="azul"] .boards {
@@ -570,7 +566,6 @@
 }
 
 [data-game="azul"] .summary-result {
-  font-weight: 600;
   color: var(--highlight);
   margin-bottom: 12px;
 }
@@ -632,7 +627,6 @@
 
 [data-game="azul"] .summary-waiting {
   margin-top: 16px;
-  color: var(--muted);
 }
 
 /* Phones: shrink the tiles so a board fits the screen, and tighten the header */

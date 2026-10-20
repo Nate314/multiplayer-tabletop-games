@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const carcassonne: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'carcassonne',
+    category: 'tile',
     name: 'Carcassonne',
     description: 'Lay land tiles to build cities, roads and fields, and claim them with your meeples',
     minPlayers: 2,

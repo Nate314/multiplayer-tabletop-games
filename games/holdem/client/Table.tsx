@@ -1,5 +1,6 @@
 import PlayingCard from '../../../src/components/PlayingCard';
-import { boardKey, seatKey } from './animateMove.ts';
+import { boardKey } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import { chipText } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 

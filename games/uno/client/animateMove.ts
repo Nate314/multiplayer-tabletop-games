@@ -1,10 +1,9 @@
 import { slideFrom } from '../../../src/animation/motion.ts';
 import { buildDeck, sameCard } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import type { Card, PublicGameState, Seat } from '../types.ts';
+import type { Card, PublicGameState } from '../types.ts';
+import { handKey, seatKey } from '../../../src/animation/animKeys.ts';
 
-export const handKey = (slot: number) => `hand-${slot}`;
-export const seatKey = (seat: Seat) => `seat-${seat}`;
 export const DISCARD_KEY = 'discard';
 
 // The deck's own order (color by color, numbers before symbols) is how a hand is shown, wilds last

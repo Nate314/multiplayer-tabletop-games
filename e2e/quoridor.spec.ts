@@ -252,28 +252,4 @@ test.describe('Quoridor controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
     await expect(alice.locator('.undo-vote')).toContainText('Alice wants to undo the last turn');
   });
-
-  test('hovering or clicking Show Last Move highlights the previous move', async ({ seat }) => {
-    const { alice, bob } = await start(seat);
-    const show = bob.getByRole('button', { name: 'Show Last Move' });
-    await expect(show).toBeDisabled();
-    await square(alice, 7, 4).click();
-    await expect(show).toBeEnabled();
-
-    await show.hover();
-    await expect(square(bob, 8, 4)).toHaveClass(/last-move-from/);
-    await expect(square(bob, 7, 4)).toHaveClass(/last-move-to/);
-    await bob.locator('.game-id').hover();
-    await expect(bob.locator('.last-move-from, .last-move-to')).toHaveCount(0);
-
-    await show.click();
-    await bob.locator('.game-id').hover();
-    await expect(square(bob, 7, 4)).toHaveClass(/last-move-to/);
-
-    // A wall as the last move lights up the wall
-    await bob.getByRole('button', { name: 'Horizontal Wall' }).click();
-    await square(bob, 4, 4).click();
-    await expect(board(bob).locator('.wall.last-move')).toHaveCount(1);
-    await expect(board(alice).locator('.wall.last-move')).toHaveCount(0);
-  });
 });

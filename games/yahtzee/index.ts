@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const yahtzee: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'yahtzee',
+    category: 'dice',
     name: 'Yahtzee',
     description: 'Roll five dice up to three times and fill every scoring box',
     minPlayers: 2,

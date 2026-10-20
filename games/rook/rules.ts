@@ -18,8 +18,13 @@
 // - Scoring: a bidding team that takes at least its bid scores what it took, otherwise it loses its bid; the other
 //   team scores what it took. The article plays to 300 and gives the win to the higher total if both pass it.
 //   This game plays to 500 (the owner's choice); see the README.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { FOUR_SEATS as SEATS, nextSeat, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
+import { baseGameState } from '../../shared/seating.ts';
+import { canFollow, describeTrickPlay, trickWinner as sharedTrickWinner } from '../../shared/tricks.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
@@ -27,10 +32,11 @@ import type {
   TeamScores
 } from './types.ts';
 
+export { SEATS, nextSeat, teamNames, teamOf, teamSeats };
+
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'black'];
 export const NUMBERS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 export const ROOK: RookCard = { color: 'rook' };
-export const SEATS: Seat[] = [1, 2, 3, 4];
 export const HAND_SIZE = 9;
 export const NEST_SIZE = 5;
 export const MIN_BID = 70;
@@ -62,19 +68,6 @@ export function handPoints(cards: Card[]): number {
   return cards.reduce((sum, card) => sum + cardPoints(card), 0);
 }
 
-export function teamOf(seat: Seat): Team {
-  return seat % 2 === 1 ? 0 : 1;
-}
-
-export function teamSeats(team: Team): Seat[] {
-  return SEATS.filter(seat => teamOf(seat) === team);
-}
-
-// The seat to the left, which plays next
-export function nextSeat(seat: Seat): Seat {
-  return seat % 4 + 1;
-}
-
 // The Rook belongs to the trump suit
 export function suitOf(card: Card, trump: Color | null): Color | null {
   return card.color === 'rook' ? trump : card.color;
@@ -82,27 +75,14 @@ export function suitOf(card: Card, trump: Color | null): Color | null {
 
 // The Rook always plays; otherwise a player who holds the suit led (the Rook counting as trump) must follow it
 export function canPlayCard(hand: Card[], card: Card, trick: Play[], trump: Color | null): boolean {
-  if (card.color === 'rook' || trick.length === 0) return true;
-  const led = suitOf(trick[0].card, trump);
-  return card.color === led || !hand.some(held => suitOf(held, trump) === led);
+  return card.color === 'rook' || canFollow(hand, card, trick, held => suitOf(held, trump));
 }
 
-// How strong a card is in this trick: any trump beats the suit led, and the Rook beats every trump
-function strength(card: Card, led: Color | null, trump: Color | null): number {
-  if (card.color === 'rook') return 200;
-  if (card.color === trump) return 100 + card.number;
-  return card.color === led ? card.number : 0;
-}
+// The Rook ranks above every number, so it beats every trump
+const rank = (card: Card) => (card.color === 'rook' ? 15 : card.number);
 
 export function trickWinner(plays: Play[], trump: Color | null): Seat {
-  const led = suitOf(plays[0].card, trump);
-  return plays.reduce((best, play) =>
-    strength(play.card, led, trump) > strength(best.card, led, trump) ? play : best).seat;
-}
-
-// The two partners' names, e.g. 'Alice and Cara'
-export function teamNames(team: Team, playerNames: Record<Seat, string>): string {
-  return teamSeats(team).map(seat => playerNames[seat]).join(' and ');
+  return sharedTrickWinner(plays, card => suitOf(card, trump), rank, trump);
 }
 
 const NO_BIDDING: Bidding = { high: null, passed: [] };
@@ -154,8 +134,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const laidAside = state.bidder !== null && viewer === state.bidder && state.phase !== 'discard' && state.phase !== 'bidding';
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     nestCount: nest.length,
     discards: laidAside ? nest : [],
     undoAvailable
@@ -214,9 +194,7 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
       return `${name} named ${lastMove.color} trump`;
     case 'play': {
       const played = `${name} played ${cardName(lastMove.card)}`;
-      if (lastMove.trickWinner === null) return played;
-      if (lastMove.trickWinner === lastMove.playerNumber) return `${played} and took the trick`;
-      return `${played}; ${playerNames[lastMove.trickWinner]} took the trick`;
+      return describeTrickPlay(played, lastMove.playerNumber, lastMove.trickWinner, playerNames);
     }
   }
 }
@@ -379,11 +357,15 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   }
 }
 
+const ROUND: RoundAccess<GameState, HandSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'hand'
+};
+
 // Deals the next hand once every connected player has acknowledged the summary. The deal passes to the left.
 function startNextHandIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
   const dealer = nextSeat(state.dealer ?? 4);
   const handNumber = state.handNumber + 1;
   const next = dealHand({ ...state, handNumber }, dealer, random);
@@ -391,15 +373,7 @@ function startNextHandIfReady(state: GameState, random: Random): GameState {
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next hand`
-  };
-  return { state: startNextHandIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextHandIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
@@ -410,17 +384,8 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
   return { error: 'Unknown action' };
 }
 
-// A player leaving breaks their partnership, so the game ends and the other team wins
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
-  const winner: Team = teamOf(seat) === 0 ? 1 : 0;
-  return {
-    ...state,
-    isGameOver: true,
-    currentPlayer: null,
-    winners: teamSeats(winner),
-    undoVote: null,
-    gameStatus: `${state.playerNames[seat]} left, so the partnership is broken: ${teamNames(winner, state.playerNames)} win`
-  };
+  return partnershipBroken(state, seat);
 }
 
 // The next hand may have been waiting only for the player who disconnected

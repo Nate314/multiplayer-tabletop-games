@@ -1,5 +1,5 @@
 import Card from './Card';
-import { seatKey, trickKey } from './animateMove.ts';
+import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { leftOf, missionRules, tokenName, totalTricks } from '../rules.ts';
 import { missionOf } from '../missions.ts';
 import type { PublicGameState, PublicTask, Seat } from '../types.ts';

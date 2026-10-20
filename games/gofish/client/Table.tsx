@@ -1,5 +1,6 @@
 import PlayingCard from '../../../src/components/PlayingCard';
-import { bookKey, seatKey, STOCK_KEY } from './animateMove.ts';
+import { bookKey, STOCK_KEY } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import { describeAsk, rankPlural, TOTAL_BOOKS } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 

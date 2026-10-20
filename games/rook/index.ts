@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const rook: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'rook',
+    category: 'card',
     name: 'Rook',
     description: 'Bid, take the nest, name trump and win tricks with your partner to 500',
     minPlayers: 4,

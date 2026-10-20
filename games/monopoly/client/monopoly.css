@@ -291,13 +291,14 @@
   height: 7cqw;
   padding: 0.8cqw;
   box-sizing: border-box;
+  border: none;
   border-radius: 1.2cqw;
   background: var(--die-bg);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 [data-game="monopoly"] .die span { place-self: center; }
-[data-game="monopoly"] .die .pip { width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: var(--die-pip); }
+[data-game="monopoly"] .die .dice-pip { width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: var(--die-pip); }
 
 [data-game="monopoly"] .drawn-card {
   max-width: 55cqw;

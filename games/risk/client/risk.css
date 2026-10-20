@@ -292,6 +292,7 @@
   height: 30px;
   padding: 4px;
   box-sizing: border-box;
+  border: none;
   border-radius: 6px;
   background: var(--die-bg);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -299,8 +300,8 @@
 
 [data-game="risk"] .die-attack { background: var(--attack-die); }
 [data-game="risk"] .die span { place-self: center; }
-[data-game="risk"] .die .pip { width: 5px; height: 5px; border-radius: 50%; background: var(--die-pip); }
-[data-game="risk"] .die-attack .pip { background: #FFFFFF; }
+[data-game="risk"] .die .dice-pip { width: 5px; height: 5px; border-radius: 50%; background: var(--die-pip); }
+[data-game="risk"] .die-attack .dice-pip { background: #FFFFFF; }
 
 /* Cards */
 [data-game="risk"] .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }

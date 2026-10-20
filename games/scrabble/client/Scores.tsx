@@ -1,4 +1,5 @@
-import { BAG_KEY, seatKey } from './animateMove.ts';
+import { BAG_KEY } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type ScoresProps = {

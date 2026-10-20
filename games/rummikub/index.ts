@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const rummikub: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'rummikub',
+    category: 'tile',
     name: 'Rummikub',
     description: 'Lay down sets and runs of numbered tiles and rearrange the table to empty your rack',
     minPlayers: 2,

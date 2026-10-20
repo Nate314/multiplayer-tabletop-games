@@ -1,5 +1,6 @@
 // Skip-Bo rules shared by the browser (what fits where, move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Skip-Bo, and Mattel's rules where the article is silent.
+import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -120,7 +121,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   return {
     ...view,
     undoAvailable,
-    myHand: viewer === null ? [] : hands[viewer] ?? [],
+    myHand: viewHand(hands, viewer),
     handCounts: perSeat(seat => hands[seat]?.length ?? 0),
     stockTops: perSeat(seat => stocks[seat]?.at(-1) ?? null),
     stockCounts: perSeat(seat => stocks[seat]?.length ?? 0),

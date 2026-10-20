@@ -1,5 +1,6 @@
 // Risk rules: the game's hooks for the platform, the setup, reading untrusted moves, ending a turn, and the public view.
 // The rules themselves live in map.ts, state.ts, cards.ts, battle.ts and placement.ts.
+import { handCounts } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -85,7 +86,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, deck, discard, ...view } = state;
   return {
     ...view,
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, cards]) => [seat, cards.length])),
+    handCounts: handCounts(hands),
     hand: viewer === null ? null : hands[viewer] ?? null,
     deckCount: deck.length,
     discardCount: discard.length,

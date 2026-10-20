@@ -1,10 +1,10 @@
 import { fadeIn, slideFrom } from '../../../src/animation/motion.ts';
 import { RANKS, sameCard, SUITS } from '../../../shared/playingCards.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import type { PlayingCard, PublicGameState, Rank, Seat } from '../types.ts';
+import type { PlayingCard, PublicGameState, Rank } from '../types.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 
 export const cardKey = (card: PlayingCard) => `card-${card.rank}-${card.suit}`;
-export const seatKey = (seat: Seat) => `seat-${seat}`;
 export const bookKey = (rank: Rank) => `book-${rank}`;
 export const STOCK_KEY = 'stock';
 

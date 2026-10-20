@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { shuffle } from '../../../shared/shuffle.ts';
 import gameService from '../../../src/services/gameService';
 import Board from './Board';
 import Tile from './Tile';
@@ -18,15 +19,6 @@ type PlayAreaProps = {
 type PendingTile = Placement & { slot: number };
 
 type Square = { row: number; col: number };
-
-function shuffled<T>(items: T[]): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
 
 // The board, the player's rack and the turn's buttons. The game screen remounts it after every move,
 // so placed tiles and selections never outlive the rack they were made from.
@@ -86,8 +78,8 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
     setExchanging([]);
   }
 
-  function shuffle() {
-    const next = shuffled(order);
+  function shuffleRack() {
+    const next = shuffle(order, Math.random);
     slide(order.map((slot, place) => [rackKey(place), rackKey(next.indexOf(slot))]));
     setOrder(next);
     onShuffle(next);
@@ -153,7 +145,7 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
       )}
       <div className={preview && 'error' in preview ? 'hint hint-error' : 'hint'}>{hint}</div>
       <div className="turn-buttons">
-        <button type="button" onClick={shuffle}>Shuffle</button>
+        <button type="button" onClick={shuffleRack}>Shuffle</button>
         {exchanging ? (
           <>
             <button type="button" onClick={exchange} disabled={exchanging.length === 0}>

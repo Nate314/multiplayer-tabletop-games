@@ -1,17 +1,8 @@
 import { Fragment } from 'react';
+import { Die } from '../../../src/components/Dice';
 import type { PublicGameState } from '../types.ts';
 
 const ROLLED_DICE = 2; // any dice after these are the faces underneath doubles
-
-// Pip positions on a 3 by 3 grid, numbered 0-8 from the top left
-const PIPS: Record<number, number[]> = {
-  1: [4],
-  2: [0, 8],
-  3: [0, 4, 8],
-  4: [0, 2, 6, 8],
-  5: [0, 2, 4, 6, 8],
-  6: [0, 2, 3, 5, 6, 8]
-};
 
 export default function DiceTray({ gameState }: { gameState: PublicGameState }) {
   const { dice, bonuses, roller, playerNames } = gameState;
@@ -26,16 +17,12 @@ export default function DiceTray({ gameState }: { gameState: PublicGameState }) 
           return (
             <Fragment key={index}>
               {index === ROLLED_DICE && <span className="dice-note">underneath</span>}
-              <div
+              <Die
+                value={die.value}
                 className={['die', underneath ? 'underneath' : '', die.used ? 'used' : ''].join(' ')}
-                role="img"
-                aria-label={`${die.value}${underneath ? ', underneath' : ''}${die.used ? ', used' : ''}`}
+                label={`${die.value}${underneath ? ', underneath' : ''}${die.used ? ', used' : ''}`}
                 title={`${underneath ? 'Face underneath, ' : ''}${die.used ? 'used' : 'not used yet'}`}
-              >
-                {Array.from({ length: 9 }, (_, spot) => (
-                  <span key={spot} className={PIPS[die.value].includes(spot) ? 'pip' : ''} />
-                ))}
-              </div>
+              />
             </Fragment>
           );
         })}

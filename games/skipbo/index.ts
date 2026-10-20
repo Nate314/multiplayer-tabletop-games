@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const skipbo: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'skipbo',
+    category: 'card',
     name: 'Skip-Bo',
     description: 'Build piles from 1 to 12 and be first to empty your stock pile',
     minPlayers: 2,

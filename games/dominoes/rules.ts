@@ -1,6 +1,9 @@
 // Dominoes rules shared by the browser (playable tiles) and the server (validation).
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
@@ -129,8 +132,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, boneyard, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     boneyardCount: boneyard.length,
     undoAvailable
   };
@@ -274,26 +277,22 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   return play(state, seat, parsed.tile, parsed.end);
 }
 
+const ROUND: RoundAccess<GameState, RoundSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'round'
+};
+
 // Deals the next round once every connected player has acknowledged the summary
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
   const roundNumber = state.roundNumber + 1;
   const next = dealRound({ ...state, roundNumber }, random);
   return { ...next, gameStatus: `Round ${roundNumber}: ${state.playerNames[next.currentPlayer as Seat]} leads` };
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next round`
-  };
-  return { state: startNextRoundIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextRoundIfReady(next, random));
 }
 
 // Any seated player may choose the set until the first move; the tiles are dealt again

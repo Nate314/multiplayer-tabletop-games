@@ -13,7 +13,7 @@ type BoardProps = {
   playerNumber: Seat;
   isMyTurn: boolean;
   selectedAction: Action;
-  showLastMove: boolean;
+  showLastMove?: boolean;
   onMove: (move: Move) => void;
 };
 
@@ -21,7 +21,7 @@ function isSamePosition(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
-export default function Board({ gameState, playerNumber, isMyTurn, selectedAction, showLastMove, onMove }: BoardProps) {
+export default function Board({ gameState, playerNumber, isMyTurn, selectedAction, showLastMove = false, onMove }: BoardProps) {
   const [hoveredSquare, setHoveredSquare] = useState<Position | null>(null);
   const { pawns, walls, playerNames, wallCounts, lastMove, isGameOver } = gameState;
   const seats = Object.keys(pawns).map(Number); // a dismissed player's pawn is off the board
