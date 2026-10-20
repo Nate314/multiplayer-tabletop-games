@@ -64,7 +64,7 @@ export function suitOf(card: Card, trump: Suit | null): Suit {
 }
 
 // Within its suit: the right bower, then the left bower, above the ace
-function rankOf(card: Card, trump: Suit | null): number {
+export function rankOf(card: Card, trump: Suit | null): number {
   if (card.rank === 'J' && trump !== null) {
     if (card.suit === trump) return 31;
     if (card.suit === SAME_COLOR[trump]) return 30;
