@@ -343,7 +343,7 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Phones: the five header buttons fill the width, so the title takes its own row above them */
+/* Phones: the header buttons (up to six with House rules) fill the width, so the title takes its own row above them */
 @media (max-width: 480px) {
   :where([data-game] .game-header) {
     flex-wrap: wrap;
@@ -620,6 +620,11 @@
 
 :where([data-game] .house-rules-agreed) {
   font-weight: 600;
+}
+
+:where([data-game] .house-rules-error) {
+  font-weight: 600;
+  color: #c0392b;
 }
 
 :where([data-game] .house-rules-actions) {

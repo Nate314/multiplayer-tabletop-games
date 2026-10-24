@@ -1,4 +1,4 @@
-import { test as base, expect, type Browser, type Page } from '@playwright/test';
+import { test as base, expect, type Browser, type Locator, type Page } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { GAMES } from '../games/registry.ts';
 import { needsAgreement, type HouseRuleValues } from '../shared/houseRules.ts';
@@ -77,29 +77,40 @@ function gameOf(gameType: string) {
   return game.info;
 }
 
+// A controlled checkbox snaps back until the server's reply arrives, so click it and wait for the new state
+// instead of using check(), and finish each control before the next, since a change sends every value at once
+async function setCheckbox(control: Locator, want: boolean): Promise<void> {
+  if (await control.isChecked() !== want) await control.click();
+  await expect(control).toBeChecked({ checked: want });
+}
+
 // The host sets each rule in `values` by its label; `maxPlayers` ticks "I know what I'm doing" and fills "Most players"
 export async function setHouseRules(page: Page, gameType: string, values: HouseRuleValues, maxPlayers?: number): Promise<void> {
   for (const rule of gameOf(gameType).houseRules ?? []) {
     if (!(rule.id in values)) continue;
     const control = page.getByLabel(rule.label, { exact: true });
-    if (rule.kind === 'toggle') await control.setChecked(values[rule.id] === true);
+    if (rule.kind === 'toggle') await setCheckbox(control, values[rule.id] === true);
     else {
       const choice = rule.choices.find(candidate => candidate.value === values[rule.id]);
       if (!choice) throw new Error(`No choice ${values[rule.id]} for ${rule.label}`);
       await control.selectOption({ label: choice.label });
+      await expect(control).toHaveValue(String(choice.value));
     }
   }
   if (maxPlayers !== undefined) {
-    await page.getByLabel("I know what I'm doing").check();
-    await page.getByLabel('Most players').fill(String(maxPlayers));
+    await setCheckbox(page.getByLabel("I know what I'm doing"), true);
+    const field = page.getByLabel('Most players');
+    await field.fill(String(maxPlayers));
+    await field.press('Enter');
+    await expect(field).toHaveValue(String(maxPlayers));
   }
 }
 
-// Each page clicks Agree and waits until the table shows its own player agreed
+// Each page clicks Agree and waits until its own row (the list marks it with aria-current) says agreed
 export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   for (const page of pages) {
     await page.getByRole('button', { name: 'Agree', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Agree', exact: true })).toHaveCount(0);
+    await expect(page.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
   }
 }
 
@@ -137,7 +148,12 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
       }
       const seated: Page[] = [];
       const everyone: Page[] = []; // seated plus anyone added by join
-      const agreeAll = async () => { if (agree && needsAgreement(gameOf(gameType))) await agreeToHouseRules(...everyone); };
+      const agreeAll = async () => {
+        if (!agree || !needsAgreement(gameOf(gameType))) return;
+        // Every page must list every player first, so no Agree names a revision from before the last join
+        for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(everyone.length);
+        await agreeToHouseRules(...everyone);
+      };
       for (const name of names) {
         const page = await newPlayer(browser, server, motion);
         pages.push(page);

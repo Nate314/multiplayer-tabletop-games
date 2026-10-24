@@ -37,7 +37,7 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <ThemeToggle />
       </header>
       <PresenceBar gameState={gameState} onDismiss={(seat) => gameService.requestDismiss(seat)} />
-      {!gameState.started && needsAgreement(game) && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} />}
+      {!gameState.started && needsAgreement(game) && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
       <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
       <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
     </div>
