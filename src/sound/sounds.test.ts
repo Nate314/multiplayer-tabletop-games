@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { soundsFor, audible } from './sounds.ts';
+import { unlockAudio, playSounds } from './synth.ts';
+import { DEFAULT_PREFERENCES, type SoundName } from '../services/settings.ts';
+import type { BasePublicState } from '../../shared/types.ts';
+
+function state(overrides: Record<string, unknown> = {}): BasePublicState {
+  return {
+    gameId: 'g', started: true, currentPlayer: 2, activePlayers: [1, 2], playerNames: { 1: 'Alice', 2: 'Bob' },
+    gameStatus: '', isGameOver: false, winners: [], undoVote: null, disconnected: [], dismissVote: null,
+    undoAvailable: false, moveCount: 3, ...overrides,
+  };
+}
+
+test('the first state after a join, rejoin or reload plays nothing', () => {
+  assert.deepEqual(soundsFor(null, state({ currentPlayer: 1 }), 1), []);
+});
+test('a move by anyone clicks', () => {
+  assert.deepEqual(soundsFor(state(), state({ moveCount: 4 }), 1), ['move']);
+});
+test('a roll rattles instead of clicking', () => {
+  for (const type of ['roll', 'attack', 'blitz'])
+    assert.deepEqual(soundsFor(state(), state({ moveCount: 4, lastMove: { type } }), 1), ['dice']);
+});
+test("Parchisi's automatic roll after a move clicks and rattles", () => {
+  const before = state({ dice: [{ value: 3, used: true }, { value: 5, used: true }] });
+  const after = state({ moveCount: 4, dice: [{ value: 2, used: false }, { value: 6, used: false }] });
+  assert.deepEqual(soundsFor(before, after, 1), ['move', 'dice']);
+});
+test('your turn arriving chimes after the move sound', () => {
+  assert.deepEqual(soundsFor(state(), state({ moveCount: 4, currentPlayer: 1 }), 1), ['move', 'turn']);
+});
+test('the second player joining gives the first player their turn', () => {
+  assert.deepEqual(soundsFor(state({ moveCount: 0, currentPlayer: 1, activePlayers: [1] }), state({ moveCount: 0, currentPlayer: 1 }), 1), ['turn']);
+});
+test('a dismissal that hands you the turn chimes', () => {
+  assert.deepEqual(soundsFor(state(), state({ currentPlayer: 1 }), 1), ['turn']);
+});
+test('an undo that gives the turn back plays nothing', () => {
+  assert.deepEqual(soundsFor(state({ moveCount: 4 }), state({ moveCount: 3, currentPlayer: 1 }), 1), []);
+});
+test('a vote opening or being declined while it is already your turn does not chime', () => {
+  const mine = state({ currentPlayer: 1 });
+  assert.deepEqual(soundsFor(mine, { ...mine, undoVote: { requestedBy: 2, votes: {} } }, 1), []);
+  assert.deepEqual(soundsFor({ ...mine, undoVote: { requestedBy: 2, votes: {} } }, mine, 1), []);
+});
+test('the game ending flourishes once, by a move or a resignation, and never chimes the turn', () => {
+  assert.deepEqual(soundsFor(state(), state({ moveCount: 4, isGameOver: true, currentPlayer: 1 }), 1), ['move', 'gameOver']);
+  assert.deepEqual(soundsFor(state(), state({ isGameOver: true }), 1), ['gameOver']);
+  assert.deepEqual(soundsFor(state({ isGameOver: true }), state({ isGameOver: true }), 1), []);
+});
+test('without a viewer (the History dialog) the turn never chimes', () => {
+  assert.deepEqual(soundsFor(state(), state({ moveCount: 4, currentPlayer: 1 }), null), ['move']);
+});
+test('a History jump or a step back plays nothing, not even the flourish', () => {
+  assert.deepEqual(soundsFor(state({ moveCount: 0 }), state({ moveCount: 9, isGameOver: true }), null), []);
+  assert.deepEqual(soundsFor(state({ moveCount: 9, isGameOver: true }), state({ moveCount: 8 }), null), []);
+});
+test('mute or a volume of 0 silences everything, and an unchecked group is left out', () => {
+  const all: SoundName[] = ['move', 'dice', 'gameOver', 'turn', 'timer'];
+  assert.deepEqual(audible(all, { ...DEFAULT_PREFERENCES, muted: true }), []);
+  assert.deepEqual(audible(all, { ...DEFAULT_PREFERENCES, volume: 0 }), []);
+  assert.deepEqual(audible(all, { ...DEFAULT_PREFERENCES, sounds: { ...DEFAULT_PREFERENCES.sounds, turn: false } }), ['move', 'dice', 'gameOver', 'timer']);
+});
+test('playing sounds without Web Audio or before a click does nothing and does not throw', () => {
+  assert.doesNotThrow(() => { unlockAudio(); playSounds(['turn', 'dice']); });
+});
