@@ -49,7 +49,7 @@ test('setup on the large board snakes through all six players', () => {
 
 test('an intersection past the base board is an invalid move there and a real one on the large board', () => {
   assert.deepEqual(move(game({ rolled: true }), 1, { type: 'buildSettlement', vertex: 79 }), { error: 'Invalid move' });
-  assert.notDeepEqual(move(fiveSixGame({ rolled: true }), 1, { type: 'buildSettlement', vertex: 79 }), { error: 'Invalid move' });
+  assert.deepEqual(move(fiveSixGame({ rolled: true }), 1, { type: 'buildSettlement', vertex: 79 }), { error: 'A settlement must be next to one of your roads' });
   assert.deepEqual(move(game(), 1, { type: 'moveRobber', hex: 29, victim: null }), { error: 'Invalid move' });
 });
 

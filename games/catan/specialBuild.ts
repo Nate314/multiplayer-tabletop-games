@@ -1,6 +1,7 @@
 // The 5-6 player extension's special build phase, a house rule: after each turn every other player, in turn order
 // from the next one, may build or buy a development card, without trading or playing cards
 import { type ToggleRule, houseRule } from '../../shared/houseRules.ts';
+import { nextActivePlayer } from '../../shared/seating.ts';
 import { buildCity, buildRoad, buildSettlement } from './building.ts';
 import { buyDevCard } from './devCards.ts';
 import { FIVE_SIX_FROM } from './editions.ts';
@@ -31,9 +32,12 @@ function canBuild(state: GameState, seat: Seat): boolean {
 // Called once the next turn has started
 export function startSpecialBuild(state: GameState, ended: Seat): GameState {
   if (!houseRule(state, SPECIAL_BUILD)) return { ...state, specialBuild: null };
-  const players = state.activePlayers.filter(seat => seat !== ended);
-  const order = [...players.filter(seat => seat > ended), ...players.filter(seat => seat < ended)];
-  const builders = order.filter(seat => canBuild(state, seat));
+  const builders: Seat[] = [];
+  let seat = ended;
+  for (let step = 1; step < state.activePlayers.length; step++) {
+    seat = nextActivePlayer(state, seat) ?? ended;
+    if (seat !== ended && canBuild(state, seat)) builders.push(seat);
+  }
   if (builders.length === 0) return { ...state, specialBuild: null };
   return note({ ...state, specialBuild: { builders } }, `Special build phase: ${builders.map(seat => nameOf(state, seat)).join(', ')}`);
 }

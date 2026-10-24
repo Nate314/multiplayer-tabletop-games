@@ -86,16 +86,16 @@ export default function TurnPanel(props: TurnPanelProps) {
     : '';
 
   if (specialBuild) {
-    if (!canBuild) {
+    if (!canBuild && specialBuild.builders[0] !== playerNumber) {
       return <section className="panel turn-panel" aria-label="Turn"><div className="turn-waiting">Waiting for {playerNames[specialBuild.builders[0]]} to build</div></section>;
     }
     return (
       <section className="panel turn-panel" aria-label="Your build chance">
         <div className="panel-title">Your build chance</div>
         <p className="turn-note">Build or buy a development card. No trading or playing cards.</p>
-        <BuildButtons gameState={gameState} mode={mode} spots={spots} onMode={onMode} onMove={onMove} />
+        {canBuild && <BuildButtons gameState={gameState} mode={mode} spots={spots} onMode={onMode} onMove={onMove} />}
         <div className="turn-buttons">
-          <button type="button" className="primary" onClick={() => onMove({ type: 'passBuild' })}>Done building</button>
+          <button type="button" className="primary" disabled={!canBuild} onClick={() => onMove({ type: 'passBuild' })}>Done building</button>
         </div>
       </section>
     );
