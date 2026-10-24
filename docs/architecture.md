@@ -136,6 +136,26 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
    - Quoridor and Azul style the header, FAQ dialog and undo vote themselves, so the defaults do not change how those look; the disconnected players bar and the dismiss vote use the defaults
 
+## Color-blind symbols
+
+- `/src/components/colorSymbols.ts` is the table: `COLOR_SYMBOLS` maps each player color to a shape, and `SHAPE_PATHS` holds each shape's SVG path in a 24 by 24 box. It has no React, so `node --test` can import it
+- `/src/components/ColorSymbol.tsx` draws the shape for a color as an `<svg class="color-symbol color-symbol-<shape>">`. It reads `colorSymbols` from `usePreferences()` and renders nothing while the setting is off or the color is not set (`null` or `undefined`), so a game passes its seat color and positions the symbol itself
+- Its default look is in `App.scss`: the symbol takes `currentColor` and a 1 px stroke (`--color-symbol-stroke`) so it reads on any fill
+
+| Color | Symbol | Also covers |
+|---|---|---|
+| red | circle | |
+| blue | square | |
+| green | triangle | |
+| yellow | star | Splendor gold |
+| black | diamond | Risk's and Carcassonne's dark gray seats |
+| white | ring | |
+| orange | hexagon | |
+| pink | heart | |
+| purple | cross | |
+| cyan | pentagon | |
+| gray | none | Ticket to Ride gray routes and Risk neutral armies: "any" or "nobody", told apart by having no symbol |
+
 ## Server
 
 1. **Express and WebSocket server (`/server/server.ts`)**

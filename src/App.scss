@@ -835,3 +835,15 @@
   flex: 1;
   min-width: 0;
 }
+
+/* A color-blind symbol: games position it and set its color; the stroke keeps it readable on light and dark fills */
+:where(.color-symbol) {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: middle;
+  fill: currentColor;
+  stroke: var(--color-symbol-stroke, rgba(0, 0, 0, 0.6));
+  stroke-width: 1px;
+  paint-order: stroke;
+}
