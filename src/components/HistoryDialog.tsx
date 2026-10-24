@@ -5,10 +5,12 @@ import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
 import { seatOptions, viewFor } from './historyView.ts';
-import { PLAY_STEP_MS, nextPlayIndex } from './playback.ts';
+import PlaybackSettings from './PlaybackSettings';
+import { nextPlayIndex, stepDelayMs } from './playback.ts';
+import type { PlaybackSpeed } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
-import { loadAnimations, saveAnimations } from '../services/settings.ts';
+import { loadAnimations, loadPlaybackSpeed, saveAnimations, savePlaybackSpeed } from '../services/settings.ts';
 import { fitScale, nextScale } from './fitScale.ts';
 
 export type History =
@@ -47,6 +49,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [index, setIndex] = useState(steps.length - 1);
   const [viewer, setViewer] = useState<Seat | null>(null);
   const [animations, setAnimations] = useState(loadAnimations);
+  const [speed, setSpeed] = useState(loadPlaybackSpeed);
   const [playing, setPlaying] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -91,16 +94,16 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     return () => observer.disconnect();
   }, []);
 
-  // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
+  // Each shown step waits stepDelayMs(speed) before the next, a new speed from the next step; moving the slider or the picker keeps playing from there
   useEffect(() => {
     if (!playing) return;
     if (index >= last) {
       setPlaying(false);
       return;
     }
-    const timeout = setTimeout(() => setIndex(i => i + 1), PLAY_STEP_MS);
+    const timeout = setTimeout(() => setIndex(i => i + 1), stepDelayMs(speed));
     return () => clearTimeout(timeout);
-  }, [playing, index, last]);
+  }, [playing, index, last, speed]);
 
   function togglePlay() {
     if (playing) {
@@ -116,36 +119,14 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     saveAnimations(on);
   }
 
+  function changeSpeed(next: PlaybackSpeed) {
+    setSpeed(next);
+    savePlaybackSpeed(next);
+  }
+
   return (
     <>
       <p className="history-move">{stepLabel(client, step, moveTotal)}</p>
-      <input
-        type="range"
-        className="history-slider"
-        min={0}
-        max={last}
-        value={index}
-        aria-label="Step"
-        autoFocus
-        onChange={(e) => setIndex(Number(e.target.value))}
-      />
-      <div className="history-controls">
-        <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
-        <label className="history-animations themed-checkbox">
-          <input type="checkbox" checked={animations} onChange={(e) => toggleAnimations(e.target.checked)} /> Animations
-        </label>
-        {steps[0].views && (
-          <select
-            className="themed-select"
-            aria-label="View as"
-            value={viewer === null ? '' : String(viewer)}
-            onChange={(e) => setViewer(e.target.value === '' ? null : Number(e.target.value))}
-          >
-            <option value="">Table only</option>
-            {seatNames.map(({ seat, name }) => <option key={seat} value={seat}>{name}</option>)}
-          </select>
-        )}
-      </div>
       <div className="history-board" ref={boxRef}>
         <div className="history-board-content" ref={boardRef}>
           <StepErrorBoundary key={`${index}-${viewer}`}>
@@ -153,6 +134,27 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
           </StepErrorBoundary>
         </div>
       </div>
+      <div className="history-controls">
+        <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
+        <input
+          type="range"
+          className="history-slider"
+          min={0}
+          max={last}
+          value={index}
+          aria-label="Step"
+          autoFocus
+          onChange={(e) => setIndex(Number(e.target.value))}
+        />
+        <PlaybackSettings
+          animations={animations}
+          onAnimationsChange={toggleAnimations}
+          speed={speed}
+          onSpeedChange={changeSpeed}
+          viewAs={steps[0].views ? { value: viewer, options: seatNames, onChange: setViewer } : undefined}
+        />
+      </div>
+      {steps[0].views && <p className="history-viewer">Viewing as {seatNames.find(o => String(o.seat) === String(shownViewer))?.name ?? 'Table only'}</p>}
     </>
   );
 }

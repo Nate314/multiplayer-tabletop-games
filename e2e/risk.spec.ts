@@ -468,11 +468,15 @@ test.describe('Risk rules', () => {
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved).toContainText(`Saved game: ${table.gameId}`);
     await expect(saved.locator('.risk-card')).toHaveCount(0);
+    await saved.getByRole('button', { name: 'Playback settings' }).click();
     await saved.getByLabel('View as').selectOption({ label: 'Alice' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Alice');
     await expect(saved.locator('.risk-card')).toHaveCount(3);
     await saved.getByLabel('View as').selectOption({ label: 'Cara' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Cara');
     await expect(saved.locator('.risk-card')).toHaveText([/Greenland/]);
     await saved.getByLabel('View as').selectOption({ label: 'Table only' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Table only');
     await expect(saved.locator('.risk-card')).toHaveCount(0);
   });
 

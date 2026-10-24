@@ -500,18 +500,68 @@
 }
 
 :where([data-game] .history-slider) {
-  width: 100%;
-  margin: 0 0 16px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
-/* Play, Animations and View as in one row, which wraps on a narrow window */
+/* One row that never wraps (the slider shrinks), so the dialog layout holds still between steps */
 :where([data-game] .history-controls) {
+  flex: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  margin: 0 0 16px;
+  gap: 10px;
+  position: relative;
+  margin: 12px 0 0;
+}
+
+:where([data-game] .history-viewer) {
+  flex: none;
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+:where([data-game] .history-settings-wrapper) {
+  position: relative;
+  flex: none;
+}
+
+:where([data-game] .history-settings-button) {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+:where([data-game] .history-settings-button:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+/* Above the gear and inside the dialog; absolute, so opening it moves nothing */
+:where([data-game] .history-settings) {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  z-index: 1;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  text-align: left;
+  white-space: nowrap;
 }
 
 :where([data-game] .history-play) {

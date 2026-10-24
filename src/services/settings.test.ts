@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { DEFAULT_FILTERS } from '../components/gameFilters.ts'
-import { loadAnimations, loadJoinForm, loadLandingFilters, saveAnimations, saveJoinForm, saveLandingFilters } from './settings.ts'
+import { loadAnimations, loadJoinForm, loadLandingFilters, loadPlaybackSpeed, saveAnimations, saveJoinForm, saveLandingFilters, savePlaybackSpeed } from './settings.ts'
 
 function installStorage(initial: Record<string, string> = {}): void {
   const items = new Map(Object.entries(initial))
@@ -24,6 +24,20 @@ test('animations default to off and round-trip', () => {
   assert.equal(loadAnimations(), true)
   saveAnimations(false)
   assert.equal(loadAnimations(), false)
+})
+
+test('playback speed defaults to 1x and round-trips', () => {
+  installStorage()
+  assert.equal(loadPlaybackSpeed(), 1)
+  savePlaybackSpeed(4)
+  assert.equal(loadPlaybackSpeed(), 4)
+})
+
+test('an unknown playback speed falls back to 1x', () => {
+  installStorage({ historySpeed: '3' })
+  assert.equal(loadPlaybackSpeed(), 1)
+  installStorage({ historySpeed: '"2"' })
+  assert.equal(loadPlaybackSpeed(), 1)
 })
 
 test('join form defaults to empty and round-trips', () => {

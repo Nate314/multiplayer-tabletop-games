@@ -70,3 +70,60 @@ test('stepping through History never enlarges the board or moves its top edge, a
   await alice.setViewportSize({ width: 1280, height: 800 });
   await expect.poll(() => scaleOf(dialog)).toBeGreaterThan(scale);
 });
+
+// Connect Four with three discs dropped: four steps to move through
+async function openConnectFourHistory(seat: Parameters<Parameters<typeof test>[2]>[0]['seat']) {
+  const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob']);
+  await alice.getByRole('button', { name: 'Drop in column 1' }).click();
+  await bob.getByRole('button', { name: 'Drop in column 2' }).click();
+  await alice.getByRole('button', { name: 'Drop in column 1' }).click();
+  await alice.getByRole('button', { name: 'History' }).click();
+  return { alice, dialog: history(alice) };
+}
+
+test('the row under the board is Play, the slider and the settings gear, and the dialog keeps its size between steps', async ({ seat }) => {
+  const { dialog } = await openConnectFourHistory(seat);
+  const board = (await dialog.locator('.history-board').boundingBox())!;
+  const play = (await dialog.locator('.history-play').boundingBox())!;
+  const slider = (await dialog.locator('.history-slider').boundingBox())!;
+  const gear = (await dialog.locator('.history-settings-button').boundingBox())!;
+  const centerY = (box: { y: number; height: number }) => box.y + box.height / 2;
+  expect(play.y).toBeGreaterThanOrEqual(board.y + board.height - 1);
+  expect(Math.abs(centerY(play) - centerY(slider))).toBeLessThanOrEqual(3);
+  expect(Math.abs(centerY(gear) - centerY(slider))).toBeLessThanOrEqual(3);
+  expect(gear.x).toBeGreaterThan(slider.x);
+  const dialogBox = await dialog.boundingBox();
+  const sliderInput = dialog.getByRole('slider', { name: 'Step' });
+  for (const step of ['0', '1', '2', '3']) {
+    await sliderInput.fill(step);
+    expect(await dialog.boundingBox()).toEqual(dialogBox);
+  }
+});
+
+test('the gear holds Animations and Speed, and the live game has no View as', async ({ seat }) => {
+  const { dialog } = await openConnectFourHistory(seat);
+  const settings = dialog.getByRole('group', { name: 'Playback settings' });
+  await expect(settings).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Playback settings' }).click();
+  await expect(settings).toBeVisible();
+  await expect(settings.getByLabel('Animations')).toBeVisible();
+  await expect(settings.getByLabel('Speed')).toBeVisible();
+  await expect(dialog.getByLabel('View as')).toHaveCount(0);
+  await dialog.locator('.history-move').click();
+  await expect(settings).toHaveCount(0);
+});
+
+test('speed and animations are remembered, and 4x plays a step in about 375 ms', async ({ seat }) => {
+  const { alice, dialog } = await openConnectFourHistory(seat);
+  await dialog.getByRole('button', { name: 'Playback settings' }).click();
+  await dialog.getByLabel('Speed').selectOption({ label: '4x' });
+  await dialog.getByLabel('Animations').check();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await alice.getByRole('button', { name: 'History' }).click();
+  await dialog.getByRole('button', { name: 'Playback settings' }).click();
+  await expect(dialog.getByLabel('Speed')).toHaveValue('4');
+  await expect(dialog.getByLabel('Animations')).toBeChecked();
+  await dialog.getByRole('slider', { name: 'Step' }).fill('0');
+  await dialog.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(dialog.locator('.history-move')).toContainText('Move 3 of 3', { timeout: 3000 }); // 1x would need 4500 ms
+});
