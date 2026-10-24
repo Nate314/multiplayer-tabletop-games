@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat as SeatFixture } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat as SeatFixture } from './fixtures.ts';
 import type { PlacedWall, Position } from '../games/quoridor/types.ts';
 
 // One test per rule and control in games/quoridor/README.md. Every player sees the board the same way up: row 0 is
@@ -251,5 +251,77 @@ test.describe('Quoridor controls', () => {
     await expect(cara.getByRole('button', { name: 'Approve' })).toBeVisible();
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
     await expect(alice.locator('.undo-vote')).toContainText('Alice wants to undo the last turn');
+  });
+});
+
+test.describe('Quoridor drag and drop', () => {
+  const trayWall = (page: Page) => page.getByRole('region', { name: 'Your walls' }).getByRole('button', { name: /^Wall/ });
+  const active = (page: Page, name: string) => expect(page.getByRole('button', { name, exact: true })).toHaveClass(/active/);
+
+  test('the pawn dragged onto a highlighted square moves there', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await lift(alice, pawn(alice, 'Alice'));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(1);
+    await alice.mouse.up(); // released beside where it began: it goes back and nothing is sent
+    await expect(square(alice, 8, 4).locator('.pawn')).toHaveAttribute('title', 'Alice');
+    await turn(alice, 'Alice moves first');
+
+    await drag(alice, pawn(alice, 'Alice'), square(alice, 7, 4));
+    await expect(square(bob, 7, 4).locator('.pawn')).toHaveAttribute('title', 'Alice');
+    await turn(bob, "Bob's turn");
+  });
+
+  test('a wall dragged from the tray onto a slot is placed, and the tray count drops', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await expect(trayWall(alice)).toHaveAccessibleName('Wall, 10 left');
+    await drag(alice, trayWall(alice), square(alice, 3, 3));
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCount(1);
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCSS('top', `${3 * 52 + 2}px`);
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCSS('left', `${3 * 52 + 2}px`);
+    await expect(trayWall(alice)).toHaveAccessibleName('Wall, 9 left');
+    await turn(alice, "Bob's turn");
+  });
+
+  test('tapping the tray wall lights its slots, tapping it again, Rotate or the R key turns it', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await expect(alice.locator('.square.wall-slot')).toHaveCount(0);
+    await trayWall(alice).click();
+    await active(alice, 'Horizontal Wall');
+    await expect(trayWall(alice)).toHaveAttribute('aria-pressed', 'true');
+    expect(await alice.locator('.square.wall-slot').count()).toBeGreaterThan(0);
+    await trayWall(alice).click();
+    await active(alice, 'Vertical Wall');
+    await alice.getByRole('button', { name: 'Rotate' }).click();
+    await active(alice, 'Horizontal Wall');
+    await alice.keyboard.press('r');
+    await active(alice, 'Vertical Wall');
+    await alice.keyboard.press('r');
+    await active(alice, 'Horizontal Wall');
+    await square(alice, 5, 5).click();
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCount(1);
+    await active(alice, 'Move');
+  });
+
+  test('at phone width, a drag on the sideways-scrolled board lands on the square under the pointer', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await alice.locator('.board-area').evaluate(area => { area.scrollLeft = 120; });
+    await expect.poll(() => alice.locator('.board-area').evaluate(area => area.scrollLeft)).toBeGreaterThan(100);
+    await expectHighlighted(alice, at(7, 4), at(8, 3), at(8, 5));
+    await drag(alice, pawn(alice, 'Alice'), square(alice, 7, 4));
+    await expect(square(bob, 7, 4).locator('.pawn')).toHaveAttribute('title', 'Alice');
+  });
+
+  test("off turn, the tray's wall is disabled and the pawn does not lift", async ({ seat }) => {
+    const { table, bob } = await start(seat);
+    const before = await table.state();
+    await expect(trayWall(bob)).toBeDisabled();
+    await expect(trayWall(bob)).toHaveAttribute('title', 'Not your turn');
+    await expect(bob.getByRole('button', { name: 'Rotate' })).toBeDisabled();
+    await lift(bob, pawn(bob, 'Bob'), { x: 0, y: 30 });
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    await bob.mouse.up();
+    await expect(square(bob, 0, 4).locator('.pawn')).toHaveAttribute('title', 'Bob');
+    expect(await table.state()).toEqual(before);
   });
 });

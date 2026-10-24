@@ -12,14 +12,17 @@ export const FAQS: FaqItem[] = [
       'start of every turn. You can move one square up, down, left or right, or jump straight over a pawn ' +
       'next to you if the square behind it is free. If a wall, another pawn or the board edge is behind that ' +
       'pawn, you can step diagonally to either side of it instead, as long as no wall or pawn is in the way. ' +
-      'You can never jump over a wall or over two pawns.'
+      'You can never jump over a wall or over two pawns. You can also drag your pawn onto a highlighted square; ' +
+      'drop it anywhere else to put it back.'
   },
   {
     question: 'How do I place a wall?',
     answer: 'On your turn, choose Horizontal Wall or Vertical Wall, then hover over the board to preview the wall ' +
       'and click to place it. A horizontal wall runs under the square you click and the one to its right. A ' +
       'vertical wall runs along the right of the square you click and the one below it. Placing a wall uses ' +
-      'your turn.'
+      'your turn. Or use the tray of walls below the action buttons: tap the wall to pick it up, and a dot marks ' +
+      'every square where it can go. Tap it again, click Rotate or press R to turn it, then click a dotted square, ' +
+      'or drag the wall from the tray onto the board.'
   },
   {
     question: 'Where can walls go?',

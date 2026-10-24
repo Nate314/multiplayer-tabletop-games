@@ -20,6 +20,13 @@
   --player2: #E53935;
   --player3: #43A047;
   --player4: #8E24AA;
+  /* The wall tray (src/components/PieceTray.tsx) and the outline under a dragged piece, in the wood palette */
+  --piece-tray-bg: rgba(0, 0, 0, 0.2);
+  --piece-tray-border: rgba(255, 255, 255, 0.25);
+  --piece-tray-text: #FFF;
+  --piece-tray-selected: #FFD54F;
+  --drag-over: #FFD54F;
+  --wall-slot: rgba(255, 213, 79, 0.6);
 
   :root[data-theme="dark"] & {
     color-scheme: dark;
@@ -38,6 +45,9 @@
     --board-grain: rgba(255, 255, 255, 0.05);
     --wall: #BCAAA4;
     --wall-preview: rgba(188, 170, 164, 0.4);
+    --piece-tray-bg: rgba(255, 255, 255, 0.05);
+    --piece-tray-border: rgba(255, 255, 255, 0.15);
+    --wall-slot: rgba(255, 213, 79, 0.45);
   }
 }
 
@@ -363,6 +373,21 @@
     border: 1px solid rgba(76, 175, 80, 0.6);
   }
 
+  /* Where the held wall can go: a dot on the slot's bottom right corner, the middle of the wall it would become */
+
+  .square.wall-slot::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    z-index: 1;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--wall-slot);
+    pointer-events: none;
+  }
+
   .square.last-move-from {
     outline: 3px dashed #FFD54F;
     outline-offset: -3px;
@@ -670,5 +695,50 @@
       padding: 8px;
       box-sizing: border-box;
     }
+  }
+}
+
+/* The wall tray: one wall to tap or drag, with its count, and Rotate */
+
+[data-game="quoridor"] {
+  .piece-tray {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-shadow: none;
+  }
+
+  .game-info .piece-tray-piece {
+    gap: 10px;
+    margin: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--piece-tray-border);
+    background: var(--button-bg);
+  }
+
+  .game-info .piece-tray-piece[aria-pressed="true"] {
+    background: var(--button-active-bg);
+  }
+
+  .tray-wall {
+    display: block;
+    border-radius: 2px;
+    background: var(--wall);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+  }
+
+  .tray-wall.horizontal {
+    width: 40px;
+    height: 8px;
+  }
+
+  .tray-wall.vertical {
+    width: 8px;
+    height: 40px;
+  }
+
+  .piece-tray > button {
+    margin: 0;
   }
 }
