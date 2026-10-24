@@ -346,6 +346,23 @@ test.describe('Go Fish controls', () => {
     await expect(bob.locator('.fished')).toHaveCount(0);
   });
 
+  test('the card you fished is outlined until your next ask, and cards handed to you are not', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await deal(table, {
+      hands: { 1: [card('7', 'clubs'), card('9', 'clubs')], 2: [card('2', 'clubs'), card('9', 'diamonds'), card('9', 'hearts')] },
+      stock: [card('5', 'spades')]
+    });
+    await ask(alice, '7 of clubs');
+    await expect(handCards(alice)).toHaveCount(3);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(1);
+    await expect(handCard(alice, '5 of spades')).toHaveClass(/newly-drawn/);
+    // Back to Alice, who asks for the nines and is handed two
+    await table.patch({ currentPlayer: 1 });
+    await ask(alice, '9 of clubs');
+    await expect(handCards(alice)).toHaveCount(5);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('clicking Undo asks everyone to undo the last ask', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara']);
     await deal(table, { hands: { 1: [card('7', 'clubs')], 2: [card('3', 'clubs')], 3: [card('5', 'hearts')] }, stock: [card('9', 'spades')] });

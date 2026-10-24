@@ -437,6 +437,12 @@
     transform: translateY(-4px);
   }
 
+  /* A tile that is both held and newly drawn keeps the lift and shows the drawn outline, dashed */
+  .rk-tile-button.rk-held .rk-tile.newly-drawn {
+    outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+    outline-offset: 3px;
+  }
+
   /* The rack */
 
   .rk-rack-area {

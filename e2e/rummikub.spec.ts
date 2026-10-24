@@ -254,6 +254,23 @@ test.describe('Rummikub rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
+  test('the tile you drew is outlined until your move on your next turn', async ({ seat }) => {
+    const { alice, bob } = await start(seat, {
+      melded: [1, 2],
+      racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('black', 1)] }
+    });
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(0);
+    await button(alice, 'Draw a tile').click();
+    await expect(rackArea(alice).locator('.rk-tile')).toHaveCount(5);
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(1);
+    await button(bob, 'Draw a tile').click();
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(1);
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await playButton(alice).click();
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('the first to empty their rack wins the sum of the others\' racks, each losing their own with a joker worth 30', async ({ seat }) => {
     const { alice, bob } = await start(seat, {
       melded: [1, 2], racks: { 1: [t('red', 1), t('red', 2), t('red', 3)], 2: [t('blue', 5), J1] }

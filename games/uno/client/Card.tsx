@@ -19,12 +19,14 @@ type CardProps = {
   onClick?: () => void;
   playable?: boolean;
   selected?: boolean;
+  drawn?: boolean; // outlined as a card you just drew
 };
 
-export default function Card({ card, animKey, highlighted = false, onClick, playable = false, selected = false }: CardProps) {
+export default function Card({ card, animKey, highlighted = false, onClick, playable = false, selected = false, drawn = false }: CardProps) {
   const classes = ['card', `card-${card.color}`];
   if (highlighted) classes.push('card-highlighted');
   if (selected) classes.push('card-selected');
+  if (drawn) classes.push('newly-drawn');
   const face = (
     <>
       <ColorSymbol color={card.color === 'wild' ? null : card.color} className="card-symbol" />

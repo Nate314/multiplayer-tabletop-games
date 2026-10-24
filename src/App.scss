@@ -756,6 +756,12 @@
   outline-offset: 1px;
 }
 
+/* After the selected outline, and dashed so it reads differently from it: a picked card that was also just drawn keeps its lift and shows both */
+:where([data-game] .playing-card.newly-drawn) {
+  outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+  outline-offset: 3px;
+}
+
 /* After the selected and highlighted outlines, so keyboard focus still shows on a picked card */
 :where(button.playing-card:focus-visible) {
   box-shadow: 0 0 0 5px var(--lobby-bg), 0 0 0 8px var(--lobby-text);

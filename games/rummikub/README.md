@@ -27,6 +27,7 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 - Hover over a joker on the table to see what it stands for. The tiles the last player put down are outlined
 - The side panel shows every player's tile count, a check for those who have made their first meld, the pool count and, at the end, each player's points
 - With Color-blind symbols on in Settings, each color also shows its shape: black diamond, blue square, orange hexagon, red circle. Each numbered tile shows it in its top left corner; jokers have no color
+- With Highlight newly drawn cards on in Settings (the default), the tile you draw is outlined in your rack until your move on your next turn, and follows the tile when you rearrange the rack
 - Click Undo to ask everyone to undo the last move, and FAQ at the top of the page for a short guide
 
 ## Differences from Wikipedia

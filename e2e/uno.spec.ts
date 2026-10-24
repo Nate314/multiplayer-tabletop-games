@@ -488,6 +488,20 @@ test.describe('UNO controls', () => {
     await expect(alice.getByRole('group', { name: 'Choose a color' }).locator('.color-symbol')).toHaveCount(4);
   });
 
+  test('the card you drew is outlined until your next move', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await deal(table, {
+      hands: { 1: [c('blue', '1')], 2: [c('blue', '2')], 3: [c('blue', '3')] },
+      discard: [c('red', '5')],
+      drawPile: [c('green', '1'), c('red', '8')]
+    });
+    await button(alice, 'Draw').click();
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(1);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveAttribute('title', 'red 8');
+    await play(alice, 'red 8');
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('playable cards in your hand are raised and outlined, and clicking one plays it', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('green', '9')], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });

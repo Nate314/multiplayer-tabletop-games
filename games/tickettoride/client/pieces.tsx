@@ -4,9 +4,9 @@ import { cardLabel } from './labels.ts';
 import type { Card } from '../types.ts';
 
 // One train card face: its color, with the name written on it so colors are never the only cue
-export function CardFace({ card, count }: { card: Card; count?: number }) {
+export function CardFace({ card, count, drawn = false }: { card: Card; count?: number; drawn?: boolean }) {
   return (
-    <span className={`card card-${card}`}>
+    <span className={drawn ? `card card-${card} newly-drawn` : `card card-${card}`}>
       <ColorSymbol color={card === 'locomotive' ? null : card} />
       <span className="card-name">{card === 'locomotive' ? 'Loco' : cardLabel(card)}</span>
       {count !== undefined && <span className="card-count">{count}</span>}

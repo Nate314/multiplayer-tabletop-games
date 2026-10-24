@@ -50,6 +50,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: black diamond, blue square, orange hexagon, red circle. Each numbered tile shows it in its top left corner; jokers have no color.'
   },
   {
+    question: 'Why is a tile in my rack outlined?',
+    answer: 'It is the tile you just drew. The outline stays until your move on your next turn, and it follows the tile when you rearrange your rack. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last turn. It is undone only if every player still in the game approves.'
   },

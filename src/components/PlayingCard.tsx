@@ -9,19 +9,21 @@ type PlayingCardProps = {
   animKey?: string; // for move animations
   highlighted?: boolean;
   selected?: boolean;
+  drawn?: boolean; // outlined as a card you just drew
   // Given only for a card the player can pick; without it the card is not a button
   onClick?: () => void;
   disabled?: boolean;
 };
 
 // A standard playing card, shared by the games that use the 52-card deck
-export default function PlayingCard({ card, size = 'medium', animKey, highlighted = false, selected = false, onClick, disabled = false }: PlayingCardProps) {
+export default function PlayingCard({ card, size = 'medium', animKey, highlighted = false, selected = false, drawn = false, onClick, disabled = false }: PlayingCardProps) {
   const classes = ['playing-card', `playing-card-${size}`];
   if (!card) classes.push('playing-card-back');
   else if (isJoker(card)) classes.push('playing-card-joker');
   else if (card.suit === 'hearts' || card.suit === 'diamonds') classes.push('playing-card-red');
   if (highlighted) classes.push('playing-card-highlighted');
   if (selected) classes.push('playing-card-selected');
+  if (drawn) classes.push('newly-drawn');
   const label = card ? cardName(card) : 'face-down card';
   const face = card && (isJoker(card) ? (
     <>

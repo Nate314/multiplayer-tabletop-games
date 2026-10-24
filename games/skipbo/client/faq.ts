@@ -34,6 +34,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The draw pile and the four building piles are at the top, each showing what it needs next. Below them are your hand, your stock and your four discard piles, then every other player with their hand size, stock top and count, and discard piles. The player whose turn it is is outlined.'
   },
   {
+    question: 'Why is a card in my hand outlined?',
+    answer: 'It is a card just dealt to you, at the start of your turn or when you play your last hand card and draw five more. The outline stays until your discard ends the turn. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
   },

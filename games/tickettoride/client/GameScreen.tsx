@@ -3,6 +3,8 @@ import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { drawnStep } from './drawn.ts';
 import HandPanel from './HandPanel';
 import MapBoard from './MapBoard';
 import Market from './Market';
@@ -38,6 +40,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
 
   useMoveAnimation(screenRef, gameState, animateMove);
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   useEffect(() => {
     // Nothing stays picked after any move, an undo or a rejoin
@@ -80,7 +83,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             onTickets={() => send({ type: 'drawTickets' })}
           />
           <button type="button" className="undo-button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
-          {me && <HandPanel gameState={gameState} seat={playerNumber} player={me} title="Your hand" onTicket={setHoveredTicket} />}
+          {me && <HandPanel gameState={gameState} seat={playerNumber} player={me} title="Your hand" drawn={newlyDrawn} onTicket={setHoveredTicket} />}
           <PlayerList gameState={gameState} viewer={playerNumber} />
         </aside>
       </div>

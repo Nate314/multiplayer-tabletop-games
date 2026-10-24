@@ -8,6 +8,8 @@ import Table from './Table';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove, { sortedHand } from './animateMove.ts';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { drawnStep, markDrawn } from './drawn.ts';
 import { handKey } from '../../../src/animation/animKeys.ts';
 import { COLORS, canPlay, isWild, sameCard } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
@@ -38,6 +40,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   // Only the live table animates; the history dialog renders it without this hook
   useMoveAnimation(screenRef, gameState, animateMove);
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   useEffect(() => {
     // A Wild picked up but not played is put back, and an UNO call not yet played is dropped, when the turn changes
@@ -49,6 +52,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     // An undo can reopen a finished game; its next ending shows the scoring again
     if (!isGameOver) setFinalScoringClosed(false);
   }, [isGameOver]);
+
+  const shownHand = sortedHand(hand);
+  const drawnSlots = markDrawn(shownHand, newlyDrawn);
 
   // After drawing, only the drawn card may be played
   const isPlayable = (card: CardData) => canPlayCards &&
@@ -176,10 +182,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <section className={isMyTurn ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">
           <header className="hand-header">Your hand ({hand.length})</header>
           <div className="hand-cards">
-            {sortedHand(hand).map((card, slot) => (
+            {shownHand.map((card, slot) => (
               <Card
                 key={slot}
                 card={card}
+                drawn={drawnSlots[slot]}
                 animKey={handKey(slot)}
                 playable={isPlayable(card)}
                 selected={pendingWild !== null && sameCard(card, pendingWild)}

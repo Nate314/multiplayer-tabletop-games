@@ -345,6 +345,12 @@
     transform: translateY(-12px);
   }
 
+  /* Dashed in the drawn color, replacing the solid playable or selected outline; the lift still shows on the same card */
+  .card.newly-drawn {
+    outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+    outline-offset: 3px;
+  }
+
   /* The table: players, direction and the piles */
 
   .table {

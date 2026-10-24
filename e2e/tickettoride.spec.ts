@@ -602,6 +602,24 @@ test.describe('Ticket to Ride controls', () => {
     await expect(stat(bob, 'Alice', 'Destination tickets')).toHaveText('4 tickets');
   });
 
+  test('both cards of a draw are outlined until your next turn\'s move', async ({ seat }) => {
+    const { alice, bob } = await start(seat, 2, {}, { 1: { hand: { yellow: 2 } } });
+    await faceUp(alice, 0).click(); // the blue card
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(1);
+    await deck(alice).click(); // a red card
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(2);
+    await expect(myHand(alice).locator('.card-blue.newly-drawn')).toHaveCount(1);
+    await expect(myHand(alice).locator('.card-red.newly-drawn')).toHaveCount(1);
+    await expect(myHand(alice).locator('.card-yellow.newly-drawn')).toHaveCount(0);
+    await drawTwo(bob);
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(2);
+    await claim(alice, LA_VEGAS, '2 yellow');
+    await expect(track(alice, LA_VEGAS)).toHaveClass(/owned seat1/);
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('your hand groups train cards by color with counts, checks completed tickets, and a pointed ticket rings its cities', async ({ seat }) => {
     const { alice } = await start(seat, 2, { claimed: { [DENVER_SANTA_FE]: 1, [EL_PASO_SANTA_FE]: 1 } }, {
       1: { hand: { red: 3, blue: 2, locomotive: 1 }, tickets: [DENVER_EL_PASO_TICKET, BOSTON_MIAMI_TICKET] }

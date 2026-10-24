@@ -6,12 +6,13 @@ type TileProps = {
   id: number;
   standsFor?: string; // for a joker on the table, e.g. 'red 5'
   highlighted?: boolean;
+  drawn?: boolean; // outlined as a tile you just drew
 };
 
 // One tile face: a colored number, or a joker. data-anim-key follows the tile wherever it is drawn.
-export default function Tile({ id, standsFor, highlighted }: TileProps) {
+export default function Tile({ id, standsFor, highlighted, drawn }: TileProps) {
   const tile = tileOf(id);
-  const classes = ['rk-tile', tile.kind === 'joker' ? 'rk-joker' : `rk-${tile.color}`, highlighted ? 'rk-tile-highlighted' : ''];
+  const classes = ['rk-tile', tile.kind === 'joker' ? 'rk-joker' : `rk-${tile.color}`, highlighted ? 'rk-tile-highlighted' : '', drawn ? 'newly-drawn' : ''];
   const title = tile.kind === 'joker' && standsFor ? `Joker as ${standsFor}` : tileName(id);
   return (
     <span className={classes.filter(Boolean).join(' ')} data-anim-key={tileKey(id)} title={title}>
