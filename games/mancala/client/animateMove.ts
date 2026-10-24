@@ -1,6 +1,6 @@
 import { prefersReducedMotion } from '../../../src/animation/motion.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import { playPit } from '../rules.ts';
+import { playPit, rulesOf } from '../rules.ts';
 import { drawnCount, stoneSpot } from './stoneLayout.ts';
 import type { PublicGameState, Transfer } from '../types.ts';
 
@@ -57,7 +57,7 @@ export default function animateMove({ previous, next, root, rectOf }: MoveChange
   root.querySelectorAll('.stone, .count').forEach(element => element.getAnimations().forEach(animation => animation.cancel()));
   const { lastMove } = next;
   if (!lastMove || prefersReducedMotion()) return;
-  const { laps, sweep } = playPit(previous.board, lastMove.playerNumber, lastMove.pit);
+  const { laps, capture, sweep } = playPit(previous.board, lastMove.playerNumber, lastMove.pit, rulesOf(next));
 
   const holes: Path[][] = previous.board.map((stones, hole) => stones.map((_, index) => ({ hole, index, stops: [] })));
   const settled = new Map<number, number>();
@@ -67,7 +67,12 @@ export default function animateMove({ previous, next, root, rectOf }: MoveChange
     time = lift(holes, drops[0].from, time);
     time = replay(holes, settled, drops, time, spread(drops.length, DROP_STAGGER_MS, DROP_SPREAD_MS), HOP_MS) + PAUSE_MS;
   }
-  if (sweep.length > 0) replay(holes, settled, sweep, time, spread(sweep.length, FLY_STAGGER_MS, FLY_SPREAD_MS), FLY_MS);
+  // A capture flies into the bank like the end-of-game sweep, and the sweep follows it
+  for (const flights of [capture, sweep]) {
+    if (flights.length > 0) {
+      time = replay(holes, settled, flights, time, spread(flights.length, FLY_STAGGER_MS, FLY_SPREAD_MS), FLY_MS) + PAUSE_MS;
+    }
+  }
   // The times above are at full speed; a move that would take longer than LONGEST_MS is played faster throughout
   const speed = Math.min(1, LONGEST_MS / Math.max(...settled.values()));
 

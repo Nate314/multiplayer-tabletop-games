@@ -131,7 +131,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Farkle](games/farkle/README.md): roll six dice, bank your points or push your luck and risk them all, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Farkle).
 - [Go Fish](games/gofish/README.md): ask for ranks, go fish, and collect the most books of four, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Go_Fish).
 - [Hearts](games/hearts/README.md): pass three cards, then dodge the hearts and the queen of spades or shoot the moon, lowest score when someone reaches 100 wins, for exactly 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Hearts_(card_game)), Black Lady.
-- [Mancala](games/mancala/README.md): drop stones around the board, keep going from every full pit, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
+- [Mancala](games/mancala/README.md): drop stones around the board, play Avalanche or Kalah, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
 - [Monopoly](games/monopoly/README.md): buy, trade and build on properties, and bankrupt every other player, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Monopoly_(game)).
 - [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Parcheesi).
 - [Phase 10](games/phase10/README.md): collect sets and runs to complete ten phases first. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Phase_10).

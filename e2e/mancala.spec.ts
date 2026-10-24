@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import type { HouseRuleValues } from '../shared/houseRules.ts';
 import type { Board } from '../games/mancala/types.ts';
 
 // One test per rule and control in games/mancala/README.md. Seat 1 (Alice) owns pits 0-5 and bank 6, seat 2 (Bob)
@@ -18,8 +19,10 @@ const myBank = (page: Page) => page.locator('.bank-right');
 const theirBank = (page: Page) => page.locator('.bank-left');
 const count = (hole: ReturnType<typeof myPit>) => hole.locator('.count');
 
-async function start(seat: (type: string, names: string[], options?: { motion?: boolean }) => Promise<Table>, motion = false) {
-  const table = await seat('mancala', ['Alice', 'Bob'], { motion });
+const OTHER_SIDE_OFF = { otherSide: false };
+
+async function start(seat: Seat, motion = false, houseRules?: HouseRuleValues) {
+  const table = await seat('mancala', ['Alice', 'Bob'], { motion, houseRules });
   const [alice, bob] = table.pages;
   return { table, alice, bob };
 }
@@ -76,7 +79,7 @@ test.describe('Mancala rules', () => {
   });
 
   test('once a row is empty after a turn, each side is swept into its own bank and the game ends', async ({ seat }) => {
-    const { table, alice } = await start(seat);
+    const { table, alice } = await start(seat, false, OTHER_SIDE_OFF);
     await table.patch({ board: boardOf([0, 0, 0, 0, 0, 1, 10, 2, 3, 0, 0, 0, 0, 5]) });
     await myPit(alice, 5).click();
     await expect(alice.locator('.turn-message')).toHaveText('Game over');
@@ -86,12 +89,12 @@ test.describe('Mancala rules', () => {
   });
 
   test('the most stones in the bank wins, and equal banks are a draw', async ({ seat }) => {
-    const { table, alice, bob } = await start(seat);
+    const { table, alice, bob } = await start(seat, false, OTHER_SIDE_OFF);
     await table.patch({ board: boardOf([0, 0, 0, 0, 0, 1, 10, 2, 3, 0, 0, 0, 0, 5]) });
     await myPit(alice, 5).click();
     await expect(bob.locator('.game-status')).toContainText('Alice wins');
 
-    const draw = await seat('mancala', ['Cara', 'Dan']);
+    const draw = await seat('mancala', ['Cara', 'Dan'], { houseRules: OTHER_SIDE_OFF });
     await draw.patch({ board: boardOf([0, 0, 0, 0, 0, 1, 9, 2, 3, 0, 0, 0, 0, 5]) });
     await myPit(draw.pages[0], 5).click();
     await expect(draw.pages[1].locator('.game-status')).toContainText(/draw/i);
@@ -213,7 +216,7 @@ test.describe('Mancala controls', () => {
   });
 
   test('the status describes the last turn and shows the final score', async ({ seat }) => {
-    const { table, alice } = await start(seat);
+    const { table, alice } = await start(seat, false, OTHER_SIDE_OFF);
     await myPit(alice, 0).click();
     await expect(alice.locator('.game-status')).toHaveText(/^Alice picked up 4 stones/);
     await table.patch({ board: boardOf([0, 0, 0, 0, 0, 1, 10, 2, 3, 0, 0, 0, 0, 5]), currentPlayer: 1 });
@@ -236,5 +239,59 @@ test.describe('Mancala controls', () => {
     await expect(faq).toContainText('counter-clockwise');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+});
+
+test.describe('Mancala house rules', () => {
+  test('playing from the other side when yours is empty', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    // Alice's row is empty, so only Bob's non-empty pits are outlined for her: pit 12 holds 1 stone, which skips Bob's bank
+    await table.patch({ board: boardOf([0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4]) });
+    await expect(alice.locator('.pit-bottom.playable')).toHaveCount(0);
+    await expect(alice.locator('.pit-top.playable')).toHaveCount(1);
+    await theirPit(alice, 5).click();
+    await expect(count(myPit(alice, 0))).toHaveText('1');
+    await expect(count(theirBank(alice))).toHaveText('4');
+    await expect(alice.locator('.game-status')).toHaveText("Alice picked up 1 stone from Bob's side, ending in an empty pit");
+    // The game goes on: Bob's row is empty too, so he plays Alice's stone from her side
+    await expect(bob.locator('.turn-message')).toHaveText('Your turn');
+    await expect(bob.locator('.pit-top.playable')).toHaveCount(1);
+    await expect(bob.locator('.pit-bottom.playable')).toHaveCount(0);
+  });
+
+  test('a Kalah capture', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat, false, { avalanche: false });
+    // Pit 0's one stone lands in empty pit 1, opposite Bob's pit 11 with 4 stones
+    await table.patch({ board: boardOf([1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 3, 4, 0, 0]) });
+    await myPit(alice, 0).click();
+    await expect(count(myBank(alice))).toHaveText('5');
+    await expect(count(myPit(alice, 1))).toHaveText('0');
+    await expect(count(theirPit(alice, 4))).toHaveText('0');
+    await expect(count(theirPit(alice, 3))).toHaveText('3');
+    await expect(alice.locator('.game-status')).toHaveText('Alice picked up 1 stone, ending in an empty pit and capturing 5 stones');
+    await expect(bob.locator('.turn-message')).toHaveText('Your turn');
+  });
+
+  test('Kalah has no relays', async ({ seat }) => {
+    const { table, alice } = await start(seat, false, { avalanche: false });
+    await table.patch({ board: boardOf([2, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0]) });
+    await myPit(alice, 0).click();
+    await expect(count(myPit(alice, 2))).toHaveText('2');
+    await expect(alice.locator('.game-status')).toHaveText('Alice picked up 2 stones, ending in a pit with stones');
+  });
+
+  test('with play from the other side on the game ends only when every pit is empty', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch({ board: boardOf([0, 0, 0, 0, 0, 1, 10, 2, 3, 0, 0, 0, 0, 5]) });
+    await myPit(alice, 5).click(); // into her bank: her row is empty but Bob's is not
+    await expect(alice.locator('.turn-message')).toHaveText('Your turn');
+    await expect(alice.locator('.pit-top.playable')).toHaveCount(2);
+  });
+
+  test('the host can turn the rules off, and the FAQ explains them', async ({ seat }) => {
+    const { alice } = await start(seat, false, { otherSide: false, avalanche: false });
+    const faq = await openFaq(alice);
+    await expect(faq).toContainText('Can the rules be changed?');
+    await expect(faq).toContainText('Kalah');
   });
 });

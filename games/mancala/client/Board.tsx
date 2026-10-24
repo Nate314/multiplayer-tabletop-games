@@ -1,4 +1,4 @@
-import { bankOf, isPlayablePit, opponentOf, pitsOf, stoneCount } from '../rules.ts';
+import { bankOf, isPlayablePit, opponentOf, pitsOf, rulesOf, stoneCount } from '../rules.ts';
 import { holeKey, stoneKey } from './animateMove.ts';
 import { drawnCount, stoneSpot } from './stoneLayout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -16,6 +16,7 @@ const ARROWS = ['top-left', 'top-right', 'right', 'bottom-left', 'bottom-right',
 // The viewer's row runs along the bottom, left to right, into their bank on the right; the history shows seat 1's view
 export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: BoardProps) {
   const { board, lastMove, playerNames, isGameOver } = gameState;
+  const { otherSide } = rulesOf(gameState);
   const bottomSeat = playerNumber === 2 ? 2 : 1;
   const topSeat = opponentOf(bottomSeat);
 
@@ -53,7 +54,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
   }
 
   function renderPit(pit: number, row: 'top' | 'bottom') {
-    const playable = isMyTurn && isPlayablePit(board, playerNumber, pit);
+    const playable = isMyTurn && isPlayablePit(board, playerNumber, pit, otherSide);
     return (
       <button
         key={pit}
