@@ -312,6 +312,25 @@ test.describe('Quoridor drag and drop', () => {
     await expect(square(bob, 7, 4).locator('.pawn')).toHaveAttribute('title', 'Alice');
   });
 
+  test('at phone width, a wall held near the top of the window scrolls the page up to the top rows', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await trayWall(alice).scrollIntoViewIfNeeded();
+    await expect.poll(async () => (await square(alice, 1, 3).boundingBox())!.y).toBeLessThan(0); // row 1 is off screen
+    const from = (await trayWall(alice).boundingBox())!;
+    await alice.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await alice.mouse.down();
+    const x = (await square(alice, 1, 3).boundingBox())!;
+    await alice.mouse.move(x.x + x.width / 2, 10, { steps: 8 }); // held still near the top edge
+    await expect.poll(async () => (await square(alice, 1, 3).boundingBox())!.y).toBeGreaterThan(60);
+    const slot = (await square(alice, 1, 3).boundingBox())!;
+    await alice.mouse.move(slot.x + slot.width / 2, slot.y + slot.height / 2, { steps: 4 });
+    await alice.mouse.up();
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCount(1);
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCSS('top', `${1 * 52 + 2}px`);
+    await expect(board(bob).locator('.wall.horizontal')).toHaveCSS('left', `${3 * 52 + 2}px`);
+  });
+
   test("off turn, the tray's wall is disabled and the pawn does not lift", async ({ seat }) => {
     const { table, bob } = await start(seat);
     const before = await table.state();

@@ -2,7 +2,8 @@
 // A drop target is any element with data-drop="<target id>"; a drop calls the game's own handler for that spot.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent } from 'react';
-import { endPress, movePress, startPress } from './dragMachine.ts';
+import { endPress, movePress, releasedUnseen, startPress } from './dragMachine.ts';
+import { edgeScrollStep } from './edgeScroll.ts';
 import type { Outcome, Point, Press } from './dragMachine.ts';
 import { createGhost, moveGhost, returnGhost } from './ghost.ts';
 import { markDropped } from './recentDrop.ts';
@@ -33,6 +34,8 @@ type Session = {
   source: Element;
   ghost: HTMLElement | null;
   overElement: Element | null;
+  point: Point;              // where the pointer last was
+  scrollFrame: number | null; // the pending edge scroll frame, while the pointer is near the top or bottom
   // null ends it silently, as on unmount; released is false when the pointer is still down, so its release click is swallowed later
   end: (outcome: Outcome | null, released?: boolean) => void;
 };
@@ -74,7 +77,7 @@ export function useDrag(options: DragOptions): Drag {
     });
     if (!press || press === session.current?.press) return;
     const source = event.currentTarget;
-    const current: Session = { press, source, ghost: null, overElement: null, end };
+    const current: Session = { press, source, ghost: null, overElement: null, point: press.start, scrollFrame: null, end };
     session.current = current;
 
     function setOverElement(element: Element | null) {
@@ -85,23 +88,42 @@ export function useDrag(options: DragOptions): Drag {
       setOver(element?.getAttribute('data-drop') ?? null);
     }
 
+    function updateOver() {
+      const element = targetAt(current.point);
+      const target = element?.getAttribute('data-drop');
+      setOverElement(target != null && latest.current.canDrop(id, target) ? element : null);
+    }
+
+    // Scrolls the window a step each frame while the pointer stays near its top or bottom edge, until it cannot go further
+    function edgeScroll() {
+      current.scrollFrame = null;
+      const step = edgeScrollStep(current.point.y, window.innerHeight);
+      if (step === 0) return;
+      const before = window.scrollY;
+      window.scrollBy(0, step);
+      if (window.scrollY === before) return;
+      updateOver(); // the page moved under a still pointer
+      current.scrollFrame = requestAnimationFrame(edgeScroll);
+    }
+
     function onMove(move: PointerEvent) {
       if (move.pointerId !== current.press.pointerId) return;
-      const point = pointOf(move);
+      if (releasedUnseen(move.pointerType, move.buttons)) { abandon(); return; }
+      current.point = pointOf(move);
       const wasLifted = current.press.lifted;
-      current.press = movePress(current.press, move.pointerId, point);
+      current.press = movePress(current.press, move.pointerId, current.point);
       if (!current.press.lifted) return;
       if (!wasLifted) {
-        current.ghost = createGhost(source, point);
+        // Made where the press began, so the grab offset is where the piece was taken, however far the first move jumped
+        current.ghost = createGhost(source, current.press.start);
         source.setAttribute('data-dragging', '');
         setDragging(id);
         window.addEventListener('keydown', onKey);
         latest.current.onLift?.(id);
       }
-      moveGhost(current.ghost!, point);
-      const element = targetAt(point);
-      const target = element?.getAttribute('data-drop');
-      setOverElement(target != null && latest.current.canDrop(id, target) ? element : null);
+      moveGhost(current.ghost!, current.point);
+      updateOver();
+      if (current.scrollFrame === null) edgeScroll();
     }
 
     function onUp(up: PointerEvent) {
@@ -110,8 +132,13 @@ export function useDrag(options: DragOptions): Drag {
       end(endPress(current.press, target, latest.current.canDrop), true);
     }
 
+    // Ends the press with no target and no release still to come: pointercancel, a mouse released unseen, the window losing focus
+    function abandon() {
+      end(endPress(current.press, null, latest.current.canDrop), true);
+    }
+
     function onCancelPointer(cancel: PointerEvent) {
-      if (cancel.pointerId === current.press.pointerId) end(endPress(current.press, null, latest.current.canDrop), true);
+      if (cancel.pointerId === current.press.pointerId) abandon();
     }
 
     function onKey(key: KeyboardEvent) {
@@ -127,6 +154,8 @@ export function useDrag(options: DragOptions): Drag {
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onCancelPointer);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('blur', abandon);
+      if (current.scrollFrame !== null) cancelAnimationFrame(current.scrollFrame);
       source.removeAttribute('data-dragging');
       current.overElement?.removeAttribute('data-drag-over');
       if (!current.press.lifted) return;
@@ -148,6 +177,7 @@ export function useDrag(options: DragOptions): Drag {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancelPointer);
+    window.addEventListener('blur', abandon);
   };
 
   const source = (id: string): DragSourceProps | undefined => options.canLift(id) ? {

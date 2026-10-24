@@ -637,6 +637,34 @@ test.describe('Chess drag and drop', () => {
     expect(await table.state()).toEqual(before);
   });
 
+  test('a mouse released outside the window, or the window losing focus, snaps the held piece back', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    const before = await table.state();
+    await alice.evaluate(() => window.addEventListener('pointerdown', down => { (window as unknown as { pid: number }).pid = down.pointerId; }));
+    const e4 = await centerOf(alice, 'e4');
+    // The release happened where the page could not see it: the next move comes with no button held
+    await lift(alice, piece(alice, 'e2'));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(1);
+    await alice.evaluate(({ x, y }) => window.dispatchEvent(new PointerEvent('pointermove', {
+      pointerId: (window as unknown as { pid: number }).pid, pointerType: 'mouse', isPrimary: true, buttons: 0, clientX: x, clientY: y
+    })), e4);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await alice.mouse.move(e4.x, e4.y, { steps: 4 });
+    await alice.mouse.up();
+    await expect(piece(alice, 'e2')).toHaveAccessibleName('white pawn');
+
+    await lift(alice, piece(alice, 'e2'));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(1);
+    await alice.evaluate(() => window.dispatchEvent(new Event('blur')));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await alice.mouse.move(e4.x, e4.y, { steps: 4 });
+    await alice.mouse.up();
+    await expect(piece(alice, 'e2')).toHaveAccessibleName('white pawn');
+    expect(await table.state()).toEqual(before);
+    await piece(alice, 'e2').click(); // and the next click is not swallowed
+    await expect(square(alice, 'e2')).toHaveClass(/selected/);
+  });
+
   test('a finger drags a piece, a tap still selects one, and a swipe from an empty square scrolls the page', async ({ seat }) => {
     const table = await seat('chess', ['Alice', 'Bob'], { touch: true });
     const [alice, bob] = table.pages;

@@ -26,3 +26,9 @@ export function endPress(press: Press, target: string | null, canDrop: (id: stri
   if (!press.lifted) return { kind: 'tap' };
   return target !== null && canDrop(press.id, target) ? { kind: 'drop', target } : { kind: 'cancel' };
 }
+
+// A mouse that moves without its main button held was released where the page could not see it (outside the
+// window, or over a dialog of the browser's own), so its drag must end
+export function releasedUnseen(pointerType: string, buttons: number): boolean {
+  return pointerType === 'mouse' && (buttons & 1) === 0;
+}

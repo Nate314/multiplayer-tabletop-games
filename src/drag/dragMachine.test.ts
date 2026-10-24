@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { endPress, movePress, startPress, type Point } from './dragMachine.ts';
+import { endPress, movePress, releasedUnseen, startPress, type Point } from './dragMachine.ts';
 
 const at = (x: number, y: number) => ({ x, y });
 const mouse = (point: Point, pointerId = 1) => ({ pointerId, isPrimary: true, button: 0, point });
@@ -41,4 +41,12 @@ test('a lifted piece released over a legal target drops there', () => {
 test('a lifted piece released over an illegal target, no target, or by pointercancel snaps back', () => {
   assert.deepEqual(endPress(lifted('a'), 'sq', () => false), { kind: 'cancel' });
   assert.deepEqual(endPress(lifted('a'), null, () => true), { kind: 'cancel' });
+});
+
+test('a mouse that moves with its main button up has lost the release, other pointers have not', () => {
+  assert.equal(releasedUnseen('mouse', 0), true);
+  assert.equal(releasedUnseen('mouse', 2), true); // only the right button
+  assert.equal(releasedUnseen('mouse', 1), false);
+  assert.equal(releasedUnseen('touch', 0), false);
+  assert.equal(releasedUnseen('pen', 0), false);
 });
