@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat as SeatFixture, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat as SeatFixture, type SeatOptions, type Table } from './fixtures.ts';
 import { createDeck } from '../games/phase10/rules.ts';
 import type { Card, CardColor, GameState, Group } from '../games/phase10/types.ts';
 
@@ -9,8 +9,8 @@ import type { Card, CardColor, GameState, Group } from '../games/phase10/types.t
 const NAMES = ['Alice', 'Bob', 'Cara'];
 const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow'];
 
-async function start(seat: SeatFixture, players = 2) {
-  const table = await seat('phase10', NAMES.slice(0, players));
+async function start(seat: SeatFixture, players = 2, options?: SeatOptions) {
+  const table = await seat('phase10', NAMES.slice(0, players), options);
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -225,10 +225,9 @@ test.describe('Phase 10 rules', () => {
       values.push((swapWith + 0.5) / (position + 1));
     }
     await first.random(...values);
-    const second = await seat('phase10', ['Bob'], { gameId: first.gameId });
-    const [alice, bob] = [first.pages[0], second.pages[0]];
+    const bob = await first.join('Bob');
+    const alice = first.pages[0];
     await expect(discardPile(alice).locator('.card')).toHaveAttribute('aria-label', 'Skip');
-    await expect(alice.locator('.game-status')).toContainText('The first discard is a Skip, so Alice is skipped.');
     await expect(turnMessage(alice)).toHaveText('Bob goes first. Joining closes after the first move.');
     await expect(drawPile(alice)).toBeDisabled();
     await expect(drawPile(bob)).toBeEnabled();
@@ -587,5 +586,52 @@ test.describe('Phase 10 controls', () => {
     await expect(faq).toContainText('How do I lay down my phase?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+});
+
+test.describe('Phase 10 house rules', () => {
+  test('laying down a later phase first', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat, 2, { houseRules: { anyOrder: true } });
+    await deal(table, {
+      hands: { 1: [...[1, 2, 3, 4, 5, 6, 7, 8].map(value => n(value, 'red')), n(9, 'red')], 2: tenCards('yellow') },
+      drawTop: [n(10, 'red')]
+    });
+    await expect(seatOf(alice, 'Alice')).toContainText('No phases done yet');
+    await drawPile(alice).click();
+
+    // Phase 1 is offered first, and any phase not completed can be picked instead
+    const picker = alice.getByLabel('Phase to lay down');
+    await expect(picker.locator('option')).toHaveCount(10);
+    await expect(alice.locator('.lay-down-part')).toHaveCount(2);
+    await picker.selectOption({ label: 'Phase 5: 1 run of 8' });
+    await expect(alice.locator('.lay-down-title')).toHaveText('Lay down phase 5');
+    await expect(alice.locator('.lay-down-part')).toHaveCount(1);
+    await stage(alice, 1, ...[1, 2, 3, 4, 5, 6, 7, 8].map(value => `red ${value}`));
+    await button(alice, 'Lay down phase').click();
+    await expect(group(alice, 'Run 1 to 8')).toHaveCount(1);
+    await expect(bob.locator('.game-status')).toContainText('Alice laid down phase 5');
+
+    // Hitting the last cards out ends the hand: phase 5 is done, and Bob laid nothing down
+    await select(alice, 'red 9', 'red 10');
+    await group(alice, 'Run 1 to 8').getByRole('button', { name: 'Hit here' }).click();
+    await expect(summaryOf(bob, 'Alice')).toContainText('Phase 5 done');
+    await expect(summaryOf(bob, 'Bob')).toContainText('No phase laid down');
+    await scoring(bob).getByRole('button', { name: 'Continue' }).click();
+    await scoring(alice).getByRole('button', { name: 'Continue' }).click();
+    await expect(seatOf(alice, 'Alice')).toContainText('Done: 5 (1/10)');
+    await expect(seatOf(bob, 'Bob')).toContainText('No phases done yet');
+
+    // Phase 5 is no longer offered
+    await table.patch({ currentPlayer: 1, drawnBy: 1 });
+    await expect(alice.getByLabel('Phase to lay down').locator('option')).toHaveCount(9);
+    await expect(alice.getByLabel('Phase to lay down').locator('option', { hasText: 'Phase 5:' })).toHaveCount(0);
+  });
+
+  test('without the rule there is no phase picker', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await deal(table, { hands: { 1: tenCards('red'), 2: tenCards('yellow') }, drawTop: [n(12, 'blue')] });
+    await drawPile(alice).click();
+    await expect(alice.locator('.lay-down-title')).toHaveText('Lay down phase 1');
+    await expect(alice.getByLabel('Phase to lay down')).toHaveCount(0);
   });
 });

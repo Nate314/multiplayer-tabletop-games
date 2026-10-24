@@ -16,6 +16,7 @@ import {
 } from './rules.ts';
 import { phase10 } from './index.ts';
 import { applyMove, removePlayer } from '../../shared/seating.ts';
+import { withRules } from '../../server/testing.ts';
 import type { Card, CardColor, GameState, Group, Result } from './types.ts';
 
 // A repeatable random, so dealing and reshuffles are the same every run
@@ -529,4 +530,136 @@ test('malformed moves are refused', () => {
     assert.deepEqual(move(state, 1, input), { error: 'Invalid move' }, JSON.stringify(input));
   }
   assert.deepEqual(move(state, 1, { type: 'discard', card: 99999, skip: null }), { error: 'That card is not in your hand' });
+});
+
+// Phases in any order
+const anyOrder = { houseRules: withRules({ anyOrder: true }) };
+const ALL_TEN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const without = (phase: number) => ALL_TEN.filter(other => other !== phase);
+
+// Alice has drawn and holds a run of 8 (phase 5) plus two spare cards; Bob has phases 1 and 2 done
+function holdingRun(overrides: Partial<GameState> = {}): { state: GameState; run: Card[]; spare: Card } {
+  const run = [1, 2, 3, 4, 5, 6, 7, 8].map(value => num(value));
+  const spare = num(12, 'blue');
+  const state = game({
+    ...anyOrder,
+    drawnBy: 1,
+    hands: { 1: [...run, spare, num(12, 'green')], 2: [num(2)] },
+    phases: { 1: 1, 2: 3 },
+    phasesDone: { 1: [], 2: [1, 2] },
+    ...overrides
+  });
+  return { state, run, spare };
+}
+
+// Alice lays the run down as phase 5, then goes out by discarding her last card
+function layRunAndGoOut(state: GameState, run: Card[], spare: Card): GameState {
+  const laid = ok(move(state, 1, { type: 'layDown', phase: 5, groups: [ids(run)] }));
+  return ok(move({ ...laid, hands: { ...laid.hands, 1: [spare] } }, 1, discardOf(spare)));
+}
+
+test('with any order a player may lay down phase 5 first', () => {
+  const { state, run, spare } = holdingRun();
+  const laid = ok(move(state, 1, { type: 'layDown', phase: 5, groups: [ids(run)] }));
+  assert.deepEqual(laid.laidPhase, { 1: 5 });
+  assert.deepEqual(laid.lastMove, { playerNumber: 1, type: 'layDown', phase: 5 });
+  assert.equal(laid.gameStatus, 'Alice laid down phase 5');
+
+  // The hand ends: phase 5 is done, the lowest phase left is still 1, and Bob did not lay down
+  const ended = layRunAndGoOut(state, run, spare);
+  assert.deepEqual(ended.phasesDone, { 1: [5], 2: [1, 2] });
+  assert.equal(ended.phases[1], 1);
+  assert.equal(ended.phases[2], 3);
+  assert.equal(ended.handSummary?.seats[1].phase, 5);
+  assert.equal(ended.handSummary?.seats[2].phase, 0);
+  assert.equal(ended.handSummary?.seats[2].completed, false);
+});
+
+test('with any order the phase must be named, and it must be a real phase', () => {
+  const { state, run } = holdingRun();
+  assert.deepEqual(move(state, 1, { type: 'layDown', groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 11, groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 2.5, groups: [ids(run)] }), { error: 'Invalid move' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: '5', groups: [ids(run)] }), { error: 'Invalid move' });
+  // The cards must match the phase named
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 6, groups: [ids(run)] }), { error: 'Group 1 is not a run of 9' });
+});
+
+test('a completed phase cannot be laid down again', () => {
+  const { state, run } = holdingRun({ phasesDone: { 1: [5], 2: [1, 2] } });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 5, groups: [ids(run)] }), { error: 'You have already completed phase 5' });
+});
+
+test('the game ends when a player has completed all ten', () => {
+  const { state, run, spare } = holdingRun({ phasesDone: { 1: without(5), 2: [1, 2] }, phases: { 1: 5, 2: 3 } });
+  const out = layRunAndGoOut(state, run, spare);
+  assert.equal(out.isGameOver, true);
+  assert.deepEqual(out.winners, [1]);
+  assert.equal(out.phases[1], 11);
+  assert.deepEqual(out.phasesDone[1], ALL_TEN);
+});
+
+test('players tied on the lowest score after finishing all ten play a tiebreaker hand of phase 10', () => {
+  const { state, run, spare } = holdingRun({
+    phasesDone: { 1: without(5), 2: without(5) },
+    phases: { 1: 5, 2: 5 },
+    scores: { 1: 20, 2: 20 }
+  });
+  const bobsGroup: Group = { owner: 2, kind: 'run', start: 1, cards: [1, 2, 3, 4, 5, 6, 7, 8].map(value => num(value, 'blue')) };
+  const laid: GameState = { ...state, groups: [bobsGroup], hands: { 1: [...run, spare], 2: [] }, laidPhase: { 2: 5 } };
+  const tied = ok(move({ ...laid, hands: { ...laid.hands, 2: [num(2)] } }, 1, { type: 'layDown', phase: 5, groups: [ids(run)] }));
+  const ended = ok(move({ ...tied, hands: { ...tied.hands, 1: [spare], 2: [] } }, 1, discardOf(spare)));
+  assert.deepEqual(ended.tiebreak, [1, 2]);
+  assert.equal(ended.isGameOver, false);
+  assert.deepEqual(ended.phases, { 1: 10, 2: 10 });
+});
+
+test('in a tiebreaker only phase 10 may be laid down, even with any order', () => {
+  const five = [num(1), num(1, 'blue'), num(1, 'green'), num(1, 'yellow'), num(1, 'red')];
+  const three = [num(2), num(2, 'blue'), num(2, 'green')];
+  const state = game({
+    ...anyOrder,
+    drawnBy: 1,
+    tiebreak: [1, 2],
+    phases: { 1: 10, 2: 10 },
+    phasesDone: { 1: ALL_TEN, 2: ALL_TEN },
+    hands: { 1: [...five, ...three, num(9)], 2: [num(4)] }
+  });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five)] }), { error: 'The tiebreaker hand is phase 10' });
+  const laid = ok(move(state, 1, { type: 'layDown', phase: 10, groups: [ids(five), ids(three)] }));
+  assert.deepEqual(laid.laidPhase, { 1: 10 });
+});
+
+test('the next hand clears what was laid down', () => {
+  const { state, run, spare } = holdingRun();
+  const ended = layRunAndGoOut(state, run, spare);
+  const next = ok(acknowledgeHand(ok(acknowledgeHand(ended, 1)), 2));
+  assert.deepEqual(next.laidPhase, {});
+  assert.equal(next.groups.length, 0);
+});
+
+test('without the rule only the next phase is accepted', () => {
+  const run = [1, 2, 3, 4, 5, 6, 7, 8].map(value => num(value));
+  const state = game({ drawnBy: 1, hands: { 1: [...run, num(12)], 2: [num(2)] } });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 5, groups: [ids(run)] }), { error: 'Phase 1 is your next phase' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', groups: [ids(run)] }), { error: 'Phase 1 needs 2 sets of 3' });
+  const sets = [[num(3), num(3, 'blue'), num(3, 'green')], [num(4), num(4, 'blue'), num(4, 'green')]];
+  const laid = ok(move({ ...state, hands: { 1: [...sets.flat(), num(9)], 2: [num(2)] } }, 1, { type: 'layDown', phase: 1, groups: sets.map(ids) }));
+  assert.deepEqual(laid.laidPhase, { 1: 1 });
+});
+
+test('a save from before the rule, with no phasesDone or laidPhase, loads and plays on', () => {
+  const sets = [[num(3), num(3, 'blue'), num(3, 'green')], [num(4), num(4, 'blue'), num(4, 'green')]];
+  const state: Partial<GameState> = game({ drawnBy: 1, phases: { 1: 3, 2: 1 }, hands: { 1: [...sets.flat(), num(9)], 2: [num(2)] } });
+  delete state.phasesDone;
+  delete state.laidPhase;
+  const old = state as GameState;
+  assert.deepEqual(move(old, 1, { type: 'layDown', groups: sets.map(ids) }), { error: 'Group 1 is not a set of 4' });
+
+  // Alice has already laid down phase 3 this hand and goes out
+  const laid: GameState = { ...old, groups: [{ owner: 1, kind: 'set', value: 3, cards: sets[0] }], hands: { 1: [num(9)], 2: [num(2)] } };
+  const ended = ok(move(laid, 1, discardOf(laid.hands[1][0])));
+  assert.equal(ended.phases[1], 4);
+  assert.equal(ended.handSummary?.seats[1].phase, 3);
+  assert.equal(toPublicState(ended, false, 1).phases[1], 4);
 });

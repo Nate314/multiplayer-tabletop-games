@@ -58,6 +58,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
   },
   {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can turn on "Phases in any order". Then each hand you choose which phase to lay down, any phase you have not completed yet, instead of the next one in order. Completing all ten finishes the game, with the same lowest-score win and tiebreaker hand of phase 10. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+  },
+  {
     question: 'What happens if someone leaves?',
     answer: 'Their groups stay on the table, but their turns are skipped and they cannot win. The last player left wins. Nobody can join after the first move.'
   }

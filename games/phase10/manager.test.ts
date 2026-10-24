@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { phase10 } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
@@ -23,6 +23,7 @@ function seeded(seed: number): () => number {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([phase10], seeded(42)));
   for (const name of names) manager.join('phase10', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
