@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { scrabble } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
@@ -20,6 +20,7 @@ const SECOND_WORD: Move = { type: 'play', tiles: [{ row: 8, col: 7, letter: 'B' 
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([scrabble], first));
   for (const name of names) manager.join('scrabble', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -101,4 +102,22 @@ test('a dismissed player puts their tiles back in the bag', () => {
   assert.deepEqual(state.activePlayers, [1, 2]);
   assert.equal(state.bagCount, bagBefore + 7);
   assert.deepEqual(state.rackCounts, { 1: 7, 2: 7 });
+});
+
+test('the turn timer starts when the last player agrees and a restored turn gets a full timer', () => {
+  let time = 1_000_000;
+  const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
+  manager.join('scrabble', 'g1', 'A');
+  manager.join('scrabble', 'g1', 'B');
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, override: false, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  const raw = () => manager.rawState(ROOM) as unknown as { turnStartedAt: number };
+  assert.equal(raw().turnStartedAt, time);
+  time += 30_000;
+  ok(manager.move(ROOM, 1, FIRST_WORD));
+  assert.equal(raw().turnStartedAt, time);
+  ok(manager.requestUndo(ROOM, 2));
+  time += 20_000;
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(raw().turnStartedAt, time);
 });

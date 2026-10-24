@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { shuffle } from '../../../shared/shuffle.ts';
 import gameService from '../../../src/services/gameService';
 import Board from './Board';
@@ -24,7 +24,7 @@ type Square = { row: number; col: number };
 // so placed tiles and selections never outlive the rack they were made from.
 // Tiles glide between the rack and the board as they are placed and taken back, and to their new places on a shuffle.
 export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle }: PlayAreaProps) {
-  const { board, rack, bagCount, lastMove } = gameState;
+  const { board, rack, bagCount, lastMove, currentPlayer } = gameState;
   const rootRef = useRef<HTMLDivElement>(null);
   const slide = useSlides(rootRef);
   const [order, setOrder] = useState(initialOrder);
@@ -32,6 +32,14 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
   const [selected, setSelected] = useState<number | null>(null);
   const [blankSquare, setBlankSquare] = useState<Square | null>(null);
   const [exchanging, setExchanging] = useState<number[] | null>(null);
+
+  // The turn passed on (the turn timer ran out): tiles put down but not played go back to the rack
+  useEffect(() => {
+    setPending([]);
+    setSelected(null);
+    setBlankSquare(null);
+    setExchanging(null);
+  }, [currentPlayer]);
 
   const isPlaced = (slot: number) => pending.some(tile => tile.slot === slot);
   const rackKeyOf = (slot: number) => rackKey(order.indexOf(slot));

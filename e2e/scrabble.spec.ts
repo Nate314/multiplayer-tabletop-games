@@ -91,11 +91,11 @@ test.describe('Scrabble rules', () => {
   });
 
   test('each player draws a tile, closest to A goes first, a blank beats every letter, ties draw again, redone on every join and leave', async ({ seat }) => {
-    const first = await seat('scrabble', ['Alice']);
+    const first = await seat('scrabble', ['Alice'], { agree: false }); // an Agree would replace the draw in the status line
     const [alice] = first.pages;
     // Alice draws the bag's first tile, an A; Bob the ninth of what is left, a B
     await first.random(0, 8.5 / 99);
-    const [bob] = (await seat('scrabble', ['Bob'], { gameId: first.gameId })).pages;
+    const bob = await first.join('Bob');
     await expect(status(alice)).toContainText('Alice drew A, Bob drew B. Alice goes first.');
     await expect(turn(bob)).toHaveText('Alice goes first. Joining closes after the first move.');
     // The drawn tiles went back before the racks were dealt
@@ -103,7 +103,7 @@ test.describe('Scrabble rules', () => {
 
     // Cara joins and the draw is redone: she draws the last tile, a blank, and beats the two As
     await first.random(0, 0, 97.5 / 98);
-    const [cara] = (await seat('scrabble', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     await expect(status(alice)).toContainText('Alice drew A, Bob drew A, Cara drew a blank. Cara goes first.');
     await expect(turn(cara)).toHaveText('Cara goes first. Joining closes after the first move.');
 
@@ -118,7 +118,7 @@ test.describe('Scrabble rules', () => {
     const first = await seat('scrabble', ['Alice', 'Bob']);
     // Alice draws a B, Bob an A and Cara a C, so Bob (seat 2) goes first
     await first.random(9.5 / 100, 0, 9.5 / 98);
-    const [cara] = (await seat('scrabble', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     const [alice, bob] = first.pages;
     await expect(turn(bob)).toHaveText('Bob goes first. Joining closes after the first move.');
     await button(bob, 'Pass').click();
@@ -498,5 +498,23 @@ test.describe('Scrabble differences from Wikipedia', () => {
     await expect(turn(alice)).toHaveText('Your turn');
     await button(alice, 'Pass').click();
     await expect(turn(bob)).toHaveText('Your turn');
+  });
+});
+
+test.describe('Scrabble turn timer', () => {
+  test('tiles placed when the time runs out go back to the rack and the turn passes', async ({ seat }) => {
+    const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
+    const [alice, bob] = table.pages;
+    const dealt = (await table.state<GameState>()).racks;
+    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnStartedAt: Date.now() + 5000 });
+    await expect(alice.locator('.turn-timer')).toHaveText(/^[01]:\d\d$/);
+    await placeWord(alice, spell('CAT', 7, 6));
+    await expect(freeSlots(alice)).toHaveCount(4);
+    await table.patch({ turnStartedAt: Date.now() - 61_000 });
+    await expect(status(bob)).toHaveText('Alice ran out of time');
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(freeSlots(alice)).toHaveCount(7);
+    expect(await rackLetters(alice)).toEqual('CATAAAA'.split(''));
+    await expect(points(alice, 'Alice')).toHaveText('0');
   });
 });

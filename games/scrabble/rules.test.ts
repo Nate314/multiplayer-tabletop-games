@@ -14,6 +14,7 @@ import {
   createGameState
 } from './rules.ts';
 import { scrabble } from './index.ts';
+import { withRules } from '../../server/testing.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Board, GameState, Move, Placement, Premium, RackTile, Result, Seat } from './types.ts';
 
@@ -349,4 +350,50 @@ test('malformed moves are refused', () => {
   ];
   for (const input of bad) assert.deepEqual(applyMove(scrabble, state, 1, input, first), { error: 'Invalid move' });
   assert.deepEqual(move(state, 1, { type: 'play', tiles: [] }), { error: 'Place at least one tile' });
+});
+
+// Turn timer
+
+const T0 = 1_000_000;
+const MINUTE = 60_000;
+const timed = (minutes: 'off' | 1 | 2 | 3 | 5 = 2): GameState => ({
+  ...game({ 1: 'CATAAAA', 2: 'AAAAAAA' }),
+  started: true,
+  houseRules: withRules({ turnMinutes: minutes })
+});
+
+test('with the timer off there is no deadline', () => {
+  const state = scrabble.resumeClock?.(timed('off'), T0) as GameState;
+  assert.equal(state.turnStartedAt, null);
+  assert.equal(scrabble.deadline?.(state), null);
+  assert.equal(scrabble.deadline?.(scrabble.createGameState('g1')), null);
+});
+
+test('the turn passes when the timer runs out', () => {
+  const started = scrabble.resumeClock?.(timed(), T0) as GameState;
+  assert.equal(scrabble.deadline?.(started), T0 + 2 * MINUTE);
+  const passed = scrabble.onDeadline?.(started, T0 + 2 * MINUTE, first) as GameState;
+  assert.equal(passed.currentPlayer, 2);
+  assert.deepEqual(passed.lastMove, { type: 'pass', playerNumber: 1, timedOut: true });
+  assert.equal(passed.gameStatus, 'A ran out of time');
+  assert.deepEqual(passed.racks, started.racks);
+});
+
+test('a timed-out turn counts as scoreless', () => {
+  let state = { ...(scrabble.resumeClock?.(timed(1), T0) as GameState), scorelessTurns: 5 };
+  state = scrabble.onDeadline?.(state, T0 + MINUTE, first) as GameState;
+  assert.equal(state.scorelessTurns, 6);
+  assert.match(state.gameStatus, /any player may end the game/);
+});
+
+test('each turn gets the full time', () => {
+  const started = scrabble.resumeClock?.(timed(), T0) as GameState;
+  const next = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 90_000));
+  assert.equal(next.turnStartedAt, T0 + 90_000);
+  assert.equal(scrabble.deadline?.(next), T0 + 90_000 + 2 * MINUTE);
+  const late = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 3 * MINUTE));
+  assert.equal(late.lastMove?.type === 'pass' && late.lastMove.timedOut, true); // a move that arrives late is a timeout
+  const loaded = scrabble.resumeClock?.(next, T0 + 9_999_999) as GameState;
+  assert.equal(scrabble.deadline?.(loaded), T0 + 9_999_999 + 2 * MINUTE); // downtime is not charged
+  assert.equal(scrabble.deadline?.(scrabble.resetLobby(loaded, first)), null);
 });

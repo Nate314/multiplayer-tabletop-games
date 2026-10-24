@@ -9,6 +9,7 @@ function list(items: string[]): string {
 export function describeMove({ lastMove, playerNames }: Pick<PublicGameState, 'lastMove' | 'playerNames'>): string {
   if (!lastMove) return '';
   const name = playerNames[lastMove.playerNumber];
+  if (lastMove.type === 'pass' && lastMove.timedOut) return `${name} ran out of time`;
   if (lastMove.type === 'pass') return `${name} passed`;
   if (lastMove.type === 'exchange') return `${name} exchanged ${lastMove.count} ${lastMove.count === 1 ? 'tile' : 'tiles'}`;
   const words = list(lastMove.words.map(word => word.word));
