@@ -351,6 +351,11 @@
     fill: var(--highlight);
   }
 
+  /* Catches drops a little off the drawn circle; clicks and keys stay on the drawn one */
+  .vertex-hit {
+    fill: transparent;
+  }
+
   .edge-target {
     cursor: pointer;
     outline: none;
@@ -805,7 +810,7 @@
   .tray-settlement,
   .tray-city {
     display: block;
-    background: var(--tray-piece, currentColor);
+    background: var(--seat, currentColor); /* the seat class on the icon sets your color */
   }
 
   .tray-road {
@@ -826,7 +831,7 @@
     clip-path: polygon(0 100%, 0 30%, 25% 0, 50% 30%, 50% 45%, 100% 45%, 100% 100%);
   }
 
-  .vertex-target[data-drag-over] {
+  .vertex-drop[data-drag-over] .vertex-target {
     fill: var(--highlight);
     stroke: var(--drag-over);
     stroke-width: 5;

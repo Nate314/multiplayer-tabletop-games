@@ -1118,6 +1118,20 @@ test.describe('Catan building tray', () => {
     await expect(road(alice)).toBeEnabled();
   });
 
+  test('at phone width, a settlement released a little off the intersection is still built there', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, { setup: { order: [1, 2, 3, 3, 2, 1], step: 0, settlement: null } });
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await settlementPiece(alice).scrollIntoViewIfNeeded();
+    await lift(alice, settlementPiece(alice));
+    const box = (await vertex(alice, home).boundingBox())!;
+    expect(box.width).toBeLessThan(16); // the drawn circle is small on a phone
+    await alice.mouse.move(box.x + box.width / 2 + 8, box.y + box.height / 2, { steps: 8 });
+    await expect(vertex(alice, home)).toHaveCSS('stroke-width', '5px'); // the drawn circle shows it is under the piece
+    await alice.mouse.up();
+    await expect(piece(bob, "Alice's settlement")).toHaveCount(1);
+    await expect(settlementPiece(alice)).toHaveAccessibleName('Settlement, 4 left');
+  });
+
   test('a piece you cannot afford is dimmed with its cost as the title', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, { rolled: true, hands: { 1: { wood: 1 } } });
     await expect(road(alice)).toBeDisabled();

@@ -175,9 +175,13 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
   const vertexTargets = (onVertex ? targets.vertices ?? [] : []).map(vertex => {
     const { x, y } = vertexPoint(vertex);
     const click = () => onVertex?.(vertex);
+    // The drop target is the group, so a drop lands within the larger invisible circle, which a finger can hit on a phone
     return (
-      <circle key={`vertex-target-${vertex}`} className="vertex-target" data-drop={`vertex-${vertex}`} cx={x} cy={y} r={9} role="button" tabIndex={0}
-        aria-label={`Intersection ${vertex}`} onClick={click} onKeyDown={onKey(click)} />
+      <g key={`vertex-target-${vertex}`} className="vertex-drop" data-drop={`vertex-${vertex}`}>
+        <circle className="vertex-hit" cx={x} cy={y} r={18} />
+        <circle className="vertex-target" cx={x} cy={y} r={9} role="button" tabIndex={0}
+          aria-label={`Intersection ${vertex}`} onClick={click} onKeyDown={onKey(click)} />
+      </g>
     );
   });
 

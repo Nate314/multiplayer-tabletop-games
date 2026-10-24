@@ -9,6 +9,7 @@ import { cityError, piecesLeft, roadSpots, settlementError, settlementSpotError 
 import { robberVictims } from '../dice.ts';
 import { MIN_PLAYERS } from '../rules.ts';
 import Board from './Board';
+import { seatClass } from './layout.ts';
 import type { Targets } from './Board';
 import Dice from './Dice';
 import DiscardPanel from './DiscardPanel';
@@ -131,7 +132,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   });
   const tapPiece = (id: string) => setMode(activeMode === id ? null : id as TrayKind);
   const pieces = (['road', 'settlement', 'city'] as const).map(kind => ({
-    id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind], icon: <span className={`tray-${kind}`} aria-hidden="true" />,
+    id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind], icon: <span className={`tray-${kind} ${seatClass(playerNumber)}`} aria-hidden="true" />,
     blocked: blockedFor(kind) || undefined
   }));
 
