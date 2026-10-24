@@ -1,5 +1,5 @@
 // Where the board's pieces are drawn, in SVG units, and the names and classes the screen shares
-import { EDGES, HEX_VERTICES, VERTICES, hexCenter } from '../board.ts';
+import { EDGES, BASE_BOARD, HEX_VERTICES, VERTICES } from '../board.ts';
 import type { DevCard, PortKind, Resource, Seat } from '../types.ts';
 
 export const SCALE = 60; // SVG units per hex radius
@@ -10,7 +10,7 @@ export function vertexPoint(vertex: number): { x: number; y: number } {
 }
 
 export function hexPoint(hex: number): { x: number; y: number } {
-  const { x, y } = hexCenter(hex);
+  const { x, y } = BASE_BOARD.centers[hex];
   return { x: x * SCALE, y: y * SCALE };
 }
 
