@@ -471,13 +471,31 @@
   margin: 4px 0 0;
 }
 
-/* The history dialog is as wide as the board it shows; a board wider than the window scrolls sideways */
-:where([data-game] .modal.history) {
-  max-width: 1100px;
+/* Outside :where() on purpose: the platform owns the History dialog's size so it never resizes between steps,
+   and (0,3,0) beats every game's .modal rule */
+[data-game] .modal.history {
+  box-sizing: border-box;
+  width: 90vw;
+  height: 90dvh;
+  max-width: none;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+/* No padding, so a 90vw dialog keeps its width on a 320 px phone */
+:where([data-game] .history-overlay) {
+  padding: 0;
+}
+
+/* Two lines kept for the move, and a longer description scrolls, so the board never moves between steps */
 :where([data-game] .history-move) {
+  flex: none;
   margin: 0 0 8px;
+  height: 3em;
+  overflow-y: auto;
+  line-height: 1.5;
   font-weight: 600;
 }
 
@@ -574,9 +592,21 @@
   color: var(--platform-button-text, var(--lobby-accent-text));
 }
 
+/* The board fills the rest of the dialog; its content is scaled down to fit (fitScale) and centered */
 :where([data-game] .history-board) {
-  max-width: 100%;
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+:where([data-game] .history-board-content) {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max-content;
+  transform-origin: top center;
+  transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
 :where([data-game] .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {

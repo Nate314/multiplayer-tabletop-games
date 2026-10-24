@@ -169,13 +169,9 @@
 
   /* History dialog */
 
-  .modal.history {
-    max-width: 900px;
-  }
-
   /* Its own stacking context, so the frame's outer edge paints above the dialog; the padding leaves room for that edge */
 
-  .history-board {
+  .history-board-content {
     isolation: isolate;
     padding: 8px;
   }

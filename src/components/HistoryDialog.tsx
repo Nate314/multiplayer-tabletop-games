@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
@@ -9,6 +9,7 @@ import { PLAY_STEP_MS, nextPlayIndex } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
 import { loadAnimations, saveAnimations } from '../services/settings.ts';
+import { fitScale, nextScale } from './fitScale.ts';
 
 export type History =
   | { status: 'loading' }
@@ -47,6 +48,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [viewer, setViewer] = useState<Seat | null>(null);
   const [animations, setAnimations] = useState(loadAnimations);
   const [playing, setPlaying] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const last = steps.length - 1;
   const step = steps[index];
@@ -66,6 +68,28 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     }
   }, [client, shownViewer, animations]);
   useMoveAnimation(boardRef, boardState, animate);
+
+  // The board shrinks to fit the box. A step that changes the board's size can only lower the scale, so the board never bounces;
+  // only the box changing size (a window resize) starts over. offsetWidth and offsetHeight ignore the scale transform.
+  // Written straight to the element, before the browser paints, so the board never shows a frame at the wrong size.
+  useLayoutEffect(() => {
+    const box = boxRef.current!;
+    const content = boardRef.current!;
+    let boxSize = '';
+    let scale: number | null = null;
+    const observer = new ResizeObserver(() => {
+      const size = `${box.clientWidth}x${box.clientHeight}`;
+      const boxResized = size !== boxSize;
+      boxSize = size;
+      const fit = fitScale({ width: content.offsetWidth, height: content.offsetHeight }, { width: box.clientWidth, height: box.clientHeight });
+      scale = nextScale(scale, fit, boxResized);
+      content.style.setProperty('--fit-scale', String(scale));
+      content.dataset.fitScale = String(scale);
+    });
+    observer.observe(box);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
 
   // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
   useEffect(() => {
@@ -122,10 +146,12 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
           </select>
         )}
       </div>
-      <div className="history-board" ref={boardRef}>
-        <StepErrorBoundary key={`${index}-${viewer}`}>
-          <HistoryBoard gameState={boardState} viewer={shownViewer} />
-        </StepErrorBoundary>
+      <div className="history-board" ref={boxRef}>
+        <div className="history-board-content" ref={boardRef}>
+          <StepErrorBoundary key={`${index}-${viewer}`}>
+            <HistoryBoard gameState={boardState} viewer={shownViewer} />
+          </StepErrorBoundary>
+        </div>
       </div>
     </>
   );
@@ -159,7 +185,7 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
   }
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay history-overlay" onClick={onClose}>
       <div className="modal history" role="dialog" aria-label="History" onClick={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
         {body}
