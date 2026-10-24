@@ -154,7 +154,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 | white | ring | |
 | orange | hexagon | |
 | pink | heart | |
-| purple | cross | Quoridor, Monopoly, Ticket to Ride and Parchisi seat colors |
+| purple | cross | |
 | cyan | pentagon | |
 | gray | none | Ticket to Ride gray routes and Risk neutral armies: "any" or "nobody", told apart by having no symbol |
 

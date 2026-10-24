@@ -350,7 +350,7 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Phones: the five header buttons fill the width, so the title takes its own row above them */
+/* Phones: the six header buttons fill the width, so the title takes its own row above them */
 @media (max-width: 480px) {
   :where([data-game] .game-header) {
     flex-wrap: wrap;

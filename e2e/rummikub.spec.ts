@@ -523,7 +523,8 @@ test.describe('Rummikub controls', () => {
     const { alice, bob } = await start(seat, {
       melded: [1, 2],
       table: [[t('red', 4), J1, t('red', 6)]],
-      racks: { 1: [t('blue', 7), t('blue', 8), t('blue', 9), t('black', 1)] }
+      // Bob's rack is fixed too, so the joker on the table is the only one on his page
+      racks: { 1: [t('blue', 7), t('blue', 8), t('blue', 9), t('black', 1)], 2: [t('black', 2), t('black', 3)] }
     });
     await bob.locator('.rk-joker').hover();
     await expect(bob.locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 5');

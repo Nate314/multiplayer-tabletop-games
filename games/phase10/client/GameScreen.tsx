@@ -19,6 +19,35 @@ import type { Card, DrawSource, PublicGameState, Seat } from '../types.ts';
 
 const MAX_PLAYERS = phase10.info.maxPlayers;
 
+type HandCardsProps = {
+  gameState: PublicGameState;
+  playerNumber: Seat;
+  hand: Card[];
+  selected: number[];
+  disabled: boolean;
+  onToggle: (card: Card) => void;
+};
+
+// Your hand as cards, with the newly drawn ones outlined
+function HandCards({ gameState, playerNumber, hand, selected, disabled, onToggle }: HandCardsProps) {
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
+  return (
+    <div className="hand-cards">
+      {hand.map(card => (
+        <CardView
+          key={card.id}
+          card={card}
+          animKey={cardKey(card.id)}
+          selected={selected.includes(card.id)}
+          drawn={newlyDrawn.includes(card.id)}
+          disabled={disabled}
+          onClick={() => onToggle(card)}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const screenRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number[]>([]);
@@ -36,7 +65,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const showSummary = handSummary !== null && !(isGameOver && finalScoringClosed);
 
   useMoveAnimation(screenRef, gameState, animateMove);
-  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   useEffect(() => {
     // Nothing stays picked or staged across moves, undos or hands
@@ -120,19 +148,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               ))}
             </span>
           </header>
-          <div className="hand-cards">
-            {hand.map(card => (
-              <CardView
-                key={card.id}
-                card={card}
-                animKey={cardKey(card.id)}
-                selected={selected.includes(card.id)}
-                drawn={newlyDrawn.includes(card.id)}
-                disabled={!hasDrawn}
-                onClick={() => toggle(card)}
-              />
-            ))}
-          </div>
+          {/* Continue deals a new hand without a move, so the cards remount to start with nothing outlined */}
+          <HandCards
+            key={handNumber}
+            gameState={gameState}
+            playerNumber={playerNumber}
+            hand={hand}
+            selected={selected}
+            disabled={!hasDrawn}
+            onToggle={toggle}
+          />
           {hasDrawn && (
             <div className="turn-actions">
               {targets.length > 0 && discardCard ? (

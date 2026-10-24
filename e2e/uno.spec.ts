@@ -649,7 +649,7 @@ test.describe('UNO controls', () => {
     await deal(table, { hands: { 1: [c('blue', '9')], 2: [c('red', 'drawTwo')] }, discard: [c('red', '5')], drawPile: [FOUR, FOUR], current: 2 });
     await play(bob, 'red Draw Two');
     await expect(hand(alice).locator('.newly-drawn')).toHaveCount(2);
-    // The queued shuffle deals Alice Wild Draw Fours again; Continue deals without a move
+    // The queued shuffle deals Alice red 1 and red 2 among her new cards; Continue deals without a move
     await table.random(...stacked([one, one, two, two]));
     await scoring(alice).getByRole('button', { name: 'Continue' }).click();
     await scoring(bob).getByRole('button', { name: 'Continue' }).click();

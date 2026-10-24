@@ -50,6 +50,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [sounds, setSounds] = useState(loadHistorySounds);
   const [playing, setPlaying] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+  const shownIndexRef = useRef(index);
   const last = steps.length - 1;
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
@@ -68,7 +69,12 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     }
   }, [client, shownViewer, animations]);
   useMoveAnimation(boardRef, boardState, animate);
-  useStateSounds(boardState, null, sounds);
+  // Only one step forward sounds: a jump over several steps would play the end of the game together with the move
+  const advancedByOne = index === shownIndexRef.current + 1;
+  useEffect(() => {
+    shownIndexRef.current = index;
+  }, [index]);
+  useStateSounds(boardState, null, sounds && advancedByOne);
 
   // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
   useEffect(() => {

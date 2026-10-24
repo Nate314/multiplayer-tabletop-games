@@ -457,6 +457,22 @@ test.describe('Phase 10 controls', () => {
     await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
   });
 
+  test('the card you drew is not outlined again when the next hand is dealt with the same card', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    // Red 5 (id 4) is drawn and hit, which ends the hand; the fresh deck deals Alice the same card again
+    await deal(table, { hands: { 1: [n(5, 'yellow')], 2: [n(1, 'red')] }, groups: phaseOne(1), drawTop: [n(5, 'red')] });
+    await drawPile(alice).click();
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(1);
+    await select(alice, 'yellow 5', 'red 5');
+    await group(alice, 'Set of 5s').getByRole('button', { name: 'Hit here' }).click();
+    await table.random(...UNSHUFFLED);
+    await scoring(alice).getByRole('button', { name: 'Continue' }).click();
+    await scoring(bob).getByRole('button', { name: 'Continue' }).click();
+    await expect(turnMessage(alice)).toHaveText("Hand 2: Bob's turn");
+    await expect(handCards(alice).getByRole('button', { name: 'red 5' })).toHaveCount(1);
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('on your turn, click the draw pile or the discard pile to draw; both are outlined while you can draw', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await deal(table, { hands: { 1: tenCards('red'), 2: tenCards('blue') }, discardPile: [n(12, 'green')] });
@@ -598,12 +614,14 @@ test.describe('Phase 10 controls', () => {
 
   test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
     const animated = await start(seat, 2, true);
+    await deal(animated.table, { hands: { 1: tenCards('blue'), 2: tenCards('green') } });
     await animated.alice.locator('.piles .pile').nth(0).click();
     await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0);
     await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBe(0);
     await expect(animated.bob.locator('.game-screen > .card')).toHaveCount(0);
 
     const still = await start(seat);
+    await deal(still.table, { hands: { 1: tenCards('blue'), 2: tenCards('green') } });
     await still.alice.locator('.piles .pile').nth(0).click();
     await expect(still.bob.getByText('Alice drew from the pile')).toBeVisible();
     expect(await still.bob.evaluate(() => document.getAnimations().length)).toBe(0);

@@ -17,11 +17,8 @@ export function unlockAudio(): void {
 
 export function installAudioUnlock(target: Window): void {
   const events = ['pointerdown', 'keydown'];
-  const unlock = () => {
-    unlockAudio();
-    if (context?.state === 'running') events.forEach(event => target.removeEventListener(event, unlock));
-  };
-  events.forEach(event => target.addEventListener(event, unlock));
+  // The listeners stay, so a context the browser suspended later is revived by the next click or key press
+  events.forEach(event => target.addEventListener(event, unlockAudio));
 }
 
 type Note = { at: number; length: number; hz: number; type: OscillatorType };
@@ -61,13 +58,27 @@ function rattle(ctx: AudioContext, gain: number): void {
   }
 }
 
-// Silently does nothing before the first click or key press, or without Web Audio; never throws into a render
+// Silently does nothing before the first click or key press, or without Web Audio; never throws into a render.
+// A context the browser suspended or interrupted (Safari, iOS) is resumed first, and the sounds play once it runs.
 export function playSounds(names: SoundName[]): void {
   const preferences = getPreferences();
   const heard = audible(names, preferences);
-  if (!context || context.state !== 'running' || heard.length === 0) return;
+  if (!context || context.state === 'closed' || heard.length === 0) return;
   const ctx = context;
-  const gain = preferences.volume * preferences.volume * 0.5;
+  if (ctx.state === 'running') {
+    play(ctx, heard, preferences.volume);
+    return;
+  }
+  try {
+    void ctx.resume().then(() => play(ctx, heard, preferences.volume), () => {});
+  } catch {
+    // A failing audio device must not break the game
+  }
+}
+
+function play(ctx: AudioContext, heard: SoundName[], volume: number): void {
+  if (ctx.state !== 'running') return;
+  const gain = volume * volume * 0.5;
   let offset = 0;
   try {
     heard.forEach(name => {

@@ -66,3 +66,49 @@ test('mute or a volume of 0 silences everything, and an unchecked group is left 
 test('playing sounds without Web Audio or before a click does nothing and does not throw', () => {
   assert.doesNotThrow(() => { unlockAudio(); playSounds(['turn', 'dice']); });
 });
+test('a suspended or interrupted context is resumed and the sound plays once it runs', async () => {
+  let oscillators = 0;
+  let resumes = 0;
+  class FakeAudioContext {
+    static last: FakeAudioContext;
+    state = 'running';
+    currentTime = 0;
+    destination = {};
+    constructor() {
+      FakeAudioContext.last = this;
+    }
+    resume() {
+      resumes++;
+      this.state = 'running';
+      return Promise.resolve();
+    }
+    createOscillator() {
+      oscillators++;
+      const node = { type: '', frequency: { value: 0 }, connect: () => node, start() {}, stop() {} };
+      return node;
+    }
+    createGain() {
+      const node = { gain: { value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect: () => node };
+      return node;
+    }
+  }
+  const globals = globalThis as unknown as { AudioContext?: unknown };
+  const original = globals.AudioContext;
+  globals.AudioContext = FakeAudioContext;
+  try {
+    unlockAudio();
+    playSounds(['move']);
+    assert.equal(oscillators, 1);
+    // The browser suspends the context (Safari also "interrupts" it): the next sound revives it
+    for (const state of ['suspended', 'interrupted']) {
+      FakeAudioContext.last.state = state;
+      const before = oscillators;
+      playSounds(['move']);
+      await Promise.resolve();
+      assert.equal(oscillators, before + 1, state);
+    }
+    assert.equal(resumes, 2);
+  } finally {
+    globals.AudioContext = original;
+  }
+});

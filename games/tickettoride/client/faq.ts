@@ -47,7 +47,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows its shape of its owner instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows its owner\'s shape instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too.'
   },
   {
     question: 'Why is a train card in my hand outlined?',
