@@ -16,7 +16,9 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do I move?',
     answer: 'On your turn, click one of your pieces, then click a highlighted square. Click the piece again to let ' +
-      'it go, or click another of your pieces to choose that one instead.'
+      'it go, or click another of your pieces to choose that one instead. Or drag one of your pieces onto a ' +
+      'highlighted square; drop it anywhere else to put it back. A multi-jump drag stops at each landing: drag the ' +
+      'piece again, or click the next landing square.'
   },
   {
     question: 'How do captures work?',

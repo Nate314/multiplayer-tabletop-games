@@ -17,13 +17,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const layoutRef = useRef<HTMLDivElement>(null);
 
-  // A new move or a new rack starts the turn's placing afresh, with the rack in its own order
+  // A new move or a new rack starts the turn's placing afresh
   const rackId = `${moveCount}:${rack.join('')}`;
-  // The last shuffle, so a move can slide each kept tile from the place it was shown at
-  const shuffleRef = useRef<{ rackId: string; order: number[] } | null>(null);
+  // The last shuffle or rearrange, kept while the rack holds the same letters (so across other players' moves),
+  // and so a move can slide each kept tile from the place it was shown at
+  const orderRef = useRef<{ letters: string; order: number[] } | null>(null);
   const orderOf = useCallback((state: PublicGameState) => {
-    const shuffle = shuffleRef.current;
-    return shuffle?.rackId === `${state.moveCount}:${state.rack.join('')}` ? shuffle.order : identityOrder(state.rack);
+    const saved = orderRef.current;
+    return saved?.letters === state.rack.join('') ? saved.order : identityOrder(state.rack);
   }, []);
 
   // Only the live board and rack animate; the history dialog renders without this hook
@@ -59,7 +60,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           gameState={gameState}
           isMyTurn={isMyTurn}
           initialOrder={orderOf(gameState)}
-          onShuffle={(order) => { shuffleRef.current = { rackId, order }; }}
+          onShuffle={(order) => { orderRef.current = { letters: rack.join(''), order }; }}
         />
       </div>
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />

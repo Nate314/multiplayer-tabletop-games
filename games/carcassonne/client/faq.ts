@@ -15,8 +15,8 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How does a turn go?',
     answer: 'The tile you must place is drawn for you and shown to everyone. Click one of the highlighted squares to put it ' +
-      'there, turn it with the Turn buttons, and click Place tile. Then click one of the circles on your tile to put a ' +
-      'meeple there and click Place meeple, or click No meeple. Anything you finished scores at once.'
+      'there (or drag the tile onto one), turn it with the Turn buttons, and click Place tile. Then click one of the circles on your tile to put a ' +
+      'meeple there (or drag the meeple from the tray onto it) and click Place meeple, or click No meeple. Anything you finished scores at once.'
   },
   {
     question: 'Where can a tile go?',

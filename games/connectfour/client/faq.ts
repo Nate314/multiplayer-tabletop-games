@@ -9,8 +9,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I drop a disc?',
-    answer: 'On your turn, click the arrow above a column, or click anywhere in the column. The disc falls to the ' +
-      'lowest empty cell. A full column cannot be chosen, and its arrow is greyed out.'
+    answer: 'On your turn, drag your disc from the tray above the board onto a column, or click the arrow above a ' +
+      'column, or click anywhere in the column. The disc falls to the lowest empty cell. A full column cannot be chosen, and its arrow is greyed out.'
   },
   {
     question: 'How do I win?',

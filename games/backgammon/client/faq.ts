@@ -35,7 +35,8 @@ export const FAQS: FaqItem[] = [
     question: 'How do I move?',
     answer: 'On your turn, the checkers that can move are highlighted. Click one, then click one of its ' +
       'highlighted destinations. Click the checker again, or anywhere else, to choose a different one. Each ' +
-      'click moves one checker by one die, and your turn ends once your dice are used.'
+      'click moves one checker by one die, and your turn ends once your dice are used. You can also drag a ' +
+      'checker onto a highlighted point or your tray; drop it anywhere else to put it back.'
   },
   {
     question: 'Where can a checker land?',

@@ -1,9 +1,10 @@
-import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import type { Locator, Page } from '@playwright/test';
+import { dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
 import { DEV_DECK } from '../games/catan/devCards.ts';
+import { COSTS, describeResources } from '../games/catan/resources.ts';
 import { LAYOUT } from '../games/catan/testing.ts';
 import type { Building, GameState, Resources } from '../games/catan/types.ts';
 
@@ -1074,5 +1075,101 @@ test.describe('Catan differences from Wikipedia', () => {
     await dropped(alice, 'Cara');
     await dismiss('Cara', alice, bob);
     await expect(status(bob)).toContainText('Too few players are left to go on: Alice wins with 2 points');
+  });
+});
+
+test.describe('Catan building tray', () => {
+  const trayPiece = (page: Page, name: RegExp) => page.getByRole('region', { name: 'Your pieces' }).getByRole('button', { name });
+  const road = (page: Page) => trayPiece(page, /^Road/);
+  const settlementPiece = (page: Page) => trayPiece(page, /^Settlement/);
+  const home = corner(9, 0);
+  const [road1, road2] = ring(9, 0, 2);
+  const next = ring(9, 2, 1)[0];
+
+  // The targets appear when the piece lifts, so lift first and then move to where the target is
+  async function dropOn(page: Page, from: Locator, to: Locator): Promise<void> {
+    await from.scrollIntoViewIfNeeded();
+    await lift(page, from);
+    const box = await to.boundingBox();
+    if (!box) throw new Error('The target is not drawn');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
+    await page.mouse.up();
+  }
+
+  test('a road dragged from the tray onto a highlighted path is built and paid for, like Build road', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, {
+      rolled: true, roads: roadsOf(1, [road1, road2]), buildings: { [home]: settlement(1) }, hands: { 1: { wood: 2, brick: 2 } }
+    });
+    await expect(road(alice)).toHaveAccessibleName('Road, 13 left');
+    await dropOn(alice, road(alice), path(alice, next));
+    await expect(bob.locator('.road.seat1')).toHaveCount(3);
+    await expectHand(alice, { wood: 1, brick: 1 });
+    await expect(road(alice)).toHaveAccessibleName('Road, 12 left');
+    await expect(road(alice)).toBeEnabled();
+  });
+
+  test('a settlement dragged in setup is placed', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, { setup: { order: [1, 2, 3, 3, 2, 1], step: 0, settlement: null } });
+    await expect(settlementPiece(alice)).toHaveAccessibleName('Settlement, 5 left');
+    await expect(road(alice)).toBeDisabled();
+    await dropOn(alice, settlementPiece(alice), vertex(alice, home));
+    await expect(piece(bob, "Alice's settlement")).toHaveCount(1);
+    await expect(settlementPiece(alice)).toHaveAccessibleName('Settlement, 4 left');
+    await expect(alice.getByText('Place a road next to it: click a highlighted path.')).toBeVisible();
+    await expect(road(alice)).toBeEnabled();
+  });
+
+  test('at phone width, a settlement released a little off the intersection is still built there', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, { setup: { order: [1, 2, 3, 3, 2, 1], step: 0, settlement: null } });
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await settlementPiece(alice).scrollIntoViewIfNeeded();
+    await lift(alice, settlementPiece(alice));
+    const box = (await vertex(alice, home).boundingBox())!;
+    expect(box.width).toBeLessThan(16); // the drawn circle is small on a phone
+    await alice.mouse.move(box.x + box.width / 2 + 8, box.y + box.height / 2, { steps: 8 });
+    await expect(vertex(alice, home)).toHaveCSS('stroke-width', '5px'); // the drawn circle shows it is under the piece
+    await alice.mouse.up();
+    await expect(piece(bob, "Alice's settlement")).toHaveCount(1);
+    await expect(settlementPiece(alice)).toHaveAccessibleName('Settlement, 4 left');
+  });
+
+  test('a piece you cannot afford is dimmed with its cost as the title', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, { rolled: true, hands: { 1: { wood: 1 } } });
+    await expect(road(alice)).toBeDisabled();
+    await expect(road(alice)).toHaveAttribute('title', `Needs ${describeResources(COSTS.road)}`);
+    await expect(trayPiece(alice, /^City/)).toHaveAttribute('title', `Needs ${describeResources(COSTS.city)}`);
+  });
+
+  test('tapping a tray piece highlights its spots like the build button, and a click builds there', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, {
+      rolled: true, roads: roadsOf(1, [road1]), buildings: { [home]: settlement(1) }, hands: { 1: ROAD }
+    });
+    await expect(path(alice, road2)).toHaveCount(0);
+    await road(alice).click();
+    await expect(road(alice)).toHaveAttribute('aria-pressed', 'true');
+    await expect(button(alice, 'Cancel')).toBeVisible();
+    await clickPath(alice, road2);
+    await expect(bob.locator('.road.seat1')).toHaveCount(2);
+    await expectHand(alice, {});
+    await expect(road(alice)).toHaveAccessibleName('Road, 13 left');
+  });
+
+  test('a piece dropped off a highlighted spot goes back and costs nothing', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, {
+      rolled: true, roads: roadsOf(1, [road1]), buildings: { [home]: settlement(1) }, hands: { 1: ROAD }
+    });
+    await road(alice).scrollIntoViewIfNeeded();
+    await lift(alice, road(alice));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(1);
+    await expect(path(alice, road2)).toHaveCount(1); // lifting lights the spots, as Build road does
+    const sea = await alice.locator('.sea').boundingBox();
+    if (!sea) throw new Error('The sea is not drawn');
+    await alice.mouse.move(sea.x + 10, sea.y + sea.height / 2, { steps: 8 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(path(alice, road2)).toHaveCount(0); // back to no build mode
+    await expect(bob.locator('.road.seat1')).toHaveCount(1);
+    await expectHand(alice, ROAD);
+    await expect(road(alice)).toHaveAccessibleName('Road, 14 left');
   });
 });

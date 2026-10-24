@@ -20,6 +20,11 @@
   --dice-face-default: #ffffff;
   --dice-pip-default: #1d1d1b;
   --dice-selected-default: #2d6a4f;
+  --drag-over-default: #2d6a4f;
+  --piece-tray-bg-default: #ffffff;
+  --piece-tray-border-default: #d9d9d4;
+  --piece-tray-text-default: #1d1d1b;
+  --piece-tray-selected-default: #2d6a4f;
 }
 
 :root[data-theme="dark"] {
@@ -42,6 +47,11 @@
   --dice-face-default: #f2f1ec;
   --dice-pip-default: #1d1d1b;
   --dice-selected-default: #3f8f6b;
+  --drag-over-default: #4ba67d;
+  --piece-tray-bg-default: #222221;
+  --piece-tray-border-default: #3a3a38;
+  --piece-tray-text-default: #ededea;
+  --piece-tray-selected-default: #4ba67d;
 }
 
 .lobby {
@@ -1016,4 +1026,84 @@
 
 :where(button.dice-die:focus-visible) {
   box-shadow: 0 0 0 5px var(--lobby-bg), 0 0 0 8px var(--lobby-text);
+}
+
+/*
+ * Drag and drop (src/drag/useDrag.ts): a piece that can be lifted, the faded piece left behind, the floating copy and
+ * the legal target under the pointer. A game can recolor the target outline with --drag-over on [data-game="<id>"].
+ */
+
+/* Only pieces that can be lifted right now take the touch, so every other swipe still scrolls the page */
+:where([data-drag]) {
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+}
+
+:where([data-dragging]) { opacity: 0.35; }
+
+:where(.drag-ghost) {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  cursor: grabbing;
+  scale: 1.08;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+
+:where([data-drag-over]) {
+  outline: 3px solid var(--drag-over, var(--drag-over-default));
+  outline-offset: -3px;
+}
+
+/*
+ * The shared piece tray, a supply of pieces shown as a hand. A game can retheme it on [data-game="<id>"] with
+ * --piece-tray-bg, --piece-tray-border, --piece-tray-text and --piece-tray-selected.
+ */
+
+:where(.piece-tray) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--piece-tray-border, var(--piece-tray-border-default));
+  border-radius: 8px;
+  background: var(--piece-tray-bg, var(--piece-tray-bg-default));
+  color: var(--piece-tray-text, var(--piece-tray-text-default));
+}
+
+:where(.piece-tray-pieces) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:where(.piece-tray-piece) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 1px solid var(--piece-tray-border, var(--piece-tray-border-default));
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+:where(.piece-tray-piece[aria-pressed="true"]) {
+  outline: 3px solid var(--piece-tray-selected, var(--piece-tray-selected-default));
+  outline-offset: 2px;
+}
+
+:where(.piece-tray-piece:disabled) {
+  opacity: 0.4;
+  cursor: default;
+}
+
+:where(.piece-tray-count) {
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
 }

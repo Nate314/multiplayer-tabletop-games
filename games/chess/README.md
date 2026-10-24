@@ -24,6 +24,7 @@ The first player to join plays white and moves first; the second plays black. Ea
 
 - On your turn, click one of your pieces to see its legal moves: a dot marks an empty square and a ring marks a capture. Click a marked square to move
 - Click the piece again, or an unmarked square, to put it down, or click another of your pieces to pick that one instead
+- Or drag one of your pieces onto a marked square, with the mouse or a finger; drop it anywhere else to put it back. A drag to the far rank opens the same box for the pawn's new piece
 - When a pawn reaches the far rank, choose its new piece in the box over the board, or click Cancel
 - The last move's squares are tinted, and a king in check stands on a red square
 - The side panel shows the status, whose turn it is, each player's color and the pieces each player has captured

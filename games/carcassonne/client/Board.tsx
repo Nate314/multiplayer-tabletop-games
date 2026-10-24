@@ -3,8 +3,9 @@ import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent }
 import TileArt from './TileArt';
 import Meeple from './Meeple';
 import { spotOf } from './spots.ts';
-import { meepleKey, tileKey } from './keys.ts';
+import { cellTarget, meepleKey, spotTarget, tileKey } from './keys.ts';
 import type { FeatureRef, Placement, Seat, TileType } from '../types.ts';
+import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
 
 export const CELL = 100;
 const MARGIN = 1.5; // cells of space around the tiles when fitting the board
@@ -115,11 +116,7 @@ export default function Board({ board, highlight = null, cells = [], preview = n
   // A drag swallows the click that ends it, so panning never places a tile
   const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
     const current = drag.current;
-    if (current?.moved) {
-      const swallow = (click: MouseEvent) => { click.stopPropagation(); click.preventDefault(); };
-      window.addEventListener('click', swallow, { capture: true, once: true });
-      setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
-    }
+    if (current?.moved) swallowNextClick();
     if (current && svgRef.current?.hasPointerCapture(event.pointerId)) svgRef.current.releasePointerCapture(event.pointerId);
     drag.current = null;
   };
@@ -159,6 +156,7 @@ export default function Board({ board, highlight = null, cells = [], preview = n
               height={CELL - 8}
               rx="6"
               role="button"
+              data-drop={cellTarget(cell)}
               aria-label={`Place the tile at column ${cell.x}, row ${cell.y}`}
               onClick={() => onCell?.(cell)}
             />
@@ -185,7 +183,7 @@ export default function Board({ board, highlight = null, cells = [], preview = n
           const x = last.x * CELL + spot.x, y = last.y * CELL + spot.y;
           return (
             <g key={`${feature.kind}-${feature.index}`} className={selected ? 'cc-spot cc-spot-selected' : 'cc-spot'}
-              role="button" aria-label={`Put a meeple on the ${feature.kind}`} onClick={() => onMeeple?.(feature)}>
+              role="button" data-drop={spotTarget(feature)} aria-label={`Put a meeple on the ${feature.kind}`} onClick={() => onMeeple?.(feature)}>
               <circle cx={x} cy={y} r="11" />
               {selected && <Meeple seat={meepleSeat} x={x} y={y} lying={feature.kind === 'field'} />}
             </g>

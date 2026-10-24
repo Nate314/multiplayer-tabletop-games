@@ -16,6 +16,8 @@
   --square-light: #F0D9B5;
   --square-dark: #8C5A3C;
   --target: rgba(102, 187, 106, 0.85);
+  /* The outline on the square under a dragged man (src/App.scss [data-drag-over]) */
+  --drag-over: #2E7D32;
   --last-move: #FFD54F;
   --must-capture: #FF9800;
   --player1: #C62828;
@@ -49,6 +51,7 @@
     --square-light: #B89A78;
     --square-dark: #5E3E2A;
     --player2: #E8DFCC;
+    --drag-over: #81C784;
   }
 
   .game-header {

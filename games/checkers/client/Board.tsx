@@ -1,3 +1,4 @@
+import type { Drag } from '../../../src/drag/useDrag.ts';
 import { squareKey } from './animateMove.ts';
 import { includesPosition } from './selection.ts';
 import { BOARD_SIZE, SEAT_COLORS, isDarkSquare, isSamePosition, pieceAt } from '../rules.ts';
@@ -15,13 +16,14 @@ type BoardProps = {
   targets: Position[]; // squares that can be clicked next
   mustCapture: boolean;
   onSquareClick: (position: Position) => void;
+  drag?: Drag; // the live board only; ids are "<row>-<col>"
 };
 
 function pieceLabel(seat: Seat, king: boolean): string {
   return `${SEAT_COLORS[seat]} ${king ? 'king' : 'man'}`;
 }
 
-export default function Board({ gameState, flipped, dimmed, picked, movable, targets, mustCapture, onSquareClick }: BoardProps) {
+export default function Board({ gameState, flipped, dimmed, picked, movable, targets, mustCapture, onSquareClick, drag }: BoardProps) {
   const { board, lastMove } = gameState;
   const toBoard = (index: number) => flipped ? BOARD_SIZE - 1 - index : index;
 
@@ -48,15 +50,17 @@ export default function Board({ gameState, flipped, dimmed, picked, movable, tar
         {INDEXES.map(screenRow => INDEXES.map(screenCol => {
           const position = { row: toBoard(screenRow), col: toBoard(screenCol) };
           const piece = pieceAt(board, position);
+          const id = `${position.row}-${position.col}`;
           return (
             <div
               key={`${screenRow}-${screenCol}`}
               className={squareClassName(position)}
               data-anim-key={squareKey(position)}
+              data-drop={id}
               onClick={() => onSquareClick(position)}
             >
               {piece && (
-                <div className={pieceClassName(position, piece.seat, piece.king)} aria-label={pieceLabel(piece.seat, piece.king)}>
+                <div className={pieceClassName(position, piece.seat, piece.king)} aria-label={pieceLabel(piece.seat, piece.king)} {...drag?.source(id)}>
                   {piece.king && <span className="crown" aria-hidden="true">♔</span>}
                 </div>
               )}

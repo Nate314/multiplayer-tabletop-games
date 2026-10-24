@@ -2,18 +2,20 @@ import Tile from './Tile';
 import { squareKey } from './animateMove.ts';
 import { CENTER, premiumAt } from '../rules.ts';
 import type { Board as BoardCells, Placement } from '../types.ts';
+import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 
 type BoardProps = {
   board: BoardCells;
   pending?: Placement[]; // tiles placed this turn but not yet played
   highlighted?: Placement[]; // the last play's tiles
-  onSquare?: (row: number, col: number) => void; // left out, the board is read-only
+  onSquare?: (row: number, col: number) => void; // left out, the board is read-only and no square is a drop target
+  sourceProps?: (row: number, col: number) => DragSourceProps | undefined; // drag props for a square whose tile can be lifted
 };
 
 const has = (tiles: Placement[], row: number, col: number) => tiles.some(tile => tile.row === row && tile.col === col);
 
 // The 15x15 board, scaled to the width it is given
-export default function Board({ board, pending = [], highlighted = [], onSquare }: BoardProps) {
+export default function Board({ board, pending = [], highlighted = [], onSquare, sourceProps }: BoardProps) {
   return (
     <div className="board-wrap">
       <div className="board">
@@ -49,6 +51,8 @@ export default function Board({ board, pending = [], highlighted = [], onSquare 
               disabled={!onSquare || cell !== null}
               aria-label={`Row ${row + 1}, column ${col + 1}`}
               onClick={() => onSquare?.(row, col)}
+              data-drop={onSquare ? `square-${row}-${col}` : undefined}
+              {...sourceProps?.(row, col)}
             >
               {content}
             </button>

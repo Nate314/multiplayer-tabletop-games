@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'How do I place a word?',
-    answer: 'On your turn, click a tile on your rack, then click an empty square on the board. Repeat for each letter. Click a tile you placed this turn to put it back on your rack, or click Recall to take them all back. When the word is ready, click Play.'
+    answer: 'On your turn, click a tile on your rack, then click an empty square on the board. Repeat for each letter. Click a tile you placed this turn to put it back on your rack, or click Recall to take them all back. You can also drag a tile from your rack onto an empty square, drag a placed tile to another empty square to move it, or drag it onto your rack to take it back. When the word is ready, click Play.'
   },
   {
     question: 'Where can tiles go?',
@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What does Shuffle do?',
-    answer: 'It mixes the order of the tiles on your rack, to help you spot words. Only you see it, and you can shuffle at any time.'
+    answer: 'It mixes the order of the tiles on your rack, to help you spot words. Only you see it, and you can shuffle at any time. To put a tile in a place of your choosing, drag it to that place on your rack, even when it is not your turn.'
   },
   {
     question: 'How many tiles are there?',

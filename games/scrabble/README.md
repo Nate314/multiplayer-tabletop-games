@@ -20,11 +20,13 @@ Build crossing words from your letter tiles on the premium-square board.
 ## Controls
 
 - Click a tile on your rack, then an empty square, to place it. Click a tile you placed this turn to take it back, or click Recall to take them all back
+- Or drag a tile from your rack onto an empty square, with the mouse or a finger. Drag a tile you placed this turn to another empty square to move it, or onto your rack to take it back. Dropped anywhere else, a tile goes back where it was
 - Placing a blank shows a row of letters under your rack; click the letter it stands for
 - The line under your rack shows the words you are making and their score, or why the tiles cannot be played yet. Click Play to play them
 - Click Exchange, select the tiles to swap, then click Exchange again to confirm, or Cancel
 - Click Pass to skip your turn
 - Click Shuffle to mix the order of your rack. Only you see it
+- Drag a tile on your rack onto another place on it to rearrange the rack, at any time, even when it is not your turn. Only you see it, and the order stays until your rack's letters change
 - After six scoreless turns in a row, every player sees an End game button next to Undo. Clicking it ends the game at once
 - The tiles of the last play are outlined, and the board and rack are dimmed when it is not your turn
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves

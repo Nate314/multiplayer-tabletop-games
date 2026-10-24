@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Board } from '../games/connectfour/types.ts';
 
 // One test per rule, control and difference in games/connectfour/README.md. Seat 1 (Alice) plays Red and moves first,
@@ -20,6 +20,7 @@ async function setUp(table: Table, board: Board, toMove = 1) {
 const cell = (page: Page, name: string) => page.locator(`[data-anim-key="cell-${name.replace(',', '-')}"]`);
 const disc = (page: Page, name: string) => cell(page, name).locator('.disc');
 const arrow = (page: Page, column: number) => page.getByRole('button', { name: `Drop in column ${column}` });
+const supply = (page: Page) => page.getByRole('region', { name: 'Your disc' }).getByRole('button', { name: 'Your disc' });
 const status = (page: Page) => page.locator('.game-status');
 const turn = (page: Page) => page.locator('.turn-message');
 
@@ -174,6 +175,32 @@ test.describe('Connect Four controls', () => {
     await expect(disc(bob, '5,2')).toHaveCount(1);
     await cell(bob, '0,5').click();
     await expect(disc(alice, '5,5')).toHaveAttribute('aria-label', 'Yellow disc');
+  });
+
+  test('a disc dragged from your supply onto a column falls to its lowest empty cell', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await drag(alice, supply(alice), cell(alice, '0,3'));
+    await expect(disc(bob, '5,3')).toHaveAttribute('aria-label', 'Red disc');
+    await expect(turn(bob)).toHaveText('Your turn');
+  });
+
+  test('a disc dropped on a full column or off the board goes back', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await setUp(table, boardOf('2......', '1......', '2......', '1......', '2......', '1......'));
+    await lift(alice, supply(alice));
+    await expect(alice.locator('.drag-ghost')).toBeVisible();
+    await alice.mouse.move(100, 5, { steps: 4 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await drag(alice, supply(alice), cell(alice, '3,0'));
+    await expect(alice.locator('.disc')).toHaveCount(6);
+    await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('off turn, the disc is disabled', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await expect(supply(bob)).toBeDisabled();
+    await expect(supply(alice)).toBeEnabled();
   });
 
   test('the arrows are off and the board is dimmed when it is not your turn', async ({ seat }) => {

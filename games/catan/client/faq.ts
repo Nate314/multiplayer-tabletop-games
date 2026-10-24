@@ -28,7 +28,8 @@ export const FAQS: FaqItem[] = [
     question: 'What does building cost?',
     answer: 'Road: 1 wood and 1 brick. Settlement: 1 wood, 1 brick, 1 sheep and 1 wheat. City (upgrading a settlement): ' +
       '2 wheat and 3 ore. Development card: 1 sheep, 1 wheat and 1 ore. Each player has 15 roads, 5 settlements and 4 ' +
-      'cities. A road must join your own road, settlement or city, and a new settlement must be next to one of your roads.'
+      'cities. A road must join your own road, settlement or city, and a new settlement must be next to one of your roads. ' +
+      'Build with the Build buttons, or drag a road, settlement or city from your pieces tray onto a highlighted spot (or tap the piece, then the spot).'
   },
   {
     question: 'What happens on a 7?',

@@ -35,6 +35,11 @@
   --seat4: #2e8b3e;
   --seat5: #3a3a3a;
   --meeple-edge: #1b1712;
+  --drag-over: #d29a00;
+  --piece-tray-bg: var(--panel-bg);
+  --piece-tray-border: var(--panel-border);
+  --piece-tray-text: var(--text);
+  --piece-tray-selected: var(--highlight);
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -225,6 +230,48 @@
 
   .cc-cell-selected {
     stroke-dasharray: none;
+  }
+
+  /* SVG ignores outline, so a legal target under a dragged tile or meeple takes a solid, thick stroke */
+
+  .cc-cell[data-drag-over] {
+    fill: rgba(255, 214, 64, 0.6);
+    stroke: var(--highlight);
+    stroke-width: 6;
+    stroke-dasharray: none;
+    outline: none;
+  }
+
+  .cc-spot[data-drag-over] circle {
+    stroke: var(--highlight);
+    stroke-width: 4;
+    stroke-dasharray: none;
+  }
+
+  .cc-spot[data-drag-over] {
+    outline: none;
+  }
+
+  .cc-current-tile[data-drag] {
+    cursor: grab;
+  }
+
+  .cc-side-panel .piece-tray {
+    margin-top: 10px;
+  }
+
+  .cc-side-panel .piece-tray-piece {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--piece-tray-border);
+    background: var(--piece-tray-bg);
+  }
+
+  .cc-side-panel .piece-tray-piece .cc-meeple-icon {
+    width: 28px;
+    height: 28px;
   }
 
   .cc-preview {

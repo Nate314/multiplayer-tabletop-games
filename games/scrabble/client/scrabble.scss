@@ -25,6 +25,7 @@
   --tile-text: #2a1d0c;
   --blank-text: #b0361f;
   --highlight: #e08a00;
+  --drag-over: #1f7a52;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -56,6 +57,7 @@
     --tile-bg: #e4c68d;
     --tile-border: #9c7a40;
     --highlight: #ffb020;
+    --drag-over: #7fe0b0;
   }
 
   .game-header {
@@ -370,6 +372,22 @@
 
   .rack-slot:disabled {
     cursor: default;
+    pointer-events: none; /* so off turn a press reaches .rack-cell, which can still be dragged to rearrange the rack */
+  }
+
+  /* Each place on the rack: a drag source for its tile and a drop target for rearranging */
+
+  .rack-cell {
+    display: flex;
+    border-radius: 6px;
+  }
+
+  /* The legal square under a dragged tile */
+
+  .square[data-drag-over] {
+    outline-width: 0.5cqw;
+    outline-offset: -0.5cqw;
+    filter: brightness(1.1);
   }
 
   .rack-slot-selected .tile {

@@ -5,6 +5,7 @@ import GameStatus from './GameStatus';
 import UndoVote from '../../../src/components/UndoVote';
 import DrawAndResign from '../../../src/components/DrawAndResign';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import animateMove from './animateMove.ts';
 import { includesPosition, isCompleteMove, nextSquares } from './selection.ts';
 import { getLegalMoves, isJump, isSamePosition } from '../rules.ts';
@@ -13,6 +14,12 @@ import type { Position, PublicGameState } from '../types.ts';
 
 // Squares picked during one turn; a pick from an earlier state is dropped
 type Picked = { moveCount: number; squares: Position[] };
+
+// Drag ids, for both the piece and the square it is dropped on
+function positionOf(id: string): Position {
+  const [row, col] = id.split('-').map(Number);
+  return { row, col };
+}
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [pickedState, setPicked] = useState<Picked>({ moveCount: -1, squares: [] });
@@ -34,17 +41,26 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     setPicked({ moveCount, squares });
   }
 
-  // Click a piece, then each landing square; the move is sent once the last jump is picked
+  // The path a lifted piece continues: the jumps so far when it is the piece part way through them, else just the piece
+  function pathFrom(position: Position): Position[] {
+    return picked.length > 1 && isSamePosition(picked[0], position) ? picked : [position];
+  }
+
+  // Sends the move once the last jump is picked
+  function advance(squares: Position[]) {
+    if (isCompleteMove(legal, squares)) {
+      gameService.makeMove({ type: 'move', path: squares });
+      pick([]);
+    } else {
+      pick(squares);
+    }
+  }
+
+  // Click a piece, then each landing square
   function handleSquareClick(position: Position) {
     if (!isMyTurn) return;
     if (includesPosition(targets, position)) {
-      const squares = [...picked, position];
-      if (isCompleteMove(legal, squares)) {
-        gameService.makeMove({ type: 'move', path: squares });
-        pick([]);
-      } else {
-        pick(squares);
-      }
+      advance([...picked, position]);
     } else if (includesPosition(movable, position)) {
       // Clicking the chosen piece again lets it go; a piece part way through a jump starts over
       const again = picked.length === 1 && isSamePosition(picked[0], position);
@@ -53,6 +69,15 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       pick([]);
     }
   }
+
+  // A drag stops at each landing of a multi-jump; the man can be dragged again from its start square
+  const drag = useDrag({
+    canLift: id => includesPosition(movable, positionOf(id)),
+    canDrop: (id, target) => includesPosition(nextSquares(legal, pathFrom(positionOf(id))), positionOf(target)),
+    onLift: id => pick(pathFrom(positionOf(id))),
+    onDrop: (id, target) => advance([...pathFrom(positionOf(id)), positionOf(target)]),
+    onCancel: () => { if (picked.length <= 1) pick([]); }
+  });
 
   function hint(): string {
     if (!isMyTurn) return '';
@@ -75,6 +100,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             targets={targets}
             mustCapture={mustCapture}
             onSquareClick={handleSquareClick}
+            drag={drag}
           />
           <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
         </div>

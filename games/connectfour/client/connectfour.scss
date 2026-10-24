@@ -115,6 +115,32 @@
     background: rgba(255, 255, 255, 0.18);
   }
 
+  /* The column under a dragged disc */
+
+  .column-over {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .cell.column-over {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .piece-tray {
+    --piece-tray-bg: var(--panel-bg);
+    --piece-tray-border: var(--panel-border);
+    --piece-tray-text: var(--text);
+    --drag-over: var(--last-move);
+    margin: 6px;
+  }
+
+  .tray-disc {
+    box-sizing: border-box;
+    width: calc(var(--cell) * 0.6);
+    height: calc(var(--cell) * 0.6);
+    border-radius: 50%;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  }
+
   .drop-button:disabled {
     opacity: 0.25;
     cursor: not-allowed;
@@ -153,12 +179,14 @@
     box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
   }
 
-  .disc.player1 {
+  .disc.player1,
+  .tray-disc.player1 {
     background: radial-gradient(circle at 35% 35%, #EF5350 0%, var(--player1) 70%);
     border: 3px solid var(--player1-edge);
   }
 
-  .disc.player2 {
+  .disc.player2,
+  .tray-disc.player2 {
     background: radial-gradient(circle at 35% 35%, #FFEE58 0%, var(--player2) 70%);
     border: 3px solid var(--player2-edge);
   }

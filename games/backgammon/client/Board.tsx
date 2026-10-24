@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useDrag } from '../../../src/drag/useDrag.ts';
+import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 import { checkerKey } from './animateMove.ts';
 import { CHECKER_COLORS, CHECKERS_PER_PLAYER, legalSteps, otherSeat, pointIndex } from '../rules.ts';
 import type { From, Move, PublicGameState, Seat, To } from '../types.ts';
@@ -24,7 +26,13 @@ type BoardProps = {
   onMove: (move: Move) => void;
 };
 
-function Stack({ seat, count, location }: { seat: Seat; count: number; location: Location }) {
+// Drag ids and drop targets are the location itself: a point index, 'bar' or 'off'
+const idOf = (location: Location) => String(location);
+const locationOf = (id: string): Location => id === 'bar' || id === 'off' ? id : Number(id);
+
+type StackProps = { seat: Seat; count: number; location: Location; dragProps?: DragSourceProps };
+
+function Stack({ seat, count, location, dragProps }: StackProps) {
   const shown = Math.min(count, MAX_SHOWN);
   return (
     <div className="bg-stack">
@@ -35,6 +43,7 @@ function Stack({ seat, count, location }: { seat: Seat; count: number; location:
             key={index}
             className={`bg-checker ${CHECKER_COLORS[seat]}`}
             data-anim-key={outermost ? checkerKey(location, seat) : undefined}
+            {...(outermost ? dragProps : undefined)}
           >
             {outermost && count > MAX_SHOWN && count}
           </div>
@@ -85,6 +94,14 @@ export default function Board({ gameState, playerNumber, isMyTurn, onMove }: Boa
     }
   }
 
+  const drag = useDrag({
+    canLift: id => isMyTurn && !pendingChoice && steps.some(step => step.from === locationOf(id)),
+    canDrop: (id, target) => steps.some(step => step.from === locationOf(id) && step.to === locationOf(target)),
+    onLift: id => setSelection({ from: locationOf(id) as From, moveCount }),
+    onDrop: (id, target) => moveTo(locationOf(id) as From, locationOf(target) as To),
+    onCancel: () => setSelection(null)
+  });
+
   // Where the viewer can click: the selected checker, the checkers that can move, and the selected checker's destinations
   function inputClass(location: Location): string {
     if (location === selected) return ' selected';
@@ -107,10 +124,11 @@ export default function Board({ gameState, playerNumber, isMyTurn, onMove }: Boa
       <div
         key={number}
         className={`bg-point bg-point-${half} ${shade}${inputClass(index)}${lastMoveClass(index, null)}`}
+        data-drop={idOf(index)}
         onClick={() => handleClick(index)}
       >
         <span className="bg-point-label">{number}</span>
-        {point && <Stack seat={point.seat} count={point.count} location={index} />}
+        {point && <Stack seat={point.seat} count={point.count} location={index} dragProps={drag.source(idOf(index))} />}
       </div>
     );
   }
@@ -122,7 +140,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onMove }: Boa
         className={`bg-bar${mine ? inputClass('bar') : ''}${lastMoveClass('bar', seat)}`}
         onClick={() => mine && handleClick('bar')}
       >
-        {bar[seat] > 0 && <Stack seat={seat} count={bar[seat]} location="bar" />}
+        {bar[seat] > 0 && <Stack seat={seat} count={bar[seat]} location="bar" dragProps={mine ? drag.source('bar') : undefined} />}
       </div>
     );
   }
@@ -132,6 +150,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onMove }: Boa
     return (
       <div
         className={`bg-tray${mine ? inputClass('off') : ''}${lastMoveClass('off', seat)}`}
+        data-drop={mine ? 'off' : undefined}
         onClick={() => mine && handleClick('off')}
       >
         <span className="bg-point-label">{borneOff[seat]}/{CHECKERS_PER_PLAYER}</span>

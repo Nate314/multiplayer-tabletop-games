@@ -17,12 +17,17 @@ export function heldTiles(draft: Draft, held: Held): number[] {
 
 const TABLE_TILES_STAY = 'Tiles from the table must stay on the table';
 
+// Whether the target is on the rack: the rack itself, or in front of a rack tile
+export function isRackTarget(draft: Draft, target: Target): boolean {
+  return target.kind === 'rack' || (target.kind === 'before' && draft.rack.includes(target.id));
+}
+
 // Moves what is held to the target. `committed` are the tiles on the table at the start of the turn,
 // which may move about the table but never to the rack.
 export function moveTo(draft: Draft, held: Held, target: Target, committed: ReadonlySet<number>): Result<Draft> {
   const tiles = heldTiles(draft, held);
   if (tiles.length === 0 || (target.kind === 'before' && tiles.includes(target.id))) return { state: draft };
-  const toRack = target.kind === 'rack' || (target.kind === 'before' && draft.rack.includes(target.id));
+  const toRack = isRackTarget(draft, target);
   if (toRack && tiles.some(id => committed.has(id))) return { error: TABLE_TILES_STAY };
 
   // Groups emptied by the move are dropped only at the end, so group indexes keep meaning what was shown
@@ -56,8 +61,7 @@ const WAIT_FOR_TURN = 'Wait for your turn to put tiles on the table';
 // Puts what is held at the target. Off turn, only the rack can be rearranged.
 export function placeHeld(state: Interaction, target: Target, committed: ReadonlySet<number>, isMyTurn: boolean): Interaction {
   if (!state.held) return state;
-  const onRack = target.kind === 'rack' || (target.kind === 'before' && state.draft.rack.includes(target.id));
-  if (!isMyTurn && !onRack) return { ...state, hint: WAIT_FOR_TURN };
+  if (!isMyTurn && !isRackTarget(state.draft, target)) return { ...state, hint: WAIT_FOR_TURN };
   const result = moveTo(state.draft, state.held, target, committed);
   if ('error' in result) return { ...state, held: null, hint: result.error };
   return { draft: result.state, held: null, hint: null };

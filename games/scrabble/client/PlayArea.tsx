@@ -5,8 +5,11 @@ import Board from './Board';
 import Tile from './Tile';
 import { rackKey, squareKey } from './animateMove.ts';
 import { useSlides } from './useSlides.ts';
+import { moveInOrder, movePending } from './placing.ts';
+import type { PendingTile } from './placing.ts';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import { BLANK, LETTERS, RACK_SIZE, evaluatePlacement } from '../rules.ts';
-import type { Placement, PublicGameState } from '../types.ts';
+import type { PublicGameState } from '../types.ts';
 
 type PlayAreaProps = {
   gameState: PublicGameState;
@@ -15,14 +18,21 @@ type PlayAreaProps = {
   onShuffle: (order: number[]) => void;
 };
 
-// A tile put on the board this turn, and the rack slot it came from
-type PendingTile = Placement & { slot: number };
-
 type Square = { row: number; col: number };
+
+// Drag ids: a rack tile by its slot, a tile placed this turn by its square; targets are squares, rack places and the rack
+const SQUARE = /^(?:square|pending)-(\d+)-(\d+)$/;
+const squareOf = (id: string): Square | null => {
+  const match = SQUARE.exec(id);
+  return match ? { row: Number(match[1]), col: Number(match[2]) } : null;
+};
+const numberAfter = (prefix: string, id: string) => id.startsWith(prefix) ? Number(id.slice(prefix.length)) : null;
 
 // The board, the player's rack and the turn's buttons. The game screen remounts it after every move,
 // so placed tiles and selections never outlive the rack they were made from.
 // Tiles glide between the rack and the board as they are placed and taken back, and to their new places on a shuffle.
+// Rack tiles can be dragged onto the board on your turn, or between places on the rack at any time; tiles placed
+// this turn can be dragged to another square or back to the rack. Only placing and Play reach the server.
 export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle }: PlayAreaProps) {
   const { board, rack, bagCount, lastMove } = gameState;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -33,7 +43,11 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
   const [blankSquare, setBlankSquare] = useState<Square | null>(null);
   const [exchanging, setExchanging] = useState<number[] | null>(null);
 
+  const liftSelected = useRef(false); // the current drag selected its rack tile, so a drag that ends without placing clears it
+
   const isPlaced = (slot: number) => pending.some(tile => tile.slot === slot);
+  const pendingAt = ({ row, col }: Square) => pending.find(tile => tile.row === row && tile.col === col);
+  const isOpen = (square: Square) => board[square.row][square.col] === null && !pendingAt(square);
   const rackKeyOf = (slot: number) => rackKey(order.indexOf(slot));
   const preview = pending.length > 0 ? evaluatePlacement(board, pending) : null;
   const canExchange = isMyTurn && bagCount >= RACK_SIZE;
@@ -54,16 +68,23 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
     setBlankSquare(null);
   }
 
+  // The rack tile in `slot` goes on the square; a blank first asks for its letter
+  function placeSlot(slot: number, row: number, col: number) {
+    if (rack[slot] === BLANK) {
+      setSelected(slot);
+      setBlankSquare({ row, col });
+    } else place({ row, col, letter: rack[slot], slot });
+  }
+
   function clickSquare(row: number, col: number) {
-    const taken = pending.find(tile => tile.row === row && tile.col === col);
+    const taken = pendingAt({ row, col });
     if (taken) {
       slide([[squareKey(row, col), rackKeyOf(taken.slot)]]);
       setPending(pending.filter(tile => tile !== taken));
       return;
     }
     if (selected === null || exchanging) return;
-    if (rack[selected] === BLANK) setBlankSquare({ row, col });
-    else place({ row, col, letter: rack[selected], slot: selected });
+    placeSlot(selected, row, col);
   }
 
   function recall() {
@@ -78,12 +99,61 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
     setExchanging([]);
   }
 
-  function shuffleRack() {
-    const next = shuffle(order, Math.random);
+  function rearrange(next: number[]) {
     slide(order.map((slot, place) => [rackKey(place), rackKey(next.indexOf(slot))]));
     setOrder(next);
     onShuffle(next);
   }
+
+  function shuffleRack() {
+    rearrange(shuffle(order, Math.random));
+  }
+
+  const drag = useDrag({
+    canLift: id => {
+      if (blankSquare) return false;
+      const slot = numberAfter('rack-', id);
+      if (slot !== null) return !isPlaced(slot);
+      const square = squareOf(id);
+      return isMyTurn && square !== null && pendingAt(square) !== undefined;
+    },
+    canDrop: (id, target) => {
+      const square = squareOf(target);
+      if (id.startsWith('rack-')) return square ? isMyTurn && !exchanging && isOpen(square) : target.startsWith('place-');
+      return square ? isOpen(square) : target === 'rack' || target.startsWith('place-');
+    },
+    onLift: id => {
+      const slot = numberAfter('rack-', id);
+      if (slot === null || !isMyTurn || exchanging) return;
+      liftSelected.current = true;
+      setSelected(slot);
+      setBlankSquare(null);
+    },
+    onDrop: (id, target) => {
+      const slot = numberAfter('rack-', id);
+      const to = squareOf(target);
+      const placeTo = numberAfter('place-', target);
+      const lifted = liftSelected.current;
+      liftSelected.current = false;
+      if (slot !== null) {
+        if (to) placeSlot(slot, to.row, to.col);
+        else if (placeTo !== null) {
+          rearrange(moveInOrder(order, slot, placeTo));
+          if (lifted) setSelected(null);
+        }
+        return;
+      }
+      const from = squareOf(id)!;
+      if (to) {
+        slide([[squareKey(from.row, from.col), squareKey(to.row, to.col)]]);
+        setPending(movePending(pending, from, to));
+      } else clickSquare(from.row, from.col); // back to its slot on the rack
+    },
+    onCancel: () => {
+      if (liftSelected.current) setSelected(null);
+      liftSelected.current = false;
+    }
+  });
 
   function play() {
     gameService.makeMove({ type: 'play', tiles: pending.map(({ row, col, letter, blank }) => ({ row, col, letter, blank })) });
@@ -114,22 +184,24 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
         pending={pending}
         highlighted={lastMove?.type === 'play' ? lastMove.tiles : []}
         onSquare={isMyTurn && !exchanging ? clickSquare : undefined}
+        sourceProps={(row, col) => drag.source(`pending-${row}-${col}`)}
       />
-      <div className="rack" aria-label="Your rack">
+      <div className="rack" aria-label="Your rack" data-drop="rack">
         {order.map((slot, place) => {
           const classes = ['rack-slot'];
           if (selected === slot || exchanging?.includes(slot)) classes.push('rack-slot-selected');
           if (isPlaced(slot)) classes.push('rack-slot-placed');
           return (
-            <button
-              key={slot}
-              type="button"
-              className={classes.join(' ')}
-              disabled={!isMyTurn || (isPlaced(slot) && !exchanging)}
-              onClick={() => clickSlot(slot)}
-            >
-              <Tile letter={rack[slot]} animKey={rackKey(place)} />
-            </button>
+            <div key={slot} className="rack-cell" data-drop={`place-${place}`} {...drag.source(`rack-${slot}`)}>
+              <button
+                type="button"
+                className={classes.join(' ')}
+                disabled={!isMyTurn || (isPlaced(slot) && !exchanging)}
+                onClick={() => clickSlot(slot)}
+              >
+                <Tile letter={rack[slot]} animKey={rackKey(place)} />
+              </button>
+            </div>
           );
         })}
       </div>

@@ -1,11 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
+import PieceTray from '../../../src/components/PieceTray';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import { meeplesOnBoard, placementOptions, tileFeatures } from '../board.ts';
 import { meepleError } from '../rules.ts';
 import { MEEPLES_PER_PLAYER } from '../tiles.ts';
 import Board from './Board';
+import { MeepleIcon } from './Meeple';
+import { cellTarget, spotTarget } from './keys.ts';
+import { meepleBlocked } from './meepleBlocked.ts';
 import PlayerList from './PlayerList';
 import TurnPanel from './TurnPanel';
 import animateMove from './animateMove.ts';
@@ -66,6 +71,29 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     update({ meeple: same ? null : feature });
   };
 
+  // The tile drops on a highlighted square and the meeple on a circle; a drop only chooses, Place tile and Place meeple still send the move
+  const optionAt = (target: string) => options.find(option => cellTarget(option) === target);
+  const spotAt = (target: string) => freeSpots.find(feature => spotTarget(feature) === target);
+  const drag = useDrag({
+    canLift: id => id === 'tile' ? canMove && !placed : canMove && placed && meeplesLeft > 0 && freeSpots.length > 0,
+    canDrop: (id, target) => id === 'tile' ? !!optionAt(target) : !!spotAt(target),
+    onDrop: (id, target) => {
+      const option = optionAt(target), feature = spotAt(target);
+      if (id === 'tile' && option) pickCell(option);
+      else if (id === 'meeple' && feature) update({ meeple: feature });
+    }
+  });
+
+  const meepleTray = (
+    <PieceTray
+      label="Your meeple"
+      pieces={[{ id: 'meeple', label: 'Meeple', icon: <MeepleIcon seat={playerNumber} />, count: meeplesLeft, blocked: meepleBlocked(meeplesLeft, freeSpots.length) }]}
+      selected={null}
+      onTap={() => {}} // the circles are already lit; tapping one chooses it
+      drag={drag}
+    />
+  );
+
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
@@ -100,6 +128,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             meepleSpots={freeSpots.length}
             meeplesLeft={meeplesLeft}
             onMeeple={place => gameService.makeMove({ type: 'meeple', feature: place ? choice.meeple : null })}
+            tileDrag={drag.source('tile')}
+            meepleTray={meepleTray}
           />
           <PlayerList gameState={gameState} viewer={playerNumber} />
           <button type="button" className="cc-undo" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>

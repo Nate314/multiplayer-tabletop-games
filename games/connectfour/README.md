@@ -17,7 +17,7 @@ Exactly two players: Player 1 plays Red and moves first, Player 2 plays Yellow.
 
 ## Controls
 
-- On your turn, click the arrow above a column, or click anywhere in the column, to drop a disc there. The arrow of a full column is greyed out
+- On your turn, drag your disc from the tray above the board onto a column to drop it there. Or click the arrow above a column, or click anywhere in the column, to drop a disc there. The arrow of a full column is greyed out
 - The last disc dropped is outlined in yellow, and the winning four glow green
 - The board is dimmed when it is not your turn
 - Click Undo to ask your opponent to undo the last disc

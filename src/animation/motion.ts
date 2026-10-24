@@ -35,11 +35,12 @@ export function boardScale(element: Element): number {
 // Inside a board scaled to fit, the distance is divided by the board's scale.
 // Animates `translate`, which adds to any `transform` the element's CSS already has.
 // A delayed slide waits at `from`, so pieces can follow one another.
-export function slideFrom(element: Element, from: DOMRect, durationMs = MOVE_DURATION_MS, delayMs = 0): void {
+// Returns the animation, or null when reduced motion skips it.
+export function slideFrom(element: Element, from: DOMRect, durationMs = MOVE_DURATION_MS, delayMs = 0): Animation | null {
   cancelAnimations(element);
-  if (prefersReducedMotion()) return;
+  if (prefersReducedMotion()) return null;
   const { x, y } = slideOffset(from, element.getBoundingClientRect(), boardScale(element));
-  element.animate(
+  return element.animate(
     [{ translate: `${x}px ${y}px` }, { translate: '0 0' }],
     { duration: durationMs, delay: delayMs, easing: 'ease-in-out', fill: 'backwards' }
   );

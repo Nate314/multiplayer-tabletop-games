@@ -15,6 +15,8 @@
   --error-bg: #FBE4E1;
   --error-text: #8A1C12;
   --highlight: #FF8F00;
+  /* The outline on the square under a dragged pawn (src/App.scss [data-drag-over]) */
+  --drag-over: #2B2118;
   --die-bg: #FFFFFF;
   --die-pip: #2B2118;
   --player1: #1E88E5;
@@ -45,6 +47,7 @@
     --error-bg: #4A1D18;
     --error-text: #FFD6D0;
     --highlight: #FFB300;
+    --drag-over: #F2E9DC;
     --die-bg: #F2E9DC;
     --die-pip: #1A1714;
     --player1: #42A5F5;

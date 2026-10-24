@@ -18,6 +18,8 @@
   --last-move: rgba(205, 210, 106, 0.75);
   --selected: rgba(20, 85, 30, 0.5);
   --legal: rgba(20, 85, 30, 0.45);
+  /* The outline on the square under a dragged piece (src/App.scss [data-drag-over]) */
+  --drag-over: #14551E;
   --check: radial-gradient(circle, #FF3B30 0%, rgba(231, 0, 0, 0.6) 45%, rgba(169, 0, 0, 0) 80%);
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
@@ -43,6 +45,7 @@
     --light-square: #B9A386;
     --dark-square: #7A5C44;
     --frame: #3A2B20;
+    --drag-over: #8FD19E;
   }
 
   .game-layout {

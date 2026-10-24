@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Board } from '../games/checkers/types.ts';
 
 // One test per rule and control in games/checkers/README.md. Seat 1 (Alice) plays Red from rows 5-7 and moves up the
@@ -324,5 +324,36 @@ test.describe('Checkers controls', () => {
     await expect(faq).toContainText('glow orange');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+});
+
+test.describe('Checkers drag and drop', () => {
+  test('a man dragged onto a highlighted square moves, and a double jump continues from the first landing', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await setUp(table, BRANCHING);
+    await drag(alice, piece(alice, '6,1'), square(alice, '4,3'));
+    await expect(square(alice, '4,3')).toHaveClass(/picked/);
+    await expect(targets(alice)).toHaveCount(2);
+    await expect(square(alice, '2,1')).toHaveClass(/target/);
+    await expect(square(alice, '2,5')).toHaveClass(/target/);
+    await expect(piece(bob, '5,2')).toHaveCount(1);
+
+    // The man still stands on its start square until the jumps are done; drag it again to the next landing
+    await drag(alice, piece(alice, '6,1'), square(alice, '2,5'));
+    await expect(status(bob)).toHaveText('Alice captured 2 pieces');
+    await expect(piece(bob, '2,5')).toHaveAttribute('aria-label', 'Red man');
+    await expect(piece(bob, '5,2')).toHaveCount(0);
+    await expect(piece(bob, '3,4')).toHaveCount(0);
+  });
+
+  test('a man dropped on an unhighlighted square goes back', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    const before = await table.state();
+    await drag(alice, piece(alice, '5,0'), square(alice, '3,0'));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(piece(alice, '5,0')).toHaveAttribute('aria-label', 'Red man');
+    await expect(alice.locator('.piece.selected')).toHaveCount(0);
+    await expect(targets(alice)).toHaveCount(0);
+    expect(await table.state()).toEqual(before);
   });
 });

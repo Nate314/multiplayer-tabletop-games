@@ -55,7 +55,7 @@ export default function WorldMap({ gameState, source = null, target = null, targ
         const label = `${name}: ${ownerName}, ${count} ${count === 1 ? 'army' : 'armies'}`;
         const added = draft[id] ?? 0;
         return (
-          <g key={id} className={classNames.join(' ')} data-anim-key={territoryKey(id)}
+          <g key={id} className={classNames.join(' ')} data-anim-key={territoryKey(id)} data-drop={onSelect ? `land-${id}` : undefined}
             role={selectable ? 'button' : undefined} tabIndex={selectable ? 0 : undefined} aria-label={label}
             onClick={selectable ? () => onSelect?.(id) : undefined}
             onKeyDown={selectable ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect?.(id); } } : undefined}>

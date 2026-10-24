@@ -27,6 +27,8 @@
   --movable: #fff59d;
   --selected: #ffca28;
   --target: rgba(129, 199, 132, 0.85);
+  /* The outline on the point or tray under a dragged checker (src/App.scss [data-drag-over]) */
+  --drag-over: #1B5E20;
   --last-move: #ffd54f;
   --die-bg: #fff;
   --die-pip: #1d2b22;
@@ -54,6 +56,7 @@
     --error-bg: #4a1f1b;
     --error-text: #ffd5d0;
     --frame: #3a2616;
+    --drag-over: #A5D6A7;
     --felt: #1d3d2c;
     --bar: #2e1d11;
     --point-light: #b8a682;
