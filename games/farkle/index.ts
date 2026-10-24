@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { FARKLE_RULES, applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const farkle: GameDefinition<GameState, PublicGameState> = {
@@ -9,7 +9,9 @@ export const farkle: GameDefinition<GameState, PublicGameState> = {
     name: 'Farkle',
     description: 'Roll six dice, bank your points or push your luck and risk them all',
     minPlayers: 2,
-    maxPlayers: 8
+    maxPlayers: 8,
+    houseRules: FARKLE_RULES,
+    stretchedPlayers: { min: 2, max: 10 }
   },
   createGameState,
   resetLobby,

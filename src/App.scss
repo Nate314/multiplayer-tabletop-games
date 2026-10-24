@@ -604,6 +604,20 @@
   font-size: 0.9rem;
 }
 
+:where([data-game] .house-rules-rule) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:where([data-game] .house-rules-rule > span) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+}
+
 :where([data-game] .house-rules-help) {
   font-size: 0.85rem;
   opacity: 0.8;
@@ -634,6 +648,18 @@
 
 :where([data-game] .modal.house-rules dl) {
   margin: 0 0 16px;
+}
+
+:where([data-game] .modal.house-rules dl > div) {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+:where([data-game] .modal.house-rules dd) {
+  margin: 0;
+  font-weight: 600;
 }
 
 /* Disconnected players, above the game screen */

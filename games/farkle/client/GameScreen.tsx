@@ -5,7 +5,7 @@ import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
 import Table from './Table';
 import { score } from '../scoring.ts';
-import { TARGET_SCORE } from '../rules.ts';
+import { targetScore } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -17,7 +17,7 @@ function turnMessage(state: PublicGameState, playerNumber: Seat, picked: number 
   const name = currentPlayer === null ? '' : playerNames[currentPlayer];
   if (!started) return `${mine ? 'You roll' : `${name} rolls`} first. Joining closes after the first roll.`;
   if (!mine) return `${name}'s turn`;
-  const last = finalTurns.includes(playerNumber) ? ` This is your last turn: someone reached ${TARGET_SCORE.toLocaleString()}.` : '';
+  const last = finalTurns.includes(playerNumber) ? ` This is your last turn: someone reached ${targetScore(state).toLocaleString()}.` : '';
   if (dice.length === 0) return `Your turn: roll the dice.${last}`;
   if (picked === null) return `Your turn: click the scoring dice to set aside. Dice that do not score cannot be set aside.${last}`;
   return `Your turn: ${picked.toLocaleString()} points selected.${last}`;

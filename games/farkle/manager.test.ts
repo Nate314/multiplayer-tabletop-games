@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { farkle } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -24,6 +24,7 @@ function game() {
   const manager = rememberingKeys(createGameManager([farkle], dice(1, 5, 2, 3, 4, 6, 2, 3, 4, 1, 2, 2, 3, 4, 6, 6)));
   manager.join('farkle', 'g1', 'A');
   manager.join('farkle', 'g1', 'B');
+  agreeAll(manager, ROOM);
   return manager;
 }
 

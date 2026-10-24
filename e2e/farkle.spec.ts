@@ -162,6 +162,21 @@ test.describe('Farkle rules', () => {
     await expect(alice.locator('.farkle-score-winner')).toHaveCount(1);
     await expect(alice.locator('.farkle-score', { hasText: 'Cara' })).toContainText('Winner');
   });
+
+  test('a game to 5,000 ends at 5,000', async ({ seat }) => {
+    const table = await seat('farkle', ['Alice', 'Bob'], { houseRules: { targetScore: 5000 } });
+    const [alice, bob] = table.pages;
+    await table.patch({ dice: [1, 1, 1, 3, 4, 6], setAside: [], turnTotal: 0, started: true, scores: { 1: 4500, 2: 4000 } });
+    await pick(alice, [0, 1], [1, 1], [2, 1]);
+    await bankButton(alice).click();
+    await expect(score(bob, 'Alice')).toHaveText('5,500');
+    await expect(bob.locator('.farkle-score', { hasText: 'Alice' })).toContainText('Reached 5,000');
+    await expect(turnMessage(bob)).toContainText('someone reached 5,000');
+    await table.patch({ dice: [1, 3, 4, 6, 6, 2], setAside: [], turnTotal: 0, currentPlayer: 2 });
+    await pick(bob, [0, 1]);
+    await bankButton(bob).click();
+    await expect(turnMessage(alice)).toHaveText('Game over: Alice won');
+  });
 });
 
 test.describe('Farkle controls', () => {
