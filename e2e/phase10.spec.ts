@@ -228,6 +228,7 @@ test.describe('Phase 10 rules', () => {
     const bob = await first.join('Bob');
     const alice = first.pages[0];
     await expect(discardPile(alice).locator('.card')).toHaveAttribute('aria-label', 'Skip');
+    await expect(alice.locator('.game-status')).toContainText('The first discard is a Skip, so Alice is skipped.');
     await expect(turnMessage(alice)).toHaveText('Bob goes first. Joining closes after the first move.');
     await expect(drawPile(alice)).toBeDisabled();
     await expect(drawPile(bob)).toBeEnabled();

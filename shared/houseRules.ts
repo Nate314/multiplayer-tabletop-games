@@ -138,7 +138,7 @@ export function agreeToHouseRules<S extends BaseGameState>(info: RulesInfo, stat
   const current = houseRulesOf(info, state);
   if (revision !== current.revision) return { error: 'The house rules changed. Check them and agree again' };
   const agreed = current.agreed.includes(seat) ? current.agreed : [...current.agreed, seat].sort((a, b) => a - b);
-  return { state: { ...state, houseRules: { ...current, agreed }, gameStatus: `${state.playerNames[seat]} agreed to the house rules` } };
+  return { state: { ...state, houseRules: { ...current, agreed } } };
 }
 
 export function everyoneAgreed(info: RulesInfo, state: BaseGameState): boolean {

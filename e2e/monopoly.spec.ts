@@ -172,11 +172,11 @@ test.describe('Monopoly rules', () => {
 
   test('everyone starts with $1500 on GO, the highest roll goes first, ties roll again, then turns go up the seats', async ({ seat }) => {
     const first = await seat('monopoly', ['Alice', 'Bob']);
-    // Cara's join reshuffles both decks (30 numbers), then everyone rolls: Alice and Bob tie on 7, then Bob rolls higher.
-    // Agreeing to the house rules replaces the status line, so the result shows in who goes first
+    // Cara's join reshuffles both decks (30 numbers), then everyone rolls: Alice and Bob tie on 7, then Bob rolls higher
     await first.random(...Array(30).fill(0), ...faces(3, 4, 5, 2, 1, 1, 1, 2, 6, 5));
     const cara = await first.join('Cara');
     const [alice, bob] = first.pages;
+    await expect(status(cara)).toContainText('Highest roll goes first: Alice 7, Bob 7, Cara 2; tie: Alice 3, Bob 11. Bob goes first');
     await expect(bob.locator('.turn-message')).toHaveText('You go first. Joining closes after the first move.');
     await expect(alice.locator('.turn-message')).toHaveText('Bob goes first. Joining closes after the first move.');
     for (const name of ['Alice', 'Bob', 'Cara']) {

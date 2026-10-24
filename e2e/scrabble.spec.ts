@@ -91,7 +91,7 @@ test.describe('Scrabble rules', () => {
   });
 
   test('each player draws a tile, closest to A goes first, a blank beats every letter, ties draw again, redone on every join and leave', async ({ seat }) => {
-    const first = await seat('scrabble', ['Alice'], { agree: false }); // an Agree would replace the draw in the status line
+    const first = await seat('scrabble', ['Alice']);
     const [alice] = first.pages;
     // Alice draws the bag's first tile, an A; Bob the ninth of what is left, a B
     await first.random(0, 8.5 / 99);

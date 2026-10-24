@@ -132,7 +132,7 @@ test('agreeToHouseRules is idempotent and everyoneAgreed waits for every seat', 
   const state = lobby([1, 2, 3]);
   const revision = state.houseRules!.revision;
   const one = ok(agreeToHouseRules(info, state, 3, revision));
-  assert.equal(one.gameStatus, 'P3 agreed to the house rules');
+  assert.equal(one.gameStatus, state.gameStatus);
   assert.deepEqual(ok(agreeToHouseRules(info, one, 3, revision)).houseRules?.agreed, [3]);
   const two = ok(agreeToHouseRules(info, one, 1, revision));
   assert.deepEqual(two.houseRules?.agreed, [1, 3]);
