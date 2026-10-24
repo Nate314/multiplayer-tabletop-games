@@ -325,7 +325,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .github-link) {
+:where([data-game] .game-header .github-link, [data-game] .share-button) {
   box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
@@ -339,11 +339,42 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Phones: the five header buttons fill the width, so the title takes its own row above them */
+/* The status and the copy-by-hand panel hang under the button so the header never reflows */
+:where([data-game] .share-wrapper) {
+  position: relative;
+}
+
+:where([data-game] .share-button) {
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+:where([data-game] .share-status, [data-game] .share-panel) {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:where([data-game] .share-panel) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Phones: the six header buttons fill the width, so the title takes its own row above them */
 @media (max-width: 480px) {
   :where([data-game] .game-header) {
     flex-wrap: wrap;

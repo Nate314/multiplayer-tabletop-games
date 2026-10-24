@@ -45,3 +45,36 @@ test('a link to another game wins over the automatic rejoin', async ({ seat }) =
   await expect(bob.getByRole('button', { name: `Back to Connect Four (${table.gameId})` })).toBeVisible();
   await expect(alice.locator('.presence-player', { hasText: 'Bob' })).toBeVisible();
 });
+
+test('share copies the join link and says so when there is no share sheet', async ({ seat, server }) => {
+  const { pages: [alice] } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
+  await alice.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await alice.evaluate(() => Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }));
+  await alice.getByRole('button', { name: 'Share' }).click();
+  await expect(alice.getByRole('status')).toHaveText('Link copied');
+  expect(await alice.evaluate(() => navigator.clipboard.readText())).toBe(`${server.url}/join/connectfour/Fri%20day%20%231`);
+});
+
+test('share opens the share sheet when there is one', async ({ seat, server }) => {
+  const { pages: [alice] } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
+  await alice.evaluate(() => {
+    Object.defineProperty(navigator, 'share', {
+      value: async (data: ShareData) => { (window as unknown as { shared: ShareData }).shared = data; },
+      configurable: true,
+    });
+  });
+  await alice.getByRole('button', { name: 'Share' }).click();
+  await expect.poll(() => alice.evaluate(() => (window as unknown as { shared?: ShareData }).shared?.url)).toBe(`${server.url}/join/connectfour/Fri%20day%20%231`);
+  expect(await alice.evaluate(() => (window as unknown as { shared: ShareData }).shared.title)).toBe('Join Connect Four');
+  await expect(alice.getByText('Link copied')).toHaveCount(0);
+});
+
+test('share falls back to a link to copy by hand when the clipboard fails', async ({ seat, server }) => {
+  const { pages: [alice] } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
+  await alice.evaluate(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) }, configurable: true });
+  });
+  await alice.getByRole('button', { name: 'Share' }).click();
+  await expect(alice.getByRole('textbox', { name: 'Game link' })).toHaveValue(`${server.url}/join/connectfour/Fri%20day%20%231`);
+});

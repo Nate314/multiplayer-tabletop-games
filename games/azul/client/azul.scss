@@ -88,6 +88,7 @@
   }
 
   .github-link,
+  .share-button,
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -107,6 +108,7 @@
   .history-button:hover:enabled,
   .faq-button:hover,
   .github-link:hover,
+  .share-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -669,7 +671,7 @@
       --tile: 26px;
     }
 
-    /* The five header buttons fill the width, so the title takes its own row above them */
+    /* The six header buttons fill the width, so the title takes its own row above them */
 
     .game-header {
       flex-wrap: wrap;
