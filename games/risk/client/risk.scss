@@ -22,6 +22,7 @@
   --error-bg: #FBE4E1;
   --error-text: #8A1C12;
   --highlight: #FF8F00;
+  --drag-over: #1A1A1A;
   --die-bg: #FFFFFF;
   --die-pip: #2A2620;
   --attack-die: #C62828;
@@ -33,6 +34,10 @@
   --seat6: #37474F;
   --neutral: #9A9A9A;
   --unclaimed: #F5F5F5;
+  --piece-tray-bg: var(--panel-bg);
+  --piece-tray-border: var(--panel-border);
+  --piece-tray-text: var(--text);
+  --piece-tray-selected: var(--button-bg);
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -66,6 +71,7 @@
     --error-bg: #4A1D18;
     --error-text: #FFD6D0;
     --highlight: #FFB300;
+    --drag-over: #FFFFFF;
     --die-bg: #EEE8DA;
     --die-pip: #17150F;
     --neutral: #7A7A7A;
@@ -284,6 +290,34 @@
   .territory.highlight .disc {
     stroke: var(--highlight);
     stroke-width: 5px;
+  }
+
+  .territory[data-drag-over] {
+    outline: none;
+  }
+
+  .territory[data-drag-over] .disc {
+    stroke: var(--drag-over);
+    stroke-width: 6px;
+    stroke-dasharray: none;
+  }
+
+  /* The armies tray (src/components/PieceTray.tsx): one army token in your color */
+  .piece-tray {
+    margin: 8px 0;
+  }
+
+  .piece-tray-piece:disabled {
+    opacity: 0.55;
+  }
+
+  .tray-army {
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--seat);
+    border: 2px solid var(--piece-tray-text);
   }
 
   .draft-badge circle {
