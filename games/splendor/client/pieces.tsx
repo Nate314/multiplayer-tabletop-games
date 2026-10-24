@@ -1,6 +1,11 @@
 // The small pieces every Splendor view draws: gem tokens, development cards and nobles
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import { CARDS, GEMS, NOBLES } from '../cards.ts';
 import type { Gems, Level, Token } from '../types.ts';
+
+// Gold is shown as the yellow shape
+const symbolOf = (token: Token): SymbolColor => (token === 'gold' ? 'yellow' : token);
 
 type GemTokenProps = {
   token: Token;
@@ -19,6 +24,7 @@ export function GemToken({ token, count, animKey, size = 'small', selected = 0, 
   const name = label ?? (count === undefined ? token : `${count} ${token}`);
   const content = (
     <>
+      <ColorSymbol color={symbolOf(token)} />
       {count !== undefined && <span className="gem-count">{count}</span>}
       {selected > 0 && <span className="gem-picked" aria-hidden="true">{selected}</span>}
     </>
@@ -38,7 +44,7 @@ export function Cost({ cost }: { cost: Gems }) {
   return (
     <span className="cost">
       {GEMS.filter(gem => cost[gem] > 0).map(gem => (
-        <span key={gem} className={`cost-pip gem-${gem}`} title={`${cost[gem]} ${gem}`}>{cost[gem]}</span>
+        <span key={gem} className={`cost-pip gem-${gem}`} title={`${cost[gem]} ${gem}`}><ColorSymbol color={gem} />{cost[gem]}</span>
       ))}
     </span>
   );
@@ -75,7 +81,7 @@ export function CardView({ card, level, animKey, selected, highlighted, affordab
       <>
         <span className="dev-card-top">
           <span className="dev-card-points">{CARDS[card].points > 0 ? CARDS[card].points : ''}</span>
-          <span className={`dev-card-bonus gem-${CARDS[card].bonus}`} aria-hidden="true" />
+          <span className={`dev-card-bonus gem-${CARDS[card].bonus}`} aria-hidden="true"><ColorSymbol color={CARDS[card].bonus} /></span>
         </span>
         <Cost cost={CARDS[card].cost} />
       </>
@@ -102,7 +108,7 @@ export function NobleView({ noble, animKey, highlighted, onClick }: NobleViewPro
       <span className="noble-points">{points}</span>
       <span className="noble-cost">
         {GEMS.filter(gem => cost[gem] > 0).map(gem => (
-          <span key={gem} className={`noble-pip gem-${gem}`}>{cost[gem]}</span>
+          <span key={gem} className={`noble-pip gem-${gem}`}><ColorSymbol color={gem} />{cost[gem]}</span>
         ))}
       </span>
     </>

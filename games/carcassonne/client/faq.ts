@@ -62,5 +62,9 @@ export const FAQS: FaqItem[] = [
     question: 'What does Undo do?',
     answer: 'Any player can ask to undo the last move: placing a tile and choosing a meeple are each one move. It is undone ' +
       'only if every player still in the game approves.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each meeple color also shows its shape: red circle, blue square, yellow star, green triangle, black diamond. Meeples on the board, the meeple you are about to place and the player list show it.'
   }
 ];

@@ -51,5 +51,9 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What does Undo do?',
     answer: 'Undo asks your opponent to take back the last turn; it happens only if they approve.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: blue square, red circle. Stones, banks and bank labels show it.'
   }
 ];

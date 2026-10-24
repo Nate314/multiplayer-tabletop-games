@@ -319,6 +319,21 @@
     fill: var(--seat5);
   }
 
+  .cc-meeple-symbol {
+    color: #FFFFFF;
+    pointer-events: none;
+  }
+
+  .cc-symbol-seat3 {
+    color: #3A2A00;
+    --color-symbol-stroke: rgba(58, 42, 0, 0.6);
+  }
+
+  :root[data-theme="dark"] & .cc-symbol-seat5 {
+    color: #1A1714;
+    --color-symbol-stroke: rgba(26, 23, 20, 0.6);
+  }
+
   .cc-spot {
     cursor: pointer;
   }

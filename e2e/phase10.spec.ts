@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat as SeatFixture, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat as SeatFixture, type Table } from './fixtures.ts';
 import { createDeck } from '../games/phase10/rules.ts';
 import type { Card, CardColor, GameState, Group } from '../games/phase10/types.ts';
 
@@ -9,8 +9,8 @@ import type { Card, CardColor, GameState, Group } from '../games/phase10/types.t
 const NAMES = ['Alice', 'Bob', 'Cara'];
 const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow'];
 
-async function start(seat: SeatFixture, players = 2) {
-  const table = await seat('phase10', NAMES.slice(0, players));
+async function start(seat: SeatFixture, players = 2, motion = false) {
+  const table = await seat('phase10', NAMES.slice(0, players), { motion });
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -430,6 +430,49 @@ test.describe('Phase 10 rules', () => {
 });
 
 test.describe('Phase 10 controls', () => {
+  test('with Color-blind symbols on, every number card shows its color shape, in the hand and in the History', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await deal(table, { hands: { 1: [n(3, 'red'), n(4, 'blue'), n(5, 'green'), n(6, 'yellow'), wild(0)], 2: tenCards('red', 1) } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['circle', 'square', 'triangle', 'star']) await expect(handCards(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(handCards(alice).locator('.color-symbol')).toHaveCount(4);
+    await drawPile(alice).click();
+    await alice.getByRole('button', { name: 'History' }).click();
+    await expect(alice.locator('.history-board .color-symbol').first()).toBeVisible();
+  });
+
+  test('the card you drew is outlined until you discard, and not with the setting off', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await deal(table, { hands: { 1: tenCards('blue'), 2: tenCards('green') }, drawTop: [n(9, 'red'), n(10, 'red')] });
+    await drawPile(alice).click();
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(1);
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveAccessibleName('red 10');
+    await discard(alice, 'blue 1');
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
+    await table.patch({ currentPlayer: 1, drawnBy: null });
+    await setPreference(alice, 'Highlight newly drawn cards', false);
+    await drawPile(alice).click();
+    await expect(handCards(alice).getByRole('button', { name: 'red 9' })).toHaveCount(1);
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
+  test('the card you drew is not outlined again when the next hand is dealt with the same card', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    // Red 5 (id 4) is drawn and hit, which ends the hand; the fresh deck deals Alice the same card again
+    await deal(table, { hands: { 1: [n(5, 'yellow')], 2: [n(1, 'red')] }, groups: phaseOne(1), drawTop: [n(5, 'red')] });
+    await drawPile(alice).click();
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(1);
+    await select(alice, 'yellow 5', 'red 5');
+    await group(alice, 'Set of 5s').getByRole('button', { name: 'Hit here' }).click();
+    await table.random(...UNSHUFFLED);
+    await scoring(alice).getByRole('button', { name: 'Continue' }).click();
+    await scoring(bob).getByRole('button', { name: 'Continue' }).click();
+    await expect(turnMessage(alice)).toHaveText("Hand 2: Bob's turn");
+    await expect(handCards(alice).getByRole('button', { name: 'red 5' })).toHaveCount(1);
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('on your turn, click the draw pile or the discard pile to draw; both are outlined while you can draw', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await deal(table, { hands: { 1: tenCards('red'), 2: tenCards('blue') }, discardPile: [n(12, 'green')] });
@@ -567,6 +610,21 @@ test.describe('Phase 10 controls', () => {
     await scoring(alice).getByRole('button', { name: 'Continue' }).click();
     await expect(scoring(bob)).toHaveCount(0);
     await expect(turnMessage(bob)).toHaveText(/^Hand 2: /);
+  });
+
+  test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
+    const animated = await start(seat, 2, true);
+    await deal(animated.table, { hands: { 1: tenCards('blue'), 2: tenCards('green') } });
+    await animated.alice.locator('.piles .pile').nth(0).click();
+    await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0);
+    await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBe(0);
+    await expect(animated.bob.locator('.game-screen > .card')).toHaveCount(0);
+
+    const still = await start(seat);
+    await deal(still.table, { hands: { 1: tenCards('blue'), 2: tenCards('green') } });
+    await still.alice.locator('.piles .pile').nth(0).click();
+    await expect(still.bob.getByText('Alice drew from the pile')).toBeVisible();
+    expect(await still.bob.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 
   test('clicking Undo asks everyone to approve undoing the last move', async ({ seat }) => {

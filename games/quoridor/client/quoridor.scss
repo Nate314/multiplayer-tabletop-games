@@ -93,6 +93,7 @@
   .faq-button,
   .github-link,
   .share-button,
+  .settings-button,
   .theme-toggle {
     height: 2.5rem;
     padding: 0 1rem;
@@ -107,6 +108,7 @@
 
   .github-link,
   .share-button,
+  .settings-button,
   .theme-toggle {
     flex: none;
     width: 2.5rem;
@@ -120,6 +122,7 @@
   .faq-button:hover,
   .github-link:hover,
   .share-button:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -415,6 +418,21 @@
     z-index: 1;
   }
 
+  /* The shape sits above the initial */
+
+  .pawn:has(.pawn-symbol) {
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1;
+  }
+
+  .pawn-symbol {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: #FFFFFF;
+  }
+
   .pawn.player1 {
     background: radial-gradient(circle at 35% 35%, #64B5F6 0%, var(--player1) 100%);
     border: 2px solid #1565C0;
@@ -589,6 +607,22 @@
     height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
+  }
+
+  /* Room round the shape, so a blue square on a blue dot still reads as a shape */
+
+  .goal-dot:has(.dot-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+  }
+
+  .dot-symbol {
+    width: 12px;
+    height: 12px;
+    color: #FFFFFF;
   }
 
   .goal-dot.player1 {

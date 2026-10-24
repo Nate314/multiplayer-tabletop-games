@@ -17,6 +17,7 @@ Roll five dice up to three times a turn and fill every scoring box on your sheet
 ## Controls
 
 - Click Roll to roll all five dice. The dice and the rolls left are shown to everyone
+- Rolled dice tumble while held dice stay still; the score slides from the dice into its box
 - Click a die to hold it (it gets a green outline), then click Roll again to roll the rest. Roll again is off once you hold all five dice or have no rolls left
 - After your first roll, each empty box in your column shows the points the dice would score there. Click one to write it in. Under the Joker rule only the boxes you may use can be clicked
 - The score sheet has a column per player, with the player on the move marked, an upper section subtotal and bonus, the Yahtzee bonus and each player's total

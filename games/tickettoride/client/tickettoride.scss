@@ -215,6 +215,20 @@
     --track: var(--card-gray);
   }
 
+  /* The route color's shape on its middle car, dark on the light colors */
+
+  .track .color-symbol {
+    color: var(--card-ink-light);
+    pointer-events: none;
+  }
+
+  .track-white .color-symbol,
+  .track-yellow .color-symbol,
+  .track-orange .color-symbol,
+  .track-pink .color-symbol {
+    color: var(--card-ink-dark);
+  }
+
   /* A claimed route is a row of train cars in the owner's color, with a white outline so it never reads as an open track */
 
   .track.owned rect {
@@ -227,6 +241,16 @@
 
   .track.owned circle {
     fill: #ffffff;
+  }
+
+  /* A claimed route shows its owner's shape, dark on the yellow seat */
+
+  .track.owned .color-symbol {
+    color: var(--card-ink-light);
+  }
+
+  .track.owned.seat4 .color-symbol {
+    color: var(--card-ink-dark);
   }
 
   .track.closed {
@@ -393,6 +417,18 @@
     font-size: 11px;
     font-weight: 700;
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+  }
+
+  .card-orange .color-symbol,
+  .card-pink .color-symbol {
+    color: var(--card-ink-dark);
+  }
+
+  .card .color-symbol {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    margin-right: 2px;
   }
 
   .card-pink {
@@ -628,6 +664,28 @@
     height: 14px;
     border-radius: 3px;
     background: var(--seat);
+  }
+
+  .player-row:has(.swatch-symbol) {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .player-swatch:has(.swatch-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+  }
+
+  .swatch-symbol {
+    width: 12px;
+    height: 12px;
+    color: var(--card-ink-light);
+  }
+
+  .player-row.seat4 .swatch-symbol {
+    color: var(--card-ink-dark);
   }
 
   .player-name {

@@ -10,8 +10,9 @@ import { nextPlayIndex, stepDelayMs } from './playback.ts';
 import type { PlaybackSpeed } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
-import { loadAnimations, loadPlaybackSpeed, saveAnimations, savePlaybackSpeed } from '../services/settings.ts';
+import { loadAnimations, loadHistorySounds, loadPlaybackSpeed, saveAnimations, saveHistorySounds, savePlaybackSpeed } from '../services/settings.ts';
 import { fitScale, nextScale } from './fitScale.ts';
+import useStateSounds from '../sound/useStateSounds.ts';
 
 export type History =
   | { status: 'loading' }
@@ -50,9 +51,11 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [viewer, setViewer] = useState<Seat | null>(null);
   const [animations, setAnimations] = useState(loadAnimations);
   const [speed, setSpeed] = useState(loadPlaybackSpeed);
+  const [sounds, setSounds] = useState(loadHistorySounds);
   const [playing, setPlaying] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const shownIndexRef = useRef(index);
   const last = steps.length - 1;
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
@@ -71,6 +74,12 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     }
   }, [client, shownViewer, animations]);
   useMoveAnimation(boardRef, boardState, animate);
+  // Only one step forward sounds: a jump over several steps would play the end of the game together with the move
+  const advancedByOne = index === shownIndexRef.current + 1;
+  useEffect(() => {
+    shownIndexRef.current = index;
+  }, [index]);
+  useStateSounds(boardState, null, sounds && advancedByOne);
 
   // The board shrinks to fit the box. A step that changes the board's size can only lower the scale, so the board never bounces;
   // only the box changing size (a window resize) starts over. offsetWidth and offsetHeight ignore the scale transform.
@@ -122,6 +131,11 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   function changeSpeed(next: PlaybackSpeed) {
     setSpeed(next);
     savePlaybackSpeed(next);
+}
+
+  function toggleSounds(on: boolean) {
+    setSounds(on);
+    saveHistorySounds(on);
   }
 
   return (
@@ -146,6 +160,9 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
           autoFocus
           onChange={(e) => setIndex(Number(e.target.value))}
         />
+        <label className="history-sounds">
+          <input type="checkbox" checked={sounds} onChange={(e) => toggleSounds(e.target.checked)} /> Sounds
+        </label>
         <PlaybackSettings
           animations={animations}
           onAnimationsChange={toggleAnimations}

@@ -16,6 +16,7 @@ type PlayAreaProps = {
   playerNumber: Seat;
   isMyTurn: boolean;
   initialRack: number[]; // the rack in the order last shown
+  newlyDrawn: number[]; // the tile ids to outline in the rack
   onRackOrder: (order: number[]) => void;
 };
 
@@ -38,7 +39,7 @@ function targetOf(id: string): Target {
 
 // The table and the player's rack. During their turn the player rearranges both here and sends the result as one play;
 // nobody else sees it until then. The game screen remounts this after every move, so a draft never outlives its turn.
-export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRack, onRackOrder }: PlayAreaProps) {
+export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRack, newlyDrawn, onRackOrder }: PlayAreaProps) {
   const { table, rack, melded, lastMove, poolCount, playerNames, currentPlayer } = gameState;
   const rootRef = useRef<HTMLDivElement>(null);
   const captureSlides = useLocalSlides(rootRef);
@@ -133,7 +134,7 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
               dragProps={drag.source(`tile-${id}`)}
               dropId={`before-${id}`}
             >
-              <Tile id={id} />
+              <Tile id={id} drawn={newlyDrawn.includes(id)} />
             </Pickable>
           ))}
           <button type="button" className={canGoBack ? 'rk-rack-end' : 'rk-rack-end rk-hidden'} onClick={() => place({ kind: 'rack' })}>

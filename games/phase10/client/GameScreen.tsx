@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import CardView from './CardView';
 import GameStatus from './GameStatus';
 import HandSummary from './HandSummary';
 import LayDownPanel from './LayDownPanel';
 import Piles from './Piles';
 import Table from './Table';
+import animateMove, { cardKey } from './animateMove.ts';
+import { drawnStep } from './drawn.ts';
 import { DEFAULT_SORT_ORDER, sortHand, type SortOrder } from './sortHand.ts';
 import { hasLaidDown, phaseRequirements, skipTargets } from '../rules.ts';
 import { phase10 } from '../index.ts';
@@ -15,7 +19,37 @@ import type { Card, DrawSource, PublicGameState, Seat } from '../types.ts';
 
 const MAX_PLAYERS = phase10.info.maxPlayers;
 
+type HandCardsProps = {
+  gameState: PublicGameState;
+  playerNumber: Seat;
+  hand: Card[];
+  selected: number[];
+  disabled: boolean;
+  onToggle: (card: Card) => void;
+};
+
+// Your hand as cards, with the newly drawn ones outlined
+function HandCards({ gameState, playerNumber, hand, selected, disabled, onToggle }: HandCardsProps) {
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
+  return (
+    <div className="hand-cards">
+      {hand.map(card => (
+        <CardView
+          key={card.id}
+          card={card}
+          animKey={cardKey(card.id)}
+          selected={selected.includes(card.id)}
+          drawn={newlyDrawn.includes(card.id)}
+          disabled={disabled}
+          onClick={() => onToggle(card)}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
+  const screenRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [staged, setStaged] = useState<number[][]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>(DEFAULT_SORT_ORDER);
@@ -29,6 +63,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const laidDown = hasLaidDown(gameState, playerNumber);
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const showSummary = handSummary !== null && !(isGameOver && finalScoringClosed);
+
+  useMoveAnimation(screenRef, gameState, animateMove);
 
   useEffect(() => {
     // Nothing stays picked or staged across moves, undos or hands
@@ -80,7 +116,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
-      <div className="game-screen">
+      <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">
             You are {playerNames[playerNumber]} (Player {playerNumber})
@@ -112,17 +148,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               ))}
             </span>
           </header>
-          <div className="hand-cards">
-            {hand.map(card => (
-              <CardView
-                key={card.id}
-                card={card}
-                selected={selected.includes(card.id)}
-                disabled={!hasDrawn}
-                onClick={() => toggle(card)}
-              />
-            ))}
-          </div>
+          {/* Continue deals a new hand without a move, so the cards remount to start with nothing outlined */}
+          <HandCards
+            key={handNumber}
+            gameState={gameState}
+            playerNumber={playerNumber}
+            hand={hand}
+            selected={selected}
+            disabled={!hasDrawn}
+            onToggle={toggle}
+          />
           {hasDrawn && (
             <div className="turn-actions">
               {targets.length > 0 && discardCard ? (

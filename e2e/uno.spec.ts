@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/uno/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
 
@@ -475,6 +475,33 @@ test.describe('UNO rules', () => {
 });
 
 test.describe('UNO controls', () => {
+  test('with Color-blind symbols on, every colored card, the current color and the color choices show a shape', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await deal(table, { hands: { 1: [c('red', '7'), c('blue', '7'), c('green', '7'), c('yellow', '7'), WILD], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['circle', 'square', 'triangle', 'star']) await expect(hand(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(hand(alice).locator('.color-symbol')).toHaveCount(4);
+    await expect(discardTop(alice).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.color-swatch .color-symbol-circle')).toHaveCount(1);
+    await handCard(alice, 'Wild').click();
+    await expect(alice.getByRole('group', { name: 'Choose a color' }).locator('.color-symbol')).toHaveCount(4);
+  });
+
+  test('the card you drew is outlined until your next move', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await deal(table, {
+      hands: { 1: [c('blue', '1')], 2: [c('blue', '2')], 3: [c('blue', '3')] },
+      discard: [c('red', '5')],
+      drawPile: [c('green', '1'), c('red', '8')]
+    });
+    await button(alice, 'Draw').click();
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(1);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveAttribute('title', 'red 8');
+    await play(alice, 'red 8');
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('playable cards in your hand are raised and outlined, and clicking one plays it', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('green', '9')], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });
@@ -614,6 +641,20 @@ test.describe('UNO controls', () => {
     await expect(dialog).toHaveCount(0);
     await button(final.pages[1], 'Show Scoring').click();
     await expect(dialog.locator('h2')).toHaveText('Final scoring');
+  });
+
+  test('the cards a round-ending Draw Two made you take are not outlined again in the next round', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
+    const [one, two] = [c('red', '1'), c('red', '2')];
+    await deal(table, { hands: { 1: [c('blue', '9')], 2: [c('red', 'drawTwo')] }, discard: [c('red', '5')], drawPile: [FOUR, FOUR], current: 2 });
+    await play(bob, 'red Draw Two');
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(2);
+    // The queued shuffle deals Alice red 1 and red 2 among her new cards; Continue deals without a move
+    await table.random(...stacked([one, one, two, two]));
+    await scoring(alice).getByRole('button', { name: 'Continue' }).click();
+    await scoring(bob).getByRole('button', { name: 'Continue' }).click();
+    await expect(hand(alice).getByRole('button')).toHaveCount(7);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
   });
 
   test('clicking Undo asks everyone to undo the last move', async ({ seat }) => {

@@ -85,6 +85,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
+  .settings-button,
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -103,6 +104,7 @@
   .back-button:hover,
   .history-button:hover:enabled,
   .faq-button:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -211,6 +213,7 @@
   /* Cards */
 
   .card {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -227,6 +230,18 @@
     font-weight: 800;
     user-select: none;
     transition: transform 0.12s, opacity 0.12s;
+  }
+
+  /* The color's shape in the top left corner, white like the card's border */
+
+  .card-symbol {
+    position: absolute;
+    top: calc(var(--card-w) * 0.06);
+    left: calc(var(--card-w) * 0.06);
+    width: calc(var(--card-w) * 0.24);
+    height: calc(var(--card-w) * 0.24);
+    color: #fff;
+    z-index: 1;
   }
 
   /* The tilted white oval in the middle of every card; the mark on it stays upright, so a 7 never reads as a 1 */
@@ -257,6 +272,10 @@
   .card-red {
     background: var(--card-red);
     --face-color: var(--card-red);
+  }
+
+  .card-yellow .card-symbol {
+    color: var(--card-dark);
   }
 
   .card-yellow {
@@ -324,6 +343,12 @@
 
   button.card-selected {
     transform: translateY(-12px);
+  }
+
+  /* Dashed in the drawn color, replacing the solid playable or selected outline; the lift still shows on the same card */
+  .card.newly-drawn {
+    outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+    outline-offset: 3px;
   }
 
   /* The table: players, direction and the piles */
@@ -430,11 +455,19 @@
   }
 
   .color-swatch {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
     width: 14px;
     height: 14px;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.3);
+  }
+
+  .swatch-symbol {
+    width: 10px;
+    height: 10px;
   }
 
   .swatch-red {
@@ -443,6 +476,7 @@
 
   .swatch-yellow {
     background: var(--card-yellow);
+    color: var(--card-dark);
   }
 
   .swatch-green {

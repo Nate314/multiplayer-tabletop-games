@@ -1,16 +1,49 @@
 import { useState, useEffect, useRef } from 'react';
 import gameService from '../../../src/services/gameService';
 import Card from './Card';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import GameStatus from './GameStatus';
 import RoundSummary from './RoundSummary';
 import Table from './Table';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove, { sortedHand } from './animateMove.ts';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { drawnStep, markDrawn } from './drawn.ts';
 import { handKey } from '../../../src/animation/animKeys.ts';
 import { COLORS, canPlay, isWild, sameCard } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Card as CardData, Color, PublicGameState } from '../types.ts';
+
+type HandCardsProps = {
+  gameState: PublicGameState;
+  playerNumber: number;
+  isPlayable: (card: CardData) => boolean;
+  selected: CardData | null;
+  onPlay: (card: CardData) => void;
+};
+
+// Your hand as cards, sorted, with the newly drawn ones outlined
+function HandCards({ gameState, playerNumber, isPlayable, selected, onPlay }: HandCardsProps) {
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
+  const shownHand = sortedHand(gameState.hand);
+  const drawnSlots = markDrawn(shownHand, newlyDrawn);
+  return (
+    <div className="hand-cards">
+      {shownHand.map((card, slot) => (
+        <Card
+          key={slot}
+          card={card}
+          drawn={drawnSlots[slot]}
+          animKey={handKey(slot)}
+          playable={isPlayable(card)}
+          selected={selected !== null && sameCard(card, selected)}
+          onClick={() => onPlay(card)}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   // A Wild waiting for its color
@@ -166,7 +199,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           <div className="color-picker" role="group" aria-label="Choose a color">
             {COLORS.map(color => (
               <button key={color} type="button" className={`color-choice swatch-${color}`} onClick={() => chooseColor(color)}>
-                {color}
+                <ColorSymbol color={color} /> {color}
               </button>
             ))}
             {pendingWild && <button type="button" className="color-cancel" onClick={() => setPendingWild(null)}>Cancel</button>}
@@ -174,18 +207,15 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         )}
         <section className={isMyTurn ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">
           <header className="hand-header">Your hand ({hand.length})</header>
-          <div className="hand-cards">
-            {sortedHand(hand).map((card, slot) => (
-              <Card
-                key={slot}
-                card={card}
-                animKey={handKey(slot)}
-                playable={isPlayable(card)}
-                selected={pendingWild !== null && sameCard(card, pendingWild)}
-                onClick={() => playCard(card)}
-              />
-            ))}
-          </div>
+          {/* Continue deals a new round without a move, so the cards remount to start with nothing outlined */}
+          <HandCards
+            key={gameState.roundNumber}
+            gameState={gameState}
+            playerNumber={playerNumber}
+            isPlayable={isPlayable}
+            selected={pendingWild}
+            onPlay={playCard}
+          />
         </section>
       </div>
       {showSummary && (

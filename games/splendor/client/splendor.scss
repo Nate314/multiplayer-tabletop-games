@@ -96,6 +96,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
+  .settings-button,
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -114,6 +115,7 @@
   .back-button:hover,
   .history-button:hover:enabled,
   .faq-button:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -418,7 +420,23 @@
     line-height: 1;
   }
 
+  /* The shape sits beside the number; the gem colors above already pick a readable ink for it */
+
+  .gem .color-symbol,
+  .cost-pip .color-symbol,
+  .bonus .color-symbol,
+  .noble-pip .color-symbol {
+    flex: none;
+    width: 0.85em;
+    height: 0.85em;
+    margin-right: 1px;
+  }
+
   .dev-card-bonus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
     width: 20px;
     height: 20px;
     border-radius: 4px;
@@ -517,6 +535,14 @@
 
   .noble-pip {
     border-radius: 3px;
+    min-width: 0;
+    padding: 0 2px;
+    font-size: 0.65rem;
+  }
+
+  .noble-pip .color-symbol {
+    width: 0.75em;
+    height: 0.75em;
   }
 
   /* Gem tokens */

@@ -228,6 +228,21 @@
     font-weight: 700;
   }
 
+  /* The points that fly from the dice to the box they were written in (the animation sizes it like the box) */
+
+  .yz-flying-points {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1px solid var(--option-text);
+    border-radius: 6px;
+    background: var(--option-bg);
+    color: var(--option-text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
   .yz-option {
     min-width: 44px;
     padding: 4px 8px;

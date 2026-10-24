@@ -26,6 +26,7 @@ Lay land tiles to build a countryside of cities, roads, monasteries and fields, 
 - The side panel shows the tile being placed, how many tiles are left, and the scores, highest first, with each player's meeples in hand. At the end a table shows what the final scoring added for roads, cities, monasteries and fields
 - Click Undo to ask everyone to undo the last move
 - Click FAQ at the top of the page for a short guide to the rules and controls
+- With Color-blind symbols on in Settings, each meeple color also shows its shape: red circle, blue square, yellow star, green triangle, black diamond. Meeples on the board, the meeple you are about to place and the player list show it
 
 ## Differences from Wikipedia
 

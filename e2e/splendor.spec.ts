@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { CARDS, GEMS, NOBLES } from '../games/splendor/cards.ts';
 import type { GameState, Gem, Level, PlayerState, Reserved, Token, Tokens } from '../games/splendor/types.ts';
 
@@ -478,6 +478,24 @@ test.describe('Splendor rules', () => {
 });
 
 test.describe('Splendor controls', () => {
+  test('with Color-blind symbols on, gem tokens, card bonuses and card costs show a shape, and gold a star', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await craft(table, fresh(2, { faceUp: { 1: [0] } }));
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes: Record<Token, string> = { white: 'ring', blue: 'square', green: 'triangle', red: 'circle', black: 'diamond', gold: 'star' };
+    for (const token of Object.keys(shapes) as Token[]) await expect(supplyGem(alice, token).locator(`.color-symbol-${shapes[token]}`)).toHaveCount(1);
+    const card = CARDS[0];
+    const first = alice.getByLabel(cardLabel(0), { exact: true });
+    await expect(first.locator('.dev-card-bonus').locator(`.color-symbol-${shapes[card.bonus]}`)).toHaveCount(1);
+    const costs = GEMS.filter(gem => card.cost[gem] > 0);
+    await expect(first.locator('.cost-pip .color-symbol')).toHaveCount(costs.length);
+    for (const gem of costs) await expect(first.locator(`.cost-pip.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+    for (const gem of GEMS) await expect(panel(alice, 'Alice').locator(`.bonus.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+    const noble = alice.locator('.nobles .noble').first();
+    for (const gem of GEMS.filter(gem => NOBLES[0].cost[gem] > 0)) await expect(noble.locator(`.noble-pip.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+  });
+
   test('click gems to pick them and Take gems to take them; a color clicked twice takes two, and clicking a picked gem puts it back', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await craft(table, fresh(2));

@@ -30,6 +30,7 @@ Two players. The first to join moves first. This is the Avalanche way of playing
 - The status describes the last turn, such as "Alice picked up 4 stones and kept going 3 times, ending in an empty pit", and shows the final score
 - Click Undo to ask the other player to undo the last turn
 - Click FAQ at the top of the page for the rules and controls
+- With Color-blind symbols on in Settings, each player color also shows its shape: blue square, red circle. Stones, banks and bank labels show it
 
 ## Differences from Wikipedia
 

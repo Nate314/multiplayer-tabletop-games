@@ -203,6 +203,16 @@
     transition: transform 0.12s;
   }
 
+  /* The color's shape in the top left corner, in the card's text color */
+
+  .card-symbol {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: calc(var(--card-w) * 0.28);
+    height: calc(var(--card-w) * 0.28);
+  }
+
   .card-small {
     --card-w: 30px;
     --card-h: 42px;
@@ -260,10 +270,22 @@
     opacity: 1;
   }
 
+  /* Dashed and not lifted, so it reads differently from a selected card's solid outline */
+  .newly-drawn {
+    outline-style: dashed;
+    outline-offset: 3px;
+  }
+
   .card-selected {
     transform: translateY(-8px);
     outline: 3px solid var(--highlight);
     outline-offset: 1px;
+  }
+
+  /* A card that is both picked and newly drawn keeps the lift and shows the drawn outline, dashed */
+  .card-selected.newly-drawn {
+    outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+    outline-offset: 3px;
   }
 
   /* Piles */

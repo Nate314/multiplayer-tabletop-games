@@ -77,5 +77,9 @@ export const FAQS: FaqItem[] = [
     question: 'Can we undo a move?',
     answer: 'Click Undo to ask everyone. The move is undone only if every player still in the game approves. Discards and ' +
       'trades are not moves, so an undo goes back past them too, and a roll played again may come up differently.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, orange hexagon, purple cross. Settlements, cities, the middle of each road and the player list show it.'
   }
 ];

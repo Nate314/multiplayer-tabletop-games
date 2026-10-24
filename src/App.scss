@@ -82,6 +82,7 @@
   line-height: 1.2;
 }
 
+.lobby-header .settings-button,
 .lobby-header .theme-toggle {
   flex-shrink: 0;
   width: 2.5rem;
@@ -309,6 +310,12 @@
   background: var(--lobby-accent-hover);
 }
 
+/* A card or tile you just drew (Highlight newly drawn cards in Settings). A game sets --newly-drawn-outline, or restyles .newly-drawn where its selected outline clashes. */
+:where([data-game] .newly-drawn) {
+  outline: 3px solid var(--newly-drawn-outline, #f5b301);
+  outline-offset: 2px;
+}
+
 /*
  * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
  * the disconnected players bar, the dismiss vote, and resign and draw offers.
@@ -353,7 +360,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .theme-toggle) {
+:where([data-game] .game-header .settings-button, [data-game] .game-header .theme-toggle) {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -378,7 +385,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -445,7 +452,7 @@
 
 /* FAQ and history dialogs */
 
-:where([data-game] .overlay) {
+:where([data-game] .overlay, .lobby .overlay) {
   position: fixed;
   inset: 0;
   z-index: 20;
@@ -456,7 +463,7 @@
   background: var(--platform-backdrop, rgba(0, 0, 0, 0.45));
 }
 
-:where([data-game] .modal) {
+:where([data-game] .modal, .lobby .modal) {
   box-sizing: border-box;
   max-width: 560px;
   max-height: 100%;
@@ -469,7 +476,7 @@
   text-align: center;
 }
 
-:where([data-game] .modal h2) {
+:where([data-game] .modal h2, .lobby .modal h2) {
   margin: 0 0 12px;
 }
 
@@ -686,7 +693,7 @@
   transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
-:where([data-game] .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {
+:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -695,20 +702,20 @@
   font-weight: 600;
 }
 
-:where([data-game] .primary-button) {
+:where([data-game] .primary-button, .lobby .primary-button) {
   min-width: 140px;
   margin-top: 16px;
 }
 
 /* A dialog's row of buttons; they wrap on a narrow window */
-:where([data-game] .modal-buttons) {
+:where([data-game] .modal-buttons, .lobby .modal-buttons) {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
 }
 
-:where([data-game] .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
+:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -975,6 +982,12 @@
   outline-offset: 1px;
 }
 
+/* After the selected outline, and dashed so it reads differently from it: a picked card that was also just drawn keeps its lift and shows both */
+:where([data-game] .playing-card.newly-drawn) {
+  outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+  outline-offset: 3px;
+}
+
 /* After the selected and highlighted outlines, so keyboard focus still shows on a picked card */
 :where(button.playing-card:focus-visible) {
   box-shadow: 0 0 0 5px var(--lobby-bg), 0 0 0 8px var(--lobby-text);
@@ -1106,4 +1119,49 @@
 :where(.piece-tray-count) {
   font-size: 0.85em;
   font-variant-numeric: tabular-nums;
+}
+
+/* Settings dialog: left aligned rows */
+
+:where([data-game] .modal.settings, .lobby .modal.settings) {
+  text-align: left;
+}
+
+:where([data-game] .modal.settings section, .lobby .modal.settings section) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+:where([data-game] .modal.settings h3, .lobby .modal.settings h3) {
+  margin: 0;
+  font-size: 1rem;
+}
+
+:where([data-game] .modal.settings label, .lobby .modal.settings label) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+:where([data-game] .modal.settings input, .lobby .modal.settings input) {
+  accent-color: var(--platform-button-bg, var(--lobby-accent));
+}
+
+:where([data-game] .modal.settings input[type="range"], .lobby .modal.settings input[type="range"]) {
+  flex: 1;
+  min-width: 0;
+}
+
+/* A color-blind symbol: games position it and set its color; the stroke keeps it readable on light and dark fills */
+:where(.color-symbol) {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: middle;
+  fill: currentColor;
+  stroke: var(--color-symbol-stroke, rgba(0, 0, 0, 0.6));
+  stroke-width: 1px;
+  paint-order: stroke;
 }

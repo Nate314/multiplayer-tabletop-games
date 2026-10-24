@@ -8,6 +8,7 @@ import JoinDialog from './components/JoinDialog'
 import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
+import SettingsButton from './components/SettingsButton'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJoinForm, saveJoinForm } from './services/settings.ts'
 import { parseJoinLink } from './services/share.ts'
@@ -79,6 +80,7 @@ function App() {
       <header className="lobby-header">
         <h1>Multiplayer Tabletop Games</h1>
         <GitHubLink />
+        <SettingsButton />
         <ThemeToggle />
       </header>
       <main className="lobby-main">

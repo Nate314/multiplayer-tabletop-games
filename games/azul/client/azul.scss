@@ -89,6 +89,7 @@
 
   .github-link,
   .share-button,
+  .settings-button,
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -109,6 +110,7 @@
   .faq-button:hover,
   .github-link:hover,
   .share-button:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -219,6 +221,11 @@
     border: 1px solid rgba(0, 0, 0, 0.35);
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
     user-select: none;
+  }
+
+  .tile .color-symbol {
+    width: 62%;
+    height: 62%;
   }
 
   .slot {

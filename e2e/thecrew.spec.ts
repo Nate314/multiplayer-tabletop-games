@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Card, GameState, OrderToken, Task } from '../games/thecrew/types.ts';
 
 // One test per rule, control and difference in games/thecrew/README.md. Seats join in order: Alice 1, Bob 2, Cara 3
@@ -543,6 +543,15 @@ test.describe('The Crew mission rules', () => {
 });
 
 test.describe('The Crew controls', () => {
+  test('with Color-blind symbols on, every suit card shows its color shape and a rocket shows none', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await playing(table, { hands: { 1: [p(1), b(1), g(1), y(1), r(1)], 2: [p(2)], 3: [p(3)] } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['heart', 'square', 'triangle', 'star']) await expect(hand(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(hand(alice).locator('.color-symbol')).toHaveCount(4);
+  });
+
   test('the table shows the mission, attempt, trick and rules, and the FAQ opens', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await playing(table, { mission: 19, attempt: 3, hands: { 1: [p(9)], 2: [p(1)], 3: [p(2)] }, tasks: [task(p(1), 1, 1)], tricks: tricksBefore(2) });

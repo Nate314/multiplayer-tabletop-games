@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { DEFAULT_FILTERS } from '../components/gameFilters.ts'
-import { loadAnimations, loadJoinForm, loadLandingFilters, loadPlaybackSpeed, saveAnimations, saveJoinForm, saveLandingFilters, savePlaybackSpeed } from './settings.ts'
+import {
+  DEFAULT_PREFERENCES, loadAnimations, loadHistorySounds, loadJoinForm, loadLandingFilters, loadPlaybackSpeed, loadPreferences,
+  saveAnimations, saveHistorySounds, saveJoinForm, saveLandingFilters, savePlaybackSpeed, savePreferences,
+} from './settings.ts'
 
 function installStorage(initial: Record<string, string> = {}): void {
   const items = new Map(Object.entries(initial))
@@ -66,10 +69,48 @@ test('a storage that throws gives defaults and saving does not throw', () => {
   assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
   assert.deepEqual(loadLandingFilters(), DEFAULT_FILTERS)
   assert.equal(loadPlaybackSpeed(), 1)
+  assert.deepEqual(loadPreferences(), DEFAULT_PREFERENCES)
   saveAnimations(true)
   savePlaybackSpeed(2)
   saveJoinForm({ playerName: 'Ann', gameId: 'abc' })
   saveLandingFilters(DEFAULT_FILTERS)
+  savePreferences(DEFAULT_PREFERENCES)
+  saveHistorySounds(true)
+})
+
+test('preferences default to every sound on at half volume, symbols off and the highlight on', () => {
+  installStorage()
+  assert.deepEqual(loadPreferences(), {
+    volume: 0.5, muted: false,
+    sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true },
+    colorSymbols: false, highlightDrawn: true,
+  })
+})
+
+test('preferences round-trip', () => {
+  installStorage()
+  const changed = { ...DEFAULT_PREFERENCES, volume: 0.2, muted: true, colorSymbols: true, highlightDrawn: false,
+    sounds: { ...DEFAULT_PREFERENCES.sounds, dice: false } }
+  savePreferences(changed)
+  assert.deepEqual(loadPreferences(), changed)
+})
+
+test('each bad preference falls back to its own default and the good ones are kept', () => {
+  installStorage({ preferences: '{"volume":"loud","muted":true,"sounds":{"dice":false,"turn":"no"},"colorSymbols":1}' })
+  assert.deepEqual(loadPreferences(), { ...DEFAULT_PREFERENCES, muted: true, sounds: { ...DEFAULT_PREFERENCES.sounds, dice: false } })
+  for (const volume of ['2', '-1', 'null']) {
+    installStorage({ preferences: `{"volume":${volume}}` })
+    assert.equal(loadPreferences().volume, 0.5)
+  }
+  installStorage({ preferences: '[1]' })
+  assert.deepEqual(loadPreferences(), DEFAULT_PREFERENCES)
+})
+
+test('history sounds default to off and round-trip', () => {
+  installStorage()
+  assert.equal(loadHistorySounds(), false)
+  saveHistorySounds(true)
+  assert.equal(loadHistorySounds(), true)
 })
 
 test('landing filters default to everything shown and round-trip', () => {

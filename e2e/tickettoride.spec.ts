@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { CITIES, ROUTES, TICKETS } from '../games/tickettoride/map.ts';
 import type { Card, GameState, Hand, PlayerState } from '../games/tickettoride/types.ts';
 
@@ -516,6 +516,33 @@ test.describe('Ticket to Ride rules', () => {
 });
 
 test.describe('Ticket to Ride controls', () => {
+  test('with Color-blind symbols on, train cards and open colored routes show a shape; locomotives and gray routes show none', async ({ seat }) => {
+    const { alice } = await start(seat, 2, { faceUp: ['locomotive', 'green', 'yellow', 'black', 'white'] }, { 1: { hand: { red: 1, blue: 1, pink: 1, orange: 1, locomotive: 1 } } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes = { red: 'circle', blue: 'square', pink: 'heart', orange: 'hexagon', green: 'triangle', yellow: 'star', black: 'diamond', white: 'ring' };
+    for (const card of ['red', 'blue', 'pink', 'orange']) await expect(myHand(alice).locator(`.card-${card} .color-symbol-${shapes[card as keyof typeof shapes]}`)).toHaveCount(1);
+    await expect(myHand(alice).locator('.card-locomotive .color-symbol')).toHaveCount(0);
+    await expect(faceUp(alice, 0).locator('.color-symbol')).toHaveCount(0);
+    for (const [slot, card] of ['green', 'yellow', 'black', 'white'].entries()) await expect(faceUp(alice, slot + 1).locator(`.color-symbol-${shapes[card as keyof typeof shapes]}`)).toHaveCount(1);
+    await expect(track(alice, KC_STL).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(track(alice, KC_STL_PINK).locator('.color-symbol-heart')).toHaveCount(1);
+    await expect(track(alice, LA_VEGAS).locator('.color-symbol')).toHaveCount(0);
+  });
+
+  test('with Color-blind symbols on, a claimed route shows the shape of its owner, not of the route color, and the player list shows each seat shape', async ({ seat }) => {
+    const { alice } = await start(seat, 3, { claimed: { [KC_STL]: 2, [LA_VEGAS]: 1, [SEATTLE_PORTLAND]: 3 } });
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(track(alice, KC_STL).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(track(alice, KC_STL).locator('.color-symbol')).toHaveCount(1);
+    await expect(track(alice, LA_VEGAS).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(track(alice, SEATTLE_PORTLAND).locator('.color-symbol-triangle')).toHaveCount(1);
+    const shapes = ['circle', 'square', 'triangle'];
+    for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
+      await expect(alice.locator('.player-row', { hasText: name }).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
+    }
+  });
+
   test('clicking a face-up card or the deck takes a card, twice a turn, and cards you cannot take are dimmed', async ({ seat }) => {
     const { alice, bob } = await start(seat, 2, { faceUp: ['locomotive', 'green', 'yellow', 'black', 'white'] });
     for (const button of await market(bob).locator('.card-button').all()) await expect(button).toBeDisabled();
@@ -573,6 +600,24 @@ test.describe('Ticket to Ride controls', () => {
     await checkboxes(alice).nth(2).uncheck();
     await keepButton(alice).click();
     await expect(stat(bob, 'Alice', 'Destination tickets')).toHaveText('4 tickets');
+  });
+
+  test('both cards of a draw are outlined until your next turn\'s move', async ({ seat }) => {
+    const { alice, bob } = await start(seat, 2, {}, { 1: { hand: { yellow: 2 } } });
+    await faceUp(alice, 0).click(); // the blue card
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(1);
+    await deck(alice).click(); // a red card
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(2);
+    await expect(myHand(alice).locator('.card-blue.newly-drawn')).toHaveCount(1);
+    await expect(myHand(alice).locator('.card-red.newly-drawn')).toHaveCount(1);
+    await expect(myHand(alice).locator('.card-yellow.newly-drawn')).toHaveCount(0);
+    await drawTwo(bob);
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(2);
+    await claim(alice, LA_VEGAS, '2 yellow');
+    await expect(track(alice, LA_VEGAS)).toHaveClass(/owned seat1/);
+    await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(0);
   });
 
   test('your hand groups train cards by color with counts, checks completed tickets, and a pointed ticket rings its cities', async ({ seat }) => {

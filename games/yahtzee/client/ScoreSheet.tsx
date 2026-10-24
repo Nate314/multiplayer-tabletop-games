@@ -1,3 +1,4 @@
+import { cellKey } from './animateMove.ts';
 import { CATEGORY_LABELS, LOWER, UPPER, UPPER_BONUS_AT, allowedCategories, scoreFor, totals } from '../rules.ts';
 import type { Category, PublicGameState, Seat } from '../types.ts';
 
@@ -16,20 +17,21 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
 
   const cell = (seat: Seat, category: Category) => {
     const sheet = sheets[seat];
+    const animKey = cellKey(seat, category);
     const className = scored?.playerNumber === seat && scored.category === category ? 'yz-cell yz-cell-last' : 'yz-cell';
-    if (sheet[category] !== undefined) return <td key={seat} className={className}>{sheet[category]}</td>;
+    if (sheet[category] !== undefined) return <td key={seat} className={className} data-anim-key={animKey}>{sheet[category]}</td>;
     if (onScore && seat === viewer) {
       const points = scoreFor(dice, category, sheet);
       const allowed = allowedCategories(dice, sheet).includes(category);
       return (
-        <td key={seat} className={className}>
+        <td key={seat} className={className} data-anim-key={animKey}>
           <button type="button" className="yz-option" disabled={!allowed} aria-label={`Score ${points} in ${CATEGORY_LABELS[category]}`} onClick={() => onScore(category)}>
             {points}
           </button>
         </td>
       );
     }
-    return <td key={seat} className={className} />;
+    return <td key={seat} className={className} data-anim-key={animKey} />;
   };
 
   const row = (category: Category) => (

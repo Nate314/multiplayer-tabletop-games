@@ -1,4 +1,5 @@
 import type { ClientGame } from '../../../src/clientGames.ts';
+import animateMove from './animateMove.ts';
 import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
@@ -11,5 +12,6 @@ export const phase10Client: ClientGame = {
   faq: QUESTIONS,
   icon: '10',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

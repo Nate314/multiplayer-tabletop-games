@@ -54,6 +54,14 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The draw pile and discard top are at the top. Your hand is below them; sort it by number or color with the Sort buttons. Every player is listed with their phase, score, card count and the groups they laid down. The player whose turn it is is outlined, and your hand is dimmed when it is not your turn.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star. Number cards show it in their top left corner; Wild and Skip cards already carry a letter.'
+  },
+  {
+    question: 'Why is a card in my hand outlined?',
+    answer: 'It is the card you just drew. The outline stays from your draw until your discard ends the turn, even after you lay down or hit. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
   },

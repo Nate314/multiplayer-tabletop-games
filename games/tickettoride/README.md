@@ -30,7 +30,9 @@ Collect train cards, claim railway routes across the USA and connect your destin
 - Claimed routes show in their owner's color with white dots. A closed track of a double route is drawn faded. The route claimed in the last move is outlined
 - When the game ends, the final scores below the map show route points, tickets made and missed, and the longest path for each player
 - On a narrow window the map keeps a usable size and scrolls sideways
+- With Highlight newly drawn cards on in Settings (the default), both cards of a draw stay outlined until your next turn's move
 - Click Undo to ask everyone to undo the last move
+- With Color-blind symbols on in Settings, each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows the shape of its owner instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too
 - Click FAQ at the top of the page for a short guide to the rules and controls
 
 ## Differences from Wikipedia

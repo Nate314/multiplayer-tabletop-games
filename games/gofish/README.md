@@ -21,6 +21,7 @@ Ask for ranks, go fish, and collect the most books of four, for 2 to 6 players.
 - On your turn, click a card in your hand to pick its rank (every card of that rank is raised), click a player on the table to ask, then click Ask. With only one other player holding cards, they are picked for you
 - The table shows every player in seat order with their card count and books; the player whose turn it is is outlined. Beside it are the stock and the ask log, newest first
 - A card you just drew is shown in the status panel
+- With Highlight newly drawn cards on in Settings (the default), the card you fish from the stock is outlined until your next ask; cards handed to you are not
 - Click Undo to ask everyone to undo the last ask
 - Click FAQ at the top of the page for a short guide to the rules and controls
 

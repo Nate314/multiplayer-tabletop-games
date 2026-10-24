@@ -34,6 +34,10 @@
   --seat2: #1565C0;
   --seat3: #EF6C00;
   --seat4: #7B1FA2;
+  --ink1: #FFFFFF;
+  --ink2: #FFFFFF;
+  --ink3: #1A140C;
+  --ink4: #FFFFFF;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -71,22 +75,29 @@
     --seat2: #42A5F5;
     --seat3: #FFA726;
     --seat4: #BA68C8;
+    --ink1: #1A140C;
+    --ink2: #1A140C;
+    --ink4: #1A140C;
   }
 
   .seat1 {
     --seat: var(--seat1);
+    --seat-ink: var(--ink1);
   }
 
   .seat2 {
     --seat: var(--seat2);
+    --seat-ink: var(--ink2);
   }
 
   .seat3 {
     --seat: var(--seat3);
+    --seat-ink: var(--ink3);
   }
 
   .seat4 {
     --seat: var(--seat4);
+    --seat-ink: var(--ink4);
   }
 
   .res-wood {
@@ -325,6 +336,12 @@
     stroke: #1A140C;
     stroke-width: 1.5;
     stroke-linejoin: round;
+  }
+
+  .road-symbol .color-symbol,
+  .building .color-symbol {
+    color: var(--seat-ink);
+    pointer-events: none;
   }
 
   .piece-dead {
@@ -681,6 +698,21 @@
     border: 1px solid #1A140C;
     border-radius: 3px;
     background: var(--seat);
+    color: var(--seat-ink);
+  }
+
+  .player-swatch:has(.swatch-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+  }
+
+  .swatch-symbol {
+    width: 12px;
+    height: 12px;
   }
 
   .player-name {

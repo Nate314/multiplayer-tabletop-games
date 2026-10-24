@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import RoundSummary from './RoundSummary';
 import Table from './Table';
+import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
 
@@ -17,11 +19,14 @@ function turnMessage(state: PublicGameState, isMe: boolean): string {
 }
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
+  const screenRef = useRef<HTMLDivElement>(null);
   const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, heldFrom, myHeld, roundSummary } = gameState;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+
+  useMoveAnimation(screenRef, gameState, animateMove);
 
   useEffect(() => {
     // An undo can reopen a finished game; its next ending shows the scoring again
@@ -36,7 +41,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
-      <div className="game-screen">
+      <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">You are {gameState.playerNames[playerNumber]} (Player {playerNumber})</div>
           {(error || gameStatus) && (

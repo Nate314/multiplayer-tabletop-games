@@ -1,6 +1,7 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { setValue } from '../cards.ts';
 import { continentsHeld, plural, reinforcementsFor, territoriesHeld } from '../state.ts';
-import { continentShort, seatClass } from './layout.ts';
+import { SEAT_SYMBOLS, continentShort, seatClass } from './layout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 // Every player's territories, armies, cards, whole continents and next reinforcement, in seat order
@@ -26,7 +27,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
         return (
           <div key={seat} className={classNames.join(' ')}>
             <div className="player-line">
-              <span className={`swatch ${seatClass(seat)}`} aria-hidden="true" />
+              <span className={`swatch ${seatClass(seat)}`} aria-hidden="true"><ColorSymbol color={SEAT_SYMBOLS[seat]} className="swatch-symbol" /></span>
               <span className="player-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
               {status && <span className="player-status">{status}</span>}
             </div>

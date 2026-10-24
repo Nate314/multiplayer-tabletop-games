@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Board } from '../games/connectfour/types.ts';
 
 // One test per rule, control and difference in games/connectfour/README.md. Seat 1 (Alice) plays Red and moves first,
@@ -169,6 +169,22 @@ test.describe('Connect Four rules', () => {
 });
 
 test.describe('Connect Four controls', () => {
+  test('with Color-blind symbols on, Red discs show a circle and Yellow discs a star, in the board and the player list', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(alice.locator('.player-dot.player1 .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.player-dot.player2 .color-symbol-star')).toHaveCount(1);
+    await expect(alice.locator('.disc .color-symbol')).toHaveCount(0);
+    await arrow(alice, 4).click();
+    await expect(alice.locator('.disc.player1 .color-symbol-circle')).toHaveCount(1);
+    await arrow(bob, 5).click();
+    await expect(alice.locator('.disc.player2 .color-symbol-star')).toHaveCount(1);
+    await expect(alice.locator('.disc .color-symbol')).toHaveCount(2);
+    await expect(bob.locator('.disc .color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('click the arrow above a column, or anywhere in the column, to drop a disc there', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await arrow(alice, 3).click();

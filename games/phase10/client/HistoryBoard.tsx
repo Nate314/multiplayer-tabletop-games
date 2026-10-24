@@ -1,4 +1,5 @@
 import CardView from './CardView';
+import { cardKey } from './animateMove.ts';
 import Piles from './Piles';
 import Table from './Table';
 import { DEFAULT_SORT_ORDER, sortHand } from './sortHand.ts';
@@ -29,7 +30,7 @@ export default function HistoryBoard({ gameState, viewer }: { gameState: PublicG
         <section className="my-hand" aria-label={label}>
           <header className="my-hand-header"><span>{label}</span></header>
           <div className="hand-cards">
-            {sortHand(myHand, DEFAULT_SORT_ORDER).map(card => <CardView key={card.id} card={card} />)}
+            {sortHand(myHand, DEFAULT_SORT_ORDER).map(card => <CardView key={card.id} card={card} animKey={cardKey(card.id)} />)}
           </div>
         </section>
       )}

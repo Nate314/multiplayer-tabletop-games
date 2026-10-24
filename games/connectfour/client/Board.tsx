@@ -1,5 +1,7 @@
 import PieceTray from '../../../src/components/PieceTray';
 import { useDrag } from '../../../src/drag/useDrag.ts';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { cellKey } from './animateMove.ts';
 import { COLUMNS, ROWS, SEAT_COLORS, isColumnFull } from '../rules.ts';
 import type { Position, PublicGameState, Seat } from '../types.ts';
@@ -77,7 +79,11 @@ export default function Board({ gameState, dimmed, droppable, onDrop, seat }: Bo
               data-drop={`${COLUMN_PREFIX}${column}`}
               onClick={() => canDrop(column) && onDrop(column)}
             >
-              {seat && <div className={`disc player${seat}`} aria-label={`${SEAT_COLORS[seat]} disc`} />}
+              {seat && (
+                <div className={`disc player${seat}`} aria-label={`${SEAT_COLORS[seat]} disc`}>
+                  <ColorSymbol color={SEAT_SYMBOLS[seat]} className="disc-symbol" />
+                </div>
+              )}
             </div>
           );
         }))}

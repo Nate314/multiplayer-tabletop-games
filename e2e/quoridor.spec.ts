@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat as SeatFixture } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, undo, type Seat as SeatFixture } from './fixtures.ts';
 import type { PlacedWall, Position } from '../games/quoridor/types.ts';
 
 // One test per rule and control in games/quoridor/README.md. Every player sees the board the same way up: row 0 is
@@ -179,6 +179,20 @@ test.describe('Quoridor rules', () => {
 });
 
 test.describe('Quoridor controls', () => {
+  test('with Color-blind symbols on, each pawn and Goals dot shows the shape of its color: blue square, red circle, green triangle, purple cross', async ({ seat }) => {
+    const { alice, bob } = await start(seat, 4);
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes = ['square', 'circle', 'triangle', 'cross'];
+    for (const [index, name] of NAMES.entries()) {
+      await expect(pawn(alice, name).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
+      await expect(alice.locator(`.goal-dot.player${index + 1} .color-symbol-${shapes[index]}`)).toHaveCount(1);
+    }
+    await expect(alice.locator('.color-symbol')).toHaveCount(8);
+    await expect(bob.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('click Move and then a valid square to move your pawn', async ({ seat }) => {
     const { alice } = await start(seat);
     await alice.getByRole('button', { name: 'Horizontal Wall' }).click();

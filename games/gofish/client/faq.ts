@@ -34,6 +34,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'No. You see your own hand and how many cards everyone else holds. Every ask and its answer is listed under Asks so far, as everyone at a real table would hear it. A card you draw is shown to you; it is shown to everyone only when it was the rank you asked for.'
   },
   {
+    question: 'Why is a card in my hand outlined?',
+    answer: 'It is the card you fished from the stock. The outline stays until your next ask. Cards another player hands you are not outlined. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back an ask?',
     answer: 'Click Undo to ask everyone to undo the last ask. It is undone only if every player still in the game approves, and every hand and the stock go back to how they were.'
   },

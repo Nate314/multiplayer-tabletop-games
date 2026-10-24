@@ -1,10 +1,14 @@
 // Where things go on the drawn map: continent shapes, labels, short territory names and seat colors
 import { CONTINENTS, TERRITORIES } from '../map.ts';
+import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import type { ContinentId, Seat } from '../types.ts';
 
 export const MAP_WIDTH = 1000;
 export const MAP_HEIGHT = 620;
 export const TERRITORY_RADIUS = 17;
+
+// The color-blind symbol for each seat's color; neutral armies have none
+export const SEAT_SYMBOLS: Record<Seat, SymbolColor> = { 1: 'red', 2: 'blue', 3: 'green', 4: 'yellow', 5: 'purple', 6: 'black' };
 
 export function seatClass(seat: Seat | null | undefined): string {
   if (seat === null) return 'seat-neutral';

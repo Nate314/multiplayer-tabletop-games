@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -810,6 +810,28 @@ test.describe('Catan controls', () => {
     await expect(dead).toHaveClass(/piece-dead/);
     expect(await dead.evaluate(element => getComputedStyle(element).opacity)).toBe('0.45');
     await expect(piece(alice, "Alice's settlement")).not.toHaveClass(/piece-dead/);
+  });
+
+  test('with Color-blind symbols on, settlements, cities, the middle of each road and the player list show a shape for each seat', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, {
+      roads: { ...roadsOf(1, ring(9, 0, 1)), ...roadsOf(2, ring(9, 2, 1)), ...roadsOf(3, ring(9, 4, 1)) },
+      buildings: { [corner(9, 0)]: settlement(1), [corner(0, 0)]: city(2), [corner(17, 3)]: settlement(3), [corner(14, 1)]: settlement(4) }
+    }, FOUR);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(piece(alice, "Alice's settlement").locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(piece(alice, "Bob's city").locator('.color-symbol-square')).toHaveCount(1);
+    await expect(piece(alice, "Cara's settlement").locator('.color-symbol-hexagon')).toHaveCount(1);
+    await expect(piece(alice, "Dan's settlement").locator('.color-symbol-cross')).toHaveCount(1);
+    await expect(alice.locator('.road-symbol.seat1 .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.road-symbol.seat2 .color-symbol-square')).toHaveCount(1);
+    await expect(alice.locator('.road-symbol.seat3 .color-symbol-hexagon')).toHaveCount(1);
+    await expect(alice.locator('.player-swatch.seat1 .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.player-swatch.seat2 .color-symbol-square')).toHaveCount(1);
+    await expect(alice.locator('.player-swatch.seat3 .color-symbol-hexagon')).toHaveCount(1);
+    await expect(alice.locator('.player-swatch.seat4 .color-symbol-cross')).toHaveCount(1);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
   });
 
   test('clickable places are highlighted: white circles on intersections, dashed white lines on paths and orange outlines on hexes', async ({ seat }) => {

@@ -191,6 +191,38 @@
     border: 3px solid var(--player2-edge);
   }
 
+  .disc-symbol {
+    position: absolute;
+    inset: 25%;
+    width: 50%;
+    height: 50%;
+  }
+
+  .disc.player1 .disc-symbol,
+  .player-dot.player1 .dot-symbol {
+    color: #FFFFFF;
+  }
+
+  .disc.player2 .disc-symbol,
+  .player-dot.player2 .dot-symbol {
+    color: #3A2A00;
+    --color-symbol-stroke: rgba(58, 42, 0, 0.6);
+  }
+
+  .player-dot:has(.dot-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+  }
+
+  .dot-symbol {
+    width: 10px;
+    height: 10px;
+  }
+
   /* The winning four */
 
   .cell.winning .disc {

@@ -72,6 +72,13 @@ export function cardName(card: Card): string {
   return `${card.color} ${card.value}`;
 }
 
+// The big character on a card's face
+export function cardFace(card: Card): string {
+  if (card.kind === 'wild') return 'W';
+  if (card.kind === 'skip') return 'S';
+  return String(card.value);
+}
+
 // What a card left in hand costs at the end of a hand
 export function cardPoints(card: Card): number {
   if (card.kind === 'wild') return 25;

@@ -358,6 +358,7 @@
   /* Tiles */
 
   .rk-tile {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -371,6 +372,16 @@
     font-size: 1.25rem;
     font-weight: 800;
     user-select: none;
+  }
+
+  /* The color's shape in the top left corner, in the tile's color */
+
+  .rk-symbol {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 10px;
+    height: 10px;
   }
 
   .rk-black {
@@ -451,6 +462,12 @@
 
   .rk-table [data-drag] {
     touch-action: pan-y;
+  }
+
+  /* A tile that is both held and newly drawn keeps the lift and shows the drawn outline, dashed */
+  .rk-tile-button.rk-held .rk-tile.newly-drawn {
+    outline: 3px dashed var(--newly-drawn-outline, #f5b301);
+    outline-offset: 3px;
   }
 
   /* The rack */

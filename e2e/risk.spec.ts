@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, lift, leave, newPlayer, openFaq, test as base, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, newPlayer, openFaq, setPreference, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/risk/map.ts';
 import { game, ownership } from '../games/risk/testing.ts';
 import type { ContinentId, GameState } from '../games/risk/types.ts';
@@ -668,6 +668,24 @@ test.describe('Risk controls', () => {
     await expect(lane).toHaveCount(2);
     await expect(lane.nth(0)).toHaveAttribute('x2', '1000');
     await expect(lane.nth(1)).toHaveAttribute('x1', '0');
+  });
+
+  test('with Color-blind symbols on, each owned territory disc and player list swatch shows a shape for its owner and neutral ones show none', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ owners: { ...game().owners, greenland: null } }));
+    await expect(land(alice, 'greenland')).toHaveClass(/seat-neutral/);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(land(alice, 'alaska').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'northwestTerritory').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(land(alice, 'alberta').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'greenland').locator('.color-symbol')).toHaveCount(0);
+    await expect(playerRow(alice, 'Alice').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(playerRow(alice, 'Bob').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(playerRow(alice, 'Cara').locator('.color-symbol-triangle')).toHaveCount(1);
+    await expect(alice.locator('.player-row', { hasText: 'Neutral' }).locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
   });
 
   test('on a narrow window the map scrolls sideways in its own box', async ({ seat }) => {

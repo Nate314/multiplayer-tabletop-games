@@ -1,6 +1,7 @@
 import FaqButton from './FaqButton';
 import HistoryButton from './HistoryButton';
 import ShareButton from './ShareButton';
+import SettingsButton from './SettingsButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
 import PresenceBar from './PresenceBar';
@@ -9,6 +10,7 @@ import gameService from '../services/gameService';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
+import useStateSounds from '../sound/useStateSounds.ts';
 
 type GameViewProps = {
   game: GameInfo;
@@ -22,6 +24,7 @@ type GameViewProps = {
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
 export default function GameView({ game, client, gameState, playerNumber, error, onBack }: GameViewProps) {
   const { Screen } = client;
+  useStateSounds(gameState, playerNumber, true);
 
   return (
     <div className="game-root" data-game={game.id}>
@@ -31,6 +34,7 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <HistoryButton gameType={game.id} gameState={gameState} client={client} />
         <ShareButton game={game} gameId={gameState.gameId} />
         <FaqButton game={game} items={client.faq} />
+        <SettingsButton />
         <GitHubLink />
         <ThemeToggle />
       </header>

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, test, touchDrag, undo, type Seat, type SeatOptions } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, touchDrag, undo, type Seat, type SeatOptions } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
 import type { GameState, TileColor } from '../games/rummikub/types.ts';
 
@@ -254,6 +254,23 @@ test.describe('Rummikub rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
+  test('the tile you drew is outlined until your move on your next turn', async ({ seat }) => {
+    const { alice, bob } = await start(seat, {
+      melded: [1, 2],
+      racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('black', 1)] }
+    });
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(0);
+    await button(alice, 'Draw a tile').click();
+    await expect(rackArea(alice).locator('.rk-tile')).toHaveCount(5);
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(1);
+    await button(bob, 'Draw a tile').click();
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(1);
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await playButton(alice).click();
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('the first to empty their rack wins the sum of the others\' racks, each losing their own with a joker worth 30', async ({ seat }) => {
     const { alice, bob } = await start(seat, {
       melded: [1, 2], racks: { 1: [t('red', 1), t('red', 2), t('red', 3)], 2: [t('blue', 5), J1] }
@@ -346,6 +363,14 @@ test.describe('Rummikub rules', () => {
 });
 
 test.describe('Rummikub controls', () => {
+  test('with Color-blind symbols on, every colored tile shows its color shape and a joker shows none', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: [t('black', 3), t('blue', 3), t('orange', 3), t('red', 3), J1] } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['diamond', 'square', 'hexagon', 'circle']) await expect(rackArea(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(rackArea(alice).locator('.color-symbol')).toHaveCount(4);
+  });
+
   test('click a tile to pick it up, then a tile to go in front of, a group\'s +, or New group; click again to put it down; dragging works too', async ({ seat }) => {
     const { alice } = await start(seat, {
       melded: [1, 2],
@@ -562,7 +587,8 @@ test.describe('Rummikub controls', () => {
     const { alice, bob } = await start(seat, {
       melded: [1, 2],
       table: [[t('red', 4), J1, t('red', 6)]],
-      racks: { 1: [t('blue', 7), t('blue', 8), t('blue', 9), t('black', 1)] }
+      // Bob's rack is fixed too, so the joker on the table is the only one on his page
+      racks: { 1: [t('blue', 7), t('blue', 8), t('blue', 9), t('black', 1)], 2: [t('black', 2), t('black', 3)] }
     });
     await tableArea(bob).locator('.rk-joker').hover(); // Bob's dealt rack may hold the other joker
     await expect(tableArea(bob).locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 5');

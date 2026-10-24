@@ -84,5 +84,9 @@ export const FAQS: FaqItem[] = [
     answer: 'A player who is dismissed is out as if bankrupt: to a player they owe money, who takes everything, ' +
       'or otherwise to the bank, and then their properties are auctioned to everyone ' +
       'left, and their open trade or debts are dropped. The last player left wins.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each token shows its color shape in place of its initial: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens on the board and in the player list show it. The brown and slate tokens of the seventh and eighth players keep their initial.'
   }
 ];

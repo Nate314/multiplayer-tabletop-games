@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { BOARD, ownable } from '../games/monopoly/board.ts';
 import { DECKS } from '../games/monopoly/cards.ts';
 import type { DeckName, GameState } from '../games/monopoly/types.ts';
@@ -838,6 +838,21 @@ test.describe('Monopoly rules', () => {
 });
 
 test.describe('Monopoly controls', () => {
+  test('with Color-blind symbols on, each token and player list token shows the shape of its color: red circle, blue square, green triangle', async ({ seat }) => {
+    const game = await start(seat, 3);
+    const [alice, bob] = game.pages;
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes = ['circle', 'square', 'triangle'];
+    for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
+      await expect(token(alice, 0, name).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
+      await expect(row(alice, name).locator(`.token .color-symbol-${shapes[index]}`)).toHaveCount(1);
+    }
+    await expect(alice.locator('.color-symbol')).toHaveCount(6);
+    await expect(bob.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('the side panel shows Roll the dice, roll again, Buy or Decline, the Jail choices, End turn and any debt', async ({ seat }) => {
     const game = await start(seat);
     const [alice, bob] = game.pages;

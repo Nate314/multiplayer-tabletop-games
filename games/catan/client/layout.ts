@@ -1,5 +1,6 @@
 // Where the board's pieces are drawn, in SVG units, and the names and classes the screen shares
 import { EDGES, HEX_VERTICES, VERTICES, hexCenter } from '../board.ts';
+import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import type { DevCard, PortKind, Resource, Seat } from '../types.ts';
 
 export const SCALE = 60; // SVG units per hex radius
@@ -56,6 +57,9 @@ export const DEV_CARD_HELP: Record<DevCard, string> = {
   yearOfPlenty: 'Take any two resources from the bank.',
   monopoly: 'Every other player gives you all their cards of one resource.'
 };
+
+// The color-blind symbol for each seat's color
+export const SEAT_SYMBOLS: Record<Seat, SymbolColor> = { 1: 'red', 2: 'blue', 3: 'orange', 4: 'purple' };
 
 export const seatClass = (seat: Seat) => `seat${seat}`;
 

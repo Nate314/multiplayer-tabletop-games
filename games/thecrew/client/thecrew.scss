@@ -90,6 +90,7 @@
     white-space: nowrap;
   }
 
+  .settings-button,
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -104,6 +105,7 @@
   .back-button:hover,
   .history-button:hover:enabled,
   .faq-button:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -335,6 +337,16 @@
     left: 4px;
     font-size: calc(var(--card-w) * 0.24);
     line-height: 1;
+  }
+
+  /* The suit's shape in the top right corner, opposite the letter */
+
+  .crew-symbol {
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    width: max(10px, calc(var(--card-w) * 0.24));
+    height: max(10px, calc(var(--card-w) * 0.24));
   }
 
   .crew-card-small .crew-card-corner {

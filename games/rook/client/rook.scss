@@ -91,6 +91,7 @@
     white-space: nowrap;
   }
 
+  .settings-button,
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -105,6 +106,7 @@
   .back-button:hover,
   .history-button:hover:enabled,
   .faq-button:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }

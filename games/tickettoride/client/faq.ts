@@ -46,6 +46,14 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'A dismissed player\'s routes stay on the map, but they are out of the scoring. Their train cards are discarded and their tickets leave the game. If they were in the middle of their turn, the next player starts a fresh turn.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows its owner\'s shape instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too.'
+  },
+  {
+    question: 'Why is a train card in my hand outlined?',
+    answer: 'It is a color you just drew. Both cards of a draw stay outlined until your move on your next turn. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. Each card drawn and each ticket choice is a move of its own. The undo happens only if every player still in the game approves.'
   }
