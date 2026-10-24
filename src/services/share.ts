@@ -26,7 +26,9 @@ export async function shareGame(target: ShareTarget, data: { title: string; url:
       await target.share(data);
       return 'shared';
     } catch (error) {
-      if ((error as { name?: string })?.name === 'AbortError') return 'cancelled';
+      // AbortError: dismissed. InvalidStateError: tapped again while the sheet was already open.
+      const name = (error as { name?: string })?.name;
+      if (name === 'AbortError' || name === 'InvalidStateError') return 'cancelled';
     }
   }
   try {

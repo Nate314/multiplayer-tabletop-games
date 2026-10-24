@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import useDismiss from '../hooks/useDismiss.ts';
 import type { Seat } from '../../shared/types.ts';
 import { PLAYBACK_SPEEDS } from './playback.ts';
 import type { PlaybackSpeed } from './playback.ts';
@@ -11,19 +12,13 @@ type PlaybackSettingsProps = {
   viewAs?: { value: Seat | null; options: { seat: string; name: string }[]; onChange: (seat: Seat | null) => void };
 };
 
-// The History dialog's settings: a gear that opens a panel above itself. A press anywhere else closes the panel.
+// The History dialog's settings: a gear that opens a panel above itself. A press anywhere else, or Escape, closes the panel.
 export default function PlaybackSettings({ animations, onAnimationsChange, speed, onSpeedChange, viewAs }: PlaybackSettingsProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function closeOutside(e: PointerEvent) {
-      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('pointerdown', closeOutside);
-    return () => document.removeEventListener('pointerdown', closeOutside);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(wrapperRef, open, close);
 
   return (
     <div className="history-settings-wrapper" ref={wrapperRef}>

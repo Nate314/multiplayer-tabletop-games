@@ -401,6 +401,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2rem);
+}
+
+:where([data-game] .share-panel .themed-input) {
+  min-width: 0;
 }
 
 /* Phones: the six header buttons fill the width, so the title takes its own row above them */
@@ -474,6 +480,7 @@
 /* Outside :where() on purpose: the platform owns the History dialog's size so it never resizes between steps,
    and (0,3,0) beats every game's .modal rule */
 [data-game] .modal.history {
+  position: relative;
   box-sizing: border-box;
   width: 90vw;
   height: 90dvh;
@@ -482,6 +489,17 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Over the dialog's bottom padding, so showing it never resizes the board box */
+:where([data-game] .history-download-error) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  margin: 0;
+  font-size: 0.8rem;
+  text-align: center;
 }
 
 /* No padding, so a 90vw dialog keeps its width on a 320 px phone */
@@ -512,7 +530,6 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 10px;
-  position: relative;
   margin: 12px 0 0;
 }
 

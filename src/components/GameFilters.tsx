@@ -39,7 +39,10 @@ export default function GameFilters({ filters, onChange }: GameFiltersProps) {
           inputMode="numeric"
           placeholder="Any"
           value={filters.players ?? ''}
-          onChange={event => onChange({ ...filters, players: parsePlayers(event.target.value) })}
+          onChange={event => {
+            const text = event.target.value;
+            if (text === '' || parsePlayers(text) !== null) onChange({ ...filters, players: parsePlayers(text) });
+          }}
         />
       </label>
       {hasActiveFilters(filters) && (

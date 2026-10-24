@@ -78,3 +78,35 @@ test('share falls back to a link to copy by hand when the clipboard fails', asyn
   await alice.getByRole('button', { name: 'Share' }).click();
   await expect(alice.getByRole('textbox', { name: 'Game link' })).toHaveValue(`${server.url}/join/connectfour/Fri%20day%20%231`);
 });
+
+async function openManualPanel(seat: Parameters<Parameters<typeof test>[2]>[0]['seat']) {
+  const { pages: [alice] } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
+  await alice.evaluate(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) }, configurable: true });
+  });
+  await alice.getByRole('button', { name: 'Share' }).click();
+  const link = alice.getByRole('textbox', { name: 'Game link' });
+  await expect(link).toBeVisible();
+  return { alice, link };
+}
+
+test('the copy-by-hand panel closes when Share is pressed again', async ({ seat }) => {
+  const { alice, link } = await openManualPanel(seat);
+  await alice.getByRole('button', { name: 'Share' }).click();
+  await expect(link).toHaveCount(0);
+});
+
+test('the copy-by-hand panel closes on a press outside it', async ({ seat }) => {
+  const { alice, link } = await openManualPanel(seat);
+  await link.click();
+  await expect(link).toBeVisible();
+  await alice.locator('.game-header h1').click();
+  await expect(link).toHaveCount(0);
+});
+
+test('the copy-by-hand panel closes on Escape', async ({ seat }) => {
+  const { alice, link } = await openManualPanel(seat);
+  await alice.keyboard.press('Escape');
+  await expect(link).toHaveCount(0);
+});

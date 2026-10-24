@@ -33,6 +33,12 @@ test('a cancelled share sheet does not copy', async () => {
   assert.equal(await shareGame({ share, clipboard }, data), 'cancelled');
   assert.deepEqual(copied, []);
 });
+test('a second tap while the share sheet is open does not copy', async () => {
+  const { copied, clipboard } = recorder();
+  const share = () => Promise.reject(new DOMException('', 'InvalidStateError'));
+  assert.equal(await shareGame({ share, clipboard }, data), 'cancelled');
+  assert.deepEqual(copied, []);
+});
 test('a failed share sheet falls back to copying', async () => {
   const { copied, clipboard } = recorder();
   assert.equal(await shareGame({ share: () => Promise.reject(new TypeError('no')), clipboard }, data), 'copied');

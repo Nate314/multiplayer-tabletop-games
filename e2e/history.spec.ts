@@ -113,6 +113,18 @@ test('the gear holds Animations and Speed, and the live game has no View as', as
   await expect(settings).toHaveCount(0);
 });
 
+test('Escape closes the open gear panel first and a second Escape closes the dialog', async ({ seat }) => {
+  const { dialog } = await openConnectFourHistory(seat);
+  const settings = dialog.getByRole('group', { name: 'Playback settings' });
+  await dialog.getByRole('button', { name: 'Playback settings' }).click();
+  await expect(settings).toBeVisible();
+  await dialog.page().keyboard.press('Escape');
+  await expect(settings).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await dialog.page().keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+});
+
 test('speed and animations are remembered, and 4x plays a step every 375 ms', async ({ seat }) => {
   const { alice, dialog } = await openConnectFourHistory(seat);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();

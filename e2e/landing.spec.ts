@@ -44,6 +44,20 @@ test('the players filter shows games that seat that many', async ({ browser, ser
   await expect(cards).toHaveCount(31);
 });
 
+test('typing a third digit or a zero in the players filter keeps the previous value', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  const players = page.getByLabel('Players');
+  await players.pressSequentially('12');
+  await players.press('3');
+  await expect(players).toHaveValue('12');
+  await players.fill('');
+  await players.press('0');
+  await expect(players).toHaveValue('');
+  await players.press('5');
+  await players.press('0');
+  await expect(players).toHaveValue('50');
+});
+
 test('filters are remembered after a reload and Clear filters shows every game again', async ({ browser, server }) => {
   const { page, cards } = await landing(browser, server);
   const search = page.getByLabel('Search games');

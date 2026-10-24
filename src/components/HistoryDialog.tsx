@@ -197,7 +197,7 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
           )}
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>
-        {downloadFailed && <p className="history-move">Could not download the game</p>}
+        {downloadFailed && <p role="alert" className="history-download-error">Could not download the game</p>}
       </div>
     </div>
   );
