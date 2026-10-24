@@ -63,7 +63,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Why is a card in my hand outlined?',
-    answer: 'It is a card you just drew, including the cards a Draw Two or Wild Draw Four made you take. The outline stays until your next move. Turn it off with Highlight newly drawn cards in Settings.'
+    answer: 'It is a card you just drew, including the cards a Draw Two or Wild Draw Four made you take. The outline stays until your next move. The 2 cards a caught missed UNO makes you draw are not outlined. Turn it off with Highlight newly drawn cards in Settings.'
   },
   {
     question: 'Can I take back a move?',

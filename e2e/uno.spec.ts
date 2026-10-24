@@ -643,6 +643,20 @@ test.describe('UNO controls', () => {
     await expect(dialog.locator('h2')).toHaveText('Final scoring');
   });
 
+  test('the cards a round-ending Draw Two made you take are not outlined again in the next round', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
+    const [one, two] = [c('red', '1'), c('red', '2')];
+    await deal(table, { hands: { 1: [c('blue', '9')], 2: [c('red', 'drawTwo')] }, discard: [c('red', '5')], drawPile: [FOUR, FOUR], current: 2 });
+    await play(bob, 'red Draw Two');
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(2);
+    // The queued shuffle deals Alice Wild Draw Fours again; Continue deals without a move
+    await table.random(...stacked([one, one, two, two]));
+    await scoring(alice).getByRole('button', { name: 'Continue' }).click();
+    await scoring(bob).getByRole('button', { name: 'Continue' }).click();
+    await expect(hand(alice).getByRole('button')).toHaveCount(7);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('clicking Undo asks everyone to undo the last move', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('red', '8')], 2: [c('blue', '1')], 3: [c('green', '1')] }, discard: [c('red', '5')] });

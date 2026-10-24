@@ -15,6 +15,36 @@ import { COLORS, canPlay, isWild, sameCard } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Card as CardData, Color, PublicGameState } from '../types.ts';
 
+type HandCardsProps = {
+  gameState: PublicGameState;
+  playerNumber: number;
+  isPlayable: (card: CardData) => boolean;
+  selected: CardData | null;
+  onPlay: (card: CardData) => void;
+};
+
+// Your hand as cards, sorted, with the newly drawn ones outlined
+function HandCards({ gameState, playerNumber, isPlayable, selected, onPlay }: HandCardsProps) {
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
+  const shownHand = sortedHand(gameState.hand);
+  const drawnSlots = markDrawn(shownHand, newlyDrawn);
+  return (
+    <div className="hand-cards">
+      {shownHand.map((card, slot) => (
+        <Card
+          key={slot}
+          card={card}
+          drawn={drawnSlots[slot]}
+          animKey={handKey(slot)}
+          playable={isPlayable(card)}
+          selected={selected !== null && sameCard(card, selected)}
+          onClick={() => onPlay(card)}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   // A Wild waiting for its color
   const [pendingWild, setPendingWild] = useState<CardData | null>(null);
@@ -40,7 +70,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   // Only the live table animates; the history dialog renders it without this hook
   useMoveAnimation(screenRef, gameState, animateMove);
-  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   useEffect(() => {
     // A Wild picked up but not played is put back, and an UNO call not yet played is dropped, when the turn changes
@@ -52,9 +81,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     // An undo can reopen a finished game; its next ending shows the scoring again
     if (!isGameOver) setFinalScoringClosed(false);
   }, [isGameOver]);
-
-  const shownHand = sortedHand(hand);
-  const drawnSlots = markDrawn(shownHand, newlyDrawn);
 
   // After drawing, only the drawn card may be played
   const isPlayable = (card: CardData) => canPlayCards &&
@@ -181,19 +207,15 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         )}
         <section className={isMyTurn ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">
           <header className="hand-header">Your hand ({hand.length})</header>
-          <div className="hand-cards">
-            {shownHand.map((card, slot) => (
-              <Card
-                key={slot}
-                card={card}
-                drawn={drawnSlots[slot]}
-                animKey={handKey(slot)}
-                playable={isPlayable(card)}
-                selected={pendingWild !== null && sameCard(card, pendingWild)}
-                onClick={() => playCard(card)}
-              />
-            ))}
-          </div>
+          {/* Continue deals a new round without a move, so the cards remount to start with nothing outlined */}
+          <HandCards
+            key={gameState.roundNumber}
+            gameState={gameState}
+            playerNumber={playerNumber}
+            isPlayable={isPlayable}
+            selected={pendingWild}
+            onPlay={playCard}
+          />
         </section>
       </div>
       {showSummary && (

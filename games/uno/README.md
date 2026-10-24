@@ -28,7 +28,7 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 - The table shows the round, every player's card count and score in seat order, the dealer, an arrow for the direction of play, the top discard and the current color. The player whose turn it is is outlined
 - After each round, read the scoring screen and click Continue; after the last round click Close, and Show Scoring opens it again
 - With Color-blind symbols on in Settings, each color also shows its shape: red circle, blue square, green triangle, yellow star. Colored cards, the current color and the color buttons show it; Wild cards carry no color
-- With Highlight newly drawn cards on in Settings (the default), the cards you draw are outlined, including those a Draw Two or Wild Draw Four makes you take, until your next move
+- With Highlight newly drawn cards on in Settings (the default), the cards you draw are outlined, including those a Draw Two or Wild Draw Four makes you take, until your next move (the 2 cards a caught missed UNO makes you draw are not outlined)
 - Click Undo to ask everyone to undo the last move
 - Click FAQ at the top of the page for a short guide to the rules and controls
 
