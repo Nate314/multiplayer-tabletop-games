@@ -108,7 +108,7 @@ export function NobleView({ noble, animKey, highlighted, onClick }: NobleViewPro
       <span className="noble-points">{points}</span>
       <span className="noble-cost">
         {GEMS.filter(gem => cost[gem] > 0).map(gem => (
-          <span key={gem} className={`noble-pip gem-${gem}`}>{cost[gem]}</span>
+          <span key={gem} className={`noble-pip gem-${gem}`}><ColorSymbol color={gem} />{cost[gem]}</span>
         ))}
       </span>
     </>

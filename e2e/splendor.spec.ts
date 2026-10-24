@@ -491,6 +491,9 @@ test.describe('Splendor controls', () => {
     const costs = GEMS.filter(gem => card.cost[gem] > 0);
     await expect(first.locator('.cost-pip .color-symbol')).toHaveCount(costs.length);
     for (const gem of costs) await expect(first.locator(`.cost-pip.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+    for (const gem of GEMS) await expect(panel(alice, 'Alice').locator(`.bonus.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+    const noble = alice.locator('.nobles .noble').first();
+    for (const gem of GEMS.filter(gem => NOBLES[0].cost[gem] > 0)) await expect(noble.locator(`.noble-pip.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
   });
 
   test('click gems to pick them and Take gems to take them; a color clicked twice takes two, and clicking a picked gem puts it back', async ({ seat }) => {

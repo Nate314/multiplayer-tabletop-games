@@ -17,7 +17,7 @@ type MapBoardProps = {
 
 // Each track's spaces are computed once; the map never changes
 const SPACES = ROUTES.map(routeSpaces);
-const SYMBOL_SIZE = 8; // a little under a car's width, so it sits inside the car
+const SYMBOL_SIZE = TRACK_WIDTH; // as wide as a car, so it sits inside it
 
 function trackTitle(route: Route, owner: string | null, closed: boolean): string {
   const base = `${routeName(route)}: ${route.length} ${route.color}`;
@@ -28,7 +28,7 @@ function trackTitle(route: Route, owner: string | null, closed: boolean): string
 // One symbol, centered on the middle car of an open colored route
 function RouteSymbol({ color, space }: { color: SymbolColor; space: Space }) {
   const size = SYMBOL_SIZE;
-  return <ColorSymbol color={color} svgProps={{ x: space.x - size / 2, y: space.y - size / 2, style: { width: size, height: size } }} />;
+  return <ColorSymbol color={color} svgProps={{ x: space.x - size / 2, y: space.y - size / 2, width: size, height: size, style: { width: size, height: size } }} />;
 }
 
 // The map drawn in SVG: land, every route as a chain of train spaces, and the cities on top
