@@ -54,11 +54,11 @@ test('scoring tumbles nothing and slides the points from the dice to their box',
 });
 
 test('scoring the last box of the game still slides the points', () => {
-  const nearly: GameState = {
-    ...rolled,
-    sheets: { 1: { ones: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6, threeKind: 0, fourKind: 0, fullHouse: 0, smallStraight: 30, largeStraight: 40, yahtzee: 0 }, 2: {} }
-  };
+  const full = { ones: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6, threeKind: 0, fourKind: 0, fullHouse: 0, smallStraight: 30, largeStraight: 40, yahtzee: 0 };
+  const nearly: GameState = { ...rolled, sheets: { 1: full, 2: { ...full, chance: 10 } } };
   const next = after(nearly, { type: 'score', category: 'chance' });
+  assert.ok(next.isGameOver);
+  assert.equal(next.dice.length, 0);
   assert.deepEqual(scoreSlide(view(next)), [DICE_KEY, cellKey(1, 'chance')]);
 });
 

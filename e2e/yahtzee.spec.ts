@@ -244,6 +244,17 @@ test.describe('Yahtzee rules', () => {
     expect(await still.bob.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 
+  test('the score of the last box of the game still slides to its box', async ({ seat }) => {
+    const { alice, bob, rolled, sheets } = await start(seat, ['Alice', 'Bob'], true);
+    await sheets(sheetWithout(0, 'chance'), sheetWithout(0));
+    await rolled([1, 1, 1, 1, 6]);
+    await option(alice, 10, 'Chance').click();
+    await expect.poll(() => bob.locator('.yz-flying-points').count()).toBe(1);
+    await expect(bob.locator('.turn-message')).toHaveText('Game over: Alice won');
+    await expect(bob.locator('.yz-flying-points')).toHaveCount(0);
+    await expect(bob.locator('[data-anim-key="cell-1-chance"]')).toHaveText('10');
+  });
+
   test('History steps through every move, and FAQ shows the rules', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await table.dice(1, 2, 3, 4, 5);

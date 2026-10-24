@@ -37,14 +37,15 @@ export default function animateMove({ next, root, rectOf }: MoveChange<PublicGam
   }
 
   const slide = scoreSlide(next);
-  if (slide && next.lastMove?.type === 'score') {
+  const { lastMove } = next;
+  if (slide && lastMove?.type === 'score') {
     const [fromKey, toKey] = slide;
     const cell = find(toKey)?.getBoundingClientRect();
     const dice = rectOf(fromKey);
     if (cell && dice) {
       // Starts as big as a box, in the middle of the dice
       const from = new DOMRect(dice.x + (dice.width - cell.width) / 2, dice.y + (dice.height - cell.height) / 2, cell.width, cell.height);
-      ghostSlide(root, pointsLabel(next.lastMove.points), from, cell);
+      ghostSlide(root, pointsLabel(lastMove.points), from, cell);
     }
   }
 }
