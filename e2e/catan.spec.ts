@@ -792,6 +792,20 @@ test.describe('Catan rules', () => {
     await expect(status(bob)).toContainText('Alice wins with 9 points');
     await expect(turnMessage(bob)).toHaveText('Game over: Alice won');
   });
+
+  test('a player with 2 points is not offered as a victim', async ({ seat }) => {
+    // Bob has 1 point and Cara 3, and both have a card and a building on hex 4
+    const table = await seat('catan', NAMES, { houseRules: { friendlyRobber: true } });
+    await craft(table, {
+      rolled: true, dice: [3, 4], pending: { kind: 'robber' }, hands: { 2: { sheep: 1 }, 3: { ore: 1 } },
+      buildings: { [corner(4, 0)]: settlement(2), [corner(4, 3)]: city(3), [corner(0, 0)]: settlement(3) }
+    });
+    const [alice, bob] = table.pages;
+    await hex(alice, 4).click();
+    await expect(alice.getByText('Steal from')).toHaveCount(0);
+    await expect(status(alice)).toHaveText('Alice moved the robber. Alice stole a card from Cara');
+    await expectHand(bob, { sheep: 1 });
+  });
 });
 
 test.describe('Catan controls', () => {

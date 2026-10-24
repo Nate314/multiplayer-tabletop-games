@@ -3,6 +3,7 @@
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
+import { minimumToStart } from '../../shared/houseRules.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { EDGE_COUNT, HEX_COUNT, VERTEX_COUNT, desertOf, isIndex, randomLayout } from './board.ts';
 import {
@@ -18,7 +19,7 @@ import {
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
 
-export const MIN_PLAYERS = 3;
+export const PLAYERS = { minPlayers: 3, maxPlayers: 4, stretchedPlayers: { min: 2, max: 4 } };
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 
 export function createGameState(gameId: string): GameState {
@@ -269,7 +270,7 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   if (state.isGameOver) return { error: 'The game is over' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-  if (state.activePlayers.length < MIN_PLAYERS) return { error: 'Waiting for more players' };
+  if (state.activePlayers.length < minimumToStart(PLAYERS, state)) return { error: 'Waiting for more players' };
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = act({ ...state, log: [] }, seat, action);
   if ('error' in result) return result;
@@ -312,7 +313,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
     const following = nextActivePlayer(next, seat);
     next = note(startTurn(next, following), `${nameOf(state, following)}'s turn`);
   }
-  if (next.activePlayers.length < MIN_PLAYERS) {
+  if (next.activePlayers.length < minimumToStart(PLAYERS, next)) {
     const awarded = settleAwards(next);
     const scores = awarded.activePlayers.map(other => points(awarded, other));
     const best = Math.max(...scores);

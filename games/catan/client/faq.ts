@@ -79,6 +79,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose the points to win: 8, 10 or 12. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+    answer: 'Before play starts the host can choose the points to win (8, 10 or 12), switch on the friendly robber (a player with 2 points or fewer cannot be robbed; the robber can still be moved to their hex but steals nothing), or ' +
+      'tick "I know what I\'m doing" to play with two players. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];
