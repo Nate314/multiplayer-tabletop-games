@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has thirty-one games: Azul, Dominoes, Parchisi, Quoridor, Rack-O, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Connect Four, Mancala and War (two players), Catan (three to four players), The Crew (three to five players), Euchre, Hearts, Rook and Spades (four players), Carcassonne and Ticket to Ride (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), Risk (three to six players), and Farkle, Monopoly, Texas Hold'em, UNO and Yahtzee (two to eight players). The landing page lists the games; pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has thirty-one games: Azul, Dominoes, Parchisi, Quoridor, Rack-O, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Connect Four, Mancala and War (two players), Catan (three to four players), The Crew (three to five players), Euchre, Hearts, Rook and Spades (four players), Carcassonne and Ticket to Ride (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), Risk (three to six players), and Farkle, Monopoly, Texas Hold'em, UNO and Yahtzee (two to eight players). The landing page lists the games in groups (card, dice, tile, classic board and strategy board games); pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -95,6 +95,16 @@ The server handles both the web pages and the WebSocket connections on one port 
 - Across computers on the same network, find the IP address of the computer running the server (for example with `ipconfig` or `ifconfig`) and open `http://<server-ip>:3000` on each one (for example `http://192.168.1.100:3000`)
 
 Make sure every player can reach the server computer over the network.
+
+## Installing as an app
+
+The site can be installed and then opens full screen like an app:
+
+- **Android (Chrome):** open the site, then choose "Install app" or "Add to Home screen" from the menu.
+- **iPhone (Safari):** open the site, tap Share, then "Add to Home Screen".
+- **Desktop (Chrome):** click the install icon at the right of the address bar.
+
+Installing needs HTTPS, or `localhost` on the server computer itself; over plain `http://<server-ip>:3000` the browser offers only a shortcut. The site always loads fresh when the server answers, so a new version shows on the next reload. Without a connection the installed app only opens its start screen: games need the server.
 
 ## Technical Details
 

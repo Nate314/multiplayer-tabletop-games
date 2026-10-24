@@ -1,5 +1,6 @@
 import Card from './Card';
-import { DISCARD_KEY, seatKey } from './animateMove.ts';
+import { DISCARD_KEY } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import { TARGET_SCORE } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 

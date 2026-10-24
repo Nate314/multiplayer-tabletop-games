@@ -1,4 +1,5 @@
 // Rolling, moving round the board, landing, rent, cards and jail
+import { rollDie } from '../../shared/dice.ts';
 import {
   BOARD, BOARD_SIZE, GO_SALARY, HOTEL, JAIL, JAIL_FINE, RAILROAD_RENTS, UTILITY_MULTIPLIERS, groupSpaces, ownable,
   spacesOfKind
@@ -13,10 +14,6 @@ export const MAX_JAIL_ROLLS = 3;
 
 // How a card's move changes the rent where it lands
 type Landing = 'normal' | 'doubleRailroad' | 'utilityTimesTen';
-
-export function rollDie(random: Random): number {
-  return Math.min(6, 1 + Math.floor(random() * 6));
-}
 
 export function rollDice(random: Random): [number, number] {
   return [rollDie(random), rollDie(random)];

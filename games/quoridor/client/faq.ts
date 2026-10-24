@@ -37,10 +37,9 @@ export const FAQS: FaqItem[] = [
       'is in your pawn\'s color, and every player\'s goal is listed under "Goals".'
   },
   {
-    question: 'What do Undo and Show Last Move do?',
+    question: 'What does Undo do?',
     answer: 'Undo asks everyone to take back the last turn; it happens only if every player still in the game ' +
-      'approves. Show Last Move highlights the previous move while you hover over it, or click it to keep ' +
-      'the highlight on.'
+      'approves.'
   },
   {
     question: 'What happens if someone leaves?',

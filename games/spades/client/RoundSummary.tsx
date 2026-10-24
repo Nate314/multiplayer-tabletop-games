@@ -1,3 +1,4 @@
+import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { BAG_LIMIT, LOSING_SCORE, TARGET_SCORE, teamNames, teamOf } from '../rules.ts';
 import type { HandSummary, PublicGameState, Seat, Team, TeamResult } from '../types.ts';
 
@@ -27,39 +28,32 @@ function reasons(result: TeamResult, playerNames: Record<Seat, string>): string 
 // The scoring after a hand: each team's contract, nils and bags, and the totals.
 // Until the game is over, everyone connected clicks Continue to deal the next hand.
 export default function RoundSummary({ summary, gameState, playerNumber, onContinue, onClose }: RoundSummaryProps) {
-  const { playerNames, isGameOver, gameStatus, scores, bags, activePlayers, disconnected } = gameState;
-  const acknowledged = summary.acknowledged.includes(playerNumber);
-  const waitingFor = activePlayers
-    .filter(seat => !summary.acknowledged.includes(seat) && !disconnected.includes(seat))
-    .map(seat => playerNames[seat]);
+  const { playerNames, isGameOver, scores, bags } = gameState;
 
   return (
-    <div className="overlay summary-overlay">
-      <div className="modal round-summary" role="dialog" aria-label="Hand scoring">
-        <h2>{isGameOver ? 'Final scoring' : `Hand ${summary.handNumber} scoring`}</h2>
-        <div className="summary-result">{gameStatus}</div>
-        <ul className="summary-teams">
-          {([0, 1] as Team[]).map(team => (
-            <li key={team} className="summary-team">
-              <span className="summary-name">
-                {teamNames(team, playerNames)}
-                {teamOf(playerNumber) === team && ' (you)'}
-              </span>
-              <span className="summary-change">{signed(summary.teams[team].change)}</span>
-              <span className="summary-points">{scores[team]} pts, {bags[team]} {bags[team] === 1 ? 'bag' : 'bags'}</span>
-              <span className="summary-reason">{reasons(summary.teams[team], playerNames)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="summary-target">First to {TARGET_SCORE} points wins; a team at {LOSING_SCORE} loses</div>
-        {isGameOver ? (
-          <button type="button" className="primary-button" onClick={onClose}>Close</button>
-        ) : acknowledged ? (
-          <div className="summary-waiting">Waiting for {waitingFor.join(', ')}</div>
-        ) : (
-          <button type="button" className="primary-button" onClick={onContinue}>Continue</button>
-        )}
-      </div>
-    </div>
+    <RoundSummaryDialog
+      label="Hand scoring"
+      title={isGameOver ? 'Final scoring' : `Hand ${summary.handNumber} scoring`}
+      gameState={gameState}
+      acknowledged={summary.acknowledged}
+      playerNumber={playerNumber}
+      onContinue={onContinue}
+      onClose={onClose}
+    >
+      <ul className="summary-teams">
+        {([0, 1] as Team[]).map(team => (
+          <li key={team} className="summary-team">
+            <span className="summary-name">
+              {teamNames(team, playerNames)}
+              {teamOf(playerNumber) === team && ' (you)'}
+            </span>
+            <span className="summary-change">{signed(summary.teams[team].change)}</span>
+            <span className="summary-points">{scores[team]} pts, {bags[team]} {bags[team] === 1 ? 'bag' : 'bags'}</span>
+            <span className="summary-reason">{reasons(summary.teams[team], playerNames)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="summary-target">First to {TARGET_SCORE} points wins; a team at {LOSING_SCORE} loses</div>
+    </RoundSummaryDialog>
   );
 }

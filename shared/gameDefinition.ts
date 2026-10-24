@@ -1,8 +1,10 @@
+import type { GameCategory } from './categories.ts';
 import type { BaseGameState, BasePublicState, Random, Result, Seat } from './types.ts';
 
 export type GameInfo = {
   id: string; // lowercase, used in messages and as data-game
   name: string;
+  category: GameCategory; // which landing page group lists it
   description: string; // one line for the landing page
   minPlayers: number;
   maxPlayers: number;

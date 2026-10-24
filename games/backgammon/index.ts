@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const backgammon: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'backgammon',
+    category: 'classic',
     name: 'Backgammon',
     description: 'Race your fifteen checkers home and bear them off before your opponent',
     minPlayers: 2,

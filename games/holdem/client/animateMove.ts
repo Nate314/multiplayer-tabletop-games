@@ -1,8 +1,8 @@
 import { slideFrom } from '../../../src/animation/motion.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
-import type { PublicGameState, Seat } from '../types.ts';
+import type { PublicGameState } from '../types.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 
-export const seatKey = (seat: Seat) => `seat-${seat}`;
 export const boardKey = (index: number) => `board-${index}`;
 
 // Newly dealt board cards slide in from the button's seat, one after another

@@ -1,6 +1,9 @@
 // Azul rules shared by the browser (legal picks and lines) and the server (validation).
+import { mapSeats } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, connectedPlayers, nextActivePlayer } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
@@ -13,6 +16,7 @@ import type {
   PlayerBoard,
   PublicGameState,
   Result,
+  RoundSummary,
   Seat,
   SeatSummary,
   Source
@@ -248,10 +252,6 @@ function tileWall(board: PlayerBoard): { board: PlayerBoard; discarded: Color[];
   };
 }
 
-function mapSeats<T, U>(record: Record<Seat, T>, change: (value: T, seat: Seat) => U): Record<Seat, U> {
-  return Object.fromEntries(Object.entries(record).map(([seat, value]) => [seat, change(value, Number(seat))]));
-}
-
 // Adds the bonuses and picks the winners among the players still in the game:
 // most points, then most complete rows; a tie on both is shared
 function endGame(state: GameState): GameState {
@@ -321,11 +321,15 @@ export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Rand
   return startNextRoundIfReady(state, random);
 }
 
+const ROUND: RoundAccess<GameState, RoundSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'round'
+};
+
 // Deals the next round once every connected player has acknowledged the summary
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
 
   const dealt = deal(state.bag, state.lid, state.factories.length, random);
   if (dealt.factories.every(factory => factory.length === 0)) return endGame({ ...state, roundSummary: null });
@@ -350,17 +354,9 @@ function startNextRoundIfReady(state: GameState, random: Random): GameState {
 }
 
 export function acknowledgeRound(state: GameState, seat: Seat, random: Random = Math.random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return { error: 'Nothing to continue' };
+  if (!state.roundSummary || state.isGameOver) return { error: 'Nothing to continue' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
-  if (summary.acknowledged.includes(seat)) return { state };
-
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next round`
-  };
-  return { state: startNextRoundIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextRoundIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {

@@ -8,7 +8,7 @@ export type { PlayingCard as Card, Suit } from '../../shared/playingCards.ts';
 import type { Seat } from '../../shared/types.ts';
 
 // The partnerships: team 0 is seats 1 and 3, team 1 is seats 2 and 4
-export type Team = 0 | 1;
+export type { Team } from '../../shared/partnerships.ts';
 export type TeamScores = [number, number];
 
 export type Phase = 'bidding' | 'play' | 'handOver';

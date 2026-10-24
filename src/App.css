@@ -98,6 +98,19 @@
   color: var(--lobby-text);
 }
 
+.lobby-category {
+  margin-bottom: 24px;
+}
+
+.lobby-category-heading {
+  margin: 0 0 12px;
+  color: var(--lobby-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .lobby-games {
   display: flex;
   flex-direction: column;
@@ -474,6 +487,16 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
+/* Round scoring dialog (RoundSummaryDialog); a game sets --muted for the waiting line */
+
+:where([data-game] .summary-result) {
+  font-weight: 600;
+}
+
+:where([data-game] .summary-waiting) {
+  color: var(--muted);
+}
+
 /* Undo and dismiss votes */
 
 :where([data-game] .undo-vote, [data-game] .dismiss-vote) {
@@ -666,6 +689,10 @@
   color: var(--playing-card-red, var(--playing-card-red-default));
 }
 
+:where(.playing-card-joker) {
+  color: var(--playing-card-red, var(--playing-card-red-default));
+}
+
 :where(.playing-card-back) {
   background:
     repeating-linear-gradient(45deg, var(--playing-card-stripe, var(--playing-card-stripe-default)) 0 4px, transparent 4px 8px),
@@ -689,6 +716,12 @@
 
 :where(.playing-card-pip) {
   font-size: 1.9em;
+}
+
+:where(.playing-card-joker .playing-card-pip) {
+  font-size: 0.75em;
+  letter-spacing: 0.05em;
+  writing-mode: vertical-rl;
 }
 
 :where(button.playing-card) {

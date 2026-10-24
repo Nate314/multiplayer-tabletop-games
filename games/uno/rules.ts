@@ -1,10 +1,13 @@
 // UNO rules shared by the browser (playable cards) and the server (validation).
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type {
-  Card, Color, Direction, GameState, LastMove, Move, PendingFour, PublicGameState, Result, Seat, Value
+  Card, Color, Direction, GameState, LastMove, Move, PendingFour, PublicGameState, Result, RoundSummary, Seat, Value
 } from './types.ts';
 
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'blue'];
@@ -209,8 +212,8 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, drawPile, discardPile, drawnCard, turnHolder: _turnHolder, revealed, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     drawPileCount: drawPile.length,
     discardTop: discardPile[discardPile.length - 1] ?? null,
     hasDrawn: drawnCard !== null,
@@ -415,11 +418,15 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   return play(next, seat, parsed.card, parsed.color, parsed.uno === true, random);
 }
 
+const ROUND: RoundAccess<GameState, RoundSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'round'
+};
+
 // Deals the next round once every connected player has acknowledged the summary. The deal passes to the dealer's left.
 function startNextRoundIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
 
   const dealer = stepFrom(state.activePlayers, state.dealer ?? state.activePlayers[0], 1);
   const roundNumber = state.roundNumber + 1;
@@ -428,15 +435,7 @@ function startNextRoundIfReady(state: GameState, random: Random): GameState {
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next round`
-  };
-  return { state: startNextRoundIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextRoundIfReady(next, random));
 }
 
 // A call after the play still counts if nobody has caught the player yet

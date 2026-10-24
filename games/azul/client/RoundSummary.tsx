@@ -1,3 +1,5 @@
+import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
+import { plural } from '../../../shared/text.ts';
 import Tile from './Tile';
 import type { Placement, PublicGameState, RoundSummary as Summary, Seat, SeatSummary } from '../types.ts';
 
@@ -9,8 +11,6 @@ type RoundSummaryProps = {
   onContinue: () => void;
   onClose: () => void;
 };
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 function reason({ rowRun, colRun }: Placement): string {
   const runs: string[] = [];
@@ -75,39 +75,36 @@ function SeatLines({ seat }: { seat: SeatSummary }) {
 
 export default function RoundSummary({ summary, gameState, playerNumber, seats, onContinue, onClose }: RoundSummaryProps) {
   const { playerNames, activePlayers, isGameOver, winners, gameStatus } = gameState;
-  const acknowledged = summary.acknowledged.includes(playerNumber);
-  const waitingFor = activePlayers.filter(seat => !summary.acknowledged.includes(seat)).map(seat => playerNames[seat]);
 
   return (
-    <div className="overlay">
-      <div className="modal" role="dialog" aria-label="Round scoring">
-        <h2>{isGameOver ? 'Final scoring' : `Round ${summary.round} scoring`}</h2>
-        {isGameOver && <div className="summary-result">{gameStatus}</div>}
-        <div className="summary-seats">
-          {seats.filter(seat => summary.seats[seat]).map(seat => (
-            <section key={seat} className={winners.includes(seat) ? 'summary-seat summary-winner' : 'summary-seat'}>
-              <header>
-                <span>
-                  {playerNames[seat]}
-                  {seat === playerNumber && ' (you)'}
-                  {!activePlayers.includes(seat) && ' (left)'}
-                </span>
-                <span>
-                  {summary.seats[seat].scoreBefore} → <strong>{summary.seats[seat].scoreAfter} pts</strong>
-                </span>
-              </header>
-              <SeatLines seat={summary.seats[seat]} />
-            </section>
-          ))}
-        </div>
-        {isGameOver ? (
-          <button type="button" className="primary-button" onClick={onClose}>Close</button>
-        ) : acknowledged ? (
-          <div className="summary-waiting">Waiting for {waitingFor.join(', ')}</div>
-        ) : (
-          <button type="button" className="primary-button" onClick={onContinue}>Continue</button>
-        )}
+    <RoundSummaryDialog
+      label="Round scoring"
+      title={isGameOver ? 'Final scoring' : `Round ${summary.round} scoring`}
+      gameState={gameState}
+      result={isGameOver ? gameStatus : null}
+      acknowledged={summary.acknowledged}
+      listDisconnected
+      playerNumber={playerNumber}
+      onContinue={onContinue}
+      onClose={onClose}
+    >
+      <div className="summary-seats">
+        {seats.filter(seat => summary.seats[seat]).map(seat => (
+          <section key={seat} className={winners.includes(seat) ? 'summary-seat summary-winner' : 'summary-seat'}>
+            <header>
+              <span>
+                {playerNames[seat]}
+                {seat === playerNumber && ' (you)'}
+                {!activePlayers.includes(seat) && ' (left)'}
+              </span>
+              <span>
+                {summary.seats[seat].scoreBefore} → <strong>{summary.seats[seat].scoreAfter} pts</strong>
+              </span>
+            </header>
+            <SeatLines seat={summary.seats[seat]} />
+          </section>
+        ))}
       </div>
-    </div>
+    </RoundSummaryDialog>
   );
 }

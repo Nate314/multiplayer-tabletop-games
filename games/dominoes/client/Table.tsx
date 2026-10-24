@@ -1,5 +1,6 @@
 import Tile from './Tile';
-import { lineKey, seatKey } from './animateMove.ts';
+import { lineKey } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import { leftEnd, rightEnd, targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 

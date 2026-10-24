@@ -6,6 +6,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const uno: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'uno',
+    category: 'card',
     name: 'UNO',
     description: 'Match colors and numbers, empty your hand and be first to 500 points',
     minPlayers: 2,

@@ -263,20 +263,6 @@ test.describe('Azul controls', () => {
     await expect(bob.locator('.tile-button').first()).toBeDisabled();
   });
 
-  test('the source of the last move is outlined', async ({ seat }) => {
-    const { table, alice, bob } = await start(seat);
-    await table.patch({ factories: factoriesOf(5, ['red', 'blue'], ['black']) });
-    await expect(bob.locator('.last-source')).toHaveCount(0);
-    await take(factory(alice, 1), 'black');
-    await line(mine(alice), 1).click();
-    await expect(factory(bob, 1)).toHaveClass(/last-source/);
-    await expect(bob.locator('.last-source')).toHaveCount(1);
-    await take(factory(bob, 0), 'red');
-    await line(mine(bob), 1).click();
-    await expect(factory(alice, 0)).toHaveClass(/last-source/);
-    await expect(factory(alice, 1)).not.toHaveClass(/last-source/);
-  });
-
   test('boards are shown in turn order starting with yours, so play passes to the board on the right', async ({ seat }) => {
     const { pages: [alice, bob, cara] } = await start(seat, 3);
     const order = (page: Page) => page.locator('.player-board .board-name');

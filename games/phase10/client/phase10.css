@@ -450,7 +450,6 @@
 }
 
 [data-game="phase10"] .summary-result {
-  font-weight: 600;
   color: var(--highlight);
   margin-bottom: 12px;
 }

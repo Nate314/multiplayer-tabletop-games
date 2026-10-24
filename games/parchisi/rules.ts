@@ -1,4 +1,5 @@
 // Parchisi rules shared by the browser (move hints) and the server (validation).
+import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import type {
@@ -18,7 +19,6 @@ export const HOME_BONUS = 10;
 const ENTRY_OFFSET = 5;
 const SAFE_OFFSETS = [0, ENTRY_OFFSET, 12]; // per side: its home entrance, its entry square and one more
 const MAX_DOUBLES = 3;
-const DIE_FACES = 6;
 const OPPOSITE_FACES = 7; // a face and the face underneath it add up to 7
 // Every roll has a chance to give a move, so the automatic passing ends; the cap only guards against a broken random.
 // Should it ever be reached, the player is left without a move and an undo rolls again.
@@ -227,10 +227,6 @@ export function describeLastMove({ playerNumber, from, to, steps, captured }: La
       : `${name} moved a pawn ${steps} ${steps === 1 ? 'square' : 'squares'}`;
   for (const { seat } of captured) text += ` and captured ${playerNames[seat]}'s pawn (+${CAPTURE_BONUS})`;
   return text;
-}
-
-function rollDie(random: Random): number {
-  return Math.min(DIE_FACES, 1 + Math.floor(random() * DIE_FACES));
 }
 
 // Three doubles in a row send the pawn closest to home (on the track or in the home column) back to the nest

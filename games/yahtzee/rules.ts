@@ -1,4 +1,5 @@
 // Yahtzee rules shared by the browser (score hints) and the server (validation).
+import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -145,7 +146,7 @@ function roll(state: GameState, seat: Seat, input: Record<string, unknown>, rand
   if (!first && hold.every(Boolean)) return { error: 'Leave at least one die to roll' };
 
   const held = first ? Array<boolean>(DICE_COUNT).fill(false) : hold;
-  const dice = Array.from({ length: DICE_COUNT }, (_, index) => held[index] ? state.dice[index] : 1 + Math.floor(random() * 6));
+  const dice = Array.from({ length: DICE_COUNT }, (_, index) => held[index] ? state.dice[index] : rollDie(random));
   const rollsLeft = state.rollsLeft - 1;
   const lastMove: LastMove = { type: 'roll', playerNumber: seat, dice, rollsLeft };
   return { state: { ...state, dice, held, rollsLeft, lastMove, gameStatus: moveText(state.playerNames[seat], lastMove) } };

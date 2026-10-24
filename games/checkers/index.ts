@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const checkers: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'checkers',
+    category: 'classic',
     name: 'Checkers',
     description: 'Jump diagonally to capture, and crown a king on the far row',
     minPlayers: 2,

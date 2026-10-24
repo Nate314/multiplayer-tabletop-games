@@ -60,10 +60,17 @@ flowchart TD
 ## Contracts
 
 - `shared/gameDefinition.ts` defines `GameDefinition` and `GameInfo`, which the server uses
-- `games/registry.ts` lists every `GameDefinition` in landing page order
+- `games/registry.ts` lists every `GameDefinition`
+- `shared/categories.ts` defines `GameCategory` (every `GameInfo` has one), `CATEGORIES` (the landing page groups, in order) and `groupByCategory`
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
-- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard 52-card deck (`PlayingCard`, `standardDeck`, `rankValue`, `cardName`, `sameCard`), for any game to use, and `shared/tricks.ts` the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions
+- `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard deck (`PlayingCard`, `JokerCard`, `DeckCard`, `standardDeck`, `isJoker`, `rankValue`, `cardName`, `sameCard`), for any game to use; `standardDeck` takes `ranks`, `suits` and `jokers` options to build a smaller deck or add jokers
+- `shared/tricks.ts` has the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions, and `describeTrickPlay` for the move description of a played card
+- `shared/rounds.ts` has the between-rounds "everyone is ready" step: `acknowledge` and `everyoneReady` work on a game's own state through its `RoundAccess`, for a summary type that is `Acknowledgeable`
+- `shared/partnerships.ts` has the four-seat partnership helpers (`FOUR_SEATS`, `nextSeat`, `teamOf`, `teamSeats`, `partnerOf`, `teamNames`, `partnershipBroken`)
+- `shared/hands.ts` has `viewHand` (a viewer sees only their own hand), `handCounts` and `mapSeats`
+- `shared/dice.ts` has `rollDie` and `rollDice`, which take the game's `Random`
+- Every game declares a `category` in its `GameInfo`, which decides its landing page group
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
 
@@ -71,7 +78,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
 1. **React components (`/src/components`)**
 
-   - `GameList.tsx` is the landing page: one row per game, in registry order
+   - `GameList.tsx` is the landing page: one row per game, in a section per category (`groupByCategory`), alphabetical within a section
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
    - `GameView.tsx` is the header (Back to games, History, FAQ, theme toggle) around the game's own `Screen`
    - `FaqButton.tsx` and `FaqDialog.tsx` show a game's FAQ items
@@ -83,11 +90,14 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `PresenceBar.tsx` sits above the game screen while anyone is disconnected: each disconnected player with a Dismiss button, and "Waiting for <name> to reconnect" when it is their turn
    - `DismissVote.tsx` shows a running dismiss vote
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
-   - `PlayingCard.tsx` draws a standard playing card face up, or its back for `card: null`, in three sizes; with `onClick` it is a button. Its default look is in `App.css`, and a game can retheme it with `--playing-card-face`, `--playing-card-back`, `--playing-card-stripe`, `--playing-card-red`, `--playing-card-black`, `--playing-card-selected` and `--playing-card-highlight`
+   - `PlayingCard.tsx` draws a standard playing card face up, a joker (a `DeckCard`, class `playing-card-joker`), or its back for `card: null`, in three sizes; with `onClick` it is a button. Its default look is in `App.css`, and a game can retheme it with `--playing-card-face`, `--playing-card-back`, `--playing-card-stripe`, `--playing-card-red`, `--playing-card-black`, `--playing-card-selected` and `--playing-card-highlight`
    - `Dice.tsx` draws a row of six-sided dice with pips; with `onToggle` each die is a button (for holding dice). Its default look is in `App.css`, and a game can retheme it with `--dice-face`, `--dice-pip` and `--dice-selected`
+   - `Die`, also exported from `Dice.tsx`, draws a single die
+   - `RoundSummaryDialog.tsx` is the end-of-round scoring dialog with a Continue button (or Close when the game is over), shared by the round-based games; the `result` option replaces the result line under the title (default: the game status) and `listDisconnected` also names disconnected players in the waiting line (the server still waits only for connected players)
    - `DrawAndResign.tsx` is the Offer draw, Accept draw and Decline, and Resign (with Confirm resign) controls for two-player games that use `shared/drawOffer.ts`; the game passes its own buttons, such as Undo, as children
+   - `/shared/text.ts` has `plural(count, word, pluralWord?)`
    - `/src/hooks/useEscapeKey.ts` closes the topmost dialog on Escape
-   - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. Quoridor glides the moved pawn from its old square and fades in a new wall; the History dialog animates only through a game's `animateMove`, when Animations is on
+   - `/src/animation/useMoveAnimation.ts` lets a game screen animate a move: after a render that added exactly one move (`moveCount` up by one) it calls the game's `animate` with the previous and next state, the root element and `rectOf(key)`, where each `data-anim-key` element was before the move; then it measures them again. The first render, a rejoin and an undo do not animate. `/src/animation/motion.ts` has `slideFrom` and `fadeIn` (Web Animations API, `MOVE_DURATION_MS` = 300 ms, none under `prefers-reduced-motion: reduce`); a new animation on an element cancels its running one. `/src/animation/animKeys.ts` has the shared `data-anim-key` names (`handKey`, `seatKey`, `trickKey`). Quoridor glides the moved pawn from its old square and fades in a new wall; the History dialog animates only through a game's `animateMove`, when Animations is on
    - `/src/hooks/useGameConnection.ts` holds the joined game's state and errors from the Game Service, remembers the game, rejoins it after a refresh, and offers it again after Back to games
 
 2. **Game Service (`/src/services/gameService.ts`)**
@@ -126,7 +136,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
 1. **Express and WebSocket server (`/server/server.ts`)**
 
-   - Serves the built React application and handles SPA routing
+   - Serves the built React application and handles SPA routing through `serveClient` (`/server/static.ts`). Vite's content-hashed files under `/assets/` are sent with `Cache-Control: public, max-age=31536000, immutable`; every other file (`index.html`, `sw.js`, `manifest.webmanifest`, the icons) and the SPA fallback's `index.html` with `no-cache`, so the browser checks with the server on each load. A path without an extension gets `index.html`; a missing file with one (`/missing.js`) is a 404
+   - The site installs as an app: `public/manifest.webmanifest` gives its name, colors and icons (`public/icon-*.png`, `public/apple-touch-icon.png`, made once from `favicon.svg`), and `index.html` links it with the `theme-color` meta, which the theme toggle keeps in step with the light or dark theme. `src/main.tsx` registers the hand-written service worker `public/sw.js` in production builds only. The worker precaches `/`, then answers same-origin GETs network first (with `cache: 'no-cache'`), keeping a copy of each good response and falling back to it offline (a page load falls back to the cached `/`). It never touches `/api/` or the WebSocket, never reloads a page, and its versioned cache name (`tabletop-games-v1`) clears older caches on activation
    - Reads `PORT` from the environment, default 3000, and `DATABASE_PATH`, default `data/games.sqlite` under the repo root
    - Routes WebSocket messages to the game manager and broadcasts the results
 
@@ -151,7 +162,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - On start the manager loads every saved room: each active seat is marked disconnected directly, without running any game hook, so the usual rejoin works; open undo and dismiss votes are cleared; the saved status is kept; and the 10-minute empty-game timer restarts. A room whose state or steps do not parse, have the wrong shape or skip an index, that names a game that no longer exists, or that fails to load for any other reason is logged and deleted with its steps
 
 4. **Game registry (`/games/registry.ts`)**
-   - `GAMES` lists the games, in landing page order
+   - `GAMES` lists the games, alphabetical by name
 
 ## Game files
 

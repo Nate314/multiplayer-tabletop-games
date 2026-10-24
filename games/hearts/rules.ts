@@ -14,15 +14,20 @@
 // - Each heart taken is 1 point and the queen of spades 13. A player who takes all 26 shoots the moon: each other
 //   player takes 26 instead.
 // - The game ends when a player reaches 100; the lowest score wins, and equal lowest scores share the win.
+import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
-import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
+import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import type { RoundAccess } from '../../shared/rounds.ts';
+import { FOUR_SEATS as SEATS, nextSeat } from '../../shared/partnerships.ts';
+import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { canFollow, trickWinner } from '../../shared/tricks.ts';
+import { canFollow, describeTrickPlay, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
 import type { GameState, HandSummary, LastMove, PassDirection, Play, PlayingCard, PublicGameState, Result, Seat } from './types.ts';
 
-export const SEATS: Seat[] = [1, 2, 3, 4];
+export { SEATS, nextSeat };
+
 export const HAND_SIZE = 13;
 export const PASS_SIZE = 3;
 export const TARGET_SCORE = 100;
@@ -43,11 +48,6 @@ export function cardPoints(card: PlayingCard): number {
 export function sortHand(hand: PlayingCard[]): PlayingCard[] {
   const order = (card: PlayingCard) => SUITS.indexOf(card.suit) * 100 + rankOf(card);
   return [...hand].sort((a, b) => order(a) - order(b));
-}
-
-// The seat to the left, which plays next
-export function nextSeat(seat: Seat): Seat {
-  return seat % 4 + 1;
 }
 
 export function passDirection(handNumber: number): PassDirection {
@@ -127,10 +127,10 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, passes, ...view } = state;
   return {
     ...view,
-    hand: viewer === null ? [] : hands[viewer] ?? [],
-    handCounts: Object.fromEntries(Object.entries(hands).map(([seat, hand]) => [seat, hand.length])),
+    hand: viewHand(hands, viewer),
+    handCounts: handCounts(hands),
     passed: SEATS.filter(seat => passes[seat]),
-    myPass: viewer === null ? [] : passes[viewer] ?? [],
+    myPass: viewHand(passes, viewer),
     undoAvailable
   };
 }
@@ -145,13 +145,11 @@ function parseCard(value: unknown): PlayingCard | null {
 // How the status line and the history describe a move, e.g. 'Dan played queen of spades; Bob took the trick'
 export function describeMove(lastMove: LastMove, playerNames: Record<Seat, string>): string {
   const played = `${playerNames[lastMove.playerNumber]} played ${cardName(lastMove.card)}`;
-  if (lastMove.trickWinner === null) return played;
-  if (lastMove.trickWinner === lastMove.playerNumber) return `${played} and took the trick`;
-  return `${played}; ${playerNames[lastMove.trickWinner]} took the trick`;
+  return describeTrickPlay(played, lastMove.playerNumber, lastMove.trickWinner, playerNames);
 }
 
 // The names of the seats with the lowest score, and that score
-function lowest(state: GameState, seats: Seat[]): { winners: Seat[]; text: string } {
+function lowest(state: GameState, seats: readonly Seat[]): { winners: Seat[]; text: string } {
   const low = Math.min(...seats.map(seat => state.scores[seat]));
   const winners = seats.filter(seat => state.scores[seat] === low);
   const names = winners.map(seat => state.playerNames[seat]);
@@ -248,24 +246,20 @@ function passCards(state: GameState, seat: Seat, cards: unknown): Result<GameSta
   return { state: { ...playing, gameStatus: `Everyone passed. ${state.playerNames[leader]} leads the 2 of clubs` } };
 }
 
+const ROUND: RoundAccess<GameState, HandSummary> = {
+  get: state => state.roundSummary,
+  set: (state, roundSummary) => ({ ...state, roundSummary }),
+  noun: 'hand'
+};
+
 // Deals the next hand once every connected player has acknowledged the summary
 function startNextHandIfReady(state: GameState, random: Random): GameState {
-  const summary = state.roundSummary;
-  if (!summary || state.isGameOver) return state;
-  if (!connectedPlayers(state).every(seat => summary.acknowledged.includes(seat))) return state;
+  if (!everyoneReady(state, ROUND)) return state;
   return dealHand({ ...state, handNumber: state.handNumber + 1 }, random);
 }
 
 function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<GameState> {
-  const summary = state.roundSummary;
-  if (!summary) return { error: 'Nothing to continue' };
-  if (summary.acknowledged.includes(seat)) return { state };
-  const next: GameState = {
-    ...state,
-    roundSummary: { ...summary, acknowledged: [...summary.acknowledged, seat] },
-    gameStatus: `${state.playerNames[seat]} is ready for the next hand`
-  };
-  return { state: startNextHandIfReady(next, random) };
+  return acknowledge(state, seat, ROUND, next => startNextHandIfReady(next, random));
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {

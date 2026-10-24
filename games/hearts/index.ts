@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const hearts: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'hearts',
+    category: 'card',
     name: 'Hearts',
     description: 'Dodge the hearts and the queen of spades, or shoot the moon and take them all',
     minPlayers: 4,

@@ -146,7 +146,7 @@
   opacity: 0.3;
 }
 
-[data-game="backgammon"] .bg-pip {
+[data-game="backgammon"] .bg-die .dice-pip {
   width: 7px;
   height: 7px;
   margin: auto;

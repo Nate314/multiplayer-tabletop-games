@@ -14,11 +14,8 @@ type FactoriesProps = {
 const CENTER: Source = { type: 'center' };
 
 export default function Factories({ gameState, isMyTurn, selection, onSelect }: FactoriesProps) {
-  const { factories, center, centerHasMarker, lastMove } = gameState;
+  const { factories, center, centerHasMarker } = gameState;
   const centerShown = byColor(center);
-
-  const pileClass = (base: string, source: Source) =>
-    lastMove !== null && sameSource(lastMove.source, source) ? `${base} last-source` : base;
 
   // keyOf(index) names the slot of the index-th tile shown, for move animations
   function renderTiles(source: Source, tiles: Color[], keyOf: (index: number) => string) {
@@ -45,13 +42,13 @@ export default function Factories({ gameState, isMyTurn, selection, onSelect }: 
         {factories.map((tiles, index) => {
           const source: Source = { type: 'factory', index };
           return (
-            <div key={index} className={pileClass('factory', source)}>
+            <div key={index} className="factory">
               {renderTiles(source, tiles, slot => factoryKey(index, slot))}
             </div>
           );
         })}
       </div>
-      <div className={pileClass('center', CENTER)}>
+      <div className="center">
         <span className="center-label">Center</span>
         {centerHasMarker && <Tile kind="first" animKey={CENTER_MARKER_KEY} />}
         {/* One group per color: a group moves to the next row whole instead of wrapping */}

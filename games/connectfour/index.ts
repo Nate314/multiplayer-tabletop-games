@@ -5,6 +5,7 @@ import type { GameState, PublicGameState } from './types.ts';
 export const connectfour: GameDefinition<GameState, PublicGameState> = {
   info: {
     id: 'connectfour',
+    category: 'classic',
     name: 'Connect Four',
     description: 'Drop discs into the grid and line up four in a row',
     minPlayers: 2,
