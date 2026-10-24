@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, joinGame, leave, newPlayer, openFaq, setHouseRules, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -1039,6 +1039,45 @@ test.describe('Catan controls', () => {
     await expect(faq).toContainText('Click a highlighted intersection');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+
+  test('the special build phase is offered only with five or more seated', async ({ seat }) => {
+    const table = await seat('catan', FOUR, { agree: false });
+    await expect(table.pages[0].getByLabel('Special build phase')).toHaveCount(0);
+    await table.join('Eve');
+    await expect(table.pages[0].getByLabel('Special build phase')).not.toBeChecked();
+  });
+
+  test('with the special build phase on, each other player in turn order gets a build chance, builds or buys without trading or playing cards, and Done building passes it on', async ({ seat }) => {
+    const table = await seat('catan', FIVE, { agree: false });
+    await setHouseRules(table.pages[0], 'catan', { specialBuild: true });
+    await agreeToHouseRules(...table.pages);
+    const [alice, bob, cara, , eve] = table.pages;
+    const bobRoad = edgeBetween(corner(0, 0), corner(0, 1));
+    const newRoad = edgeBetween(corner(0, 1), corner(0, 2));
+    // Alice rolled; Bob holds ROAD and an old Knight next to his road; Cara holds DEV_CARD; Dan holds nothing; Eve holds ROAD
+    await craft(table, {
+      rolled: true, dice: [3, 4], roads: roadsOf(2, [bobRoad]), devCards: { 1: [], 2: ['knight'], 3: [], 4: [], 5: [] },
+      hands: { 2: ROAD, 3: DEV_CARD, 5: ROAD }
+    });
+    await button(alice, 'End turn').click();
+    await expect(turnMessage(alice)).toHaveText("Bob's build chance");
+    await expect(bob.locator('.turn-panel .panel-title')).toHaveText('Your build chance');
+    await expect(bob.getByLabel('Give to the bank')).toHaveCount(0);
+    await expect(button(bob, 'End turn')).toHaveCount(0);
+    await expect(devCardRow(bob, 'Knight').getByRole('button', { name: 'Play' })).toBeDisabled();
+    await expect(cara.locator('.turn-waiting')).toHaveText('Waiting for Bob to build');
+    await button(bob, 'Build road').click();
+    await clickPath(bob, newRoad);
+    await expect(alice.locator('.road.seat2')).toHaveCount(2);
+    await button(bob, 'Done building').click();
+    await expect(turnMessage(bob)).toHaveText("Cara's build chance");
+    await button(cara, 'Buy development card').click();
+    await expect(row(alice, 'Cara')).toContainText('Dev 1');
+    await button(cara, 'Done building').click();
+    await expect(turnMessage(alice)).toHaveText("Eve's build chance"); // Dan, with no cards, is skipped
+    await button(eve, 'Done building').click();
+    await expect(button(bob, 'Roll the dice')).toBeVisible();
   });
 });
 

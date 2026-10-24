@@ -6,6 +6,7 @@ import { boardOf } from '../board.ts';
 import { cityError, roadSpots, settlementError, settlementSpotError } from '../building.ts';
 import { robberVictims } from '../dice.ts';
 import { MAX_PLAYERS, MIN_PLAYERS } from '../rules.ts';
+import { buildChance } from '../specialBuild.ts';
 import Board from './Board';
 import { boardAreaClass } from './layout.ts';
 import type { Targets } from './Board';
@@ -31,6 +32,10 @@ function turnMessage(state: PublicGameState, playerNumber: Seat): string {
   if (activePlayers.length < MIN_PLAYERS) return `Waiting for at least ${MIN_PLAYERS} players (up to ${MAX_PLAYERS})`;
   if (currentPlayer === null) return '';
   const name = currentPlayer === playerNumber ? 'You' : playerNames[currentPlayer];
+  if (state.specialBuild) {
+    const builder = state.specialBuild.builders[0];
+    return builder === playerNumber ? 'Your build chance' : `${playerNames[builder]}'s build chance`;
+  }
   if (!started) return `${name} ${currentPlayer === playerNumber ? 'place' : 'places'} first. Joining closes after the first move.`;
   return currentPlayer === playerNumber ? 'Your turn' : `${name}'s turn`;
 }
@@ -45,7 +50,7 @@ function targetsFor(state: PublicGameState, seat: Seat, mode: BuildMode): Target
   }
   if (pending?.kind === 'robber') return { hexes: allHexes(state).filter(hex => hex !== state.robber) };
   if (pending?.kind === 'roadBuilding') return { edges: roadSpots(state, seat) };
-  if (!pending && state.rolled) {
+  if (!pending && (state.rolled || state.specialBuild)) {
     if (mode === 'road') return { edges: roadSpots(state, seat) };
     if (mode === 'settlement') return { vertices: allVertices(state).filter(vertex => settlementError(state, seat, vertex) === null) };
     if (mode === 'city') return { vertices: allVertices(state).filter(vertex => cityError(state, seat, vertex) === null) };
@@ -57,10 +62,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [mode, setMode] = useState<BuildMode>(null);
   const [robberHex, setRobberHex] = useState<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
-  const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, pending, devPlayed, setup } = gameState;
+  const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, pending, devPlayed, setup, specialBuild } = gameState;
   const noVote = !undoVote && !dismissVote;
   const ready = activePlayers.length >= MIN_PLAYERS && !isGameOver && noVote;
   const canMove = ready && currentPlayer === playerNumber;
+  const canBuild = ready && buildChance(gameState, playerNumber);
   const canAct = ready && activePlayers.includes(playerNumber);
   const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= MIN_PLAYERS;
   const canPlay = canMove && !setup && !pending && !devPlayed;
@@ -69,15 +75,15 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   useMoveAnimation(boardRef, gameState, animateMove);
 
   // A build mode or a half-chosen robber move only lasts while it still applies
-  const activeMode = canMove && !pending && gameState.rolled ? mode : null;
+  const activeMode = (canMove && !pending && gameState.rolled) || canBuild ? mode : null;
   const victimsAt = (hex: number) => robberVictims(gameState, playerNumber, hex, seat => gameState.handCounts[seat] ?? 0);
   const choosing = canMove && pending?.kind === 'robber' && robberHex !== null && victimsAt(robberHex).length > 1 ? robberHex : null;
-  const targets = canMove ? targetsFor(gameState, playerNumber, activeMode) : {};
+  const targets = canMove || canBuild ? targetsFor(gameState, playerNumber, activeMode) : {};
 
   const send = (move: Move) => {
     setMode(null);
     setRobberHex(null);
-    gameService.makeMove(move);
+    gameService.makeMove(move, playerNumber === currentPlayer ? undefined : gameState.moveCount);
   };
 
   function clickVertex(vertex: number) {
@@ -114,14 +120,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="side-panel">
           <div className={error ? 'game-status game-status-error' : 'game-status'} role="status">{error || gameStatus}</div>
           <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
-          <TurnPanel gameState={gameState} playerNumber={playerNumber} canMove={canMove} mode={activeMode} spots={spots}
+          <TurnPanel gameState={gameState} playerNumber={playerNumber} canMove={canMove} canBuild={canBuild} mode={activeMode} spots={spots}
             victims={choosing === null ? null : victimsAt(choosing)} onMode={setMode}
             onSteal={victim => choosing !== null && send({ type: 'moveRobber', hex: choosing, victim })} onMove={send} />
           <DiscardPanel key={`discard-${gameState.moveCount}`} gameState={gameState} playerNumber={playerNumber} canAct={canAct}
             onAction={action => gameService.sendAction(action)} />
           <TradePanel key={`trade-${gameState.turnHolder}-${gameState.moveCount}`} gameState={gameState} playerNumber={playerNumber}
-            canAct={canAct} onAction={action => gameService.sendAction(action)} />
-          <HandPanel gameState={gameState} playerNumber={playerNumber} canPlay={canPlay} onMove={send} />
+            canAct={canAct && !specialBuild} onAction={action => gameService.sendAction(action)} />
+          <HandPanel gameState={gameState} playerNumber={playerNumber} canPlay={canPlay && !specialBuild} onMove={send} />
           <button type="button" className="undo-button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
           <PlayerList gameState={gameState} viewer={playerNumber} />
           <EventLog log={gameState.log} />

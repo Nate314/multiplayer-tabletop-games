@@ -29,6 +29,7 @@ Settle an island, trade resources and build roads, settlements and cities to rea
 - What you can click is highlighted: white circles on intersections, dashed white lines on paths, and orange outlines on hexes for the robber
 - In setup, click a highlighted intersection for your settlement, then a highlighted path for its road
 - On your turn the panel has Roll the dice, then Build road, Build settlement and Build city (each highlights where it can go; click it again to cancel), Buy development card, the bank trade (choose what to give, at your best rate, and what to take) and End turn. A greyed out button says why when you hover over it
+- With the special build phase on, after each turn your panel shows Your build chance: build or buy, then click Done building
 - After a 7 or a Knight, click a highlighted hex for the robber; if more than one player there can be stolen from, choose one in the panel
 - Your cards panel shows your resources and development cards; Play plays a card (Year of Plenty and Monopoly first ask for the resources). Cards bought this turn are listed but cannot be played yet
 - After a 7, a player with more than 7 cards sees the Discard panel: pick the cards with + and - and click Discard
