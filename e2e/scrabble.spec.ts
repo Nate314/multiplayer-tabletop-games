@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat } from './fixtures.ts';
 import { BLANK, emptyBoard } from '../games/scrabble/rules.ts';
 import type { GameState, Placement } from '../games/scrabble/types.ts';
 
@@ -49,6 +49,8 @@ const square = (page: Page, row: number, col: number) =>
   page.getByRole('button', { name: `Row ${row + 1}, column ${col + 1}`, exact: true });
 const rackLetters = (page: Page) => rack(page).locator('.tile-letter').allTextContents();
 const hint = (page: Page) => page.locator('.hint');
+// The rack's places, in the order shown
+const rackPlace = (page: Page, place: number) => rack(page).locator('.rack-cell').nth(place);
 const status = (page: Page) => page.locator('.game-status');
 const turn = (page: Page) => page.locator('.turn-message');
 const scoreRow = (page: Page, name: string) => page.locator('.score-row', { hasText: name });
@@ -482,6 +484,73 @@ test.describe('Scrabble controls', () => {
     await expect(faq).toContainText('What does Shuffle do?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+});
+
+test.describe('Scrabble drag and drop', () => {
+  test('a rack tile dragged onto a square is placed, and a blank dragged there asks for its letter', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: '?ATSXYZ' } });
+    await drag(alice, rackTile(alice, 'A'), square(alice, 7, 7));
+    await expect(square(alice, 7, 7).locator('.tile-pending')).toHaveText('A1');
+    await expect(rack(alice).locator('.rack-slot-placed')).toHaveCount(1);
+    await expect(rack(alice).locator('.rack-slot-selected')).toHaveCount(0);
+
+    await drag(alice, rackTile(alice, BLANK), square(alice, 7, 6));
+    await expect(hint(alice)).toHaveText('Pick the letter for your blank');
+    await alice.getByRole('group', { name: 'Letter for the blank' }).getByRole('button', { name: 'C', exact: true }).click();
+    await expect(square(alice, 7, 6).locator('.tile')).toHaveClass(/tile-blank/);
+    await expect(square(alice, 7, 6).locator('.tile')).toHaveText('C');
+    await drag(alice, rackTile(alice, 'T'), square(alice, 7, 8));
+    await expect(hint(alice)).toHaveText('CAT: 4 points');
+    await expect(playButton(alice)).toBeEnabled();
+  });
+
+  test('a placed tile dragged to another square moves, and dragged to the rack goes back', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: 'CATSXYZ' } });
+    await place(alice, 'C', 7, 7);
+    await drag(alice, square(alice, 7, 7), square(alice, 7, 6));
+    await expect(square(alice, 7, 6).locator('.tile-pending')).toHaveText('C3');
+    await expect(square(alice, 7, 7).locator('.tile')).toHaveCount(0);
+    await place(alice, 'A', 7, 7);
+    await place(alice, 'T', 7, 8);
+    await expect(hint(alice)).toHaveText('CAT: 10 points');
+
+    // Dropped on its own square it stays, and the release does not also click it back to the rack
+    await drag(alice, square(alice, 7, 8), square(alice, 7, 8), { x: 2, y: 2 });
+    await expect(square(alice, 7, 8).locator('.tile-pending')).toHaveText('T1');
+    await expect(hint(alice)).toHaveText('CAT: 10 points');
+
+    await drag(alice, square(alice, 7, 6), rack(alice));
+    await expect(square(alice, 7, 6).locator('.tile')).toHaveCount(0);
+    await expect(rack(alice).locator('.rack-slot-placed')).toHaveCount(2);
+    await expect(hint(alice)).toHaveText('AT: 4 points');
+    expect(await rackLetters(alice)).toEqual(['C', 'A', 'T', 'S', 'X', 'Y', 'Z']);
+  });
+
+  test('rack tiles dragged between places rearrange the rack, also off turn, and the order survives the other player\'s move', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat, { racks: { 1: 'CATSXYZ', 2: 'ABCDEFG' } });
+    await drag(bob, rackPlace(bob, 0), rackPlace(bob, 4));
+    await expect.poll(() => rackLetters(bob)).toEqual(['B', 'C', 'D', 'E', 'A', 'F', 'G']);
+    // Nothing went to the server
+    expect((await table.state<GameState>()).racks[2].join('')).toBe('ABCDEFG');
+
+    await placeWord(alice, spell('CAT', 7, 6));
+    await playButton(alice).click();
+    await expect(turn(bob)).toHaveText('Your turn');
+    expect(await rackLetters(bob)).toEqual(['B', 'C', 'D', 'E', 'A', 'F', 'G']);
+  });
+
+  test('off turn, a rack tile dropped on the board goes back', async ({ seat }) => {
+    const { bob } = await start(seat, { racks: { 2: 'ABCDEFG' } });
+    await lift(bob, rackPlace(bob, 0));
+    await expect(bob.locator('.drag-ghost')).toBeVisible();
+    const box = (await square(bob, 7, 7).boundingBox())!;
+    await bob.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+    await bob.mouse.up();
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    await expect(bob.locator('.board .tile')).toHaveCount(0);
+    await expect(rack(bob).locator('.rack-slot-placed')).toHaveCount(0);
+    expect(await rackLetters(bob)).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
   });
 });
 

@@ -13,7 +13,8 @@ function copyStyles(from: Element, to: Element) {
   const style = (to as HTMLElement | SVGElement).style;
   for (let index = 0; index < computed.length; index++) {
     const name = computed[index];
-    style.setProperty(name, computed.getPropertyValue(name));
+    // Left to inherit .drag-ghost's none, so no part of the copy hides the drop target under the pointer
+    if (name !== 'pointer-events') style.setProperty(name, computed.getPropertyValue(name));
   }
   // The copy must not look like a drag source, a drop target or an animated piece
   for (const attribute of ['id', 'data-drag', 'data-drop', 'data-dragging', 'data-drag-over', 'data-anim-key']) to.removeAttribute(attribute);
