@@ -107,11 +107,12 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
       />
       <div className="history-controls">
         <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
-        <label className="history-animations">
+        <label className="history-animations themed-checkbox">
           <input type="checkbox" checked={animations} onChange={(e) => toggleAnimations(e.target.checked)} /> Animations
         </label>
         {steps[0].views && (
           <select
+            className="themed-select"
             aria-label="View as"
             value={viewer === null ? '' : String(viewer)}
             onChange={(e) => setViewer(e.target.value === '' ? null : Number(e.target.value))}

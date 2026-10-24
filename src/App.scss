@@ -450,10 +450,68 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-:where([data-game] .history-animations) {
+/* Shared control looks: .themed-select (select), .themed-checkbox (label wrapping a checkbox),
+   .themed-input (text, search or number input) and .themed-chip (button with aria-pressed).
+   Platform pieces should use these for any new control. */
+:where(.themed-select, .themed-checkbox, .themed-chip) {
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font: inherit;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where(.themed-select:hover, .themed-checkbox:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where(.themed-select) {
+  padding: 6px 10px;
+}
+
+:where(.themed-select option) {
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+}
+
+:where(.themed-checkbox) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 14px;
+}
+
+:where(.themed-checkbox input) {
+  accent-color: var(--platform-panel-bg, var(--lobby-surface));
+}
+
+:where(.themed-input) {
+  padding: 8px 10px;
+  border: 1px solid var(--platform-button-bg, var(--lobby-accent));
+  border-radius: 6px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  font: inherit;
+}
+
+:where(.themed-chip) {
+  padding: 6px 14px;
+  border: 1px solid var(--platform-button-bg, var(--lobby-accent));
+  border-radius: 999px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+}
+
+:where(.themed-chip:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+:where(.themed-chip[aria-pressed="true"]) {
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
 }
 
 :where([data-game] .history-board) {
