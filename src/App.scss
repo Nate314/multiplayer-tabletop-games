@@ -360,7 +360,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .settings-button, [data-game] .game-header .theme-toggle) {
+:where([data-game] .game-header .settings-button, [data-game] .theme-toggle) {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -385,7 +385,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -426,8 +426,16 @@
   min-width: 0;
 }
 
-/* Phones: the six header buttons fill the width, so the title takes its own row above them */
+/* Phones: the title takes its own row, and Back to games, History, FAQ and Settings fit one row under it.
+   Share and the theme toggle move into Settings and the GitHub link stays on the landing page only.
+   Outside :where(), so no game's header rule can show them again. */
 @media (max-width: 480px) {
+  [data-game] .game-header > .share-wrapper,
+  [data-game] .game-header > .github-link,
+  [data-game] .game-header > .theme-toggle {
+    display: none;
+  }
+
   :where([data-game] .game-header) {
     flex-wrap: wrap;
     justify-content: center;
@@ -1152,6 +1160,24 @@
 :where([data-game] .settings-volume input, .lobby .settings-volume input) {
   flex: 1;
   min-width: 0;
+}
+
+/* Share and the theme toggle, shown here on phones only, where the game header has no room for them */
+:where([data-game] .settings-phone-controls) {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  :where([data-game] .settings-phone-controls) {
+    display: flex;
+  }
+}
+
+:where([data-game] .settings-row) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 /* Each checkbox is a themed pill as wide as its text */

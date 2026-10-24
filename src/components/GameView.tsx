@@ -34,7 +34,12 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <HistoryButton gameType={game.id} gameState={gameState} client={client} />
         <ShareButton game={game} gameId={gameState.gameId} />
         <FaqButton game={game} items={client.faq} />
-        <SettingsButton />
+        <SettingsButton phoneControls={(
+          <>
+            <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
+            <div className="settings-row">Theme <ThemeToggle /></div>
+          </>
+        )} />
         <GitHubLink />
         <ThemeToggle />
       </header>

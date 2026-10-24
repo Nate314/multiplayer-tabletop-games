@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import usePreferences, { setPreferences } from '../hooks/usePreferences';
 import type { SoundName } from '../services/settings.ts';
@@ -12,9 +13,10 @@ const SOUND_LABELS: [SoundName, string][] = [
 
 type SettingsDialogProps = {
   onClose: () => void;
+  phoneControls?: ReactNode;
 };
 
-export default function SettingsDialog({ onClose }: SettingsDialogProps) {
+export default function SettingsDialog({ onClose, phoneControls }: SettingsDialogProps) {
   useEscapeKey(onClose);
   const preferences = usePreferences();
 
@@ -22,6 +24,12 @@ export default function SettingsDialog({ onClose }: SettingsDialogProps) {
     <div className="overlay" onClick={onClose}>
       <div className="modal settings" role="dialog" aria-label="Settings" onClick={(e) => e.stopPropagation()}>
         <h2>Settings</h2>
+        {phoneControls && (
+          <section className="settings-phone-controls">
+            <h3>Share and theme</h3>
+            {phoneControls}
+          </section>
+        )}
         <section>
           <h3>Sounds</h3>
           <label className="settings-volume">

@@ -1,31 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'theme';
 
-export default function ThemeToggle() {
-  // index.html applies the saved theme before first paint; this keeps it in sync afterwards.
-  // Reading it back from the page keeps the choice across screens even when storage is blocked.
-  const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'light');
-  const nextTheme = theme === 'dark' ? 'light' : 'dark';
+type Theme = 'light' | 'dark';
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    // The browser bar follows the theme; index.html holds each theme's color
-    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    const color = themeColor?.dataset[theme];
-    if (themeColor && color) themeColor.content = color;
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // Storage is blocked; the theme lasts until the page goes away
-    }
-  }, [theme]);
+// index.html applies the saved theme before first paint. Every toggle reads the theme back from the page, so the
+// header toggle and the one in Settings (on phones) always agree, even when storage is blocked.
+const currentTheme = (): Theme => (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+
+function subscribe(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  return () => observer.disconnect();
+}
+
+function applyTheme(theme: Theme): void {
+  document.documentElement.setAttribute('data-theme', theme);
+  // The browser bar follows the theme; index.html holds each theme's color
+  const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  const color = themeColor?.dataset[theme];
+  if (themeColor && color) themeColor.content = color;
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // Storage is blocked; the theme lasts until the page goes away
+  }
+}
+
+export default function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribe, currentTheme);
+  const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
   return (
     <button
       type="button"
       className="theme-toggle"
-      onClick={() => setTheme(nextTheme)}
+      onClick={() => applyTheme(nextTheme)}
       aria-label={`Switch to ${nextTheme} mode`}
     >
       {theme === 'dark' ? '☀️' : '🌙'}

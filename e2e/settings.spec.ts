@@ -43,4 +43,24 @@ test.describe('Settings', () => {
     await history.getByRole('button', { name: 'Playback settings' }).click();
     await expect(sounds).toBeChecked();
   });
+  test('on a phone the header fits one row, and Share and the theme toggle are in Settings', async ({ seat }) => {
+    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    await alice.setViewportSize({ width: 375, height: 667 });
+    const header = alice.locator('.game-header');
+    await expect(header.getByRole('button', { name: 'Share' })).toBeHidden();
+    await expect(header.getByRole('link', { name: /GitHub/ })).toBeHidden();
+    const controls = header.locator(':scope > :not(h1):visible');
+    await expect(controls).toHaveCount(4);
+    const tops = await controls.evaluateAll(elements => elements.map(element => Math.round(element.getBoundingClientRect().top)));
+    expect(new Set(tops).size).toBe(1);
+    await header.getByRole('button', { name: 'Settings' }).click();
+    const dialog = alice.getByRole('dialog', { name: 'Settings' });
+    await expect(dialog.getByRole('button', { name: 'Share' })).toBeVisible();
+    await dialog.getByRole('button', { name: /Switch to (dark|light) mode/ }).click();
+    const theme = await alice.evaluate(() => document.documentElement.dataset.theme);
+    await alice.keyboard.press('Escape');
+    await alice.setViewportSize({ width: 1280, height: 800 });
+    await expect(header.getByRole('button', { name: 'Share' })).toBeVisible();
+    await expect(header.getByRole('button', { name: `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode` })).toBeVisible();
+  });
 });
