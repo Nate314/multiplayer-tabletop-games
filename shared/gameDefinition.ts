@@ -28,7 +28,14 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   onUndo?(state: S, random: Random): S;
   // Called only after the platform's turn guards pass. Validates untrusted `move`.
   // `random` is for dice and reshuffles; an undo restores the state before the move, so a replayed move may roll differently.
-  applyMove(state: S, seat: Seat, move: unknown, random: Random): Result<S>;
+  // `now` is the server's time in ms, for games with a clock; other games ignore it.
+  applyMove(state: S, seat: Seat, move: unknown, random: Random, now: number): Result<S>;
+  // Timed rules. `deadline` is the server time in ms when `onDeadline` must run, or null for none. The platform
+  // records `onDeadline` as a move by currentPlayer, so it can be undone. `resumeClock` restarts a clock from `now`:
+  // once everyone has agreed to the house rules, after an approved undo, and on load after a restart.
+  deadline?(state: S): number | null;
+  onDeadline?(state: S, now: number, random: Random): S;
+  resumeClock?(state: S, now: number): S;
   // Called only when `seat` is not currentPlayer, after every other turn guard passed. True lets applyMove run for this
   // out-of-turn move, which is recorded for undo like any other. Validates untrusted `move`.
   allowsOutOfTurn?(state: S, seat: Seat, move: unknown): boolean;

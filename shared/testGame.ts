@@ -58,3 +58,26 @@ export const rulesGame: GameDefinition<TestState, TestPublicState> = {
   ...testGame,
   info: { ...testGame.info, houseRules: [FAST, GOAL, BIG, BIGGER], stretchedPlayers: { min: 2, max: 6 } }
 };
+
+export const TURN_MS = 1000;
+export type TimedState = TestState & { turnEndsAt: number | null };
+
+const ticking = (state: TimedState, now: number): TimedState =>
+  ({ ...state, turnEndsAt: state.isGameOver ? null : now + TURN_MS });
+
+// rulesGame with a turn clock: each turn lasts TURN_MS, and running out passes the turn
+export const timedGame: GameDefinition<TimedState, TestPublicState> = {
+  ...(rulesGame as unknown as GameDefinition<TimedState, TestPublicState>),
+  createGameState: gameId => ({ ...rulesGame.createGameState(gameId), turnEndsAt: null }),
+  applyMove(state, seat, move, random, now): Result<TimedState> {
+    const result = rulesGame.applyMove(state, seat, move, random, now);
+    return 'error' in result ? result : { state: ticking(result.state as TimedState, now) };
+  },
+  deadline: state => state.turnEndsAt,
+  onDeadline(state, now): TimedState {
+    const seat = state.currentPlayer ?? state.activePlayers[0];
+    const next = { ...state, currentPlayer: nextActivePlayer(state, seat), gameStatus: `${state.playerNames[seat]} ran out of time` };
+    return ticking(next, now);
+  },
+  resumeClock: ticking
+};

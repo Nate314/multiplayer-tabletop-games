@@ -4,7 +4,7 @@ import {
   addPlayer, removePlayer, nextActivePlayer, applyMove, baseGameState,
   connectedPlayers, findSeatByName, disconnectPlayer, reconnectPlayer, resolveDismissVote
 } from './seating.ts';
-import { rulesGame, testGame, type TestState } from './testGame.ts';
+import { rulesGame, testGame, timedGame, type TestState, type TimedState } from './testGame.ts';
 import { setHouseRules, agreeToHouseRules } from './houseRules.ts';
 
 function join(state: TestState, ...names: string[]): TestState {
@@ -289,4 +289,16 @@ test('an out-of-turn move needs the game to allow it', () => {
   assert.equal(okState(applyMove(allowing, ready, 2, { type: 'tick' })).started, true);
   const refusing = { ...testGame, allowsOutOfTurn: () => false };
   assert.deepEqual(applyMove(refusing, ready, 2, { type: 'tick' }), { error: 'Not your turn' });
+});
+
+test('applyMove hands the game the server time, which defaults to now', () => {
+  const state: TimedState = { ...join(testGame.createGameState('g1'), 'A', 'B'), turnEndsAt: null };
+  const at = (now?: number) => {
+    const result = applyMove(timedGame, state, 1, { type: 'tick' }, Math.random, now);
+    if ('error' in result) throw new Error(result.error);
+    return result.state.turnEndsAt;
+  };
+  assert.equal(at(5000), 6000);
+  const before = Date.now();
+  assert.ok((at() ?? 0) >= before + 1000);
 });

@@ -163,7 +163,8 @@ export function applyMove<S extends BaseGameState>(
   state: S,
   seat: Seat,
   move: unknown,
-  random: Random = Math.random
+  random: Random = Math.random,
+  now = Date.now()
 ): Result<S> {
   if (state.isGameOver) return { error: 'The game is over' };
   // Only the start needs the minimum: a game that loses players to dismissals plays on, or ends itself in onPlayerLeft
@@ -172,7 +173,7 @@ export function applyMove<S extends BaseGameState>(
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   if (state.currentPlayer !== seat && !game.allowsOutOfTurn?.(state, seat, move)) return { error: 'Not your turn' };
 
-  const result = game.applyMove(state, seat, move, random);
+  const result = game.applyMove(state, seat, move, random, now);
   if ('error' in result) return result;
   return { state: { ...result.state, started: true } };
 }

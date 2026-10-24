@@ -4,7 +4,8 @@ import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import { agreeAll, rememberingKeys } from './testing.ts';
 import { openGameStore } from './store.ts';
 import type { GameStore, SavedRoom } from './store.ts';
-import { rulesGame, testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
+import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
+import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
 import type { BaseGameState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
@@ -1034,4 +1035,117 @@ test('the house rules survive a restart', () => {
   assert.equal(rules?.values.goal, 5);
   assert.equal(rules?.values.fast, true);
   assert.deepEqual(rules?.agreed, [1, 2]);
+});
+
+// A manager for timedGame whose clock the test sets; `changed` lists each room the manager reported
+function timedManager(
+  t: TestContext, store?: GameStore, game: GameDefinition<TimedState, TestPublicState> = timedGame, start = 100_000
+) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const clock = { now: start };
+  const changed: string[] = [];
+  const manager = rememberingKeys(
+    createGameManager([game], seededRandom, store, { now: () => clock.now, changed: roomId => changed.push(roomId) }), keys
+  );
+  // Moves the test's clock and the mocked timers together
+  const advance = (ms: number) => { clock.now += ms; t.mock.timers.tick(ms); };
+  return { manager, clock, changed, advance };
+}
+
+function timedTable(t: TestContext, store?: GameStore, game?: GameDefinition<TimedState, TestPublicState>) {
+  const timed = timedManager(t, store, game);
+  timed.manager.join('test', 'g1', 'A');
+  timed.manager.join('test', 'g1', 'B');
+  agreeAll(timed.manager, ROOM);
+  return timed;
+}
+
+test('a deadline passing makes the game\'s timeout move and tells the server', (t: TestContext) => {
+  const { manager, changed, advance } = timedTable(t);
+  assert.equal(current(manager).serverTime, 100_000);
+  advance(TURN_MS - 1);
+  assert.equal(current(manager).currentPlayer, 1);
+  assert.deepEqual(changed, []);
+  advance(1);
+  assert.equal(current(manager).currentPlayer, 2);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+  assert.equal(current(manager).started, true);
+  assert.equal(current(manager).moveCount, 1);
+  assert.equal(current(manager).serverTime, 100_000 + TURN_MS);
+  assert.deepEqual(changed, [ROOM]);
+  assert.equal(manager.history('test', 'g1')?.[1].serverTime, undefined); // live views only
+});
+
+test('a timeout is a move and can be undone', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  advance(TURN_MS);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(current(manager).currentPlayer, 1);
+  assert.equal(current(manager).moveCount, 0);
+});
+
+test('the clock starts when everyone has agreed', (t: TestContext) => {
+  const resumeClock = t.mock.fn(timedGame.resumeClock);
+  const { manager, advance } = timedManager(t, undefined, { ...timedGame, resumeClock });
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  const revision = current(manager).houseRules?.revision;
+  ok(manager.agreeHouseRules(ROOM, 1, revision));
+  advance(5 * TURN_MS); // nobody's clock runs while waiting for agreement
+  assert.equal(resumeClock.mock.callCount(), 0);
+  assert.equal(current(manager).moveCount, 0);
+  ok(manager.agreeHouseRules(ROOM, 2, revision));
+  ok(manager.agreeHouseRules(ROOM, 2, revision)); // a repeat does not restart it
+  assert.equal(resumeClock.mock.callCount(), 1);
+  advance(TURN_MS);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+});
+
+test('an undo restarts the clock from the moment of the undo', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  ok(manager.move(ROOM, 1, tick));
+  advance(TURN_MS / 2);
+  ok(manager.requestUndo(ROOM, 2));
+  advance(TURN_MS / 4); // an open vote does not pause the clock
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(current(manager).currentPlayer, 1);
+  advance(TURN_MS - 1);
+  assert.equal(current(manager).currentPlayer, 1);
+  advance(1);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+});
+
+test('a restart does not charge the time the server was down', (t: TestContext) => {
+  const store = memoryStore();
+  const { manager } = timedTable(t, store);
+  ok(manager.move(ROOM, 1, tick)); // B's turn ends at 101_000
+  t.mock.timers.reset();
+
+  const back = timedManager(t, store, timedGame, 100_000 + 10 * TURN_MS); // loaded long after the saved deadline
+  assert.equal(current(back.manager).currentPlayer, 2);
+  back.advance(TURN_MS - 1);
+  assert.equal(current(back.manager).currentPlayer, 2);
+  assert.deepEqual(back.changed, []);
+  back.advance(1);
+  assert.equal(current(back.manager).gameStatus, 'B ran out of time');
+});
+
+test('a deleted room\'s deadline never fires', (t: TestContext) => {
+  const { manager, changed, advance } = timedTable(t); // the clock runs from the last agreement
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2); // the last one out of the lobby deletes the room
+  advance(TURN_MS);
+  assert.equal(manager.getState(ROOM), undefined);
+  assert.deepEqual(changed, []);
+});
+
+test('a timeout cancels an open undo vote, which was for the move before it', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  advance(TURN_MS);
+  assert.equal(current(manager).gameStatus, 'B ran out of time');
+  assert.equal(current(manager).undoVote, null);
+  assert.equal(current(manager).moveCount, 2);
 });

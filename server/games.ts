@@ -22,7 +22,11 @@ type Room = {
   history: BaseGameState[];
   timeline: BaseGameState[];
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
+  deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
 };
+
+// `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout
+export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => void };
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
@@ -36,9 +40,10 @@ function cleanName(value: unknown): string {
 // With a `store`, started games are saved after every change and come back on creation with every seat held.
 export function createGameManager(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore
+  games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore, hooks: ManagerHooks = {}
 ) {
   const rooms = new Map<string, Room>();
+  const now = hooks.now ?? Date.now;
 
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
@@ -56,15 +61,49 @@ export function createGameManager(
 
   // Only a started game is kept: a lobby lost in a restart is just joined again.
   // `step` is how this change moved `history` and `timeline`, so only that step is written
+  // Every change passes through here, so this is also where the room's deadline is rescheduled
   function save(roomId: string, room: Room, step?: StepChange): void {
     const { game, state } = room;
     writeStore(roomId, target => {
       if (state.started) target.save(roomId, game.info.id, state, step);
       else target.remove(roomId);
     });
+    scheduleDeadline(roomId, room);
+  }
+
+  // Records `next` as a move after the current state, for undo, history and the store
+  function record(roomId: string, room: Room, next: BaseGameState): void {
+    const index = room.history.push(room.state) - 1;
+    room.timeline.push(next);
+    room.state = next;
+    save(roomId, room, { type: 'push', index, before: room.history[index], after: next });
+  }
+
+  // Open votes and disconnects do not pause a clock; only the game's own deadline does
+  function scheduleDeadline(roomId: string, room: Room): void {
+    clearTimeout(room.deadlineTimer);
+    room.deadlineTimer = undefined;
+    const deadline = room.state.isGameOver ? null : room.game.deadline?.(room.state) ?? null;
+    if (deadline === null || !room.game.onDeadline) return;
+    room.deadlineTimer = setTimeout(() => runDeadline(roomId, room), Math.max(0, deadline - now()));
+    room.deadlineTimer.unref(); // never keeps the process alive on its own
+  }
+
+  function runDeadline(roomId: string, room: Room): void {
+    const { game } = room;
+    const deadline = game.deadline?.(room.state) ?? null;
+    if (rooms.get(roomId) !== room || deadline === null || !game.onDeadline) return;
+    if (deadline > now()) { // a timer can fire a little before the clock says the deadline passed
+      scheduleDeadline(roomId, room);
+      return;
+    }
+    // An open undo vote was for the move before this one, so the timeout cancels it
+    record(roomId, room, { ...game.onDeadline(room.state, now(), random), started: true, undoVote: null });
+    hooks.changed?.(roomId);
   }
 
   function deleteRoom(roomId: string): void {
+    clearTimeout(rooms.get(roomId)?.deadlineTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
   }
@@ -86,9 +125,9 @@ export function createGameManager(
     return { ...view, moveCount, houseRules: houseRulesOf(room.game.info, state) };
   }
 
-  // The current state as `viewer` may see it
+  // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
-    return publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
+    return { ...publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer), serverTime: now() };
   }
 
   function findHistoryRoom(gameType: unknown, gameId: unknown) {
@@ -148,6 +187,7 @@ export function createGameManager(
       dismissVote: null
     };
     if (room.game.onUndo) restored = room.game.onUndo(restored, random);
+    if (room.game.resumeClock) restored = room.game.resumeClock(restored, now());
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
       restored = removePlayer(room.game, restored, seat, random);
     }
@@ -164,12 +204,14 @@ export function createGameManager(
   }
 
   // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
-  // No game hook runs: a game's disconnect hook may deal the next round once nobody is waiting
+  // No game hook runs but `resumeClock`: a game's disconnect hook may deal the next round once nobody is waiting,
+  // and a clock restarts from now, so the time the server was down is never charged
   function loadRoom(roomId: string, saved: SavedRoom): void {
     const game = findGame(saved.gameType);
     if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
-    const state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
+    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
+    if (game.resumeClock) state = game.resumeClock(state, now());
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
     rooms.set(roomId, room);
     save(roomId, room);
@@ -256,13 +298,10 @@ export function createGameManager(
       }
       if (moveCount !== undefined && moveCount !== room.timeline.length) return { error: 'Someone else moved first' };
 
-      const result = applyMove(room.game, room.state, seat, move, random);
+      const result = applyMove(room.game, room.state, seat, move, random, now());
       if ('error' in result) return result;
 
-      const index = room.history.push(room.state) - 1;
-      room.timeline.push(result.state);
-      room.state = result.state;
-      save(roomId, room, { type: 'push', index, before: room.history[index], after: result.state });
+      record(roomId, room, result.state);
       return { state: view(room, seat) };
     },
 
@@ -283,9 +322,14 @@ export function createGameManager(
       if ('error' in found) return found;
       const { room } = found;
 
+      const wasAgreed = everyoneAgreed(room.game.info, room.state);
       const result = agreeToHouseRules(room.game.info, room.state, seat, revision);
       if ('error' in result) return result;
       room.state = result.state;
+      // The clock starts on the last agreement, not on a repeat of it
+      if (!wasAgreed && everyoneAgreed(room.game.info, room.state) && room.game.resumeClock) {
+        room.state = room.game.resumeClock(room.state, now());
+      }
       save(roomId, room);
       return { state: view(room, seat) };
     },

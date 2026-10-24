@@ -28,6 +28,7 @@ export type BaseGameState = {
 export type BasePublicState = BaseGameState & {
   undoAvailable: boolean;
   moveCount: number; // moves on the timeline; undo lowers it
+  serverTime?: number; // only on live views, so a client countdown can correct for its own clock
 };
 
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it

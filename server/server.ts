@@ -25,7 +25,7 @@ const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real mess
 type Connection = { roomId: string; seat: Seat };
 
 const e2eRandom = E2E ? createE2eRandom() : null;
-const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH));
+const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), { changed: broadcast });
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
 
