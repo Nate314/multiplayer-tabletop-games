@@ -4,25 +4,28 @@ import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { EDGE_COUNT, HEX_COUNT, VERTEX_COUNT, desertOf, isIndex, randomLayout } from './board.ts';
+import { type Board, boardOf, desertOf, isIndex, randomLayout } from './board.ts';
 import {
   advanceSetup, buildCity, buildRoad, buildSettlement, placeFreeRoad, placeSetupRoad, placeSetupSettlement
 } from './building.ts';
-import { DEV_DECK, buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
+import { buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
 import { afterDiscards, discard, discardForAbsent, moveRobber, roll } from './dice.ts';
 import { roadLengths } from './roads.ts';
-import { BANK_SIZE, add, isResource, noResources, parseResources, total } from './resources.ts';
+import { add, isResource, noResources, parseResources, total } from './resources.ts';
 import {
   LOG_SIZE, checkWin, endGame, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
 } from './state.ts';
+import { editionFor } from './editions.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
 
 export const MIN_PLAYERS = 3;
+export const MAX_PLAYERS = 6;
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 
 export function createGameState(gameId: string): GameState {
-  const layout = randomLayout(() => 0.5);
+  const edition = editionFor(0);
+  const layout = randomLayout(() => 0.5, edition.board);
   return {
     ...baseGameState(gameId),
     layout,
@@ -30,7 +33,7 @@ export function createGameState(gameId: string): GameState {
     roads: {},
     buildings: {},
     hands: {},
-    bank: fullBank(),
+    bank: fullBank(edition.bankSize),
     devDeck: [],
     devCards: {},
     boughtThisTurn: [],
@@ -50,8 +53,8 @@ export function createGameState(gameId: string): GameState {
   };
 }
 
-function fullBank(): Resources {
-  return { wood: BANK_SIZE, brick: BANK_SIZE, sheep: BANK_SIZE, wheat: BANK_SIZE, ore: BANK_SIZE };
+function fullBank(size: number): Resources {
+  return { wood: size, brick: size, sheep: size, wheat: size, ore: size };
 }
 
 // Everyone rolls both dice and the highest total goes first; players tied for highest roll again
@@ -80,7 +83,8 @@ function snakeOrder(players: Seat[], first: Seat): Setup {
 export function resetLobby(state: GameState, random: Random): GameState {
   const players = state.activePlayers;
   const each = <T>(value: () => T): Record<Seat, T> => Object.fromEntries(players.map(seat => [seat, value()]));
-  const layout = randomLayout(random);
+  const edition = editionFor(players.length);
+  const layout = randomLayout(random, edition.board);
   const fresh: GameState = {
     ...createGameState(state.gameId),
     ...state,
@@ -89,8 +93,8 @@ export function resetLobby(state: GameState, random: Random): GameState {
     roads: {},
     buildings: {},
     hands: each(noResources),
-    bank: fullBank(),
-    devDeck: shuffle(DEV_DECK, random),
+    bank: fullBank(edition.bankSize),
+    devDeck: shuffle(edition.devDeck, random),
     devCards: each(() => []),
     boughtThisTurn: [],
     devPlayed: false,
@@ -142,17 +146,17 @@ const VERTEX_MOVES = ['placeSettlement', 'buildSettlement', 'buildCity'] as cons
 const EDGE_MOVES = ['placeRoad', 'buildRoad'] as const;
 const PLAIN_MOVES = ['roll', 'buyDevCard', 'playKnight', 'playRoadBuilding', 'endTurn'] as const;
 
-function parseMove(move: unknown): Move | null {
+function parseMove(move: unknown, board: Board): Move | null {
   const input = asRecord(move);
   if (!input) return null;
   const vertexMove = VERTEX_MOVES.find(type => type === input.type);
-  if (vertexMove) return isIndex(input.vertex, VERTEX_COUNT) ? { type: vertexMove, vertex: input.vertex } : null;
+  if (vertexMove) return isIndex(input.vertex, board.vertexCount) ? { type: vertexMove, vertex: input.vertex } : null;
   const edgeMove = EDGE_MOVES.find(type => type === input.type);
-  if (edgeMove) return isIndex(input.edge, EDGE_COUNT) ? { type: edgeMove, edge: input.edge } : null;
+  if (edgeMove) return isIndex(input.edge, board.edgeCount) ? { type: edgeMove, edge: input.edge } : null;
   switch (input.type) {
     case 'moveRobber': {
       const { hex, victim } = input;
-      if (!isIndex(hex, HEX_COUNT)) return null;
+      if (!isIndex(hex, board.hexCount)) return null;
       if (victim !== null && !(typeof victim === 'number' && Number.isInteger(victim))) return null;
       return { type: 'moveRobber', hex, victim };
     }
@@ -236,7 +240,7 @@ function play(state: GameState, seat: Seat, move: Move, random: Random): Result<
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
-  const parsed = parseMove(move);
+  const parsed = parseMove(move, boardOf(state.layout));
   if (!parsed) return { error: 'Invalid move' };
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = play({ ...state, log: [], steal: null }, seat, parsed, random);

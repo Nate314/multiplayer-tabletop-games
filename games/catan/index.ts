@@ -1,7 +1,7 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import {
-  MIN_PLAYERS, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState
+  MAX_PLAYERS, MIN_PLAYERS, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState
 } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -12,7 +12,7 @@ export const catan: GameDefinition<GameState, PublicGameState> = {
     name: 'Catan',
     description: 'Settle an island, trade resources and build your way to 10 points',
     minPlayers: MIN_PLAYERS,
-    maxPlayers: 4
+    maxPlayers: MAX_PLAYERS
   },
   createGameState,
   resetLobby,

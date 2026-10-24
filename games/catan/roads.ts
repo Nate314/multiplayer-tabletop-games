@@ -1,18 +1,18 @@
 // Longest Road: each player's longest single line of roads, and who holds the Longest Road and Largest Army cards.
 // A line may not go through an intersection holding another player's settlement or city, which breaks it there.
-import { EDGES, VERTEX_EDGES } from './board.ts';
+import { boardOf } from './board.ts';
 import type { GameState, Seat } from './types.ts';
 
 export const LONGEST_ROAD_MINIMUM = 5;
 export const LARGEST_ARMY_MINIMUM = 3;
 export const AWARD_POINTS = 2;
 
-type RoadView = Pick<GameState, 'roads' | 'buildings'>;
-
-const otherEnd = (edge: number, vertex: number) => EDGES[edge][0] === vertex ? EDGES[edge][1] : EDGES[edge][0];
+type RoadView = Pick<GameState, 'layout' | 'roads' | 'buildings'>;
 
 // The longest trail of `seat`'s roads, counting each road once
 export function longestRoadOf(state: RoadView, seat: Seat): number {
+  const { edges, vertexEdges } = boardOf(state.layout);
+  const otherEnd = (edge: number, vertex: number) => edges[edge][0] === vertex ? edges[edge][1] : edges[edge][0];
   const blocked = (vertex: number) => {
     const building = state.buildings[vertex];
     return building !== undefined && building.seat !== seat;
@@ -22,7 +22,7 @@ export function longestRoadOf(state: RoadView, seat: Seat): number {
   const extend = (vertex: number, start: boolean): number => {
     if (!start && blocked(vertex)) return 0;
     let best = 0;
-    for (const edge of VERTEX_EDGES[vertex]) {
+    for (const edge of vertexEdges[vertex]) {
       if (state.roads[edge] !== seat || used.has(edge)) continue;
       used.add(edge);
       best = Math.max(best, 1 + extend(otherEnd(edge, vertex), false));
@@ -30,7 +30,7 @@ export function longestRoadOf(state: RoadView, seat: Seat): number {
     }
     return best;
   };
-  const ends = new Set(Object.keys(state.roads).map(Number).filter(edge => state.roads[edge] === seat).flatMap(edge => EDGES[edge]));
+  const ends = new Set(Object.keys(state.roads).map(Number).filter(edge => state.roads[edge] === seat).flatMap(edge => edges[edge]));
   let longest = 0;
   for (const vertex of ends) longest = Math.max(longest, extend(vertex, true));
   return longest;

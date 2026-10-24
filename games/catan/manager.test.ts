@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys } from '../../server/testing.ts';
-import { HEX_COUNT, RESOURCES, VERTEX_COUNT, VERTEX_EDGES } from './board.ts';
+import { RESOURCES, boardOf } from './board.ts';
 import { cityError, roadSpots, settlementError, settlementSpotError } from './building.ts';
 import { robberVictims } from './dice.ts';
 import { COSTS, covers, total } from './resources.ts';
@@ -45,8 +45,8 @@ function viewOf(manager: Manager, viewer: Seat | null = null): PublicGameState {
   return state as PublicGameState;
 }
 
-const vertices = Array.from({ length: VERTEX_COUNT }, (_, vertex) => vertex);
-const mine = (state: PublicGameState, seat: Seat) => vertices.filter(vertex => state.buildings[vertex]?.seat === seat);
+const verticesOf = (state: PublicGameState) => Array.from({ length: boardOf(state.layout).vertexCount }, (_, vertex) => vertex);
+const mine = (state: PublicGameState, seat: Seat) => verticesOf(state).filter(vertex => state.buildings[vertex]?.seat === seat);
 
 // The first `count` cards of a hand, for a discard
 function firstCards(hand: Resources, count: number): Resources {
@@ -64,7 +64,7 @@ function firstCards(hand: Resources, count: number): Resources {
 function chooseBuild(state: PublicGameState, seat: Seat, hand: Resources): Move | null {
   const city = mine(state, seat).find(vertex => cityError(state, seat, vertex) === null);
   if (city !== undefined && covers(hand, COSTS.city)) return { type: 'buildCity', vertex: city };
-  const spot = vertices.find(vertex => settlementError(state, seat, vertex) === null);
+  const spot = verticesOf(state).find(vertex => settlementError(state, seat, vertex) === null);
   if (spot !== undefined && covers(hand, COSTS.settlement)) return { type: 'buildSettlement', vertex: spot };
   const roads = roadSpots(state, seat);
   if (spot === undefined && roads.length > 0 && covers(hand, COSTS.road)) return { type: 'buildRoad', edge: roads[0] };
@@ -90,14 +90,14 @@ function step(manager: Manager): PublicGameState {
   const send = (move: Move) => ok(manager.move(ROOM, seat, move));
   if (view.setup) {
     if (view.setup.settlement === null) {
-      const vertex = vertices.find(v => settlementSpotError(view, v) === null) ?? assert.fail('no room');
+      const vertex = verticesOf(view).find(v => settlementSpotError(view, v) === null) ?? assert.fail('no room');
       return send({ type: 'placeSettlement', vertex });
     }
-    const edge = VERTEX_EDGES[view.setup.settlement].find(e => view.roads[e] === undefined) ?? assert.fail('no edge');
+    const edge = boardOf(view.layout).vertexEdges[view.setup.settlement].find(e => view.roads[e] === undefined) ?? assert.fail('no edge');
     return send({ type: 'placeRoad', edge });
   }
   if (pending?.kind === 'robber') {
-    const hex = Array.from({ length: HEX_COUNT }, (_, h) => h).find(h => h !== view.robber) ?? 0;
+    const hex = Array.from({ length: boardOf(view.layout).hexCount }, (_, h) => h).find(h => h !== view.robber) ?? 0;
     const victim = robberVictims(view, seat, hex, other => view.handCounts[other])[0] ?? null;
     return send({ type: 'moveRobber', hex, victim });
   }
@@ -182,4 +182,28 @@ test('dismissing a player mid-game leaves their pieces and play goes on', () => 
   assert.equal(Object.values(state.roads).filter(owner => owner === 4).length >= 2, true);
   state = step(manager);
   assert.equal(state.isGameOver, false);
+});
+
+test('a seeded five-player game plays to 10 points on the large board', () => {
+  const state = playUntil(gameWith(13, ['A', 'B', 'C', 'D', 'E']), view => view.isGameOver, 9000);
+  assert.equal(state.layout.hexes.length, 30);
+  assert.equal(state.winners.length, 1);
+  assert.ok(state.points[state.winners[0]] >= 10);
+});
+
+test('a seeded six-player game plays to 10 points, and no table step shows a hand', () => {
+  const manager = gameWith(17, ['A', 'B', 'C', 'D', 'E', 'F']);
+  const state = playUntil(manager, view => view.isGameOver, 12000);
+  assert.equal(state.layout.hexes.length, 30);
+  assert.equal(state.winners.length, 1);
+  assert.ok(state.points[state.winners[0]] >= 10);
+  const steps = manager.history('catan', 'g1') ?? assert.fail('no history');
+  assert.ok(steps.length > 50);
+  for (const past of steps) {
+    const view = past as unknown as PublicGameState;
+    for (const key of ['hands', 'devDeck', 'devCards', 'boughtThisTurn']) assert.equal(key in view, false);
+    assert.equal(view.hand, null);
+    assert.deepEqual(view.myDevCards, []);
+    assert.equal(view.steal?.resource ?? null, null);
+  }
 });

@@ -1,15 +1,20 @@
 // Helpers for the Catan tests: a known board, a game past setup, and dice that come up as asked
-import { HEX_RESOURCES, NUMBER_TOKENS, PORT_EDGES, PORT_KINDS } from './board.ts';
-import { DEV_DECK } from './devCards.ts';
+import { BASE_BOARD, FIVE_SIX_BOARD, type Board } from './board.ts';
+import { DEV_DECK, FIVE_SIX_DEV_DECK } from './devCards.ts';
 import { applyAction, applyMove, createGameState } from './rules.ts';
-import { BANK_SIZE, noResources, resources } from './resources.ts';
+import { BANK_SIZE, FIVE_SIX_BANK_SIZE, noResources, resources } from './resources.ts';
 import type { GameState, Layout, Random, Resources, Result, Seat } from './types.ts';
 
 // Hexes take the printed resource list in order (the desert last, hex 18) and the tokens in order
-export const LAYOUT: Layout = {
-  hexes: HEX_RESOURCES.map((resource, index) => ({ resource, number: resource === null ? null : NUMBER_TOKENS[index] })),
-  ports: PORT_EDGES.map((edge, index) => ({ edge, kind: PORT_KINDS[index] }))
-};
+const printed = (board: Board): Layout => ({
+  hexes: board.hexResources.map((resource, index) => ({ resource, number: resource === null ? null : board.numberTokens[index] })),
+  ports: board.portEdges.map((edge, index) => ({ edge, kind: board.portKinds[index] }))
+});
+
+export const LAYOUT: Layout = printed(BASE_BOARD);
+
+// The large board's contents in printed order, the deserts last (hexes 28 and 29)
+export const FIVE_SIX_LAYOUT: Layout = printed(FIVE_SIX_BOARD);
 
 // Three players past setup with nothing built, Alice to roll, the robber on the desert and the deck in printed order
 export function game(overrides: Partial<GameState> = {}): GameState {
@@ -57,3 +62,21 @@ export const act = (state: GameState, seat: Seat, value: unknown) => applyAction
 export const played = (state: GameState, seat: Seat, value: unknown, random: Random = dice()) => ok(move(state, seat, value, random));
 
 export const acted = (state: GameState, seat: Seat, value: unknown) => ok(act(state, seat, value));
+
+// Five players past setup with nothing built, Alice to roll, the robber on a desert and the deck in printed order
+export function fiveSixGame(overrides: Partial<GameState> = {}): GameState {
+  const seats = [1, 2, 3, 4, 5];
+  const each = <T>(value: () => T): Record<Seat, T> => Object.fromEntries(seats.map(seat => [seat, value()]));
+  return game({
+    activePlayers: seats,
+    playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cara', 4: 'Dan', 5: 'Eve' },
+    layout: FIVE_SIX_LAYOUT,
+    robber: 28,
+    hands: each(noResources),
+    bank: resources({ wood: FIVE_SIX_BANK_SIZE, brick: FIVE_SIX_BANK_SIZE, sheep: FIVE_SIX_BANK_SIZE, wheat: FIVE_SIX_BANK_SIZE, ore: FIVE_SIX_BANK_SIZE }),
+    devDeck: [...FIVE_SIX_DEV_DECK],
+    devCards: each(() => []),
+    knights: each(() => 0),
+    ...overrides
+  });
+}
