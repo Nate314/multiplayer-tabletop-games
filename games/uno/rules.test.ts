@@ -746,3 +746,80 @@ test('a saved game without pendingDraw plays on', () => {
   assert.equal(state.currentPlayer, 2);
   assert.equal(toPublicState(old as GameState, true, 1).pendingDraw, null);
 });
+
+// House rule: jump-in
+const jumpRules = { houseRules: withRules({ jumpIn: true }) };
+const jumpGame = (hands: GameState['hands'], overrides: Partial<GameState> = {}) =>
+  game({ ...jumpRules, hands: { ...game().hands, ...hands }, ...overrides });
+const jumps = (state: GameState, seat: number, played: Card) =>
+  uno.allowsOutOfTurn?.(state, seat, { type: 'play', card: played }) ?? assert.fail('UNO allows out of turn play');
+
+test('allowsOutOfTurn accepts only an exact number match with jump-in on', () => {
+  const hands = { 2: [red('5'), red('6'), blue('5'), red('skip'), WILD], 3: [blue('3'), blue('4')] };
+  const state = jumpGame(hands);
+  assert.equal(jumps(state, 2, red('5')), true);
+  for (const other of [red('6'), blue('5'), red('skip'), WILD]) assert.equal(jumps(state, 2, other), false);
+  assert.equal(jumps(state, 2, red('9')), false); // not in the hand
+  assert.equal(jumps(state, 4, red('5')), false); // not seated
+  const off = game({ hands: { ...game().hands, ...hands } });
+  assert.equal(jumps(off, 2, red('5')), false);
+  assert.deepEqual(move(off, 2, { type: 'play', card: red('5') }), { error: 'Not your turn' });
+  assert.equal(uno.allowsOutOfTurn?.(state, 2, { type: 'draw' }), false);
+  const topAction = jumpGame({ 2: [red('skip')] }, { discardPile: [red('skip')] });
+  assert.equal(jumps(topAction, 2, red('skip')), false);
+});
+
+test('a jump-in moves the turn on from the jumper', () => {
+  const state = jumpGame({ 2: [red('5'), blue('1')] }, { drawnCard: blue('9') });
+  const jumped = ok(play(state, 2, red('5')));
+  assert.equal(jumped.currentPlayer, 3);
+  assert.equal(jumped.turnHolder, 3);
+  assert.equal(jumped.drawnCard, null);
+  assert.deepEqual(jumped.hands[2], [blue('1')]);
+  assert.deepEqual(jumped.discardPile, [red('5'), red('5')]);
+  assert.equal(jumped.lastMove?.type === 'play' && jumped.lastMove.jumpedIn, true);
+  assert.equal(jumped.gameStatus, 'Bob jumped in with red 5');
+  // The turn holder's drawn card is no longer theirs to play
+  assert.deepEqual(play(jumped, 1, blue('9')), { error: 'Not your turn' });
+  // A normal play is not marked
+  const normal = ok(play(jumpGame({ 1: [red('5'), blue('1')] }), 1, red('5')));
+  assert.equal(normal.lastMove?.type === 'play' && 'jumpedIn' in normal.lastMove, false);
+});
+
+test('a jump-in continues in the current direction, and a jumped 7 still swaps with 7-0', () => {
+  const backwards = jumpGame({ 3: [red('5'), blue('1')] }, { direction: -1 });
+  assert.equal(ok(play(backwards, 3, red('5'))).currentPlayer, 2);
+  const seven = jumpGame({ 2: [red('7'), blue('1'), blue('2')] }, {
+    houseRules: withRules({ jumpIn: true, sevenZero: true }), discardPile: [red('7')]
+  });
+  const swapped = ok(move(seven, 2, { type: 'play', card: red('7'), swapWith: 3 }));
+  assert.deepEqual(swapped.hands[2], [blue('3'), blue('4')]);
+  assert.equal(swapped.currentPlayer, 3);
+});
+
+test('a jump-in that empties the hand goes out', () => {
+  const out = ok(play(jumpGame({ 2: [red('5')] }), 2, red('5')));
+  assert.equal(out.roundSummary?.wentOut, 2);
+  assert.equal(out.currentPlayer, null);
+});
+
+test('a jump-in closes the UNO window, and can open its own', () => {
+  const state = jumpGame({ 2: [red('5'), blue('1'), blue('2')] }, { unoWindow: { seat: 1, called: false } });
+  assert.equal(ok(play(state, 2, red('5'))).unoWindow, null);
+  assert.deepEqual(ok(play(jumpGame({ 2: [red('5'), blue('1')] }), 2, red('5'))).unoWindow, { seat: 2, called: false });
+});
+
+test('a jump-in during a Draw stack is refused', () => {
+  const hands = { 2: [red('5'), blue('1')], 3: [red('drawTwo'), blue('4')] };
+  const stack = jumpGame(hands, {
+    houseRules: withRules({ jumpIn: true, stacking: true }), pendingDraw: { count: 2, target: 1 }, discardPile: [red('5')]
+  });
+  assert.equal(jumps(stack, 2, red('5')), false);
+  assert.deepEqual(play(stack, 2, red('5')), { error: 'Not your turn' });
+  const four = jumpGame(hands, { pendingFour: { by: 3, target: 1, previousColor: 'red' } });
+  assert.equal(jumps(four, 2, red('5')), false);
+  const summary = jumpGame(hands, { roundSummary: { roundNumber: 1, wentOut: 3, points: 0, cardsLeft: {}, acknowledged: [] } });
+  assert.equal(jumps(summary, 2, red('5')), false);
+  const starting = jumpGame(hands, { currentColor: null, discardPile: [WILD] });
+  assert.equal(jumps(starting, 2, red('5')), false);
+});

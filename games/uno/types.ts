@@ -32,9 +32,9 @@ export type Action =
 // `target` is who a Skip, Reverse with 2 players, Draw Two or Wild Draw Four hit; `drew` is how many they drew.
 // A Wild Draw Four that does not go out leaves its target to accept or challenge, so they have drawn nothing yet.
 export type LastMove =
-  // stack: with stacking, how many cards the target draws unless they stack on it; swappedWith: a 7 under 7-0; passedHands: a 0
+  // stack: with stacking, how many cards the target draws unless they stack on it; swappedWith: a 7 under 7-0; passedHands: a 0; jumpedIn: played out of turn
   | { type: 'play'; playerNumber: Seat; card: Card; color: Color; target: Seat | null; drew: number; wentOut: boolean;
-      stack?: number; swappedWith?: Seat; passedHands?: true }
+      stack?: number; swappedWith?: Seat; passedHands?: true; jumpedIn?: true }
   // count: how many cards were drawn (more than one only when drawing until a card can be played)
   | { type: 'draw'; playerNumber: Seat; passed: boolean; count?: number } // passed: the card could not be played, so the turn moved on
   | { type: 'pass'; playerNumber: Seat }

@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { UNO_RULES, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { UNO_RULES, allowsOutOfTurn, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const uno: GameDefinition<GameState, PublicGameState> = {
@@ -19,6 +19,7 @@ export const uno: GameDefinition<GameState, PublicGameState> = {
   onPlayerDisconnected,
   applyMove,
   applyAction,
+  allowsOutOfTurn,
   onUndo: (state, random) => ({ ...state, drawPile: shuffle(state.drawPile, random) }),
   toPublicState
 };

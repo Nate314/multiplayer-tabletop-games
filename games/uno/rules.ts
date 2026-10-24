@@ -24,13 +24,18 @@ const SEVEN_ZERO_RULE: ToggleRule = {
 const DRAW_UNTIL_RULE: ToggleRule = {
   id: 'drawUntilPlayable', label: 'Draw until you can play', kind: 'toggle', standard: false
 };
-export const UNO_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE];
+const JUMP_IN_RULE: ToggleRule = {
+  id: 'jumpIn', label: 'Jump-in', kind: 'toggle', standard: false,
+  help: 'Any player can play a number card out of turn if it matches the top card exactly, and play continues from them'
+};
+export const UNO_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE, JUMP_IN_RULE];
 
 type Rules = Pick<GameState, 'houseRules'>;
 export const targetScore = (state: Rules): number => houseRule(state, TARGET_RULE);
 const stacking = (state: Rules): boolean => houseRule(state, STACKING_RULE);
 export const sevenZero = (state: Rules): boolean => houseRule(state, SEVEN_ZERO_RULE);
 const drawUntilPlayable = (state: Rules): boolean => houseRule(state, DRAW_UNTIL_RULE);
+const jumpIn = (state: Rules): boolean => houseRule(state, JUMP_IN_RULE);
 const NUMBERS: Value[] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const ACTIONS: Value[] = ['skip', 'reverse', 'drawTwo'];
 const WILDS: Value[] = ['wild', 'wildDrawFour'];
@@ -63,6 +68,17 @@ export function sameCard(a: Card, b: Card): boolean {
 export function canPlay(card: Card, top: Card | null, currentColor: Color | null): boolean {
   if (isWild(card) || !top) return true;
   return card.color === currentColor || card.value === top.value;
+}
+
+// With jump-in, a number card identical in color and number to the top card may be played out of turn, unless a Draw stack,
+// a Wild Draw Four, a round summary or a starting-color choice is waiting
+export function canJumpIn(
+  state: Pick<GameState, 'houseRules' | 'pendingFour' | 'pendingDraw' | 'currentColor' | 'roundSummary'>,
+  top: Card | null,
+  card: Card
+): boolean {
+  if (!jumpIn(state) || state.pendingFour || state.pendingDraw || state.roundSummary || state.currentColor === null) return false;
+  return top !== null && NUMBERS.includes(card.value) && sameCard(card, top);
 }
 
 // What a card left in a hand scores for the player who went out: a number its face value, an action card 20, a Wild 50
@@ -305,8 +321,9 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
         : `${name} challenged ${challenged}'s Wild Draw Four and lost; ${name} draws ${lastMove.drew} and is skipped`;
     }
     case 'play': {
-      const { card, color, target, drew, wentOut, stack, swappedWith, passedHands } = lastMove;
-      const played = `${name} played ${isWild(card) ? `${cardName(card)} (${color})` : cardName(card)}`;
+      const { card, color, target, drew, wentOut, stack, swappedWith, passedHands, jumpedIn } = lastMove;
+      const verb = jumpedIn ? 'jumped in with' : 'played';
+      const played = `${name} ${verb} ${isWild(card) ? `${cardName(card)} (${color})` : cardName(card)}`;
       const targetName = target === null ? '' : playerNames[target];
       if (wentOut) return target === null ? `${played} and went out` : `${played} and went out; ${targetName} draws ${drew}`;
       if (swappedWith !== undefined) return `${played}; swaps hands with ${playerNames[swappedWith]}`;
@@ -328,7 +345,7 @@ function recorded(state: GameState, lastMove: LastMove): GameState {
 
 // The player who went out scores every card left in the other hands, after the next player has drawn for a last
 // Draw Two or Wild Draw Four. The first to reach targetScore(state) wins; otherwise the next round waits for everyone to continue.
-function endRound(state: GameState, seat: Seat, card: Card, color: Color, random: Random): GameState {
+function endRound(state: GameState, seat: Seat, card: Card, color: Color, random: Random, jumped = false): GameState {
   const count = (DRAWS[card.value] ?? 0) + (state.pendingDraw?.count ?? 0);
   const target = count > 0 ? stepFrom(state.activePlayers, seat, state.direction) : null;
   const { state: drawn, drew } = target === null ? { state, drew: 0 } : dealTo(state, target, count, random);
@@ -343,7 +360,7 @@ function endRound(state: GameState, seat: Seat, card: Card, color: Color, random
     scores: { ...state.scores, [seat]: total },
     unoWindow: null,
     roundSummary: { roundNumber: state.roundNumber, wentOut: seat, points, cardsLeft, acknowledged: [] },
-    lastMove: { type: 'play', playerNumber: seat, card, color, target, drew, wentOut: true }
+    lastMove: { type: 'play', playerNumber: seat, card, color, target, drew, wentOut: true, ...(jumped ? { jumpedIn: true as const } : {}) }
   };
 
   const name = state.playerNames[seat];
@@ -377,7 +394,9 @@ function play(
   const hand = state.hands[seat];
   const index = hand.findIndex(held => sameCard(held, card));
   if (index < 0) return { error: 'You do not have that card' };
-  if (state.drawnCard && !sameCard(state.drawnCard, card)) return { error: 'You may only play the card you drew' };
+  // A jump-in is out of turn, so the turn holder's drawn card does not limit it
+  const jumping = seat !== state.currentPlayer;
+  if (!jumping && state.drawnCard && !sameCard(state.drawnCard, card)) return { error: 'You may only play the card you drew' };
   const top = state.discardPile[state.discardPile.length - 1] ?? null;
   const owed = state.pendingDraw ?? null;
   if (owed) {
@@ -396,7 +415,7 @@ function play(
     currentColor: color,
     unoWindow: rest.length === 1 ? { seat, called: uno } : null
   };
-  if (rest.length === 0) return { state: endRound(played, seat, card, color, random) };
+  if (rest.length === 0) return { state: endRound(played, seat, card, color, random, jumping) };
 
   const stacks = stacking(state);
   if (card.value === 'wildDrawFour' || (stacks && card.value === 'drawTwo')) {
@@ -425,7 +444,8 @@ function play(
   }
 
   const { state: next, target, drew } = applyEffect(dealt, seat, card, random);
-  return { state: recorded(next, { type: 'play', playerNumber: seat, card, color, target, drew, wentOut: false, ...extra }) };
+  const jumped = jumping ? { jumpedIn: true as const } : {};
+  return { state: recorded(next, { type: 'play', playerNumber: seat, card, color, target, drew, wentOut: false, ...extra, ...jumped }) };
 }
 
 // The drawn card goes to the hand. If it can be played the player may play it or pass; otherwise the turn moves on.
@@ -485,6 +505,14 @@ function challenge(state: GameState, seat: Seat, pending: PendingFour, random: R
     guilty ? seat : stepFrom(state.activePlayers, seat, state.direction)
   );
   return recorded(next, { type: 'challenge', playerNumber: seat, challenged: pending.by, guilty, drew });
+}
+
+// Whether a player who does not hold the turn may make this move: only a jump-in
+export function allowsOutOfTurn(state: GameState, seat: Seat, move: unknown): boolean {
+  const parsed = parseMove(move);
+  if (parsed?.type !== 'play' || !state.activePlayers.includes(seat)) return false;
+  const top = state.discardPile[state.discardPile.length - 1] ?? null;
+  return state.hands[seat]?.some(held => sameCard(held, parsed.card)) === true && canJumpIn(state, top, parsed.card);
 }
 
 // Any move closes the UNO window, and the challenger's next move hides a challenged hand again

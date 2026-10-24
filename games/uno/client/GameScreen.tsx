@@ -8,9 +8,9 @@ import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove, { sortedHand } from './animateMove.ts';
 import { handKey } from '../../../src/animation/animKeys.ts';
-import { COLORS, canPlay, isWild, sameCard, sevenZero } from '../rules.ts';
+import { COLORS, canJumpIn, canPlay, isWild, sameCard, sevenZero } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
-import type { Card as CardData, Color, PublicGameState, Seat } from '../types.ts';
+import type { Card as CardData, Color, Move, PublicGameState, Seat } from '../types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   // A Wild waiting for its color
@@ -36,7 +36,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const canDrawOrPass = canPlayCards && !answering;
   // The UNO button calls with the play that leaves one card, or late, before anyone catches you
   const lateUno = canAct && unoWindow?.seat === playerNumber && !unoWindow.called;
-  const canArmUno = canPlayCards && hand.length === 2 && !lateUno;
+  // With jump-in, a number card matching the top card exactly may be played out of turn
+  const jumpable = (card: CardData) => canAct && !isMyTurn && currentPlayer !== null && canJumpIn(gameState, discardTop, card);
+  const canJump = hand.some(jumpable);
+  const canArmUno = (canPlayCards || canJump) && hand.length === 2 && !lateUno;
   const catchable = canAct && unoWindow !== null && !unoWindow.called && unoWindow.seat !== playerNumber ? unoWindow.seat : null;
   const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
 
@@ -60,8 +63,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // A Draw Two cannot go on a Wild Draw Four
   const stackable = discardTop?.value === 'wildDrawFour' ? 'a Wild Draw Four' : 'a Draw Two or Wild Draw Four';
   const canStack = (card: CardData) => card.value === 'wildDrawFour' || (card.value === 'drawTwo' && discardTop?.value === 'drawTwo');
-  const isPlayable = (card: CardData) => canPlayCards &&
+  const isPlayable = (card: CardData) => jumpable(card) || canPlayCards &&
     (pendingDraw ? canStack(card) : drawnCard ? sameCard(card, drawnCard) : !hasDrawn && canPlay(card, discardTop, currentColor));
+
+  // An out-of-turn play names the move count it saw, so of two players jumping on the same card only the first counts
+  const send = (move: Move) => gameService.makeMove(move, isMyTurn ? undefined : gameState.moveCount);
 
   function playCard(card: CardData) {
     setPendingSwap(null);
@@ -74,12 +80,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       setPendingSwap(card);
       return;
     }
-    gameService.makeMove({ type: 'play', card, uno: unoArmed });
+    send({ type: 'play', card, uno: unoArmed });
   }
 
   function swapWith(seat: Seat) {
     if (!pendingSwap) return;
-    gameService.makeMove({ type: 'play', card: pendingSwap, uno: unoArmed, swapWith: seat });
+    send({ type: 'play', card: pendingSwap, uno: unoArmed, swapWith: seat });
     setPendingSwap(null);
   }
 
@@ -103,6 +109,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   else if (answering && pendingDraw) hint = `Play ${stackable} on it, or accept and draw ${pendingDraw.count}`;
   else if (answering) hint = 'Accept the Wild Draw Four, or challenge it';
   else if (lateUno) hint = 'Call UNO before anyone catches you!';
+  else if (canJump) hint = 'Jump in: you hold a card identical to the top card';
   else if (isMyTurn) {
     if (pendingWild) hint = 'Choose a color for your Wild';
     else if (pendingSwap) hint = 'Choose a player to swap hands with';

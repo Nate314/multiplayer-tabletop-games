@@ -188,3 +188,43 @@ test('a whole game with every house rule on still ends, and a stack is never lef
   assert.ok(stacks > 0);
   assert.equal(state.pendingDraw, null);
 });
+
+// Plays on until a player who does not hold the turn has the top card's twin
+function untilJumpable(manager: Manager): { jumper: number; move: Move; view: PublicGameState } {
+  for (let moves = 0; moves < 5000; moves++) {
+    const view = viewOf(manager, null);
+    const top = view.discardTop;
+    if (top && /^[0-9]$/.test(top.value) && !view.pendingFour && !view.pendingDraw && !view.roundSummary && view.currentColor !== null) {
+      for (const seat of view.activePlayers.filter(other => other !== view.currentPlayer)) {
+        const card = viewOf(manager, seat).hand.find(held => held.color === top.color && held.value === top.value);
+        if (card) return { jumper: seat, move: { type: 'play', card }, view };
+      }
+    }
+    step(manager);
+  }
+  return assert.fail('nobody could jump in');
+}
+
+test('a jump-in can be undone', () => {
+  const manager = gameWithRules({ jumpIn: true }, 'A', 'B', 'C');
+  const { jumper, move, view } = untilJumpable(manager);
+  const before = viewOf(manager, jumper);
+  const jumped = ok(manager.move(ROOM, jumper, move, view.moveCount));
+  assert.equal(jumped.handCounts[jumper], before.hand.length - 1);
+  assert.equal(jumped.lastMove?.type === 'play' && jumped.lastMove.jumpedIn, true);
+
+  ok(manager.requestUndo(ROOM, jumper));
+  for (const seat of view.activePlayers.filter(other => other !== jumper)) ok(manager.voteUndo(ROOM, seat, true));
+  const restored = viewOf(manager, jumper);
+  assert.deepEqual(restored.hand, before.hand);
+  assert.equal(restored.currentPlayer, view.currentPlayer);
+  assert.deepEqual(restored.discardTop, view.discardTop);
+});
+
+test('the second of two jump-ins on the same card is refused', () => {
+  const manager = gameWithRules({ jumpIn: true }, 'A', 'B', 'C');
+  const { jumper, move, view } = untilJumpable(manager);
+  ok(manager.move(ROOM, jumper, move, view.moveCount));
+  const late = view.activePlayers.find(seat => seat !== jumper) ?? assert.fail('no other player');
+  assert.deepEqual(manager.move(ROOM, late, move, view.moveCount), { error: 'Someone else moved first' });
+});

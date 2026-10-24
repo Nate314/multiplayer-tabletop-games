@@ -67,7 +67,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points, and turn on three house rules: stacking, 7-0, and drawing until you can play. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points, and turn on four house rules: stacking, 7-0, drawing until you can play, and jump-in. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   },
   {
     question: 'How does stacking work?',
@@ -80,5 +80,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'What does drawing until you can play do?',
     answer: 'When the host turns it on, Draw takes cards until one can be played, or until there are no cards left. You may then play that card or pass. If nothing could be played, your turn ends.'
+  },
+  {
+    question: 'How does jump-in work?',
+    answer: 'When the host turns on jump-in, you may play a number card out of turn if it is exactly the same color and number as the top card, for example a red 7 on a red 7. Play then continues from you in the same direction, and the player whose turn it was loses it, along with any card they had drawn. Only number cards can jump in, and not while cards are waiting to be drawn, a Wild Draw Four is waiting to be answered, or the round is over. If two players jump in on the same card, the first one the server receives counts and the other is told that someone else moved first. A jump-in is a move like any other, so it can be undone. It also counts as a move for UNO: a player who has not yet called UNO can no longer be caught once someone jumps in.'
   }
 ];

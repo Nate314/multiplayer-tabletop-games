@@ -539,6 +539,36 @@ test.describe('UNO rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
     await expect(cara.getByRole('group', { name: 'Swap hands with' })).toHaveCount(0);
   });
+
+  test('a player jumps in out of turn and play continues from them', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { jumpIn: true } });
+    await deal(table, {
+      hands: {
+        1: [c('red', '7'), c('red', '8')],
+        2: [c('red', '5'), c('red', '6'), c('blue', '5'), c('red', 'skip'), c('green', '1')],
+        3: [c('green', '2'), c('green', '3')]
+      },
+      discard: [c('red', '5')]
+    });
+    await expect(handCard(bob, 'red 5')).toHaveClass(/card-playable/);
+    for (const name of ['red 6', 'blue 5', 'red Skip', 'green 1']) await expect(handCard(bob, name)).toBeDisabled();
+    await expect(bob.locator('.hint')).toHaveText('Jump in: you hold a card identical to the top card');
+    await expect(handCard(cara, 'green 2')).toBeDisabled();
+
+    await play(bob, 'red 5');
+    await expect(status(alice)).toHaveText('Bob jumped in with red 5');
+    await expect(turn(cara)).toHaveText('Your turn');
+    await expect(turn(alice)).not.toHaveText('Your turn');
+    await expect(countOf(alice, 'Bob')).toHaveText('4 cards');
+    await expect(discardTop(alice)).toHaveAttribute('title', 'red 5');
+    // Alice lost her turn, so her cards are no longer playable
+    await expect(handCard(alice, 'red 7')).toBeDisabled();
+    await expect(handCard(bob, 'red 5')).toHaveCount(0);
+
+    await undo(bob, alice, cara);
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(countOf(alice, 'Bob')).toHaveText('5 cards');
+  });
 });
 
 test.describe('UNO controls', () => {
