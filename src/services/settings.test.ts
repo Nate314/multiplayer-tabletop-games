@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
-import { loadAnimations, loadJoinForm, saveAnimations, saveJoinForm } from './settings.ts'
+import { DEFAULT_FILTERS } from '../components/gameFilters.ts'
+import { loadAnimations, loadJoinForm, loadLandingFilters, saveAnimations, saveJoinForm, saveLandingFilters } from './settings.ts'
 
 function installStorage(initial: Record<string, string> = {}): void {
   const items = new Map(Object.entries(initial))
@@ -49,6 +50,21 @@ test('a storage that throws gives defaults and saving does not throw', () => {
   })
   assert.equal(loadAnimations(), false)
   assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadLandingFilters(), DEFAULT_FILTERS)
   saveAnimations(true)
   saveJoinForm({ playerName: 'Ann', gameId: 'abc' })
+  saveLandingFilters(DEFAULT_FILTERS)
+})
+
+test('landing filters default to everything shown and round-trip', () => {
+  installStorage()
+  assert.deepEqual(loadLandingFilters(), DEFAULT_FILTERS)
+  const filters = { search: 'uno', sort: 'name' as const, categories: ['card' as const, 'dice' as const], players: 4 }
+  saveLandingFilters(filters)
+  assert.deepEqual(loadLandingFilters(), filters)
+})
+
+test('junk landing filters fall back field by field', () => {
+  installStorage({ landingFilters: '{"search":5,"sort":"x","categories":["dice","nope"],"players":2.5}' })
+  assert.deepEqual(loadLandingFilters(), { search: '', sort: 'category', categories: ['dice'], players: null })
 })
