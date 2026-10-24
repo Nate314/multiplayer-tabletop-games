@@ -1,4 +1,5 @@
 import CardView from './CardView';
+import { cardKey } from './animateMove.ts';
 import { buildGroup, phaseRequirements, requirementName } from '../rules.ts';
 import type { Card, Seat } from '../types.ts';
 
@@ -32,7 +33,7 @@ export default function LayDownPanel({ seat, phase, staged, hasSelection, onAdd,
               </div>
               <div className="group-cards">
                 {cards.map(card => (
-                  <CardView key={card.id} card={card} small onClick={() => onReturn(card)} />
+                  <CardView key={card.id} card={card} small animKey={cardKey(card.id)} onClick={() => onReturn(card)} />
                 ))}
               </div>
               <button type="button" disabled={!hasSelection} onClick={() => onAdd(part)}>

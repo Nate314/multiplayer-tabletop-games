@@ -1,4 +1,4 @@
-import { MOVE_DURATION_MS, prefersReducedMotion, slideFrom } from '../../../src/animation/motion.ts';
+import { MOVE_DURATION_MS, ghostSlide, prefersReducedMotion, slideFrom } from '../../../src/animation/motion.ts';
 import { BLANK, tileValue } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { LastMove, PublicGameState, RackTile, Seat } from '../types.ts';
@@ -43,10 +43,7 @@ export function tilesUsed(lastMove: LastMove): number {
 function ghostToBag(root: HTMLElement, letter: RackTile, from: DOMRect, to: DOMRect, delayMs: number) {
   const ghost = document.createElement('span');
   ghost.className = letter === BLANK ? 'tile tile-blank' : 'tile';
-  Object.assign(ghost.style, {
-    position: 'fixed', left: `${from.x}px`, top: `${from.y}px`, width: `${from.width}px`, height: `${from.height}px`,
-    fontSize: `${from.height / 2}px`, pointerEvents: 'none', zIndex: '10'
-  });
+  ghost.style.fontSize = `${from.height / 2}px`;
   const letterSpan = ghost.appendChild(document.createElement('span'));
   letterSpan.className = 'tile-letter';
   letterSpan.textContent = letter === BLANK ? '' : letter;
@@ -55,13 +52,7 @@ function ghostToBag(root: HTMLElement, letter: RackTile, from: DOMRect, to: DOMR
     value.className = 'tile-value';
     value.textContent = String(tileValue(letter));
   }
-  root.appendChild(ghost);
-  const dx = to.x + to.width / 2 - (from.x + from.width / 2);
-  const dy = to.y + to.height / 2 - (from.y + from.height / 2);
-  ghost.animate(
-    [{ translate: '0 0', opacity: 1 }, { translate: `${dx}px ${dy}px`, opacity: 0 }],
-    { duration: MOVE_DURATION_MS, delay: delayMs, easing: 'ease-in', fill: 'both' }
-  ).finished.finally(() => ghost.remove());
+  ghostSlide(root, ghost, from, to, delayMs);
 }
 
 // A play slides its tiles onto the board one after another from the player's score row; your own play is

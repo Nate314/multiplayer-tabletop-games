@@ -9,8 +9,8 @@ import type { Card, CardColor, GameState, Group } from '../games/phase10/types.t
 const NAMES = ['Alice', 'Bob', 'Cara'];
 const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow'];
 
-async function start(seat: SeatFixture, players = 2) {
-  const table = await seat('phase10', NAMES.slice(0, players));
+async function start(seat: SeatFixture, players = 2, motion = false) {
+  const table = await seat('phase10', NAMES.slice(0, players), { motion });
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -579,6 +579,19 @@ test.describe('Phase 10 controls', () => {
     await scoring(alice).getByRole('button', { name: 'Continue' }).click();
     await expect(scoring(bob)).toHaveCount(0);
     await expect(turnMessage(bob)).toHaveText(/^Hand 2: /);
+  });
+
+  test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
+    const animated = await start(seat, 2, true);
+    await animated.alice.locator('.piles .pile').nth(0).click();
+    await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0);
+    await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBe(0);
+    await expect(animated.bob.locator('.game-screen > .card')).toHaveCount(0);
+
+    const still = await start(seat);
+    await still.alice.locator('.piles .pile').nth(0).click();
+    await expect(still.bob.getByText('Alice drew from the pile')).toBeVisible();
+    expect(await still.bob.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 
   test('clicking Undo asks everyone to approve undoing the last move', async ({ seat }) => {

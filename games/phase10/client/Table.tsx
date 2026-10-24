@@ -1,4 +1,6 @@
 import CardView from './CardView';
+import { cardKey } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
 import { LAST_PHASE, handPlayers, phaseName, runValue } from '../rules.ts';
 import type { Group, LastMove, PublicGameState, Seat } from '../types.ts';
 
@@ -45,7 +47,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
         const own = groups.map((group, index) => ({ group, index })).filter(({ group }) => group.owner === seat);
 
         return (
-          <section key={seat} className={classes.join(' ')}>
+          <section key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
             <header className="seat-header">
               <span className="seat-name">
                 {playerNames[seat]}
@@ -71,7 +73,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
                     <div className="group-label">{groupLabel(group)}</div>
                     <div className="group-cards">
                       {group.cards.map((card, position) => (
-                        <CardView key={card.id} card={card} small standsFor={runValue(group, position)} />
+                        <CardView key={card.id} card={card} small animKey={cardKey(card.id)} standsFor={runValue(group, position)} />
                       ))}
                     </div>
                     {canHit && (

@@ -1,4 +1,5 @@
 import CardView from './CardView';
+import { DISCARD_KEY, PILE_KEY } from './animateMove.ts';
 import type { DrawSource, PublicGameState } from '../types.ts';
 
 type PilesProps = {
@@ -18,11 +19,11 @@ export default function Piles({ gameState, canDraw, onDraw, lastPile = null }: P
   return (
     <div className="piles">
       <button type="button" className={pileClass('pile')} disabled={!canDraw} onClick={() => onDraw('pile')}>
-        <span className="card card-back" aria-hidden="true">10</span>
+        <span className="card card-back" aria-hidden="true" data-anim-key={PILE_KEY}>10</span>
         <span className="pile-label">Draw pile ({drawCount})</span>
       </button>
       <button type="button" className={pileClass('discard')} disabled={!canTakeDiscard} onClick={() => onDraw('discard')}>
-        {discardTop ? <CardView card={discardTop} /> : <span className="card card-empty" aria-hidden="true" />}
+        {discardTop ? <CardView card={discardTop} animKey={DISCARD_KEY} /> : <span className="card card-empty" aria-hidden="true" data-anim-key={DISCARD_KEY} />}
         <span className="pile-label">Discard</span>
       </button>
     </div>
