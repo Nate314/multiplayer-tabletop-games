@@ -599,6 +599,14 @@ test.describe('Risk rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
+  test('an eliminated player has no armies tray', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({ owners: ownership(1, { greenland: 3 }), eliminated: [2] }));
+    await expect(playerRow(alice, 'Bob').locator('.player-status')).toHaveText('eliminated');
+    await expect(alice.getByRole('region', { name: 'Your armies' })).toBeVisible();
+    await expect(bob.getByRole('region', { name: 'Your armies' })).toHaveCount(0);
+  });
+
   test('dismissed: the game ends when only one player still holds territory', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
     await table.patch(attacking({ owners: ownership(1, { greenland: 3 }), eliminated: [2] }));

@@ -13,6 +13,7 @@ import WorldMap from './WorldMap';
 import animateMove from './animateMove.ts';
 import { seatClass } from './layout.ts';
 import { canBeSource, targetsFrom } from './selection.ts';
+import { inGame } from '../state.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, Placements, PublicGameState } from '../types.ts';
 
@@ -104,7 +105,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             canSelect={canSelect} onSelect={select} />
         </div>
         <div className="side-panel">
-          {gameState.firstPlayer !== null && !isGameOver && <PieceTray label="Your armies" pieces={armies} selected={placing && trayTapped ? 'armies' : null} onTap={() => setTrayTapped(tapped => !tapped)} drag={drag} />}
+          {gameState.firstPlayer !== null && !isGameOver && inGame(gameState).includes(playerNumber) && <PieceTray label="Your armies" pieces={armies} selected={placing && trayTapped ? 'armies' : null} onTap={() => setTrayTapped(tapped => !tapped)} drag={drag} />}
           <div className={error ? 'game-status game-status-error' : 'game-status'} role="status">{error || gameStatus}</div>
           <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
           <PhasePanel gameState={gameState} playerNumber={playerNumber} canMove={canMove} source={source} target={target} draft={draft}
