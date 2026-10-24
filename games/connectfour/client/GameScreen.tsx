@@ -27,13 +27,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             gameState={gameState}
             dimmed={!isMyTurn && !isGameOver}
             droppable={isMyTurn}
+            seat={playerNumber === 1 || playerNumber === 2 ? playerNumber : undefined}
             onDrop={column => gameService.makeMove({ type: 'drop', column })}
           />
           <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
         </div>
         <div className="side-panel">
           <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} />
-          {isMyTurn && <div className="hint">Click a column to drop your disc</div>}
+          {isMyTurn && <div className="hint">Drag your disc to a column, or click a column</div>}
           <DrawAndResign gameState={gameState} playerNumber={playerNumber} onAction={(action) => gameService.sendAction(action)}>
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
               Undo
