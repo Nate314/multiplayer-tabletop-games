@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table } from './fixtures.ts';
 import type { Board } from '../games/mancala/types.ts';
 
 // One test per rule and control in games/mancala/README.md. Seat 1 (Alice) owns pits 0-5 and bank 6, seat 2 (Bob)
@@ -130,6 +130,23 @@ test.describe('Mancala controls', () => {
     await expect(count(myPit(bob, 0))).toHaveText('8');
     await expect(count(myBank(bob))).toHaveText('14');
     await expect(count(theirPit(bob, 0))).toHaveText('1');
+  });
+
+  test('with Color-blind symbols on, each stone, bank and bank label shows a shape for its seat: Alice blue squares, Bob red circles', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch({ board: boardOf([2, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1]) });
+    await expect(count(myBank(alice))).toHaveText('3');
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(myPit(alice, 0).locator('.stone .color-symbol-square')).toHaveCount(2);
+    await expect(myBank(alice).locator('.stone .color-symbol-square')).toHaveCount(3);
+    await expect(myBank(alice).locator('.bank-symbol.color-symbol-square')).toHaveCount(1);
+    await expect(theirBank(alice).locator('.stone .color-symbol-circle')).toHaveCount(1);
+    await expect(theirBank(alice).locator('.bank-symbol.color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.bank-label-right .color-symbol-square')).toHaveCount(1);
+    await expect(alice.locator('.bank-label-left .color-symbol-circle')).toHaveCount(1);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
   });
 
   test('arrows around the board show the counter-clockwise direction', async ({ seat }) => {

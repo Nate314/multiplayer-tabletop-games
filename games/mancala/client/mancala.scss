@@ -266,6 +266,26 @@
     pointer-events: none;
   }
 
+  .stone-symbol {
+    position: absolute;
+    inset: 15%;
+    width: 70%;
+    height: 70%;
+    color: #fff;
+  }
+
+  .bank-symbol {
+    position: absolute;
+    bottom: 2%;
+    left: 50%;
+    width: 36%;
+    height: auto;
+    aspect-ratio: 1;
+    translate: -50% 0;
+    color: #fff;
+    pointer-events: none;
+  }
+
   /* The exact count, small, in a corner a round pit leaves free, so it stays readable over a big pile */
 
   .count {

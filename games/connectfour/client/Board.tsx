@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { cellKey } from './animateMove.ts';
 import { COLUMNS, ROWS, SEAT_COLORS, isColumnFull } from '../rules.ts';
 import type { Position, PublicGameState } from '../types.ts';
@@ -47,7 +49,11 @@ export default function Board({ gameState, dimmed, droppable, onDrop }: BoardPro
               data-anim-key={cellKey({ row, col: column })}
               onClick={() => canDrop(column) && onDrop(column)}
             >
-              {seat && <div className={`disc player${seat}`} aria-label={`${SEAT_COLORS[seat]} disc`} />}
+              {seat && (
+                <div className={`disc player${seat}`} aria-label={`${SEAT_COLORS[seat]} disc`}>
+                  <ColorSymbol color={SEAT_SYMBOLS[seat]} className="disc-symbol" />
+                </div>
+              )}
             </div>
           );
         }))}

@@ -1,4 +1,6 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import Pawn from './Pawn';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { CENTER_AREA, HOME_COLUMN, SEATS, TRACK_CELLS, cellKey, cellOf, cellPlacement, gridPlacement, nestArea } from './geometry.ts';
 import { dieLabel } from './dice.ts';
 import { HOME, NEST, PAWN_COUNT, entryIndex, getLegalMoves, isSafe, sideOf } from '../rules.ts';
@@ -91,11 +93,12 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
     return classNames.join(' ');
   }
 
-  function renderSquare(cell: Cell, extra: string[]) {
+  function renderSquare(cell: Cell, extra: string[], laneSeat?: Seat) {
     const key = cellKey(cell);
     const there = pawnsByCell.get(key) ?? [];
     return (
       <div key={key} className={squareClass(cell, extra)} style={cellPlacement(cell)} onClick={() => handleClick(key, there)}>
+        {laneSeat && <ColorSymbol color={SEAT_SYMBOLS[laneSeat]} className="lane-symbol" />}
         {there.map(renderPawn)}
         {renderBadge(key)}
       </div>
@@ -114,7 +117,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
         if (lastMove?.captured.some(ref => ref.seat === seat)) classNames.push('last-move-to');
         return (
           <div key={`nest-${seat}`} className={classNames.join(' ')} style={gridPlacement(nestArea(seat))} onClick={() => handleClick('', nestPawns)}>
-            <span className="nest-name">{playerNames[seat] ?? ''}</span>
+            <span className="nest-name"><ColorSymbol color={SEAT_SYMBOLS[seat]} className="nest-symbol" /> {playerNames[seat] ?? ''}</span>
             <div className="nest-pawns">{nestPawns.map(renderPawn)}</div>
           </div>
         );
@@ -126,7 +129,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
         if (entrySeat) extra.push('entry', `player${entrySeat}`);
         return renderSquare(cell, extra);
       })}
-      {SEATS.flatMap(seat => HOME_COLUMN.map(progress => renderSquare(cellOf(seat, progress)!, ['home-lane', `player${seat}`])))}
+      {SEATS.flatMap(seat => HOME_COLUMN.map(progress => renderSquare(cellOf(seat, progress)!, ['home-lane', `player${seat}`], seat)))}
       <div
         className={[
           'center',

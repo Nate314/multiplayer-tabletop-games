@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { HOME, LAST_TRACK, NEST, TRACK_LENGTH, entryIndex, isOnTrack, trackIndex } from '../games/parchisi/rules.ts';
 import type { Progress, Seat as SeatNumber } from '../games/parchisi/types.ts';
 
@@ -381,6 +381,26 @@ test.describe('Parchisi controls', () => {
     await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4], { used: [0, 1], bonuses: [20] });
     await pawn(alice, 1, 0).click();
     await expect(badge(alice, 1, 20)).toHaveText('+20');
+  });
+
+  test('with Color-blind symbols on, pawns, nests, home columns and the player list show a shape for each seat', async ({ seat, server }) => {
+    const { table, alice } = await start(seat, server);
+    await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4]);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(pawn(alice, 1, 0).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(pawn(alice, 2, 0).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.pawn .color-symbol')).toHaveCount(8);
+    await expect(alice.locator('.nest.player1 .nest-name .color-symbol-square')).toHaveCount(1);
+    await expect(alice.locator('.nest.player2 .nest-name .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.nest.player3 .nest-name .color-symbol-triangle')).toHaveCount(1);
+    await expect(alice.locator('.nest.player4 .nest-name .color-symbol-cross')).toHaveCount(1);
+    await expect(alice.locator('.square.home-lane.player1 .color-symbol-square')).toHaveCount(HOME_COLUMN_LENGTH);
+    await expect(alice.locator('.square.home-lane.player2 .color-symbol-circle')).toHaveCount(HOME_COLUMN_LENGTH);
+    await expect(alice.locator('.player-dot.player1 .color-symbol-square')).toHaveCount(1);
+    await expect(alice.locator('.player-dot.player2 .color-symbol-circle')).toHaveCount(1);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
   });
 
   test('click a marked square to move, and click the selected pawn again to unselect it', async ({ seat, server }) => {

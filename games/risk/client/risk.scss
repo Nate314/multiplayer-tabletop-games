@@ -236,6 +236,11 @@
     pointer-events: none;
   }
 
+  .disc-symbol {
+    color: var(--seat-text);
+    pointer-events: none;
+  }
+
   .territory-name {
     fill: var(--label);
     font-size: 10.5px;
@@ -611,6 +616,15 @@
     border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: 50%;
     background: var(--seat);
+    color: var(--seat-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .swatch-symbol {
+    width: 10px;
+    height: 10px;
   }
 
   .player-name {

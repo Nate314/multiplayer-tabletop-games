@@ -1,8 +1,9 @@
 import type { KeyboardEvent, ReactNode } from 'react';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { pips } from '../board.ts';
 import {
   RESOURCE_LABELS, SCALE, TERRAIN_LABELS, buildingKey, edgeEnds, hexPoint, hexPolygon, portLabel, portPoint, roadKey, robberKey,
-  seatClass, vertexPoint
+  SEAT_SYMBOLS, seatClass, vertexPoint
 } from './layout.ts';
 import type { PublicGameState, Resource, Seat } from '../types.ts';
 
@@ -16,6 +17,14 @@ type BoardProps = {
   onEdge?: (edge: number) => void;
   onHex?: (hex: number) => void;
 };
+
+const ROAD_SYMBOL = 9; // fits the 8 unit wide road
+const BUILDING_SYMBOL = 9;
+
+// A color symbol centered on a point of the drawing; the nested svg needs its size as attributes
+function symbolAt(seat: Seat, x: number, y: number, size: number) {
+  return <ColorSymbol color={SEAT_SYMBOLS[seat]} svgProps={{ x: x - size / 2, y: y - size / 2, width: size, height: size }} />;
+}
 
 const VIEW = 5.3 * SCALE; // half the width and height of the drawing, sea and ports included
 
@@ -149,6 +158,11 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
     );
   });
 
+  const roadSymbols = Object.keys(roads).map(Number).map(edge => {
+    const [a, b] = edgeEnds(edge);
+    return <g key={`road-symbol-${edge}`} className={`road-symbol ${pieceClass(roads[edge])}`}>{symbolAt(roads[edge], (a.x + b.x) / 2, (a.y + b.y) / 2, ROAD_SYMBOL)}</g>;
+  });
+
   const edgeTargets = (onEdge ? targets.edges ?? [] : []).map(edge => {
     const [a, b] = edgeEnds(edge);
     const click = () => onEdge?.(edge);
@@ -168,6 +182,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
       <g key={`building-${vertex}`} className={`building ${pieceClass(building.seat)}`} data-anim-key={buildingKey(vertex)}>
         <title>{`${playerNames[building.seat]}'s ${building.city ? 'city' : 'settlement'}`}</title>
         {building.city ? <City x={x} y={y} /> : <Settlement x={x} y={y} />}
+        {building.city ? symbolAt(building.seat, x - 6, y + 4, BUILDING_SYMBOL) : symbolAt(building.seat, x, y + 2, BUILDING_SYMBOL)}
       </g>
     );
   });
@@ -189,6 +204,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
       {ports}
       {items}
       {roadLines}
+      {roadSymbols}
       {edgeTargets}
       <g className="robber" data-anim-key={robberKey}>
         <title>The robber</title>

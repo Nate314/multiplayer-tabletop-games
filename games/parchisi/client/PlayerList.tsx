@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { HOME, PAWN_COUNT, inTurnOrder } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -22,7 +24,7 @@ export default function PlayerList({ gameState, playerNumber }: PlayerListProps)
         const home = pawns[seat]?.filter(progress => progress === HOME).length ?? 0;
         return (
           <div key={seat} className={classNames.join(' ')}>
-            <span className={`player-dot player${seat}`} />
+            <span className={`player-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat]} className="dot-symbol" /></span>
             <span className="player-name">
               {playerNames[seat]}
               {seat === playerNumber && ' (you)'}

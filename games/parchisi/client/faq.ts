@@ -87,5 +87,9 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What happens if someone leaves?',
     answer: 'Their pawns are taken off the board and their turns are skipped. The last player left wins.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns, nests, home columns and the player list show it.'
   }
 ];

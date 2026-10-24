@@ -66,5 +66,9 @@ export const FAQS: FaqItem[] = [
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. ' +
       'An attack played again rolls new dice.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, black diamond. Territory discs and the player list show it; neutral grey territories show none.'
   }
 ];

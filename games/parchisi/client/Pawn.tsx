@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { pawnKey } from './animateMove.ts';
 import type { Seat } from '../types.ts';
 
@@ -13,5 +15,9 @@ export default function Pawn({ seat, pawn, name, movable, selected }: PawnProps)
   const classNames = ['pawn', `player${seat}`];
   if (movable) classNames.push('movable');
   if (selected) classNames.push('selected');
-  return <span className={classNames.join(' ')} title={name} data-anim-key={pawnKey(seat, pawn)} />;
+  return (
+    <span className={classNames.join(' ')} title={name} data-anim-key={pawnKey(seat, pawn)}>
+      <ColorSymbol color={SEAT_SYMBOLS[seat]} className="pawn-symbol" />
+    </span>
+  );
 }

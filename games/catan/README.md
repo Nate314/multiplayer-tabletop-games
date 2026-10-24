@@ -34,6 +34,7 @@ Settle an island, trade resources and build roads, settlements and cities to rea
 - The player list shows each player's points, cards, unplayed development cards, Knights played, longest road and award cards, and the bank's cards. Recent events lists what happened, newest first
 - Click Undo to ask everyone to undo the last move
 - Click FAQ at the top of the page for a short guide to the rules and controls
+- With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, orange hexagon, purple cross. Settlements, cities, the middle of each road and the player list show it
 
 ## Differences from Wikipedia
 

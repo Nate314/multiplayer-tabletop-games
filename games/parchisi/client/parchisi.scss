@@ -255,6 +255,23 @@
     box-sizing: border-box;
   }
 
+  .pawn-symbol {
+    position: absolute;
+    inset: 25%;
+    width: 50%;
+    height: 50%;
+    color: #FFFFFF;
+  }
+
+  .lane-symbol {
+    position: absolute;
+    inset: 25%;
+    width: 50%;
+    height: 50%;
+    color: var(--text);
+    pointer-events: none;
+  }
+
   .pawn.movable {
     cursor: pointer;
     box-shadow: 0 0 0 2px var(--highlight), 0 0 8px var(--highlight);
@@ -467,6 +484,13 @@
     height: 12px;
     border-radius: 50%;
     background: var(--seat);
+  }
+
+  .dot-symbol {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: #FFFFFF;
   }
 
   /* History dialog: the board at full strength, though nothing on it can be clicked */

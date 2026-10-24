@@ -40,5 +40,9 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What happens if my opponent leaves?',
     answer: 'If they are dismissed, you win.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: Red circle, Yellow star. Discs and the player list show it.'
   }
 ];

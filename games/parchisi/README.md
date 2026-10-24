@@ -27,6 +27,7 @@ Players are seated in join order: Player 1 (blue) at the bottom, Player 2 (red) 
 - The board is dimmed when it is not your turn, and the last move's squares are outlined
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
 - Click FAQ at the top of the page for a short guide to the rules and controls
+- With Color-blind symbols on in Settings, each player color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns, nests, home columns and the player list show it
 
 ## Differences from Wikipedia
 
