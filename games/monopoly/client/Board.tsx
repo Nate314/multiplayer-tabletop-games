@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { BOARD, HOTEL, JAIL, ownable } from '../board.ts';
 import { DECKS, DECK_NAMES } from '../cards.ts';
 import { gridPosition, seatClass, shortName, sideOf, tokenKey } from './layout.ts';
@@ -30,7 +32,8 @@ function Buildings({ level }: { level: number }) {
 function Token({ seat, name }: { seat: Seat; name: string }) {
   return (
     <span className={`token ${seatClass(seat)}`} data-anim-key={tokenKey(seat)} title={name}>
-      {name.slice(0, 1).toUpperCase()}
+      <ColorSymbol color={SEAT_SYMBOLS[seat]} className="token-symbol" />
+      <span className="token-initial">{name.slice(0, 1).toUpperCase()}</span>
     </span>
   );
 }

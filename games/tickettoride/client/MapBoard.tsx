@@ -3,6 +3,7 @@ import { CITIES, ROUTES, routeName } from '../map.ts';
 import { CANADA_OUTLINE, CITY_RADIUS, LAND_OUTLINE, MAP_HEIGHT, MAP_LEFT, MAP_WIDTH, TRACK_WIDTH, labelPlacement, routeSpaces } from './geometry.ts';
 import type { Space } from './geometry.ts';
 import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { routeKey } from './animateMove.ts';
 import { DOUBLES_FROM } from '../rules.ts';
 import type { PublicGameState, Route } from '../types.ts';
@@ -25,10 +26,10 @@ function trackTitle(route: Route, owner: string | null, closed: boolean): string
   return closed ? `${base}, closed (the other track is taken)` : base;
 }
 
-// One symbol, centered on the middle car of an open colored route
-function RouteSymbol({ color, space }: { color: SymbolColor; space: Space }) {
+// One symbol, centered on the middle car of a route: an open colored route's color, or a claimed route's owner
+function RouteSymbol({ color, space, className }: { color: SymbolColor | undefined; space: Space; className?: string }) {
   const size = SYMBOL_SIZE;
-  return <ColorSymbol color={color} svgProps={{ x: space.x - size / 2, y: space.y - size / 2, width: size, height: size, style: { width: size, height: size } }} />;
+  return <ColorSymbol color={color} className={className} svgProps={{ x: space.x - size / 2, y: space.y - size / 2, width: size, height: size, style: { width: size, height: size } }} />;
 }
 
 // The map drawn in SVG: land, every route as a chain of train spaces, and the cities on top
@@ -79,8 +80,9 @@ export default function MapBoard({ gameState, selected = null, highlight = null,
                   transform={`rotate(${space.angle} ${space.x} ${space.y})`}
                 />
               ))}
-              {owner === undefined && route.color !== 'gray' && <RouteSymbol color={route.color} space={SPACES[route.id][Math.floor(route.length / 2)]} />}
               {owner !== undefined && SPACES[route.id].map((space, index) => <circle key={`dot-${index}`} cx={space.x} cy={space.y} r={2} />)}
+              {owner === undefined && route.color !== 'gray' && <RouteSymbol color={route.color} space={SPACES[route.id][Math.floor(route.length / 2)]} />}
+              {owner !== undefined && <RouteSymbol color={SEAT_SYMBOLS[owner]} space={SPACES[route.id][Math.floor(route.length / 2)]} />}
             </g>
           );
         })}

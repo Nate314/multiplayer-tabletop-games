@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { TicketFace } from './pieces';
 import { LONGEST_PATH_BONUS, routePoints } from '../scoring.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -22,7 +24,7 @@ export default function PlayerList({ gameState, viewer }: PlayerListProps) {
         const classes = ['player-row', `seat${seat}`, seat === currentPlayer ? 'current' : '', out ? 'out' : ''].filter(Boolean).join(' ');
         return (
           <div key={seat} className={classes}>
-            <span className="player-swatch" aria-hidden="true" />
+            <span className="player-swatch" aria-hidden="true"><ColorSymbol color={SEAT_SYMBOLS[seat]} className="swatch-symbol" /></span>
             <span className="player-name">
               {playerNames[seat]}{seat === viewer ? ' (you)' : ''}{out ? ' (left)' : ''}
               {lastTurns?.includes(seat) && <span className="last-turn"> last turn to come</span>}

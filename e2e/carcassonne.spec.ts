@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, nameOf, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, nameOf, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { at, START } from '../games/carcassonne/testing.ts';
 import { TILES, TILE_TYPES } from '../games/carcassonne/tiles.ts';
 import type { FeatureKind, GameState, Meeple } from '../games/carcassonne/types.ts';
@@ -306,6 +306,21 @@ test.describe('Carcassonne rules', () => {
 });
 
 test.describe('Carcassonne controls', () => {
+  test('with Color-blind symbols on, meeples and the player list show the shape of their color: red circle, blue square, yellow star', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat, 3);
+    await craft(table, { board: [START, at(-1, 0, 'W', 0, on(1, 'road')), at(2, 0, 'W', 0, on(2, 'road')), at(0, 1, 'D', 0, on(3, 'field'))], currentTile: 'U', drawPile: ['U', 'U'] });
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes = ['circle', 'square', 'star'];
+    for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
+      await expect(playerRow(alice, name).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
+      await expect(board(alice).locator(`.cc-symbol-seat${index + 1}.color-symbol-${shapes[index]}`)).toHaveCount(1);
+    }
+    await expect(board(alice).locator('.color-symbol')).toHaveCount(3);
+    await expect(bob.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('the board highlights where the tile fits; Turn tries only the turns that fit a picked square, or turns the panel tile before one is picked', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     // A city on one side fits north of the start tile with its city facing south, or south of it facing any way but north

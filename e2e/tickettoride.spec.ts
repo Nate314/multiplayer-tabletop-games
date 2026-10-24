@@ -530,6 +530,19 @@ test.describe('Ticket to Ride controls', () => {
     await expect(track(alice, LA_VEGAS).locator('.color-symbol')).toHaveCount(0);
   });
 
+  test('with Color-blind symbols on, a claimed route shows the shape of its owner, not of the route color, and the player list shows each seat shape', async ({ seat }) => {
+    const { alice } = await start(seat, 3, { claimed: { [KC_STL]: 2, [LA_VEGAS]: 1, [SEATTLE_PORTLAND]: 3 } });
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(track(alice, KC_STL).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(track(alice, KC_STL).locator('.color-symbol')).toHaveCount(1);
+    await expect(track(alice, LA_VEGAS).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(track(alice, SEATTLE_PORTLAND).locator('.color-symbol-triangle')).toHaveCount(1);
+    const shapes = ['circle', 'square', 'triangle'];
+    for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
+      await expect(alice.locator('.player-row', { hasText: name }).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
+    }
+  });
+
   test('clicking a face-up card or the deck takes a card, twice a turn, and cards you cannot take are dimmed', async ({ seat }) => {
     const { alice, bob } = await start(seat, 2, { faceUp: ['locomotive', 'green', 'yellow', 'black', 'white'] });
     for (const button of await market(bob).locator('.card-button').all()) await expect(button).toBeDisabled();

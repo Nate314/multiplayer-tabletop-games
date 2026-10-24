@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { BOARD } from '../board.ts';
 import { seatClass, shortName } from './layout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -39,7 +41,10 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
         return (
           <div key={seat} className={classNames.join(' ')}>
             <div className="player-line">
-              <span className={`token ${seatClass(seat)}`} aria-hidden="true">{playerNames[seat].slice(0, 1).toUpperCase()}</span>
+              <span className={`token ${seatClass(seat)}`} aria-hidden="true">
+                <ColorSymbol color={SEAT_SYMBOLS[seat]} className="token-symbol" />
+                <span className="token-initial">{playerNames[seat].slice(0, 1).toUpperCase()}</span>
+              </span>
               <span className="player-name">
                 {playerNames[seat]}
                 {seat === viewer && ' (you)'}

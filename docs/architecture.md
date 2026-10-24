@@ -141,6 +141,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 - `/src/components/colorSymbols.ts` is the table: `COLOR_SYMBOLS` maps each player color to a shape, and `SHAPE_PATHS` holds each shape's SVG path in a 24 by 24 box. It has no React, so `node --test` can import it
 - `/src/components/ColorSymbol.tsx` draws the shape for a color as an `<svg class="color-symbol color-symbol-<shape>">`. It reads `colorSymbols` from `usePreferences()` and renders nothing while the setting is off or the color is not set (`null` or `undefined`), so a game passes its seat color and positions the symbol itself
 - Its default look is in `App.scss`: the symbol takes `currentColor` and a 1 px stroke (`--color-symbol-stroke`) so it reads on any fill
+- Games told apart by light against dark (Checkers' red against cream) or by a printed symbol get nothing. Quoridor, Carcassonne, Monopoly and Ticket to Ride tell players apart by color alone, so they show their seat colors' shapes (Monopoly's seventh and eighth tokens, brown and slate, have no shape and keep their initial; a claimed Ticket to Ride route shows its owner's shape, not the route color's)
 
 | Color | Symbol | Also covers |
 |---|---|---|
@@ -152,7 +153,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 | white | ring | |
 | orange | hexagon | |
 | pink | heart | |
-| purple | cross | |
+| purple | cross | Quoridor, Monopoly, Ticket to Ride and Parchisi seat colors |
 | cyan | pentagon | |
 | gray | none | Ticket to Ride gray routes and Risk neutral armies: "any" or "nobody", told apart by having no symbol |
 

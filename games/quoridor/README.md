@@ -24,6 +24,7 @@ Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2
 - The game board is dimmed when it's not your turn; its frame stays colored to show each player's goal side
 - Click "FAQ" at the top of the page for FAQs on moving, placing walls and the rules
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
+- With Color-blind symbols on in Settings, each pawn color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns and the Goals list show it
 
 ## Differences from Wikipedia
 
