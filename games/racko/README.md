@@ -20,6 +20,7 @@ Draw and swap cards to put the ten cards of your rack in ascending order, first 
 - On your turn click the draw pile or the discard pile. The card you took appears beside the piles
 - Click a slot in your rack to swap the card in. A card from the draw pile also has a Discard button
 - The table shows each player's score, with the player whose turn it is outlined, and the slot just changed is highlighted
+- Cards slide from the pile to the card in hand, into the rack slot, and from the slot to the discard pile
 - After each round, read the scoring screen and click Continue; after the last round click Close, and Show Scoring opens it again
 - Click Undo to ask everyone to undo the last move
 - Click FAQ at the top of the page for a short guide to the rules and controls

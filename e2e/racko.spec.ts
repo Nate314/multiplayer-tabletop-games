@@ -8,8 +8,8 @@ const range = (from: number, to: number) => Array.from({ length: to - from + 1 }
 // Alice's rack is 1 to 10 with a 50 in slot 5; the discard top is 5 and the draw pile ends in 40
 const NEARLY = { racks: { 1: [1, 2, 3, 4, 50, 6, 7, 8, 9, 10], 2: range(11, 20) }, drawPile: [60, 40], discardPile: [30, 5] };
 
-async function start(seat: Seat, names = ['Alice', 'Bob'], fields: object = NEARLY) {
-  const table = await seat('racko', names);
+async function start(seat: Seat, names = ['Alice', 'Bob'], fields: object = NEARLY, motion = false) {
+  const table = await seat('racko', names, { motion });
   if (Object.keys(fields).length > 0) await table.patch({ scores: Object.fromEntries(names.map((_, index) => [index + 1, 0])), ...fields });
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
@@ -183,6 +183,22 @@ test.describe('Rack-O rules', () => {
 });
 
 test.describe('Rack-O controls and platform', () => {
+  test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
+    const animated = await start(seat, ['Alice', 'Bob'], NEARLY, true);
+    const animations = (page: Page) => page.evaluate(() => document.getAnimations().length);
+    await drawPile(animated.alice).click();
+    await expect.poll(() => animations(animated.bob)).toBeGreaterThan(0);
+    await expect.poll(() => animations(animated.bob)).toBe(0);
+    await slot(animated.alice, 5).click();
+    await expect.poll(() => animations(animated.bob)).toBeGreaterThan(0);
+    await expect.poll(() => animations(animated.bob)).toBe(0);
+
+    const still = await start(seat);
+    await drawPile(still.alice).click();
+    await expect(still.bob.getByText('Alice drew from the draw pile')).toBeVisible();
+    expect(await animations(still.bob)).toBe(0);
+  });
+
   test('Undo takes back a draw and the draw pile is reshuffled', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await drawPile(alice).click();

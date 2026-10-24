@@ -1,4 +1,5 @@
 import Tile from './Tile';
+import { DECK_KEY, DISCARD_KEY, HELD_KEY, slotKey } from './animateMove.ts';
 import { RACK_SIZE } from '../rules.ts';
 import type { PublicGameState } from '../types.ts';
 import type { Seat } from '../../../shared/types.ts';
@@ -29,7 +30,7 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
         <div className="pile">
           <span className="pile-name">Draw pile</span>
           {drawCount > 0 || discardCount > 1
-            ? <Tile label={`Draw pile, ${drawCount} cards`} onClick={onDraw && !holding ? () => onDraw('deck') : undefined} disabled={!onDraw || holding} />
+            ? <Tile label={`Draw pile, ${drawCount} cards`} animKey={DECK_KEY} onClick={onDraw && !holding ? () => onDraw('deck') : undefined} disabled={!onDraw || holding} />
             : <Tile label="Draw pile, empty" disabled />}
           <span className="pile-count">{drawCount} {drawCount === 1 ? 'card' : 'cards'}</span>
         </div>
@@ -37,13 +38,13 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
           <span className="pile-name">Discard pile</span>
           {discardTop === null
             ? <span className="tile tile-empty" aria-label="Discard pile, empty" />
-            : <Tile card={discardTop} label={`Discard pile, top card ${discardTop}`} onClick={onDraw && !holding ? () => onDraw('discard') : undefined} disabled={!onDraw || holding} />}
+            : <Tile card={discardTop} animKey={DISCARD_KEY} label={`Discard pile, top card ${discardTop}`} onClick={onDraw && !holding ? () => onDraw('discard') : undefined} disabled={!onDraw || holding} />}
           <span className="pile-count">{discardCount} {discardCount === 1 ? 'card' : 'cards'}</span>
         </div>
         {holding && (
           <div className="pile held" aria-label="The card in hand">
             <span className="pile-name">{myHeld !== null ? 'You hold' : `${playerNames[currentPlayer ?? 0] ?? 'A player'} holds`}</span>
-            {myHeld !== null ? <Tile card={myHeld} label={`Your card ${myHeld}`} selected /> : <Tile label="A card from the draw pile" />}
+            {myHeld !== null ? <Tile card={myHeld} label={`Your card ${myHeld}`} selected animKey={HELD_KEY} /> : <Tile label="A card from the draw pile" animKey={HELD_KEY} />}
             {onDiscard && myHeld !== null && heldFrom === 'deck' && <button type="button" className="discard-button" onClick={onDiscard}>Discard</button>}
           </div>
         )}
@@ -59,8 +60,8 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
                 {myRack[slot] === undefined
                   ? <span className="tile tile-empty" />
                   : canPlace
-                    ? <Tile card={myRack[slot]} label={`Place in slot ${slot + 1}, replacing ${myRack[slot]}`} onClick={() => onPlace(slot)} />
-                    : <Tile card={myRack[slot]} label={`Slot ${slot + 1}, card ${myRack[slot]}`} />}
+                    ? <Tile card={myRack[slot]} label={`Place in slot ${slot + 1}, replacing ${myRack[slot]}`} animKey={slotKey(viewer, slot)} onClick={() => onPlace(slot)} />
+                    : <Tile card={myRack[slot]} label={`Slot ${slot + 1}, card ${myRack[slot]}`} animKey={slotKey(viewer, slot)} />}
               </div>
             ))}
           </div>
@@ -78,7 +79,7 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
             <div className="rack-slots">
               {SLOTS.map(slot => (
                 <div key={slot} className={slot === lastSlot && lastMove?.playerNumber === seat ? 'slot slot-last' : 'slot'}>
-                  <Tile small />
+                  <Tile small animKey={slotKey(seat, slot)} />
                 </div>
               ))}
             </div>
