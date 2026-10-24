@@ -1,4 +1,5 @@
 import type { GameCategory } from './categories.ts';
+import type { HouseRule, PlayerRange } from './houseRules.ts';
 import type { BaseGameState, BasePublicState, Random, Result, Seat } from './types.ts';
 
 export type GameInfo = {
@@ -8,6 +9,8 @@ export type GameInfo = {
   description: string; // one line for the landing page
   minPlayers: number;
   maxPlayers: number;
+  houseRules?: HouseRule[];
+  stretchedPlayers?: PlayerRange; // allowed with the player-count override; contains minPlayers..maxPlayers
 };
 
 // Everything a game supplies; seating, turn order and undo are handled by the platform

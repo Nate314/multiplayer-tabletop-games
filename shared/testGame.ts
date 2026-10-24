@@ -1,4 +1,5 @@
 import type { GameDefinition } from './gameDefinition.ts';
+import type { ChoiceRule, ToggleRule } from './houseRules.ts';
 import { asRecord } from './messages.ts';
 import { baseGameState, nextActivePlayer } from './seating.ts';
 import type { BaseGameState, BasePublicState, Result, Seat } from './types.ts';
@@ -41,4 +42,19 @@ export const testGame: GameDefinition<TestState, TestPublicState> = {
     const { secret: _secret, ...view } = state;
     return { ...view, undoAvailable, viewer };
   }
+};
+
+const FAST: ToggleRule = { id: 'fast', label: 'Fast', kind: 'toggle', standard: false };
+const GOAL: ChoiceRule<number> = {
+  id: 'goal', label: 'Goal', kind: 'choice', standard: 3, choices: [{ value: 3, label: '3' }, { value: 5, label: '5' }]
+};
+const BIG: ToggleRule = { id: 'big', label: 'Big', kind: 'toggle', standard: false, offered: seats => seats >= 3 };
+const BIGGER: ToggleRule = {
+  id: 'bigger', label: 'Bigger', kind: 'toggle', standard: false, offered: (seats, values) => seats >= 3 && values.big === true
+};
+
+// testGame with house rules and a stretched table size
+export const rulesGame: GameDefinition<TestState, TestPublicState> = {
+  ...testGame,
+  info: { ...testGame.info, houseRules: [FAST, GOAL, BIG, BIGGER], stretchedPlayers: { min: 2, max: 6 } }
 };
