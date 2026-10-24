@@ -1,5 +1,6 @@
 import PieceGlyph from './PieceGlyph';
-import { colorOf, isInCheck, opponent } from '../rules.ts';
+import { useCountdown, formatClock } from '../../../src/hooks/useCountdown.ts';
+import { colorOf, deadline, isInCheck, opponent } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type GameStatusProps = {
@@ -24,7 +25,9 @@ function capitalized(text: string): string {
 }
 
 export default function GameStatus({ gameState, playerNumber, error }: GameStatusProps) {
-  const { gameStatus, playerNames, activePlayers, captured, currentPlayer, isGameOver } = gameState;
+  const { gameStatus, playerNames, activePlayers, captured, currentPlayer, isGameOver, clock } = gameState;
+  const limit = deadline(gameState);
+  const timeLeft = useCountdown(limit, gameState.serverTime); // the running player's time; others show what they had
 
   return (
     <>
@@ -39,6 +42,7 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
           const color = colorOf(seat);
           const taken = captured[opponent(color)];
           const classNames = ['player-row'];
+          const running = timeLeft !== null && seat === currentPlayer;
           if (seat === currentPlayer && !isGameOver) classNames.push('to-move');
           if (!activePlayers.includes(seat)) classNames.push('player-left');
           return (
@@ -47,6 +51,11 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
                 <PieceGlyph color={color} type="king" />
                 {playerNames[seat]} ({capitalized(color)}){seat === playerNumber && ' (you)'}
                 {!activePlayers.includes(seat) && ' (left)'}
+                {clock && (
+                  <span className={running ? 'chess-clock chess-clock-running' : 'chess-clock'} aria-label={`${playerNames[seat]}'s time`}>
+                    {formatClock(running ? timeLeft : clock.remainingMs[seat])}
+                  </span>
+                )}
               </div>
               <div className="captured" aria-label={`Pieces ${playerNames[seat]} captured`}>
                 {taken.length === 0

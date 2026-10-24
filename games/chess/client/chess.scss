@@ -312,6 +312,20 @@
     overflow-wrap: anywhere;
   }
 
+  .chess-clock {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--panel-bg);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .chess-clock-running {
+    background: var(--button-bg);
+    color: var(--button-text);
+  }
+
   .player-name .piece {
     font-size: 22px;
   }

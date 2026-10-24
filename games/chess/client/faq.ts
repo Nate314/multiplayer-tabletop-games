@@ -78,6 +78,14 @@ export const FAQS: FaqItem[] = [
       'whose turn it is, and the pieces each player has captured. The board is dimmed when it is not your turn.'
   },
   {
+    question: 'How does the clock work?',
+    answer: 'The host can turn on a clock of 5, 10 or 15 minutes per player, with an optional increment of 2, 5 or ' +
+      '10 seconds added after each move you make. Both players must agree to the house rules first. The clocks ' +
+      'start when both have agreed, with White running first. Your clock runs while it is your turn, even if you ' +
+      'disconnect or a vote is open. If your time runs out you lose, even if your opponent could not checkmate. ' +
+      'Undo gives back the time spent on the undone move.'
+  },
+  {
     question: 'What does Undo do?',
     answer: 'Undo asks your opponent to take back the last move; it happens only if they approve.'
   },

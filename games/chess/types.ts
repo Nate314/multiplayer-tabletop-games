@@ -35,11 +35,16 @@ export type BoardState = {
   enPassant: Square | null; // the square a pawn just skipped over, which an enemy pawn may capture onto
 };
 
+// Time left for each seat as of the last move, and the server time the player to move started using theirs
+// (null while no clock runs: clock off, a lobby that is not ready, or a finished game)
+export type ChessClock = { remainingMs: Record<Seat, number>; runningSince: number | null };
+
 export type GameState = BaseGameState & BoardState & DrawOfferState & {
   // Position keys since the last capture or pawn move, the current one last: for repetition and the 50- and 75-move rules
   positions: string[];
   captured: Record<Color, PieceType[]>; // pieces of each color taken so far
   lastMove: LastMove | null;
+  clock: ChessClock | null; // null with the clock off
 };
 
 // The game state as the server sends it to browsers
