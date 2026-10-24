@@ -8,7 +8,8 @@ import { seatOptions, viewFor } from './historyView.ts';
 import { PLAY_STEP_MS, nextPlayIndex } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
-import { loadAnimations, saveAnimations } from '../services/settings.ts';
+import { loadAnimations, loadHistorySounds, saveAnimations, saveHistorySounds } from '../services/settings.ts';
+import useStateSounds from '../sound/useStateSounds.ts';
 
 export type History =
   | { status: 'loading' }
@@ -46,6 +47,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [index, setIndex] = useState(steps.length - 1);
   const [viewer, setViewer] = useState<Seat | null>(null);
   const [animations, setAnimations] = useState(loadAnimations);
+  const [sounds, setSounds] = useState(loadHistorySounds);
   const [playing, setPlaying] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const last = steps.length - 1;
@@ -66,6 +68,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     }
   }, [client, shownViewer, animations]);
   useMoveAnimation(boardRef, boardState, animate);
+  useStateSounds(boardState, null, sounds);
 
   // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
   useEffect(() => {
@@ -92,6 +95,11 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     saveAnimations(on);
   }
 
+  function toggleSounds(on: boolean) {
+    setSounds(on);
+    saveHistorySounds(on);
+  }
+
   return (
     <>
       <p className="history-move">{stepLabel(client, step, moveTotal)}</p>
@@ -109,6 +117,9 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
         <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
         <label className="history-animations">
           <input type="checkbox" checked={animations} onChange={(e) => toggleAnimations(e.target.checked)} /> Animations
+        </label>
+        <label className="history-sounds">
+          <input type="checkbox" checked={sounds} onChange={(e) => toggleSounds(e.target.checked)} /> Sounds
         </label>
         {steps[0].views && (
           <select

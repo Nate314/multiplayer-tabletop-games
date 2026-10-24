@@ -28,4 +28,16 @@ test.describe('Settings', () => {
     await bob.getByRole('button', { name: 'Settings' }).click();
     await expect(bob.getByLabel('Color-blind symbols')).not.toBeChecked();
   });
+
+  test('the History dialog has a Sounds option, off by default and kept for next time', async ({ seat }) => {
+    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    await alice.getByRole('button', { name: 'Drop in column 1' }).click();
+    await alice.getByRole('button', { name: 'History' }).click();
+    const sounds = alice.getByRole('dialog', { name: 'History' }).getByLabel('Sounds');
+    await expect(sounds).not.toBeChecked();
+    await sounds.check();
+    await alice.getByRole('button', { name: 'Close' }).click();
+    await alice.getByRole('button', { name: 'History' }).click();
+    await expect(sounds).toBeChecked();
+  });
 });

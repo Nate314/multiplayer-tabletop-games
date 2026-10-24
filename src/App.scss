@@ -451,7 +451,7 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-:where([data-game] .history-animations) {
+:where([data-game] .history-animations, [data-game] .history-sounds) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
