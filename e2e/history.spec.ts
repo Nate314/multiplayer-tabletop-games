@@ -113,7 +113,7 @@ test('the gear holds Animations and Speed, and the live game has no View as', as
   await expect(settings).toHaveCount(0);
 });
 
-test('speed and animations are remembered, and 4x plays three steps in about 1125 ms', async ({ seat }) => {
+test('speed and animations are remembered, and 4x plays a step every 375 ms', async ({ seat }) => {
   const { alice, dialog } = await openConnectFourHistory(seat);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await dialog.getByLabel('Speed').selectOption({ label: '4x' });
@@ -124,9 +124,13 @@ test('speed and animations are remembered, and 4x plays three steps in about 112
   await expect(dialog.getByLabel('Speed')).toHaveValue('4');
   await expect(dialog.getByLabel('Animations')).toBeChecked();
   await dialog.getByRole('slider', { name: 'Step' }).fill('0');
-  // A fake clock makes the timing exact: three steps take 1125 ms at 4x, but 2250 ms at 2x and 4500 ms at 1x
-  await alice.clock.install();
+  // A paused fake clock makes the timing exact: only runFor moves time. A step takes 375 ms at 4x, 750 ms at 2x, 1500 ms at 1x,
+  // so 400 ms moves one step at 4x and none at 2x. The next timer starts after React renders, hence one runFor per step.
+  await alice.clock.install({ time: 0 });
+  await alice.clock.pauseAt(1000);
   await dialog.getByRole('button', { name: 'Play', exact: true }).click();
-  await alice.clock.runFor(1200);
-  await expect(dialog.locator('.history-move')).toContainText('Move 3 of 3');
+  for (const move of [1, 2, 3]) {
+    await alice.clock.runFor(400);
+    await expect(dialog.locator('.history-move')).toContainText(`Move ${move} of 3`, { timeout: 500 });
+  }
 });
