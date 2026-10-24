@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'When is my train open?',
-    answer: 'When you cannot play, you draw one tile. If it fits you may play it; if not, or if the boneyard is empty, you pass and your train opens, so anyone may play on it. It closes again when you play on your own train.'
+    answer: 'When you cannot play, you draw one tile. If it fits you play it; if not, or if the boneyard is empty, you pass and your train opens, so anyone may play on it. It closes again when you play on your own train.'
   },
   {
     question: 'What if a tile fits more than one end?',

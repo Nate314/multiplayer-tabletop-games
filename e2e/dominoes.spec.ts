@@ -494,6 +494,26 @@ test.describe('Dominoes layouts', () => {
     await expect(alice.locator('.hint')).toHaveText('Nothing fits and the boneyard is empty: pass, and your train opens');
   });
 
+  test('Trains with your train already open: the pass hint does not promise it opens', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob'], { trains: true });
+    await deal(table, { hands: { 1: [[1, 2]], 2: [[6, 2]] }, board: build(TRAINS, [1, 2], [6, 6]) });
+    await table.patch({ openTrains: [1] });
+    await expect(alice.locator('.hint')).toHaveText('Nothing fits and the boneyard is empty: pass');
+  });
+
+  test('only playable tiles on your turn are draggable, so the rest never block scrolling', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { trains: true });
+    await deal(table, {
+      hands: { 1: [[6, 2], [1, 2]], 2: [[6, 5], [1, 1]] },
+      boneyard: [[5, 5]],
+      board: build(TRAINS, [1, 2], [6, 6])
+    });
+    await expect(handTile(alice, 6, 2)).toHaveAttribute('data-drag', /.*/);
+    await expect(handTile(alice, 1, 2)).not.toHaveAttribute('data-drag');
+    await expect(handTile(bob, 6, 5)).not.toHaveAttribute('data-drag');
+    await expect(handTile(bob, 1, 1)).not.toHaveAttribute('data-drag');
+  });
+
   test('the leader\'s highest double becomes the hub with one train per player and the Mexican train', async ({ seat }) => {
     const { table, pages } = await start(seat, ['Alice', 'Bob', 'Cara'], { trains: true });
     const state = await table.state<GameState>();
@@ -518,6 +538,32 @@ test.describe('Dominoes layouts', () => {
     for (const page of [alice, bob]) {
       await expect(row(page, 'First branch of 4-4')).toHaveCount(0);
       await expect(page.locator('.board-row')).toHaveCount(1);
+    }
+  });
+
+  test('four trains and the Mexican train with doubles wrap at phone width', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob', 'Cara', 'Dan'], { trains: true });
+    await alice.setViewportSize({ width: 390, height: 844 });
+    // Arms of the 6-6 hub: 0..3 the trains, 4 the Mexican train; the doubles branch further
+    const board = build(TRAINS, [1, 2, 3, 4], [6, 6],
+      [0, [6, 5]], [0, [5, 5]], [5, [5, 4]], [5, [4, 3]], [5, [3, 3]], [8, [3, 2]], [6, [5, 1]], [7, [5, 0]],
+      [1, [6, 4]], [1, [4, 4]], [11, [4, 1]], [11, [1, 0]],
+      [2, [6, 3]], [2, [3, 1]], [2, [1, 1]], [14, [1, 2]],
+      [3, [6, 2]], [3, [2, 2]], [17, [2, 0]],
+      [4, [6, 0]], [4, [0, 0]], [20, [0, 3]]);
+    await deal(table, { hands: { 1: [[6, 1]], 2: [[4, 2]], 3: [[5, 2]], 4: [[5, 3]] }, boneyard: [[4, 0]], board });
+    await expect(alice.locator('.board-row').first()).toBeVisible();
+    expect(await alice.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    const boxes = await alice.locator('.board-row').evaluateAll(rows => rows.map(element => {
+      const { left, right, top, bottom } = element.getBoundingClientRect();
+      return { left, right, top, bottom };
+    }));
+    for (const box of boxes) expect(box.right).toBeLessThanOrEqual(390);
+    for (const [i, a] of boxes.entries()) {
+      for (const b of boxes.slice(i + 1)) {
+        const overlap = a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+        expect(overlap, `rows ${JSON.stringify(a)} and ${JSON.stringify(b)} overlap`).toBe(false);
+      }
     }
   });
 

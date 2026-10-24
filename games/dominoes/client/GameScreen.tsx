@@ -82,16 +82,18 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   const held = drag.dragging === null ? choosing : Number(drag.dragging);
 
+  const opensTrain = layout.trains && !gameState.openTrains.includes(playerNumber);
   let hint: string | null = null;
   if (isMyTurn) {
     if (choosing !== null) hint = 'That tile fits more than one end: choose one';
     else if (!roundBegun && leadTile !== null) hint = 'Lead with your highest double, or your heaviest tile';
     else if (!roundBegun) hint = 'You won the last round: lead with any tile';
     else if (canDraw) hint = 'Nothing fits: draw from the boneyard';
-    else if (canPass && layout.trains && boneyardCount === 0) hint = 'Nothing fits and the boneyard is empty: pass, and your train opens';
-    else if (canPass && layout.trains && drewThisTurn) hint = 'Nothing fits: pass, and your train opens';
+    else if (canPass && boneyardCount === 0) hint = `Nothing fits and the boneyard is empty: pass${opensTrain ? ', and your train opens' : ''}`;
+    else if (canPass && drewThisTurn) hint = `Nothing fits: pass${opensTrain ? ', and your train opens' : ''}`;
     else if (canPass) hint = 'Nothing fits and the boneyard is empty: pass';
     else if (pending.length > 0) {
+      // Every pending arm shares one `from`, so the first arm's base is the double's pips
       const double = board.arms[pending[0]].base;
       hint = `Finish the ${double}-${double} first: play on its open ends`;
     } else hint = 'Play a tile that matches an open end';
@@ -145,7 +147,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                 playable={isMyTurn && plays.some(option => option.tile === tile)}
                 selected={choosing === tile}
                 onClick={() => playTile(tile)}
-                dragProps={drag.source(String(tile))}
+                dragProps={isMyTurn && plays.some(option => option.tile === tile) ? drag.source(String(tile)) : undefined}
               />
             ))}
           </div>

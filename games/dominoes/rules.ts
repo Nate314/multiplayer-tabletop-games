@@ -312,6 +312,7 @@ function refusal(state: GameState, seat: Seat, layout: Layout, tile: number, end
   if (pips === null) return 'That end is closed';
   const pending = pendingArms(board, layout);
   if (pending.length > 0 && !pending.includes(end)) {
+    // Every pending arm shares one `from`, so the first arm's base is the double's pips
     const double = board.arms[pending[0]].base;
     return `Finish the ${double}-${double} first`;
   }
