@@ -1,7 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react';
-import { pips } from '../board.ts';
+import { boardOf, pips } from '../board.ts';
 import {
-  RESOURCE_LABELS, SCALE, TERRAIN_LABELS, buildingKey, edgeEnds, hexPoint, hexPolygon, portLabel, portPoint, roadKey, robberKey,
+  RESOURCE_LABELS, TERRAIN_LABELS, boardFrame, buildingKey, edgeEnds, hexPoint, hexPolygon, portLabel, portPoint, roadKey, robberKey,
   seatClass, vertexPoint
 } from './layout.ts';
 import type { PublicGameState, Resource, Seat } from '../types.ts';
@@ -16,14 +16,6 @@ type BoardProps = {
   onEdge?: (edge: number) => void;
   onHex?: (hex: number) => void;
 };
-
-const VIEW = 5.3 * SCALE; // half the width and height of the drawing, sea and ports included
-
-// The sea is a flat-topped hexagon round the island, as wide as the drawing
-const SEA = Array.from({ length: 6 }, (_, k) => {
-  const angle = (Math.PI / 3) * k;
-  return `${(Math.cos(angle) * VIEW).toFixed(1)},${(Math.sin(angle) * VIEW * 0.98).toFixed(1)}`;
-}).join(' ');
 
 const onKey = (action: () => void) => (event: KeyboardEvent) => {
   if (event.key === 'Enter' || event.key === ' ') {
@@ -101,13 +93,15 @@ function City({ x, y }: { x: number; y: number }) {
 
 // The island: hexes with their number tokens, ports, roads, settlements, cities and the robber, plus clickable targets
 export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex }: BoardProps) {
+  const board = boardOf(gameState.layout);
+  const { viewBox, sea } = boardFrame(board);
   const { layout, robber, roads, buildings, playerNames, activePlayers } = gameState;
   const pieceClass = (seat: Seat) => `${seatClass(seat)}${activePlayers.includes(seat) ? '' : ' piece-dead'}`;
   const hexTargets = new Set(targets.hexes ?? []);
   const items: ReactNode[] = [];
 
   layout.hexes.forEach((hex, index) => {
-    const { x, y } = hexPoint(index);
+    const { x, y } = hexPoint(board, index);
     const label = hex.resource ? `${TERRAIN_LABELS[hex.resource]} (${RESOURCE_LABELS[hex.resource]}) ${hex.number}` : 'Desert';
     const clickable = hexTargets.has(index) && onHex;
     items.push(
@@ -117,7 +111,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
           onClick: () => onHex(index), onKeyDown: onKey(() => onHex(index))
         } : {})}>
         <title>{label}</title>
-        <polygon points={hexPolygon(index)} />
+        <polygon points={hexPolygon(board, index)} />
         <Motif resource={hex.resource} x={x} y={y - 30} />
         {hex.number !== null && <NumberToken number={hex.number} x={x} y={y + 4} />}
       </g>
@@ -125,8 +119,8 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
   });
 
   const ports = layout.ports.map(port => {
-    const { x, y } = portPoint(port.edge);
-    const [a, b] = edgeEnds(port.edge);
+    const { x, y } = portPoint(board, port.edge);
+    const [a, b] = edgeEnds(board, port.edge);
     return (
       <g key={`port-${port.edge}`} className={`port port-${port.kind}`}>
         <title>{`Port ${portLabel(port.kind)}`}</title>
@@ -140,7 +134,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
   });
 
   const roadLines = Object.keys(roads).map(Number).map(edge => {
-    const [a, b] = edgeEnds(edge);
+    const [a, b] = edgeEnds(board, edge);
     return (
       <line key={`road-${edge}`} className={`road ${pieceClass(roads[edge])}`} data-anim-key={roadKey(edge)}
         x1={a.x} y1={a.y} x2={b.x} y2={b.y}>
@@ -150,7 +144,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
   });
 
   const edgeTargets = (onEdge ? targets.edges ?? [] : []).map(edge => {
-    const [a, b] = edgeEnds(edge);
+    const [a, b] = edgeEnds(board, edge);
     const click = () => onEdge?.(edge);
     return (
       <g key={`edge-target-${edge}`} className="edge-target" role="button" tabIndex={0} aria-label={`Road at path ${edge}`}
@@ -163,7 +157,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
 
   const pieces = Object.keys(buildings).map(Number).map(vertex => {
     const building = buildings[vertex];
-    const { x, y } = vertexPoint(vertex);
+    const { x, y } = vertexPoint(board, vertex);
     return (
       <g key={`building-${vertex}`} className={`building ${pieceClass(building.seat)}`} data-anim-key={buildingKey(vertex)}>
         <title>{`${playerNames[building.seat]}'s ${building.city ? 'city' : 'settlement'}`}</title>
@@ -173,7 +167,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
   });
 
   const vertexTargets = (onVertex ? targets.vertices ?? [] : []).map(vertex => {
-    const { x, y } = vertexPoint(vertex);
+    const { x, y } = vertexPoint(board, vertex);
     const click = () => onVertex?.(vertex);
     return (
       <circle key={`vertex-target-${vertex}`} className="vertex-target" cx={x} cy={y} r={9} role="button" tabIndex={0}
@@ -181,11 +175,11 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
     );
   });
 
-  const robberAt = hexPoint(robber);
+  const robberAt = hexPoint(board, robber);
 
   return (
-    <svg className="catan-board" viewBox={`${-VIEW} ${-VIEW} ${VIEW * 2} ${VIEW * 2}`} role="img" aria-label="The island of Catan">
-      <polygon className="sea" points={SEA} />
+    <svg className="catan-board" viewBox={viewBox} role="img" aria-label="The island of Catan">
+      <polygon className="sea" points={sea} />
       {ports}
       {items}
       {roadLines}

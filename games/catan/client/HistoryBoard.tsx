@@ -1,4 +1,6 @@
+import { boardOf } from '../board.ts';
 import Board from './Board';
+import { boardAreaClass } from './layout.ts';
 import Dice from './Dice';
 import HandPanel from './HandPanel';
 import PlayerList from './PlayerList';
@@ -10,7 +12,7 @@ import type { Seat } from '../../../shared/types.ts';
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   return (
     <div className="history-layout">
-      <div className="board-area">
+      <div className={boardAreaClass(boardOf(gameState.layout))}>
         <Board gameState={gameState} />
         <Dice dice={gameState.dice} />
       </div>

@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has thirty-one games: Azul, Dominoes, Parchisi, Quoridor, Rack-O, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Connect Four, Mancala and War (two players), Catan (three to four players), The Crew (three to five players), Euchre, Hearts, Rook and Spades (four players), Carcassonne and Ticket to Ride (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), Risk (three to six players), and Farkle, Monopoly, Texas Hold'em, UNO and Yahtzee (two to eight players). The landing page lists the games in groups (card, dice, tile, classic board and strategy board games); pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has thirty-one games: Azul, Dominoes, Parchisi, Quoridor, Rack-O, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Connect Four, Mancala and War (two players), The Crew (three to five players), Euchre, Hearts, Rook and Spades (four players), Carcassonne and Ticket to Ride (two to five players), Go Fish, Phase 10 and Skip-Bo (two to six players), Catan and Risk (three to six players), and Farkle, Monopoly, Texas Hold'em, UNO and Yahtzee (two to eight players). The landing page lists the games in groups (card, dice, tile, classic board and strategy board games); pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -122,7 +122,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Azul](games/azul/README.md): draft colored tiles and decorate your palace wall. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Azul_(board_game)).
 - [Backgammon](games/backgammon/README.md): race your fifteen checkers home and bear them off before your opponent. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Backgammon).
 - [Carcassonne](games/carcassonne/README.md): lay land tiles to build cities, roads and fields, and claim them with your meeples, for 2 to 5 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Carcassonne_(board_game)).
-- [Catan](games/catan/README.md): settle an island, trade resources and build roads, settlements and cities to reach 10 points, for 3 to 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Catan) and the official base game rules.
+- [Catan](games/catan/README.md): settle an island, trade resources and build roads, settlements and cities to reach 10 points, for 3 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Catan) and the official base game and 5-6 player extension rules.
 - [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
 - [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
 - [Connect Four](games/connectfour/README.md): drop discs into the grid and line up four in a row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Connect_Four).

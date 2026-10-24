@@ -29,6 +29,8 @@
   --seat2: #1565C0;
   --seat3: #EF6C00;
   --seat4: #7B1FA2;
+  --seat5: #F5F5F5;
+  --seat6: #43A047;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -66,6 +68,8 @@
     --seat2: #42A5F5;
     --seat3: #FFA726;
     --seat4: #BA68C8;
+    --seat5: #ECEFF1;
+    --seat6: #66BB6A;
   }
 
   .seat1 {
@@ -82,6 +86,14 @@
 
   .seat4 {
     --seat: var(--seat4);
+  }
+
+  .seat5 {
+    --seat: var(--seat5);
+  }
+
+  .seat6 {
+    --seat: var(--seat6);
   }
 
   .res-wood {
@@ -130,6 +142,12 @@
     position: relative;
     width: min(100%, 680px, calc(100vh - 110px));
     min-width: min(100%, 420px);
+  }
+
+  /* The 5-6 player board is taller than it is wide (0.91, the frame's width to height) */
+
+  .board-area-large {
+    width: min(100%, 680px, calc((100vh - 110px) * 0.91));
   }
 
   .side-panel {
@@ -772,6 +790,10 @@
     .board-area {
       width: min(100%, 680px, calc(100vh - 200px));
       min-width: min(100%, 340px);
+    }
+
+    .board-area-large {
+      width: min(100%, 680px, calc((100vh - 200px) * 0.91));
     }
 
     .side-panel {

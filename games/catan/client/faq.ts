@@ -3,9 +3,15 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const FAQS: FaqItem[] = [
   {
     question: 'How do I join a game?',
-    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game, up to four players. ' +
+    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game, up to six players. ' +
       'The game needs at least three, and nobody can join after the first move. Everyone rolls the dice and the highest ' +
       'total places first; players tied for highest roll again.'
+  },
+  {
+    question: 'What changes with five or six players?',
+    answer: 'The 5-6 player extension is played: a bigger island of 30 hexes with two deserts, 28 number tokens, 11 ' +
+      'harbors, 24 cards of each resource in the bank and 34 development cards. White and green join the other ' +
+      'colors. The island is chosen when the lobby resets, so it changes back if a player leaves before the first move.'
   },
   {
     question: 'What is the goal?',

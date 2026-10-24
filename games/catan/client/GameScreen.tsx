@@ -2,11 +2,12 @@ import { useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
-import { EDGES, HEX_COUNT, VERTEX_COUNT } from '../board.ts';
+import { boardOf } from '../board.ts';
 import { cityError, roadSpots, settlementError, settlementSpotError } from '../building.ts';
 import { robberVictims } from '../dice.ts';
-import { MIN_PLAYERS } from '../rules.ts';
+import { MAX_PLAYERS, MIN_PLAYERS } from '../rules.ts';
 import Board from './Board';
+import { boardAreaClass } from './layout.ts';
 import type { Targets } from './Board';
 import Dice from './Dice';
 import DiscardPanel from './DiscardPanel';
@@ -20,13 +21,14 @@ import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
 
-const ALL_VERTICES = Array.from({ length: VERTEX_COUNT }, (_, vertex) => vertex);
-const ALL_HEXES = Array.from({ length: HEX_COUNT }, (_, hex) => hex);
+const indexes = (count: number) => Array.from({ length: count }, (_, index) => index);
+const allVertices = (state: PublicGameState) => indexes(boardOf(state.layout).vertexCount);
+const allHexes = (state: PublicGameState) => indexes(boardOf(state.layout).hexCount);
 
 function turnMessage(state: PublicGameState, playerNumber: Seat): string {
   const { isGameOver, winners, playerNames, activePlayers, started, currentPlayer } = state;
   if (isGameOver) return winners.length > 0 ? `Game over: ${winners.map(winner => playerNames[winner]).join(' and ')} won` : 'Game over';
-  if (activePlayers.length < MIN_PLAYERS) return `Waiting for at least ${MIN_PLAYERS} players (up to 4)`;
+  if (activePlayers.length < MIN_PLAYERS) return `Waiting for at least ${MIN_PLAYERS} players (up to ${MAX_PLAYERS})`;
   if (currentPlayer === null) return '';
   const name = currentPlayer === playerNumber ? 'You' : playerNames[currentPlayer];
   if (!started) return `${name} ${currentPlayer === playerNumber ? 'place' : 'places'} first. Joining closes after the first move.`;
@@ -37,16 +39,16 @@ function turnMessage(state: PublicGameState, playerNumber: Seat): string {
 function targetsFor(state: PublicGameState, seat: Seat, mode: BuildMode): Targets {
   const { setup, pending } = state;
   if (setup) {
-    if (setup.settlement === null) return { vertices: ALL_VERTICES.filter(vertex => settlementSpotError(state, vertex) === null) };
+    if (setup.settlement === null) return { vertices: allVertices(state).filter(vertex => settlementSpotError(state, vertex) === null) };
     const placed = setup.settlement;
-    return { edges: EDGES.flatMap((ends, edge) => ends.includes(placed) && state.roads[edge] === undefined ? [edge] : []) };
+    return { edges: boardOf(state.layout).edges.flatMap((ends, edge) => ends.includes(placed) && state.roads[edge] === undefined ? [edge] : []) };
   }
-  if (pending?.kind === 'robber') return { hexes: ALL_HEXES.filter(hex => hex !== state.robber) };
+  if (pending?.kind === 'robber') return { hexes: allHexes(state).filter(hex => hex !== state.robber) };
   if (pending?.kind === 'roadBuilding') return { edges: roadSpots(state, seat) };
   if (!pending && state.rolled) {
     if (mode === 'road') return { edges: roadSpots(state, seat) };
-    if (mode === 'settlement') return { vertices: ALL_VERTICES.filter(vertex => settlementError(state, seat, vertex) === null) };
-    if (mode === 'city') return { vertices: ALL_VERTICES.filter(vertex => cityError(state, seat, vertex) === null) };
+    if (mode === 'settlement') return { vertices: allVertices(state).filter(vertex => settlementError(state, seat, vertex) === null) };
+    if (mode === 'city') return { vertices: allVertices(state).filter(vertex => cityError(state, seat, vertex) === null) };
   }
   return {};
 }
@@ -97,15 +99,15 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   const spots = {
     road: roadSpots(gameState, playerNumber).length,
-    settlement: ALL_VERTICES.filter(vertex => settlementError(gameState, playerNumber, vertex) === null).length,
-    city: ALL_VERTICES.filter(vertex => cityError(gameState, playerNumber, vertex) === null).length
+    settlement: allVertices(gameState).filter(vertex => settlementError(gameState, playerNumber, vertex) === null).length,
+    city: allVertices(gameState).filter(vertex => cityError(gameState, playerNumber, vertex) === null).length
   };
 
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
       <div className="catan-layout">
-        <div className="board-area" ref={boardRef}>
+        <div className={boardAreaClass(boardOf(gameState.layout))} ref={boardRef}>
           <Board gameState={gameState} targets={targets} onVertex={clickVertex} onEdge={clickEdge} onHex={clickHex} />
           <Dice dice={gameState.dice} />
         </div>
