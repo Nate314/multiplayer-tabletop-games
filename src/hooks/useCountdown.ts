@@ -5,7 +5,7 @@ const TICK_MS = 250;
 // Milliseconds left until `deadline` (server time), or null for no deadline. `serverTime` is the server's clock when
 // the view was sent, so a device whose own clock is off still counts down correctly. Re-renders every 250 ms
 export function useCountdown(deadline: number | null, serverTime: number | undefined): number | null {
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(() => (serverTime === undefined ? 0 : serverTime - Date.now()));
   const [clientNow, setClientNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -14,6 +14,7 @@ export function useCountdown(deadline: number | null, serverTime: number | undef
 
   useEffect(() => {
     if (deadline === null) return;
+    setClientNow(Date.now()); // a new deadline counts from now, not from the last tick
     const timer = setInterval(() => setClientNow(Date.now()), TICK_MS);
     return () => clearInterval(timer);
   }, [deadline]);

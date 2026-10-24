@@ -1149,3 +1149,36 @@ test('a timeout cancels an open undo vote, which was for the move before it', (t
   assert.equal(current(manager).undoVote, null);
   assert.equal(current(manager).moveCount, 2);
 });
+
+test('a join after everyone agreed stops the clock until they agree again', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  manager.join('test', 'g1', 'C'); // clears the agreements
+  advance(5 * TURN_MS);
+  assert.equal(current(manager).moveCount, 0);
+  assert.equal(current(manager).started, false);
+  agreeAll(manager, ROOM);
+  advance(TURN_MS - 1);
+  assert.equal(current(manager).moveCount, 0);
+  advance(1);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+});
+
+test('a leave down to one player stops the clock', (t: TestContext) => {
+  const { manager, changed, advance } = timedTable(t);
+  manager.disconnect(ROOM, 2);
+  agreeAll(manager, ROOM); // the one left agrees, but one player cannot start
+  advance(5 * TURN_MS);
+  assert.equal(current(manager).moveCount, 0);
+  assert.equal(current(manager).started, false);
+  assert.deepEqual(changed, []);
+});
+
+test('a timeout that leaves its deadline already past is not run again', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const stuck: GameDefinition<TimedState, TestPublicState> = { ...timedGame, onDeadline: state => state };
+  const { manager, advance } = timedTable(t, undefined, stuck);
+  advance(TURN_MS);
+  advance(5 * TURN_MS);
+  assert.equal(current(manager).moveCount, 1);
+  assert.equal(logged.mock.callCount(), 1);
+});

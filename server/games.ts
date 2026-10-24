@@ -4,7 +4,9 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
-import { agreeToHouseRules, everyoneAgreed, houseRulesOf, needsAgreement, setHouseRules } from '../shared/houseRules.ts';
+import {
+  agreeToHouseRules, everyoneAgreed, houseRulesOf, minimumToStart, needsAgreement, setHouseRules
+} from '../shared/houseRules.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
@@ -79,11 +81,23 @@ export function createGameManager(
     save(roomId, room, { type: 'push', index, before: room.history[index], after: next });
   }
 
+  // Before the first move, nobody may play until every seated player agreed to the current house rules
+  function awaitingAgreement({ game, state }: Room): boolean {
+    return !state.started && needsAgreement(game.info) && !everyoneAgreed(game.info, state);
+  }
+
+  // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.
+  // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it
+  function clockMayRun(room: Room): boolean {
+    const { game, state } = room;
+    return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info, state));
+  }
+
   // Open votes and disconnects do not pause a clock; only the game's own deadline does
   function scheduleDeadline(roomId: string, room: Room): void {
     clearTimeout(room.deadlineTimer);
     room.deadlineTimer = undefined;
-    const deadline = room.state.isGameOver ? null : room.game.deadline?.(room.state) ?? null;
+    const deadline = room.state.isGameOver || !clockMayRun(room) ? null : room.game.deadline?.(room.state) ?? null;
     if (deadline === null || !room.game.onDeadline) return;
     room.deadlineTimer = setTimeout(() => runDeadline(roomId, room), Math.max(0, deadline - now()));
     room.deadlineTimer.unref(); // never keeps the process alive on its own
@@ -99,6 +113,12 @@ export function createGameManager(
     }
     // An open undo vote was for the move before this one, so the timeout cancels it
     record(roomId, room, { ...game.onDeadline(room.state, now(), random), started: true, undoVote: null });
+    const next = game.deadline?.(room.state) ?? null;
+    if (room.deadlineTimer && next !== null && next <= now()) { // would time out again at once, forever
+      clearTimeout(room.deadlineTimer);
+      room.deadlineTimer = undefined;
+      console.error(`${game.info.id} set a deadline that had already passed after a timeout in ${roomId}`);
+    }
     hooks.changed?.(roomId);
   }
 
@@ -293,9 +313,7 @@ export function createGameManager(
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
-      if (!room.state.started && needsAgreement(room.game.info) && !everyoneAgreed(room.game.info, room.state)) {
-        return { error: 'Everyone must agree to the house rules first' };
-      }
+      if (awaitingAgreement(room)) return { error: 'Everyone must agree to the house rules first' };
       if (moveCount !== undefined && moveCount !== room.timeline.length) return { error: 'Someone else moved first' };
 
       const result = applyMove(room.game, room.state, seat, move, random, now());
