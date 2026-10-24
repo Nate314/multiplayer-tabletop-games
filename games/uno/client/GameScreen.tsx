@@ -57,6 +57,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   // After drawing, only the drawn card may be played
   // A Draw Two goes on a Draw Two, a Wild Draw Four on either
+  // A Draw Two cannot go on a Wild Draw Four
+  const stackable = discardTop?.value === 'wildDrawFour' ? 'a Wild Draw Four' : 'a Draw Two or Wild Draw Four';
   const canStack = (card: CardData) => card.value === 'wildDrawFour' || (card.value === 'drawTwo' && discardTop?.value === 'drawTwo');
   const isPlayable = (card: CardData) => canPlayCards &&
     (pendingDraw ? canStack(card) : drawnCard ? sameCard(card, drawnCard) : !hasDrawn && canPlay(card, discardTop, currentColor));
@@ -98,7 +100,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   let hint: string | null = null;
   if (needsColor) hint = 'The game starts on a Wild: name the first color';
-  else if (answering && pendingDraw) hint = `Play a Draw Two or Wild Draw Four on it, or accept and draw ${pendingDraw.count}`;
+  else if (answering && pendingDraw) hint = `Play ${stackable} on it, or accept and draw ${pendingDraw.count}`;
   else if (answering) hint = 'Accept the Wild Draw Four, or challenge it';
   else if (lateUno) hint = 'Call UNO before anyone catches you!';
   else if (isMyTurn) {
@@ -170,10 +172,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                 {playerNames[pendingFour.by]} played a Wild Draw Four on you. It was allowed only if they held
                 no {pendingFour.previousColor} card. If you challenge and they did, they draw 4 and you play on;
                 if they did not, you draw 6 and lose your turn.
-                {pendingDraw && ' Or play a Draw Two or Wild Draw Four on it.'}
+                {pendingDraw && ` Or play ${stackable} on it.`}
               </p>
             ) : (
-              <p>Play a Draw Two or Wild Draw Four on the stack, or accept it, draw {pendingDraw?.count} and lose your turn.</p>
+              <p>Play {stackable} on the stack, or accept it, draw {pendingDraw?.count} and lose your turn.</p>
             )}
             <div className="four-actions">
               {pendingFour && <button type="button" onClick={() => gameService.makeMove({ type: 'challenge' })}>Challenge</button>}

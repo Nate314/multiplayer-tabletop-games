@@ -499,10 +499,26 @@ test.describe('UNO rules', () => {
     await play(bob, 'red Draw Two');
     await expect(cara.locator('.stack-count')).toHaveText('Stack: Cara draws 4 unless they stack');
     await expect(handCard(cara, 'green 1')).toBeDisabled();
+    await expect(cara.locator('.hint')).toHaveText('Play a Draw Two or Wild Draw Four on it, or accept and draw 4');
+    await expect(cara.getByRole('group', { name: 'Answer the stack' })).toContainText('Play a Draw Two or Wild Draw Four on the stack');
     await button(cara, 'Accept and draw 4').click();
     await expect(cara.locator('.stack-count')).toHaveCount(0);
     await expect(countOf(alice, 'Cara')).toHaveText('6 cards');
     await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('a Draw Two is not offered on a Wild Draw Four', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { stacking: true } });
+    await deal(table, {
+      hands: { 1: [FOUR, c('red', '1')], 2: [c('blue', 'drawTwo'), c('blue', '2')], 3: [c('green', '1'), c('green', '2')] },
+      discard: [c('red', '5')]
+    });
+    await playWild(alice, 'Wild Draw Four', 'blue');
+    const panel = bob.getByRole('group', { name: 'Answer the Wild Draw Four' });
+    await expect(panel).toContainText('Or play a Wild Draw Four on it.');
+    await expect(panel).not.toContainText('Draw Two');
+    await expect(handCard(bob, 'blue Draw Two')).toBeDisabled();
+    await expect(bob.locator('.hint')).toHaveText('Play a Wild Draw Four on it, or accept and draw 4');
   });
 
   test('a 7 swaps hands', async ({ seat }) => {
@@ -688,7 +704,7 @@ test.describe('UNO controls', () => {
 });
 
 test.describe('UNO differences from Wikipedia', () => {
-  test('house rules are not offered: no stacking a Draw Two, and no jumping in out of turn', async ({ seat }) => {
+  test('with house rules off there is no stacking a Draw Two, and no jumping in out of turn', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat);
     await deal(table, {
       hands: { 1: [c('red', 'drawTwo'), c('red', '1')], 2: [c('red', 'drawTwo'), c('red', '2')], 3: [c('red', 'drawTwo'), c('green', '1')] },

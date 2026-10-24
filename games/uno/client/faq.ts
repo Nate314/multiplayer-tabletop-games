@@ -75,7 +75,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does 7-0 work?',
-    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice: click the 7, then click their name. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing.'
+    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice: click the 7, then click their name. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing. A player left with one card by a swap or a pass has no UNO to call and cannot be caught for it.'
   },
   {
     question: 'What does drawing until you can play do?',

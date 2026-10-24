@@ -28,7 +28,7 @@ export const UNO_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RU
 
 type Rules = Pick<GameState, 'houseRules'>;
 export const targetScore = (state: Rules): number => houseRule(state, TARGET_RULE);
-export const stacking = (state: Rules): boolean => houseRule(state, STACKING_RULE);
+const stacking = (state: Rules): boolean => houseRule(state, STACKING_RULE);
 export const sevenZero = (state: Rules): boolean => houseRule(state, SEVEN_ZERO_RULE);
 const drawUntilPlayable = (state: Rules): boolean => houseRule(state, DRAW_UNTIL_RULE);
 const NUMBERS: Value[] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -360,7 +360,8 @@ type PlayExtras = { swappedWith?: Seat; passedHands?: true };
 // Under the 7-0 rule a 7 swaps hands with another player and a 0 passes every hand one seat in the direction of play
 function moveHands(state: GameState, seat: Seat, card: Card, swapWith: Seat | undefined): { hands: GameState['hands'] } & PlayExtras {
   const { hands, activePlayers: players } = state;
-  if (card.value === '7' && swapWith !== undefined) {
+  if (card.value !== '0') {
+    if (swapWith === undefined) return { hands };
     return { hands: { ...hands, [seat]: hands[swapWith], [swapWith]: hands[seat] }, swappedWith: swapWith };
   }
   const passed = Object.fromEntries(players.map(other => [stepFrom(players, other, state.direction), hands[other]]));
@@ -419,7 +420,8 @@ function play(
     }
     const { hands, ...moved } = moveHands(played, seat, card, swapWith);
     extra = moved;
-    dealt = { ...played, hands, unoWindow: hands[seat].length === 1 ? { seat, called: uno } : null };
+    // Whoever is left with one card by the swap or the pass has no UNO to call
+    dealt = { ...played, hands, unoWindow: null };
   }
 
   const { state: next, target, drew } = applyEffect(dealt, seat, card, random);

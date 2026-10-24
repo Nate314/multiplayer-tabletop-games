@@ -664,6 +664,7 @@ test('a 7 swaps hands with the chosen player', () => {
   assert.deepEqual(swapped.lastMove,
     { type: 'play', playerNumber: 1, card: red('7'), color: 'red', target: null, drew: 0, wentOut: false, swappedWith: 3 });
   assert.equal(swapped.gameStatus, 'Alice played red 7; swaps hands with Cara');
+  assert.equal(swapped.unoWindow, null);
 });
 
 test('a 7 without a player is refused', () => {
@@ -719,6 +720,24 @@ test('drawing until you can play stops when the pile is empty', () => {
   assert.equal(drew.currentPlayer, 2);
   assert.deepEqual(drew.lastMove, { type: 'draw', playerNumber: 1, passed: true, count: 2 });
   assert.equal(drew.gameStatus, 'Alice drew 2 cards and could not play any');
+});
+
+test('accepting a stack with a short draw pile reshuffles the discards, then draws what is left', () => {
+  const hands = { 1: [red('drawTwo'), red('1')], 2: [blue('drawTwo'), blue('1')], 3: [blue('3'), blue('4')] };
+  // Four owed, two in the draw pile; the discards below the top card are reshuffled in
+  const stackedOn = (overrides: Partial<GameState>) =>
+    ok(play(ok(play(stackGame(hands, overrides), 1, red('drawTwo'))), 2, blue('drawTwo')));
+  const reshuffled = ok(move(stackedOn({ drawPile: [blue('6'), blue('7')], discardPile: [red('1'), red('2'), red('5')] }), 3, { type: 'accept' }));
+  assert.equal(reshuffled.lastMove?.type === 'accept' && reshuffled.lastMove.drew, 4);
+  assert.equal(reshuffled.hands[3].length, 6);
+  assert.equal(reshuffled.gameStatus, 'Cara accepted the stack, draws 4 and is skipped');
+
+  // Too few cards in total (one in the draw pile, two reshuffled from the discards, four owed): only what exists is drawn
+  const short = ok(move(stackedOn({ drawPile: [blue('6')], discardPile: [red('5')] }), 3, { type: 'accept' }));
+  assert.equal(short.lastMove?.type === 'accept' && short.lastMove.drew, 3);
+  assert.equal(short.hands[3].length, 5);
+  assert.equal(short.gameStatus, 'Cara accepted the stack, draws 3 and is skipped');
+  assert.equal(short.currentPlayer, 1);
 });
 
 test('a saved game without pendingDraw plays on', () => {
