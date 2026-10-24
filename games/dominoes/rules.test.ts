@@ -1,9 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  HAND_SIZES, dealRound, legalPlays, openingTile, pipTotal, place, targetScore, tilesOf, toPublicState
+  HAND_SIZES, dealRound, layoutOf, legalPlays, openingTile, pipTotal, targetScore, tilesOf, toPublicState, usableEnds
 } from './rules.ts';
+import { EMPTY_BOARD, boardFromLine, boardOf, lineOf, openEnds } from './board.ts';
+import type { ArmName, Branching } from './board.ts';
 import { dominoes } from './index.ts';
+import { setHouseRules } from '../../shared/houseRules.ts';
+import type { HouseRulesState, HouseRuleValues } from '../../shared/houseRules.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import type { GameState, Placed, Result, SetSize } from './types.ts';
@@ -24,15 +28,20 @@ const noShuffle = () => 0.999999;
 const t = (a: number, b: number, set: SetSize = 6) =>
   tilesOf(set).findIndex(([low, high]) => low === Math.min(a, b) && high === Math.max(a, b));
 
+// The host's proposal, as the manager applies it: the rules change and the tiles are dealt again
+function propose(state: GameState, values: HouseRuleValues, random: Random = noShuffle): Result<GameState> {
+  const result = setHouseRules(dominoes.info, state, 1, { values, override: false, maxPlayers: null });
+  return 'error' in result ? result : { state: dominoes.resetLobby(result.state, random) };
+}
+
 function lobby(count: number, set?: SetSize, random: Random = seeded(count)): GameState {
   let state = dominoes.createGameState('g');
-  if (set) state = { ...state, set };
   for (const name of ['Alice', 'Bob', 'Cara', 'Dan'].slice(0, count)) {
     const result = addPlayer(dominoes, state, name, random);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
-  return state;
+  return set ? ok(propose(state, { set }, random)) : state;
 }
 
 const laid = (...pips: [number, number][]): Placed[] => pips.map(([left, right]) => ({ tile: t(left, right), left, right }));
@@ -48,7 +57,9 @@ function game(overrides: Partial<GameState> = {}): GameState {
     scores: { 1: 0, 2: 0, 3: 0 },
     hands: { 1: [t(4, 5), t(0, 1)], 2: [t(3, 6), t(2, 2)], 3: [t(1, 1), t(5, 5)] },
     boneyard: [t(6, 6), t(0, 0)],
-    line: laid([3, 4]),
+    board: boardFromLine(laid([3, 4])),
+    openTrains: [],
+    drewThisTurn: false,
     ...overrides
   };
 }
@@ -58,8 +69,22 @@ function ok(result: Result<GameState>): GameState {
   return result.state;
 }
 
+// House rules as a joined lobby would have them, everyone agreed
+const rules = (values: HouseRuleValues): HouseRulesState => ({
+  host: 1, values: { set: 6, branching: 'every', chickenfoot: false, trains: false, ...values },
+  override: false, maxPlayers: null, agreed: [1, 2, 3], revision: 1
+});
+const withBranching = (branching: Branching) => rules({ branching });
+
 const move = (state: GameState, seat: number, made: unknown) => applyMove(dominoes, state, seat, made, noShuffle);
-const play = (state: GameState, seat: number, tile: number, end: 'left' | 'right') => move(state, seat, { type: 'play', tile, end });
+// Plays on the newest open arm with that name; the first tile of a round goes on end 0
+function play(state: GameState, seat: number, tile: number, side: ArmName['kind']) {
+  const board = boardOf(state);
+  const open = openEnds(board).filter(({ arm }) => board.arms[arm].name.kind === side);
+  const end = board.start ? (open.at(-1)?.arm ?? -1) : 0;
+  return move(state, seat, { type: 'play', tile, end });
+}
+const pipsOfEnds = (state: GameState) => openEnds(boardOf(state)).map(({ pips }) => pips);
 const act = (state: GameState, seat: number, action: unknown, random: Random = noShuffle) =>
   dominoes.applyAction?.(state, seat, action, random) ?? assert.fail('Dominoes has actions');
 
@@ -108,35 +133,35 @@ test('one player waits with nothing dealt, and joining deals the tiles afresh', 
   const two = lobby(2);
   assert.equal(two.hands[1].length, 7);
   assert.equal(two.boneyard.length, 14);
-  assert.equal(two.line.length, 0);
+  assert.deepEqual(two.board, EMPTY_BOARD);
 });
 
 test('the first tile must be the lead tile, and either end takes it', () => {
-  const start = game({ line: [], leadTile: t(2, 2), hands: { 1: [t(2, 2), t(4, 5)], 2: [t(3, 6)], 3: [t(1, 1)] } });
+  const start = game({ board: EMPTY_BOARD, leadTile: t(2, 2), hands: { 1: [t(2, 2), t(4, 5)], 2: [t(3, 6)], 3: [t(1, 1)] } });
   assert.ok('error' in play(start, 1, t(4, 5), 'left'));
   const next = ok(play(start, 1, t(2, 2), 'right'));
-  assert.deepEqual(next.line, laid([2, 2]));
+  assert.deepEqual(lineOf(next.board), laid([2, 2]));
   assert.equal(next.leadTile, null);
   assert.equal(next.currentPlayer, 2);
-  assert.equal(next.lastMove?.type === 'play' && next.lastMove.end, null);
+  assert.equal(next.lastMove?.type === 'play' && next.lastMove.where, null);
 });
 
 test('a tile must match the open end it is played on and is flipped to fit', () => {
-  const state = game({ line: laid([3, 4]) });
+  const state = game({ board: boardFromLine(laid([3, 4])) });
   // 4-5 matches the right end 4; the 5 faces out
   const right = ok(play(state, 1, t(4, 5), 'right'));
-  assert.deepEqual(right.line, laid([3, 4], [4, 5]));
+  assert.deepEqual(lineOf(right.board), laid([3, 4], [4, 5]));
+  assert.equal(right.lastMove?.type === 'play' && right.lastMove.where, 'on the right');
   // It does not match the left end 3
   assert.ok('error' in play(state, 1, t(4, 5), 'left'));
   // 3-6 matches the left end 3 and is flipped so the 3 touches the line
   const left = ok(play({ ...state, currentPlayer: 2 }, 2, t(3, 6), 'left'));
-  assert.deepEqual(left.line, laid([6, 3], [3, 4]));
+  assert.deepEqual(lineOf(left.board), laid([6, 3], [3, 4]));
   assert.ok('error' in play({ ...state, currentPlayer: 2 }, 2, t(3, 6), 'right'));
   // A tile that matches neither end, and one not in the hand
   assert.ok('error' in play({ ...state, currentPlayer: 2 }, 2, t(2, 2), 'left'));
   assert.ok('error' in play(state, 1, t(1, 1), 'left'));
-  assert.deepEqual(place(6, t(5, 5), 'right', laid([2, 5])), { tile: t(5, 5), left: 5, right: 5 });
-  assert.equal(legalPlays(6, [t(3, 4)], laid([3, 4]), null).length, 2);
+  assert.equal(legalPlays(state, 1, [t(3, 4)]).length, 2);
 });
 
 test('draw is allowed only when nothing fits', () => {
@@ -185,9 +210,8 @@ test('playing out the hand ends the round with the article\'s scoring', () => {
 
 test('a blocked round goes to the lowest pip total', () => {
   // 6 is gone from both ends: the line is 6-6 with 6s out, and nobody holds another 6
-  const line = laid([6, 6]);
   const state = game({
-    line,
+    board: boardFromLine(laid([6, 6])),
     boneyard: [],
     hands: { 1: [t(0, 1), t(1, 1)], 2: [t(2, 2)], 3: [t(5, 5), t(0, 0)] },
     currentPlayer: 1
@@ -210,7 +234,7 @@ test('a blocked round goes to the lowest pip total', () => {
 
 test('a play that blocks the game ends the round at once', () => {
   const state = game({
-    line: laid([6, 4]),
+    board: boardFromLine(laid([6, 4])),
     boneyard: [],
     hands: { 1: [t(5, 6), t(0, 1)], 2: [t(1, 1)], 3: [t(2, 2)] }
   });
@@ -252,32 +276,86 @@ test('Continue waits for every connected player, then the winner leads with any 
   assert.equal(next.roundNumber, 2);
   assert.equal(next.currentPlayer, 1);
   assert.equal(next.leadTile, null);
-  assert.equal(next.line.length, 0);
+  assert.deepEqual(next.board, EMPTY_BOARD);
   assert.equal(next.hands[1].length, 7);
   assert.ok('error' in act(next, 1, { type: 'acknowledgeRound' }));
 });
 
-test('lobby choice is kept across joins and refused after the first move', () => {
-  let state = lobby(2);
+test('a new game plays every double branching, double-six, no Chickenfoot and no trains', () => {
+  const state = lobby(2);
+  assert.deepEqual(layoutOf(state), { branching: 'every', chickenfoot: false, trains: false });
   assert.equal(state.set, 6);
-  state = ok(act(state, 2, { type: 'chooseSet', set: 9 }, seeded(2)));
+});
+
+test('the set is a house rule: the host\'s choice is dealt and the first move locks it', () => {
+  const state = ok(propose(lobby(2), { set: 9 }, seeded(2)));
   assert.equal(state.set, 9);
   assert.equal(state.hands[1].length, 9);
+  assert.equal(state.hands[2].length, 9);
   assert.equal(state.boneyard.length, 55 - 18);
+  // A join and a leave deal again from the same set
   const joined = addPlayer(dominoes, state, 'Cara', seeded(3));
-  assert.ok(!('error' in joined));
-  if ('error' in joined) return;
+  if ('error' in joined) assert.fail(joined.error);
   assert.equal(joined.state.set, 9);
   assert.equal(joined.state.hands[3].length, 9);
-  const left = removePlayer(dominoes, joined.state, 3, seeded(3));
-  assert.equal(left.set, 9);
-  assert.ok('error' in act(state, 1, { type: 'chooseSet', set: 7 }));
-  assert.ok('error' in act(state, 1, { type: 'chooseSet' }));
-  assert.ok('error' in act(state, 9, { type: 'chooseSet', set: 6 }), 'only a seated player');
+  assert.equal(removePlayer(dominoes, joined.state, 3, seeded(3)).set, 9);
   const first = ok(applyMove(dominoes, state, state.currentPlayer as number,
-    { type: 'play', tile: state.leadTile, end: 'left' }, noShuffle));
-  assert.ok('error' in act(first, 1, { type: 'chooseSet', set: 6 }));
+    { type: 'play', tile: state.leadTile, end: 0 }, noShuffle));
+  assert.deepEqual(setHouseRules(dominoes.info, first, 1, { values: { set: 6 }, override: false, maxPlayers: null }),
+    { error: 'The house rules are locked once play starts' });
   assert.equal(first.set, 9);
+});
+
+test('chooseSet is no longer an action', () => {
+  assert.deepEqual(act(lobby(2), 1, { type: 'chooseSet', set: 9 }), { error: 'Unknown action' });
+});
+
+test('a game saved before layouts plays on as a single line', () => {
+  const { houseRules: _houseRules, ...rest } = {
+    ...game({ hands: { 1: [t(4, 4), t(3, 4)], 2: [t(3, 6)], 3: [t(1, 1)] } }),
+    board: undefined, line: laid([3, 4]), openTrains: undefined, drewThisTurn: undefined
+  };
+  const saved = rest as unknown as GameState;
+  assert.deepEqual(legalPlays(saved, 1, [t(3, 4)]).map(({ end }) => end), [0, 1]);
+  const next = ok(play(saved, 1, t(4, 4), 'right'));
+  assert.deepEqual(lineOf(next.board), laid([3, 4], [4, 4]));
+  assert.equal(openEnds(next.board).length, 2);
+});
+
+test('starter only: the starting double opens four ends, a later double continues its arm', () => {
+  const start = game({
+    board: EMPTY_BOARD, leadTile: t(6, 6), houseRules: withBranching('starter'),
+    hands: { 1: [t(6, 6), t(0, 1)], 2: [t(6, 3), t(0, 2)], 3: [t(3, 3), t(0, 4)] }
+  });
+  const led = ok(play(start, 1, t(6, 6), 'left'));
+  assert.equal(usableEnds(led, 2).length, 4);
+  const top = ok(play(led, 2, t(6, 3), 'top'));
+  const doubled = ok(play(top, 3, t(3, 3), 'top'));
+  assert.equal(usableEnds(doubled, 1).length, 4);
+  assert.deepEqual(pipsOfEnds(doubled), [6, 6, 6, 3]);
+});
+
+test('every double: a double on an end opens three ends that each take its pips', () => {
+  const state = game({ houseRules: withBranching('every'), hands: { 1: [t(4, 4), t(0, 1)], 2: [t(4, 6), t(0, 2)], 3: [t(1, 1)] } });
+  const next = ok(play(state, 1, t(4, 4), 'right'));
+  assert.deepEqual(pipsOfEnds(next), [3, 4, 4, 4]);
+  const fours = openEnds(next.board).filter(({ pips }) => pips === 4).map(({ arm }) => arm);
+  assert.deepEqual(legalPlays(next, 2, [t(4, 6)]).map(({ end }) => end), fours);
+  for (const end of fours) assert.ok(!('error' in move(next, 2, { type: 'play', tile: t(4, 6), end })));
+});
+
+test('a play on a missing, fractional or closed end is refused and changes nothing', () => {
+  const state = game({ hands: { 1: [t(4, 4), t(3, 5)], 2: [t(4, 6)], 3: [t(1, 1)] } });
+  const frozen = JSON.stringify(state);
+  for (const end of [-1, 1.5, 99, '1']) assert.ok('error' in move(state, 1, { type: 'play', tile: t(3, 5), end }), String(end));
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(3, 5), end: 99 }), { error: 'There is no such end' });
+  assert.equal(JSON.stringify(state), frozen);
+  // The double closes the right arm it was played on; the line goes on from a new arm
+  const next = ok(play(state, 1, t(4, 4), 'right'));
+  const before = JSON.stringify(next);
+  assert.deepEqual(move(next, 2, { type: 'play', tile: t(4, 6), end: 1 }), { error: 'That end is closed' });
+  assert.deepEqual(move(next, 2, { type: 'play', tile: t(4, 6), end: 0 }), { error: 'That tile does not match that end' });
+  assert.equal(JSON.stringify(next), before);
 });
 
 test('invalid moves leave the state unchanged', () => {
@@ -285,8 +363,9 @@ test('invalid moves leave the state unchanged', () => {
   const frozen = JSON.stringify(state);
   const bad: unknown[] = [
     null, 'play', {}, { type: 'play' }, { type: 'play', tile: 1.5, end: 'left' }, { type: 'play', tile: '3', end: 'left' },
-    { type: 'play', tile: -1, end: 'left' }, { type: 'play', tile: 99, end: 'left' }, { type: 'play', tile: t(4, 5), end: 'up' },
-    { type: 'play', tile: t(4, 5) }, { type: 'play', tile: t(3, 6), end: 'left' }, { type: 'play', tile: t(0, 1), end: 'left' },
+    { type: 'play', tile: -1, end: 0 }, { type: 'play', tile: 99, end: 0 }, { type: 'play', tile: t(4, 5), end: 'up' },
+    { type: 'play', tile: t(4, 5), end: 'right' }, { type: 'play', tile: t(4, 5) }, { type: 'play', tile: t(3, 6), end: 0 },
+    { type: 'play', tile: t(0, 1), end: 0 },
     { type: 'draw' }, { type: 'pass' }, { type: 'bogus' }
   ];
   for (const made of bad) assert.ok('error' in move(state, 1, made), JSON.stringify(made));
@@ -322,9 +401,9 @@ test('dismissed player mid-turn: their tiles go back to the boneyard and the nex
 });
 
 test('a dismissed player can leave the others blocked, and the round ends', () => {
-  const line = laid([6, 6]);
+  const board = boardFromLine(laid([6, 6]));
   // Bob, who held the only way to unblock, leaves: his tile goes to the boneyard, so nobody is blocked
-  const state = game({ line, boneyard: [], hands: { 1: [t(0, 1)], 2: [t(2, 2)], 3: [t(5, 5)] }, currentPlayer: 1 });
+  const state = game({ board, boneyard: [], hands: { 1: [t(0, 1)], 2: [t(2, 2)], 3: [t(5, 5)] }, currentPlayer: 1 });
   const gone = removePlayer(dominoes, state, 2, seeded(1));
   assert.equal(gone.roundSummary, null);
   assert.equal(gone.boneyard.length, 1);
@@ -367,7 +446,7 @@ test('table view hides hands over every step of a short game', () => {
   for (let step = 0; step < 60 && !state.isGameOver && !state.roundSummary; step++) {
     const seat = state.currentPlayer as number;
     const hand = state.hands[seat];
-    const options = legalPlays(state.set, hand, state.line, state.leadTile);
+    const options = legalPlays(state, seat, hand);
     const made = options.length > 0 ? { type: 'play', ...options[0] } : state.boneyard.length > 0 ? { type: 'draw' } : { type: 'pass' };
     state = ok(applyMove(dominoes, state, seat, made, seeded(step)));
     check(state);
@@ -383,7 +462,7 @@ test('undo reshuffles the boneyard', () => {
 });
 
 test('dealing again with a winner leads that winner, who may play any tile', () => {
-  const dealt = dealRound({ ...game(), lastWinner: 2, line: [] }, seeded(2));
+  const dealt = dealRound({ ...game(), lastWinner: 2, board: EMPTY_BOARD }, seeded(2));
   assert.equal(dealt.currentPlayer, 2);
   assert.equal(dealt.leadTile, null);
   const any = dealt.hands[2][3];
@@ -393,7 +472,7 @@ test('dealing again with a winner leads that winner, who may play any tile', () 
 test('a dismissed leader who held the lead tile hands the opening to the tile now highest', () => {
   // After a tied round the first-round lead rule applies; Bob must lead with 6-6, then he is dismissed
   const state = game({
-    line: [],
+    board: EMPTY_BOARD,
     leadTile: t(6, 6),
     currentPlayer: 2,
     hands: { 1: [t(5, 5), t(0, 1)], 2: [t(6, 6), t(2, 2)], 3: [t(3, 4), t(1, 1)] },

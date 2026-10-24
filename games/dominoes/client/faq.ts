@@ -7,7 +7,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Which set is used?',
-    answer: 'Double-six (28 tiles) or double-nine (55 tiles). Any seated player can choose it in the lobby, before the first move, and the tiles are dealt again. The first move locks the choice.'
+    answer: 'Double-six (28 tiles) or double-nine (55 tiles). The host chooses it in the house rules before the first move, and the tiles are dealt again. The first move locks it with the other house rules.'
   },
   {
     question: 'How many tiles do I get, and who goes first?',
@@ -15,10 +15,14 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Which tiles can I play?',
-    answer: 'A tile with a number that matches one of the two open ends of the line. It is flipped to fit, so the matching half touches the line. Playable tiles are raised and outlined; the rest are dimmed. The line is a single line with two ends (there are no branches).'
+    answer: 'A tile with a number that matches an open end of any arm of the line. It is flipped to fit, so the matching half touches the line. Playable tiles are raised and outlined; the rest are dimmed. The table lists the open ends.'
   },
   {
-    question: 'What if a tile fits both ends?',
+    question: 'What do the branching settings do?',
+    answer: 'The host picks one in the house rules under Doubles open branches. None plays a single line with two ends, where a double is like any other tile. Starting double only lets the first double of the round open four ends (or three, if the round was not led by a double); later doubles are like any other tile. Every double, the default, makes every double open branches: the starting double opens four ends, and a double played on an end opens three, each taking the double\'s number.'
+  },
+  {
+    question: 'What if a tile fits more than one end?',
     answer: 'After you click it, buttons ask which end to play it on. Click Cancel to put the tile back.'
   },
   {
@@ -39,7 +43,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. After an undo the boneyard is shuffled again, so an undone draw cannot show you which tile is next. Choosing the set and Continue are not moves, so an undo goes back past them too.'
+    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. After an undo the boneyard is shuffled again, so an undone draw cannot show you which tile is next. Continue is not a move, so an undo goes back past it too.'
   },
   {
     question: 'What happens if someone leaves?',

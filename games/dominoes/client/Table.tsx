@@ -1,7 +1,9 @@
 import Tile from './Tile';
 import { lineKey } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
-import { leftEnd, rightEnd, targetScore } from '../rules.ts';
+import { Fragment } from 'react';
+import { boardOf, lineOf, openEnds } from '../board.ts';
+import { targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -13,9 +15,15 @@ type TableProps = {
   onDraw?: () => void;
 };
 
-// Every player's score and tile count in seat order, the boneyard and the line with its two open ends
+// What goes before the i-th of n open ends, so they read '3 and 4' or '3, 4 and 6'
+const separator = (i: number, n: number) => (i === 0 ? '' : i === n - 1 ? ' and ' : ', ');
+
+// Every player's score and tile count in seat order, the boneyard, the open ends and the line
 export default function Table({ gameState, viewer, showLastMove = false, onDraw }: TableProps) {
-  const { handCounts, playerNames, currentPlayer, winners, line, lastMove, scores, roundNumber, boneyardCount, set } = gameState;
+  const { handCounts, playerNames, currentPlayer, winners, lastMove, scores, roundNumber, boneyardCount, set } = gameState;
+  const board = boardOf(gameState);
+  const line = lineOf(board);
+  const ends = openEnds(board).map(({ pips }) => pips);
   const seats = Object.keys(handCounts).map(Number).sort((a, b) => a - b);
   const lastMover = showLastMove ? lastMove?.playerNumber : undefined;
   const lastTile = showLastMove && lastMove?.type === 'play' ? lastMove.tile : null;
@@ -52,9 +60,11 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
         <span className="boneyard-label">Boneyard: {boneyardCount}</span>
       </div>
       <div className="line-ends">
-        {line.length === 0
-          ? 'No tiles played yet'
-          : <>Open ends: <span className="end-pips end-left">{leftEnd(line)}</span> and <span className="end-pips end-right">{rightEnd(line)}</span></>}
+        {line.length === 0 ? 'No tiles played yet' : (
+          <>Open ends: {ends.map((pips, i) => (
+            <Fragment key={i}>{separator(i, ends.length)}<span className="end-pips">{pips}</span></Fragment>
+          ))}</>
+        )}
       </div>
       <div className="line" role="list" aria-label="Line of play">
         {line.map(placed => (

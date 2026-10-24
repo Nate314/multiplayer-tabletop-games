@@ -3,6 +3,7 @@ import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
 
 export type { Result, Seat, UndoVote } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
+import type { Board } from './board.ts';
 
 // The highest pip count on a tile: a double-six or double-nine set
 export type SetSize = 6 | 9;
@@ -14,20 +15,19 @@ export type End = 'left' | 'right';
 export type Placed = { tile: number; left: number; right: number };
 
 export type Move =
-  | { type: 'play'; tile: number; end: End } // end is ignored for the first tile
+  | { type: 'play'; tile: number; end: number } // end: an arm index on the board; ignored for the first tile
   | { type: 'draw' } // only when no tile in hand fits and the boneyard is not empty
   | { type: 'pass' }; // only when no tile fits and the boneyard is empty
 
-// Not turn-bound and not undoable
-export type Action =
-  | { type: 'chooseSet'; set: SetSize } // in the lobby only
-  | { type: 'acknowledgeRound' };
+// Not turn-bound and not undoable. The set is a house rule, chosen before the first move
+export type Action = { type: 'acknowledgeRound' };
 
-// `pips` is the tile as it was laid, left to right; `end` is null for the first tile of the round
+// `pips` is the tile as it was laid; `where` names the end it went on, e.g. 'on the right', and is null for the first tile.
+// `end` is only in moves saved before layouts, which have no `where`
 export type LastMove =
-  | { type: 'play'; playerNumber: Seat; tile: number; pips: [number, number]; end: End | null; wentOut: boolean }
+  | { type: 'play'; playerNumber: Seat; tile: number; pips: [number, number]; where: string | null; wentOut: boolean; end?: End | null }
   | { type: 'draw'; playerNumber: Seat }
-  | { type: 'pass'; playerNumber: Seat };
+  | { type: 'pass'; playerNumber: Seat; trainOpened?: boolean };
 
 // How a round went. `winner` is null when a blocked round ended in a tie. Tiles left are counted, not shown.
 export type RoundSummary = {
@@ -43,12 +43,14 @@ export type RoundSummary = {
 
 // The full state, which never leaves the server: nobody may see the boneyard or another player's hand
 export type GameState = BaseGameState & {
-  set: SetSize; // the lobby's choice; locked by the first move
+  set: SetSize; // the house rule, dealt by resetLobby; locked by the first move
   roundNumber: number;
   scores: Record<Seat, number>;
   hands: Record<Seat, number[]>;
   boneyard: number[]; // the top tile is the last one
-  line: Placed[];
+  board: Board; // read through boardOf: a game saved before layouts has `line` instead
+  openTrains: Seat[]; // Trains: seats whose train anyone may use
+  drewThisTurn: boolean; // Trains: the one draw of this turn is used
   leadTile: number | null; // the tile the first player must lead with; null when any tile may lead
   lastWinner: Seat | null; // leads the next round with any tile
   roundSummary: RoundSummary | null;

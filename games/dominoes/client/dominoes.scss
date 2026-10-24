@@ -595,18 +595,14 @@
     outline-offset: 2px;
   }
 
-  /* Choosing the lobby set, and an end for a tile that fits both */
+  /* Choosing an end for a tile that fits more than one */
 
-  .set-choice,
   .end-choice {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
     margin-top: 8px;
-  }
-
-  .end-choice {
     box-sizing: border-box;
     width: 100%;
     max-width: 560px;
@@ -616,7 +612,6 @@
     background: var(--panel-bg);
   }
 
-  .set-choice button,
   .end-choice button {
     padding: 8px 18px;
     border: 2px solid transparent;
@@ -624,16 +619,6 @@
     background: var(--button-bg);
     color: var(--button-text);
     font-weight: 600;
-  }
-
-  .set-choice button[aria-pressed="false"] {
-    background: var(--status-bg);
-    color: var(--text);
-    border-color: var(--panel-border);
-  }
-
-  .set-choice button[aria-pressed="true"] {
-    border-color: var(--highlight);
   }
 
   .end-choice button:hover {

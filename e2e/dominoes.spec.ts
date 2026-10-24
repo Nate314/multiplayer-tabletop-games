@@ -1,7 +1,11 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import {
+  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table
+} from './fixtures.ts';
+import { boardFromLine } from '../games/dominoes/board.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
 import type { GameState, SetSize } from '../games/dominoes/types.ts';
+import type { HouseRuleValues } from '../shared/houseRules.ts';
 
 // One test per rule, control and difference in games/dominoes/README.md. Players are seated in join order:
 // Alice is seat 1, Bob seat 2, Cara seat 3. A tile is written as its two pip counts.
@@ -29,7 +33,9 @@ async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], curre
     roundNumber: 1,
     hands: Object.fromEntries(seats.map(seat => [seat, ids(...hands[seat])])),
     boneyard: ids(...boneyard),
-    line: laid(...line),
+    board: boardFromLine(laid(...line)),
+    openTrains: [],
+    drewThisTurn: false,
     leadTile: null,
     lastWinner: null,
     roundSummary: null,
@@ -39,8 +45,9 @@ async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], curre
   });
 }
 
-async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara']) {
-  const table = await seat('dominoes', names);
+// These tests play the single line unless they say otherwise
+async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara'], houseRules: HouseRuleValues = { branching: 'none' }) {
+  const table = await seat('dominoes', names, { houseRules });
   return { table, pages: table.pages };
 }
 
@@ -60,11 +67,7 @@ const boneyard = (page: Page) => page.locator('.boneyard-label');
 test.describe('Dominoes rules', () => {
   test('double-six has 28 tiles and double-nine 55, dealt 7 and 9 each, and the highest double leads with it', async ({ seat }) => {
     for (const [set, size, total] of [[6, 7, 28], [9, 9, 55]] as const) {
-      const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
-      if (set === 9) {
-        await button(alice, 'Double-nine (55 tiles)').click();
-        await expect(button(bob, 'Double-nine (55 tiles)')).toHaveAttribute('aria-pressed', 'true');
-      }
+      const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { branching: 'none', set });
       const state = await table.state<GameState>();
       const all = [...Object.values(state.hands).flat(), ...state.boneyard];
       expect(new Set(all).size).toBe(total);
@@ -84,23 +87,24 @@ test.describe('Dominoes rules', () => {
     }
   });
 
-  test('the lobby choice is kept across joins and refused after the first move', async ({ seat }) => {
-    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
-    await expect(button(alice, 'Double-six (28 tiles)')).toHaveAttribute('aria-pressed', 'true');
-    await button(bob, 'Double-nine (55 tiles)').click();
-    await expect(button(alice, 'Double-nine (55 tiles)')).toHaveAttribute('aria-pressed', 'true');
-    await expect(status(alice)).toHaveText('Bob chose double-nine');
+  test('the host\'s set is dealt, kept across joins, and locked by the first move', async ({ seat }) => {
+    const table = await seat('dominoes', ['Alice', 'Bob'], { agree: false });
+    const [alice, bob] = table.pages;
+    await setHouseRules(alice, 'dominoes', { branching: 'none', set: 9 });
+    const bobsSet = bob.getByLabel('Set', { exact: true });
+    await expect(bobsSet).toHaveValue('9');
+    await expect(bobsSet).toBeDisabled();
+    await expect(bobsSet.locator('option:checked')).toHaveText('Double-nine (55 tiles)');
 
     const cara = await table.join('Cara');
-    await expect(button(cara, 'Double-nine (55 tiles)')).toHaveAttribute('aria-pressed', 'true');
     await expect(hand(cara).getByRole('button')).toHaveCount(9);
-    await leave(cara);
+    await agreeToHouseRules(alice, bob, cara);
 
     const state = await table.state<GameState>();
-    const leader = table.pages[(state.currentPlayer as number) - 1];
+    const leader = [alice, bob, cara][(state.currentPlayer as number) - 1];
     const [low, high] = tilesOf(9)[state.leadTile as number];
     await play(leader, low, high);
-    await expect(button(alice, 'Double-nine (55 tiles)')).toHaveCount(0);
+    await expect(alice.locator('.house-rules-panel')).toHaveCount(0);
     expect((await table.state<GameState>()).set).toBe(9);
   });
 

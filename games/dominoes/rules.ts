@@ -1,17 +1,49 @@
 // Dominoes rules shared by the browser (playable tiles) and the server (validation).
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule } from '../../shared/houseRules.ts';
+import type { ChoiceRule, HouseRule, ToggleRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
-import type {
-  End, GameState, LastMove, Move, Placed, PublicGameState, Result, RoundSummary, Seat, SetSize
-} from './types.ts';
+import { EMPTY_BOARD, SINGLE_LINE, boardOf, endPhrase, lay, openEnd, openEnds, pendingArms } from './board.ts';
+import type { Branching, Layout } from './board.ts';
+import type { GameState, LastMove, Move, PublicGameState, Result, RoundSummary, Seat, SetSize } from './types.ts';
 
-export const SETS: SetSize[] = [6, 9];
-export const DEFAULT_SET: SetSize = 6;
+export const SET_RULE: ChoiceRule<SetSize> = {
+  id: 'set', label: 'Set', kind: 'choice', standard: 6,
+  choices: [{ value: 6, label: 'Double-six (28 tiles)' }, { value: 9, label: 'Double-nine (55 tiles)' }]
+};
+export const BRANCHING_RULE: ChoiceRule<Branching> = {
+  id: 'branching', label: 'Doubles open branches', kind: 'choice', standard: 'every',
+  choices: [
+    { value: 'none', label: 'None (a single line)' },
+    { value: 'starter', label: 'Starting double only' },
+    { value: 'every', label: 'Every double' }
+  ]
+};
+export const CHICKENFOOT_RULE: ToggleRule = {
+  id: 'chickenfoot', label: 'Chickenfoot', kind: 'toggle', standard: false,
+  help: 'After a double, every end it opens must get a tile before anyone plays elsewhere'
+};
+export const TRAINS_RULE: ToggleRule = {
+  id: 'trains', label: 'Trains (Mexican Train)', kind: 'toggle', standard: false,
+  help: 'Play only on your own train, the Mexican train or an open train'
+};
+export const DOMINOES_RULES: HouseRule[] = [SET_RULE, BRANCHING_RULE, CHICKENFOOT_RULE, TRAINS_RULE];
+
+export function layoutOf(state: Pick<GameState, 'houseRules'>): Layout {
+  // No house rules: saved before layouts (or built by hand in a test), so it keeps playing the single line it started as
+  if (!state.houseRules) return SINGLE_LINE;
+  return {
+    branching: houseRule(state, BRANCHING_RULE),
+    chickenfoot: houseRule(state, CHICKENFOOT_RULE),
+    trains: houseRule(state, TRAINS_RULE)
+  };
+}
+
 export const targetScore = (players: number) => (players === 2 ? 100 : 61);
 
 // Wikipedia's Dominoes article is silent on hand sizes and target scores for the Draw game, so these follow Pagat's Draw
@@ -36,28 +68,34 @@ export const tilePips = (set: SetSize, tile: number): [number, number] => tilesO
 export const pipTotal = (set: SetSize, tiles: number[]) =>
   tiles.reduce((sum, tile) => sum + tilePips(set, tile)[0] + tilePips(set, tile)[1], 0);
 
-export const leftEnd = (line: Placed[]): number | null => line[0]?.left ?? null;
-export const rightEnd = (line: Placed[]): number | null => line[line.length - 1]?.right ?? null;
+// What deciding a play needs; both GameState and PublicGameState have it. A state saved before layouts has `line` and no
+// `board`, `openTrains` or `drewThisTurn`, so reads go through boardOf and defaults.
+export type PlayView = Pick<GameState, 'set' | 'board' | 'leadTile' | 'openTrains' | 'drewThisTurn' | 'activePlayers' | 'houseRules'>;
+export type Play = { tile: number; end: number }; // end: an arm index
 
-export type Play = { tile: number; end: End };
+// The arm indexes `seat` may play on: every open end, or only the ends of a double still waiting for a tile
+export const usableEnds: (view: PlayView, seat: Seat, everyTrainOpen?: boolean) => number[] = view => {
+  const board = boardOf(view);
+  const ends = openEnds(board).map(({ arm }) => arm);
+  const pending = pendingArms(board, layoutOf(view));
+  return pending.length > 0 ? ends.filter(arm => pending.includes(arm)) : ends;
+};
 
-// Every way a tile in `hand` can be played. The first tile of a round has no end to match, so it is listed once as 'left';
+// Every way a tile in `hand` can be played. The first tile of a round has no end to match, so it is listed once with end 0;
 // a `leadTile` restricts it.
-export function legalPlays(set: SetSize, hand: number[], line: Placed[], leadTile: number | null): Play[] {
-  if (line.length === 0) return hand.filter(tile => leadTile === null || tile === leadTile).map(tile => ({ tile, end: 'left' }));
-  const ends: [End, number | null][] = [['left', leftEnd(line)], ['right', rightEnd(line)]];
+export function legalPlays(view: PlayView, seat: Seat, hand: number[]): Play[] {
+  const board = boardOf(view);
+  if (!board.start) return hand.filter(tile => view.leadTile === null || tile === view.leadTile).map(tile => ({ tile, end: 0 }));
+  const ends = usableEnds(view, seat);
   return hand.flatMap(tile => ends
-    .filter(([, pips]) => tilePips(set, tile).some(side => side === pips))
-    .map(([end]): Play => ({ tile, end })));
+    .filter(arm => tilePips(view.set, tile).some(side => side === openEnd(board, arm)))
+    .map((end): Play => ({ tile, end })));
 }
 
-// How `tile` lies on an end: its matching pips touch the line, the other pips face out
-export function place(set: SetSize, tile: number, end: End, line: Placed[]): Placed {
-  const [a, b] = tilePips(set, tile);
-  if (line.length === 0) return { tile, left: a, right: b };
-  const open = (end === 'left' ? leftEnd(line) : rightEnd(line)) as number;
-  const other = a === open ? b : a;
-  return end === 'left' ? { tile, left: other, right: open } : { tile, left: open, right: other };
+// What a player with no tile that fits must do; null when a tile fits
+export function stuckMove(view: PlayView, seat: Seat, hand: number[], boneyardCount: number): 'draw' | 'pass' | null {
+  if (legalPlays(view, seat, hand).length > 0) return null;
+  return boneyardCount > 0 ? 'draw' : 'pass';
 }
 
 // How the status line and the history name a tile: its pips as laid, e.g. '3-4'
@@ -76,12 +114,14 @@ export function openingTile(set: SetSize, hands: Record<Seat, number[]>): { seat
 export function createGameState(gameId: string): GameState {
   return {
     ...baseGameState(gameId),
-    set: DEFAULT_SET,
+    set: SET_RULE.standard,
     roundNumber: 1,
     scores: {},
     hands: {},
     boneyard: [],
-    line: [],
+    board: EMPTY_BOARD,
+    openTrains: [],
+    drewThisTurn: false,
     leadTile: null,
     lastWinner: null,
     roundSummary: null,
@@ -101,7 +141,9 @@ export function dealRound(state: GameState, random: Random): GameState {
     ...state,
     hands,
     boneyard: deck.slice(players.length * size),
-    line: [],
+    board: EMPTY_BOARD,
+    openTrains: [],
+    drewThisTurn: false,
     leadTile: opening?.tile ?? null,
     currentPlayer: opening?.seat ?? state.lastWinner,
     roundSummary: null,
@@ -109,17 +151,20 @@ export function dealRound(state: GameState, random: Random): GameState {
   };
 }
 
-// Before the first move, the tiles are dealt afresh for the current players, keeping the lobby's choice of set.
+// Before the first move, the tiles are dealt afresh for the current players from the house rules' set.
 // Nothing is dealt until two players are seated.
 export function resetLobby(state: GameState, random: Random): GameState {
   const players = state.activePlayers;
   const empty: GameState = {
     ...state,
+    set: houseRule(state, SET_RULE),
     roundNumber: 1,
     scores: Object.fromEntries(players.map(seat => [seat, 0])),
     hands: Object.fromEntries(players.map(seat => [seat, []])),
     boneyard: [],
-    line: [],
+    board: EMPTY_BOARD,
+    openTrains: [],
+    drewThisTurn: false,
     leadTile: null,
     lastWinner: null,
     roundSummary: null,
@@ -146,32 +191,32 @@ function parseMove(move: unknown): Move | null {
     case 'pass':
       return { type: input.type };
     case 'play':
-      if (!Number.isInteger(input.tile) || (input.end !== 'left' && input.end !== 'right')) return null;
-      return { type: 'play', tile: input.tile as number, end: input.end };
+      if (!Number.isInteger(input.tile) || !Number.isInteger(input.end)) return null;
+      return { type: 'play', tile: input.tile as number, end: input.end as number };
     default:
       return null;
   }
 }
 
-// How the status line and the history describe a move, e.g. 'Alice played 3-4 on the left'
+// How the status line and the history describe a move, e.g. 'Alice played 3-4 on the left'.
+// A play saved before layouts has `end` instead of `where`
 export function describeMove(lastMove: LastMove, playerNames: Record<Seat, string>): string {
   const name = playerNames[lastMove.playerNumber];
   switch (lastMove.type) {
     case 'draw': return `${name} drew a tile`;
     case 'pass': return `${name} passed`;
     case 'play': {
-      const where = lastMove.end === null ? '' : ` on the ${lastMove.end}`;
-      return `${name} played ${pipsName(lastMove.pips)}${where}${lastMove.wentOut ? ' and went out' : ''}`;
+      const where = lastMove.where ?? (lastMove.end ? `on the ${lastMove.end}` : null);
+      return `${name} played ${pipsName(lastMove.pips)}${where ? ` ${where}` : ''}${lastMove.wentOut ? ' and went out' : ''}`;
     }
   }
 }
 
-const canMove = (state: GameState, seat: Seat) =>
-  legalPlays(state.set, state.hands[seat] ?? [], state.line, state.leadTile).length > 0;
+const canMove = (state: GameState, seat: Seat) => legalPlays(state, seat, state.hands[seat] ?? []).length > 0;
 
 // Nobody can play and there is nothing left to draw
 function isBlocked(state: GameState): boolean {
-  return state.boneyard.length === 0 && state.line.length > 0 && !state.activePlayers.some(seat => canMove(state, seat));
+  return state.boneyard.length === 0 && boardOf(state).start !== null && !state.activePlayers.some(seat => canMove(state, seat));
 }
 
 // A round ends in a win for the player who went out, who scores the pips in every other hand and in the boneyard (Wikipedia,
@@ -221,28 +266,45 @@ function settle(state: GameState, seat: Seat, lastMove: LastMove, advance: boole
   return { ...state, currentPlayer: turn, lastMove, gameStatus: describeMove(lastMove, state.playerNames) };
 }
 
-function play(state: GameState, seat: Seat, tile: number, end: End): Result<GameState> {
+// Why a tile cannot go on arm `end` of a started board, or null when it can
+function refusal(state: GameState, layout: Layout, tile: number, end: number): string | null {
+  const board = boardOf(state);
+  if (!Number.isInteger(end) || end < 0 || end >= board.arms.length) return 'There is no such end';
+  const pips = openEnd(board, end);
+  if (pips === null) return 'That end is closed';
+  const pending = pendingArms(board, layout);
+  if (pending.length > 0 && !pending.includes(end)) {
+    const double = board.arms[pending[0]].base;
+    return `Finish the ${double}-${double} first`;
+  }
+  if (!tilePips(state.set, tile).includes(pips)) return 'That tile does not match that end';
+  return null;
+}
+
+function play(state: GameState, seat: Seat, tile: number, end: number): Result<GameState> {
   const hand = state.hands[seat];
   if (!hand.includes(tile)) return { error: 'You do not have that tile' };
-  const first = state.line.length === 0;
+  const board = boardOf(state);
+  const first = board.start === null;
   if (first && state.leadTile !== null && tile !== state.leadTile) {
     return { error: 'Lead with the highest double, or the heaviest tile if nobody has a double' };
   }
-  // The first tile has no end to match; afterwards the tile must match the end it is played on
-  if (!first && !legalPlays(state.set, [tile], state.line, null).some(option => option.end === end)) {
-    return { error: 'That tile does not match that end' };
-  }
+  // The first tile has no end to match; afterwards the tile must fit the end it is played on
+  const layout = layoutOf(state);
+  const refused = first ? null : refusal(state, layout, tile, end);
+  if (refused) return { error: refused };
 
-  const placed = place(state.set, tile, end, state.line);
+  const laid = lay(board, layout, tile, tilePips(state.set, tile), end, state.activePlayers);
   const rest = hand.filter(held => held !== tile);
   const next: GameState = {
     ...state,
     hands: { ...state.hands, [seat]: rest },
-    line: end === 'left' ? [placed, ...state.line] : [...state.line, placed],
+    board: laid.board,
     leadTile: null
   };
   const lastMove: LastMove = {
-    type: 'play', playerNumber: seat, tile, pips: [placed.left, placed.right], end: first ? null : end, wentOut: rest.length === 0
+    type: 'play', playerNumber: seat, tile, pips: laid.pips,
+    where: first ? null : endPhrase(board, end, state.playerNames), wentOut: rest.length === 0
   };
   if (rest.length === 0) return { state: { ...endRound(next, seat), lastMove } };
   return { state: settle(next, seat, lastMove, true) };
@@ -295,22 +357,12 @@ function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<
   return acknowledge(state, seat, ROUND, next => startNextRoundIfReady(next, random));
 }
 
-// Any seated player may choose the set until the first move; the tiles are dealt again
-function chooseSet(state: GameState, seat: Seat, set: unknown, random: Random): Result<GameState> {
-  if (state.started) return { error: 'The set can only be chosen before the first move' };
-  if (!state.activePlayers.includes(seat)) return { error: 'Only seated players can choose the set' };
-  if (!SETS.some(size => size === set)) return { error: 'Choose double-six or double-nine' };
-  const next = resetLobby({ ...state, set: set as SetSize }, random);
-  return { state: { ...next, gameStatus: `${state.playerNames[seat]} chose double-${set === 6 ? 'six' : 'nine'}` } };
-}
-
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
   if (state.isGameOver) return { error: 'The game is over' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   const input = asRecord(action);
   switch (input?.type) {
-    case 'chooseSet': return chooseSet(state, seat, input.set, random);
     case 'acknowledgeRound': return acknowledgeRound(state, seat, random);
     default: return { error: 'Unknown action' };
   }
@@ -328,7 +380,7 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
   };
   if (returned.roundSummary) return startNextRoundIfReady(returned, random);
   // Nobody else can lead with a lead tile the leaver held, so the opening is chosen again among the hands left
-  if (returned.line.length === 0 && returned.leadTile !== null && hand.includes(returned.leadTile)) {
+  if (boardOf(returned).start === null && returned.leadTile !== null && hand.includes(returned.leadTile)) {
     const opening = openingTile(returned.set, hands);
     return { ...returned, leadTile: opening.tile, currentPlayer: opening.seat };
   }
