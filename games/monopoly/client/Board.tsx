@@ -1,5 +1,6 @@
 import { BOARD, HOTEL, JAIL, ownable } from '../board.ts';
 import { DECKS, DECK_NAMES } from '../cards.ts';
+import { freeParkingJackpot } from '../options.ts';
 import { gridPosition, seatClass, shortName, sideOf, tokenKey } from './layout.ts';
 import Dice from './Dice';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -59,6 +60,9 @@ function Space({ space, gameState, selected, onSelect, highlight }: BoardProps &
       {iconFor(space) && <span className="space-icon" aria-hidden="true">{iconFor(space)}</span>}
       {property && owner === undefined && <span className="space-price">${property.price}</span>}
       {target.kind === 'tax' && <span className="space-price">${target.amount}</span>}
+      {target.kind === 'parking' && freeParkingJackpot(gameState) && (
+        <span className="space-pot">Pot ${gameState.freeParkingPot ?? 0}</span>
+      )}
       {owner !== undefined && (
         <span className={`owner-tag ${seatClass(owner)}`}>
           {mortgaged.includes(space) ? 'Mortgaged' : playerNames[owner]}

@@ -1,11 +1,12 @@
 // Rolling, moving round the board, landing, rent, cards and jail
 import { rollDie } from '../../shared/dice.ts';
 import {
-  BOARD, BOARD_SIZE, GO_SALARY, HOTEL, JAIL, JAIL_FINE, RAILROAD_RENTS, UTILITY_MULTIPLIERS, groupSpaces, ownable,
+  BOARD, BOARD_SIZE, GO_BONUS_SALARY, GO_SALARY, HOTEL, JAIL, JAIL_FINE, RAILROAD_RENTS, UTILITY_MULTIPLIERS, groupSpaces, ownable,
   spacesOfKind
 } from './board.ts';
 import { DECKS, DECK_NAMES, jailCardIndex } from './cards.ts';
-import { charge, giveCash } from './money.ts';
+import { addToPot, charge, giveCash, potOf } from './money.ts';
+import { freeParkingJackpot, goBonus } from './options.ts';
 import { inGame, money, nameOf, note } from './state.ts';
 import type { DeckName, GameState, Random, Seat, TableState } from './types.ts';
 
@@ -64,17 +65,24 @@ export function returnJailCards(decks: GameState['decks'], held: DeckName[]): Ga
   return next;
 }
 
+// The $50 fine paid at the start of a turn
+export function payFine(state: GameState, seat: Seat): GameState {
+  const paid = giveCash(leaveJail(state, seat), seat, -JAIL_FINE);
+  return freeParkingJackpot(state) ? addToPot(paid, JAIL_FINE) : paid;
+}
+
 export function leaveJail(state: GameState, seat: Seat): GameState {
   const { [seat]: _rolls, ...jailed } = state.jailed;
   return { ...state, jailed };
 }
 
-// Moves forward to `to`, collecting $200 for passing or landing on GO
+// Moves forward to `to`, collecting $200 for passing or landing on GO ($400 for landing exactly on it with that rule)
 function moveTo(state: GameState, seat: Seat, to: number): GameState {
   const from = state.positions[seat];
   const moved = note({ ...state, positions: { ...state.positions, [seat]: to } }, `${nameOf(state, seat)} moved to ${BOARD[to].name}`);
   if (to > from) return moved;
-  return note(giveCash(moved, seat, GO_SALARY), `${nameOf(state, seat)} passed GO and collected ${money(GO_SALARY)}`);
+  const salary = to === 0 && goBonus(state) ? GO_BONUS_SALARY : GO_SALARY;
+  return note(giveCash(moved, seat, salary), `${nameOf(state, seat)} ${to === 0 ? 'landed on' : 'passed'} GO and collected ${money(salary)}`);
 }
 
 function nearest(from: number, kind: 'railroad' | 'utility'): number {
@@ -124,16 +132,22 @@ function drawCard(state: GameState, seat: Seat, deck: DeckName, random: Random):
     case 'collect':
       return giveCash(drawn, seat, effect.amount);
     case 'pay':
-      return charge(drawn, seat, null, effect.amount, DECK_NAMES[deck]);
+      return charge(drawn, seat, null, effect.amount, DECK_NAMES[deck], freeParkingJackpot(state));
     case 'payEach':
       return others.reduce((next, other) => charge(next, seat, other, effect.amount, DECK_NAMES[deck]), drawn);
     case 'collectEach':
       return others.reduce((next, other) => charge(next, other, seat, effect.amount, DECK_NAMES[deck]), drawn);
     case 'repairs': {
       const { houses, hotels } = buildingCounts(state, seat);
-      return charge(drawn, seat, null, houses * effect.house + hotels * effect.hotel, 'repairs');
+      return charge(drawn, seat, null, houses * effect.house + hotels * effect.hotel, 'repairs', freeParkingJackpot(state));
     }
   }
+}
+
+function collectPot(state: GameState, seat: Seat): GameState {
+  const pot = potOf(state);
+  if (pot === 0) return state;
+  return note(giveCash({ ...state, freeParkingPot: 0 }, seat, pot), `${nameOf(state, seat)} collected ${money(pot)} from Free Parking`);
 }
 
 // What happens on the space `seat` now stands on
@@ -145,12 +159,13 @@ function landOn(state: GameState, seat: Seat, random: Random, landing: Landing):
     case 'goToJail':
       return sendToJail(state, seat);
     case 'tax':
-      return charge(state, seat, null, target.amount, target.name);
+      return charge(state, seat, null, target.amount, target.name, freeParkingJackpot(state));
     case 'card':
       return drawCard(state, seat, target.deck, random);
+    case 'parking':
+      return collectPot(state, seat);
     case 'go':
     case 'jail':
-    case 'parking':
       return state;
   }
 
@@ -184,7 +199,7 @@ function rollInJail(state: GameState, seat: Seat, dice: [number, number], random
     return moveBy(note(leaveJail(state, seat), `${name} rolled doubles and left Jail`), seat, total(dice), random);
   }
   if (failed >= MAX_JAIL_ROLLS) {
-    const fined = charge(note(leaveJail(state, seat), `${name} failed a third time and must pay the fine`), seat, null, JAIL_FINE, 'Jail fine');
+    const fined = charge(note(leaveJail(state, seat), `${name} failed a third time and must pay the fine`), seat, null, JAIL_FINE, 'Jail fine', freeParkingJackpot(state));
     return moveBy(fined, seat, total(dice), random);
   }
   return note({ ...state, jailed: { ...state.jailed, [seat]: failed } }, `${name} stays in Jail`);

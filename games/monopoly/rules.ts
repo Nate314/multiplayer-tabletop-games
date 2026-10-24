@@ -9,10 +9,13 @@ import { bid, closeAuctionIfDone, nextAuction, passBid, startAuction } from './a
 import { declareBankruptcy, goBankrupt } from './bankruptcy.ts';
 import { build, liftMortgages, mortgage, sellBuilding, unmortgage } from './buildings.ts';
 import { giveCash, settleDebts } from './money.ts';
-import { leaveJail, returnJailCards, roll, rollDice } from './movement.ts';
+import { auctionsOn, MONOPOLY_RULES } from './options.ts';
+import { leaveJail, payFine, returnJailCards, roll, rollDice } from './movement.ts';
 import { LOG_SIZE, checkGameOver, inGame, money, nameOf, nextInGame, note, startTurn, syncTurn } from './state.ts';
 import { answerTrade, cancelTrade, dropTradesOf, offerTrade, parseSide } from './trades.ts';
 import type { DeckName, GameState, LastMove, Move, PublicGameState, Random, Result, Seat } from './types.ts';
+
+export { MONOPOLY_RULES };
 
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 
@@ -25,6 +28,7 @@ export function createGameState(gameId: string): GameState {
   return {
     ...baseGameState(gameId),
     cash: {},
+    freeParkingPot: 0,
     positions: {},
     jailed: {},
     jailCards: {},
@@ -74,6 +78,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     ...createGameState(state.gameId),
     ...state,
     cash: each(() => START_CASH),
+    freeParkingPot: 0,
     positions: each(() => 0),
     jailed: {},
     jailCards: each((): DeckName[] => []),
@@ -156,7 +161,7 @@ function decline(state: GameState, seat: Seat): Result<GameState> {
   const space = state.pendingBuy;
   if (space === null) return { error: 'There is nothing to decline' };
   const declined = note({ ...state, pendingBuy: null }, `${nameOf(state, seat)} declined to buy ${ownable(space)?.name}`);
-  return { state: startAuction(declined, space) };
+  return { state: auctionsOn(state) ? startAuction(declined, space) : declined };
 }
 
 function jailError(state: GameState, seat: Seat): string | null {
@@ -168,8 +173,7 @@ function jailError(state: GameState, seat: Seat): string | null {
 function payJailFine(state: GameState, seat: Seat): Result<GameState> {
   const error = jailError(state, seat) ?? ((state.cash[seat] ?? 0) < JAIL_FINE ? `You need ${money(JAIL_FINE)}` : null);
   if (error) return { error };
-  const paid = giveCash(leaveJail(state, seat), seat, -JAIL_FINE);
-  return { state: note(paid, `${nameOf(state, seat)} paid ${money(JAIL_FINE)} to leave Jail`) };
+  return { state: note(payFine(state, seat), `${nameOf(state, seat)} paid ${money(JAIL_FINE)} to leave Jail`) };
 }
 
 function playJailCard(state: GameState, seat: Seat): Result<GameState> {
