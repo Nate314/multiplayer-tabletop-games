@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
 import type { GameState, TileColor } from '../games/rummikub/types.ts';
 
@@ -367,12 +367,12 @@ test.describe('Rummikub controls', () => {
     expect(await titles(group(alice, 2))).toEqual(names(t('red', 9)));
 
     // Drags: onto New group, onto a tile to go in front of it, and onto the end of a group
-    await rackTile(alice, t('black', 9)).dragTo(newGroup(alice));
+    await drag(alice, rackTile(alice, t('black', 9)), newGroup(alice));
     await expect(groups(alice)).toHaveCount(3);
-    await rackTile(alice, t('orange', 9)).dragTo(tableTile(alice, t('red', 9)));
+    await drag(alice, rackTile(alice, t('orange', 9)), tableTile(alice, t('red', 9)));
     expect(await titles(group(alice, 2))).toEqual(names(t('orange', 9), t('red', 9)));
     const end = (await group(alice, 2).boundingBox())!;
-    await tableTile(alice, t('black', 9)).dragTo(group(alice, 2), { targetPosition: { x: end.width - 6, y: end.height / 2 } });
+    await drag(alice, tableTile(alice, t('black', 9)), group(alice, 2), { x: end.width - 6, y: end.height / 2 });
     await expect(groups(alice)).toHaveCount(2);
     expect(await titles(group(alice, 2))).toEqual(names(t('orange', 9), t('red', 9), t('black', 9)));
     await expect(hint(alice)).toHaveText('Ready to play 5 tiles');
@@ -397,6 +397,40 @@ test.describe('Rummikub controls', () => {
     await rackTile(alice, t('red', 7)).click();
     await groupEnd(alice, 2).click();
     await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+  });
+
+  test('off turn, rack tiles drag to rearrange the rack, and a drop on the table goes back', async ({ seat }) => {
+    const rack = [t('red', 2), t('blue', 1), t('black', 3)];
+    const { table, bob } = await start(seat, { table: [[t('red', 7), t('red', 8), t('red', 9)]], racks: { 2: rack } });
+    await expect(turn(bob)).toHaveText("Alice's turn");
+    await drag(bob, rackTile(bob, t('black', 3)), rackTile(bob, t('red', 2)));
+    const arranged = names(t('black', 3), t('red', 2), t('blue', 1));
+    expect(await titles(rackArea(bob))).toEqual(arranged);
+    expect((await table.state<GameState>()).racks[2]).toEqual(rack);
+
+    // It lifts, but the table is not Bob's to change, so it goes back to the rack
+    await lift(bob, rackTile(bob, t('blue', 1)));
+    await expect(bob.locator('.drag-ghost')).toBeVisible();
+    // The line under the rack keeps its text mid-drag, so a longer one never pushes the page under the finger
+    await expect(hint(bob)).toHaveText('Waiting for Alice. You can sort and arrange your rack.');
+    const over = (await group(bob, 1).boundingBox())!;
+    await bob.mouse.move(over.x + over.width / 2, over.y + over.height / 2, { steps: 4 });
+    await bob.mouse.up();
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    expect(await titles(rackArea(bob))).toEqual(arranged);
+    expect(await titles(group(bob, 1))).toEqual(names(t('red', 7), t('red', 8), t('red', 9)));
+  });
+
+  test('a group dragged by its handle joins the end of another group', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      table: [[t('red', 1), t('red', 2), t('red', 3)], [t('red', 4), t('red', 5), t('red', 6)]],
+      racks: { 1: [t('red', 7)] }
+    });
+    const end = (await group(alice, 1).boundingBox())!;
+    await drag(alice, button(alice, 'Pick up group 2'), group(alice, 1), { x: end.width - 6, y: end.height / 2 });
+    await expect(groups(alice)).toHaveCount(1);
+    expect(await titles(group(alice, 1))).toEqual(names(...[1, 2, 3, 4, 5, 6].map(value => t('red', value))));
   });
 
   test('tiles put down this turn can go back to the rack, before a rack tile or with End of rack, but table tiles cannot', async ({ seat }) => {

@@ -29,6 +29,7 @@
   --tile-red: #c8102e;
   --held: #ffd34d;
   --highlight: #ffb020;
+  --drag-over: #7fe3ff;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -57,6 +58,7 @@
     --rack-edge: #46311c;
     --tile-face: #ece4cf;
     --tile-edge: #a99c79;
+    --drag-over: #5ccff2;
   }
 }
 
@@ -424,6 +426,24 @@
     outline: 3px solid var(--held);
     outline-offset: 1px;
     transform: translateY(-4px);
+  }
+
+  /* Under a dragged tile or group: a bar in front of the tile it would go before, or an outline on the group,
+     New group or rack it would join */
+
+  .rk-tile-button[data-drag-over] {
+    outline: none;
+    box-shadow: -5px 0 0 var(--drag-over);
+  }
+
+  .rk-group[data-drag-over],
+  .rk-new-group[data-drag-over],
+  .rk-rack-area[data-drag-over] {
+    outline-offset: 2px;
+  }
+
+  .rk-group-end[data-drag-over] {
+    background: var(--drag-over);
   }
 
   /* The rack */

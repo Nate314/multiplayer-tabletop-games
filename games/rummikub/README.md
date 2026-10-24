@@ -18,12 +18,12 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 
 ## Controls
 
-- On your turn, click a tile on your rack or the table to pick it up (it lifts and is outlined), then click the tile it should go in front of, the + at the end of a group, or New group. Click a held tile again to put it down. Dragging a tile and dropping it in the same places works too
+- On your turn, click a tile on your rack or the table to pick it up (it lifts and is outlined), then click the tile it should go in front of, the + at the end of a group, or New group. Click a held tile again to put it down. You can also drag a tile, or a group by its handle, with the mouse or a finger and drop it in the same places; dropped anywhere else, it goes back
 - The handle at the start of a group picks up the whole group; put it at the end of another group to merge them. The thin bar between two tiles of a group splits the group there
 - A tile you put on the table this turn, or a group made only of such tiles, can go back to your rack: drop it in front of a rack tile or click End of rack. Tiles that were on the table at the start of the turn cannot
 - A group that is not a valid set or run has a dashed red border. The line under your rack says what is wrong with the play, or that it is ready. Click Play to send it
 - Reset puts the table and your rack back as they were at the start of the turn. Draw a tile (Pass when the pool is empty) ends your turn and drops any changes
-- Color and Number sort your rack. You can also move rack tiles about at any time, even on other players' turns. Only you see the order, and it is kept from turn to turn
+- Color and Number sort your rack. You can also move rack tiles about at any time, even on other players' turns, by clicking or by dragging a rack tile in front of another. Only you see the order, and it is kept from turn to turn
 - Hover over a joker on the table to see what it stands for. The tiles the last player put down are outlined
 - The side panel shows every player's tile count, a check for those who have made their first meld, the pool count and, at the end, each player's points
 - Click Undo to ask everyone to undo the last move, and FAQ at the top of the page for a short guide

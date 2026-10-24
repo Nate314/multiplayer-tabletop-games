@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I play tiles?',
-    answer: 'On your turn, click a tile to pick it up, then click the tile it should go in front of, the + at the end of a group, or New group. You can also drag tiles and drop them in the same places. Click a held tile again to put it down. When every group is valid, click Play. The line under your rack says what is wrong, or that the play is ready.'
+    answer: 'On your turn, click a tile to pick it up, then click the tile it should go in front of, the + at the end of a group, or New group. You can also drag tiles, with the mouse or a finger, and drop them in the same places; a tile dropped anywhere else goes back. Click a held tile again to put it down. When every group is valid, click Play. The line under your rack says what is wrong, or that the play is ready.'
   },
   {
     question: 'How do I rearrange the table?',
@@ -43,7 +43,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I sort my rack?',
-    answer: 'Click Color or Number above your rack. You can also pick up a rack tile and put it in front of another one, even when it is not your turn. Only you see the order.'
+    answer: 'Click Color or Number above your rack. You can also pick up a rack tile, or drag it, and put it in front of another one at any time, even when it is not your turn. Only you see the order.'
   },
   {
     question: 'Can I take back a move?',

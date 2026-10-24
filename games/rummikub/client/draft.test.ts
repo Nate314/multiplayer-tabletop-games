@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canReturnToRack, clickTile, heldTiles, moveTo as move, placeHeld, rackOrder, resetDraft, sortRack, splitGroup } from './draft.ts';
+import { canReturnToRack, clickTile, heldTiles, isRackTarget, moveTo as move, placeHeld, rackOrder, resetDraft, sortRack, splitGroup } from './draft.ts';
 import { COLORS, JOKERS } from '../rules.ts';
 import type { TileColor } from '../types.ts';
 
@@ -110,4 +110,12 @@ test('the rack sorts by color or by number, jokers last', () => {
   const rack = [JOKERS[0], t('red', 2), t('black', 5), t('blue', 2), t('black', 1)];
   assert.deepEqual(sortRack(rack, 'color'), [t('black', 1), t('black', 5), t('blue', 2), t('red', 2), JOKERS[0]]);
   assert.deepEqual(sortRack(rack, 'number'), [t('black', 1), t('blue', 2), t('red', 2), t('black', 5), JOKERS[0]]);
+});
+
+test('a target is on the rack when it is the rack or a rack tile', () => {
+  assert.equal(isRackTarget(draft, { kind: 'rack' }), true);
+  assert.equal(isRackTarget(draft, { kind: 'before', id: r(4) }), true);
+  assert.equal(isRackTarget(draft, { kind: 'before', id: r(5) }), false);
+  assert.equal(isRackTarget(draft, { kind: 'groupEnd', index: 0 }), false);
+  assert.equal(isRackTarget(draft, { kind: 'newGroup' }), false);
 });

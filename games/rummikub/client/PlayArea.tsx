@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
-import type { DragEvent } from 'react';
 import gameService from '../../../src/services/gameService';
 import Pickable from './Pickable';
 import TableArea from './TableArea';
 import Tile from './Tile';
-import { allowDrop } from './dragDrop.ts';
-import { canReturnToRack, clickTile, placeHeld, resetDraft, sortRack, splitGroup } from './draft.ts';
+import { canReturnToRack, clickTile, isRackTarget, placeHeld, resetDraft, sortRack, splitGroup } from './draft.ts';
 import { useLocalSlides } from './useLocalSlides.ts';
+import { useDrag } from '../../../src/drag/useDrag.ts';
+import { takeDrop } from '../../../src/drag/recentDrop.ts';
 import { checkPlay, tileName } from '../rules.ts';
 import type { Draft, Held, Interaction, Target } from './draft.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -21,6 +21,21 @@ type PlayAreaProps = {
 
 const sameTable = (a: number[][], b: number[][]) => JSON.stringify(a) === JSON.stringify(b);
 
+// Drag ids: sources are "tile-<id>" and "group-<index>"; targets are "before-<id>" (any tile), "end-<index>"
+// (a group or its +), "new" (New group) and "rack" (the rack)
+const numberAfter = (prefix: string, id: string) => Number(id.slice(prefix.length));
+
+function heldOf(id: string): Held {
+  return id.startsWith('group-') ? { kind: 'group', index: numberAfter('group-', id) } : { kind: 'tile', id: numberAfter('tile-', id) };
+}
+
+function targetOf(id: string): Target {
+  if (id === 'new') return { kind: 'newGroup' };
+  if (id === 'rack') return { kind: 'rack' };
+  if (id.startsWith('end-')) return { kind: 'groupEnd', index: numberAfter('end-', id) };
+  return { kind: 'before', id: numberAfter('before-', id) };
+}
+
 // The table and the player's rack. During their turn the player rearranges both here and sends the result as one play;
 // nobody else sees it until then. The game screen remounts this after every move, so a draft never outlives its turn.
 export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRack, onRackOrder }: PlayAreaProps) {
@@ -28,8 +43,6 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
   const rootRef = useRef<HTMLDivElement>(null);
   const captureSlides = useLocalSlides(rootRef);
   const [state, setState] = useState<Interaction>({ draft: { table, rack: initialRack }, held: null, hint: null });
-  // What is being dragged, known at once; `held` follows a frame later so the drag starts before anything re-renders
-  const dragRef = useRef<Held | null>(null);
   const { draft, held, hint } = state;
 
   const committed = new Set(table.flat());
@@ -49,29 +62,18 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
   const place = (target: Target) => apply(placeHeld(state, target, committed, isMyTurn));
   const click = (id: number) => apply(clickTile(state, id, committed, isMyTurn));
 
-  function dragStart(event: DragEvent, holding: Held) {
-    event.dataTransfer.setData('text/plain', 'rummikub');
-    event.dataTransfer.effectAllowed = 'move';
-    dragRef.current = holding;
-    requestAnimationFrame(() => {
-      if (dragRef.current === holding) setState(current => ({ ...current, held: holding, hint: null }));
-    });
-  }
-
-  function drop(event: DragEvent, target: Target) {
-    event.preventDefault();
-    event.stopPropagation();
-    const holding = dragRef.current ?? held;
-    dragRef.current = null;
-    if (holding) apply(placeHeld({ ...state, held: holding }, target, committed, isMyTurn));
-  }
-
-  // A drag dropped nowhere puts the tile down where it was
-  function dragEnd() {
-    if (!dragRef.current) return;
-    dragRef.current = null;
-    setState(current => ({ ...current, held: null }));
-  }
+  // Rack tiles can be dragged at any time, to rearrange the rack; table tiles and groups only on your turn.
+  // A drop puts the tile or group where a click on that spot would.
+  const drag = useDrag({
+    canLift: id => isMyTurn || (id.startsWith('tile-') && draft.rack.includes(numberAfter('tile-', id))),
+    canDrop: (_id, target) => isMyTurn || isRackTarget(draft, targetOf(target)),
+    onLift: id => setState(current => ({ ...current, held: heldOf(id) })),
+    onDrop: (id, target) => {
+      apply(placeHeld({ ...state, held: heldOf(id) }, targetOf(target), committed, isMyTurn));
+      takeDrop(); // a drop that changed nothing must not leave its mark to skip the next move's slide
+    },
+    onCancel: () => setState(current => ({ ...current, held: null }))
+  });
 
   const edit = isMyTurn ? {
     held,
@@ -81,14 +83,14 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
       ...state, held: held?.kind === 'group' && held.index === index ? null : { kind: 'group', index }, hint: null
     }),
     onSplit: (index: number, at: number) => setDraft(splitGroup(draft, index, at)),
-    onDragStart: dragStart,
-    onDragEnd: dragEnd,
-    onDrop: drop
+    drag
   } : undefined;
 
   const canGoBack = held !== null && canReturnToRack(draft, held, committed);
+  // While a tile is dragged the line under the rack stays as it was: a longer line would push the page under the finger
+  const clicked = drag.dragging === null ? held : null;
   let message = hint;
-  if (!message && held) {
+  if (!message && clicked) {
     message = !isMyTurn
       ? 'Click a rack tile to put the held tile in front of it, or End of rack'
       : 'Click a tile to put it in front of, the + at the end of a group, or New group. Click it again to put it down.';
@@ -105,19 +107,13 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
   } else if (!message && currentPlayer !== null) {
     message = `Waiting for ${playerNames[currentPlayer]}. You can sort and arrange your rack.`;
   }
-  const isError = hint !== null || (held === null && check !== null && 'error' in check);
+  const isError = hint !== null || (clicked === null && check !== null && 'error' in check);
 
   return (
     <div className={isMyTurn ? 'rk-play-area' : 'rk-play-area rk-play-area-waiting'} ref={rootRef}>
       <TableArea table={isMyTurn ? draft.table : table} highlighted={highlighted} edit={edit} />
 
-      <section
-        className="rk-rack-area"
-        aria-label="Your rack"
-        onDragEnter={allowDrop}
-        onDragOver={allowDrop}
-        onDrop={event => drop(event, { kind: 'rack' })}
-      >
+      <section className="rk-rack-area" aria-label="Your rack" data-drop="rack">
         <header className="rk-rack-header">
           <span>Your rack ({draft.rack.length})</span>
           <span className="rk-sort">
@@ -133,9 +129,8 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
               label={tileName(id)}
               className={held?.kind === 'tile' && held.id === id ? 'rk-tile-button rk-held' : 'rk-tile-button'}
               onActivate={() => click(id)}
-              onDragStart={event => dragStart(event, { kind: 'tile', id })}
-              onDragEnd={dragEnd}
-              onDrop={event => drop(event, { kind: 'before', id })}
+              dragProps={drag.source(`tile-${id}`)}
+              dropId={`before-${id}`}
             >
               <Tile id={id} />
             </Pickable>

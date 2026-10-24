@@ -1,11 +1,10 @@
-import type { DragEvent } from 'react';
 import Pickable from './Pickable';
 import Tile from './Tile';
-import { allowDrop } from './dragDrop.ts';
 import { analyzeGroup, tileName } from '../rules.ts';
 import type { GroupInfo } from '../rules.ts';
 import type { Held, Target } from './draft.ts';
 import type { Table } from '../types.ts';
+import type { Drag } from '../../../src/drag/useDrag.ts';
 
 // What the player can do with the table during their turn
 export type TableEditing = {
@@ -14,9 +13,7 @@ export type TableEditing = {
   onTarget: (target: Target) => void;
   onPickGroup: (index: number) => void;
   onSplit: (index: number, at: number) => void;
-  onDragStart: (event: DragEvent, held: Held) => void;
-  onDragEnd: () => void;
-  onDrop: (event: DragEvent, target: Target) => void;
+  drag: Drag; // sources "tile-<id>" and "group-<index>"; targets "before-<id>", "end-<index>" and "new"
 };
 
 type TableAreaProps = {
@@ -31,8 +28,7 @@ function standsFor(group: GroupInfo | null, index: number): string | undefined {
   return group.kind === 'run' ? `${group.colors[index][0]} ${group.values[index]}` : `${group.values[index]}`;
 }
 
-// Hidden but still taking its space, so picking something up never moves anything on screen
-// (a drag is canceled when the page under it shifts)
+// Hidden but still taking its space, so picking something up never moves anything on screen, even under a drag
 function shown(visible: boolean): string {
   return visible ? '' : ' rk-hidden';
 }
@@ -54,9 +50,7 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
             className={classes.filter(Boolean).join(' ')}
             aria-label={group ? `Group ${index + 1}` : `Group ${index + 1} (not a valid set or run)`}
             role="group"
-            onDragEnter={edit && allowDrop}
-            onDragOver={edit && allowDrop}
-            onDrop={edit && (event => edit.onDrop(event, { kind: 'groupEnd', index }))}
+            data-drop={edit && `end-${index}`}
           >
             {edit && (
               <Pickable
@@ -64,8 +58,7 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
                 title="Pick up the whole group"
                 className="rk-group-handle"
                 onActivate={() => edit.onPickGroup(index)}
-                onDragStart={event => edit.onDragStart(event, { kind: 'group', index })}
-                onDragEnd={edit.onDragEnd}
+                dragProps={edit.drag.source(`group-${index}`)}
               >
                 ⠿
               </Pickable>
@@ -88,9 +81,8 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
                       label={tileName(id)}
                       className={edit.held?.kind === 'tile' && edit.held.id === id ? 'rk-tile-button rk-held' : 'rk-tile-button'}
                       onActivate={() => edit.onTile(id)}
-                      onDragStart={event => edit.onDragStart(event, { kind: 'tile', id })}
-                      onDragEnd={edit.onDragEnd}
-                      onDrop={event => edit.onDrop(event, { kind: 'before', id })}
+                      dragProps={edit.drag.source(`tile-${id}`)}
+                      dropId={`before-${id}`}
                     >
                       {face}
                     </Pickable>
@@ -103,6 +95,7 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
                 type="button"
                 className={`rk-group-end${shown(holding)}`}
                 aria-label={`Put at the end of ${label}`}
+                data-drop={`end-${index}`}
                 onClick={() => edit.onTarget({ kind: 'groupEnd', index })}
               >
                 +
@@ -116,9 +109,7 @@ export default function TableArea({ table, highlighted, edit }: TableAreaProps) 
           type="button"
           className={holding ? 'rk-new-group rk-new-group-ready' : 'rk-new-group'}
           aria-disabled={!holding}
-          onDragEnter={allowDrop}
-          onDragOver={allowDrop}
-          onDrop={event => edit.onDrop(event, { kind: 'newGroup' })}
+          data-drop="new"
           onClick={() => edit.onTarget({ kind: 'newGroup' })}
         >
           New group
