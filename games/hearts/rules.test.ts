@@ -375,3 +375,38 @@ test('the game ends at the chosen target', () => {
   assert.equal(last(26, 100).isGameOver, false);
   assert.equal(targetScore(rules(150)), 150);
 });
+
+const jackRules = { houseRules: withRules({ jackOfDiamonds: true }) };
+const JD = diamond('J');
+
+test('the Jack of Diamonds takes 10 off its taker', () => {
+  // Bob takes the last trick with the jack and a heart in it
+  const state = lastTrick({ 1: 0, 2: 3, 3: 0, 4: 0 }, { 1: 10, 2: 30, 3: 10, 4: 10 }, [JD, heart('3')], jackRules);
+  assert.equal(state.jackTaker, 2);
+  assert.equal(state.roundSummary?.jack, 2);
+  assert.deepEqual(state.roundSummary?.taken, { 1: 0, 2: 4, 3: 0, 4: 0 });
+  assert.deepEqual(state.roundSummary?.change, { 1: 0, 2: -6, 3: 0, 4: 0 });
+  assert.equal(state.scores[2], 24);
+});
+
+test('shooting the moon with the jack scores minus 10', () => {
+  const state = lastTrick({ 1: 0, 2: 24, 3: 0, 4: 0 }, { 1: 10, 2: 30, 3: 10, 4: 10 }, undefined, { ...jackRules, jackTaker: 2 });
+  assert.equal(state.roundSummary?.moon, 2);
+  assert.deepEqual(state.roundSummary?.change, { 1: 26, 2: -10, 3: 26, 4: 26 });
+  assert.equal(state.scores[2], 20);
+});
+
+test('the jack may be played on the first trick', () => {
+  const state = game({ 1: [club('2')], 2: [JD, club('3')], 3: [club('4')], 4: [club('5')] }, { tricksPlayed: 0 });
+  assert.equal(playError(state.hands[2], JD, { ...state, trick: [{ seat: 1, card: club('2') }] }), 'Follow suit: play clubs');
+  const voidInClubs = { ...state.hands, 2: [JD, heart('4')] };
+  assert.equal(playError(voidInClubs[2], JD, { ...state, trick: [{ seat: 1, card: club('2') }] }), null);
+  assert.equal(cardPoints(JD), 0);
+});
+
+test('without the rule the jack is worth nothing', () => {
+  const state = lastTrick({ 1: 0, 2: 3, 3: 0, 4: 0 }, { 1: 10, 2: 30, 3: 10, 4: 10 }, [JD, heart('3')]);
+  assert.equal(state.jackTaker, null);
+  assert.equal(state.roundSummary?.jack, null);
+  assert.deepEqual(state.roundSummary?.change, { 1: 0, 2: 4, 3: 0, 4: 0 });
+});

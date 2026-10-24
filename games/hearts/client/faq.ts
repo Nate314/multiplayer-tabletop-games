@@ -43,6 +43,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose the score that ends the game: 50, 75, 100 or 150 points. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+    answer: 'Before play starts the host can choose the score that ends the game: 50, 75, 100 or 150 points, and can make the Jack of Diamonds worth minus 10 to whoever takes it. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

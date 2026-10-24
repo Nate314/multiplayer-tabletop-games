@@ -29,7 +29,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
         {SEATS.filter(seat => playerNames[seat] !== undefined).map(seat => (
           <li key={seat} className={seat === summary.moon ? 'summary-player summary-moon' : 'summary-player'}>
             <span className="summary-name">{playerNames[seat]}{seat === playerNumber && ' (you)'}</span>
-            <span className="summary-reason">took {summary.taken[seat]}: +{summary.change[seat]}</span>
+            <span className="summary-reason">took {summary.taken[seat]}{seat === summary.jack && ' and the Jack of Diamonds'}: {summary.change[seat] < 0 ? '' : '+'}{summary.change[seat]}</span>
             <span className="summary-points">{scores[seat]} pts</span>
           </li>
         ))}

@@ -15,7 +15,7 @@
 //   player takes 26 instead.
 // - The game ends when a player reaches the target score (100 unless the host chose another); the lowest score wins, and equal lowest scores share the win.
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule, targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -32,13 +32,21 @@ export { SEATS, nextSeat };
 export const HAND_SIZE = 13;
 export const PASS_SIZE = 3;
 const TARGET_RULE = targetScoreRule(100, [50, 75, 150]);
-export const HEARTS_RULES: HouseRule[] = [TARGET_RULE];
+const JACK_RULE: ToggleRule = {
+  id: 'jackOfDiamonds', label: 'Jack of Diamonds is worth minus 10', kind: 'toggle', standard: false,
+  help: 'Whoever takes the jack of diamonds scores 10 less for the hand, even when they shoot the moon'
+};
+export const HEARTS_RULES: HouseRule[] = [TARGET_RULE, JACK_RULE];
+
+const jackScores = (state: Pick<GameState, 'houseRules'>): boolean => houseRule(state, JACK_RULE) === true;
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const MOON = 26;
 const PASS_CYCLE: PassDirection[] = ['left', 'right', 'across', 'none'];
 const TWO_OF_CLUBS: PlayingCard = { suit: 'clubs', rank: '2' };
 const QUEEN_OF_SPADES: PlayingCard = { suit: 'spades', rank: 'Q' };
+const JACK_OF_DIAMONDS: PlayingCard = { suit: 'diamonds', rank: 'J' };
+export const JACK_BONUS = 10;
 
 const suitOf = (card: PlayingCard) => card.suit;
 const rankOf = (card: PlayingCard) => rankValue(card.rank, true);
@@ -96,6 +104,7 @@ const HAND_START = {
   lastTrick: null,
   tricksPlayed: 0,
   heartsBroken: false,
+  jackTaker: null,
   roundSummary: null,
   lastMove: null
 } satisfies Partial<GameState>;
@@ -166,9 +175,11 @@ function lowest(state: GameState, seats: readonly Seat[]): { winners: Seat[]; te
 // Scores a finished hand; the game ends once anyone has the target score or more
 function endHand(state: GameState): GameState {
   const moon = SEATS.find(seat => state.taken[seat] === MOON) ?? null;
-  const change = moon === null ? state.taken : perSeat(seat => (seat === moon ? 0 : MOON));
+  const jack = state.jackTaker ?? null; // a game saved before the rule has none
+  const base = moon === null ? state.taken : perSeat(seat => (seat === moon ? 0 : MOON));
+  const change = perSeat(seat => base[seat] - (seat === jack ? JACK_BONUS : 0));
   const scores = perSeat(seat => state.scores[seat] + change[seat]);
-  const summary: HandSummary = { handNumber: state.handNumber, taken: state.taken, change, moon, acknowledged: [] };
+  const summary: HandSummary = { handNumber: state.handNumber, taken: state.taken, change, moon, jack, acknowledged: [] };
   const scored: GameState = { ...state, phase: 'handOver', scores, currentPlayer: null, roundSummary: summary };
   const outcome = moon === null ? `Hand ${state.handNumber} is scored` : `${state.playerNames[moon]} shot the moon: everyone else takes ${MOON}`;
   if (Math.max(...Object.values(scores)) < targetScore(state)) return { ...scored, gameStatus: outcome };
@@ -195,6 +206,7 @@ function play(state: GameState, seat: Seat, card: PlayingCard): Result<GameState
   }
 
   const winner = trickWinner(trick, suitOf, rankOf, null);
+  const jackTaker = jackScores(state) && trick.some(p => sameCard(p.card, JACK_OF_DIAMONDS)) ? winner : state.jackTaker ?? null;
   const points = trick.reduce((sum, p) => sum + cardPoints(p.card), 0);
   const lastMove: LastMove = { type: 'play', playerNumber: seat, card, trickWinner: winner };
   const taken: GameState = {
@@ -203,6 +215,7 @@ function play(state: GameState, seat: Seat, card: PlayingCard): Result<GameState
     lastTrick: { plays: trick, winner },
     tricksPlayed: state.tricksPlayed + 1,
     taken: { ...state.taken, [winner]: state.taken[winner] + points },
+    jackTaker,
     currentPlayer: winner,
     lastMove,
     gameStatus: describeMove(lastMove, state.playerNames)
