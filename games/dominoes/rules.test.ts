@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  HAND_SIZES, dealRound, layoutOf, legalPlays, openingTile, pipTotal, targetScore, tilesOf, toPublicState, usableEnds
+  HAND_SIZES, dealRound, layoutOf, legalPlays, openingTile, pipTotal, stuckMove, targetScore, tilesOf, toPublicState, usableEnds
 } from './rules.ts';
-import { EMPTY_BOARD, boardFromLine, boardOf, lineOf, openEnds } from './board.ts';
-import type { ArmName, Branching } from './board.ts';
+import { EMPTY_BOARD, boardFromLine, boardOf, lay, lineOf, openEnds } from './board.ts';
+import type { ArmName, Board, Branching } from './board.ts';
 import { dominoes } from './index.ts';
 import { setHouseRules } from '../../shared/houseRules.ts';
 import type { HouseRulesState, HouseRuleValues } from '../../shared/houseRules.ts';
@@ -487,4 +487,291 @@ test('a dismissed leader who held the lead tile hands the opening to the tile no
   const other = removePlayer(dominoes, { ...state, currentPlayer: 2 }, 3, seeded(1));
   assert.equal(other.leadTile, t(6, 6));
   assert.equal(other.currentPlayer, 2);
+});
+
+// Chickenfoot and Trains. `withRules` writes the house rule values straight into the state, everyone agreed
+const withRules = (state: GameState, values: HouseRuleValues): GameState => ({ ...state, houseRules: rules(values) });
+const layoutFor = (values: HouseRuleValues) => layoutOf({ houseRules: rules(values) });
+const TRAINS = { trains: true };
+const TRAIN_ERROR = { error: 'You can play only on your own train, the Mexican train or an open train' };
+// A round whose 6-6 hub is down: one train per seat and the Mexican train, Alice to move
+function hub(values: HouseRuleValues, overrides: Partial<GameState> = {}): GameState {
+  return withRules(game({ board: lay(EMPTY_BOARD, layoutFor(values), t(6, 6), [6, 6], 0, [1, 2, 3]).board, ...overrides }), values);
+}
+// Lays tiles on a board by hand, each as [pips, arm]
+const built = (board: Board, values: HouseRuleValues, ...tiles: [[number, number], number][]) =>
+  tiles.reduce((next, [pips, arm]) => lay(next, layoutFor(values), t(...pips), pips, arm, [1, 2, 3]).board, board);
+const owners = (state: GameState) => boardOf(state).arms.map(arm => arm.owner);
+
+test('Chickenfoot: after a double the next three tiles must go on it', () => {
+  const state = withRules(game({
+    hands: { 1: [t(4, 4), t(4, 0), t(6, 6)], 2: [t(3, 1), t(4, 5), t(2, 2)], 3: [t(4, 6), t(1, 1), t(0, 0)] }
+  }), { branching: 'every', chickenfoot: true });
+  let next = ok(play(state, 1, t(4, 4), 'right'));
+  const foot = openEnds(next.board).filter(({ pips }) => pips === 4).map(({ arm }) => arm);
+  assert.equal(foot.length, 3);
+  for (const seat of [1, 2, 3]) assert.deepEqual(usableEnds(next, seat), foot);
+  const frozen = JSON.stringify(next);
+  assert.deepEqual(play(next, 2, t(3, 1), 'left'), { error: 'Finish the 4-4 first' });
+  assert.equal(JSON.stringify(next), frozen);
+  next = ok(move(next, 2, { type: 'play', tile: t(4, 5), end: foot[0] }));
+  next = ok(move(next, 3, { type: 'play', tile: t(4, 6), end: foot[1] }));
+  assert.deepEqual(usableEnds(next, 1), [foot[2]]);
+  next = ok(move(next, 1, { type: 'play', tile: t(4, 0), end: foot[2] }));
+  assert.ok(usableEnds(next, 2).includes(0));
+  next = ok(play(next, 2, t(3, 1), 'left'));
+  assert.equal(next.currentPlayer, 3);
+});
+
+test('Chickenfoot with no branches: a double must be covered before anyone plays elsewhere', () => {
+  const state = withRules(game({
+    hands: { 1: [t(4, 4), t(0, 0)], 2: [t(3, 1), t(4, 5), t(2, 2)], 3: [t(1, 1)] }
+  }), { branching: 'none', chickenfoot: true });
+  let next = ok(play(state, 1, t(4, 4), 'right'));
+  const forward = usableEnds(next, 2);
+  assert.equal(forward.length, 1);
+  assert.deepEqual(play(next, 2, t(3, 1), 'left'), { error: 'Finish the 4-4 first' });
+  next = ok(move(next, 2, { type: 'play', tile: t(4, 5), end: forward[0] }));
+  assert.equal(usableEnds(next, 3).length, 2);
+  next = ok(play({ ...next, currentPlayer: 2 }, 2, t(3, 1), 'left'));
+  assert.deepEqual(lineOf(next.board).map(({ left, right }) => [left, right]), [[1, 3], [3, 4], [4, 4], [4, 5]]);
+});
+
+test('Chickenfoot with starter only: all four ends of the starting double before any arm grows', () => {
+  const start = withRules(game({
+    board: EMPTY_BOARD, leadTile: t(6, 6),
+    hands: { 1: [t(6, 6), t(6, 3), t(0, 0)], 2: [t(6, 1), t(6, 4), t(0, 2)], 3: [t(6, 2), t(1, 1), t(0, 3)] }
+  }), { branching: 'starter', chickenfoot: true });
+  let next = ok(play(start, 1, t(6, 6), 'left'));
+  assert.deepEqual(usableEnds(next, 2), [0, 1, 2, 3]);
+  next = ok(move(next, 2, { type: 'play', tile: t(6, 1), end: 0 }));
+  const frozen = JSON.stringify(next);
+  assert.deepEqual(move(next, 3, { type: 'play', tile: t(1, 1), end: 0 }), { error: 'Finish the 6-6 first' });
+  assert.equal(JSON.stringify(next), frozen);
+  next = ok(move(next, 3, { type: 'play', tile: t(6, 2), end: 1 }));
+  next = ok(move(next, 1, { type: 'play', tile: t(6, 3), end: 2 }));
+  next = ok(move(next, 2, { type: 'play', tile: t(6, 4), end: 3 }));
+  next = ok(move(next, 3, { type: 'play', tile: t(1, 1), end: 0 }));
+  // The 1-1 is a later double: it opens one end, which must be covered next
+  assert.deepEqual(usableEnds(next, 1), [4]);
+});
+
+test('Trains: the starting double opens one train per player and the Mexican train', () => {
+  const start = withRules(game({
+    board: EMPTY_BOARD, leadTile: t(6, 6), hands: { 1: [t(6, 6), t(0, 1)], 2: [t(6, 3)], 3: [t(1, 1)] }
+  }), TRAINS);
+  const led = ok(play(start, 1, t(6, 6), 'left'));
+  assert.deepEqual(owners(led), [1, 2, 3, 'mexican']);
+  assert.ok(led.board.arms.every(arm => arm.name.kind === 'train' && arm.base === 6));
+  // Bob may use his own train and the Mexican train
+  assert.deepEqual(usableEnds(led, 2), [1, 3]);
+  assert.deepEqual(usableEnds(led, 2, true), [0, 1, 2, 3]);
+});
+
+test('Trains: you may play only on your own train, the Mexican train or an open train', () => {
+  const state = hub(TRAINS, { hands: { 1: [t(6, 2), t(0, 1)], 2: [t(3, 6)], 3: [t(1, 1)] } });
+  const frozen = JSON.stringify(state);
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(6, 2), end: 1 }), TRAIN_ERROR);
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(6, 2), end: 2 }), TRAIN_ERROR);
+  assert.equal(JSON.stringify(state), frozen);
+  assert.deepEqual(legalPlays(state, 1, state.hands[1]).map(({ end }) => end), [0, 3]);
+  const mexican = ok(move(state, 1, { type: 'play', tile: t(6, 2), end: 3 }));
+  assert.equal(mexican.lastMove?.type === 'play' && mexican.lastMove.where, 'on the Mexican train');
+  ok(move(state, 1, { type: 'play', tile: t(6, 2), end: 0 }));
+  const open = ok(move({ ...state, openTrains: [2] }, 1, { type: 'play', tile: t(6, 2), end: 1 }));
+  assert.equal(open.lastMove?.type === 'play' && open.lastMove.where, 'on Bob\'s train');
+  assert.deepEqual(open.openTrains, [2]);
+});
+
+test('Trains: with nothing to play you draw one tile, then pass and your train opens', () => {
+  const state = hub(TRAINS, { hands: { 1: [t(0, 1), t(2, 3)], 2: [t(3, 6)], 3: [t(1, 1)] }, boneyard: [t(0, 0), t(4, 5)] });
+  assert.equal(stuckMove(state, 1, state.hands[1], state.boneyard.length), 'draw');
+  assert.deepEqual(move(state, 1, { type: 'pass' }), { error: 'Draw from the boneyard first' });
+  const drawn = ok(move(state, 1, { type: 'draw' }));
+  assert.equal(drawn.drewThisTurn, true);
+  assert.equal(drawn.currentPlayer, 1);
+  assert.deepEqual(drawn.hands[1], [t(0, 1), t(2, 3), t(4, 5)]);
+  assert.equal(stuckMove(drawn, 1, drawn.hands[1], drawn.boneyard.length), 'pass');
+  assert.deepEqual(move(drawn, 1, { type: 'draw' }), { error: 'You have already drawn this turn' });
+  const passed = ok(move(drawn, 1, { type: 'pass' }));
+  assert.deepEqual(passed.openTrains, [1]);
+  assert.equal(passed.gameStatus, 'Alice passed: Alice\'s train is open');
+  assert.deepEqual(passed.lastMove, { type: 'pass', playerNumber: 1, trainOpened: true });
+  assert.equal(passed.currentPlayer, 2);
+  assert.equal(passed.drewThisTurn, false);
+  // A drawn tile that fits may be played at once
+  const fits = ok(move({ ...state, boneyard: [t(0, 0), t(6, 5)] }, 1, { type: 'draw' }));
+  const played = ok(move(fits, 1, { type: 'play', tile: t(6, 5), end: 0 }));
+  assert.equal(played.drewThisTurn, false);
+  assert.equal(played.currentPlayer, 2);
+  // Without Trains drawing goes on until a tile fits
+  const plain = withRules(game({ hands: { 1: [t(0, 1), t(2, 2)], 2: [t(3, 6)], 3: [t(1, 1)] }, boneyard: [t(0, 0), t(5, 6)] }), {});
+  const once = ok(move(plain, 1, { type: 'draw' }));
+  assert.equal(stuckMove(once, 1, once.hands[1], once.boneyard.length), 'draw');
+  assert.ok(!('error' in move(once, 1, { type: 'draw' })));
+});
+
+test('Trains: playing on your own train closes it', () => {
+  const state = hub(TRAINS, { hands: { 1: [t(6, 2), t(6, 1), t(0, 0)], 2: [t(3, 6)], 3: [t(1, 1)] }, openTrains: [1, 3] });
+  const mexican = ok(move(state, 1, { type: 'play', tile: t(6, 2), end: 3 }));
+  assert.deepEqual(mexican.openTrains, [1, 3]);
+  const own = ok(move(state, 1, { type: 'play', tile: t(6, 2), end: 0 }));
+  assert.deepEqual(own.openTrains, [3]);
+});
+
+test('Trains: every round opens with the highest double, and the last winner does not lead', () => {
+  // Without shuffling, Alice holds 0-0, Bob 1-1 and 2-2, and Cara 3-3
+  const trains = dealRound(withRules({ ...game(), lastWinner: 2, board: EMPTY_BOARD }, TRAINS), noShuffle);
+  assert.equal(trains.leadTile, t(3, 3));
+  assert.equal(trains.currentPlayer, 3);
+  const plain = dealRound(withRules({ ...game(), lastWinner: 2, board: EMPTY_BOARD }, {}), noShuffle);
+  assert.equal(plain.leadTile, null);
+  assert.equal(plain.currentPlayer, 2);
+});
+
+// A Random that makes `shuffle` deal the set in exactly this order
+function arranged(order: number[]): Random {
+  const items = order.map((_, i) => i);
+  const values: number[] = [];
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = items.indexOf(order[i]);
+    values.push((j + 0.5) / (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  let next = 0;
+  return () => values[next++] ?? 0.999999;
+}
+
+test('Trains: when nobody holds a double, players draw in seat order until one does', () => {
+  const doubles = tilesOf(6).flatMap(([a, b], tile) => (a === b ? [tile] : []));
+  const others = tilesOf(6).flatMap(([a, b], tile) => (a === b || tile === t(0, 1) ? [] : [tile]));
+  // Two hands of seven with no double; the boneyard's top tiles are 0-1 (drawn by Alice), then 4-4 (drawn by Bob)
+  const order = [...others, ...doubles.filter(tile => tile !== t(4, 4)), t(4, 4), t(0, 1)];
+  const state = withRules({ ...game(), activePlayers: [1, 2], board: EMPTY_BOARD }, TRAINS);
+  const dealt = dealRound(state, arranged(order));
+  assert.deepEqual(dealt.hands[1], [...others.slice(0, 7), t(0, 1)]);
+  assert.deepEqual(dealt.hands[2], [...others.slice(7, 14), t(4, 4)]);
+  assert.equal(dealt.currentPlayer, 2);
+  assert.equal(dealt.leadTile, t(4, 4));
+  assert.equal(dealt.boneyard.length, 12);
+  assert.ok(!('error' in move(dealt, 2, { type: 'play', tile: t(4, 4), end: 0 })));
+});
+
+test('Trains with Chickenfoot: the hub is exempt, and anyone may finish a double on a train', () => {
+  const values = { trains: true, chickenfoot: true, branching: 'every' };
+  const start = hub(values);
+  assert.deepEqual(usableEnds(start, 2), [1, 3]);
+  // A 2-2 on Bob's train opens three ends of Bob's train, which Cara must finish first
+  const board = built(start.board, values, [[6, 2], 1], [[2, 2], 1]);
+  const state = { ...start, board, currentPlayer: 3, hands: { 1: [t(0, 0)], 2: [t(1, 1)], 3: [t(6, 1), t(2, 5), t(0, 3)] } };
+  assert.deepEqual(owners(state).slice(4), [2, 2, 2]);
+  assert.deepEqual(usableEnds(state, 3), [4, 5, 6]);
+  assert.deepEqual(move(state, 3, { type: 'play', tile: t(6, 1), end: 2 }), { error: 'Finish the 2-2 first' });
+  const finished = ok(move(state, 3, { type: 'play', tile: t(2, 5), end: 4 }));
+  assert.deepEqual(finished.openTrains, []);
+  assert.deepEqual(usableEnds(finished, 1), [5, 6]);
+});
+
+test('Trains: a dismissed player\'s train is open to everyone', () => {
+  const state = hub(TRAINS, { hands: { 1: [t(6, 2), t(0, 1)], 2: [t(3, 3)], 3: [t(1, 1)] } });
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(6, 2), end: 1 }), TRAIN_ERROR);
+  const gone = removePlayer(dominoes, state, 2, noShuffle);
+  assert.deepEqual(owners(gone), [1, 2, 3, 'mexican']);
+  assert.deepEqual(usableEnds(gone, 1), [0, 1, 3]);
+  const next = ok(move(gone, 1, { type: 'play', tile: t(6, 2), end: 1 }));
+  assert.equal(next.currentPlayer, 3);
+  // A leaver dismissed after drawing on their turn: the next player may still draw
+  const drew = hub(TRAINS, { currentPlayer: 2, hands: { 1: [t(0, 1)], 2: [t(1, 2)], 3: [t(1, 1)] }, boneyard: [t(0, 0), t(2, 3)] });
+  const drawn = ok(move(drew, 2, { type: 'draw' }));
+  const left = removePlayer(dominoes, drawn, 2, noShuffle);
+  assert.equal(left.currentPlayer, 3);
+  assert.equal(left.drewThisTurn, false);
+  assert.equal(removePlayer(dominoes, drawn, 1, noShuffle).drewThisTurn, true);
+});
+
+test('Trains: a dismissed leader who held the lead double opens the round again', () => {
+  // Bob must lead with 6-6 and is dismissed. His tiles go on top of the boneyard, and nobody left holds a double, so
+  // Alice draws 2-3, then Cara draws 6-6 and leads with it
+  const state = withRules(game({
+    board: EMPTY_BOARD, leadTile: t(6, 6), currentPlayer: 2,
+    hands: { 1: [t(0, 1)], 2: [t(6, 6), t(2, 3)], 3: [t(1, 2)] },
+    boneyard: [t(0, 5)]
+  }), TRAINS);
+  const gone = removePlayer(dominoes, state, 2, noShuffle);
+  assert.equal(gone.leadTile, t(6, 6));
+  assert.equal(gone.currentPlayer, 3);
+  assert.deepEqual(gone.hands[1], [t(0, 1), t(2, 3)]);
+  assert.deepEqual(gone.hands[3], [t(1, 2), t(6, 6)]);
+  assert.deepEqual(gone.boneyard, [t(0, 5)]);
+  const led = ok(move(gone, 3, { type: 'play', tile: t(6, 6), end: 0 }));
+  assert.deepEqual(owners(led), [1, 3, 'mexican']);
+});
+
+test('Trains: a round is not blocked while a pass would open a train someone can use', () => {
+  // Alice's train ends in 5, Bob's in 3, Cara's in 4 and the Mexican train in 0. Only Bob can play, on Alice's train
+  const board = built(hub(TRAINS).board, TRAINS, [[6, 5], 0], [[6, 3], 1], [[6, 4], 2], [[6, 0], 3]);
+  const state = hub(TRAINS, { board, boneyard: [], currentPlayer: 3, hands: { 1: [t(1, 2)], 2: [t(5, 1), t(1, 1)], 3: [t(2, 2)] } });
+  assert.deepEqual(legalPlays(state, 2, state.hands[2]), []);
+  const cara = ok(move(state, 3, { type: 'pass' }));
+  assert.equal(cara.roundSummary, null);
+  assert.equal(cara.gameStatus, 'Cara passed: Cara\'s train is open');
+  const alice = ok(move(cara, 1, { type: 'pass' }));
+  assert.equal(alice.roundSummary, null);
+  assert.deepEqual(alice.openTrains, [3, 1]);
+  assert.equal(alice.currentPlayer, 2);
+  const bob = ok(move(alice, 2, { type: 'play', tile: t(5, 1), end: 0 }));
+  assert.equal(bob.roundSummary, null);
+  // Blocked: nobody could play even with every train open
+  const stuck = ok(move({ ...state, hands: { ...state.hands, 2: [t(1, 1), t(2, 6)] } }, 3, { type: 'pass' }));
+  assert.equal(stuck.roundSummary?.blocked, true);
+});
+
+test('a double nobody can finish with the boneyard empty ends the round as blocked', () => {
+  // Nobody holds another 4, so the 4-4's foot can never be finished, though Bob's 3-1 would fit the left end
+  const state = withRules(game({
+    boneyard: [], hands: { 1: [t(4, 4), t(0, 0)], 2: [t(3, 1)], 3: [t(1, 1)] }
+  }), { branching: 'every', chickenfoot: true });
+  const blocked = ok(play(state, 1, t(4, 4), 'right'));
+  assert.equal(blocked.roundSummary?.blocked, true);
+  assert.equal(blocked.currentPlayer, null);
+  // The same under Trains, on Alice's own train
+  const trains = hub({ trains: true, chickenfoot: true }, { boneyard: [], hands: { 1: [t(6, 4), t(4, 4), t(0, 0)], 2: [t(1, 6)], 3: [t(2, 2)] } });
+  const four = ok(move(trains, 1, { type: 'play', tile: t(6, 4), end: 0 }));
+  assert.equal(four.roundSummary, null);
+  const dead = ok(move({ ...four, currentPlayer: 1 }, 1, { type: 'play', tile: t(4, 4), end: 0 }));
+  assert.equal(dead.roundSummary?.blocked, true);
+});
+
+test('Trains without branching, with starter only and with every double all keep the hub', () => {
+  for (const [branching, added] of [['none', 1], ['starter', 1], ['every', 3]] as const) {
+    const start = withRules(game({
+      board: EMPTY_BOARD, leadTile: t(6, 6), hands: { 1: [t(6, 6), t(0, 1)], 2: [t(6, 3), t(3, 3), t(0, 2)], 3: [t(1, 1)] }
+    }), { trains: true, branching });
+    const led = ok(play(start, 1, t(6, 6), 'left'));
+    assert.deepEqual(owners(led), [1, 2, 3, 'mexican'], branching);
+    const next = ok(move(led, 2, { type: 'play', tile: t(6, 3), end: 1 }));
+    const doubled = ok(move({ ...next, currentPlayer: 2 }, 2, { type: 'play', tile: t(3, 3), end: 1 }));
+    assert.equal(doubled.board.arms.length, 4 + added, branching);
+    assert.ok(doubled.board.arms.slice(4).every(arm => arm.owner === 2), branching);
+  }
+});
+
+test('hand-crafted moves under Trains and Chickenfoot are refused with the state unchanged', () => {
+  const values = { trains: true, chickenfoot: true, branching: 'every' };
+  const start = hub(values);
+  // Cara's train ends in 5; Bob's ends in an unfinished 2-2
+  const board = built(start.board, values, [[6, 5], 2], [[6, 2], 1], [[2, 2], 1]);
+  const state = { ...start, board, hands: { 1: [t(2, 4), t(5, 4), t(6, 1)], 2: [t(1, 1)], 3: [t(0, 0)] } };
+  const frozen = JSON.stringify(state);
+  for (const end of [-1, 1.5, 99, '1']) assert.ok('error' in move(state, 1, { type: 'play', tile: t(2, 4), end }), String(end));
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(2, 4), end: 1 }), { error: 'That end is closed' });
+  // Ends outside the unfinished double: Cara's train and Alice's own
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(5, 4), end: 2 }), { error: 'Finish the 2-2 first' });
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(6, 1), end: 0 }), { error: 'Finish the 2-2 first' });
+  assert.equal(JSON.stringify(state), frozen);
+  // Once the 2-2 is finished, Cara's closed train is refused
+  const finished = { ...state, board: built(board, values, [[2, 0], 4], [[2, 1], 5], [[2, 3], 6]) };
+  const before = JSON.stringify(finished);
+  assert.deepEqual(move(finished, 1, { type: 'play', tile: t(5, 4), end: 2 }), TRAIN_ERROR);
+  assert.equal(JSON.stringify(finished), before);
 });

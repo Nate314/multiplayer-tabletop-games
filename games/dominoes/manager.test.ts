@@ -165,3 +165,59 @@ test('dismissing a player mid-game skips their seat', () => {
   assert.equal('3' in state.handCounts, false);
   assert.notEqual(state.currentPlayer, 3);
 });
+
+test('every combination of layouts plays whole games, and builds its history and game file', () => {
+  for (const branching of ['none', 'starter', 'every']) for (const chickenfoot of [false, true]) for (const trains of [false, true]) {
+    const label = JSON.stringify({ branching, chickenfoot, trains });
+    const manager = gameWithRules({ branching, chickenfoot, trains }, 'A', 'B', 'C');
+    let state = viewOf(manager, null);
+    for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
+    assert.equal(state.isGameOver, true, label);
+    assert.ok(manager.history('dominoes', 'g1')?.length, label);
+    assert.ok('file' in (manager.gameFile('dominoes', 'g1', new Date()) ?? {}), label);
+  }
+});
+
+// Steps a Trains game until the player to move must draw while some train is open
+function trainsGameAtADraw(): { manager: Manager; seat: number } {
+  const manager = gameWithRules({ trains: true }, 'A', 'B', 'C');
+  for (let moves = 0; moves < 5000; moves++) {
+    const state = viewOf(manager, null);
+    if (state.isGameOver) break;
+    const seat = state.currentPlayer;
+    if (seat !== null && !state.roundSummary && state.openTrains.length > 0 && anyMove(viewOf(manager, seat), seat).type === 'draw') {
+      return { manager, seat };
+    }
+    step(manager);
+  }
+  return assert.fail('no draw with an open train');
+}
+
+test('undo restores the board, the open trains and the draw', () => {
+  const { manager, seat } = trainsGameAtADraw();
+  const before = viewOf(manager, seat);
+  const drawn = ok(manager.move(ROOM, seat, { type: 'draw' }));
+  assert.equal(drawn.drewThisTurn, true);
+  ok(manager.requestUndo(ROOM, seat));
+  for (const other of before.activePlayers.filter(s => s !== seat)) ok(manager.voteUndo(ROOM, other, true));
+  const restored = viewOf(manager, seat);
+  assert.equal(restored.drewThisTurn, false);
+  assert.deepEqual(restored.board, before.board);
+  assert.deepEqual(restored.openTrains, before.openTrains);
+  assert.deepEqual(restored.hand, before.hand);
+  assert.equal(restored.currentPlayer, seat);
+});
+
+test('a rejoin shows the same board and open trains', () => {
+  const { manager, seat } = trainsGameAtADraw();
+  ok(manager.move(ROOM, seat, { type: 'draw' }));
+  const before = viewOf(manager, seat);
+  manager.disconnect(ROOM, seat);
+  const rejoined = manager.join('dominoes', 'g1', ['A', 'B', 'C'][seat - 1], true);
+  if ('error' in rejoined) assert.fail(rejoined.error);
+  const view = rejoined.state as PublicGameState;
+  assert.deepEqual(view.board, before.board);
+  assert.deepEqual(view.openTrains, before.openTrains);
+  assert.equal(view.drewThisTurn, true);
+  assert.deepEqual(view.hand, before.hand);
+});

@@ -22,6 +22,18 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The host picks one in the house rules under Doubles open branches. None plays a single line with two ends, where a double is like any other tile. Starting double only lets the first double of the round open four ends (or three, if the round was not led by a double); later doubles are like any other tile. Every double, the default, makes every double open branches: the starting double opens four ends, and a double played on an end opens three, each taking the double\'s number.'
   },
   {
+    question: 'What is Chickenfoot?',
+    answer: 'A house rule that makes every double be finished before anyone plays elsewhere: each end it opened must get a tile first. With Every double, a double played on an end opens three ends, the chicken foot, so the next three tiles go on it. Only those ends can be played on until the double is finished. If the boneyard is empty and nobody can finish a double, the round is blocked.'
+  },
+  {
+    question: 'How do trains work?',
+    answer: 'With the Trains house rule, every round is led with the highest double held, which becomes the hub. Each player has a train starting from it, and there is a shared Mexican train. You may play on your own train, the Mexican train, any open train, or the train of a player who was dismissed. If nobody holds a double at the start, players draw one tile at a time in seat order until someone draws one, and that player leads with it.'
+  },
+  {
+    question: 'When is my train open?',
+    answer: 'When you cannot play, you draw one tile. If it fits you may play it; if not, or if the boneyard is empty, you pass and your train opens, so anyone may play on it. It closes again when you play on your own train.'
+  },
+  {
     question: 'What if a tile fits more than one end?',
     answer: 'After you click it, buttons ask which end to play it on. Click Cancel to put the tile back.'
   },
