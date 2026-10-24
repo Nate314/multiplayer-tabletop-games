@@ -15,13 +15,14 @@ type TableProps = {
   usable?: number[]; // the ends you may play on, highlighted
   fits?: number[]; // the ends the selected tile fits, buttons calling onEnd
   onEnd?: (arm: number) => void;
+  startDrop?: boolean; // the empty board takes the first tile dropped on it
 };
 
 // What goes before the i-th of n open ends, so they read '3 and 4' or '3, 4 and 6'
 const separator = (i: number, n: number) => (i === 0 ? '' : i === n - 1 ? ' and ' : ', ');
 
 // Every player's score and tile count in seat order, the boneyard, the open ends and the board
-export default function Table({ gameState, viewer, showLastMove = false, onDraw, usable, fits, onEnd }: TableProps) {
+export default function Table({ gameState, viewer, showLastMove = false, onDraw, usable, fits, onEnd, startDrop }: TableProps) {
   const { handCounts, playerNames, currentPlayer, winners, lastMove, scores, roundNumber, boneyardCount, set, activePlayers } = gameState;
   const board = boardOf(gameState);
   const begun = board.start !== null;
@@ -79,6 +80,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
         usable={usable}
         fits={fits}
         onEnd={onEnd}
+        startDrop={startDrop}
       />
     </div>
   );

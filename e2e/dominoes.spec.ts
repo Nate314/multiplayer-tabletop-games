@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import {
   agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table
 } from './fixtures.ts';
@@ -342,6 +342,75 @@ test.describe('Dominoes layouts', () => {
     await expect(status(alice)).toHaveText('Bob played 4-6 on the first branch of 4-4');
     await expect(row(alice, 'First branch of 4-4').locator('[title="4-6"]')).toHaveCount(1);
     await expect(endChoice(bob)).toHaveCount(0);
+  });
+
+  test.describe('dragging', () => {
+    // The middle of an element, scrolled into view first: the mouse does not scroll
+    async function centre(locator: Locator) {
+      await locator.scrollIntoViewIfNeeded();
+      const box = await locator.boundingBox();
+      if (!box) throw new Error('nothing to drag');
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    }
+    async function hold(page: Page, from: Locator, dx: number, dy: number) {
+      const { x, y } = await centre(from);
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx, y + dy, { steps: 4 });
+    }
+    // Presses on `from`, moves to `to` in 8 steps and releases
+    async function dragTile(page: Page, from: Locator, to: Locator) {
+      const start = await centre(from);
+      await page.mouse.move(start.x, start.y);
+      await page.mouse.down();
+      const end = await centre(to);
+      await page.mouse.move(end.x, end.y, { steps: 8 });
+      await page.mouse.up();
+    }
+    const ghost = (page: Page) => page.locator('.drag-ghost');
+
+    test('a tile dragged onto a highlighted end is played there, and its ends light up while it is held', async ({ seat }) => {
+      const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], {});
+      await deal(table, { hands: { 1: [[4, 4], [0, 0]], 2: [[4, 6], [1, 1]] }, boneyard: [[2, 2]] });
+      await play(alice, 4, 4);
+      await hold(bob, handTile(bob, 4, 6), 20, -20);
+      await expect(ghost(bob)).toHaveCount(1);
+      await expect(bob.locator('.end-slot-fits')).toHaveCount(3);
+      const target = bob.locator('[aria-label="Open end: Second branch of 4-4 (4)"]');
+      const end = await centre(target);
+      await bob.mouse.move(end.x, end.y, { steps: 8 });
+      await bob.mouse.up();
+      await expect(status(alice)).toHaveText('Bob played 4-6 on the second branch of 4-4');
+      await expect(ghost(bob)).toHaveCount(0);
+    });
+
+    test('a tile dropped away from an open end goes back and nothing is sent', async ({ seat }) => {
+      const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], {});
+      await deal(table, { hands: { 1: [[4, 4], [0, 0]], 2: [[4, 6], [1, 1]] }, boneyard: [[2, 2]] });
+      await play(alice, 4, 4);
+      await expect(usable(bob)).toHaveCount(4);
+      const before = JSON.stringify(await table.state<GameState>());
+      await dragTile(bob, handTile(bob, 4, 6), bob.locator('.players'));
+      await expect(ghost(bob)).toHaveCount(0);
+      await expect(handTile(bob, 4, 6)).toBeVisible();
+      await expect(bob.locator('.end-slot-fits')).toHaveCount(0);
+      expect(JSON.stringify(await table.state<GameState>())).toBe(before);
+    });
+
+    test('the first tile can be dragged onto the empty board', async ({ seat }) => {
+      const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], {});
+      await deal(table, { hands: { 1: [[4, 4], [0, 0]], 2: [[4, 6], [1, 1]] }, boneyard: [[2, 2]], line: [] });
+      await dragTile(alice, handTile(alice, 4, 4), alice.locator('.board-start'));
+      await expect(status(bob)).toContainText('Alice played 4-4');
+    });
+
+    test('off turn, tiles do not lift', async ({ seat }) => {
+      const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob'], {});
+      await deal(table, { hands: { 1: [[4, 5], [1, 1]], 2: [[4, 6]] }, current: 2 });
+      await hold(alice, handTile(alice, 4, 5), 20, -20);
+      await expect(ghost(alice)).toHaveCount(0);
+      await alice.mouse.up();
+    });
   });
 
   test('clicking a selected tile again puts it back', async ({ seat }) => {

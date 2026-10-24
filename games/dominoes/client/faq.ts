@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Which tiles can I play?',
-    answer: 'A tile with a number that matches an open end of any arm of the line. It is flipped to fit, so the matching half touches the line. Playable tiles are raised and outlined; the rest are dimmed. The table lists the open ends, and on your turn the ends you may play on are highlighted on the board.'
+    answer: 'A tile with a number that matches an open end of any arm of the line. It is flipped to fit, so the matching half touches the line. Playable tiles are raised and outlined; the rest are dimmed. Drag a tile onto a highlighted open end to play it there, or click it. The table lists the open ends, and on your turn the ends you may play on are highlighted on the board.'
   },
   {
     question: 'What do the branching settings do?',

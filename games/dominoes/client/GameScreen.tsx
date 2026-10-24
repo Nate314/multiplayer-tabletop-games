@@ -6,6 +6,7 @@ import Table from './Table';
 import Tile from './Tile';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import { useDrag } from './useDrag.ts';
 import animateMove, { handKey } from './animateMove.ts';
 import { boardOf, endLabel, openEnd, pendingArms } from '../board.ts';
 import { layoutOf, legalPlays, stuckMove, tilePips, usableEnds } from '../rules.ts';
@@ -54,8 +55,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   function playTile(tile: number) {
     const ends = endsFor(tile);
     if (choosing === tile) setChoosing(null);
-    else if (ends.length === 1) gameService.makeMove({ type: 'play', tile, end: ends[0] });
-    else setChoosing(tile);
+    else if (ends.length === 1) {
+      setChoosing(null); // a tile selected earlier is not left selected under the one just played
+      gameService.makeMove({ type: 'play', tile, end: ends[0] });
+    } else setChoosing(tile);
   }
 
   function playOn(end: number) {
@@ -63,6 +66,21 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     gameService.makeMove({ type: 'play', tile: choosing, end });
     setChoosing(null);
   }
+
+  // Dragging a tile: the ends it fits light up while it is held (without the end-choice panel a selection shows); dropping on one plays it there
+  const drag = useDrag({
+    canLift: id => isMyTurn && plays.some(option => option.tile === Number(id)),
+    canDrop: (id, target) => endsFor(Number(id)).some(end => target === `end-${end}` || (target === 'start' && !roundBegun)),
+    onDrop: (id, target) => {
+      const ends = endsFor(Number(id));
+      const end = target === 'start' ? ends[0] : Number(target.slice('end-'.length));
+      setChoosing(null);
+      gameService.makeMove({ type: 'play', tile: Number(id), end });
+    },
+    onCancel: () => setChoosing(null)
+  });
+
+  const held = drag.dragging === null ? choosing : Number(drag.dragging);
 
   let hint: string | null = null;
   if (isMyTurn) {
@@ -102,8 +120,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           viewer={playerNumber}
           onDraw={canDraw ? () => gameService.makeMove({ type: 'draw' }) : undefined}
           usable={usable}
-          fits={choosing === null ? [] : endsFor(choosing)}
+          fits={held === null ? [] : endsFor(held)}
           onEnd={playOn}
+          startDrop={isMyTurn && !roundBegun}
         />
         {choosing !== null && (
           <div className="end-choice" role="group" aria-label="Choose an end">
@@ -126,6 +145,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                 playable={isMyTurn && plays.some(option => option.tile === tile)}
                 selected={choosing === tile}
                 onClick={() => playTile(tile)}
+                dragProps={drag.source(String(tile))}
               />
             ))}
           </div>

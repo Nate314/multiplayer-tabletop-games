@@ -31,7 +31,7 @@ Match tile ends to build a line that branches at doubles (or a single line, by h
 
 ## Controls
 
-- Playable tiles in your hand are raised and outlined; click one to play it. If it fits more than one end, it is selected: click one of the open ends it fits on the board, or one of the buttons that ask which end (on a single line, the Left end or the Right end). Cancel, or clicking the tile again, puts it back
+- Playable tiles in your hand are raised and outlined; drag one onto a highlighted open end to play it there (the ends it fits light up while you hold it, and the empty board takes the first tile), or click it to play it. Dropping anywhere else, or pressing Escape, puts the tile back. If a clicked tile fits more than one end, it is selected: click one of the open ends it fits on the board, or one of the buttons that ask which end (on a single line, the Left end or the Right end). Cancel, or clicking the tile again, puts it back
 - On your turn the open ends you may play on are highlighted. With Chickenfoot only the ends of an unfinished double are, and the hint says which double to finish; with Trains, only your own train, the Mexican train and open trains
 - Click Draw, or the boneyard, to draw when nothing fits. Click Pass when nothing fits and the boneyard is empty, or, with Trains, when the tile you drew does not fit
 - The table shows the round, every player's tile count and score in seat order, the boneyard, the open ends and the board. The player whose turn it is is outlined
