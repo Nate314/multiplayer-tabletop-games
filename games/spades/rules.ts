@@ -16,6 +16,7 @@
 //   count toward the contract.
 // - The first team to 500 wins; a team that falls to -200 loses. On a tie another hand is played.
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -31,7 +32,10 @@ export { SEATS, nextSeat, teamNames, teamOf, teamSeats };
 
 export const HAND_SIZE = 13;
 export const MAX_BID = 13;
-export const TARGET_SCORE = 500;
+const TARGET_RULE = targetScoreRule(500, [250, 300]);
+export const SPADES_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const LOSING_SCORE = -200;
 export const BAG_LIMIT = 10;
 const BAG_PENALTY = 100;
@@ -173,11 +177,11 @@ function endHand(state: GameState): GameState {
   const outcome = `${names(0)} score ${signed(teams[0].change)}, ${names(1)} score ${signed(teams[1].change)}`;
   const top = Math.max(...scores);
   const bottom = Math.min(...scores);
-  if (top < TARGET_SCORE && bottom > LOSING_SCORE) return { ...scored, gameStatus: outcome };
+  if (top < targetScore(state) && bottom > LOSING_SCORE) return { ...scored, gameStatus: outcome };
   if (scores[0] === scores[1]) return { ...scored, gameStatus: `${outcome}. Both teams are tied at ${top}, so another hand is played` };
   const winner: Team = scores[0] > scores[1] ? 0 : 1;
   const loser: Team = winner === 0 ? 1 : 0;
-  const gameStatus = top >= TARGET_SCORE
+  const gameStatus = top >= targetScore(state)
     ? `${names(winner)} win with ${top} points!`
     : `${names(loser)} fell to ${bottom}: ${names(winner)} win`;
   return { ...scored, isGameOver: true, winners: teamSeats(winner), gameStatus };

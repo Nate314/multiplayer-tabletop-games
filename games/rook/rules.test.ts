@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import {
-  BID_STEP, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, TARGET_SCORE, buildDeck, canPlayCard, cardName, cardPoints,
+  BID_STEP, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, targetScore, buildDeck, canPlayCard, cardName, cardPoints,
   createGameState, dealHand, handPoints, teamOf, toPublicState, trickWinner
 } from './rules.ts';
 import { rook } from './index.ts';
@@ -274,7 +275,7 @@ test('the last trick takes the nest', () => {
   assert.equal(next.currentPlayer, null);
 });
 
-function lastTrickOf(captured: [number, number], bid: number, scores: [number, number] = [0, 0]): GameState {
+function lastTrickOf(captured: [number, number], bid: number, scores: [number, number] = [0, 0], overrides: Partial<GameState> = {}): GameState {
   // Seat 1 leads a 13, nobody else can beat it, and the trick holds no counters: team 0 takes the last trick and an empty nest
   const state = game({
     hands: { 1: [red(13)], 2: [green(13)], 3: [green(12)], 4: [green(11)] },
@@ -283,7 +284,8 @@ function lastTrickOf(captured: [number, number], bid: number, scores: [number, n
     tricksWon: [4, 4],
     bid,
     bidding: { high: { seat: 1, amount: bid }, passed: [2, 3, 4] },
-    scores
+    scores,
+    ...overrides
   });
   let next = state;
   for (const [seat, card] of [[1, red(13)], [2, green(13)], [3, green(12)], [4, green(11)]] as const) {
@@ -335,7 +337,7 @@ test('when both teams pass 500 the higher total wins, and a tie plays on', () =>
   const tie = lastTrickOf([70, 50], 70, [450, 470]);
   assert.equal(tie.isGameOver, false);
   assert.match(tie.gameStatus, /tied/);
-  assert.equal(TARGET_SCORE, 500);
+  assert.equal(targetScore({}), 500);
 });
 
 test('the next hand does not wait for disconnected players', () => {
@@ -442,4 +444,15 @@ test('describes moves for the status line', () => {
   state = ok(move(state, 1, { type: 'play', card: red(6) }));
   assert.equal(state.gameStatus, 'Alice played red 6');
   assert.equal(cardName(ROOK), 'the Rook');
+});
+
+test('the game ends at the chosen target', () => {
+  const rules = { houseRules: withRules({ targetScore: 300 }) };
+  const won = lastTrickOf([80, 40], 80, [230, 0], rules); // the bidders make 80: 230 + 80
+  assert.equal(won.isGameOver, true);
+  assert.deepEqual(won.winners, [1, 3]);
+  const short = lastTrickOf([80, 40], 80, [219, 0], rules);
+  assert.equal(short.isGameOver, false);
+  const standard = lastTrickOf([80, 40], 80, [230, 0], { houseRules: withRules({ targetScore: 500 }) });
+  assert.equal(standard.isGameOver, false);
 });

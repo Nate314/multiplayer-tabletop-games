@@ -15,6 +15,7 @@
 // - Scoring: makers taking 3 or 4 tricks score 1, all 5 (a march) 2, a lone march 4. Makers who take fewer than 3
 //   are euchred and the defenders score 2. Games are played to 5, 7 or 10; this game plays to 10.
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { cardName, rankValue, sameCard, standardDeck, SUITS } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -34,7 +35,10 @@ export const RANKS: Card['rank'][] = ['9', '10', 'J', 'Q', 'K', 'A'];
 export const HAND_SIZE = 5;
 export const KITTY_SIZE = 3; // face down under the turned-up card
 export const TRICKS = 5;
-export const TARGET_SCORE = 10;
+const TARGET_RULE = targetScoreRule(10, [5, 15]);
+export const EUCHRE_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const SUIT_SYMBOLS: Record<Suit, string> = { clubs: '♣', diamonds: '♦', hearts: '♥', spades: '♠' };
 
 export function buildDeck(): Card[] {
@@ -263,7 +267,7 @@ function endHand(state: GameState): GameState {
   const scores: TeamScores = [state.scores[0] + change[0], state.scores[1] + change[1]];
   const summary: HandSummary = { handNumber: state.handNumber, maker, alone: state.alone, tricks: state.tricksWon, change, acknowledged: [] };
   const scored: GameState = { ...state, phase: 'handOver', scores, currentPlayer: null, roundSummary: summary, gameStatus: outcome };
-  const winner = ([0, 1] as Team[]).find(team => scores[team] >= TARGET_SCORE);
+  const winner = ([0, 1] as Team[]).find(team => scores[team] >= targetScore(state));
   if (winner === undefined) return scored;
   return {
     ...scored,

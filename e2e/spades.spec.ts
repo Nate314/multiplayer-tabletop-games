@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { cardName } from '../shared/playingCards.ts';
 import type { Card, GameState, Seat as SeatNumber, Suit, TeamScores } from '../games/spades/types.ts';
 
@@ -15,8 +15,8 @@ const D = card('diamonds');
 const BIDS = { 1: 3, 2: 4, 3: 2, 4: 3 };
 const NO_TRICKS = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
-async function start(seat: Seat): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('spades', ['Alice', 'Bob', 'Cara', 'Dan']);
+async function start(seat: Seat, options?: SeatOptions): Promise<{ table: Table; pages: Page[] }> {
+  const table = await seat('spades', ['Alice', 'Bob', 'Cara', 'Dan'], options);
   return { table, pages: table.pages };
 }
 
@@ -71,7 +71,7 @@ const team = (page: Page, which: 0 | 1) => page.locator(`.scoreboard .team-${whi
 const bidButton = (page: Page) => page.getByRole('button', { name: /^Bid / });
 
 async function bid(page: Page, tricks: number): Promise<void> {
-  await page.getByRole('combobox').selectOption(String(tricks));
+  await page.getByRole('combobox', { name: 'Tricks', exact: true }).selectOption(String(tricks));
   await page.getByRole('button', { name: `Bid ${tricks === 0 ? 'nil' : tricks}`, exact: true }).click();
 }
 
@@ -112,7 +112,7 @@ test.describe('Spades rules', () => {
     const { pages: [alice, bob, cara, dan] } = await start(seat);
     await expect(turn(alice)).toHaveText(/^Your turn/);
     await expect(bidButton(bob)).toHaveCount(0);
-    await expect(alice.getByRole('combobox').locator('option')).toHaveText(['Nil', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']);
+    await expect(alice.getByRole('combobox', { name: 'Tricks', exact: true }).locator('option')).toHaveText(['Nil', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']);
     await bid(alice, 4);
     await bid(bob, 0);
     await bid(cara, 13);
@@ -289,6 +289,15 @@ test.describe('Spades rules', () => {
     await expect(turn(alice)).toHaveText('Game over');
     await expect(alice.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, { houseRules: { targetScore: 250 } });
+    await lastTrick(table, { scores: [200, 0] });
+    await playLastTrick(pages);
+    await expect(status(pages[1])).toHaveText('Alice and Cara win with 252 points!');
+    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins; a team at -200 loses');
+    await expect(turn(pages[1])).toHaveText('Game over');
+  });
 });
 
 test.describe('Spades controls', () => {
@@ -296,9 +305,9 @@ test.describe('Spades controls', () => {
     const { pages: [alice, bob] } = await start(seat);
     await expect(bidButton(bob)).toHaveCount(0);
     await expect(bidButton(alice)).toHaveText('Bid 1');
-    await alice.getByRole('combobox').selectOption('0');
+    await alice.getByRole('combobox', { name: 'Tricks', exact: true }).selectOption('0');
     await expect(bidButton(alice)).toHaveText('Bid nil');
-    await alice.getByRole('combobox').selectOption('6');
+    await alice.getByRole('combobox', { name: 'Tricks', exact: true }).selectOption('6');
     await bidButton(alice).click();
     await expect(seatOf(bob, 'Alice').locator('.seat-bid')).toHaveText('bid 6');
     await expect(status(bob)).toHaveText('Alice bid 6');
@@ -391,7 +400,7 @@ test.describe('Spades differences from Wikipedia', () => {
     const { pages: [alice] } = await start(seat);
     await expect(alice.locator('.action-buttons button')).toHaveText([/^Bid /, 'Undo']);
     await expect(alice.getByRole('button', { name: /blind/i })).toHaveCount(0);
-    await expect(alice.getByRole('combobox').locator('option')).toHaveCount(14);
+    await expect(alice.getByRole('combobox', { name: 'Tricks', exact: true }).locator('option')).toHaveCount(14);
   });
 
   test('the shuffled deck is split into four hands, seat 4 deals first and the deal passes to the left', async ({ seat }) => {

@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { UNO_RULES, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const uno: GameDefinition<GameState, PublicGameState> = {
@@ -10,7 +10,8 @@ export const uno: GameDefinition<GameState, PublicGameState> = {
     name: 'UNO',
     description: 'Match colors and numbers, empty your hand and be first to 500 points',
     minPlayers: 2,
-    maxPlayers: 8
+    maxPlayers: 8,
+    houseRules: UNO_RULES
   },
   createGameState,
   resetLobby,

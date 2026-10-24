@@ -1,7 +1,7 @@
 import PlayingCard from '../../../src/components/PlayingCard';
 import { plural } from '../../../shared/text.ts';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
-import { SEATS, TARGET_SCORE, nextSeat, passDirection, passPhrase } from '../rules.ts';
+import { SEATS, targetScore, nextSeat, passDirection, passPhrase } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -43,7 +43,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         ))}
       </ol>
       <div className="hand-info">
-        <span>Hand {handNumber}, game ends at {TARGET_SCORE}</span>
+        <span>Hand {handNumber}, game ends at {targetScore(gameState)}</span>
         <span>{direction === 'none' ? 'No pass this hand' : `Pass: ${direction}`}</span>
         <span className="hearts-broken">{heartsBroken ? 'Hearts broken' : 'Hearts not broken'}</span>
       </div>

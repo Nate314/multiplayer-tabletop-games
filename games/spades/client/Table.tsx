@@ -1,6 +1,6 @@
 import PlayingCard from '../../../src/components/PlayingCard';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
-import { SEATS, TARGET_SCORE, bidName, nextSeat, teamNames, teamOf, teamSeats } from '../rules.ts';
+import { SEATS, targetScore, bidName, nextSeat, teamNames, teamOf, teamSeats } from '../rules.ts';
 import type { PublicGameState, Seat, Team } from '../types.ts';
 
 type TableProps = {
@@ -49,7 +49,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         })}
       </div>
       <div className="hand-info">
-        <span>Hand {handNumber}, first to {TARGET_SCORE}</span>
+        <span>Hand {handNumber}, first to {targetScore(gameState)}</span>
         <span className="spades-broken">{spadesBroken ? 'Spades are broken' : 'Spades not broken yet'}</span>
       </div>
       {seated && (

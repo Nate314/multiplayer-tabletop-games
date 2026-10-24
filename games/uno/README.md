@@ -1,6 +1,6 @@
 # UNO
 
-Match colors and numbers, empty your hand to score the cards left in the others, and reach 500 points first, for 2 to 8 players.
+Match colors and numbers, empty your hand to score the cards left in the others, and reach the target score first (500 unless the host chose another), for 2 to 8 players.
 
 ## Rules
 
@@ -12,7 +12,7 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 - Skip: the next player loses their turn. Reverse: play changes direction (with two players it acts as a Skip). Draw Two: the next player draws 2 cards and loses their turn
 - **Wild Draw Four.** You choose the color, and it may be played only if you hold no card of the current color (cards matching only the number, and Wilds, do not count). The game lets you play it anyway, as in the physical game. The next player either accepts, drawing 4 and losing their turn, or challenges. On a challenge only the challenger sees your hand. If you held a card of that color you draw 4 instead and the challenger takes their turn; otherwise the challenger draws 6 and loses their turn
 - **UNO.** Call UNO when you play your second-to-last card. A late call still counts if nobody has caught you yet. Until the next player makes their move, any other player may catch a player who has not called it, and the caught player draws 2
-- **Scoring.** A round ends when a player plays their last card. If it is a Draw Two or Wild Draw Four the next player draws those cards first. The player who went out scores the cards left in everyone else's hands: number cards at face value, Skip, Reverse and Draw Two 20 each, Wild and Wild Draw Four 50 each. A scoring screen shows the round, and the next round is dealt once every connected player has pressed Continue (disconnected players are not waited for). The first player to reach 500 points wins
+- **Scoring.** A round ends when a player plays their last card. If it is a Draw Two or Wild Draw Four the next player draws those cards first. The player who went out scores the cards left in everyone else's hands: number cards at face value, Skip, Reverse and Draw Two 20 each, Wild and Wild Draw Four 50 each. A scoring screen shows the round, and the next round is dealt once every connected player has pressed Continue (disconnected players are not waited for). The first player to reach the target score wins (500 unless the host chose another)
 - When the draw pile runs out, the discards except the top card are shuffled into a new draw pile
 - You see only your own hand and how many cards everyone else holds, apart from a hand you challenge. The draw pile is hidden from everyone
 - A dismissed player's cards go to the bottom of the draw pile and their turns are skipped. A Wild Draw Four played by or on them is dropped. The last player left wins
@@ -32,9 +32,9 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 
 ## Differences from Wikipedia
 
-These follow the classic official rules described on [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)), which play to 500 points. What remains different:
+These follow the classic official rules described on [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)), which play to 500 points. The host can choose 250 or 1,000 instead, and everyone must agree to that before play starts. What remains different:
 
-- **House rules are not offered.** Stacking Draw Twos or Wild Draw Fours, Seven-O, Jump-In and other house rules Wikipedia lists are not part of the official rules and are not available
+- **Other house rules are not offered.** Stacking Draw Twos or Wild Draw Fours, Seven-O, Jump-In and other house rules Wikipedia lists are not part of the official rules and are not available
 - **Mattel's 2022 rule changes are not followed.** Since 2022 the official goal is just to go out first in a single hand, there is no official way to choose the dealer, and a starting action card or Wild is ignored and another card flipped until a number card appears. This game keeps the classic rules instead: play to 500, cut for the dealer, and starting cards take effect
 - **Cutting for the dealer.** Wikipedia says only that the highest number deals. Here a card that is not a number counts lowest and tied players draw again
 - **Calling and catching UNO.** At a table a player shouts "UNO" and anyone may catch them. Here the call is a button, and the catch window closes when any move is made, which is the next player beginning their turn

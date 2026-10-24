@@ -15,6 +15,7 @@
 //   player takes 26 instead.
 // - The game ends when a player reaches 100; the lowest score wins, and equal lowest scores share the win.
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -30,7 +31,10 @@ export { SEATS, nextSeat };
 
 export const HAND_SIZE = 13;
 export const PASS_SIZE = 3;
-export const TARGET_SCORE = 100;
+const TARGET_RULE = targetScoreRule(100, [50, 75, 150]);
+export const HEARTS_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const MOON = 26;
 const PASS_CYCLE: PassDirection[] = ['left', 'right', 'across', 'none'];
 const TWO_OF_CLUBS: PlayingCard = { suit: 'clubs', rank: '2' };
@@ -167,7 +171,7 @@ function endHand(state: GameState): GameState {
   const summary: HandSummary = { handNumber: state.handNumber, taken: state.taken, change, moon, acknowledged: [] };
   const scored: GameState = { ...state, phase: 'handOver', scores, currentPlayer: null, roundSummary: summary };
   const outcome = moon === null ? `Hand ${state.handNumber} is scored` : `${state.playerNames[moon]} shot the moon: everyone else takes ${MOON}`;
-  if (Math.max(...Object.values(scores)) < TARGET_SCORE) return { ...scored, gameStatus: outcome };
+  if (Math.max(...Object.values(scores)) < targetScore(state)) return { ...scored, gameStatus: outcome };
   const { winners, text } = lowest(scored, SEATS);
   return { ...scored, isGameOver: true, winners, gameStatus: text };
 }

@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
-import { legalPlays, targetScore } from './rules.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { legalPlays, standardTarget } from './rules.ts';
 import { dominoes } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -25,6 +25,7 @@ function seeded(seed: number): Random {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([dominoes], seeded(1)));
   for (const name of names) manager.join('dominoes', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -135,7 +136,7 @@ test('a whole game played with legal moves ends when someone reaches the target 
   for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
   assert.equal(state.isGameOver, true);
   assert.equal(state.winners.length, 1);
-  assert.ok(state.scores[state.winners[0]] >= targetScore(4));
+  assert.ok(state.scores[state.winners[0]] >= standardTarget(4));
   assert.ok(state.roundNumber >= 1);
 });
 

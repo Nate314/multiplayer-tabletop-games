@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'You and your partner, who sits across from you, try to take at least three of the five tricks when your team makes trump. Seats 1 and 3 play against seats 2 and 4. The first team to reach 10 points wins.'
+    answer: 'You and your partner, who sits across from you, try to take at least three of the five tricks when your team makes trump. Seats 1 and 3 play against seats 2 and 4. The first team to reach the target score (10 unless the host chose another) wins.'
   },
   {
     question: 'What is in the deck?',
@@ -36,5 +36,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose a target score of 5, 10 or 15 points. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

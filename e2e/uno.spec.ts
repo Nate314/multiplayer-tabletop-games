@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/uno/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
 
@@ -71,8 +71,8 @@ async function deal(table: Table, { hands, discard, color, drawPile = GREENS, cu
   });
 }
 
-async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara']) {
-  const table = await seat('uno', names);
+async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara'], options?: SeatOptions) {
+  const table = await seat('uno', names, options);
   return { table, pages: table.pages };
 }
 
@@ -471,6 +471,17 @@ test.describe('UNO rules', () => {
     await expect(handCard(alice, 'red 7')).toBeEnabled();
     await expect(discardTop(alice)).toHaveAttribute('title', 'red 5');
     await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, ['Dan', 'Eve'], { houseRules: { targetScore: 250 } });
+    await expect(pages[0].locator('.round')).toHaveText('Round 1: first to 250 points wins');
+    await deal(table, { hands: { 1: [c('red', '7')], 2: [WILD] }, discard: [c('red', '5')], scores: { 1: 200, 2: 100 } });
+    await play(pages[0], 'red 7');
+    await expect(scoring(pages[1]).locator('h2')).toHaveText('Final scoring');
+    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins');
+    await expect(scoring(pages[1]).locator('.summary-result')).toHaveText('Dan went out and wins with 250 points!');
+    await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
   });
 });
 

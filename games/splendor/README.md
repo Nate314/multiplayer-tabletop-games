@@ -1,6 +1,6 @@
 # Splendor
 
-Collect gems, buy development cards and attract nobles to reach 15 prestige, for 2 to 4 players.
+Collect gems, buy development cards and attract nobles to reach the prestige to win (15 unless the host chose another), for 2 to 4 players.
 
 ## Rules
 
@@ -14,7 +14,7 @@ Collect gems, buy development cards and attract nobles to reach 15 prestige, for
 - **Buying.** Each card you own is a permanent bonus of its color and lowers the cost of later cards by one gem of that color. Gold pays for any missing gem. Spent tokens go back to the supply. A face-up card that is bought or reserved is replaced from its deck; when the deck is empty the space stays empty
 - **10 tokens.** A player who ends their turn with more than 10 tokens, gold included, gives back tokens of their choice until they have 10
 - **Nobles.** At the end of your turn, a noble whose cost your card bonuses meet visits you and is yours. Only one noble visits per turn; if several qualify you choose one, and the others may come on later turns. A visit cannot be refused
-- **End of the game.** When a player reaches 15 prestige at the end of their turn, the round is finished so everyone has had the same number of turns. Then the most prestige wins; a tie goes to the player who bought the fewest development cards, then to the fewest reserved cards, and a tie on all three is shared
+- **End of the game.** When a player reaches the prestige to win (15 unless the host chose 10 or 21) at the end of their turn, the round is finished so everyone has had the same number of turns. Then the most prestige wins; a tie goes to the player who bought the fewest development cards, then to the fewest reserved cards, and a tie on all three is shared
 - **Hidden information.** Nobody sees the order of the decks. A card reserved from the top of a deck is shown to the others only as a card back of its level; its owner sees it
 - **Leaving.** A dismissed player's tokens go back to the supply and their reserved cards leave the game; their bought cards and nobles stay on show and their turns are skipped. If it was their turn, the turn ends there, including any token return or noble choice they had left. If that turn was the last of the final round, the game ends. The last player left wins
 - Any player can ask to undo the last move. It is undone only if every player still in the game approves. Giving back tokens and choosing a noble are moves of their own

@@ -1,6 +1,7 @@
 // Rack-O rules shared by the browser (move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Rack-O, and the target score of 500 from the official rules.
 import { viewHand } from '../../shared/hands.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -12,7 +13,10 @@ import type { Card, GameState, LastMove, Move, Pile, PublicGameState, Result, Ro
 export const RACK_SIZE = 10;
 export const RACKO_POINTS = 75;
 export const CARD_POINTS = 5;
-export const TARGET_SCORE = 500;
+const TARGET_RULE = targetScoreRule(500, [250, 1000]);
+export const RACKO_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 
 // Wikipedia, Game play: cards 1 to 40 with two players, 1 to 50 with three, the whole 60 with four
 export function deckSize(players: number): number {
@@ -183,7 +187,7 @@ function endRound(state: GameState, caller: Seat, lastMove: LastMove): GameState
   const scores = Object.fromEntries(state.activePlayers.map(seat => [seat, state.scores[seat] + points[seat]]));
   const roundSummary: RoundSummary = { round: state.round, caller, points, racks: state.racks, acknowledged: [] };
   const top = Math.max(...Object.values(scores));
-  const over = top >= TARGET_SCORE;
+  const over = top >= targetScore(state);
   const winners = over ? state.activePlayers.filter(seat => scores[seat] === top) : [];
   const name = state.playerNames[caller];
   const status = over

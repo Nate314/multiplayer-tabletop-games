@@ -9,7 +9,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What is the goal?',
-    answer: 'Be the first to reach 10 points on your own turn. A settlement is 1 point, a city 2, each Victory Point card ' +
+    answer: 'Be the first to reach the points to win (10 unless the host chose another) on your own turn. A settlement is 1 point, a city 2, each Victory Point card ' +
       '1, and the Longest Road and Largest Army cards 2 each.'
   },
   {
@@ -76,5 +76,9 @@ export const FAQS: FaqItem[] = [
     question: 'Can we undo a move?',
     answer: 'Click Undo to ask everyone. The move is undone only if every player still in the game approves. Discards and ' +
       'trades are not moves, so an undo goes back past them too, and a roll played again may come up differently.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose the points to win: 8, 10 or 12. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

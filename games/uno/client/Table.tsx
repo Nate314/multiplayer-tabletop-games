@@ -1,7 +1,7 @@
 import Card from './Card';
 import { DISCARD_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
-import { TARGET_SCORE } from '../rules.ts';
+import { targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -28,7 +28,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
 
   return (
     <div className="table">
-      <div className="round">Round {roundNumber}: first to {TARGET_SCORE} points wins</div>
+      <div className="round">Round {roundNumber}: first to {targetScore(gameState)} points wins</div>
       <div className="direction">
         Direction: <span className="direction-arrow" aria-hidden="true">{arrow}</span> {direction === 1 ? 'in seat order' : 'reversed'}
       </div>

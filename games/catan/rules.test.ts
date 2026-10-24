@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import { EDGES, HEX_VERTICES, VERTEX_COUNT, VERTEX_EDGES, VERTEX_HEXES } from './board.ts';
 import { settlementSpotError } from './building.ts';
 import { longestRoadOf } from './roads.ts';
 import { createGameState, toPublicState } from './rules.ts';
+import { winningPoints } from './state.ts';
 import { resources, total } from './resources.ts';
 import { catan } from './index.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -541,4 +543,19 @@ test('table view hides hands over every step of a short game', () => {
       assert.deepEqual(toPublicState(step, false, seat).hand, step.hands[seat]);
     }
   }
+});
+
+test('the game ends at the chosen points', () => {
+  // Four cities and a settlement is 9 points; a Development Card that is not a Victory Point card adds none
+  const buildings = Object.fromEntries([0, 2, 4].map(k => [corner(9, k), city(1)]).concat([[corner(0, 0), city(1)], [corner(2, 0), settlement(1)]]));
+  const buy = (target: number) => played(holding(
+    rolled({ buildings, devDeck: ['knight'], houseRules: withRules({ targetScore: target }) }), 1, { sheep: 1, wheat: 1, ore: 1 }
+  ), 1, { type: 'buyDevCard' });
+  const won = buy(8);
+  assert.equal(won.isGameOver, true);
+  assert.deepEqual(won.winners, [1]);
+  assert.match(won.gameStatus, /Alice wins with 9 points/);
+  assert.equal(buy(10).isGameOver, false);
+  assert.equal(buy(12).isGameOver, false);
+  assert.equal(winningPoints({}), 10);
 });

@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import {
   buildDeck, canPlay, cardName, cardPoints, createGameState, cutForDealer, dealRound, handPoints, sameCard, stepFrom,
-  toPublicState
+  targetScore, toPublicState
 } from './rules.ts';
 import { uno } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -558,4 +559,16 @@ test('a Wild Draw Four waiting on a player who leaves is dropped', () => {
   assert.equal(left.pendingFour, null);
   assert.equal(left.currentPlayer, 3);
   assert.equal(ok(play(left, 3, blue('3'))).currentPlayer, 1);
+});
+
+test('the game ends at the chosen target', () => {
+  const finish = (mine: number, target: number) =>
+    ok(play(withHand(1, [red('7')], { scores: { 1: mine, 2: 0, 3: 0 }, houseRules: withRules({ targetScore: target }) }), 1, red('7')));
+  const over = finish(240, 250); // going out is worth 10
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [1]);
+  assert.equal(over.gameStatus, 'Alice went out and wins with 250 points!');
+  assert.equal(finish(239, 250).isGameOver, false);
+  assert.equal(finish(240, 500).isGameOver, false);
+  assert.equal(targetScore({}), 500);
 });

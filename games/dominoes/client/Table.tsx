@@ -22,7 +22,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
 
   return (
     <div className="table">
-      <div className="round">Round {roundNumber}: first to {targetScore(seats.length)} points wins ({set === 6 ? 'double-six' : 'double-nine'})</div>
+      <div className="round">Round {roundNumber}: first to {targetScore(gameState)} points wins ({set === 6 ? 'double-six' : 'double-nine'})</div>
       <ol className="players">
         {seats.map(seat => {
           const count = handCounts[seat];

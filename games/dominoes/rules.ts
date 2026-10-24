@@ -1,4 +1,5 @@
 // Dominoes rules shared by the browser (playable tiles) and the server (validation).
+import { houseRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -12,7 +13,24 @@ import type {
 
 export const SETS: SetSize[] = [6, 9];
 export const DEFAULT_SET: SetSize = 6;
-export const targetScore = (players: number) => (players === 2 ? 100 : 61);
+export const standardTarget = (players: number) => (players === 2 ? 100 : 61);
+
+const TARGET_RULE: ChoiceRule = {
+  id: 'targetScore', label: 'Target score', kind: 'choice', standard: 'standard',
+  choices: [
+    { value: 'standard', label: '100 for 2 players, 61 for 3 or 4' },
+    { value: 61, label: '61' },
+    { value: 100, label: '100' },
+    { value: 150, label: '150' },
+    { value: 200, label: '200' }
+  ]
+};
+export const DOMINOES_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules' | 'activePlayers'>): number => {
+  const chosen = houseRule(state, TARGET_RULE);
+  return typeof chosen === 'number' ? chosen : standardTarget(state.activePlayers.length);
+};
 
 // Wikipedia's Dominoes article is silent on hand sizes and target scores for the Draw game, so these follow Pagat's Draw
 // Dominoes (pagat.com/domino/draw.html): with double-six each player draws 7 tiles, 6 with four players, so a boneyard is
@@ -209,7 +227,7 @@ function endRound(state: GameState, wentOut: Seat | null): GameState {
 
   const name = state.playerNames[winner];
   const total = scored.scores[winner];
-  if (total >= targetScore(players.length)) return { ...scored, isGameOver: true, winners: [winner], gameStatus: `${name} wins with ${total} points!` };
+  if (total >= targetScore(state)) return { ...scored, isGameOver: true, winners: [winner], gameStatus: `${name} wins with ${total} points!` };
   const cause = wentOut === null ? `The round is blocked: ${name} has the lowest total and` : `${name} went out and`;
   return { ...scored, gameStatus: `${cause} scores ${points} points. Waiting for everyone to continue.` };
 }

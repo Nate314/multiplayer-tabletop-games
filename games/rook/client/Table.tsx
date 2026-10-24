@@ -1,6 +1,6 @@
 import Card from './Card';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
-import { SEATS, TARGET_SCORE, nextSeat, teamNames, teamOf } from '../rules.ts';
+import { SEATS, targetScore, nextSeat, teamNames, teamOf } from '../rules.ts';
 import type { PublicGameState, Seat, Team } from '../types.ts';
 
 type TableProps = {
@@ -55,7 +55,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         ))}
       </div>
       <div className="hand-info">
-        <span>Hand {handNumber}, first to {TARGET_SCORE}</span>
+        <span>Hand {handNumber}, first to {targetScore(gameState)}</span>
         {bidder !== null && <span>Bid: {playerNames[bidder]} {bid}</span>}
         <span>
           Trump: {trump ? <><span className={`swatch swatch-${trump}`} /> <span className="color-name">{trump}</span></> : 'not named yet'}

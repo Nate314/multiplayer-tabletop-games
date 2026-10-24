@@ -19,6 +19,7 @@
 //   team scores what it took. The article plays to 300 and gives the win to the higher total if both pass it.
 //   This game plays to 500 (the owner's choice); see the README.
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -42,7 +43,10 @@ export const NEST_SIZE = 5;
 export const MIN_BID = 70;
 export const MAX_BID = 120;
 export const BID_STEP = 5;
-export const TARGET_SCORE = 500;
+const TARGET_RULE = targetScoreRule(500, [300, 1000]);
+export const ROOK_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 const ROOK_POINTS = 20;
 
 export function buildDeck(): Card[] {
@@ -298,7 +302,7 @@ function endHand(state: GameState, lastTrick: Seat): GameState {
   const bidderName = state.playerNames[bidder];
   const outcome = `${bidderName}'s team bid ${bid} and took ${points[bidTeam]}: ${made ? `they score ${points[bidTeam]}` : `they lose ${bid}`}`;
   const top = Math.max(...scores);
-  if (top < TARGET_SCORE) return { ...scored, gameStatus: outcome };
+  if (top < targetScore(state)) return { ...scored, gameStatus: outcome };
   if (scores[0] === scores[1]) return { ...scored, gameStatus: `${outcome}. Both teams are tied at ${top}, so another hand is played` };
   const winner: Team = scores[0] > scores[1] ? 0 : 1;
   return {

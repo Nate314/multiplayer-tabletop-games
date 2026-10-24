@@ -1,6 +1,6 @@
 # Rook
 
-Bid for the nest, name trump and take counters in tricks with your partner, first team to 500, for exactly 4 players. This is the Kentucky Discard version, which Wikipedia calls Tournament Rook.
+Bid for the nest, name trump and take counters in tricks with your partner, first team to the target score (500 unless the host chose another), for exactly 4 players. This is the Kentucky Discard version, which Wikipedia calls Tournament Rook.
 
 ## Rules
 
@@ -14,7 +14,7 @@ Bid for the nest, name trump and take counters in tricks with your partner, firs
 - **The Rook** is the highest trump, whatever color is trump. It may be played at any time, even when you could follow suit. When the Rook is led, everyone must play trump if they can, and when trump is led a player whose only trump is the Rook must play it
 - **Last trick.** Whoever takes the last trick also takes the cards laid aside and the counters in them
 - **Scoring.** If the bidding team took at least its bid, it scores what it took; otherwise it loses the amount of its bid. The other team always scores what it took. Scores can go below zero. A scoring screen shows the hand, and the next hand is dealt once every connected player has pressed Continue (disconnected players are not waited for)
-- **Winning.** The first team to reach 500 wins. If both teams reach it in the same hand the higher total wins; if the totals are equal another hand is played
+- **Winning.** The first team to reach the target score (500 unless the host chose another) wins. If both teams reach it in the same hand the higher total wins; if the totals are equal another hand is played
 - You see only your own hand and how many cards everyone else holds. The nest, the cards laid aside and the counters each team has taken stay hidden until the hand is scored; the number of tricks each team has taken is shown
 - **Leaving.** A disconnected player keeps their seat and the game waits for them on their turn. A dismissed player breaks their partnership, so the game ends and the other team wins
 - Any player can ask to undo the last move. It is undone only if every connected player approves, and only while all four seats are filled. Continue is not a move, so an undo goes back past it
@@ -34,7 +34,7 @@ Bid for the nest, name trump and take counters in tricks with your partner, firs
 
 These follow the Official rules (Tournament Rook, also known as Kentucky Discard) in [Wikipedia's Rook article](https://en.wikipedia.org/wiki/Rook_(card_game)). What is different:
 
-- **Target score.** Wikipedia plays to 300. This game plays to 500, the owner's choice and a common target. If both teams pass it in one hand, the higher total wins as in the article; the article does not cover an equal total, so another hand is played
+- **Target score.** Wikipedia plays to 300. This game plays to 500 unless the host chooses 300 or 1,000 before play starts (everyone must agree), 500 being the owner's choice and a common target. If both teams pass it in one hand, the higher total wins as in the article; the article does not cover an equal total, so another hand is played
 - **No redeal for a pointless hand.** Wikipedia lets a player with no counters call a redeal during bidding. That is not offered here
 - **Everyone passes.** The article does not say what happens if nobody bids. Here the next dealer deals a new hand
 - **Dealing.** The article deals one card at a time with the nest built up between rounds. Here the shuffled deck is split straight into the nest and four hands, which gives the same chances. Who deals first and how the deal moves are not in the article: seat 4 deals first and the deal passes to the left

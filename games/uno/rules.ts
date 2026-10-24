@@ -1,5 +1,6 @@
 // UNO rules shared by the browser (playable cards) and the server (validation).
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -12,7 +13,10 @@ import type {
 
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'blue'];
 export const HAND_SIZE = 7;
-export const TARGET_SCORE = 500;
+const TARGET_RULE = targetScoreRule(500, [250, 1000]);
+export const UNO_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 const NUMBERS: Value[] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const ACTIONS: Value[] = ['skip', 'reverse', 'drawTwo'];
 const WILDS: Value[] = ['wild', 'wildDrawFour'];
@@ -294,7 +298,7 @@ function recorded(state: GameState, lastMove: LastMove): GameState {
 }
 
 // The player who went out scores every card left in the other hands, after the next player has drawn for a last
-// Draw Two or Wild Draw Four. The first to reach TARGET_SCORE wins; otherwise the next round waits for everyone to continue.
+// Draw Two or Wild Draw Four. The first to reach targetScore(state) wins; otherwise the next round waits for everyone to continue.
 function endRound(state: GameState, seat: Seat, card: Card, color: Color, random: Random): GameState {
   const count = DRAWS[card.value] ?? 0;
   const target = count > 0 ? stepFrom(state.activePlayers, seat, state.direction) : null;
@@ -312,7 +316,7 @@ function endRound(state: GameState, seat: Seat, card: Card, color: Color, random
   };
 
   const name = state.playerNames[seat];
-  if (total >= TARGET_SCORE) {
+  if (total >= targetScore(state)) {
     return { ...scored, isGameOver: true, winners: [seat], gameStatus: `${name} went out and wins with ${total} points!` };
   }
   return { ...scored, gameStatus: `${name} went out and scores ${points} points. Waiting for everyone to continue.` };

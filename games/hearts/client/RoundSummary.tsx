@@ -1,5 +1,5 @@
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
-import { SEATS, TARGET_SCORE } from '../rules.ts';
+import { SEATS, targetScore } from '../rules.ts';
 import type { HandSummary, PublicGameState, Seat } from '../types.ts';
 
 type RoundSummaryProps = {
@@ -34,7 +34,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           </li>
         ))}
       </ul>
-      <div className="summary-target">The game ends when someone reaches {TARGET_SCORE}; the lowest score wins</div>
+      <div className="summary-target">The game ends when someone reaches {targetScore(gameState)}; the lowest score wins</div>
     </RoundSummaryDialog>
   );
 }

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { Card, GameState, Suit, TeamScores } from '../games/euchre/types.ts';
 
 // One test per rule and control in games/euchre/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
@@ -14,8 +14,8 @@ const NAMES: Record<string, string> = { A: 'ace', J: 'jack', Q: 'queen', K: 'kin
 const label = (card: Card) => `${NAMES[card.rank] ?? card.rank} of ${card.suit}`;
 const SUITS: Suit[] = ['clubs', 'diamonds', 'hearts', 'spades'];
 
-async function start(seat: Seat): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('euchre', ['Alice', 'Bob', 'Cara', 'Dan']);
+async function start(seat: Seat, options?: SeatOptions): Promise<{ table: Table; pages: Page[] }> {
+  const table = await seat('euchre', ['Alice', 'Bob', 'Cara', 'Dan'], options);
   return { table, pages: table.pages };
 }
 
@@ -305,6 +305,15 @@ test.describe('Euchre rules', () => {
     await dismiss('Bob', alice, cara, dan);
     await expect(turn(alice)).toHaveText('Game over');
     await expect(button(alice, 'Undo')).toBeDisabled();
+  });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, { houseRules: { targetScore: 5 } });
+    await lastTrick(table, [4, 0], { scores: [3, 0] });
+    await playLastTrick(pages);
+    await expect(status(pages[1])).toHaveText('Alice and Cara took all 5 tricks: a march, 2 points. Alice and Cara win with 5 points!');
+    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 5 points wins');
+    await expect(turn(pages[1])).toHaveText('Game over');
   });
 });
 

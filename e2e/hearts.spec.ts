@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { cardName, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState, PlayingCard } from '../games/hearts/types.ts';
 
@@ -14,8 +14,8 @@ const spade = (rank: Rank) => c(rank, 'spades');
 const QS = spade('Q');
 const zero = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
-async function start(seat: Seat): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan']);
+async function start(seat: Seat, options?: SeatOptions): Promise<{ table: Table; pages: Page[] }> {
+  const table = await seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan'], options);
   return { table, pages: table.pages };
 }
 
@@ -262,6 +262,15 @@ test.describe('Hearts rules', () => {
     await dismiss('Bob', alice, cara, dan);
     await expect(turn(alice)).toHaveText('Game over');
     await expect(alice.getByRole('button', { name: 'Undo' })).toBeDisabled();
+  });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, { houseRules: { targetScore: 50 } });
+    await lastTrick(table, { 1: 20, 2: 48, 3: 30, 4: 40 }); // Bob reaches 50
+    await playLastTrick(pages);
+    await expect(scoring(pages[0]).locator('.summary-target')).toHaveText('The game ends when someone reaches 50; the lowest score wins');
+    await expect(status(pages[0])).toHaveText('Alice wins with 20 points!');
+    await expect(turn(pages[0])).toHaveText('Game over');
   });
 });
 

@@ -1,3 +1,4 @@
+import type { HouseRuleValues, HouseRulesState } from '../shared/houseRules.ts';
 import type { createGameManager } from './games.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
@@ -25,4 +26,9 @@ export function agreeAll(manager: Manager, roomId: string): void {
     const result = manager.agreeHouseRules(roomId, seat, revision);
     if ('error' in result) throw new Error(result.error);
   }
+}
+
+// House rules with these values, for building a test state directly
+export function withRules(values: HouseRuleValues): HouseRulesState {
+  return { host: 1, values, override: false, maxPlayers: null, agreed: [], revision: 0 };
 }

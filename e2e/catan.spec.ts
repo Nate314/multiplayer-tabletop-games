@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -200,6 +200,8 @@ test.describe('Catan rules', () => {
         'Cara joined (3/4 players). Highest roll goes first: Alice 12, Bob 12, Cara 2; tie: Alice 3, Bob 8. Bob goes first');
       await expect(turnMessage(bob)).toHaveText('You place first. Joining closes after the first move.');
       await expect(turnMessage(alice)).toHaveText('Bob places first. Joining closes after the first move.');
+      for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(3);
+      await agreeToHouseRules(...everyone); // a join clears every agreement
 
       const order: [Page, string, number][] = [
         [bob, 'Bob', corner(9, 0)], [cara, 'Cara', corner(0, 0)], [alice, 'Alice', corner(2, 0)],
@@ -773,6 +775,22 @@ test.describe('Catan rules', () => {
     await undo(alice, bob, cara);
     await expect(button(alice, 'Roll the dice')).toBeVisible();
     await expectHand(bob, { sheep: 9 });
+  });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    // Four cities and a settlement are 9 points, and three roads are too few for Longest Road
+    const cities = [corner(9, 0), corner(9, 2), corner(9, 4), corner(0, 0)];
+    const table = await seat('catan', NAMES, { houseRules: { targetScore: 8 } });
+    await craft(table, {
+      rolled: true, buildings: { ...Object.fromEntries(cities.map(at => [at, city(1)])), [corner(2, 0)]: settlement(1) },
+      roads: roadsOf(1, ring(9, 0, 3)), hands: { 1: ROAD }
+    });
+    const [alice, bob] = table.pages;
+    await expect(row(bob, 'Alice').locator('.player-points')).toHaveText('9 pts');
+    await button(alice, 'Build road').click();
+    await clickPath(alice, ring(9, 3, 1)[0]);
+    await expect(status(bob)).toContainText('Alice wins with 9 points');
+    await expect(turnMessage(bob)).toHaveText('Game over: Alice won');
   });
 });
 

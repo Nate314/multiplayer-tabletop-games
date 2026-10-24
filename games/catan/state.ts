@@ -1,9 +1,13 @@
 // Turn order, points, the two award cards, the end of the game and the event log, shared by every part of the rules
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { AWARD_POINTS, LARGEST_ARMY_MINIMUM, LONGEST_ROAD_MINIMUM, awardHolder, roadLengths } from './roads.ts';
 import type { GameState, Seat } from './types.ts';
 
 export const LOG_SIZE = 40;
-export const WINNING_POINTS = 10;
+const POINTS_RULE = targetScoreRule(10, [8, 12], 'Points to win');
+export const CATAN_RULES: HouseRule[] = [POINTS_RULE];
+
+export const winningPoints = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, POINTS_RULE);
 
 export function nameOf(state: Pick<GameState, 'playerNames'>, seat: Seat | null): string {
   return seat === null ? 'the bank' : state.playerNames[seat] ?? `Player ${seat}`;
@@ -43,10 +47,10 @@ export function settleAwards(state: GameState): GameState {
   return next;
 }
 
-// A player wins with 10 points on their own turn
+// A player wins with the target points (10 unless the host chose another) on their own turn
 export function checkWin(state: GameState): GameState {
   const seat = state.turnHolder;
-  if (state.isGameOver || state.setup || seat === null || points(state, seat) < WINNING_POINTS) return state;
+  if (state.isGameOver || state.setup || seat === null || points(state, seat) < winningPoints(state)) return state;
   return endGame(state, [seat], `${nameOf(state, seat)} wins with ${points(state, seat)} points`);
 }
 

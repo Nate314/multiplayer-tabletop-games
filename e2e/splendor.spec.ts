@@ -475,6 +475,17 @@ test.describe('Splendor rules', () => {
     await expect(turnPanel(nobles.alice)).toContainText('Several nobles want to visit.');
     await expect(panel(nobles.alice, 'Alice')).toContainText('Cards 11');
   });
+
+  test('the host can set a lower prestige to win', async ({ seat }) => {
+    const table = await seat('splendor', NAMES.slice(0, 2), { houseRules: { targetScore: 10 } });
+    const [alice, bob] = table.pages;
+    // Bob holds 10 prestige (cards 73 and 77) and ends the round
+    await craft(table, { ...fresh(2, { owned: [73, 77] }), players: players(2, { 2: { cards: [73, 77] } }) });
+    await takeGems(alice, 'white', 'blue', 'green');
+    await takeGems(bob, 'white', 'blue', 'green');
+    for (const page of [alice, bob]) await expect(turnMessage(page)).toHaveText('Game over');
+    await expect(status(alice)).toHaveText('Bob wins with 10 prestige!');
+  });
 });
 
 test.describe('Splendor controls', () => {

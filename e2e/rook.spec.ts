@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { Card, Color, GameState, TeamScores } from '../games/rook/types.ts';
 
 // One test per rule and control in games/rook/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
@@ -13,8 +13,8 @@ const black = (n: number) => c('black', n);
 const ROOK: Card = { color: 'rook' };
 const label = (card: Card) => (card.color === 'rook' ? 'the Rook' : `${card.color} ${card.number}`);
 
-async function start(seat: Seat): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('rook', ['Alice', 'Bob', 'Cara', 'Dan']);
+async function start(seat: Seat, options?: SeatOptions): Promise<{ table: Table; pages: Page[] }> {
+  const table = await seat('rook', ['Alice', 'Bob', 'Cara', 'Dan'], options);
   return { table, pages: table.pages };
 }
 
@@ -64,7 +64,7 @@ const bidButton = (page: Page) => page.getByRole('button', { name: /^Bid \d+$/ }
 const pass = (page: Page) => page.getByRole('button', { name: 'Pass' });
 
 async function bid(page: Page, amount: number): Promise<void> {
-  await page.getByRole('combobox').selectOption(String(amount));
+  await page.getByRole('combobox', { name: 'Bid', exact: true }).selectOption(String(amount));
   await page.getByRole('button', { name: `Bid ${amount}` }).click();
 }
 
@@ -147,9 +147,9 @@ test.describe('Rook rules', () => {
   test('bidding starts left of the dealer, goes 70 to 120 in fives, must beat the last bid, a pass is final, and it ends when the rest have passed, on 120, or with a redeal when all pass', async ({ seat }) => {
     const { pages: [alice, bob, cara, dan] } = await start(seat);
     await expect(turn(alice)).toHaveText(/^Your turn/);
-    await expect(alice.getByRole('combobox').locator('option')).toHaveText(['70', '75', '80', '85', '90', '95', '100', '105', '110', '115', '120']);
+    await expect(alice.getByRole('combobox', { name: 'Bid', exact: true }).locator('option')).toHaveText(['70', '75', '80', '85', '90', '95', '100', '105', '110', '115', '120']);
     await bid(alice, 80);
-    await expect(bob.getByRole('combobox').locator('option').first()).toHaveText('85');
+    await expect(bob.getByRole('combobox', { name: 'Bid', exact: true }).locator('option').first()).toHaveText('85');
     await pass(bob).click();
     await pass(cara).click();
     await bid(dan, 90);
@@ -343,6 +343,15 @@ test.describe('Rook rules', () => {
     await expect(turn(alice)).toHaveText('Game over');
     await expect(alice.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, { houseRules: { targetScore: 300 } });
+    await lastTrick(table, [230, 0]);
+    await playLastTrick(pages);
+    await expect(status(pages[1])).toHaveText('Alice and Cara win with 320 points!');
+    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 300 points wins');
+    await expect(turn(pages[1])).toHaveText('Game over');
+  });
 });
 
 test.describe('Rook controls', () => {
@@ -350,7 +359,7 @@ test.describe('Rook controls', () => {
     const { pages: [alice, bob] } = await start(seat);
     await expect(bidButton(bob)).toHaveCount(0);
     await expect(bidButton(alice)).toHaveText('Bid 70');
-    await alice.getByRole('combobox').selectOption('85');
+    await alice.getByRole('combobox', { name: 'Bid', exact: true }).selectOption('85');
     await expect(bidButton(alice)).toHaveText('Bid 85');
     await bidButton(alice).click();
     await expect(seatOf(bob, 'Alice').locator('.seat-bid')).toHaveText('bid 85');

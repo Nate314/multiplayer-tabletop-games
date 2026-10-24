@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import {
-  HAND_SIZE, TARGET_SCORE, cardPoints, createGameState, dealHand, passDirection, playError, sortHand, toPublicState
+  HAND_SIZE, targetScore, cardPoints, createGameState, dealHand, passDirection, playError, sortHand, toPublicState
 } from './rules.ts';
 import { hearts } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -198,9 +199,9 @@ test('hearts are 1 point and the queen of spades 13', () => {
 });
 
 // The last trick of a hand: Bob's ace of clubs takes it with `points` in it; `taken` were taken before
-function lastTrick(taken: Record<number, number>, scores: Record<number, number>, cards: PlayingCard[] = [heart('2'), heart('3')]): GameState {
+function lastTrick(taken: Record<number, number>, scores: Record<number, number>, cards: PlayingCard[] = [heart('2'), heart('3')], overrides: Partial<GameState> = {}): GameState {
   const state = game({ 1: [club('5')], 2: [club('A')], 3: [cards[0]], 4: [cards[1]] },
-    { tricksPlayed: 12, heartsBroken: true, taken, scores });
+    { tricksPlayed: 12, heartsBroken: true, taken, scores, ...overrides });
   return playAll(state, [club('5'), club('A'), cards[0], cards[1]]);
 }
 
@@ -228,7 +229,7 @@ test('the game ends at 100 and the lowest score wins, ties share', () => {
   assert.equal(short.isGameOver, false);
   const won = lastTrick({ 1: 0, 2: 0, 3: 0, 4: 24 }, { 1: 50, 2: 60, 3: 70, 4: 76 });
   assert.equal(won.isGameOver, true);
-  assert.equal(won.scores[4], TARGET_SCORE);
+  assert.equal(won.scores[4], targetScore({}));
   assert.deepEqual(won.winners, [1]);
   assert.equal(won.gameStatus, 'Alice wins with 50 points!');
   assert.deepEqual(act(won, 1, { type: 'acknowledgeRound' }), { error: 'The game is over' });
@@ -361,4 +362,16 @@ test('table view hides hands', () => {
 test('describes plays for the status line', () => {
   const state = playAll(game({ 1: [club('5')], 2: [club('6')], 3: [club('7')], 4: [club('8')] }), [club('5')]);
   assert.equal(state.gameStatus, 'Alice played 5 of clubs');
+});
+
+test('the game ends at the chosen target', () => {
+  const rules = (value: number) => ({ houseRules: withRules({ targetScore: value }) });
+  const last = (dan: number, value: number) =>
+    lastTrick({ 1: 0, 2: 0, 3: 0, 4: 24 }, { 1: 10, 2: 10, 3: 10, 4: dan }, undefined, rules(value));
+  const won = last(26, 50); // Dan takes 24 and reaches 50
+  assert.equal(won.isGameOver, true);
+  assert.equal(won.scores[4], 50);
+  assert.equal(last(25, 50).isGameOver, false);
+  assert.equal(last(26, 100).isGameOver, false);
+  assert.equal(targetScore(rules(150)), 150);
 });

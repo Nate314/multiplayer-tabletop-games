@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'You and your partner, who sits across from you, try to capture counters in tricks. Seats 1 and 3 play against seats 2 and 4. The first team to reach 500 points wins.'
+    answer: 'You and your partner, who sits across from you, try to capture counters in tricks. Seats 1 and 3 play against seats 2 and 4. The first team to reach the target score (500 unless the host chose another) wins.'
   },
   {
     question: 'What is in the deck?',
@@ -34,7 +34,7 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'If the bidding team took at least its bid, it scores what it took; otherwise it loses the amount of its bid. The other team always scores what it took. Scores can go below zero. After the scoring, everyone clicks Continue for the next hand, and the deal passes to the left.'
   },
   {
-    question: 'What if both teams pass 500 in the same hand?',
+    question: 'What if both teams pass the target in the same hand?',
     answer: 'The higher total wins. If the totals are equal, another hand is played.'
   },
   {
@@ -44,5 +44,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose a target score of 300, 500 or 1,000 points. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

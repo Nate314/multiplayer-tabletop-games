@@ -1,5 +1,6 @@
 // Splendor rules shared by the browser (what can be afforded) and the server (validation).
 // Rules follow https://en.wikipedia.org/wiki/Splendor_(game); token counts per player count follow the published rulebook.
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -30,7 +31,10 @@ export const GOLD_COUNT = 5;
 export const MARKET_SIZE = 4;
 export const MAX_TOKENS = 10;
 export const MAX_RESERVED = 3;
-export const WINNING_PRESTIGE = 15;
+const PRESTIGE_RULE = targetScoreRule(15, [10, 21], 'Prestige to win');
+export const SPLENDOR_RULES: HouseRule[] = [PRESTIGE_RULE];
+
+export const winningPrestige = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, PRESTIGE_RULE);
 
 export function gemsPerColor(playerCount: number): number {
   return playerCount <= 2 ? 4 : playerCount === 3 ? 5 : 7;
@@ -261,7 +265,7 @@ function endGame(state: GameState): GameState {
 }
 
 function passTurn(state: GameState, seat: Seat): GameState {
-  const reached = prestige(state.players[seat]) >= WINNING_PRESTIGE;
+  const reached = prestige(state.players[seat]) >= winningPrestige(state);
   const finalRound = state.finalRound || reached;
   const next = nextActivePlayer(state, seat);
   // Turns go up the seats from the lowest, so a round is over when play wraps back down
@@ -269,7 +273,7 @@ function passTurn(state: GameState, seat: Seat): GameState {
   const passed: GameState = { ...state, finalRound, pending: null };
   if (finalRound && roundOver) return endGame(passed);
   const status = reached && !state.finalRound
-    ? `${state.gameStatus}. ${state.playerNames[seat]} has ${WINNING_PRESTIGE} prestige: the round finishes, then the game ends.`
+    ? `${state.gameStatus}. ${state.playerNames[seat]} has ${winningPrestige(state)} prestige: the round finishes, then the game ends.`
     : state.gameStatus;
   return { ...passed, currentPlayer: next, turnHolder: next, gameStatus: status };
 }
