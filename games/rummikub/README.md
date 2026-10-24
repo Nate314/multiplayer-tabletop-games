@@ -18,7 +18,7 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 
 ## Controls
 
-- On your turn, click a tile on your rack or the table to pick it up (it lifts and is outlined), then click the tile it should go in front of, the + at the end of a group, or New group. Click a held tile again to put it down. You can also drag a tile, or a group by its handle, with the mouse or a finger and drop it in the same places; dropped anywhere else, it goes back
+- On your turn, click a tile on your rack or the table to pick it up (it lifts and is outlined), then click the tile it should go in front of, the + at the end of a group, or New group. Click a held tile again to put it down. You can also drag a tile, or a group by its handle, with the mouse or a finger and drop it in the same places; dropped anywhere else, it goes back. On a phone, drag a table tile or group sideways (a swipe up or down on the table scrolls the page), or pick it with a tap
 - The handle at the start of a group picks up the whole group; put it at the end of another group to merge them. The thin bar between two tiles of a group splits the group there
 - A tile you put on the table this turn, or a group made only of such tiles, can go back to your rack: drop it in front of a rack tile or click End of rack. Tiles that were on the table at the start of the turn cannot
 - A group that is not a valid set or run has a dashed red border. The line under your rack says what is wrong with the play, or that it is ready. Click Play to send it

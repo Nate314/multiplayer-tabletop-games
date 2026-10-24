@@ -66,7 +66,8 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
   // A drop puts the tile or group where a click on that spot would.
   const drag = useDrag({
     canLift: id => isMyTurn || (id.startsWith('tile-') && draft.rack.includes(numberAfter('tile-', id))),
-    canDrop: (_id, target) => isMyTurn || isRackTarget(draft, targetOf(target)),
+    // The rack lights only for what may go back to it, as placeHeld checks; tiles from the table must stay there
+    canDrop: (id, target) => isRackTarget(draft, targetOf(target)) ? canReturnToRack(draft, heldOf(id), committed) : isMyTurn,
     onLift: id => setState(current => ({ ...current, held: heldOf(id) })),
     onDrop: (id, target) => {
       apply(placeHeld({ ...state, held: heldOf(id) }, targetOf(target), committed, isMyTurn));

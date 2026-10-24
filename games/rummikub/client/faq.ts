@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I play tiles?',
-    answer: 'On your turn, click a tile to pick it up, then click the tile it should go in front of, the + at the end of a group, or New group. You can also drag tiles, with the mouse or a finger, and drop them in the same places; a tile dropped anywhere else goes back. Click a held tile again to put it down. When every group is valid, click Play. The line under your rack says what is wrong, or that the play is ready.'
+    answer: 'On your turn, click a tile to pick it up, then click the tile it should go in front of, the + at the end of a group, or New group. You can also drag tiles, with the mouse or a finger, and drop them in the same places; a tile dropped anywhere else goes back. On a phone, drag a table tile sideways, since a swipe up or down on the table scrolls the page, or pick it with a tap. Click a held tile again to put it down. When every group is valid, click Play. The line under your rack says what is wrong, or that the play is ready.'
   },
   {
     question: 'How do I rearrange the table?',

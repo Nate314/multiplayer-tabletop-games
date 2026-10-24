@@ -446,6 +446,13 @@
     background: var(--drag-over);
   }
 
+  /* On a phone a vertical swipe that starts on a table tile or group handle scrolls the page; a sideways one drags it.
+     Rack tiles keep the platform's touch-action: none, as the rack does not need the page to scroll. */
+
+  .rk-table [data-drag] {
+    touch-action: pan-y;
+  }
+
   /* The rack */
 
   .rk-rack-area {

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, test, touchDrag, undo, type Seat, type SeatOptions } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
 import type { GameState, TileColor } from '../games/rummikub/types.ts';
 
@@ -17,8 +17,8 @@ type Setup = Partial<Pick<GameState, 'table' | 'pool' | 'melded' | 'currentPlaye
 };
 
 // Seats the players, then sets up a game in progress on Alice's turn. Nobody has melded unless `melded` says so.
-async function start(seat: Seat, setup: Setup = {}, names = ['Alice', 'Bob']) {
-  const table = await seat('rummikub', names);
+async function start(seat: Seat, setup: Setup = {}, names = ['Alice', 'Bob'], options: SeatOptions = {}) {
+  const table = await seat('rummikub', names, options);
   const { racks, ...rest } = setup;
   const patch: Record<string, unknown> = { started: true, currentPlayer: 1, ...rest };
   // The patch replaces the whole of `racks`, so the racks not named keep the tiles they were dealt
@@ -421,6 +421,25 @@ test.describe('Rummikub controls', () => {
     expect(await titles(group(bob, 1))).toEqual(names(t('red', 7), t('red', 8), t('red', 9)));
   });
 
+  test('on a phone, a swipe up or down that starts on a table tile scrolls the page; rack tiles still take the touch', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      table: [[t('red', 7), t('red', 8), t('red', 9)]],
+      racks: { 1: [t('blue', 1), t('blue', 2), t('blue', 3)] }
+    }, ['Alice', 'Bob'], { touch: true });
+    const touchAction = (locator: ReturnType<Page['locator']>) => locator.evaluate(element => getComputedStyle(element).touchAction);
+    expect(await touchAction(tableTile(alice, t('red', 8)))).toBe('pan-y');
+    expect(await touchAction(button(alice, 'Pick up group 1'))).toBe('pan-y');
+    expect(await touchAction(rackArea(alice).locator('.rk-tile-button').first())).toBe('none');
+
+    await alice.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => alice.evaluate(() => window.scrollY)).toBe(0);
+    await touchDrag(alice, tableTile(alice, t('red', 8)), turn(alice));
+    await expect.poll(() => alice.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    expect(await titles(group(alice, 1))).toEqual(names(t('red', 7), t('red', 8), t('red', 9)));
+  });
+
   test('a group dragged by its handle joins the end of another group', async ({ seat }) => {
     const { alice } = await start(seat, {
       melded: [1, 2],
@@ -461,6 +480,17 @@ test.describe('Rummikub controls', () => {
     await rackTile(alice, t('blue', 1)).click();
     await expect(hint(alice)).toHaveText('Tiles from the table must stay on the table');
     await expect(rackHeader(alice)).toHaveText('Your rack (4)');
+
+    // Dragged, a table tile does not light the rack or a rack tile, and a drop there sends it back to the table
+    await lift(alice, tableTile(alice, t('black', 2)));
+    await expect(alice.locator('.drag-ghost')).toBeVisible();
+    const blue = (await rackTile(alice, t('blue', 1)).boundingBox())!;
+    await alice.mouse.move(blue.x + blue.width / 2, blue.y + blue.height / 2, { steps: 4 });
+    await expect(alice.locator('[data-drag-over]')).toHaveCount(0);
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(rackHeader(alice)).toHaveText('Your rack (4)');
+    expect(await titles(group(alice, 1))).toEqual(names(t('black', 1), t('black', 2), t('black', 3)));
   });
 
   test('an invalid group has a dashed red border, the line under the rack says what is wrong or that it is ready, and Play sends it', async ({ seat }) => {
@@ -534,8 +564,8 @@ test.describe('Rummikub controls', () => {
       table: [[t('red', 4), J1, t('red', 6)]],
       racks: { 1: [t('blue', 7), t('blue', 8), t('blue', 9), t('black', 1)] }
     });
-    await bob.locator('.rk-joker').hover();
-    await expect(bob.locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 5');
+    await tableArea(bob).locator('.rk-joker').hover(); // Bob's dealt rack may hold the other joker
+    await expect(tableArea(bob).locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 5');
 
     await lay(alice, t('blue', 7), t('blue', 8), t('blue', 9));
     await playButton(alice).click();
