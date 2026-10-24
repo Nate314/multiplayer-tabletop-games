@@ -100,13 +100,14 @@ test('the row under the board is Play, the slider and the settings gear, and the
   }
 });
 
-test('the gear holds Animations and Speed, and the live game has no View as', async ({ seat }) => {
+test('the gear holds Animations, Sounds and Speed, and the live game has no View as', async ({ seat }) => {
   const { dialog } = await openConnectFourHistory(seat);
   const settings = dialog.getByRole('group', { name: 'Playback settings' });
   await expect(settings).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await expect(settings).toBeVisible();
   await expect(settings.getByLabel('Animations')).toBeVisible();
+  await expect(settings.getByLabel('Sounds')).toBeVisible();
   await expect(settings.getByLabel('Speed')).toBeVisible();
   await expect(dialog.getByLabel('View as')).toHaveCount(0);
   await dialog.locator('.history-move').click();

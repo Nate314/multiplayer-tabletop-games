@@ -160,12 +160,11 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
           autoFocus
           onChange={(e) => setIndex(Number(e.target.value))}
         />
-        <label className="history-sounds">
-          <input type="checkbox" checked={sounds} onChange={(e) => toggleSounds(e.target.checked)} /> Sounds
-        </label>
         <PlaybackSettings
           animations={animations}
           onAnimationsChange={toggleAnimations}
+          sounds={sounds}
+          onSoundsChange={toggleSounds}
           speed={speed}
           onSpeedChange={changeSpeed}
           viewAs={steps[0].views ? { value: viewer, options: seatNames, onChange: setViewer } : undefined}

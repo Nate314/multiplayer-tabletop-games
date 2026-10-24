@@ -7,13 +7,15 @@ import type { PlaybackSpeed } from './playback.ts';
 type PlaybackSettingsProps = {
   animations: boolean;
   onAnimationsChange: (on: boolean) => void;
+  sounds: boolean;
+  onSoundsChange: (on: boolean) => void;
   speed: PlaybackSpeed;
   onSpeedChange: (speed: PlaybackSpeed) => void;
   viewAs?: { value: Seat | null; options: { seat: string; name: string }[]; onChange: (seat: Seat | null) => void };
 };
 
 // The History dialog's settings: a gear that opens a panel above itself. A press anywhere else, or Escape, closes the panel.
-export default function PlaybackSettings({ animations, onAnimationsChange, speed, onSpeedChange, viewAs }: PlaybackSettingsProps) {
+export default function PlaybackSettings({ animations, onAnimationsChange, sounds, onSoundsChange, speed, onSpeedChange, viewAs }: PlaybackSettingsProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +38,9 @@ export default function PlaybackSettings({ animations, onAnimationsChange, speed
           <label className="themed-checkbox">
             <input type="checkbox" checked={animations} onChange={(e) => onAnimationsChange(e.target.checked)} /> Animations
           </label>
-          {/* The preferences PR adds its Sounds checkbox here */}
+          <label className="themed-checkbox">
+            <input type="checkbox" checked={sounds} onChange={(e) => onSoundsChange(e.target.checked)} /> Sounds
+          </label>
           <label>
             Speed{' '}
             <select className="themed-select" value={speed} onChange={(e) => onSpeedChange(Number(e.target.value) as PlaybackSpeed)}>
