@@ -370,7 +370,8 @@ test.describe('Carcassonne controls', () => {
     await expect(button(alice, 'Place meeple')).toBeEnabled();
     await button(alice, 'Place meeple').click();
     await expect(boardMeeples(bob, 1)).toHaveCount(1);
-    await expect(button(alice, 'Meeple, 6 left')).toHaveCount(0); // the tray goes with the step
+    await expect(meeplesInHand(bob, 'Alice')).toHaveText('6 meeples');
+    await expect(boardMeeples(alice, 1)).toHaveCount(1);
   });
 
   test('a tile dropped on the board away from a highlighted square goes back, and the view does not pan', async ({ seat }) => {

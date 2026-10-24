@@ -10,6 +10,7 @@ import { MEEPLES_PER_PLAYER } from '../tiles.ts';
 import Board from './Board';
 import { MeepleIcon } from './Meeple';
 import { cellTarget, spotTarget } from './keys.ts';
+import { meepleBlocked } from './meepleBlocked.ts';
 import PlayerList from './PlayerList';
 import TurnPanel from './TurnPanel';
 import animateMove from './animateMove.ts';
@@ -83,13 +84,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     }
   });
 
-  let meepleBlocked: string | undefined;
-  if (meeplesLeft === 0) meepleBlocked = 'All your meeples are on the board';
-  else if (freeSpots.length === 0) meepleBlocked = 'No free feature on this tile for a meeple';
   const meepleTray = (
     <PieceTray
       label="Your meeple"
-      pieces={[{ id: 'meeple', label: 'Meeple', icon: <MeepleIcon seat={playerNumber} />, count: meeplesLeft, blocked: meepleBlocked }]}
+      pieces={[{ id: 'meeple', label: 'Meeple', icon: <MeepleIcon seat={playerNumber} />, count: meeplesLeft, blocked: meepleBlocked(meeplesLeft, freeSpots.length) }]}
       selected={null}
       onTap={() => {}} // the circles are already lit; tapping one chooses it
       drag={drag}

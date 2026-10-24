@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import TileArt from './TileArt';
 import { tileName } from '../tiles.ts';
+import { meepleBlocked } from './meepleBlocked.ts';
 import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 import type { PublicGameState, TileType } from '../types.ts';
 
@@ -36,8 +37,7 @@ export default function TurnPanel(props: TurnPanelProps) {
   let hint: string;
   if (isGameOver) hint = 'The game is over';
   else if (!canMove) hint = placed ? `${mover} is choosing where to put a meeple` : `${mover} is placing this tile`;
-  else if (placed && meeplesLeft === 0) hint = 'All your meeples are on the board';
-  else if (placed && meepleSpots === 0) hint = 'No free feature on this tile for a meeple';
+  else if (placed && meepleBlocked(meeplesLeft, meepleSpots)) hint = meepleBlocked(meeplesLeft, meepleSpots)!;
   else if (placed) hint = 'Click a circle on your tile to put a meeple there, or place none';
   else hint = cellChosen ? 'Turn the tile if you like, then place it' : 'Click a highlighted square to put the tile there';
 
