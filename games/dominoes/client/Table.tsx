@@ -1,8 +1,7 @@
-import Tile from './Tile';
-import { lineKey } from './animateMove.ts';
+import Board from './Board';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import { Fragment } from 'react';
-import { boardOf, lineOf, openEnds } from '../board.ts';
+import { boardOf, openEnds } from '../board.ts';
 import { targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -13,16 +12,22 @@ type TableProps = {
   showLastMove?: boolean;
   // Given only when you may draw; the boneyard is then a button
   onDraw?: () => void;
+  usable?: number[]; // the ends you may play on, highlighted
+  fits?: number[]; // the ends the selected tile fits, buttons calling onEnd
+  onEnd?: (arm: number) => void;
 };
 
 // What goes before the i-th of n open ends, so they read '3 and 4' or '3, 4 and 6'
 const separator = (i: number, n: number) => (i === 0 ? '' : i === n - 1 ? ' and ' : ', ');
 
-// Every player's score and tile count in seat order, the boneyard, the open ends and the line
-export default function Table({ gameState, viewer, showLastMove = false, onDraw }: TableProps) {
-  const { handCounts, playerNames, currentPlayer, winners, lastMove, scores, roundNumber, boneyardCount, set } = gameState;
+// Every player's score and tile count in seat order, the boneyard, the open ends and the board
+export default function Table({ gameState, viewer, showLastMove = false, onDraw, usable, fits, onEnd }: TableProps) {
+  const { handCounts, playerNames, currentPlayer, winners, lastMove, scores, roundNumber, boneyardCount, set, activePlayers } = gameState;
   const board = boardOf(gameState);
-  const line = lineOf(board);
+  const begun = board.start !== null;
+  // A dismissed player's train is open to everyone, as the rules treat it
+  const dismissed = board.arms.flatMap(({ owner }) => (typeof owner === 'number' && !activePlayers.includes(owner) ? [owner] : []));
+  const openTrains = [...new Set([...(gameState.openTrains ?? []), ...dismissed])];
   const ends = openEnds(board).map(({ pips }) => pips);
   const seats = Object.keys(handCounts).map(Number).sort((a, b) => a - b);
   const lastMover = showLastMove ? lastMove?.playerNumber : undefined;
@@ -60,19 +65,21 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
         <span className="boneyard-label">Boneyard: {boneyardCount}</span>
       </div>
       <div className="line-ends">
-        {line.length === 0 ? 'No tiles played yet' : (
+        {!begun ? 'No tiles played yet' : (
           <>Open ends: {ends.map((pips, i) => (
             <Fragment key={i}>{separator(i, ends.length)}<span className="end-pips">{pips}</span></Fragment>
           ))}</>
         )}
       </div>
-      <div className="line" role="list" aria-label="Line of play">
-        {line.map(placed => (
-          <span key={placed.tile} role="listitem" className="line-slot">
-            <Tile pips={[placed.left, placed.right]} animKey={lineKey(placed.tile)} highlighted={placed.tile === lastTile} />
-          </span>
-        ))}
-      </div>
+      <Board
+        board={board}
+        playerNames={playerNames}
+        openTrains={openTrains}
+        lastTile={lastTile}
+        usable={usable}
+        fits={fits}
+        onEnd={onEnd}
+      />
     </div>
   );
 }

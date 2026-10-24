@@ -2,7 +2,8 @@ import type { Page } from '@playwright/test';
 import {
   agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table
 } from './fixtures.ts';
-import { boardFromLine } from '../games/dominoes/board.ts';
+import { EMPTY_BOARD, boardFromLine, lay } from '../games/dominoes/board.ts';
+import type { Board, Layout } from '../games/dominoes/board.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
 import type { GameState, SetSize } from '../games/dominoes/types.ts';
 import type { HouseRuleValues } from '../shared/houseRules.ts';
@@ -20,12 +21,13 @@ type Deal = {
   hands: Record<number, Pips[]>;
   boneyard?: Pips[];
   line?: Pips[]; // as laid, left to right
+  board?: Board; // in place of `line`, for a board that branches
   current?: number;
   scores?: Record<number, number>;
 };
 
 // Crafts a round under way
-async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], current = 1, scores }: Deal) {
+async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], board, current = 1, scores }: Deal) {
   const seats = Object.keys(hands).map(Number);
   await table.patch({
     started: true,
@@ -33,7 +35,7 @@ async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], curre
     roundNumber: 1,
     hands: Object.fromEntries(seats.map(seat => [seat, ids(...hands[seat])])),
     boneyard: ids(...boneyard),
-    board: boardFromLine(laid(...line)),
+    board: board ?? boardFromLine(laid(...line)),
     openTrains: [],
     drewThisTurn: false,
     leadTile: null,
@@ -44,6 +46,15 @@ async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], curre
     scores: scores ?? Object.fromEntries(seats.map(seat => [seat, 0]))
   });
 }
+
+// A board laid by the rules of `layout`: the starter, then each play as [arm, tile as held]
+const build = (layout: Layout, seats: number[], start: Pips, ...plays: [number, Pips][]): Board =>
+  plays.reduce(
+    (board, [arm, pips]) => lay(board, layout, id(...pips), pips, arm, seats).board,
+    lay(EMPTY_BOARD, layout, id(...start), start, 0, seats).board
+  );
+const EVERY: Layout = { branching: 'every', chickenfoot: false, trains: false };
+const TRAINS: Layout = { branching: 'every', chickenfoot: false, trains: true };
 
 // These tests play the single line unless they say otherwise
 async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara'], houseRules: HouseRuleValues = { branching: 'none' }) {
@@ -63,6 +74,12 @@ const turn = (page: Page) => page.locator('.turn-message');
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring' });
 const boneyard = (page: Page) => page.locator('.boneyard-label');
+const row = (page: Page, name: string) => page.getByRole('list', { name, exact: true });
+const usable = (page: Page) => page.locator('.end-slot-usable');
+const endChoice = (page: Page) => page.getByRole('group', { name: 'Choose an end' });
+const rowTitles = (page: Page, name: string) =>
+  row(page, name).locator('.tile').evaluateAll(tiles => tiles.map(tile => tile.getAttribute('title')));
+const top = async (page: Page, name: string) => (await row(page, name).boundingBox())?.y ?? NaN;
 
 test.describe('Dominoes rules', () => {
   test('double-six has 28 tiles and double-nine 55, dealt 7 and 9 each, and the highest double leads with it', async ({ seat }) => {
@@ -307,5 +324,160 @@ test.describe('Dominoes rules', () => {
     const faq = await openFaq(bob);
     await expect(faq).toContainText('Double-six (28 tiles) or double-nine (55 tiles)');
     await expect(faq).toContainText('Click Draw, or the boneyard');
+  });
+});
+
+test.describe('Dominoes layouts', () => {
+  test('every double (the default): a double opens three ends, and a tile clicked then an end clicked is played there', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], {});
+    await deal(table, { hands: { 1: [[4, 4], [0, 0]], 2: [[4, 6], [1, 1]] }, boneyard: [[2, 2]] });
+    await play(alice, 4, 4);
+    await expect(usable(bob)).toHaveCount(4);
+    await play(bob, 4, 6);
+    await expect(endChoice(bob).getByRole('button')).toHaveText([
+      'Right end (4)', 'First branch of 4-4 (4)', 'Second branch of 4-4 (4)', 'Cancel'
+    ]);
+    await expect(bob.locator('.end-slot-fits')).toHaveCount(3);
+    await button(bob, 'Open end: First branch of 4-4 (4)').click();
+    await expect(status(alice)).toHaveText('Bob played 4-6 on the first branch of 4-4');
+    await expect(row(alice, 'First branch of 4-4').locator('[title="4-6"]')).toHaveCount(1);
+    await expect(endChoice(bob)).toHaveCount(0);
+  });
+
+  test('clicking a selected tile again puts it back', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob'], {});
+    await deal(table, { hands: { 1: [[2, 4], [1, 1]], 2: [[4, 6]] }, line: [[2, 3], [3, 4]] });
+    await play(alice, 2, 4);
+    await expect(alice.locator('.end-slot-fits')).toHaveCount(2);
+    await play(alice, 2, 4);
+    await expect(endChoice(alice)).toHaveCount(0);
+    await expect(alice.locator('.end-slot-fits')).toHaveCount(0);
+  });
+
+  test('starter only: the starting double opens four ends and a later double continues its arm', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { branching: 'starter' });
+    await deal(table, { hands: { 1: [[6, 6], [3, 3], [0, 0]], 2: [[6, 3], [1, 2]] }, boneyard: [[2, 2], [5, 5]], line: [] });
+    await play(alice, 6, 6);
+    await expect(bob.locator('.line-ends')).toHaveText('Open ends: 6, 6, 6 and 6');
+    await expect(row(bob, 'Top end')).toBeVisible();
+    await expect(row(bob, 'Bottom end')).toBeVisible();
+    const hub = (await bob.locator('.board-row-hub').boundingBox())?.y ?? NaN;
+    expect(await top(bob, 'Top end')).toBeLessThan(hub);
+    expect(await top(bob, 'Bottom end')).toBeGreaterThan(hub);
+
+    await play(bob, 6, 3);
+    await endChoice(bob).getByRole('button', { name: 'Top end (6)' }).click();
+    await play(alice, 3, 3);
+    await expect(alice.locator('.end-slot')).toHaveCount(4);
+    expect(await rowTitles(bob, 'Top end')).toEqual(['6-3', '3-3']);
+    await expect(alice.locator('.board-row')).toHaveCount(3);
+  });
+
+  test('Chickenfoot: after a double only its ends are highlighted until its foot is finished', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { chickenfoot: true });
+    await deal(table, { hands: { 1: [[4, 4], [4, 1], [5, 5]], 2: [[4, 0], [4, 2], [6, 6]] }, boneyard: [[2, 2]] });
+    const leftEnd = (page: Page) => page.locator('.end-slot[title="Open end: Left end (3)"]');
+    await play(alice, 4, 4);
+    await expect(usable(bob)).toHaveCount(3);
+    await expect(leftEnd(bob)).not.toHaveClass(/end-slot-usable/);
+    await expect(bob.locator('.hint')).toHaveText('Finish the 4-4 first: play on its open ends');
+    await play(bob, 4, 0);
+    await endChoice(bob).getByRole('button', { name: 'Right end (4)' }).click();
+    await play(alice, 4, 1);
+    await endChoice(alice).getByRole('button', { name: 'First branch of 4-4 (4)' }).click();
+    await play(bob, 4, 2);
+    await expect(status(alice)).toHaveText('Bob played 4-2 on the second branch of 4-4');
+    await expect(leftEnd(alice)).toHaveClass(/end-slot-usable/);
+    await expect(usable(alice)).toHaveCount(4);
+  });
+
+  test('Trains: only your train, the Mexican train and open trains are highlighted; passing opens and marks your train', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { trains: true });
+    // Arms of the hub: 0 Alice's train, 1 Bob's, 2 Cara's, 3 the Mexican train
+    await deal(table, {
+      hands: { 1: [[1, 2], [0, 0]], 2: [[6, 2], [4, 4]], 3: [[6, 5], [3, 3]] },
+      boneyard: [[5, 5], [0, 1]],
+      board: build(TRAINS, [1, 2, 3], [6, 6])
+    });
+    await expect(usable(alice)).toHaveCount(2);
+    await expect(alice.locator('.end-slot-usable[title="Open end: Alice\'s train (6)"]')).toHaveCount(1);
+    await expect(alice.locator('.end-slot-usable[title="Open end: Mexican train (6)"]')).toHaveCount(1);
+    await button(alice, 'Draw').click();
+    await expect(alice.locator('.hint')).toHaveText('Nothing fits: pass, and your train opens');
+    await button(alice, 'Pass').click();
+    await expect(row(bob, "Alice's train (open)")).toBeVisible();
+    await expect(bob.locator('.board-row-open .board-row-label')).toHaveText("Alice's train (open)");
+    await expect(usable(bob)).toHaveCount(3);
+
+    await play(bob, 6, 2);
+    await endChoice(bob).getByRole('button', { name: "Alice's train (6)" }).click();
+    await play(cara, 6, 5);
+    await endChoice(cara).getByRole('button', { name: "Cara's train (6)" }).click();
+    await play(alice, 1, 2);
+    await expect(status(bob)).toHaveText("Alice played 2-1 on Alice's train");
+    await expect(row(bob, "Alice's train")).toBeVisible();
+    await expect(bob.locator('.board-row-open')).toHaveCount(0);
+  });
+
+  test('Trains with an empty boneyard: the pass hint says your train opens', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob'], { trains: true });
+    await deal(table, { hands: { 1: [[1, 2]], 2: [[6, 2]] }, board: build(TRAINS, [1, 2], [6, 6]) });
+    await expect(alice.locator('.hint')).toHaveText('Nothing fits and the boneyard is empty: pass, and your train opens');
+  });
+
+  test('the leader\'s highest double becomes the hub with one train per player and the Mexican train', async ({ seat }) => {
+    const { table, pages } = await start(seat, ['Alice', 'Bob', 'Cara'], { trains: true });
+    const state = await table.state<GameState>();
+    const [low, high] = tilesOf(6)[state.leadTile as number];
+    expect(low).toBe(high);
+    await play(pages[(state.currentPlayer as number) - 1], low, high);
+    for (const name of ["Alice's train", "Bob's train", "Cara's train", 'Mexican train']) await expect(row(pages[0], name)).toBeVisible();
+    expect(await rowTitles(pages[0], 'Line of play')).toEqual([`${low}-${high}`]);
+  });
+
+  test('History and undo show the branches', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], {});
+    await deal(table, { hands: { 1: [[4, 4], [0, 0]], 2: [[1, 1]] }, boneyard: [[2, 2]] });
+    await play(alice, 4, 4);
+    await bob.getByRole('button', { name: 'History' }).click();
+    const history = bob.getByRole('dialog', { name: 'History' });
+    await expect(history.locator('.board-row')).toHaveCount(3);
+    await expect(history.getByRole('list', { name: 'First branch of 4-4', exact: true })).toBeVisible();
+    await expect(history.locator('.end-slot-usable, .end-slot-fits')).toHaveCount(0);
+    await bob.keyboard.press('Escape');
+    await undo(alice, bob);
+    for (const page of [alice, bob]) {
+      await expect(row(page, 'First branch of 4-4')).toHaveCount(0);
+      await expect(page.locator('.board-row')).toHaveCount(1);
+    }
+  });
+
+  test('a long board wraps at phone width with no sideways scroll', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob'], {});
+    await alice.setViewportSize({ width: 390, height: 844 });
+    // Arms of the 6-6 hub: 0 left, 1 right, 2 top, 3 bottom; each double adds three more: on past it, then its two branches
+    const board = build(EVERY, [1, 2], [6, 6],
+      [0, [6, 5]], [0, [5, 4]], [0, [4, 3]], [0, [3, 2]],
+      [1, [6, 1]], [1, [1, 1]], // 4, 5, 6
+      [4, [1, 0]], [4, [0, 0]], // 7, 8, 9
+      [5, [1, 2]], [5, [2, 2]], // 10, 11, 12
+      [6, [1, 3]], [6, [3, 3]], // 13, 14, 15
+      [2, [6, 4]], [2, [4, 4]], // 16, 17, 18
+      [3, [6, 2]], [3, [2, 5]],
+      [11, [2, 0]], [14, [3, 5]], [17, [4, 1]], [16, [4, 0]]);
+    await deal(table, { hands: { 1: [[5, 5]], 2: [[0, 3]] }, boneyard: [[1, 5]], board });
+    await expect(alice.locator('.board-row')).toHaveCount(13);
+    expect(await alice.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    const boxes = await alice.locator('.board-row').evaluateAll(rows => rows.map(element => {
+      const { left, right, top, bottom } = element.getBoundingClientRect();
+      return { left, right, top, bottom };
+    }));
+    for (const box of boxes) expect(box.right).toBeLessThanOrEqual(390);
+    for (const [i, a] of boxes.entries()) {
+      for (const b of boxes.slice(i + 1)) {
+        const overlap = a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+        expect(overlap, `rows ${JSON.stringify(a)} and ${JSON.stringify(b)} overlap`).toBe(false);
+      }
+    }
   });
 });
