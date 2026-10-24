@@ -43,9 +43,11 @@ flowchart TD
 - Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name with the seat's key, and dismissing a disconnected player by vote
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
 - A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
+- House rules: a game declares options (toggles and choices) and may allow a player-count override; the host (the first seated player, passed on if they leave) sets them before play, every seated player must agree to the current revision before the first move, and any seat change clears the agreements. Rules are locked once play starts
+- Out-of-turn moves for a game that allows them (`allowsOutOfTurn`), refused with "Someone else moved first" when the mover's `moveCount` is stale
 - Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
 - Calling the game's `toPublicState` for each player before anything is sent to them, so each player gets their own view
-- The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, theme toggle), FAQ dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`
+- The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, House rules, theme toggle), FAQ dialog, house rules panel and dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`
 - Docker, compose, launcher, CI, lint and TypeScript config
 
 **Each game owns (`games/<id>/`):**
@@ -63,6 +65,7 @@ flowchart TD
 - `games/registry.ts` lists every `GameDefinition`
 - `shared/categories.ts` defines `GameCategory` (every `GameInfo` has one), `CATEGORIES` (the landing page groups, in order) and `groupByCategory`
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
+- `shared/houseRules.ts` defines the house rules model: `HouseRule` (`ToggleRule` or `ChoiceRule`, with `offered` for rules that depend on the seat count), `HouseRulesState`, `HouseRulesProposal`, and the pure functions `needsAgreement`, `houseRulesOf`, `houseRule`, `tableLimit`, `minimumToStart`, `afterSeatChange`, `setHouseRules`, `agreeToHouseRules`, `everyoneAgreed`, `describeHouseRules` and `targetScoreRule`. `GameInfo` has the optional `houseRules` and `stretchedPlayers` (the range the player-count override allows), `GameDefinition` has the optional `allowsOutOfTurn`, and every game state carries `houseRules`
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 - `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard deck (`PlayingCard`, `JokerCard`, `DeckCard`, `standardDeck`, `isJoker`, `rankValue`, `cardName`, `sameCard`), for any game to use; `standardDeck` takes `ranks`, `suits` and `jokers` options to build a smaller deck or add jokers
 - `shared/tricks.ts` has the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions, and `describeTrickPlay` for the move description of a played card
@@ -127,7 +130,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
 6. **Default styles for the platform pieces (`/src/App.scss`)**
-   - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
+   - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) house rules (`.house-rules-panel`, `.house-rules-title`, `.house-rules-host`, `.house-rules-help`, `.house-rules-list`, `.house-rules-agreed`, `.house-rules-actions`, `.house-rules-button`, `.modal.house-rules`), the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette
    - Quoridor and Azul style the header, FAQ dialog and undo vote themselves, so the defaults do not change how those look; the disconnected players bar and the dismiss vote use the defaults
@@ -189,9 +192,11 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
 2. **Playing**
 
    ```
-   Client -> Server: MAKE_MOVE (move)
+   Client -> Server: MAKE_MOVE (move, moveCount?)
    Server -> All clients in the game: GAME_STATE, or GAME_ERROR to the sender
    ```
+
+   `moveCount` is sent only for an out-of-turn move: the server refuses it with "Someone else moved first" if the count it names is no longer current.
 
 3. **Game actions**
 
@@ -226,6 +231,16 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
    Each connected client -> Server: VOTE_DISMISS (approve)
    Server -> All clients in the game: GAME_STATE (vote progress, then the dismissal or the decline)
    ```
+
+7. **House rules**
+
+   ```
+   Host -> Server: SET_HOUSE_RULES (proposal: values, override, maxPlayers)
+   Each player -> Server: AGREE_HOUSE_RULES (revision)
+   Server -> All clients in the game: GAME_STATE (houseRules: host, values, override, maxPlayers, agreed, revision), or GAME_ERROR to the sender
+   ```
+
+   Only the host may change the rules, and only before the first move; every key and value is checked against the game's declarations. Each change, and each join or leave, bumps `revision` and clears `agreed`. An agreement names the revision the player saw and is refused as stale otherwise. For a game that declares rules or a player-count override, MAKE_MOVE is refused with "Everyone must agree to the house rules first" until every seated player has agreed.
 
 ## Single Port
 
