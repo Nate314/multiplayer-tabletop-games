@@ -121,6 +121,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
    - `storage.ts` has `readJson`, `writeJson` and `removeKey`, which swallow storage errors
    - `historyAnimations` (the History dialog's Animations checkbox, off by default) and `joinForm` (the name and game ID last used to join, shared by every game, saved when Join is pressed) are kept in `localStorage`
+   - `preferences` holds the Settings dialog's choices: `volume` (0 to 1, default 0.5), `muted` (off), `sounds` (turn, move, dice, gameOver, timer, each on), `colorSymbols` (off) and `highlightDrawn` (on). Each field is validated on its own, so a bad value falls back to its default and the rest are kept. `historySounds` (off) is the History dialog's Sounds checkbox
+   - `/src/hooks/usePreferences.ts` keeps the preferences in memory after one read: `getPreferences()` for non-React code, `setPreferences(next)` to save and notify, and the default `usePreferences()` hook (`useSyncExternalStore`) for components
 
 5. **Game screens (`/games/<id>/client`)**
    - Each game's board components and screen, receiving the public state, the player's seat and any error
