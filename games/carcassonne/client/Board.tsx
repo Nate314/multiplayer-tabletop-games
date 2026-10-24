@@ -5,6 +5,7 @@ import Meeple from './Meeple';
 import { spotOf } from './spots.ts';
 import { meepleKey, tileKey } from './keys.ts';
 import type { FeatureRef, Placement, Seat, TileType } from '../types.ts';
+import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
 
 export const CELL = 100;
 const MARGIN = 1.5; // cells of space around the tiles when fitting the board
@@ -115,11 +116,7 @@ export default function Board({ board, highlight = null, cells = [], preview = n
   // A drag swallows the click that ends it, so panning never places a tile
   const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
     const current = drag.current;
-    if (current?.moved) {
-      const swallow = (click: MouseEvent) => { click.stopPropagation(); click.preventDefault(); };
-      window.addEventListener('click', swallow, { capture: true, once: true });
-      setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
-    }
+    if (current?.moved) swallowNextClick();
     if (current && svgRef.current?.hasPointerCapture(event.pointerId)) svgRef.current.releasePointerCapture(event.pointerId);
     drag.current = null;
   };

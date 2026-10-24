@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 import type { BasePublicState } from '../../shared/types.ts';
+import { takeDrop } from '../drag/recentDrop.ts';
 
 export type MoveChange<P extends BasePublicState> = {
   previous: P;
@@ -39,7 +40,8 @@ function measure(root: HTMLElement): Map<string, DOMRect> {
 }
 
 // Calls animate after the DOM shows the new state but before the browser paints it, only for exactly one new move.
-// The first render (also after a refresh or rejoin), a jump of several moves and an undo (fewer moves) snap without animating.
+// The first render (also after a refresh or rejoin), a jump of several moves and an undo (fewer moves) snap without animating,
+// and so does a move this player just made by dropping the piece where it lands (markDropped in src/drag/recentDrop.ts).
 // rectOf(key) is where the element with data-anim-key="<key>" was after the previous render, in the current viewport coordinates.
 export function useMoveAnimation<P extends BasePublicState>(
   rootRef: RefObject<HTMLElement | null>,
@@ -62,7 +64,7 @@ export function useMoveAnimation<P extends BasePublicState>(
     const rects = rectsRef.current;
     const nextRects = measure(root);
     try {
-      if (previous && rects && state.moveCount === previous.moveCount + 1) {
+      if (previous && rects && state.moveCount === previous.moveCount + 1 && !takeDrop()) {
         const origin = originOf(root);
         animate({
           previous,

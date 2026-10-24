@@ -1,4 +1,4 @@
-import { test as base, expect, type Browser, type Page } from '@playwright/test';
+import { test as base, devices, expect, type Browser, type Locator, type Page } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { GAMES } from '../games/registry.ts';
 
@@ -24,8 +24,9 @@ export type Table = {
   join(name: string): Promise<Page>;
 };
 
-// `motion: true` lets moves animate; by default every player asks for reduced motion, so nothing animates
-export type SeatOptions = { gameId?: string; motion?: boolean };
+// `motion: true` lets moves animate; by default every player asks for reduced motion, so nothing animates.
+// `touch: true` seats every player on a phone (Pixel 7: touch input and a mobile viewport).
+export type SeatOptions = { gameId?: string; motion?: boolean; touch?: boolean };
 export type Seat = (gameType: string, names: string[], options?: SeatOptions) => Promise<Table>;
 
 let tableCount = 0;
@@ -46,9 +47,50 @@ export async function joinGame(page: Page, gameType: string, gameId: string, nam
   await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
 }
 
-export async function newPlayer(browser: Browser, server: Server, motion = false): Promise<Page> {
-  const context = await browser.newContext({ baseURL: server.url, reducedMotion: motion ? 'no-preference' : 'reduce' });
+export async function newPlayer(browser: Browser, server: Server, motion = false, touch = false): Promise<Page> {
+  const context = await browser.newContext({
+    ...(touch ? devices['Pixel 7'] : {}), baseURL: server.url, reducedMotion: motion ? 'no-preference' : 'reduce'
+  });
   return context.newPage();
+}
+
+async function pointIn(locator: Locator, position?: { x: number; y: number }): Promise<{ x: number; y: number }> {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error(`${locator} is not visible`);
+  return position ? { x: box.x + position.x, y: box.y + position.y } : { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+// Drags with the mouse from the center of `from` to `to` (its center, or `position` inside it), in 8 steps as a person would
+export async function drag(page: Page, from: Locator, to: Locator, position?: { x: number; y: number }): Promise<void> {
+  const start = await pointIn(from);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  const end = await pointIn(to, position);
+  await page.mouse.move(end.x, end.y, { steps: 8 });
+  await page.mouse.up();
+}
+
+// Presses on `from` and moves `by` (default 20, 0) without releasing, so a test can act mid-drag; finish with page.mouse.move/up
+export async function lift(page: Page, from: Locator, by = { x: 20, y: 0 }): Promise<void> {
+  const start = await pointIn(from);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + by.x, start.y + by.y, { steps: 4 });
+}
+
+// One finger from `from` to `to` through Chrome's touch input (CDP Input.dispatchTouchEvent: touchStart, 8 touchMoves, touchEnd)
+export async function touchDrag(page: Page, from: Locator, to: Locator): Promise<void> {
+  const start = await pointIn(from);
+  const end = await pointIn(to);
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', point?: { x: number; y: number }) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: point ? [point] : [] });
+  await touch('touchStart', start);
+  for (let step = 1; step <= 8; step++) {
+    await touch('touchMove', { x: start.x + (end.x - start.x) * step / 8, y: start.y + (end.y - start.y) * step / 8 });
+  }
+  await touch('touchEnd');
+  await cdp.detach();
 }
 
 // The player's connection drops for good: their page closes and the server holds their seat
@@ -92,7 +134,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
 
   seat: async ({ browser, server }, use) => {
     const pages: Page[] = [];
-    await use(async (gameType, names, { gameId = `t${++tableCount}`, motion = false } = {}) => {
+    await use(async (gameType, names, { gameId = `t${++tableCount}`, motion = false, touch = false } = {}) => {
       const api = `${server.url}/api/e2e`;
       async function call(path: string, body?: unknown): Promise<unknown> {
         const response = await fetch(`${api}/${path}`, body === undefined ? {} : {
@@ -103,7 +145,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
       }
       const seated: Page[] = [];
       for (const name of names) {
-        const page = await newPlayer(browser, server, motion);
+        const page = await newPlayer(browser, server, motion, touch);
         pages.push(page);
         await joinGame(page, gameType, gameId, name);
         seated.push(page);
@@ -117,7 +159,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
         random: async (...values) => { await call('random', { values }); },
         dice: async (...faces) => { await call('random', { values: faces.map(face => (face - 0.5) / 6) }); },
         join: async name => {
-          const page = await newPlayer(browser, server, motion);
+          const page = await newPlayer(browser, server, motion, touch);
           pages.push(page);
           await joinGame(page, gameType, gameId, name);
           return page;
