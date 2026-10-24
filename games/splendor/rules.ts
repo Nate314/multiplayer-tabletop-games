@@ -273,7 +273,7 @@ function passTurn(state: GameState, seat: Seat): GameState {
   const passed: GameState = { ...state, finalRound, pending: null };
   if (finalRound && roundOver) return endGame(passed);
   const status = reached && !state.finalRound
-    ? `${state.gameStatus}. ${state.playerNames[seat]} has ${winningPrestige(state)} prestige: the round finishes, then the game ends.`
+    ? `${state.gameStatus}. ${state.playerNames[seat]} has ${prestige(state.players[seat])} prestige: the round finishes, then the game ends.`
     : state.gameStatus;
   return { ...passed, currentPlayer: next, turnHolder: next, gameStatus: status };
 }

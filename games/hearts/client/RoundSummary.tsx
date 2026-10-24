@@ -34,7 +34,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           </li>
         ))}
       </ul>
-      <div className="summary-target">The game ends when someone reaches {targetScore(gameState)}; the lowest score wins</div>
+      <div className="summary-target">The game ends when someone reaches {targetScore(gameState).toLocaleString('en-US')}; the lowest score wins</div>
     </RoundSummaryDialog>
   );
 }

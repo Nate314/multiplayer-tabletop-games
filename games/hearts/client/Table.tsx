@@ -43,7 +43,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         ))}
       </ol>
       <div className="hand-info">
-        <span>Hand {handNumber}, game ends at {targetScore(gameState)}</span>
+        <span>Hand {handNumber}, game ends at {targetScore(gameState).toLocaleString('en-US')}</span>
         <span>{direction === 'none' ? 'No pass this hand' : `Pass: ${direction}`}</span>
         <span className="hearts-broken">{heartsBroken ? 'Hearts broken' : 'Hearts not broken'}</span>
       </div>

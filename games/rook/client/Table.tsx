@@ -55,7 +55,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         ))}
       </div>
       <div className="hand-info">
-        <span>Hand {handNumber}, first to {targetScore(gameState)}</span>
+        <span>Hand {handNumber}, first to {targetScore(gameState).toLocaleString('en-US')}</span>
         {bidder !== null && <span>Bid: {playerNames[bidder]} {bid}</span>}
         <span>
           Trump: {trump ? <><span className={`swatch swatch-${trump}`} /> <span className="color-name">{trump}</span></> : 'not named yet'}

@@ -17,7 +17,7 @@
 // - Last trick: whoever takes it captures the nest and scores the counters in it (the article's only last-trick bonus).
 // - Scoring: a bidding team that takes at least its bid scores what it took, otherwise it loses its bid; the other
 //   team scores what it took. The article plays to 300 and gives the win to the higher total if both pass it.
-//   This game plays to 500 (the owner's choice); see the README.
+//   This game plays to 500 by default (the owner's choice), or the host's target; see the README.
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -284,7 +284,7 @@ function nameTrump(state: GameState, seat: Seat, color: Color): GameState {
   return recorded({ ...state, phase: 'play', trump: color, currentPlayer: leader }, { type: 'nameTrump', playerNumber: seat, color });
 }
 
-// Scores a finished hand. The first team at or over 500 wins, the higher total if both are; on a tie another hand is played.
+// Scores a finished hand. The first team at or over the target score wins, the higher total if both are; on a tie another hand is played.
 function endHand(state: GameState, lastTrick: Seat): GameState {
   const bidder = state.bidder ?? lastTrick;
   const bid = state.bid ?? 0;

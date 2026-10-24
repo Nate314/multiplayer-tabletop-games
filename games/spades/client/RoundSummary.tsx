@@ -53,7 +53,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           </li>
         ))}
       </ul>
-      <div className="summary-target">First to {targetScore(gameState)} points wins; a team at {LOSING_SCORE} loses</div>
+      <div className="summary-target">First to {targetScore(gameState).toLocaleString('en-US')} points wins; a team at {LOSING_SCORE} loses</div>
     </RoundSummaryDialog>
   );
 }

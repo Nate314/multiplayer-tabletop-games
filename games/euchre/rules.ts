@@ -245,7 +245,7 @@ function discard(state: GameState, seat: Seat, card: Card): Result<GameState> {
   return { state: recorded(next, { type: 'discard', playerNumber: seat }) };
 }
 
-// Scores a finished hand. Only one team scores in a hand, so the first to reach 10 wins.
+// Scores a finished hand. Only one team scores in a hand, so the first to reach the target score (10 unless the host chose another) wins.
 function endHand(state: GameState): GameState {
   const maker = state.maker ?? 1;
   const makers = teamOf(maker);

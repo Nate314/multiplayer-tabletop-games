@@ -14,7 +14,7 @@
 //   does not loses 10 per trick bid. Every 10 bags cost 100 and the count carries on past 10. A nil scores 100 if the
 //   nil bidder takes no trick and loses 100 if they take any, on top of the partner's contract. Both partners' tricks
 //   count toward the contract.
-// - The first team to 500 wins; a team that falls to -200 loses. On a tie another hand is played.
+// - The first team to the target score (500 unless the host chose another) wins; a team that falls to -200 loses. On a tie another hand is played.
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -165,7 +165,7 @@ function scoreTeam(state: GameState, team: Team): { result: TeamResult; bags: nu
 
 const signed = (value: number) => (value >= 0 ? `+${value}` : String(value));
 
-// Scores a finished hand. At 500 or more, or at -200 or less, the higher total wins; on a tie another hand is played.
+// Scores a finished hand. At the target score or more, or at -200 or less, the higher total wins; on a tie another hand is played.
 function endHand(state: GameState): GameState {
   const [first, second] = [scoreTeam(state, 0), scoreTeam(state, 1)];
   const teams: [TeamResult, TeamResult] = [first.result, second.result];

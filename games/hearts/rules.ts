@@ -13,7 +13,7 @@
 // - A heart may not be led until a heart has been played, unless the leader holds only hearts.
 // - Each heart taken is 1 point and the queen of spades 13. A player who takes all 26 shoots the moon: each other
 //   player takes 26 instead.
-// - The game ends when a player reaches 100; the lowest score wins, and equal lowest scores share the win.
+// - The game ends when a player reaches the target score (100 unless the host chose another); the lowest score wins, and equal lowest scores share the win.
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -163,7 +163,7 @@ function lowest(state: GameState, seats: readonly Seat[]): { winners: Seat[]; te
   return { winners, text };
 }
 
-// Scores a finished hand; the game ends once anyone has 100 or more
+// Scores a finished hand; the game ends once anyone has the target score or more
 function endHand(state: GameState): GameState {
   const moon = SEATS.find(seat => state.taken[seat] === MOON) ?? null;
   const change = moon === null ? state.taken : perSeat(seat => (seat === moon ? 0 : MOON));

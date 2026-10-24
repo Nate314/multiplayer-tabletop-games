@@ -11,7 +11,7 @@ export const catan: GameDefinition<GameState, PublicGameState> = {
     id: 'catan',
     category: 'strategy',
     name: 'Catan',
-    description: 'Settle an island, trade resources and build your way to 10 points',
+    description: 'Settle an island, trade resources and build your way to the points to win (10 unless the host chose another)',
     minPlayers: MIN_PLAYERS,
     maxPlayers: 4,
     houseRules: CATAN_RULES

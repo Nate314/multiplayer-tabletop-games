@@ -64,7 +64,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         ))}
       </div>
       <div className="hand-info">
-        <span>Hand {handNumber}, first to {targetScore(gameState)}</span>
+        <span>Hand {handNumber}, first to {targetScore(gameState).toLocaleString('en-US')}</span>
         <span className="trump-info">
           Trump: {trump
             ? <><span className={`suit-symbol suit-${trump}`}>{SUIT_SYMBOLS[trump]}</span> <span className="suit-name">{trump}</span></>

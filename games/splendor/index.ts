@@ -8,7 +8,7 @@ export const splendor: GameDefinition<GameState, PublicGameState> = {
     id: 'splendor',
     category: 'strategy',
     name: 'Splendor',
-    description: 'Collect gems, buy development cards and attract nobles to reach 15 prestige',
+    description: 'Collect gems, buy development cards and attract nobles to reach the prestige to win (15 unless the host chose another)',
     minPlayers: 2,
     maxPlayers: 4,
     houseRules: SPLENDOR_RULES

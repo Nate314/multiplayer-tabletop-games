@@ -1,5 +1,5 @@
 // Rack-O rules shared by the browser (move text) and the server (validation).
-// Source: https://en.wikipedia.org/wiki/Rack-O, and the target score of 500 from the official rules.
+// Source: https://en.wikipedia.org/wiki/Rack-O, and the default target score of 500 from the official rules.
 import { viewHand } from '../../shared/hands.ts';
 import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -179,7 +179,7 @@ function discard(state: GameState, seat: Seat): Result<GameState> {
   return { state: endTurn({ ...state, discardPile: [...state.discardPile, held.card] }, seat, { playerNumber: seat, type: 'discard', card: held.card }) };
 }
 
-// The player who called Rack-O scores 75 and the others 5 per card in order. The first to 500 wins; the higher total
+// The player who called Rack-O scores 75 and the others 5 per card in order. The first to the target score wins; the higher total
 // wins if several pass it in the same round, and equal totals share.
 function endRound(state: GameState, caller: Seat, lastMove: LastMove): GameState {
   const points: Record<Seat, number> = Object.fromEntries(state.activePlayers.map(seat =>

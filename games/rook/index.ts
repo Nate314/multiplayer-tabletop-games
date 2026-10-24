@@ -7,7 +7,7 @@ export const rook: GameDefinition<GameState, PublicGameState> = {
     id: 'rook',
     category: 'card',
     name: 'Rook',
-    description: 'Bid, take the nest, name trump and win tricks with your partner to 500',
+    description: 'Bid, take the nest, name trump and win tricks with your partner to the target score (500 unless the host chose another)',
     minPlayers: 4,
     maxPlayers: 4,
     houseRules: ROOK_RULES

@@ -49,7 +49,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         })}
       </div>
       <div className="hand-info">
-        <span>Hand {handNumber}, first to {targetScore(gameState)}</span>
+        <span>Hand {handNumber}, first to {targetScore(gameState).toLocaleString('en-US')}</span>
         <span className="spades-broken">{spadesBroken ? 'Spades are broken' : 'Spades not broken yet'}</span>
       </div>
       {seated && (

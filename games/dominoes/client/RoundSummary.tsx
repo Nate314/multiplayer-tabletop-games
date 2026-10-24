@@ -51,7 +51,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
         ))}
       </ul>
       {!summary.blocked && <div className="summary-target">The boneyard held {plural(summary.boneyardPips, 'pip')}, scored by the winner</div>}
-      <div className="summary-target">First to {targetScore(gameState)} points wins</div>
+      <div className="summary-target">First to {targetScore(gameState).toLocaleString('en-US')} points wins</div>
     </RoundSummaryDialog>
   );
 }
