@@ -18,8 +18,8 @@ type BoardProps = {
   onHex?: (hex: number) => void;
 };
 
-const ROAD_SYMBOL = 9; // fits the 8 unit wide road
-const BUILDING_SYMBOL = 9;
+const ROAD_SYMBOL = 10; // a little wider than the 8 unit road, so it reads when the board is small
+const BUILDING_SYMBOL = 11; // fills a settlement's body or a city's tower
 
 // A color symbol centered on a point of the drawing; the nested svg needs its size as attributes
 function symbolAt(seat: Seat, x: number, y: number, size: number) {
@@ -182,7 +182,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
       <g key={`building-${vertex}`} className={`building ${pieceClass(building.seat)}`} data-anim-key={buildingKey(vertex)}>
         <title>{`${playerNames[building.seat]}'s ${building.city ? 'city' : 'settlement'}`}</title>
         {building.city ? <City x={x} y={y} /> : <Settlement x={x} y={y} />}
-        {building.city ? symbolAt(building.seat, x - 6, y + 4, BUILDING_SYMBOL) : symbolAt(building.seat, x, y + 2, BUILDING_SYMBOL)}
+        {building.city ? symbolAt(building.seat, x - 6, y + 3, BUILDING_SYMBOL) : symbolAt(building.seat, x, y + 2.5, BUILDING_SYMBOL)}
       </g>
     );
   });

@@ -14,7 +14,7 @@ type WorldMapProps = {
   onSelect?: (id: string) => void;
 };
 
-const SYMBOL_SIZE = 8; // under the army count, inside the disc
+const SYMBOL_SIZE = 9; // under the army count, inside the disc
 
 const byId = new Map(TERRITORIES.map(territory => [territory.id, territory]));
 

@@ -18,6 +18,7 @@
   --playable: #ffd166;
   --last-from: #fff4e0;
   --last-to: #2a9d8f;
+  --symbol-ink: #fff;
   --seat-1: #2f6fdb;
   --seat-2: #d63c3c;
   --arrow: #8a5a2b;
@@ -42,6 +43,7 @@
     --playable: #ffc94a;
     --last-from: #f6e8d2;
     --last-to: #4fd1c0;
+    --symbol-ink: #1a1208;
     --seat-1: #4f8ef7;
     --seat-2: #f05a5a;
     --arrow: #c99a62;
@@ -114,6 +116,10 @@
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .bank-label .color-symbol {
+    color: var(--symbol-ink);
   }
 
   .bank-label-left {
@@ -266,16 +272,23 @@
     pointer-events: none;
   }
 
+  /* Bigger than its stone, so the shape reads in a crowded pit. It is a pale tint of the seat's color with a dark outline, so it shows on the stone, on the hole and on a neighbor */
+
   .stone-symbol {
     position: absolute;
-    inset: 15%;
-    width: 70%;
-    height: 70%;
-    color: #fff;
+    top: 50%;
+    left: 50%;
+    width: 130%;
+    height: 130%;
+    translate: -50% -50%;
+    color: color-mix(in srgb, var(--seat) 35%, #fff);
+    stroke: rgba(0, 0, 0, 0.75);
+    stroke-width: 1.8px;
   }
 
   .bank-symbol {
     position: absolute;
+    z-index: 2;
     bottom: 2%;
     left: 50%;
     width: 36%;

@@ -181,10 +181,18 @@
     --color-symbol-stroke: rgba(58, 42, 0, 0.6);
   }
 
+  .player-dot:has(.dot-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+  }
+
   .dot-symbol {
-    display: block;
-    width: 100%;
-    height: 100%;
+    width: 10px;
+    height: 10px;
   }
 
   /* The winning four */

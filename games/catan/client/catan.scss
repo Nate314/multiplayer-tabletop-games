@@ -691,10 +691,18 @@
     color: var(--seat-ink);
   }
 
+  .player-swatch:has(.swatch-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+  }
+
   .swatch-symbol {
-    display: block;
-    width: 100%;
-    height: 100%;
+    width: 12px;
+    height: 12px;
   }
 
   .player-name {
