@@ -94,7 +94,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     return () => observer.disconnect();
   }, []);
 
-  // Each shown step waits stepDelayMs(speed) before the next, a new speed from the next step; moving the slider or the picker keeps playing from there
+  // Each shown step waits stepDelayMs(speed) before the next, a new speed restarts the current step's wait; moving the slider or the picker keeps playing from there
   useEffect(() => {
     if (!playing) return;
     if (index >= last) {

@@ -113,7 +113,7 @@ test('the gear holds Animations and Speed, and the live game has no View as', as
   await expect(settings).toHaveCount(0);
 });
 
-test('speed and animations are remembered, and 4x plays a step in about 375 ms', async ({ seat }) => {
+test('speed and animations are remembered, and 4x plays three steps in about 1125 ms', async ({ seat }) => {
   const { alice, dialog } = await openConnectFourHistory(seat);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await dialog.getByLabel('Speed').selectOption({ label: '4x' });
@@ -124,6 +124,9 @@ test('speed and animations are remembered, and 4x plays a step in about 375 ms',
   await expect(dialog.getByLabel('Speed')).toHaveValue('4');
   await expect(dialog.getByLabel('Animations')).toBeChecked();
   await dialog.getByRole('slider', { name: 'Step' }).fill('0');
+  // A fake clock makes the timing exact: three steps take 1125 ms at 4x, but 2250 ms at 2x and 4500 ms at 1x
+  await alice.clock.install();
   await dialog.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(dialog.locator('.history-move')).toContainText('Move 3 of 3', { timeout: 3000 }); // 1x would need 4500 ms
+  await alice.clock.runFor(1200);
+  await expect(dialog.locator('.history-move')).toContainText('Move 3 of 3');
 });
