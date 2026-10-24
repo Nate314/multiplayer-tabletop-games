@@ -19,6 +19,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
     handCounts, playerNames, currentPlayer, winners, direction, discardTop, currentColor, drawPileCount, lastMove,
     scores, dealer, roundNumber, unoWindow
   } = gameState;
+  const pendingDraw = gameState.pendingDraw ?? null;
   const seats = Object.keys(handCounts).map(Number).sort((a, b) => a - b);
   const arrow = direction === 1 ? '→' : '←';
   const lastMover = showLastMove ? lastMove?.playerNumber : undefined;
@@ -54,6 +55,11 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
           );
         })}
       </ol>
+      {pendingDraw && (
+        <div className="stack-count">
+          Stack: {playerNames[pendingDraw.target]} draws {pendingDraw.count} unless they stack
+        </div>
+      )}
       <div className="piles">
         <div className="pile">
           {onDraw ? (

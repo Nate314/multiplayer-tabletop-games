@@ -8,13 +8,15 @@ import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove, { sortedHand } from './animateMove.ts';
 import { handKey } from '../../../src/animation/animKeys.ts';
-import { COLORS, canPlay, isWild, sameCard } from '../rules.ts';
+import { COLORS, canPlay, isWild, sameCard, sevenZero } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
-import type { Card as CardData, Color, PublicGameState } from '../types.ts';
+import type { Card as CardData, Color, PublicGameState, Seat } from '../types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   // A Wild waiting for its color
   const [pendingWild, setPendingWild] = useState<CardData | null>(null);
+  // A 7 waiting for the player to swap hands with
+  const [pendingSwap, setPendingSwap] = useState<CardData | null>(null);
   // UNO is called with the next play, which leaves one card
   const [unoArmed, setUnoArmed] = useState(false);
   const [finalScoringClosed, setFinalScoringClosed] = useState(false);
@@ -23,12 +25,15 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable,
     hand, discardTop, currentColor, hasDrawn, drawnCard, drawPileCount, pendingFour, unoWindow, revealed, roundSummary
   } = gameState;
+  const pendingDraw = gameState.pendingDraw ?? null;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const canAct = !isGameOver && !undoVote && !dismissVote && activePlayers.includes(playerNumber);
   const needsColor = isMyTurn && currentColor === null;
-  const answeringFour = isMyTurn && pendingFour !== null;
-  const canPlayCards = isMyTurn && !needsColor && !answeringFour;
+  const answering = isMyTurn && (pendingFour !== null || pendingDraw !== null);
+  // A Wild Draw Four can be answered only by accepting or challenging it, unless stacking lets a card be played on it
+  const canPlayCards = isMyTurn && !needsColor && (!answering || pendingDraw !== null);
+  const canDrawOrPass = canPlayCards && !answering;
   // The UNO button calls with the play that leaves one card, or late, before anyone catches you
   const lateUno = canAct && unoWindow?.seat === playerNumber && !unoWindow.called;
   const canArmUno = canPlayCards && hand.length === 2 && !lateUno;
@@ -41,6 +46,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   useEffect(() => {
     // A Wild picked up but not played is put back, and an UNO call not yet played is dropped, when the turn changes
     setPendingWild(null);
+    setPendingSwap(null);
     setUnoArmed(false);
   }, [currentPlayer, hasDrawn]);
 
@@ -50,15 +56,29 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   }, [isGameOver]);
 
   // After drawing, only the drawn card may be played
+  // A Draw Two goes on a Draw Two, a Wild Draw Four on either
+  const canStack = (card: CardData) => card.value === 'wildDrawFour' || (card.value === 'drawTwo' && discardTop?.value === 'drawTwo');
   const isPlayable = (card: CardData) => canPlayCards &&
-    (drawnCard ? sameCard(card, drawnCard) : !hasDrawn && canPlay(card, discardTop, currentColor));
+    (pendingDraw ? canStack(card) : drawnCard ? sameCard(card, drawnCard) : !hasDrawn && canPlay(card, discardTop, currentColor));
 
   function playCard(card: CardData) {
+    setPendingSwap(null);
     if (isWild(card)) {
       setPendingWild(card);
       return;
     }
+    // A 7 that goes out swaps nothing, so it needs no one to swap with
+    if (card.value === '7' && sevenZero(gameState) && hand.length > 1) {
+      setPendingSwap(card);
+      return;
+    }
     gameService.makeMove({ type: 'play', card, uno: unoArmed });
+  }
+
+  function swapWith(seat: Seat) {
+    if (!pendingSwap) return;
+    gameService.makeMove({ type: 'play', card: pendingSwap, uno: unoArmed, swapWith: seat });
+    setPendingSwap(null);
   }
 
   function chooseColor(color: Color) {
@@ -78,10 +98,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   let hint: string | null = null;
   if (needsColor) hint = 'The game starts on a Wild: name the first color';
-  else if (answeringFour) hint = 'Accept the Wild Draw Four, or challenge it';
+  else if (answering && pendingDraw) hint = `Play a Draw Two or Wild Draw Four on it, or accept and draw ${pendingDraw.count}`;
+  else if (answering) hint = 'Accept the Wild Draw Four, or challenge it';
   else if (lateUno) hint = 'Call UNO before anyone catches you!';
   else if (isMyTurn) {
     if (pendingWild) hint = 'Choose a color for your Wild';
+    else if (pendingSwap) hint = 'Choose a player to swap hands with';
     else if (unoArmed) hint = 'UNO! Now play your next-to-last card';
     else if (hasDrawn) hint = 'Play the card you drew, or pass to keep it';
     else if (hand.length === 2) hint = 'Call UNO before you play your next-to-last card';
@@ -101,14 +123,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button
               type="button"
               onClick={() => gameService.makeMove({ type: 'draw' })}
-              disabled={!canPlayCards || hasDrawn}
+              disabled={!canDrawOrPass || hasDrawn}
             >
               Draw
             </button>
             <button
               type="button"
               onClick={() => gameService.makeMove({ type: 'pass' })}
-              disabled={!canPlayCards || (!hasDrawn && drawPileCount > 0)}
+              disabled={!canDrawOrPass || (!hasDrawn && drawPileCount > 0)}
             >
               Pass
             </button>
@@ -139,18 +161,25 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <Table
           gameState={gameState}
           viewer={playerNumber}
-          onDraw={canPlayCards && !hasDrawn ? () => gameService.makeMove({ type: 'draw' }) : undefined}
+          onDraw={canDrawOrPass && !hasDrawn ? () => gameService.makeMove({ type: 'draw' }) : undefined}
         />
-        {answeringFour && pendingFour && (
-          <div className="four-answer" role="group" aria-label="Answer the Wild Draw Four">
-            <p>
-              {playerNames[pendingFour.by]} played a Wild Draw Four on you. It was allowed only if they held
-              no {pendingFour.previousColor} card. If you challenge and they did, they draw 4 and you play on;
-              if they did not, you draw 6 and lose your turn.
-            </p>
+        {answering && (
+          <div className="four-answer" role="group" aria-label={pendingFour ? 'Answer the Wild Draw Four' : 'Answer the stack'}>
+            {pendingFour ? (
+              <p>
+                {playerNames[pendingFour.by]} played a Wild Draw Four on you. It was allowed only if they held
+                no {pendingFour.previousColor} card. If you challenge and they did, they draw 4 and you play on;
+                if they did not, you draw 6 and lose your turn.
+                {pendingDraw && ' Or play a Draw Two or Wild Draw Four on it.'}
+              </p>
+            ) : (
+              <p>Play a Draw Two or Wild Draw Four on the stack, or accept it, draw {pendingDraw?.count} and lose your turn.</p>
+            )}
             <div className="four-actions">
-              <button type="button" onClick={() => gameService.makeMove({ type: 'challenge' })}>Challenge</button>
-              <button type="button" onClick={() => gameService.makeMove({ type: 'accept' })}>Accept and draw 4</button>
+              {pendingFour && <button type="button" onClick={() => gameService.makeMove({ type: 'challenge' })}>Challenge</button>}
+              <button type="button" onClick={() => gameService.makeMove({ type: 'accept' })}>
+                Accept and draw {pendingDraw?.count ?? 4}
+              </button>
             </div>
           </div>
         )}
@@ -170,6 +199,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               </button>
             ))}
             {pendingWild && <button type="button" className="color-cancel" onClick={() => setPendingWild(null)}>Cancel</button>}
+          </div>
+        )}
+        {pendingSwap && (
+          <div className="swap-picker" role="group" aria-label="Swap hands with">
+            {activePlayers.filter(seat => seat !== playerNumber).map(seat => (
+              <button key={seat} type="button" className="swap-choice" onClick={() => swapWith(seat)}>
+                {playerNames[seat]} ({gameState.handCounts[seat]})
+              </button>
+            ))}
+            <button type="button" className="swap-cancel" onClick={() => setPendingSwap(null)}>Cancel</button>
           </div>
         )}
         <section className={isMyTurn ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">

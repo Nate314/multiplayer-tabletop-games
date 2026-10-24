@@ -61,6 +61,7 @@ async function deal(table: Table, { hands, discard, color, drawPile = GREENS, cu
     currentPlayer: current,
     turnHolder: current,
     pendingFour: null,
+    pendingDraw: null,
     unoWindow: null,
     revealed: null,
     roundSummary: null,
@@ -482,6 +483,45 @@ test.describe('UNO rules', () => {
     await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins');
     await expect(scoring(pages[1]).locator('.summary-result')).toHaveText('Dan went out and wins with 250 points!');
     await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
+  });
+
+  test('stacking a Draw Two', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { stacking: true } });
+    await deal(table, {
+      hands: { 1: [c('red', 'drawTwo'), c('red', '1')], 2: [c('red', 'drawTwo'), c('red', '2')], 3: [c('green', '1'), c('green', '2')] },
+      discard: [c('red', '5')]
+    });
+    await play(alice, 'red Draw Two');
+    await expect(bob.locator('.stack-count')).toHaveText('Stack: Bob draws 2 unless they stack');
+    await expect(countOf(bob, 'Bob')).toHaveText('2 cards');
+    await expect(bob.getByRole('group', { name: 'Answer the stack' })).toBeVisible();
+    await expect(button(bob, 'Draw')).toBeDisabled();
+    await play(bob, 'red Draw Two');
+    await expect(cara.locator('.stack-count')).toHaveText('Stack: Cara draws 4 unless they stack');
+    await expect(handCard(cara, 'green 1')).toBeDisabled();
+    await button(cara, 'Accept and draw 4').click();
+    await expect(cara.locator('.stack-count')).toHaveCount(0);
+    await expect(countOf(alice, 'Cara')).toHaveText('6 cards');
+    await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('a 7 swaps hands', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { sevenZero: true } });
+    await deal(table, {
+      hands: { 1: [c('red', '7'), c('red', '8'), c('red', '9')], 2: [c('blue', '1')], 3: [c('green', '1'), c('green', '2')] },
+      discard: [c('red', '5')]
+    });
+    await play(alice, 'red 7');
+    const picker = alice.getByRole('group', { name: 'Swap hands with' });
+    await expect(picker.getByRole('button')).toHaveText(['Bob (1)', 'Cara (2)', 'Cancel']);
+    await picker.getByRole('button', { name: 'Cara (2)' }).click();
+    await expect(status(bob)).toHaveText('Alice played red 7; swaps hands with Cara');
+    await expect(countOf(bob, 'Alice')).toHaveText('2 cards');
+    await expect(countOf(bob, 'Cara')).toHaveText('2 cards');
+    await expect(handCard(alice, 'green 1')).toBeVisible();
+    await expect(handCard(cara, 'red 8')).toBeVisible();
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(cara.getByRole('group', { name: 'Swap hands with' })).toHaveCount(0);
   });
 });
 

@@ -16,7 +16,7 @@ export type Card = { color: Color | 'wild'; value: Value };
 export type Direction = 1 | -1; // 1 plays up through the seats, to the dealer's left; -1 down
 
 export type Move =
-  | { type: 'play'; card: Card; color?: Color; uno?: boolean } // color is required for a Wild; uno calls UNO with the play
+  | { type: 'play'; card: Card; color?: Color; uno?: boolean; swapWith?: Seat } // color is required for a Wild; uno calls UNO with the play; swapWith is required for a 7 under the 7-0 rule
   | { type: 'draw' }
   | { type: 'pass' } // only after drawing a playable card
   | { type: 'chooseColor'; color: Color } // the first player names the color after a starting Wild
@@ -32,12 +32,15 @@ export type Action =
 // `target` is who a Skip, Reverse with 2 players, Draw Two or Wild Draw Four hit; `drew` is how many they drew.
 // A Wild Draw Four that does not go out leaves its target to accept or challenge, so they have drawn nothing yet.
 export type LastMove =
-  | { type: 'play'; playerNumber: Seat; card: Card; color: Color; target: Seat | null; drew: number; wentOut: boolean }
-  | { type: 'draw'; playerNumber: Seat; passed: boolean } // passed: the card could not be played, so the turn moved on
+  // stack: with stacking, how many cards the target draws unless they stack on it; swappedWith: a 7 under 7-0; passedHands: a 0
+  | { type: 'play'; playerNumber: Seat; card: Card; color: Color; target: Seat | null; drew: number; wentOut: boolean;
+      stack?: number; swappedWith?: Seat; passedHands?: true }
+  // count: how many cards were drawn (more than one only when drawing until a card can be played)
+  | { type: 'draw'; playerNumber: Seat; passed: boolean; count?: number } // passed: the card could not be played, so the turn moved on
   | { type: 'pass'; playerNumber: Seat }
   | { type: 'chooseColor'; playerNumber: Seat; color: Color }
   | { type: 'challenge'; playerNumber: Seat; challenged: Seat; guilty: boolean; drew: number } // guilty: the challenged player drew
-  | { type: 'accept'; playerNumber: Seat; drew: number };
+  | { type: 'accept'; playerNumber: Seat; drew: number; stacked?: true }; // stacked: it was not a lone Wild Draw Four
 
 // A Wild Draw Four waiting for its target to accept or challenge. It was legal only if `by` held no card of `previousColor`.
 export type PendingFour = { by: Seat; target: Seat; previousColor: Color };
@@ -69,6 +72,8 @@ export type GameState = BaseGameState & {
   // when onPlayerLeft runs, and only this tells whether the leaver held the turn
   turnHolder: Seat | null;
   pendingFour: PendingFour | null;
+  // With stacking: the cards `target` draws unless they stack another Draw Two or Wild Draw Four. Saved games may lack it.
+  pendingDraw: { count: number; target: Seat } | null;
   unoWindow: UnoWindow | null;
   // The challenged player's hand as it was, shown to the challenger only, until the challenger's next move
   revealed: { to: Seat; of: Seat; hand: Card[] } | null;

@@ -67,6 +67,18 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points, and turn on three house rules: stacking, 7-0, and drawing until you can play. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+  },
+  {
+    question: 'How does stacking work?',
+    answer: 'When the host turns on stacking, a Draw Two or Wild Draw Four does not make the next player draw at once. They may play another Draw Two on a Draw Two, or a Wild Draw Four on either, and the count grows and passes to the next player. Or they click Accept, draw the whole count and lose their turn. A Draw Two cannot go on a Wild Draw Four, and a Wild Draw Four can be challenged only while it is the only card in the stack. The table shows how many cards are waiting.'
+  },
+  {
+    question: 'How does 7-0 work?',
+    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice: click the 7, then click their name. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing.'
+  },
+  {
+    question: 'What does drawing until you can play do?',
+    answer: 'When the host turns it on, Draw takes cards until one can be played, or until there are no cards left. You may then play that card or pass. If nothing could be played, your turn ends.'
   }
 ];

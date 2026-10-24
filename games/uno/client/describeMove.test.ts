@@ -50,3 +50,20 @@ test('describes draws, passes and the first color', () => {
   assert.equal(describe({ type: 'chooseColor', playerNumber: 1, color: 'blue' }), 'Alice chose blue to start');
   assert.equal(describe(null), '');
 });
+
+test('describes stacks, swaps and long draws', () => {
+  const two = { color: 'red', value: 'drawTwo' } as const;
+  assert.equal(describe({ type: 'play', playerNumber: 1, card: two, color: 'red', target: 2, drew: 0, wentOut: false, stack: 4 }),
+    'Alice played red Draw Two; Bob must stack or draw 4');
+  assert.equal(describe({ type: 'play', playerNumber: 1, card: FOUR, color: 'red', target: 2, drew: 0, wentOut: false, stack: 4 }),
+    'Alice played Wild Draw Four (red); Bob may stack it, accept or challenge it');
+  assert.equal(describe({ type: 'accept', playerNumber: 2, drew: 6, stacked: true }), 'Bob accepted the stack, draws 6 and is skipped');
+  assert.equal(describe({
+    type: 'play', playerNumber: 1, card: { color: 'red', value: '7' }, color: 'red', target: null, drew: 0, wentOut: false, swappedWith: 2
+  }), 'Alice played red 7; swaps hands with Bob');
+  assert.equal(describe({
+    type: 'play', playerNumber: 1, card: { color: 'red', value: '0' }, color: 'red', target: null, drew: 0, wentOut: false, passedHands: true
+  }), 'Alice played red 0; every hand passes on');
+  assert.equal(describe({ type: 'draw', playerNumber: 2, passed: false, count: 3 }), 'Bob drew 3 cards');
+  assert.equal(describe({ type: 'draw', playerNumber: 2, passed: true, count: 3 }), 'Bob drew 3 cards and could not play any');
+});

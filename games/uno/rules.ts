@@ -1,6 +1,6 @@
 // UNO rules shared by the browser (playable cards) and the server (validation).
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule, targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -14,9 +14,23 @@ import type {
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'blue'];
 export const HAND_SIZE = 7;
 const TARGET_RULE = targetScoreRule(500, [250, 1000]);
-export const UNO_RULES: HouseRule[] = [TARGET_RULE];
+const STACKING_RULE: ToggleRule = {
+  id: 'stacking', label: 'Stack +2 and +4 cards', kind: 'toggle', standard: false,
+  help: 'A Draw Two or Wild Draw Four can be answered with another one instead of drawing'
+};
+const SEVEN_ZERO_RULE: ToggleRule = {
+  id: 'sevenZero', label: '7-0: a 7 swaps hands, a 0 passes every hand', kind: 'toggle', standard: false
+};
+const DRAW_UNTIL_RULE: ToggleRule = {
+  id: 'drawUntilPlayable', label: 'Draw until you can play', kind: 'toggle', standard: false
+};
+export const UNO_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE];
 
-export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
+type Rules = Pick<GameState, 'houseRules'>;
+export const targetScore = (state: Rules): number => houseRule(state, TARGET_RULE);
+export const stacking = (state: Rules): boolean => houseRule(state, STACKING_RULE);
+export const sevenZero = (state: Rules): boolean => houseRule(state, SEVEN_ZERO_RULE);
+const drawUntilPlayable = (state: Rules): boolean => houseRule(state, DRAW_UNTIL_RULE);
 const NUMBERS: Value[] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const ACTIONS: Value[] = ['skip', 'reverse', 'drawTwo'];
 const WILDS: Value[] = ['wild', 'wildDrawFour'];
@@ -116,6 +130,7 @@ const ROUND_START = {
   direction: 1,
   drawnCard: null,
   pendingFour: null,
+  pendingDraw: null,
   unoWindow: null,
   revealed: null,
   roundSummary: null,
@@ -216,6 +231,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
   const { hands, drawPile, discardPile, drawnCard, turnHolder: _turnHolder, revealed, ...view } = state;
   return {
     ...view,
+    pendingDraw: state.pendingDraw ?? null,
     hand: viewHand(hands, viewer),
     handCounts: handCounts(hands),
     drawPileCount: drawPile.length,
@@ -254,13 +270,20 @@ function parseMove(move: unknown): Move | null {
     case 'play': {
       const card = parseCard(input.card);
       const uno = input.uno === true;
+      const swapWith = typeof input.swapWith === 'number' ? { swapWith: input.swapWith } : {};
       if (!card) return null;
-      if (!isWild(card)) return { type: 'play', card, uno };
-      return isColor(input.color) ? { type: 'play', card, color: input.color, uno } : null;
+      if (!isWild(card)) return { type: 'play', card, uno, ...swapWith };
+      return isColor(input.color) ? { type: 'play', card, color: input.color, uno, ...swapWith } : null;
     }
     default:
       return null;
   }
+}
+
+function describeDraw(lastMove: Extract<LastMove, { type: 'draw' }>, name: string): string {
+  const count = lastMove.count ?? 1;
+  if (count === 1) return lastMove.passed ? `${name} drew a card and could not play it` : `${name} drew a card`;
+  return lastMove.passed ? `${name} drew ${count} cards and could not play any` : `${name} drew ${count} cards`;
 }
 
 // How the status line and the history describe a move, e.g. 'Alice played red Draw Two; Bob draws 2 and is skipped'
@@ -270,11 +293,11 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
     case 'pass':
       return `${name} passed`;
     case 'draw':
-      return lastMove.passed ? `${name} drew a card and could not play it` : `${name} drew a card`;
+      return describeDraw(lastMove, name);
     case 'chooseColor':
       return `${name} chose ${lastMove.color} to start`;
     case 'accept':
-      return `${name} accepted the Wild Draw Four, draws ${lastMove.drew} and is skipped`;
+      return `${name} accepted the ${lastMove.stacked ? 'stack' : 'Wild Draw Four'}, draws ${lastMove.drew} and is skipped`;
     case 'challenge': {
       const challenged = playerNames[lastMove.challenged];
       return lastMove.guilty
@@ -282,11 +305,17 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
         : `${name} challenged ${challenged}'s Wild Draw Four and lost; ${name} draws ${lastMove.drew} and is skipped`;
     }
     case 'play': {
-      const { card, color, target, drew, wentOut } = lastMove;
+      const { card, color, target, drew, wentOut, stack, swappedWith, passedHands } = lastMove;
       const played = `${name} played ${isWild(card) ? `${cardName(card)} (${color})` : cardName(card)}`;
       const targetName = target === null ? '' : playerNames[target];
       if (wentOut) return target === null ? `${played} and went out` : `${played} and went out; ${targetName} draws ${drew}`;
+      if (swappedWith !== undefined) return `${played}; swaps hands with ${playerNames[swappedWith]}`;
+      if (passedHands) return `${played}; every hand passes on`;
       if (target === null) return played;
+      if (stack !== undefined) {
+        const lone = card.value === 'wildDrawFour' && stack === DRAWS.wildDrawFour;
+        return lone ? `${played}; ${targetName} may stack it, accept or challenge it` : `${played}; ${targetName} must stack or draw ${stack}`;
+      }
       if (card.value === 'wildDrawFour') return `${played}; ${targetName} may accept or challenge it`;
       return `${played}; ${targetName} ${drew > 0 ? `draws ${drew} and is skipped` : 'is skipped'}`;
     }
@@ -300,7 +329,7 @@ function recorded(state: GameState, lastMove: LastMove): GameState {
 // The player who went out scores every card left in the other hands, after the next player has drawn for a last
 // Draw Two or Wild Draw Four. The first to reach targetScore(state) wins; otherwise the next round waits for everyone to continue.
 function endRound(state: GameState, seat: Seat, card: Card, color: Color, random: Random): GameState {
-  const count = DRAWS[card.value] ?? 0;
+  const count = (DRAWS[card.value] ?? 0) + (state.pendingDraw?.count ?? 0);
   const target = count > 0 ? stepFrom(state.activePlayers, seat, state.direction) : null;
   const { state: drawn, drew } = target === null ? { state, drew: 0 } : dealTo(state, target, count, random);
 
@@ -309,6 +338,8 @@ function endRound(state: GameState, seat: Seat, card: Card, color: Color, random
   const total = state.scores[seat] + points;
   const scored: GameState = {
     ...withTurn(drawn, null),
+    pendingDraw: null,
+    pendingFour: null,
     scores: { ...state.scores, [seat]: total },
     unoWindow: null,
     roundSummary: { roundNumber: state.roundNumber, wentOut: seat, points, cardsLeft, acknowledged: [] },
@@ -322,15 +353,38 @@ function endRound(state: GameState, seat: Seat, card: Card, color: Color, random
   return { ...scored, gameStatus: `${name} went out and scores ${points} points. Waiting for everyone to continue.` };
 }
 
+const STACK_ERROR = 'Stack a Draw Two or Wild Draw Four, or accept the cards';
+
+type PlayExtras = { swappedWith?: Seat; passedHands?: true };
+
+// Under the 7-0 rule a 7 swaps hands with another player and a 0 passes every hand one seat in the direction of play
+function moveHands(state: GameState, seat: Seat, card: Card, swapWith: Seat | undefined): { hands: GameState['hands'] } & PlayExtras {
+  const { hands, activePlayers: players } = state;
+  if (card.value === '7' && swapWith !== undefined) {
+    return { hands: { ...hands, [seat]: hands[swapWith], [swapWith]: hands[seat] }, swappedWith: swapWith };
+  }
+  const passed = Object.fromEntries(players.map(other => [stepFrom(players, other, state.direction), hands[other]]));
+  return { hands: { ...hands, ...passed }, passedHands: true };
+}
+
 // A play that leaves one card opens the UNO window, already closed if `uno` called it with the play.
-// A Wild Draw Four waits for its target to accept or challenge it.
-function play(state: GameState, seat: Seat, card: Card, chosen: Color | undefined, uno: boolean, random: Random): Result<GameState> {
+// A Wild Draw Four waits for its target to accept or challenge it. With stacking, so does a Draw Two, and
+// the target may answer with another Draw Two (on a Draw Two) or Wild Draw Four instead.
+function play(
+  state: GameState, seat: Seat, card: Card, chosen: Color | undefined, uno: boolean, swapWith: Seat | undefined, random: Random
+): Result<GameState> {
   const hand = state.hands[seat];
   const index = hand.findIndex(held => sameCard(held, card));
   if (index < 0) return { error: 'You do not have that card' };
   if (state.drawnCard && !sameCard(state.drawnCard, card)) return { error: 'You may only play the card you drew' };
   const top = state.discardPile[state.discardPile.length - 1] ?? null;
-  if (!canPlay(card, top, state.currentColor)) return { error: 'That card does not match' };
+  const owed = state.pendingDraw ?? null;
+  if (owed) {
+    if (!(card.value in DRAWS)) return { error: STACK_ERROR };
+    if (card.value === 'drawTwo' && top?.value === 'wildDrawFour') return { error: 'A Draw Two cannot go on a Wild Draw Four' };
+  } else if (!canPlay(card, top, state.currentColor)) {
+    return { error: 'That card does not match' };
+  }
 
   const color = chosen ?? card.color as Color;
   const rest = hand.filter((_, i) => i !== index);
@@ -343,27 +397,53 @@ function play(state: GameState, seat: Seat, card: Card, chosen: Color | undefine
   };
   if (rest.length === 0) return { state: endRound(played, seat, card, color, random) };
 
-  if (card.value === 'wildDrawFour') {
+  const stacks = stacking(state);
+  if (card.value === 'wildDrawFour' || (stacks && card.value === 'drawTwo')) {
     const target = stepFrom(state.activePlayers, seat, state.direction);
-    const pendingFour: PendingFour = { by: seat, target, previousColor: state.currentColor as Color };
-    const lastMove: LastMove = { type: 'play', playerNumber: seat, card, color, target, drew: 0, wentOut: false };
-    return { state: recorded(withTurn({ ...played, pendingFour }, target), lastMove) };
+    const count = (owed?.count ?? 0) + (DRAWS[card.value] ?? 0);
+    const pendingDraw = stacks ? { count, target } : null;
+    // Only a lone Wild Draw Four can be challenged
+    const pendingFour: PendingFour | null = card.value === 'wildDrawFour' && !owed
+      ? { by: seat, target, previousColor: state.currentColor as Color } : null;
+    const lastMove: LastMove = {
+      type: 'play', playerNumber: seat, card, color, target, drew: 0, wentOut: false, ...(stacks ? { stack: count } : {})
+    };
+    return { state: recorded(withTurn({ ...played, pendingDraw, pendingFour }, target), lastMove) };
   }
 
-  const { state: next, target, drew } = applyEffect(played, seat, card, random);
-  return { state: recorded(next, { type: 'play', playerNumber: seat, card, color, target, drew, wentOut: false }) };
+  let extra: PlayExtras = {};
+  let dealt = played;
+  if (sevenZero(state) && (card.value === '7' || card.value === '0')) {
+    if (card.value === '7' && (swapWith === undefined || swapWith === seat || !state.activePlayers.includes(swapWith))) {
+      return { error: 'Choose a player to swap hands with' };
+    }
+    const { hands, ...moved } = moveHands(played, seat, card, swapWith);
+    extra = moved;
+    dealt = { ...played, hands, unoWindow: hands[seat].length === 1 ? { seat, called: uno } : null };
+  }
+
+  const { state: next, target, drew } = applyEffect(dealt, seat, card, random);
+  return { state: recorded(next, { type: 'play', playerNumber: seat, card, color, target, drew, wentOut: false, ...extra }) };
 }
 
 // The drawn card goes to the hand. If it can be played the player may play it or pass; otherwise the turn moves on.
+// Drawing until you can play takes cards until one plays or the piles run out.
 function draw(state: GameState, seat: Seat, random: Random): Result<GameState> {
   if (state.drawnCard) return { error: 'You already drew a card' };
   if (!canDraw(state)) return { error: 'There are no cards left to draw' };
 
-  const { state: next } = dealTo(state, seat, 1, random);
+  const repeat = drawUntilPlayable(state);
+  let next = state;
+  let count = 0;
+  let playable = false;
+  while (!playable && canDraw(next) && (repeat || count === 0)) {
+    next = dealTo(next, seat, 1, random).state;
+    count++;
+    const top = next.discardPile[next.discardPile.length - 1] ?? null;
+    playable = canPlay(next.hands[seat][next.hands[seat].length - 1], top, state.currentColor);
+  }
   const card = next.hands[seat][next.hands[seat].length - 1];
-  const top = next.discardPile[next.discardPile.length - 1] ?? null;
-  const playable = canPlay(card, top, state.currentColor);
-  const lastMove: LastMove = { type: 'draw', playerNumber: seat, passed: !playable };
+  const lastMove: LastMove = { type: 'draw', playerNumber: seat, passed: !playable, ...(count > 1 ? { count } : {}) };
   if (playable) return { state: recorded({ ...next, drawnCard: card }, lastMove) };
   return { state: recorded(withTurn(next, stepFrom(state.activePlayers, seat, state.direction)), lastMove) };
 }
@@ -381,10 +461,12 @@ function chooseColor(state: GameState, seat: Seat, color: Color): Result<GameSta
   return { state: recorded({ ...state, currentColor: color }, { type: 'chooseColor', playerNumber: seat, color }) };
 }
 
+// Takes the Wild Draw Four's 4 cards, or the whole stack, and loses the turn
 function accept(state: GameState, seat: Seat, random: Random): GameState {
-  const { state: drawn, drew } = dealTo({ ...state, pendingFour: null }, seat, DRAWS.wildDrawFour ?? 0, random);
+  const count = state.pendingDraw?.count ?? DRAWS.wildDrawFour ?? 0;
+  const { state: drawn, drew } = dealTo({ ...state, pendingFour: null, pendingDraw: null }, seat, count, random);
   const next = withTurn(drawn, stepFrom(state.activePlayers, seat, state.direction));
-  return recorded(next, { type: 'accept', playerNumber: seat, drew });
+  return recorded(next, { type: 'accept', playerNumber: seat, drew, ...(state.pendingFour ? {} : { stacked: true as const }) });
 }
 
 // The challenged player shows their hand to the challenger alone. If it holds a card of the color that was current when
@@ -395,7 +477,7 @@ function challenge(state: GameState, seat: Seat, pending: PendingFour, random: R
   const guilty = hand.some(held => held.color === pending.previousColor);
   const drawer = guilty ? pending.by : seat;
   const count = guilty ? DRAWS.wildDrawFour ?? 0 : FAILED_CHALLENGE_DRAW;
-  const { state: drawn, drew } = dealTo({ ...state, pendingFour: null }, drawer, count, random);
+  const { state: drawn, drew } = dealTo({ ...state, pendingFour: null, pendingDraw: null }, drawer, count, random);
   const next = withTurn(
     { ...drawn, revealed: { to: seat, of: pending.by, hand } },
     guilty ? seat : stepFrom(state.activePlayers, seat, state.direction)
@@ -408,18 +490,23 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
   const pending = state.pendingFour;
+  const owed = state.pendingDraw ?? null;
   const next: GameState = { ...state, unoWindow: null, revealed: state.revealed?.to === seat ? null : state.revealed };
 
   if (parsed.type === 'chooseColor') return chooseColor(next, seat, parsed.color);
   if (state.currentColor === null) return { error: 'Choose the first color' };
   if (parsed.type === 'challenge' || parsed.type === 'accept') {
-    if (!pending) return { error: 'There is no Wild Draw Four to answer' };
-    return { state: parsed.type === 'challenge' ? challenge(next, seat, pending, random) : accept(next, seat, random) };
+    if (parsed.type === 'challenge' && pending) return { state: challenge(next, seat, pending, random) };
+    if (parsed.type === 'accept' && (pending || owed)) return { state: accept(next, seat, random) };
+    return { error: 'There is no Wild Draw Four to answer' };
   }
-  if (pending) return { error: 'Accept the Wild Draw Four or challenge it' };
-  if (parsed.type === 'draw') return draw(next, seat, random);
-  if (parsed.type === 'pass') return pass(next, seat);
-  return play(next, seat, parsed.card, parsed.color, parsed.uno === true, random);
+  if (parsed.type !== 'play') {
+    if (owed) return { error: STACK_ERROR };
+    if (pending) return { error: 'Accept the Wild Draw Four or challenge it' };
+    return parsed.type === 'draw' ? draw(next, seat, random) : pass(next, seat);
+  }
+  if (pending && !owed) return { error: 'Accept the Wild Draw Four or challenge it' };
+  return play(next, seat, parsed.card, parsed.color, parsed.uno === true, parsed.swapWith, random);
 }
 
 const ROUND: RoundAccess<GameState, RoundSummary> = {
@@ -475,11 +562,14 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
 export function onPlayerLeft(state: GameState, seat: Seat, random: Random): GameState {
   const { [seat]: hand = [], ...hands } = state.hands;
   const { pendingFour, unoWindow, revealed } = state;
+  const owed = state.pendingDraw ?? null;
+  const fourGone = pendingFour?.by === seat || pendingFour?.target === seat;
   const next: GameState = {
     ...state,
     hands,
     drawPile: [...hand, ...state.drawPile],
-    pendingFour: pendingFour?.by === seat || pendingFour?.target === seat ? null : pendingFour,
+    pendingFour: fourGone ? null : pendingFour,
+    pendingDraw: fourGone || owed?.target === seat ? null : owed,
     unoWindow: unoWindow?.seat === seat ? null : unoWindow,
     revealed: revealed?.to === seat || revealed?.of === seat ? null : revealed
   };

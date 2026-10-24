@@ -572,3 +572,158 @@ test('the game ends at the chosen target', () => {
   assert.equal(finish(240, 500).isGameOver, false);
   assert.equal(targetScore({}), 500);
 });
+
+// House rules: stacking, 7-0 and draw until you can play
+const stackRules = { houseRules: withRules({ stacking: true }) };
+const sevenZero = { houseRules: withRules({ sevenZero: true }) };
+const stackGame = (hands: GameState['hands'], overrides: Partial<GameState> = {}) =>
+  game({ ...stackRules, hands: { ...game().hands, ...hands }, ...overrides });
+const STACK_ERROR = { error: 'Stack a Draw Two or Wild Draw Four, or accept the cards' };
+
+test('a Draw Two can be stacked and the next player draws four', () => {
+  const state = stackGame({ 1: [red('drawTwo'), red('1')], 2: [blue('drawTwo'), blue('1')], 3: [blue('3'), blue('4')] });
+  const first = ok(play(state, 1, red('drawTwo')));
+  assert.deepEqual(first.pendingDraw, { count: 2, target: 2 });
+  assert.equal(first.currentPlayer, 2);
+  assert.equal(first.hands[2].length, 2);
+  assert.equal(first.gameStatus, 'Alice played red Draw Two; Bob must stack or draw 2');
+
+  const second = ok(play(first, 2, blue('drawTwo')));
+  assert.deepEqual(second.pendingDraw, { count: 4, target: 3 });
+  assert.equal(second.currentPlayer, 3);
+  assert.equal(second.currentColor, 'blue');
+  assert.equal(second.hands[3].length, 2);
+
+  assert.deepEqual(move(second, 3, { type: 'draw' }), STACK_ERROR);
+  assert.deepEqual(play(second, 3, blue('3')), STACK_ERROR);
+});
+
+test('a Wild Draw Four stacks on a Draw Two but not the other way round', () => {
+  const state = stackGame({ 1: [red('drawTwo'), red('1')], 2: [WILD_FOUR, blue('1')], 3: [blue('3'), blue('4')] });
+  const stacked = ok(play(ok(play(state, 1, red('drawTwo'))), 2, WILD_FOUR, 'green'));
+  assert.deepEqual(stacked.pendingDraw, { count: 6, target: 3 });
+  assert.equal(stacked.pendingFour, null);
+  assert.equal(stacked.currentColor, 'green');
+
+  const four = stackGame({ 1: [WILD_FOUR, red('1')], 2: [blue('drawTwo'), blue('1')] });
+  const played = ok(play(four, 1, WILD_FOUR, 'blue'));
+  assert.deepEqual(played.pendingDraw, { count: 4, target: 2 });
+  assert.deepEqual(played.pendingFour, { by: 1, target: 2, previousColor: 'red' });
+  assert.deepEqual(play(played, 2, blue('drawTwo')), { error: 'A Draw Two cannot go on a Wild Draw Four' });
+});
+
+test('accepting a stack draws the whole count and loses the turn', () => {
+  const state = stackGame({ 1: [red('drawTwo'), red('1')], 2: [blue('drawTwo'), blue('1')], 3: [blue('3'), blue('4')] });
+  const stacked = ok(play(ok(play(state, 1, red('drawTwo'))), 2, blue('drawTwo')));
+  const accepted = ok(move(stacked, 3, { type: 'accept' }));
+  assert.equal(accepted.hands[3].length, 6);
+  assert.equal(accepted.pendingDraw, null);
+  assert.equal(accepted.currentPlayer, 1);
+  assert.deepEqual(accepted.lastMove, { type: 'accept', playerNumber: 3, drew: 4, stacked: true });
+  assert.equal(accepted.gameStatus, 'Cara accepted the stack, draws 4 and is skipped');
+
+  // A lone Draw Two is accepted the same way
+  const lone = ok(move(ok(play(state, 1, red('drawTwo'))), 2, { type: 'accept' }));
+  assert.equal(lone.hands[2].length, 4);
+  assert.equal(lone.currentPlayer, 3);
+});
+
+test('a stacked Wild Draw Four cannot be challenged', () => {
+  const state = stackGame({ 1: [red('drawTwo'), red('1')], 2: [WILD_FOUR, blue('1')], 3: [blue('3'), blue('4')] });
+  const stacked = ok(play(ok(play(state, 1, red('drawTwo'))), 2, WILD_FOUR, 'green'));
+  assert.deepEqual(move(stacked, 3, { type: 'challenge' }), { error: 'There is no Wild Draw Four to answer' });
+
+  // On its own it can be challenged, or stacked on, which ends the challenge
+  const lone = stackGame({ 1: [WILD_FOUR, red('1')], 2: [WILD_FOUR, blue('1')] }, { drawPile: BIG_PILE });
+  const four = ok(play(lone, 1, WILD_FOUR, 'blue'));
+  assert.equal(ok(move(four, 2, { type: 'challenge' })).pendingDraw, null);
+  const onFour = ok(play(four, 2, WILD_FOUR, 'blue'));
+  assert.deepEqual(onFour.pendingDraw, { count: 8, target: 3 });
+  assert.equal(onFour.pendingFour, null);
+});
+
+test('a stack that goes out makes the next player draw the whole count', () => {
+  const state = stackGame({ 1: [red('drawTwo'), red('1')], 2: [blue('drawTwo')], 3: [blue('3')] });
+  const out = ok(play(ok(play(state, 1, red('drawTwo'))), 2, blue('drawTwo')));
+  assert.equal(out.roundSummary?.cardsLeft[3], 5);
+  assert.equal(out.pendingDraw, null);
+});
+
+test('without the stacking rule a Draw Two still draws at once', () => {
+  const state = ok(play(withHand(1, [red('drawTwo'), red('1')]), 1, red('drawTwo')));
+  assert.equal(state.pendingDraw, null);
+  assert.equal(state.hands[2].length, 4);
+});
+
+test('a 7 swaps hands with the chosen player', () => {
+  const swapped = ok(move(game(sevenZero), 1, { type: 'play', card: red('7'), swapWith: 3 }));
+  assert.deepEqual(swapped.hands[1], [blue('3'), blue('4')]);
+  assert.deepEqual(swapped.hands[3], [blue('5'), blue('9')]);
+  assert.deepEqual(swapped.hands[2], [blue('1'), blue('2')]);
+  assert.equal(swapped.currentPlayer, 2);
+  assert.deepEqual(swapped.lastMove,
+    { type: 'play', playerNumber: 1, card: red('7'), color: 'red', target: null, drew: 0, wentOut: false, swappedWith: 3 });
+  assert.equal(swapped.gameStatus, 'Alice played red 7; swaps hands with Cara');
+});
+
+test('a 7 without a player is refused', () => {
+  const state = game(sevenZero);
+  const refused = { error: 'Choose a player to swap hands with' };
+  assert.deepEqual(play(state, 1, red('7')), refused);
+  assert.deepEqual(move(state, 1, { type: 'play', card: red('7'), swapWith: 1 }), refused);
+  assert.deepEqual(move(state, 1, { type: 'play', card: red('7'), swapWith: 9 }), refused);
+  // Without the rule the 7 plays as it always did
+  assert.equal(ok(play(game(), 1, red('7'))).hands[2].length, 2);
+});
+
+test('a 0 passes every hand in the direction of play', () => {
+  const hands = { 1: [red('0'), blue('5')], 2: [blue('1'), blue('2')], 3: [blue('3'), blue('4'), blue('6')] };
+  const up = ok(play(game({ ...sevenZero, hands }), 1, red('0')));
+  assert.deepEqual(up.hands, { 1: [blue('3'), blue('4'), blue('6')], 2: [blue('5')], 3: [blue('1'), blue('2')] });
+  assert.equal(up.currentPlayer, 2);
+  assert.equal(up.gameStatus, 'Alice played red 0; every hand passes on');
+
+  const down = ok(play(game({ ...sevenZero, hands, direction: -1 }), 1, red('0')));
+  assert.deepEqual(down.hands, { 1: [blue('1'), blue('2')], 2: [blue('3'), blue('4'), blue('6')], 3: [blue('5')] });
+});
+
+test('a 7 that goes out swaps nothing', () => {
+  const out = ok(play(withHand(1, [red('7')], sevenZero), 1, red('7')));
+  assert.equal(out.roundSummary?.wentOut, 1);
+  assert.deepEqual(out.hands[2], [blue('1'), blue('2')]);
+  const zero = ok(play(withHand(1, [red('0')], sevenZero), 1, red('0')));
+  assert.deepEqual(zero.hands[2], [blue('1'), blue('2')]);
+});
+
+const untilPlayable = { houseRules: withRules({ drawUntilPlayable: true }) };
+
+test('drawing until you can play stops at the first playable card', () => {
+  const state = game({ ...untilPlayable, drawPile: [red('9'), blue('6'), blue('7'), blue('8')] });
+  const drew = ok(draw(state, 1));
+  assert.deepEqual(drew.hands[1].slice(3), [blue('8'), blue('7'), blue('6'), red('9')]);
+  assert.deepEqual(drew.drawnCard, red('9'));
+  assert.equal(drew.currentPlayer, 1);
+  assert.deepEqual(drew.lastMove, { type: 'draw', playerNumber: 1, passed: false, count: 4 });
+  assert.equal(drew.gameStatus, 'Alice drew 4 cards');
+  assert.equal(ok(pass(drew, 1)).currentPlayer, 2);
+
+  // Without the rule one card is drawn as before
+  assert.equal(ok(draw(game({ drawPile: [red('9'), blue('6')] }), 1)).hands[1].length, 4);
+});
+
+test('drawing until you can play stops when the pile is empty', () => {
+  const state = game({ ...untilPlayable, drawPile: [blue('6'), blue('7')], discardPile: [red('5')] });
+  const drew = ok(draw(state, 1));
+  assert.equal(drew.hands[1].length, 5);
+  assert.equal(drew.drawPile.length, 0);
+  assert.equal(drew.currentPlayer, 2);
+  assert.deepEqual(drew.lastMove, { type: 'draw', playerNumber: 1, passed: true, count: 2 });
+  assert.equal(drew.gameStatus, 'Alice drew 2 cards and could not play any');
+});
+
+test('a saved game without pendingDraw plays on', () => {
+  const { pendingDraw: _gone, ...old } = stackGame({});
+  const state = ok(play(old as GameState, 1, red('7')));
+  assert.equal(state.currentPlayer, 2);
+  assert.equal(toPublicState(old as GameState, true, 1).pendingDraw, null);
+});
