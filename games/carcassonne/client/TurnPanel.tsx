@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
 import TileArt from './TileArt';
 import { tileName } from '../tiles.ts';
+import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 import type { PublicGameState, TileType } from '../types.ts';
 
 type TurnPanelProps = {
@@ -13,11 +15,13 @@ type TurnPanelProps = {
   meepleSpots: number; // free spots on the placed tile
   meeplesLeft: number;
   onMeeple: (place: boolean) => void;
+  tileDrag?: DragSourceProps; // lifts the tile picture onto a highlighted square
+  meepleTray: ReactNode;      // the meeple to drag onto a circle, shown on the meeple step
 };
 
-function TilePicture({ tile, rotation }: { tile: TileType; rotation: number }) {
+function TilePicture({ tile, rotation, dragProps }: { tile: TileType; rotation: number; dragProps?: DragSourceProps }) {
   return (
-    <svg className="cc-current-tile" viewBox="-4 -4 108 108" role="img" aria-label={`The tile to place: ${tileName(tile)}`}>
+    <svg className="cc-current-tile" {...dragProps} viewBox="-4 -4 108 108" role="img" aria-label={`The tile to place: ${tileName(tile)}`}>
       <TileArt type={tile} rotation={rotation} />
     </svg>
   );
@@ -25,7 +29,7 @@ function TilePicture({ tile, rotation }: { tile: TileType; rotation: number }) {
 
 // The tile being placed, shown to everyone, and the current player's controls for the step they are on
 export default function TurnPanel(props: TurnPanelProps) {
-  const { gameState, canMove, rotation, onRotate, cellChosen, onPlace, meepleChosen, meepleSpots, meeplesLeft, onMeeple } = props;
+  const { gameState, canMove, rotation, onRotate, cellChosen, onPlace, meepleChosen, meepleSpots, meeplesLeft, onMeeple, tileDrag, meepleTray } = props;
   const { currentTile, currentPlayer, placed, playerNames, tilesLeft, discarded, isGameOver } = gameState;
   const mover = currentPlayer === null ? '' : playerNames[currentPlayer];
 
@@ -40,7 +44,7 @@ export default function TurnPanel(props: TurnPanelProps) {
   return (
     <section className="cc-panel cc-turn" aria-label="Turn">
       <div className="cc-turn-body">
-        {currentTile && !placed && <TilePicture tile={currentTile} rotation={canMove ? rotation : 0} />}
+        {currentTile && !placed && <TilePicture tile={currentTile} rotation={canMove ? rotation : 0} dragProps={tileDrag} />}
         <div className="cc-turn-text">
           <div className="cc-hint">{hint}</div>
           <div className="cc-tiles-left">
@@ -55,6 +59,7 @@ export default function TurnPanel(props: TurnPanelProps) {
           <button type="button" className="cc-primary" disabled={!cellChosen} onClick={onPlace}>Place tile</button>
         </div>
       )}
+      {canMove && placed && meepleTray}
       {canMove && placed && (
         <div className="cc-buttons">
           <button type="button" className="cc-primary" disabled={!meepleChosen} onClick={() => onMeeple(true)}>Place meeple</button>

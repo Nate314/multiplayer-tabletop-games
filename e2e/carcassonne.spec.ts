@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, nameOf, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, nameOf, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { at, START } from '../games/carcassonne/testing.ts';
 import { TILES, TILE_TYPES } from '../games/carcassonne/tiles.ts';
 import type { FeatureKind, GameState, Meeple } from '../games/carcassonne/types.ts';
@@ -348,6 +348,44 @@ test.describe('Carcassonne controls', () => {
     await spot(alice, 'field').click();
     await button(alice, 'Place meeple').click();
     await expect(boardMeeples(bob, 1)).toHaveAttribute('transform', /rotate\(-90\)/);
+  });
+
+  test('the tile dragged onto a highlighted square is shown there, ready to turn and place', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await craft(table, { board: [START], currentTile: 'E', drawPile: ['U'] });
+    await drag(alice, tilePicture(alice), cell(alice, 0, -1));
+    await expect(cell(alice, 0, -1)).toHaveClass(/cc-cell-selected/);
+    await expect(button(alice, 'Place tile')).toBeEnabled();
+    await button(alice, 'Place tile').click();
+    await expect(board(bob)).toHaveAttribute('aria-label', 'Board with 2 tiles');
+  });
+
+  test('a meeple dragged from the tray onto a circle is chosen there, ready to place', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await craft(table, { board: [START], currentTile: 'E', drawPile: ['U', 'U'] });
+    await placeTile(alice, 0, -1);
+    await expect(button(alice, 'Meeple, 7 left')).toBeVisible();
+    await drag(alice, button(alice, 'Meeple, 7 left'), spot(alice, 'field'));
+    await expect(alice.locator('.cc-spot-selected')).toHaveCount(1);
+    await expect(button(alice, 'Place meeple')).toBeEnabled();
+    await button(alice, 'Place meeple').click();
+    await expect(boardMeeples(bob, 1)).toHaveCount(1);
+    await expect(button(alice, 'Meeple, 6 left')).toHaveCount(0); // the tray goes with the step
+  });
+
+  test('a tile dropped on the board away from a highlighted square goes back, and the view does not pan', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await craft(table, { board: [START], currentTile: 'E', drawPile: ['U'] });
+    const before = await board(alice).getAttribute('viewBox');
+    await lift(alice, tilePicture(alice));
+    await expect(alice.locator('.drag-ghost')).toBeVisible();
+    const box = (await board(alice).boundingBox())!;
+    await alice.mouse.move(box.x + 20, box.y + 60, { steps: 8 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(alice.locator('.cc-cell-selected')).toHaveCount(0);
+    await expect(board(alice)).toHaveAttribute('viewBox', before!);
+    await expect(button(alice, 'Place tile')).toBeDisabled();
   });
 
   test('after a refresh the placed tile stays and the meeple step is still waiting', async ({ seat }) => {

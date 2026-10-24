@@ -18,7 +18,9 @@ Lay land tiles to build a countryside of cities, roads, monasteries and fields, 
 ## Controls
 
 - On your turn the board highlights every square where the drawn tile fits. Click one to see the tile there; Turn left and Turn right then try only the turns that fit that square. Before you pick a square the Turn buttons simply turn the tile in the side panel. Click Place tile to put it down
+- You can also drag the tile from the side panel onto a highlighted square (mouse or touch). Dropping only picks the square, as a click does, so you can still turn the tile; Place tile puts it down. Dropped anywhere else, the tile goes back
 - The board then shows your placed tile up close, with a circle on every feature that can take a meeple. Click one (click it again to change your mind) and then Place meeple, or click No meeple. Farmers lie on their side
+- Or drag the meeple from the tray under the tile onto a circle. Dropping only picks that circle, as a click does; Place meeple puts it down
 - The half-finished turn is part of the game: after a refresh you see your tile placed and the meeple step still waiting
 - Drag the board to pan it, use the mouse wheel or the + and − buttons to zoom, and Fit to see the whole board. The tile placed last is outlined
 - The side panel shows the tile being placed, how many tiles are left, and the scores, highest first, with each player's meeples in hand. At the end a table shows what the final scoring added for roads, cities, monasteries and fields

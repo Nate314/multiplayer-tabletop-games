@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent }
 import TileArt from './TileArt';
 import Meeple from './Meeple';
 import { spotOf } from './spots.ts';
-import { meepleKey, tileKey } from './keys.ts';
+import { cellTarget, meepleKey, spotTarget, tileKey } from './keys.ts';
 import type { FeatureRef, Placement, Seat, TileType } from '../types.ts';
 import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
 
@@ -156,6 +156,7 @@ export default function Board({ board, highlight = null, cells = [], preview = n
               height={CELL - 8}
               rx="6"
               role="button"
+              data-drop={cellTarget(cell)}
               aria-label={`Place the tile at column ${cell.x}, row ${cell.y}`}
               onClick={() => onCell?.(cell)}
             />
@@ -182,7 +183,7 @@ export default function Board({ board, highlight = null, cells = [], preview = n
           const x = last.x * CELL + spot.x, y = last.y * CELL + spot.y;
           return (
             <g key={`${feature.kind}-${feature.index}`} className={selected ? 'cc-spot cc-spot-selected' : 'cc-spot'}
-              role="button" aria-label={`Put a meeple on the ${feature.kind}`} onClick={() => onMeeple?.(feature)}>
+              role="button" data-drop={spotTarget(feature)} aria-label={`Put a meeple on the ${feature.kind}`} onClick={() => onMeeple?.(feature)}>
               <circle cx={x} cy={y} r="11" />
               {selected && <Meeple seat={meepleSeat} x={x} y={y} lying={feature.kind === 'field'} />}
             </g>
