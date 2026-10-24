@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import gameService from '../../../src/services/gameService';
 import Card from './Card';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import GameStatus from './GameStatus';
 import RoundSummary from './RoundSummary';
 import Table from './Table';
@@ -166,7 +167,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           <div className="color-picker" role="group" aria-label="Choose a color">
             {COLORS.map(color => (
               <button key={color} type="button" className={`color-choice swatch-${color}`} onClick={() => chooseColor(color)}>
-                {color}
+                <ColorSymbol color={color} /> {color}
               </button>
             ))}
             {pendingWild && <button type="button" className="color-cancel" onClick={() => setPendingWild(null)}>Cancel</button>}

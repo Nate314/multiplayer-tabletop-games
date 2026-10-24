@@ -46,6 +46,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Click Color or Number above your rack. You can also pick up a rack tile and put it in front of another one, even when it is not your turn. Only you see the order.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: black diamond, blue square, orange hexagon, red circle. Each numbered tile shows it in its top left corner; jokers have no color.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last turn. It is undone only if every player still in the game approves.'
   },

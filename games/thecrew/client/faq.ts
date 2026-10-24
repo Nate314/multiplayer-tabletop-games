@@ -54,6 +54,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'A disconnected player keeps their seat and the game waits for them. If they are dismissed, the game ends, because the cards depend on the size of the crew.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: pink heart, blue square, green triangle, yellow star. Each suit card shows it in its top right corner; the rocket already carries a symbol.'
+  },
+  {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. A communication or a passed card is not a move; undoing the move before it takes it back too.'
   }

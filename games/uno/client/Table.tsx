@@ -1,4 +1,5 @@
 import Card from './Card';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { DISCARD_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import { TARGET_SCORE } from '../rules.ts';
@@ -70,7 +71,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
             ? <Card card={discardTop} animKey={DISCARD_KEY} highlighted={showLastMove && lastMove?.type === 'play'} />
             : <span className="card card-empty" />}
           <span className="pile-label">
-            Color: <span className={`color-swatch swatch-${currentColor ?? 'any'}`} /> <span className="color-name">{currentColor ?? 'any'}</span>
+            Color: <span className={`color-swatch swatch-${currentColor ?? 'any'}`}><ColorSymbol color={currentColor} className="swatch-symbol" /></span> <span className="color-name">{currentColor ?? 'any'}</span>
           </span>
         </div>
       </div>

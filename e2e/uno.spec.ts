@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/uno/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
 
@@ -475,6 +475,19 @@ test.describe('UNO rules', () => {
 });
 
 test.describe('UNO controls', () => {
+  test('with Color-blind symbols on, every colored card, the current color and the color choices show a shape', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await deal(table, { hands: { 1: [c('red', '7'), c('blue', '7'), c('green', '7'), c('yellow', '7'), WILD], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['circle', 'square', 'triangle', 'star']) await expect(hand(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(hand(alice).locator('.color-symbol')).toHaveCount(4);
+    await expect(discardTop(alice).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.color-swatch .color-symbol-circle')).toHaveCount(1);
+    await handCard(alice, 'Wild').click();
+    await expect(alice.getByRole('group', { name: 'Choose a color' }).locator('.color-symbol')).toHaveCount(4);
+  });
+
   test('playable cards in your hand are raised and outlined, and clicking one plays it', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('green', '9')], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });

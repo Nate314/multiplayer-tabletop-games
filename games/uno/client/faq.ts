@@ -58,6 +58,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The status panel says whose turn it is, and that player\'s name is outlined in the list of players. The players are listed in seat order, and the direction line shows an arrow pointing the way play goes. The current color is shown under the discard pile.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star. Colored cards, the current color and the color buttons show it; Wild cards carry no color.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves, and every hand and pile goes back to how it was before that move. Calling UNO, catching and Continue are not moves, so an undo goes back past them too.'
   },

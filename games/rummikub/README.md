@@ -26,6 +26,7 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 - Color and Number sort your rack. You can also move rack tiles about at any time, even on other players' turns. Only you see the order, and it is kept from turn to turn
 - Hover over a joker on the table to see what it stands for. The tiles the last player put down are outlined
 - The side panel shows every player's tile count, a check for those who have made their first meld, the pool count and, at the end, each player's points
+- With Color-blind symbols on in Settings, each color also shows its shape: black diamond, blue square, orange hexagon, red circle. Each numbered tile shows it in its top left corner; jokers have no color
 - Click Undo to ask everyone to undo the last move, and FAQ at the top of the page for a short guide
 
 ## Differences from Wikipedia

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
 import type { GameState, TileColor } from '../games/rummikub/types.ts';
 
@@ -346,6 +346,14 @@ test.describe('Rummikub rules', () => {
 });
 
 test.describe('Rummikub controls', () => {
+  test('with Color-blind symbols on, every colored tile shows its color shape and a joker shows none', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: [t('black', 3), t('blue', 3), t('orange', 3), t('red', 3), J1] } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['diamond', 'square', 'hexagon', 'circle']) await expect(rackArea(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(rackArea(alice).locator('.color-symbol')).toHaveCount(4);
+  });
+
   test('click a tile to pick it up, then a tile to go in front of, a group\'s +, or New group; click again to put it down; dragging works too', async ({ seat }) => {
     const { alice } = await start(seat, {
       melded: [1, 2],

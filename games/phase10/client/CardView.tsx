@@ -1,3 +1,4 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { cardName } from '../rules.ts';
 import type { Card } from '../types.ts';
 
@@ -24,6 +25,7 @@ export default function CardView({ card, standsFor = null, selected = false, sma
   if (small) classes.push('card-small');
   const content = (
     <>
+      {card.kind === 'number' && <ColorSymbol color={card.color} className="card-symbol" />}
       <span className="card-face">{face(card)}</span>
       {standsFor !== null && card.kind === 'wild' && <span className="card-stands-for">{standsFor}</span>}
     </>

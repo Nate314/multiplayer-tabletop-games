@@ -339,6 +339,16 @@
     line-height: 1;
   }
 
+  /* The suit's shape in the top right corner, opposite the letter */
+
+  .crew-symbol {
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    width: max(10px, calc(var(--card-w) * 0.24));
+    height: max(10px, calc(var(--card-w) * 0.24));
+  }
+
   .crew-card-small .crew-card-corner {
     display: none;
   }

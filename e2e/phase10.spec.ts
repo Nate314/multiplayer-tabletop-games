@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat as SeatFixture, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat as SeatFixture, type Table } from './fixtures.ts';
 import { createDeck } from '../games/phase10/rules.ts';
 import type { Card, CardColor, GameState, Group } from '../games/phase10/types.ts';
 
@@ -430,6 +430,18 @@ test.describe('Phase 10 rules', () => {
 });
 
 test.describe('Phase 10 controls', () => {
+  test('with Color-blind symbols on, every number card shows its color shape, in the hand and in the History', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await deal(table, { hands: { 1: [n(3, 'red'), n(4, 'blue'), n(5, 'green'), n(6, 'yellow'), wild(0)], 2: tenCards('red', 1) } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['circle', 'square', 'triangle', 'star']) await expect(handCards(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(handCards(alice).locator('.color-symbol')).toHaveCount(4);
+    await drawPile(alice).click();
+    await alice.getByRole('button', { name: 'History' }).click();
+    await expect(alice.locator('.history-board .color-symbol').first()).toBeVisible();
+  });
+
   test('on your turn, click the draw pile or the discard pile to draw; both are outlined while you can draw', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await deal(table, { hands: { 1: tenCards('red'), 2: tenCards('blue') }, discardPile: [n(12, 'green')] });

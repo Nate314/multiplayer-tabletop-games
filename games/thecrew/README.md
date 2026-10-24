@@ -93,6 +93,7 @@ Sources for the missions, mechanics only: the task counts and special rules are 
 - With five players from mission 25 on, the commander can hand a task to another crew member before the first trick with the Hand over a task lists
 - The table shows the mission number, the attempt, the trick number and the mission's rules, then each crew member with their cards, tricks won, tasks (with order tokens and which are done), communicated card and any role a special rule gives them, then the trick being played or the last trick taken
 - After each mission, read the result and click Continue. Vote to end and Vote to play on call or answer the end vote. After the game, Close hides the result and Show the mission opens it again
+- With Color-blind symbols on in Settings, each color also shows its shape: pink heart, blue square, green triangle, yellow star. Each suit card shows it in its top right corner; the rocket already carries a symbol
 - Click Undo to ask everyone to undo the last move
 - Click FAQ at the top of the page for a short guide to the rules and controls
 

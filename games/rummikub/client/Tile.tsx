@@ -1,3 +1,4 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { tileName, tileOf } from '../rules.ts';
 import { tileKey } from './animateMove.ts';
 
@@ -14,7 +15,12 @@ export default function Tile({ id, standsFor, highlighted }: TileProps) {
   const title = tile.kind === 'joker' && standsFor ? `Joker as ${standsFor}` : tileName(id);
   return (
     <span className={classes.filter(Boolean).join(' ')} data-anim-key={tileKey(id)} title={title}>
-      {tile.kind === 'joker' ? <span aria-hidden="true">☺</span> : tile.value}
+      {tile.kind === 'joker' ? <span aria-hidden="true">☺</span> : (
+        <>
+          <ColorSymbol color={tile.color} className="rk-symbol" />
+          {tile.value}
+        </>
+      )}
     </span>
   );
 }

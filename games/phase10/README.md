@@ -24,6 +24,7 @@ Collect sets and runs to complete ten phases first.
 - Select one card and click "Discard selected card" to end your turn. For a Skip, click the player to skip
 - Every player is listed with their phase, score, card count and laid-down groups, and the current player is outlined. Your hand is dimmed when it is not your turn
 - After each hand, read the scoring screen and click Continue; the next hand starts once everyone has
+- With Color-blind symbols on in Settings, each color also shows its shape: red circle, blue square, green triangle, yellow star. Number cards show it in their top left corner; Wild and Skip cards already carry a letter
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
 - Click FAQ at the top of the page for the rules, the ten phases and the controls
 
