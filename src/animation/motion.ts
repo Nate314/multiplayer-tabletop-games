@@ -25,6 +25,12 @@ export function slideOffset(from: Rect, to: Rect, scale: number): { x: number; y
   return { x: (start.x - end.x) / scale, y: (start.y - end.y) / scale };
 }
 
+// The scale of the board the element is drawn in: a board scaled to fit (the History board) carries it in data-fit-scale.
+// Screen-pixel distances inside that board are divided by it, as a translate there moves that much less on screen.
+export function boardScale(element: Element): number {
+  return Number(element.closest<HTMLElement>('[data-fit-scale]')?.dataset.fitScale ?? 1);
+}
+
 // Moves the element from where `from` is to where it is now, center to center, so a pawn can start from its old square.
 // Inside a board scaled to fit, the distance is divided by the board's scale.
 // Animates `translate`, which adds to any `transform` the element's CSS already has.
@@ -32,8 +38,7 @@ export function slideOffset(from: Rect, to: Rect, scale: number): { x: number; y
 export function slideFrom(element: Element, from: DOMRect, durationMs = MOVE_DURATION_MS, delayMs = 0): void {
   cancelAnimations(element);
   if (prefersReducedMotion()) return;
-  const scaled = element.closest<HTMLElement>('[data-fit-scale]');
-  const { x, y } = slideOffset(from, element.getBoundingClientRect(), Number(scaled?.dataset.fitScale ?? 1));
+  const { x, y } = slideOffset(from, element.getBoundingClientRect(), boardScale(element));
   element.animate(
     [{ translate: `${x}px ${y}px` }, { translate: '0 0' }],
     { duration: durationMs, delay: delayMs, easing: 'ease-in-out', fill: 'backwards' }

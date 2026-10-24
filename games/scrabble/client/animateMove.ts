@@ -55,7 +55,8 @@ function ghostToBag(root: HTMLElement, letter: RackTile, from: DOMRect, to: DOMR
     value.className = 'tile-value';
     value.textContent = String(tileValue(letter));
   }
-  root.appendChild(ghost);
+  // Outside the History board's scaled content, as a transformed ancestor would place and scale a fixed element itself
+  (root.closest('.history-board') ?? root).appendChild(ghost);
   const dx = to.x + to.width / 2 - (from.x + from.width / 2);
   const dy = to.y + to.height / 2 - (from.y + from.height / 2);
   ghost.animate(
