@@ -152,7 +152,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
         <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
         <input
           type="range"
-          className="history-slider"
+          className="history-slider themed-range"
           min={0}
           max={last}
           value={index}

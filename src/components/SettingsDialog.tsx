@@ -24,10 +24,11 @@ export default function SettingsDialog({ onClose }: SettingsDialogProps) {
         <h2>Settings</h2>
         <section>
           <h3>Sounds</h3>
-          <label>
+          <label className="settings-volume">
             Volume
             <input
               type="range"
+              className="themed-range"
               min={0}
               max={100}
               step={5}
@@ -35,7 +36,7 @@ export default function SettingsDialog({ onClose }: SettingsDialogProps) {
               onChange={(e) => setPreferences({ ...preferences, volume: Number(e.target.value) / 100 })}
             />
           </label>
-          <label>
+          <label className="themed-checkbox">
             <input
               type="checkbox"
               checked={preferences.muted}
@@ -44,7 +45,7 @@ export default function SettingsDialog({ onClose }: SettingsDialogProps) {
             Mute all
           </label>
           {SOUND_LABELS.map(([name, label]) => (
-            <label key={name}>
+            <label key={name} className="themed-checkbox">
               <input
                 type="checkbox"
                 checked={preferences.sounds[name]}
@@ -56,7 +57,7 @@ export default function SettingsDialog({ onClose }: SettingsDialogProps) {
         </section>
         <section>
           <h3>Display</h3>
-          <label>
+          <label className="themed-checkbox">
             <input
               type="checkbox"
               checked={preferences.colorSymbols}
@@ -64,7 +65,7 @@ export default function SettingsDialog({ onClose }: SettingsDialogProps) {
             />
             Color-blind symbols
           </label>
-          <label>
+          <label className="themed-checkbox">
             <input
               type="checkbox"
               checked={preferences.highlightDrawn}

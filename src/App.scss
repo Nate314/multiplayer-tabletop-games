@@ -613,7 +613,7 @@
 }
 
 /* Shared control looks: .themed-select (select), .themed-checkbox (label wrapping a checkbox),
-   .themed-input (text, search or number input) and .themed-chip (button with aria-pressed).
+   .themed-input (text, search or number input), .themed-chip (button with aria-pressed) and .themed-range (range slider).
    Platform pieces should use these for any new control. */
 :where(.themed-select, .themed-checkbox, .themed-chip) {
   border: none;
@@ -674,6 +674,10 @@
 :where(.themed-chip[aria-pressed="true"]) {
   background: var(--platform-button-bg, var(--lobby-accent));
   color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+:where(.themed-range) {
+  accent-color: var(--platform-button-bg, var(--lobby-accent));
 }
 
 /* The board fills the rest of the dialog; its content is scaled down to fit (fitScale) and centered */
@@ -1139,19 +1143,20 @@
   font-size: 1rem;
 }
 
-:where([data-game] .modal.settings label, .lobby .modal.settings label) {
+:where([data-game] .settings-volume, .lobby .settings-volume) {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-:where([data-game] .modal.settings input, .lobby .modal.settings input) {
-  accent-color: var(--platform-button-bg, var(--lobby-accent));
-}
-
-:where([data-game] .modal.settings input[type="range"], .lobby .modal.settings input[type="range"]) {
+:where([data-game] .settings-volume input, .lobby .settings-volume input) {
   flex: 1;
   min-width: 0;
+}
+
+/* Each checkbox is a themed pill as wide as its text */
+:where([data-game] .modal.settings .themed-checkbox, .lobby .modal.settings .themed-checkbox) {
+  align-self: flex-start;
 }
 
 /* A color-blind symbol: games position it and set its color; the stroke keeps it readable on light and dark fills */
