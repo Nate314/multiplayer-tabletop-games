@@ -73,7 +73,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 ## How to Play Multiplayer
 
 1. Open the site in one browser window per player
-2. In each window, click a game in the list. The join dialog asks for your name and a game ID (any string); use the same game ID to join the same game. The dialog has an FAQ button, so you can read a game's rules before joining
+2. In each window, click a game in the list. The join dialog asks for your name and a game ID (any string); use the same game ID to join the same game, or open a share link from a player (see step 5). The dialog has an FAQ button, so you can read a game's rules before joining
 3. Players are seated in join order. The lowest-numbered player moves first once at least two players have joined. Nobody can join after the first move
 4. Game IDs are separate per game: Azul "friday" and Quoridor "friday" are different games
 5. Each game screen has a header with Back to games, FAQ and the light/dark theme toggle. Back to games returns to the list but keeps your seat, the same as closing the tab or losing the connection
