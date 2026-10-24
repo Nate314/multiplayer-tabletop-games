@@ -78,7 +78,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
 
 1. **React components (`/src/components`)**
 
-   - `GameList.tsx` is the landing page: one row per game, in a section per category (`groupByCategory`), alphabetical within a section
+   - `GameList.tsx` is the landing page. It owns the filter state (remembered through `loadLandingFilters` and `saveLandingFilters`) and renders `GameFilters.tsx` above the cards: a search box (name and description), a sort (by category, or A to Z in one list), category chips, a Players filter (`supportsPlayers`, `minPlayers` to `maxPlayers`; the hook point for house rule ranges) and Clear filters when any filter is on. `arrangeGames` (`gameFilters.ts`) applies them; no match shows "No games match these filters". Cards sit in a responsive grid (one column on phones, up to four at 1240 px), a section per category (`groupByCategory`) alphabetical within a section
    - `App.tsx` reads `/join/<game type>/<game ID>` once on load (`parseJoinLink`, `src/services/share.ts`), opens that game's join dialog with the ID filled in and the last name from `joinForm`, and replaces the address with `/`; an unknown game type opens the plain list
    - `JoinDialog.tsx` asks for a name and game ID and shows server errors inline; it has an FAQ button
    - `GameView.tsx` is the header (Back to games, History, Share, FAQ, theme toggle) around the game's own `Screen`
@@ -123,7 +123,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    **Settings (`/src/services/settings.ts`, on `/src/services/storage.ts`)**
 
    - `storage.ts` has `readJson`, `writeJson` and `removeKey`, which swallow storage errors
-   - `historyAnimations` (the History dialog's Animations checkbox, off by default) and `joinForm` (the name and game ID last used to join, shared by every game, saved when Join is pressed) are kept in `localStorage`
+   - `historyAnimations` (the History dialog's Animations checkbox, off by default) and `joinForm` (the name and game ID last used to join, shared by every game, saved when Join is pressed) and `landingFilters` (the landing page's search, sort, categories and players) are kept in `localStorage`
 
 5. **Game screens (`/games/<id>/client`)**
    - Each game's board components and screen, receiving the public state, the player's seat and any error
