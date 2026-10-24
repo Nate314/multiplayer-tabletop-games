@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, test, touchDrag, undo, type Seat, type Table } from './fixtures.ts';
 import { positionKey } from '../games/chess/rules.ts';
 import type { Board, BoardState, CastlingRights, PieceType } from '../games/chess/types.ts';
 
@@ -559,5 +559,98 @@ test.describe('Chess differences from Wikipedia', () => {
     await expect(alice.locator('.board-prompt')).toHaveCount(0);
     await expect(piece(bob, 'h3')).toHaveAccessibleName('white knight');
     await expect(bob.getByRole('button', { name: 'Claim draw' })).toHaveCount(0);
+  });
+});
+
+test.describe('Chess drag and drop', () => {
+  // The center of a square, for moving the mouse there mid-drag
+  async function centerOf(page: Page, name: string) {
+    const box = await square(page, name).boundingBox();
+    if (!box) throw new Error(`${name} is not visible`);
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
+  test('a piece dragged to a marked square moves there, and the marks show while it is held', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await lift(alice, piece(alice, 'e2'));
+    await expect(marks(alice)).toHaveCount(2);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(1);
+    const e4 = await centerOf(alice, 'e4');
+    await alice.mouse.move(e4.x, e4.y, { steps: 4 });
+    await expect(square(alice, 'e4')).toHaveAttribute('data-drag-over', '');
+    await alice.mouse.up();
+    await expect(piece(bob, 'e4')).toHaveAccessibleName('white pawn');
+    await expect(square(alice, 'e2').getByRole('img')).toHaveCount(0);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+  });
+
+  test('a piece dropped on a square it cannot reach goes back, and nothing stays selected', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    const before = await table.state();
+    await drag(alice, piece(alice, 'e2'), square(alice, 'e5'));
+    await expect(piece(alice, 'e2')).toHaveAccessibleName('white pawn');
+    await expect(alice.locator('.square.selected')).toHaveCount(0);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    expect(await table.state()).toEqual(before);
+  });
+
+  test('a drag that ends where it began leaves nothing selected', async ({ seat }) => {
+    const { alice } = await start(seat);
+    await drag(alice, piece(alice, 'e2'), square(alice, 'e2'), { x: 10, y: 10 });
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(alice.locator('.square.selected')).toHaveCount(0);
+    await expect(marks(alice)).toHaveCount(0);
+  });
+
+  test('a drag to the last rank opens the promotion picker, as a click does', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await setUp(table, { e1: 'K', h5: 'k', a7: 'P' });
+    await drag(alice, piece(alice, 'a7'), square(alice, 'a8'));
+    await expect(alice.getByText('Promote to')).toBeVisible();
+    await alice.getByRole('button', { name: 'white queen' }).click();
+    await expect(piece(bob, 'a8')).toHaveAccessibleName('white queen');
+    await expect(square(bob, 'a7').getByRole('img')).toHaveCount(0);
+  });
+
+  test('off turn, pieces do not lift', async ({ seat }) => {
+    const { table, bob } = await start(seat);
+    const before = await table.state();
+    await lift(bob, piece(bob, 'e7'), { x: 0, y: 30 });
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    await bob.mouse.up();
+    await expect(piece(bob, 'e7')).toHaveAccessibleName('black pawn');
+    expect(await table.state()).toEqual(before);
+  });
+
+  test('a change of turn while a piece is held snaps it back', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await lift(alice, piece(alice, 'e2'));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(1);
+    await table.patch({ currentPlayer: 2 });
+    const before = await table.state();
+    const e4 = await centerOf(alice, 'e4');
+    await alice.mouse.move(e4.x, e4.y, { steps: 4 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(piece(alice, 'e2')).toHaveAccessibleName('white pawn');
+    await expect(square(alice, 'e4').getByRole('img')).toHaveCount(0);
+    expect(await table.state()).toEqual(before);
+  });
+
+  test('a finger drags a piece, a tap still selects one, and a swipe from an empty square scrolls the page', async ({ seat }) => {
+    const table = await seat('chess', ['Alice', 'Bob'], { touch: true });
+    const [alice, bob] = table.pages;
+    await touchDrag(alice, piece(alice, 'e2'), square(alice, 'e4'));
+    await expect(piece(alice, 'e4')).toHaveAccessibleName('white pawn');
+    await expect(piece(bob, 'e4')).toHaveAccessibleName('white pawn');
+
+    const e7 = await centerOf(bob, 'e7');
+    await bob.touchscreen.tap(e7.x, e7.y);
+    await expect(square(bob, 'e7')).toHaveClass(/selected/);
+
+    await alice.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => alice.evaluate(() => window.scrollY)).toBe(0);
+    await touchDrag(alice, square(alice, 'e5'), square(alice, 'e8'));
+    await expect.poll(() => alice.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   });
 });

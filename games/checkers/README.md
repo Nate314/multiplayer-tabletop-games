@@ -21,6 +21,7 @@ Exactly two players: Player 1 plays Red and moves first, Player 2 plays White. E
 
 - On your turn, click one of your pieces, then click a highlighted square to move there
 - For a multi-jump, click each landing square in turn; the move is sent once no more jumps are left. Click the piece again to start over, or click another of your pieces to choose that one
+- Or drag one of your pieces onto a highlighted square, with the mouse or a finger; drop it anywhere else to put it back. A multi-jump drag stops at each landing: drag the piece again, or click the next landing square
 - Pieces that must capture glow orange
 - The squares of the last move are outlined in yellow, and captured pieces' squares are marked with a cross
 - The board is dimmed when it is not your turn
