@@ -1,0 +1,486 @@
+[data-game="parchisi"] {
+  color-scheme: light;
+  --page-bg: #F3EBDD;
+  --text: #2B2118;
+  --muted: #6B5D4F;
+  --panel-bg: #FFFDF8;
+  --panel-border: #E0D3BC;
+  --board-bg: #E9DCC3;
+  --square-bg: #FFFFFF;
+  --square-border: #C9B99A;
+  --button-bg: #8C5A2B;
+  --button-hover-bg: #74491F;
+  --button-text: #FFFFFF;
+  --status-bg: #F1E6D2;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --highlight: #FF8F00;
+  --die-bg: #FFFFFF;
+  --die-pip: #2B2118;
+  --player1: #1E88E5;
+  --player2: #E53935;
+  --player3: #43A047;
+  --player4: #8E24AA;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #1A1714;
+    --text: #F2E9DC;
+    --muted: #B5A794;
+    --panel-bg: #2A2520;
+    --panel-border: #463D33;
+    --board-bg: #3A322A;
+    --square-bg: #2E2924;
+    --square-border: #5A4E42;
+    --button-bg: #A86F38;
+    --button-hover-bg: #BF8246;
+    --status-bg: #3A322A;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --highlight: #FFB300;
+    --die-bg: #F2E9DC;
+    --die-pip: #1A1714;
+    --player1: #42A5F5;
+    --player2: #EF5350;
+    --player3: #66BB6A;
+    --player4: #AB47BC;
+  }
+
+  /* Each seat's color, read by its nest, lane, entry square, pawns and player dot */
+
+  .player1 {
+    --seat: var(--player1);
+  }
+
+  .player2 {
+    --seat: var(--player2);
+  }
+
+  .player3 {
+    --seat: var(--player3);
+  }
+
+  .player4 {
+    --seat: var(--player4);
+  }
+
+  .game-id {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .board-area {
+    position: relative;
+    width: min(100%, 570px);
+  }
+
+  /* The 19 by 19 grid: four nests in the corners, the cross of track squares and the home block in the middle */
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(19, 1fr);
+    grid-template-rows: repeat(19, 1fr);
+    width: 100%;
+    aspect-ratio: 1;
+    padding: 4px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: var(--board-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .board.not-your-turn,
+  .board.game-over {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  .square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    min-width: 0;
+    border: 1px solid var(--square-border);
+    background: var(--square-bg);
+    box-sizing: border-box;
+  }
+
+  .square.home-lane,
+  .square.entry {
+    background: color-mix(in srgb, var(--seat) 40%, var(--square-bg));
+  }
+
+  /* Safe squares carry a ring */
+
+  .square.safe::before {
+    content: '';
+    position: absolute;
+    inset: 18%;
+    border: 2px solid var(--square-border);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .nest {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6%;
+    margin: 6%;
+    min-width: 0;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--seat) 75%, var(--square-bg));
+  }
+
+  .nest.empty-seat {
+    background: color-mix(in srgb, var(--seat) 25%, var(--square-bg));
+  }
+
+  .nest-name {
+    max-width: 90%;
+    overflow: hidden;
+    color: #FFFFFF;
+    font-size: clamp(10px, 2.6vw, 15px);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Two fixed rows: with fewer than three pawns a lone implicit row would stretch to the full height and the pawns with it */
+
+  .nest-pawns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 10%;
+    width: 50%;
+    aspect-ratio: 1;
+  }
+
+  .nest-pawns .pawn {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Home: one triangle per side, pointing at the center, holding the pawns that made it */
+
+  .center {
+    position: relative;
+    container-type: inline-size;
+    background: conic-gradient(
+    from -45deg,
+    var(--player2) 0 90deg,
+    var(--player3) 90deg 180deg,
+    var(--player1) 180deg 270deg,
+    var(--player4) 270deg 360deg
+  );
+  }
+
+  .home-pawns {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  /* Sized by the center block, not the strip, so the pawns match on all four sides */
+
+  .home-pawns .pawn {
+    flex: none;
+    width: 12cqw;
+    max-width: none;
+  }
+
+  .home-pawns.side0 {
+    left: 15%;
+    right: 15%;
+    bottom: 6%;
+  }
+
+  .home-pawns.side2 {
+    left: 15%;
+    right: 15%;
+    top: 6%;
+  }
+
+  .home-pawns.side1,
+  .home-pawns.side3 {
+    top: 15%;
+    bottom: 15%;
+    flex-direction: column;
+    align-items: center;
+    width: 22%;
+  }
+
+  .home-pawns.side1 {
+    right: 2%;
+  }
+
+  .home-pawns.side3 {
+    left: 2%;
+  }
+
+  .pawn {
+    /* Above the squares it passes over while it glides */
+    position: relative;
+    z-index: 1;
+    flex: 0 1 72%;
+    max-width: 72%;
+    aspect-ratio: 1;
+    border: 1px solid rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--seat) 55%, #FFFFFF) 0%, var(--seat) 70%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+  }
+
+  .pawn.movable {
+    cursor: pointer;
+    box-shadow: 0 0 0 2px var(--highlight), 0 0 8px var(--highlight);
+    animation: parchisi-glow 1.2s ease-in-out infinite alternate;
+  }
+
+  .pawn.selected {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--text), 0 0 0 4px var(--highlight);
+  }
+}
+
+@keyframes parchisi-glow {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.3); }
+}
+
+[data-game="parchisi"] {
+  .destination {
+    cursor: pointer;
+    outline: 3px solid var(--highlight);
+    outline-offset: -3px;
+    background: color-mix(in srgb, var(--highlight) 30%, var(--square-bg));
+  }
+
+  .center.destination {
+    outline-offset: -4px;
+  }
+
+  .destination-badge {
+    position: absolute;
+    z-index: 2;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 3px;
+    border-radius: 6px;
+    background: var(--highlight);
+    color: #1A1714;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .center .destination-badge {
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  .last-move-from {
+    outline: 2px dashed var(--highlight);
+    outline-offset: -2px;
+  }
+
+  .last-move-to:not(.destination) {
+    outline: 3px solid var(--highlight);
+    outline-offset: -3px;
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: min(100%, 320px);
+    padding: 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .panel-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .game-status {
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message.your-turn {
+    font-weight: 700;
+    color: var(--button-bg);
+  }
+
+  .dice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .die {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 5px;
+    box-sizing: border-box;
+    border: 1px solid var(--square-border);
+    border-radius: 8px;
+    background: var(--die-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .die.underneath {
+    border-style: dashed;
+    box-shadow: none;
+  }
+
+  .dice-note {
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  .die.used {
+    opacity: 0.3;
+    box-shadow: none;
+  }
+
+  .die .dice-pip {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--die-pip);
+  }
+
+  .bonus {
+    padding: 4px 10px;
+    border-radius: 14px;
+    background: var(--highlight);
+    color: #1A1714;
+    font-weight: 700;
+  }
+
+  .undo-button {
+    align-self: flex-start;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .undo-button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .undo-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .player-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+
+  .player-row.player-current {
+    background: var(--status-bg);
+  }
+
+  .player-row.player-you {
+    font-weight: 700;
+  }
+
+  .player-row.player-left {
+    opacity: 0.5;
+  }
+
+  .player-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .player-home {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .player-dot {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--seat);
+  }
+
+  /* History dialog: the board at full strength, though nothing on it can be clicked */
+
+  .history-board .board {
+    width: 480px;
+    max-width: 100%;
+    margin: 0 auto;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pawn.movable {
+      animation: none;
+    }
+  }
+}

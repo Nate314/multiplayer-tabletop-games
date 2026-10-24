@@ -1,0 +1,784 @@
+[data-game="uno"] {
+  /* UNO's red table theme. Every rule is scoped to data-game="uno", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  color: var(--text);
+  --page-bg-start: #fde3dc;
+  --page-bg-end: #f4b4a6;
+  --text: #2a1712;
+  --muted: #6e4f47;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(42, 23, 18, 0.15);
+  --button-bg: #c8261b;
+  --button-hover-bg: #a01d14;
+  --button-text: #fff;
+  --status-bg: #fbe8e3;
+  --status-text: #2a1712;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #e08a00;
+  --card-red: #d72600;
+  --card-yellow: #ecd407;
+  --card-green: #379711;
+  --card-blue: #0956bf;
+  --card-dark: #1b1b1b;
+  --card-w: 58px;
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg-start: #2a1411;
+    --page-bg-end: #130908;
+    --text: #f6e9e6;
+    --muted: #c4a8a1;
+    --panel-bg: rgba(48, 28, 24, 0.95);
+    --panel-border: rgba(246, 233, 230, 0.14);
+    --button-bg: #c8392d;
+    --button-hover-bg: #e04c3f;
+    --button-text: #fff;
+    --status-bg: #45261f;
+    --status-text: #f6e9e6;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --highlight: #ffb020;
+    --card-dark: #000;
+  }
+}
+
+/* Page: the red background, with the header and the game in a centered column */
+
+.game-root[data-game="uno"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+}
+
+[data-game="uno"] {
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 0 12px;
+  }
+
+  .game-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+  }
+
+  .back-button,
+  .history-button,
+  .faq-button {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 1.25rem;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--button-bg);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .back-button:hover,
+  .history-button:hover:enabled,
+  .faq-button:hover,
+  .theme-toggle:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  /* Game screen: status, table and hand in one column */
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-info,
+  .table,
+  .hand {
+    box-sizing: border-box;
+    max-width: 100%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-info {
+    width: 440px;
+    padding: 14px 20px;
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+    color: var(--status-text);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  /* Always rendered, so the layout does not jump when the turn changes */
+
+  .hint {
+    color: var(--highlight);
+    font-weight: 600;
+    margin-top: 4px;
+    min-height: 1.5em;
+  }
+
+  /* Draw, Pass and Undo */
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .primary-button,
+  .action-buttons button,
+  .color-picker button,
+  .undo-vote-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+  }
+
+  .primary-button:hover,
+  .action-buttons button:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .action-buttons button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  /* Cards */
+
+  .card {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    box-sizing: border-box;
+    width: var(--card-w);
+    height: calc(var(--card-w) * 1.5);
+    padding: 0;
+    border: 3px solid #fff;
+    border-radius: calc(var(--card-w) * 0.14);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font: inherit;
+    font-weight: 800;
+    user-select: none;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+
+  /* The tilted white oval in the middle of every card; the mark on it stays upright, so a 7 never reads as a 1 */
+
+  .card-face {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 78%;
+    height: 58%;
+    color: var(--face-color, var(--card-dark));
+    font-size: calc(var(--card-w) * 0.38);
+    line-height: 1;
+  }
+
+  .card-face::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 50%;
+    background: #fff;
+    transform: rotate(-20deg);
+  }
+
+  .card-red {
+    background: var(--card-red);
+    --face-color: var(--card-red);
+  }
+
+  .card-yellow {
+    background: var(--card-yellow);
+    --face-color: #8a6d00;
+  }
+
+  .card-green {
+    background: var(--card-green);
+    --face-color: var(--card-green);
+  }
+
+  .card-blue {
+    background: var(--card-blue);
+    --face-color: var(--card-blue);
+  }
+
+  .card-wild {
+    background: conic-gradient(var(--card-red) 0 25%, var(--card-blue) 0 50%, var(--card-yellow) 0 75%, var(--card-green) 0);
+  }
+
+  .card-back {
+    background: var(--card-dark);
+    --face-color: var(--card-red);
+  }
+
+  .card-back .card-face::before {
+    background: var(--card-red);
+  }
+
+  .card-back .card-face {
+    color: var(--card-yellow);
+    font-size: calc(var(--card-w) * 0.24);
+    font-style: italic;
+  }
+
+  .card-empty {
+    background: none;
+    border: 2px dashed var(--panel-border);
+    box-shadow: none;
+  }
+
+  button.card-playable {
+    cursor: pointer;
+    outline: 3px solid var(--highlight);
+    outline-offset: 1px;
+    transform: translateY(-6px);
+  }
+
+  button.card-playable:hover {
+    filter: brightness(1.1);
+    transform: translateY(-9px);
+  }
+
+  button.card-unplayable {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .card-selected,
+  .card-highlighted {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+  }
+
+  button.card-selected {
+    transform: translateY(-12px);
+  }
+
+  /* The table: players, direction and the piles */
+
+  .table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .direction {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .direction-arrow {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .players {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 84px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--status-bg);
+  }
+
+  .player-current {
+    border-color: var(--button-bg);
+    box-shadow: 0 0 0 2px var(--button-bg);
+  }
+
+  .player-winner,
+  .player-last {
+    border-color: var(--highlight);
+  }
+
+  .player-target {
+    border-style: dashed;
+    border-color: var(--highlight);
+  }
+
+  .player-name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .player-count {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .uno-badge {
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: var(--card-red);
+    color: var(--card-yellow);
+    font-size: 0.75rem;
+    font-weight: 800;
+    font-style: italic;
+  }
+
+  .piles {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+  }
+
+  .pile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    --card-w: 72px;
+  }
+
+  .pile-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9rem;
+  }
+
+  .color-name {
+    text-transform: capitalize;
+  }
+
+  .color-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+  }
+
+  .swatch-red {
+    background: var(--card-red);
+  }
+
+  .swatch-yellow {
+    background: var(--card-yellow);
+  }
+
+  .swatch-green {
+    background: var(--card-green);
+  }
+
+  .swatch-blue {
+    background: var(--card-blue);
+  }
+
+  .swatch-any {
+    background: conic-gradient(var(--card-red) 0 25%, var(--card-blue) 0 50%, var(--card-yellow) 0 75%, var(--card-green) 0);
+  }
+
+  /* Choosing a Wild's color */
+
+  .color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .color-picker .color-choice {
+    min-width: 72px;
+    text-transform: capitalize;
+    border: 2px solid #fff;
+  }
+
+  /* Beats the button color the picker's Cancel button shares */
+
+  .color-picker .swatch-red {
+    background: var(--card-red);
+  }
+
+  .color-picker .swatch-yellow {
+    background: var(--card-yellow);
+    color: #3a2a00;
+  }
+
+  .color-picker .swatch-green {
+    background: var(--card-green);
+  }
+
+  .color-picker .swatch-blue {
+    background: var(--card-blue);
+  }
+
+  .color-picker .color-choice:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Your hand: the cards wrap inside the panel, which scrolls only if it grows very tall */
+
+  .hand {
+    width: 100%;
+    padding: 10px 12px 16px;
+    transition: opacity 0.2s;
+  }
+
+  .hand-waiting {
+    opacity: 0.75;
+  }
+
+  /* While waiting the whole hand is dimmed once, not each card again */
+
+  .hand-waiting button.card-unplayable {
+    opacity: 1;
+  }
+
+  .hand-header {
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .hand-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-top: 12px;
+  }
+
+  /* Calling UNO, catching a player who did not, and answering a Wild Draw Four */
+
+  .action-buttons {
+    flex-wrap: wrap;
+  }
+
+  /* Pressed: UNO is called with the next play. Beats the shared hover color, which would hide the dark text. */
+
+  .action-buttons .uno-button[aria-pressed="true"],
+  .action-buttons .uno-button[aria-pressed="true"]:hover {
+    background: var(--card-yellow);
+    color: #3a2a00;
+    box-shadow: 0 0 0 2px var(--button-bg);
+  }
+
+  .catch-button,
+  .four-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+  }
+
+  .catch-button {
+    margin-top: 10px;
+    background: var(--card-yellow);
+    color: #3a2a00;
+    overflow-wrap: anywhere;
+  }
+
+  .four-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .four-answer,
+  .revealed {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 2px solid var(--highlight);
+    background: var(--panel-bg);
+  }
+
+  .four-answer p {
+    margin: 0 0 10px;
+  }
+
+  .four-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .round {
+    font-weight: 600;
+  }
+
+  .player-score {
+    font-size: 0.85rem;
+  }
+
+  /* The scoring after each round */
+
+  .summary-overlay {
+    z-index: 15;
+  }
+
+  .round-summary {
+    max-width: 420px;
+  }
+
+  .summary-result {
+    color: var(--highlight);
+    margin-bottom: 12px;
+  }
+
+  .summary-seats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .summary-seat {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--status-bg);
+  }
+
+  .summary-winner {
+    border-color: var(--highlight);
+  }
+
+  .summary-name,
+  .summary-points {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .summary-points {
+    text-align: right;
+  }
+
+  .summary-reason,
+  .summary-target,
+  .summary-waiting {
+    color: var(--muted);
+  }
+
+  .summary-target,
+  .summary-waiting {
+    margin-top: 12px;
+  }
+
+  /* Overlays: FAQ, history, undo vote */
+
+  .overlay,
+  .undo-vote {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .undo-vote {
+    z-index: 30;
+  }
+
+  .modal,
+  .undo-vote-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 640px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    color: var(--text);
+    text-align: center;
+  }
+
+  .modal h2 {
+    margin: 0 0 12px;
+  }
+
+  /* The history shows the table and any hand without their panel shadow */
+
+  .history-board .table,
+  .history-board .hand {
+    box-shadow: none;
+  }
+
+  .history-board .hand {
+    margin-top: 12px;
+  }
+
+  .undo-vote-panel {
+    max-width: 340px;
+  }
+
+  .undo-vote-title {
+    font-weight: 600;
+  }
+
+  .undo-vote-list {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+  }
+
+  .undo-vote-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .primary-button {
+    min-width: 140px;
+    margin-top: 16px;
+    padding: 12px;
+  }
+
+  .faq dl {
+    margin: 0;
+    text-align: left;
+  }
+
+  .faq dt {
+    font-weight: 600;
+    margin-top: 14px;
+  }
+
+  .faq dd {
+    margin: 4px 0 0;
+    color: var(--muted);
+  }
+
+  /* Phones: smaller cards, and the title on its own row above the header buttons */
+
+  @media (max-width: 480px) {
+    & {
+      --card-w: 46px;
+    }
+
+    .pile {
+      --card-w: 58px;
+    }
+
+    .game-header {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .game-header h1 {
+      flex-basis: 100%;
+      order: -1;
+      font-size: 1.4rem;
+    }
+
+    .back-button,
+    .history-button,
+    .faq-button {
+      padding: 0 0.6rem;
+    }
+
+    .game-info {
+      padding: 12px;
+    }
+
+    .hand-cards {
+      gap: 6px;
+    }
+  }
+}

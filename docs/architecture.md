@@ -53,7 +53,7 @@ flowchart TD
 - Its metadata, state shape and types (`types.ts`, `index.ts`)
 - Its rules: starting state, applying a move, extra non-move actions, who won, what happens when a player is seated or leaves (`rules.ts`)
 - Its public view, `toPublicState`, which removes hidden information
-- Its screen, read-only history board, move descriptions, FAQ content, icon and styles (`client/`), with CSS scoped under `[data-game="<id>"]`
+- Its screen, read-only history board, move descriptions, FAQ content, icon and styles (`client/`), with SCSS nested under `[data-game="<id>"]`
 - Its rules tests
 - Its `README.md`, with the rules and controls for players, linked from the main README
 
@@ -90,8 +90,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `PresenceBar.tsx` sits above the game screen while anyone is disconnected: each disconnected player with a Dismiss button, and "Waiting for <name> to reconnect" when it is their turn
    - `DismissVote.tsx` shows a running dismiss vote
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
-   - `PlayingCard.tsx` draws a standard playing card face up, a joker (a `DeckCard`, class `playing-card-joker`), or its back for `card: null`, in three sizes; with `onClick` it is a button. Its default look is in `App.css`, and a game can retheme it with `--playing-card-face`, `--playing-card-back`, `--playing-card-stripe`, `--playing-card-red`, `--playing-card-black`, `--playing-card-selected` and `--playing-card-highlight`
-   - `Dice.tsx` draws a row of six-sided dice with pips; with `onToggle` each die is a button (for holding dice). Its default look is in `App.css`, and a game can retheme it with `--dice-face`, `--dice-pip` and `--dice-selected`
+   - `PlayingCard.tsx` draws a standard playing card face up, a joker (a `DeckCard`, class `playing-card-joker`), or its back for `card: null`, in three sizes; with `onClick` it is a button. Its default look is in `App.scss`, and a game can retheme it with `--playing-card-face`, `--playing-card-back`, `--playing-card-stripe`, `--playing-card-red`, `--playing-card-black`, `--playing-card-selected` and `--playing-card-highlight`
+   - `Dice.tsx` draws a row of six-sided dice with pips; with `onToggle` each die is a button (for holding dice). Its default look is in `App.scss`, and a game can retheme it with `--dice-face`, `--dice-pip` and `--dice-selected`
    - `Die`, also exported from `Dice.tsx`, draws a single die
    - `RoundSummaryDialog.tsx` is the end-of-round scoring dialog with a Continue button (or Close when the game is over), shared by the round-based games; the `result` option replaces the result line under the title (default: the game status) and `listDisconnected` also names disconnected players in the waiting line (the server still waits only for connected players)
    - `DrawAndResign.tsx` is the Offer draw, Accept draw and Decline, and Resign (with Confirm resign) controls for two-player games that use `shared/drawOffer.ts`; the game passes its own buttons, such as Undo, as children
@@ -126,7 +126,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Each game's board components and screen, receiving the public state, the player's seat and any error
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
-6. **Default styles for the platform pieces (`/src/App.css`)**
+6. **Default styles for the platform pieces (`/src/App.scss`)**
    - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.faq-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-move`, `.history-slider`, `.history-board`), the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins
    - A game can retheme the defaults without writing rules by setting these variables on `[data-game="<id>"]`: `--platform-page-bg`, `--platform-text`, `--platform-button-bg`, `--platform-button-hover-bg`, `--platform-button-text`, `--platform-panel-bg`, `--platform-panel-text`, `--platform-backdrop`. Unset ones fall back to the lobby's light or dark palette

@@ -3,7 +3,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './racko.css';
+import './racko.scss';
 
 export const rackoClient: ClientGame = {
   id: 'racko',

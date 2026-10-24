@@ -10,7 +10,7 @@ import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJoinForm, saveJoinForm } from './services/settings.ts'
-import './App.css'
+import './App.scss'
 
 // Every game needs a screen as well as rules; a missing one fails at startup instead of hiding the game
 const PLAYABLE_GAMES: PlayableGame[] = GAMES.map(({ info }) => {

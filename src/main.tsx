@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import './index.scss'
 import App from './App.tsx'
 
 // Lets the built site install as an app (public/sw.js); left out of dev so Vite's hot reload is never cached

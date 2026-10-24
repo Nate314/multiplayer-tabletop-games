@@ -1,0 +1,674 @@
+[data-game="quoridor"] {
+  color-scheme: light;
+  color: #FFF;
+  --page-bg-start: #A1887F;
+  --page-bg-end: #8D6E63;
+  --panel-bg: rgba(62, 39, 35, 0.95);
+  --banner-bg: rgba(93, 64, 55, 0.8);
+  --button-bg: #5D4037;
+  --button-hover-bg: #4E342E;
+  --button-active-bg: #3E2723;
+  --status-bg: #ecf0f1;
+  --status-text: #2c3e50;
+  --board-bg: #8D6E63;
+  --board-frame: #5D4037;
+  --board-frame-outer: #795548;
+  --board-grain: rgba(255, 255, 255, 0.1);
+  --wall: #3E2723;
+  --wall-preview: rgba(62, 39, 35, 0.4);
+  --player1: #1E88E5;
+  --player2: #E53935;
+  --player3: #43A047;
+  --player4: #8E24AA;
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg-start: #3E2C26;
+    --page-bg-end: #241915;
+    --panel-bg: rgba(30, 20, 17, 0.95);
+    --banner-bg: rgba(50, 35, 30, 0.9);
+    --button-bg: #4A332C;
+    --button-hover-bg: #5D4037;
+    --button-active-bg: #1A110E;
+    --status-bg: #4E342E;
+    --status-text: #FFF8E1;
+    --board-bg: #4A3731;
+    --board-frame: #5D4037;
+    --board-frame-outer: #4E342E;
+    --board-grain: rgba(255, 255, 255, 0.05);
+    --wall: #BCAAA4;
+    --wall-preview: rgba(188, 170, 164, 0.4);
+  }
+}
+
+/* Page: the wood background and a column with the header on top */
+
+.game-root[data-game="quoridor"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 16px;
+  /* Its own stacking context keeps the board frame's outer edge above the page background */
+  isolation: isolate;
+  background: linear-gradient(45deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+[data-game="quoridor"] {
+  button {
+    font-weight: 500;
+  }
+
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 900px;
+    padding: 1rem 0;
+  }
+
+  .game-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 1.6rem;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .back-button,
+  .history-button,
+  .faq-button,
+  .github-link,
+  .theme-toggle {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 1.25rem;
+    background: var(--button-bg);
+    color: #FFF;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .github-link,
+  .theme-toggle {
+    flex: none;
+    width: 2.5rem;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.2rem;
+  }
+
+  .back-button:hover,
+  .history-button:hover:enabled,
+  .faq-button:hover,
+  .github-link:hover,
+  .theme-toggle:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-id {
+    padding: 8px 14px;
+    border-radius: 4px;
+    background: var(--banner-bg);
+    font-size: 14px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Centered in the space under the header; the auto margins drop to 0 when the window is too short */
+
+  .game-layout {
+    margin: auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    max-width: 100%;
+    padding: 20px 0;
+  }
+
+  /* FAQ: the platform's dialog markup in the wood palette */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .modal {
+    box-sizing: border-box;
+    max-width: 560px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 20px 28px;
+    border-radius: 8px;
+    background: var(--panel-bg);
+    color: #FFF;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+
+  .modal h2 {
+    margin: 0 0 12px;
+    font-size: 24px;
+  }
+
+  /* History dialog */
+
+  .modal.history {
+    max-width: 900px;
+  }
+
+  /* Its own stacking context, so the frame's outer edge paints above the dialog; the padding leaves room for that edge */
+
+  .history-board {
+    isolation: isolate;
+    padding: 8px;
+  }
+
+  .history-board .board-frame {
+    margin: 0 auto;
+  }
+
+  /* The board at full strength, though nothing on it can be clicked */
+
+  .history-board .board:is(.not-your-turn, .game-over) {
+    opacity: 1;
+  }
+
+  .faq dl {
+    margin: 0;
+    text-align: left;
+  }
+
+  .faq dt {
+    margin-top: 16px;
+    font-weight: bold;
+  }
+
+  .faq dd {
+    margin: 4px 0 0;
+    font-size: 14px;
+  }
+
+  .primary-button {
+    min-width: 140px;
+    margin-top: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: #FFF;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .primary-button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-info {
+    margin-bottom: 30px;
+    text-align: center;
+    color: #FFF;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+  }
+
+  .board.not-your-turn {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .board.not-your-turn .square {
+    cursor: not-allowed;
+  }
+
+  .game-info button {
+    margin: 0 5px;
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .game-info button:hover {
+    background: var(--button-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .game-info button.active {
+    background: var(--button-active-bg);
+    color: white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    transform: translateY(1px);
+  }
+
+  .game-info button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* The frame sits outside .board so its colors stay full strength when the board is dimmed */
+
+  .board-frame {
+    position: relative;
+    border: 8px solid var(--board-frame);
+    width: fit-content;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .board {
+    position: relative;
+    background: var(--board-bg);
+    width: fit-content;
+    background-image:
+    repeating-linear-gradient(
+      90deg,
+      var(--board-grain),
+      var(--board-grain) 2px,
+      transparent 2px,
+      transparent 15px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      var(--board-grain),
+      var(--board-grain) 2px,
+      transparent 2px,
+      transparent 15px
+    );
+  }
+
+  /* Each side of the frame takes the color of the pawn that has to reach it */
+
+  .board-frame.goal-edge1 {
+    border-top-color: var(--player1);
+  }
+
+  .board-frame.goal-edge2 {
+    border-bottom-color: var(--player2);
+  }
+
+  .board-frame.goal-edge3 {
+    border-right-color: var(--player3);
+  }
+
+  .board-frame.goal-edge4 {
+    border-left-color: var(--player4);
+  }
+
+  .board-frame::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    background: var(--board-frame-outer);
+    z-index: -1;
+    border-radius: 4px;
+  }
+
+  .board-row {
+    display: flex;
+  }
+
+  .square {
+    width: 50px;
+    height: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .square:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .square.valid-move {
+    background: rgba(238, 238, 238, 0.15);
+    box-shadow: inset 0 0 15px rgba(76, 175, 80, 0.3);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+  }
+
+  .square.valid-move:hover {
+    background: rgba(238, 238, 238, 0.2);
+    box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.4);
+    border: 1px solid rgba(76, 175, 80, 0.6);
+  }
+
+  .square.last-move-from {
+    outline: 3px dashed #FFD54F;
+    outline-offset: -3px;
+  }
+
+  .square.last-move-to {
+    outline: 3px solid #FFD54F;
+    outline-offset: -3px;
+  }
+
+  .pawn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    box-shadow:
+    inset 0 -2px 5px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+    /* Above the squares it passes over while it glides */
+    position: relative;
+    z-index: 1;
+  }
+
+  .pawn.player1 {
+    background: radial-gradient(circle at 35% 35%, #64B5F6 0%, var(--player1) 100%);
+    border: 2px solid #1565C0;
+  }
+
+  .pawn.player2 {
+    background: radial-gradient(circle at 35% 35%, #E57373 0%, var(--player2) 100%);
+    border: 2px solid #C62828;
+  }
+
+  .wall-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+
+  .wall {
+    position: absolute;
+    background: var(--wall);
+    pointer-events: all;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  }
+
+  .wall.horizontal {
+    width: 102px;
+    height: 8px;
+    transform: translate(-1px, 46px);
+  }
+
+  .wall.vertical {
+    width: 8px;
+    height: 102px;
+    transform: translate(46px, -1px);
+  }
+
+  .wall.last-move {
+    background: #FFD54F;
+    box-shadow: 0 0 8px #FFD54F;
+  }
+
+  /* Wall preview styles */
+
+  .wall-preview {
+    position: absolute;
+    background: var(--wall-preview);
+    pointer-events: none;
+    z-index: 1;
+    box-shadow: 0 0 10px rgba(62, 39, 35, 0.2);
+  }
+
+  .wall-preview.horizontal {
+    width: 102px;
+    height: 8px;
+    transform: translate(-1px, 46px);
+  }
+
+  .wall-preview.vertical {
+    width: 8px;
+    height: 102px;
+    transform: translate(46px, -1px);
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 300px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+  }
+
+  .side-panel .game-status {
+    margin: 0;
+  }
+
+  .panel-title {
+    font-weight: bold;
+  }
+
+  .turn-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .turn-actions button {
+    margin: 0;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .action-buttons button {
+    margin: 0;
+  }
+
+  .game-status {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--status-text);
+    background-color: var(--status-bg);
+    padding: 10px 20px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    animation: quoridor-fade-in 0.5s ease-in;
+  }
+
+  .game-status.game-status-error {
+    color: #FFCDD2;
+    background-color: rgba(244, 67, 54, 0.2);
+  }
+
+  .board.game-over {
+    opacity: 0.7;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+}
+
+@keyframes quoridor-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-game="quoridor"] {
+  .player-left {
+    opacity: 0.5;
+  }
+
+  .pawn.player3 {
+    background: radial-gradient(circle at 35% 35%, #81C784 0%, var(--player3) 100%);
+    border: 2px solid #2E7D32;
+  }
+
+  .pawn.player4 {
+    background: radial-gradient(circle at 35% 35%, #BA68C8 0%, var(--player4) 100%);
+    border: 2px solid #6A1B9A;
+  }
+
+  .board-area {
+    position: relative;
+  }
+
+  .goal-list {
+    align-self: center;
+  }
+
+  .goal-list-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .goal-list-you {
+    font-weight: bold;
+  }
+
+  .goal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .goal-dot.player1 {
+    background: var(--player1);
+  }
+
+  .goal-dot.player2 {
+    background: var(--player2);
+  }
+
+  .goal-dot.player3 {
+    background: var(--player3);
+  }
+
+  .goal-dot.player4 {
+    background: var(--player4);
+  }
+
+  .undo-vote {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .undo-vote-panel {
+    min-width: 260px;
+    padding: 20px;
+    border-radius: 8px;
+    background: var(--panel-bg);
+    color: #FFF;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .undo-vote-title {
+    font-weight: bold;
+  }
+
+  .undo-vote-list {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+  }
+
+  .undo-vote-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .undo-vote-actions button {
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  /* Phones: the five header buttons fill about 360px, so the title takes its own row above them, with an ellipsis */
+
+  @media (max-width: 480px) {
+    .game-header {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .game-header h1 {
+      flex-basis: 100%;
+      order: -1;
+      min-width: 0;
+      overflow: hidden;
+      font-size: 1.1rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .back-button,
+    .history-button,
+    .faq-button {
+      padding: 0 0.6rem;
+    }
+  }
+
+  /* Too narrow for the board: it scrolls sideways instead of the page; the padding leaves room for the frame's outer edge */
+
+  @media (max-width: 540px) {
+    .board-area {
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+  }
+}

@@ -1,0 +1,734 @@
+[data-game="thecrew"] {
+  /* The Crew's deep space table. Every rule is scoped to data-game="thecrew", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  color: var(--text);
+  --page-bg-start: #dfe4f5;
+  --page-bg-end: #aab4dc;
+  --text: #151a33;
+  --muted: #4d5577;
+  --panel-bg: rgba(255, 255, 255, 0.93);
+  --panel-border: rgba(21, 26, 51, 0.15);
+  --modal-bg: #fbfbff;
+  --felt: #1d2450;
+  --felt-text: #eef0ff;
+  --button-bg: #3a46a0;
+  --button-hover-bg: #2b3580;
+  --button-text: #fff;
+  --status-bg: #e7e9f7;
+  --status-text: #151a33;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #e08a00;
+  --card-face: #fffdf7;
+  --card-edge: rgba(0, 0, 0, 0.25);
+  --crew-pink: #c2185b;
+  --crew-blue: #1565c0;
+  --crew-green: #2e7d32;
+  --crew-yellow: #a87b00;
+  --crew-rocket: #1b1b1b;
+  --card-w: 50px;
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg-start: #12152b;
+    --page-bg-end: #05060f;
+    --text: #e8eaff;
+    --muted: #a5abd0;
+    --panel-bg: rgba(26, 30, 60, 0.95);
+    --panel-border: rgba(232, 234, 255, 0.14);
+    --modal-bg: #1a1e3c;
+    --felt: #0f1433;
+    --button-bg: #5562c9;
+    --button-hover-bg: #6a77e0;
+    --status-bg: #262b55;
+    --status-text: #e8eaff;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --highlight: #ffb020;
+    --card-face: #f4f1e8;
+  }
+}
+
+/* Page and header */
+
+.game-root[data-game="thecrew"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+}
+
+[data-game="thecrew"] {
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem 0 12px;
+  }
+
+  .game-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+  }
+
+  .back-button,
+  .history-button,
+  .faq-button {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 1.25rem;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--button-bg);
+    font-size: 1.2rem;
+  }
+
+  .back-button:hover,
+  .history-button:hover:enabled,
+  .faq-button:hover,
+  .theme-toggle:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  /* Game screen: status and controls, the table, the hand */
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .game-info,
+  .table,
+  .hand {
+    box-sizing: border-box;
+    max-width: 100%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-info {
+    width: 480px;
+    padding: 14px 20px;
+  }
+
+  /* Wide screens: the status beside the table, so the hand stays in view */
+
+  @media (min-width: 960px) {
+    .game-screen {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      align-items: start;
+    }
+
+    .game-info {
+      width: auto;
+    }
+
+    .hand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+    color: var(--status-text);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  /* Always rendered, so the layout does not jump when the turn changes */
+
+  .hint {
+    color: var(--highlight);
+    font-weight: 600;
+    margin-top: 4px;
+    min-height: 1.5em;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .primary-button,
+  .action-buttons button,
+  .hand-over button,
+  .end-vote-actions button,
+  .undo-vote-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .primary-button:hover,
+  .action-buttons button:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .action-buttons button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .hand-over button:disabled,
+  .end-vote-actions button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .mission-choice select,
+  .hand-over select {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--panel-border);
+    background: var(--status-bg);
+    color: var(--text);
+    font: inherit;
+  }
+
+  .mission-choice {
+    display: block;
+    margin-top: 8px;
+    font-weight: 600;
+  }
+
+  .hand-over {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .distress-info {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* Cards */
+
+  .crew-card {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    box-sizing: border-box;
+    width: var(--card-w);
+    height: calc(var(--card-w) * 1.45);
+    padding: 0;
+    border: 1px solid var(--card-edge);
+    border-radius: 7px;
+    background: var(--card-face);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: var(--card-color, var(--crew-rocket));
+    font: inherit;
+    font-weight: 800;
+    user-select: none;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+
+  .crew-card-small {
+    --card-w: 30px;
+    box-shadow: none;
+  }
+
+  .crew-card-pink {
+    --card-color: var(--crew-pink);
+    border-top: 5px solid var(--crew-pink);
+  }
+
+  .crew-card-blue {
+    --card-color: var(--crew-blue);
+    border-top: 5px solid var(--crew-blue);
+  }
+
+  .crew-card-green {
+    --card-color: var(--crew-green);
+    border-top: 5px solid var(--crew-green);
+  }
+
+  .crew-card-yellow {
+    --card-color: var(--crew-yellow);
+    border-top: 5px solid var(--crew-yellow);
+  }
+
+  .crew-card-rocket {
+    background: linear-gradient(160deg, #3b3f5c, #11131f);
+    --card-color: #fff;
+  }
+
+  .crew-card-back {
+    background: repeating-linear-gradient(45deg, #3a46a0 0 5px, #232a66 5px 10px);
+    color: #fff;
+  }
+
+  .crew-card-empty {
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.35);
+    box-shadow: none;
+  }
+
+  .crew-card-corner {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: calc(var(--card-w) * 0.24);
+    line-height: 1;
+  }
+
+  .crew-card-small .crew-card-corner {
+    display: none;
+  }
+
+  .crew-card-value {
+    font-size: calc(var(--card-w) * 0.46);
+    line-height: 1;
+  }
+
+  button.crew-card {
+    cursor: default;
+  }
+
+  button.crew-card:disabled {
+    opacity: 0.55;
+  }
+
+  .hand-waiting button.crew-card:disabled {
+    opacity: 1;
+  }
+
+  button.crew-card-playable {
+    cursor: pointer;
+    outline: 3px solid var(--highlight);
+    outline-offset: 1px;
+    transform: translateY(-5px);
+  }
+
+  button.crew-card-playable:hover {
+    transform: translateY(-8px);
+  }
+
+  .crew-card-selected,
+  .crew-card-highlighted {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+  }
+
+  button.crew-card-selected {
+    transform: translateY(-14px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  /* The table: the mission, the open tasks, the crew and the trick */
+
+  .table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .mission-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px 18px;
+    color: var(--muted);
+  }
+
+  .mission-number {
+    color: var(--text);
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  .mission-rules {
+    margin: 0;
+    padding: 8px 12px 8px 28px;
+    border-radius: 8px;
+    background: var(--status-bg);
+    text-align: left;
+    font-size: 0.9rem;
+  }
+
+  .task-pool,
+  .seat-tasks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .task {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--status-bg);
+    color: var(--text);
+    font: inherit;
+  }
+
+  button.task-pick {
+    cursor: pointer;
+    border-color: var(--highlight);
+  }
+
+  button.task-pick:disabled {
+    cursor: default;
+    border-color: transparent;
+    opacity: 0.6;
+  }
+
+  .task-selected {
+    background: var(--highlight);
+  }
+
+  .task-is-done {
+    opacity: 0.6;
+  }
+
+  .task-token {
+    min-width: 1.4em;
+    padding: 0 4px;
+    border-radius: 10px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .task-done {
+    color: var(--crew-green);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .seats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .seat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 150px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--panel-bg);
+  }
+
+  .seat-current {
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 2px var(--highlight);
+  }
+
+  .seat-winner {
+    border-color: var(--highlight);
+  }
+
+  .seat-name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .seat-count {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .seat-badge,
+  .seat-role {
+    padding: 0 8px;
+    border-radius: 10px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .seat-role {
+    background: var(--highlight);
+    color: #1b1b1b;
+  }
+
+  .seat-comm {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+  }
+
+  .seat-comm-played {
+    opacity: 0.5;
+  }
+
+  .comm-token {
+    font-weight: 600;
+  }
+
+  .trick {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 120px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--felt);
+    color: var(--felt-text);
+  }
+
+  .trick-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: var(--card-w);
+  }
+
+  .trick-name {
+    max-width: 80px;
+    overflow-wrap: anywhere;
+    font-size: 0.8rem;
+  }
+
+  .trick-taken {
+    flex-basis: 100%;
+    min-height: 1.2em;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* Your hand */
+
+  .hand {
+    width: 100%;
+    padding: 12px 12px 16px;
+  }
+
+  .hand-header {
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .hand-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Hand scoring, the undo vote and the FAQ */
+
+  .overlay,
+  .undo-vote {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal,
+  .undo-vote-panel {
+    box-sizing: border-box;
+    width: min(460px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--modal-bg);
+    color: var(--text);
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal.history {
+    width: min(760px, 100%);
+  }
+
+  .modal h2 {
+    margin: 0 0 12px;
+    text-align: center;
+  }
+
+  .history-board .table,
+  .history-board .hand {
+    box-shadow: none;
+  }
+
+  .history-board .hand {
+    margin-top: 10px;
+  }
+
+  .summary-result {
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .summary-detail {
+    margin-bottom: 12px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .summary-target,
+  .summary-waiting {
+    margin-bottom: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .round-summary .primary-button {
+    display: block;
+    margin: 0 auto;
+  }
+
+  .undo-vote-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .undo-vote-list {
+    margin: 0 0 12px;
+    padding-left: 20px;
+  }
+
+  .undo-vote-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .faq dl {
+    margin: 0;
+  }
+
+  .faq dt {
+    font-weight: 600;
+    margin-top: 12px;
+  }
+
+  .faq dd {
+    margin: 4px 0 0;
+  }
+
+  .end-vote {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--panel-border);
+    text-align: center;
+  }
+
+  .end-vote-list {
+    margin: 8px 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+  }
+
+  .end-vote-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  @media (max-width: 560px) {
+    & {
+      --card-w: 42px;
+    }
+
+    .game-header h1 {
+      font-size: 1.4rem;
+    }
+
+    .seat {
+      width: 130px;
+    }
+  }
+}

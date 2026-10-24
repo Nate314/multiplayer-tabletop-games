@@ -4,7 +4,7 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './thecrew.css';
+import './thecrew.scss';
 
 export const thecrewClient: ClientGame = {
   id: 'thecrew',

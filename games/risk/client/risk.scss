@@ -1,0 +1,714 @@
+[data-game="risk"] {
+  color-scheme: light;
+  --page-bg: #F1EEE6;
+  --text: #2A2620;
+  --muted: #6B6458;
+  --panel-bg: #FFFFFF;
+  --panel-border: #D6CFC0;
+  --sea: #BFD9EA;
+  --sea-line: #4F7FA3;
+  --land-line: #5C5446;
+  --land-na: #E6D3A3;
+  --land-sa: #D9B98B;
+  --land-eu: #C9D3A4;
+  --land-af: #E3C08E;
+  --land-as: #BFD0A0;
+  --land-au: #DDBFA6;
+  --label: #3A3328;
+  --button-bg: #8A2E1F;
+  --button-hover-bg: #6F2418;
+  --button-text: #FFFFFF;
+  --status-bg: #E8E1D2;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --highlight: #FF8F00;
+  --die-bg: #FFFFFF;
+  --die-pip: #2A2620;
+  --attack-die: #C62828;
+  --seat1: #D32F2F;
+  --seat2: #1E5FC4;
+  --seat3: #2E8B3E;
+  --seat4: #E0A100;
+  --seat5: #7B3FA6;
+  --seat6: #37474F;
+  --neutral: #9A9A9A;
+  --unclaimed: #F5F5F5;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  background: var(--page-bg);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #17150F;
+    --text: #EEE8DA;
+    --muted: #ADA493;
+    --panel-bg: #24211A;
+    --panel-border: #433D31;
+    --sea: #1C3446;
+    --sea-line: #7FB2D6;
+    --land-line: #CFC4AE;
+    --land-na: #5A4E33;
+    --land-sa: #5C4630;
+    --land-eu: #48522F;
+    --land-af: #604A2C;
+    --land-as: #3F4C30;
+    --land-au: #5B4436;
+    --label: #E8DFC9;
+    --button-bg: #B5442F;
+    --button-hover-bg: #CB5540;
+    --status-bg: #332E24;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --highlight: #FFB300;
+    --die-bg: #EEE8DA;
+    --die-pip: #17150F;
+    --neutral: #7A7A7A;
+    --unclaimed: #3A3A3A;
+  }
+
+  .seat1 {
+    --seat: var(--seat1);
+    --seat-text: #FFFFFF;
+  }
+
+  .seat2 {
+    --seat: var(--seat2);
+    --seat-text: #FFFFFF;
+  }
+
+  .seat3 {
+    --seat: var(--seat3);
+    --seat-text: #FFFFFF;
+  }
+
+  .seat4 {
+    --seat: var(--seat4);
+    --seat-text: #1A1A1A;
+  }
+
+  .seat5 {
+    --seat: var(--seat5);
+    --seat-text: #FFFFFF;
+  }
+
+  .seat6 {
+    --seat: var(--seat6);
+    --seat-text: #FFFFFF;
+  }
+
+  .seat-neutral {
+    --seat: var(--neutral);
+    --seat-text: #FFFFFF;
+  }
+
+  .seat-none {
+    --seat: var(--unclaimed);
+    --seat-text: var(--text);
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .game-id {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .risk-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 8px;
+  }
+
+  /* As wide as fits beside the panel; the map keeps its proportions */
+
+  .map-area {
+    flex: 1 1 560px;
+    min-width: 0;
+    max-width: min(1100px, calc((100vh - 110px) * 1000 / 620));
+  }
+
+  .side-panel {
+    display: flex;
+    flex: 1 1 300px;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    max-width: 400px;
+  }
+
+  /* The map */
+
+  .world-map {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+  }
+
+  .sea {
+    fill: var(--sea);
+  }
+
+  .land {
+    stroke-width: 64px;
+    stroke-linejoin: round;
+    opacity: 0.85;
+  }
+
+  .continent-northAmerica .land {
+    fill: var(--land-na);
+    stroke: var(--land-na);
+  }
+
+  .continent-southAmerica .land {
+    fill: var(--land-sa);
+    stroke: var(--land-sa);
+  }
+
+  .continent-europe .land {
+    fill: var(--land-eu);
+    stroke: var(--land-eu);
+  }
+
+  .continent-africa .land {
+    fill: var(--land-af);
+    stroke: var(--land-af);
+  }
+
+  .continent-asia .land {
+    fill: var(--land-as);
+    stroke: var(--land-as);
+  }
+
+  .continent-australia .land {
+    fill: var(--land-au);
+    stroke: var(--land-au);
+  }
+
+  .continent-label {
+    fill: var(--label);
+    font-size: 15px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    opacity: 0.8;
+  }
+
+  .border {
+    stroke: var(--land-line);
+    stroke-width: 1.6px;
+    opacity: 0.55;
+  }
+
+  .sea-lane,
+  .sea-lane line {
+    stroke: var(--sea-line);
+    stroke-width: 1.8px;
+    stroke-dasharray: 5 4;
+    opacity: 0.9;
+  }
+
+  .territory .disc {
+    fill: var(--seat);
+    stroke: rgba(0, 0, 0, 0.55);
+    stroke-width: 1.5px;
+  }
+
+  .army-count {
+    fill: var(--seat-text);
+    font-size: 14px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+  }
+
+  .territory-name {
+    fill: var(--label);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    paint-order: stroke;
+    stroke: var(--sea);
+    stroke-width: 3px;
+    stroke-opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .territory.selectable {
+    cursor: pointer;
+  }
+
+  .territory.selectable .disc {
+    stroke: var(--text);
+    stroke-width: 2.5px;
+  }
+
+  .territory.selectable:hover .disc,
+  .territory.selectable:focus-visible .disc {
+    stroke: var(--highlight);
+    stroke-width: 4px;
+  }
+
+  .territory:focus {
+    outline: none;
+  }
+
+  .territory.can-target .disc {
+    stroke: var(--highlight);
+    stroke-width: 3px;
+    stroke-dasharray: 4 3;
+  }
+
+  .territory.source .disc,
+  .territory.target .disc {
+    stroke: var(--highlight);
+    stroke-width: 5px;
+    stroke-dasharray: none;
+  }
+
+  .territory.highlight .disc {
+    stroke: var(--highlight);
+    stroke-width: 5px;
+  }
+
+  .draft-badge circle {
+    fill: var(--highlight);
+    stroke: #000000;
+    stroke-width: 1px;
+  }
+
+  .draft-badge text {
+    fill: #1A1A1A;
+    font-size: 10px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+
+  /* Side panel */
+
+  .panel {
+    padding: 10px 12px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+  }
+
+  .panel-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .game-status {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--status-bg);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 700;
+  }
+
+  .turn-waiting {
+    color: var(--muted);
+  }
+
+  .note {
+    margin: 4px 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .side-panel button:where(:not(.risk-card)) {
+    padding: 6px 12px;
+    border: 1px solid var(--button-bg);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+  }
+
+  .side-panel button.primary,
+  .side-panel button.toggle-on {
+    background: var(--button-bg);
+    color: var(--button-text);
+  }
+
+  .side-panel button.primary:hover:not(:disabled) {
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .side-panel button.small,
+  .side-panel button.toggle {
+    padding: 2px 10px;
+  }
+
+  .side-panel .undo-button {
+    align-self: flex-start;
+  }
+
+  .button-row,
+  .step-row,
+  .trade-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .step-row span {
+    font-size: 14px;
+  }
+
+  .armies-left {
+    font-size: 15px;
+  }
+
+  .armies-left strong {
+    font-size: 20px;
+  }
+
+  .draft-list {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+  }
+
+  .draft-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 0;
+  }
+
+  .army-slider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 14px;
+  }
+
+  .army-slider input {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--button-bg);
+  }
+
+  .army-slider output {
+    min-width: 2ch;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  /* Dice */
+
+  .battle-rolls {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 13px;
+  }
+
+  .battle-sides {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+
+  .battle-side {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .battle-who {
+    font-weight: 600;
+  }
+
+  .battle-lost {
+    color: var(--muted);
+  }
+
+  .battle-result {
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  .dice {
+    display: flex;
+    gap: 6px;
+  }
+
+  .die {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 30px;
+    height: 30px;
+    padding: 4px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 6px;
+    background: var(--die-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+
+  .die-attack {
+    background: var(--attack-die);
+  }
+
+  .die span {
+    place-self: center;
+  }
+
+  .die .dice-pip {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--die-pip);
+  }
+
+  .die-attack .dice-pip {
+    background: #FFFFFF;
+  }
+
+  /* Cards */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+  }
+
+  .risk-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text);
+    font-size: 13px;
+    text-align: left;
+  }
+
+  button.risk-card:hover {
+    border-color: var(--highlight);
+  }
+
+  .risk-card.card-picked {
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 2px var(--highlight);
+  }
+
+  .card-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: 4px;
+    color: #FFFFFF;
+    font-weight: 700;
+  }
+
+  .card-infantry .card-symbol {
+    background: #5D7A3A;
+  }
+
+  .card-cavalry .card-symbol {
+    background: #8A5A2B;
+  }
+
+  .card-artillery .card-symbol {
+    background: #4A5A73;
+  }
+
+  .card-wild .card-symbol {
+    background: #B8860B;
+  }
+
+  .card-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .card-territory {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-kind {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* Players */
+
+  .player-row {
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .player-row:last-of-type {
+    border-bottom: none;
+  }
+
+  .player-current {
+    background: color-mix(in srgb, var(--highlight) 15%, transparent);
+  }
+
+  .player-out {
+    opacity: 0.55;
+  }
+
+  .player-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .swatch {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    background: var(--seat);
+  }
+
+  .player-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .player-status {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .player-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .player-continents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 4px;
+  }
+
+  .chip {
+    padding: 1px 6px;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
+  .deck-line {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .event-log ol {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+  }
+
+  .event-log li {
+    margin: 2px 0;
+    overflow-wrap: anywhere;
+  }
+
+  .event-log li:first-child {
+    font-weight: 600;
+  }
+
+  /* The history dialog: the map with the battle, cards and players below it */
+
+  .history-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(760px, 86vw);
+    text-align: left;
+  }
+
+  .history-layout .map-area {
+    flex: none;
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Stacked under the map on a narrow window */
+
+  @media (max-width: 899px) {
+    .map-area {
+      flex-basis: 100%;
+      max-width: 100%;
+    }
+
+    .side-panel {
+      max-width: 720px;
+    }
+  }
+
+  /* On a phone the map keeps a size that can be tapped and scrolls sideways inside its own box */
+
+  @media (max-width: 679px) {
+    .risk-layout .map-area {
+      overflow-x: auto;
+    }
+
+    .risk-layout .world-map {
+      min-width: 640px;
+    }
+  }
+}

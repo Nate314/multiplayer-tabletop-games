@@ -1,0 +1,315 @@
+[data-game="connectfour"] {
+  color-scheme: light;
+  --page-bg: #E8EEF7;
+  --text: #17202E;
+  --panel-bg: #FFFFFF;
+  --panel-border: #C5D0E2;
+  --button-bg: #1F4FA3;
+  --button-hover-bg: #173D80;
+  --button-text: #FFF;
+  --status-bg: #E3EAF6;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
+  --frame: #123A7A;
+  --board-blue: #1F5BC4;
+  --hole: #E8EEF7;
+  --last-move: #FFD54F;
+  --winning: #66BB6A;
+  --player1: #D32F2F;
+  --player1-edge: #8E1B1B;
+  --player2: #FBC02D;
+  --player2-edge: #A87A00;
+  /* Seven columns and the frame fit a phone: 100vw less the page's 16px gutters, the 6px frame on each side
+     and room for a desktop scrollbar, which 100vw includes */
+  --cell: min(64px, calc((100vw - 64px) / 7));
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #121722;
+    --text: #E6EBF5;
+    --panel-bg: #1C2432;
+    --panel-border: #33405A;
+    --button-bg: #3E6FC8;
+    --button-hover-bg: #5584DA;
+    --status-bg: #2A3550;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --frame: #0B2350;
+    --board-blue: #1A4A9E;
+    --hole: #121722;
+  }
+
+  .game-header {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .game-id {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  /* The board and the side panel side by side, or stacked when the window is narrow */
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .board-area {
+    position: relative;
+    max-width: 100%;
+  }
+
+  .board-frame {
+    width: fit-content;
+    border: 6px solid var(--frame);
+    border-radius: 8px;
+    background: var(--board-blue);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .drop-row,
+  .board {
+    display: grid;
+    grid-template-columns: repeat(7, var(--cell));
+  }
+
+  .board {
+    grid-template-rows: repeat(6, var(--cell));
+    transition: opacity 0.3s ease;
+  }
+
+  /* Not your turn: the board is dimmed and ignores clicks */
+
+  .board.dimmed {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  .drop-button {
+    height: calc(var(--cell) * 0.6);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--last-move);
+    font-size: calc(var(--cell) * 0.3);
+    cursor: pointer;
+  }
+
+  .drop-button:hover:enabled {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .drop-button:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+
+  .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* The empty slot, which a disc covers */
+
+  .cell::before {
+    content: '';
+    position: absolute;
+    width: 82%;
+    height: 82%;
+    border-radius: 50%;
+    background: var(--hole);
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .cell.last-move::before {
+    box-shadow: 0 0 0 3px var(--last-move);
+  }
+
+  .disc {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    width: 82%;
+    height: 82%;
+    border-radius: 50%;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  }
+
+  .disc.player1 {
+    background: radial-gradient(circle at 35% 35%, #EF5350 0%, var(--player1) 70%);
+    border: 3px solid var(--player1-edge);
+  }
+
+  .disc.player2 {
+    background: radial-gradient(circle at 35% 35%, #FFEE58 0%, var(--player2) 70%);
+    border: 3px solid var(--player2-edge);
+  }
+
+  /* The winning four */
+
+  .cell.winning .disc {
+    outline: 4px solid var(--winning);
+    box-shadow: 0 0 14px var(--winning);
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 300px;
+    max-width: 100%;
+    padding: 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .player-list li.current {
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .player-list .player-left {
+    opacity: 0.5;
+  }
+
+  .player-dot {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+
+  .player-dot.player1 {
+    background: var(--player1);
+    border: 2px solid var(--player1-edge);
+  }
+
+  .player-dot.player2 {
+    background: var(--player2);
+    border: 2px solid var(--player2-edge);
+  }
+
+  .disc-color {
+    margin-left: auto;
+    font-weight: normal;
+    opacity: 0.8;
+  }
+
+  .hint {
+    font-size: 14px;
+  }
+
+  .ending-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ending-buttons,
+  .draw-offer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .draw-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .ending-controls button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .ending-controls button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .ending-controls button.danger {
+    background: var(--danger-bg);
+  }
+
+  .ending-controls button.danger:hover {
+    background: var(--danger-hover-bg);
+  }
+
+  .ending-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The history dialog's board, a little smaller than the live one */
+
+  .history-board .board-frame {
+    margin: 0 auto;
+    --cell: min(44px, calc((100vw - 96px) / 7));
+  }
+}

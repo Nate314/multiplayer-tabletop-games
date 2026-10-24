@@ -3,7 +3,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './yahtzee.css';
+import './yahtzee.scss';
 
 export const yahtzeeClient: ClientGame = {
   id: 'yahtzee',

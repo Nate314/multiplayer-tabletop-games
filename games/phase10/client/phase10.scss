@@ -1,0 +1,546 @@
+[data-game="phase10"] {
+  /* Phase 10's card table theme. Every rule is scoped to data-game="phase10", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  color: var(--text);
+  --page-bg: #e4eee6;
+  --text: #1b2a20;
+  --muted: #56685b;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(27, 42, 32, 0.16);
+  --button-bg: #2c6e49;
+  --button-hover-bg: #225a3b;
+  --button-text: #fff;
+  --status-bg: #e1efe5;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --slot-bg: rgba(27, 42, 32, 0.06);
+  --highlight: #d9822b;
+  --card-w: 46px;
+  --card-h: 66px;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #0f1a14;
+    --text: #e3ece5;
+    --muted: #9db3a3;
+    --panel-bg: #1a2a20;
+    --panel-border: rgba(227, 236, 229, 0.14);
+    --button-bg: #3a8a5f;
+    --button-hover-bg: #47a271;
+    --button-text: #fff;
+    --status-bg: #24392c;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --slot-bg: rgba(227, 236, 229, 0.06);
+    --highlight: #f0a040;
+  }
+
+  .game-header {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  /* Panels */
+
+  .game-info,
+  .my-hand,
+  .seat {
+    box-sizing: border-box;
+    max-width: 100%;
+    background: var(--panel-bg);
+    border: 2px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .game-info {
+    width: 440px;
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  /* Always rendered, so the layout does not jump when the turn changes */
+
+  .hint {
+    color: var(--highlight);
+    font-weight: 600;
+    margin-top: 4px;
+    min-height: 1.5em;
+  }
+
+  /* Buttons */
+
+  .action-buttons,
+  .turn-actions,
+  .lay-down-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .action-buttons button,
+  .turn-actions button,
+  .lay-down-part > button,
+  .lay-down-actions button,
+  .hit-button,
+  .sort-buttons button,
+  .undo-vote-actions button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+  }
+
+  .action-buttons button:not(:disabled):hover,
+  .turn-actions button:not(:disabled):hover,
+  .lay-down-part > button:not(:disabled):hover,
+  .lay-down-actions button:not(:disabled):hover,
+  .hit-button:hover,
+  .sort-buttons button:hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .sort-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .sort-buttons button {
+    padding: 4px 10px;
+    background: var(--slot-bg);
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+  }
+
+  .sort-buttons button[aria-pressed="true"] {
+    background: var(--button-bg);
+    color: var(--button-text);
+  }
+
+  /* Cards */
+
+  .card {
+    position: relative;
+    box-sizing: border-box;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: var(--card-w);
+    height: var(--card-h);
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    border-radius: 7px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-weight: 800;
+    font-size: calc(var(--card-w) * 0.48);
+    line-height: 1;
+    user-select: none;
+    transition: transform 0.12s;
+  }
+
+  .card-small {
+    --card-w: 30px;
+    --card-h: 42px;
+    border-width: 1px;
+    border-radius: 5px;
+  }
+
+  .card-red {
+    background: #d33a2c;
+  }
+
+  .card-blue {
+    background: #1f62c4;
+  }
+
+  .card-green {
+    background: #2c8a3c;
+  }
+
+  .card-yellow {
+    background: #e9b318;
+    color: #3a2a00;
+  }
+
+  .card-wild {
+    background: linear-gradient(135deg, #d33a2c, #e9b318 35%, #2c8a3c 65%, #1f62c4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  .card-skip {
+    background: #262b33;
+  }
+
+  .card-back {
+    background: repeating-linear-gradient(45deg, #2c6e49, #2c6e49 6px, #23583a 6px, #23583a 12px);
+    font-size: calc(var(--card-w) * 0.36);
+  }
+
+  .card-empty {
+    background: var(--slot-bg);
+    border: 2px dashed var(--panel-border);
+    box-shadow: none;
+  }
+
+  .card-stands-for {
+    font-size: 0.45em;
+    font-weight: 700;
+  }
+
+  button.card:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button.card:disabled {
+    opacity: 1;
+  }
+
+  .card-selected {
+    transform: translateY(-8px);
+    outline: 3px solid var(--highlight);
+    outline-offset: 1px;
+  }
+
+  /* Piles */
+
+  .piles {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+  }
+
+  .pile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: none;
+    color: inherit;
+  }
+
+  .pile:disabled {
+    opacity: 1;
+  }
+
+  .pile:not(:disabled) {
+    border-color: var(--highlight);
+    cursor: pointer;
+  }
+
+  .pile:not(:disabled):hover {
+    background: var(--slot-bg);
+  }
+
+  .pile-last {
+    border-color: var(--highlight);
+  }
+
+  .pile-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  /* Your hand */
+
+  .my-hand {
+    width: 100%;
+    transition: opacity 0.2s;
+  }
+
+  .my-hand-waiting {
+    opacity: 0.6;
+  }
+
+  .my-hand-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+
+  .hand-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 0 4px;
+    min-height: var(--card-h);
+  }
+
+  .lay-down {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .lay-down-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .lay-down-parts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .lay-down-part {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--slot-bg);
+  }
+
+  .lay-down-part .group-cards {
+    min-height: 42px;
+  }
+
+  /* The table: every player and their groups */
+
+  .table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .seat-current {
+    border-color: var(--button-bg);
+  }
+
+  .seat-winner {
+    border-color: var(--highlight);
+  }
+
+  .seat-left {
+    opacity: 0.55;
+  }
+
+  .seat-header,
+  .seat-details {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 12px;
+  }
+
+  .seat-header {
+    font-weight: 600;
+  }
+
+  .seat-details {
+    margin-top: 2px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 6px 8px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: var(--slot-bg);
+  }
+
+  .group-last {
+    border-color: var(--highlight);
+  }
+
+  .group-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .group-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .hit-button {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+  }
+
+  /* Overlays: hand scoring, history, FAQ */
+
+  /* Below the FAQ and history dialogs, so either can be opened over the scoring */
+
+  .summary-overlay {
+    z-index: 15;
+  }
+
+  .modal {
+    width: 100%;
+    border: 1px solid var(--panel-border);
+  }
+
+  .modal.history {
+    max-width: 1100px;
+  }
+
+  .history-board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .faq dd {
+    color: var(--muted);
+  }
+
+  .summary-result {
+    color: var(--highlight);
+    margin-bottom: 12px;
+  }
+
+  .summary-seats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .summary-seat {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--slot-bg);
+  }
+
+  .summary-winner {
+    border-color: var(--highlight);
+  }
+
+  .summary-name,
+  .summary-points {
+    font-weight: 600;
+  }
+
+  .summary-points {
+    text-align: right;
+  }
+
+  .summary-phase,
+  .summary-reason,
+  .summary-waiting {
+    color: var(--muted);
+  }
+
+  .summary-waiting {
+    margin-top: 16px;
+  }
+
+  /* Phones: smaller cards, and the table in one column */
+
+  @media (max-width: 480px) {
+    & {
+      --card-w: 38px;
+      --card-h: 56px;
+    }
+
+    .table {
+      grid-template-columns: 1fr;
+    }
+
+    .my-hand,
+    .seat {
+      padding: 10px;
+    }
+  }
+}

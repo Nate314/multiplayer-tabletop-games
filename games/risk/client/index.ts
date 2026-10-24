@@ -4,7 +4,7 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './risk.css';
+import './risk.scss';
 
 export const riskClient: ClientGame = {
   id: 'risk',
