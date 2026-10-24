@@ -83,6 +83,15 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 9. A game whose players have all disconnected is kept for 10 minutes, then deleted
 10. The History button shows the starting board, every move, and, if the game ended by resigning, a draw or everyone else leaving, the end of the game. When a game is over, Download game in that dialog saves it as a `.json` file, which includes every player's view of the game. Anyone can open that file with Open a saved game on the landing page and step through it, without joining anything. A saved game is for review only. In an opened file, View as shows the game from any player's seat, including their hand in Dominoes, Euchre, Go Fish, Hearts, Phase 10, Rack-O, Rook, Rummikub, Scrabble, Skip-Bo, Spades, Texas Hold'em, The Crew and Uno and the cards they reserved from a deck in Splendor, or Table only. The Animations checkbox animates each step forward, and Play steps through the game on its own, one step every 1.5 seconds. The Animations setting and the name and game ID you last joined with are remembered in this browser
 
+## Settings
+
+The gear button in the landing page header and every game header opens Settings. Every setting belongs to the player and is kept in this browser only; it is never sent to the server and does not change what other players see or hear.
+
+- Volume and Mute all set how loud the sounds are, and Mute all silences them
+- Your turn chime, Moves, Dice, Game over and Timer warnings turn each group of sounds on or off
+- Color-blind symbols adds a symbol next to colors that carry meaning
+- Highlight newly drawn cards marks the cards you just drew
+
 ## Saved games
 
 The database is `data/games.sqlite` in the repo, created on first start and git-ignored. Set `DATABASE_PATH` to put it elsewhere. With Docker, the `game-data` volume holds it, so it survives `docker compose restart` and rebuilds; `docker compose down -v` deletes it. After a restart every player is shown as disconnected until they rejoin, and a game with nobody back within 10 minutes is deleted.

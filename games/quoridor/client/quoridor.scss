@@ -82,6 +82,7 @@
   .history-button,
   .faq-button,
   .github-link,
+  .settings-button,
   .theme-toggle {
     height: 2.5rem;
     padding: 0 1rem;
@@ -95,6 +96,7 @@
   }
 
   .github-link,
+  .settings-button,
   .theme-toggle {
     flex: none;
     width: 2.5rem;
@@ -107,6 +109,7 @@
   .history-button:hover:enabled,
   .faq-button:hover,
   .github-link:hover,
+  .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }

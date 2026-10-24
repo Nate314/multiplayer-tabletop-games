@@ -129,3 +129,11 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
 });
 
 export { expect };
+
+// Opens Settings, sets the checkbox `label` and closes the dialog
+export async function setPreference(page: Page, label: string, on: boolean): Promise<void> {
+  await page.getByRole('button', { name: 'Settings' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByLabel(label).setChecked(on);
+  await dialog.getByRole('button', { name: 'Close' }).click();
+}
