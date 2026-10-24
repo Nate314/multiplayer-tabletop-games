@@ -271,6 +271,26 @@ test.describe('Rummikub rules', () => {
     await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(0);
   });
 
+  test('the drawn tile keeps its outline while it is dragged about the rack', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('black', 1)] }
+    });
+    await button(alice, 'Draw a tile').click();
+    const drawn = rackArea(alice).locator('.rk-tile-button', { has: alice.locator('.newly-drawn') });
+    await expect(drawn).toHaveCount(1);
+    const drawnTitle = await drawn.locator('.rk-tile').getAttribute('title');
+    await lift(alice, drawn);
+    await expect(alice.locator('.drag-ghost .newly-drawn')).toBeVisible();
+    const first = (await rackTile(alice, t('red', 10)).boundingBox())!;
+    await alice.mouse.move(first.x + first.width / 2, first.y + first.height / 2, { steps: 4 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    expect((await titles(rackArea(alice)))[0]).toBe(drawnTitle);
+    await expect(rackArea(alice).locator('.rk-tile').first()).toHaveClass(/newly-drawn/);
+    await expect(rackArea(alice).locator('.newly-drawn')).toHaveCount(1);
+  });
+
   test('the first to empty their rack wins the sum of the others\' racks, each losing their own with a joker worth 30', async ({ seat }) => {
     const { alice, bob } = await start(seat, {
       melded: [1, 2], racks: { 1: [t('red', 1), t('red', 2), t('red', 3)], 2: [t('blue', 5), J1] }
