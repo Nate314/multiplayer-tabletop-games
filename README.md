@@ -82,6 +82,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 8. The other players can vote to dismiss a disconnected player with the Dismiss button next to their name. Every connected player must approve; one decline cancels it. A dismissed player is out for good: their turns are skipped, they cannot rejoin, and if only one player is left, that player wins
 9. A game whose players have all disconnected is kept for 10 minutes, then deleted
 10. The History button shows the starting board, every move, and, if the game ended by resigning, a draw or everyone else leaving, the end of the game. When a game is over, Download game in that dialog saves it as a `.json` file, which includes every player's view of the game. Anyone can open that file with Open a saved game on the landing page and step through it, without joining anything. A saved game is for review only. In an opened file, View as shows the game from any player's seat, including their hand in Dominoes, Euchre, Go Fish, Hearts, Phase 10, Rack-O, Rook, Rummikub, Scrabble, Skip-Bo, Spades, Texas Hold'em, The Crew and Uno and the cards they reserved from a deck in Splendor, or Table only. The Animations checkbox animates each step forward, and Play steps through the game on its own, one step every 1.5 seconds. The Animations setting and the name and game ID you last joined with are remembered in this browser
+11. In Backgammon, Carcassonne, Catan, Checkers, Chess, Connect Four, Parchisi, Quoridor, Risk, Rummikub and Scrabble you can drag pieces and tiles with the mouse or a finger, or click and tap them as before. A drop on a legal spot makes the same move a click would; dropped anywhere else, the piece goes back. Pieces lift only on your turn, except that you can rearrange your own rack in Scrabble and Rummikub at any time. Each game's README lists its controls
 
 ## Saved games
 
@@ -112,6 +113,7 @@ Installing needs HTTPS, or `localhost` on the server computer itself; over plain
 - Uses WebSocket for real-time multiplayer communication
 - The server validates every move with the game's rules code
 - Started games are kept in a SQLite database (Node's built-in `node:sqlite`, which prints an experimental warning), so they survive a server restart. Players rejoin with the same game ID and name, from the browser they joined in. Games not yet started are not saved
+- Drag and drop works with mouse and touch through one shared pointer-events hook (`src/drag/`), with no library
 
 See `docs/architecture.md` for more.
 
