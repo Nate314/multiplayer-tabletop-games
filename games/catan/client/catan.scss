@@ -16,6 +16,11 @@
   --error-text: #8A1C12;
   --highlight: #FFB300;
   --target: #FFFFFF;
+  --drag-over: #FFFFFF;
+  --piece-tray-bg: var(--panel-bg);
+  --piece-tray-border: var(--panel-border);
+  --piece-tray-text: var(--text);
+  --piece-tray-selected: var(--button-bg);
   --token-bg: #FFF6DD;
   --token-text: #2B2418;
   --token-red: #C62828;
@@ -777,5 +782,60 @@
     .side-panel {
       max-width: 680px;
     }
+  }
+}
+
+/* The building tray (src/components/PieceTray.tsx): road, settlement and city drawn in your color, and the drop highlight */
+
+[data-game="catan"] {
+  .piece-tray {
+    margin: 8px 0;
+  }
+
+  .piece-tray-piece {
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .piece-tray-piece:disabled {
+    opacity: 0.55;
+  }
+
+  .tray-road,
+  .tray-settlement,
+  .tray-city {
+    display: block;
+    background: var(--tray-piece, currentColor);
+  }
+
+  .tray-road {
+    width: 28px;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .tray-settlement {
+    width: 18px;
+    height: 20px;
+    clip-path: polygon(50% 0, 100% 35%, 100% 100%, 0 100%, 0 35%);
+  }
+
+  .tray-city {
+    width: 26px;
+    height: 22px;
+    clip-path: polygon(0 100%, 0 30%, 25% 0, 50% 30%, 50% 45%, 100% 45%, 100% 100%);
+  }
+
+  .vertex-target[data-drag-over] {
+    fill: var(--highlight);
+    stroke: var(--drag-over);
+    stroke-width: 5;
+    r: 14;
+  }
+
+  .edge-target[data-drag-over] .edge-mark {
+    stroke: var(--drag-over);
+    stroke-dasharray: none;
+    stroke-width: 9;
   }
 }

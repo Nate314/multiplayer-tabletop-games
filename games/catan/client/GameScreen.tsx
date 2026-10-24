@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
+import PieceTray from '../../../src/components/PieceTray';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import { EDGES, HEX_COUNT, VERTEX_COUNT } from '../board.ts';
-import { cityError, roadSpots, settlementError, settlementSpotError } from '../building.ts';
+import { cityError, piecesLeft, roadSpots, settlementError, settlementSpotError } from '../building.ts';
 import { robberVictims } from '../dice.ts';
 import { MIN_PLAYERS } from '../rules.ts';
 import Board from './Board';
@@ -16,6 +18,8 @@ import PlayerList from './PlayerList';
 import TradePanel from './TradePanel';
 import TurnPanel from './TurnPanel';
 import type { BuildMode } from './TurnPanel';
+import { trayBlocker } from './tray.ts';
+import type { TrayKind } from './tray.ts';
 import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
@@ -78,15 +82,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     gameService.makeMove(move);
   };
 
-  function clickVertex(vertex: number) {
+  // A click builds what the build mode says; a drop builds the piece that was lifted, whatever the mode has re-rendered to
+  function clickVertex(vertex: number, kind: BuildMode = activeMode) {
     if (setup) send({ type: 'placeSettlement', vertex });
-    else if (activeMode === 'settlement') send({ type: 'buildSettlement', vertex });
-    else if (activeMode === 'city') send({ type: 'buildCity', vertex });
+    else if (kind === 'settlement') send({ type: 'buildSettlement', vertex });
+    else if (kind === 'city') send({ type: 'buildCity', vertex });
   }
 
-  function clickEdge(edge: number) {
+  function clickEdge(edge: number, kind: BuildMode = activeMode) {
     if (setup || pending?.kind === 'roadBuilding') send({ type: 'placeRoad', edge });
-    else if (activeMode === 'road') send({ type: 'buildRoad', edge });
+    else if (kind === 'road') send({ type: 'buildRoad', edge });
   }
 
   function clickHex(hex: number) {
@@ -101,6 +106,35 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     city: ALL_VERTICES.filter(vertex => cityError(gameState, playerNumber, vertex) === null).length
   };
 
+  const left = piecesLeft(gameState, playerNumber);
+  const blockedFor = (kind: TrayKind) => canMove ? trayBlocker(gameState, kind, spots[kind]) : 'Not your turn';
+  const beforeLift = useRef<BuildMode>(null);
+  const targetOf = (id: string, target: string) => {
+    const kind = id as TrayKind, number = Number(target.split('-')[1]);
+    const legal = targetsFor(gameState, playerNumber, kind);
+    return (target.startsWith('edge-') ? legal.edges : legal.vertices)?.includes(number) ? number : null;
+  };
+  const drag = useDrag({
+    canLift: id => canMove && blockedFor(id as TrayKind) === '',
+    canDrop: (id, target) => targetOf(id, target) !== null,
+    onLift: id => {
+      beforeLift.current = activeMode;
+      if (!setup && !pending) setMode(id as TrayKind);
+    },
+    onDrop: (id, target) => {
+      const spot = targetOf(id, target);
+      if (spot === null) return;
+      if (target.startsWith('edge-')) clickEdge(spot, id as TrayKind);
+      else clickVertex(spot, id as TrayKind);
+    },
+    onCancel: () => setMode(beforeLift.current)
+  });
+  const tapPiece = (id: string) => setMode(activeMode === id ? null : id as TrayKind);
+  const pieces = (['road', 'settlement', 'city'] as const).map(kind => ({
+    id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind], icon: <span className={`tray-${kind}`} aria-hidden="true" />,
+    blocked: blockedFor(kind) || undefined
+  }));
+
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
@@ -112,6 +146,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="side-panel">
           <div className={error ? 'game-status game-status-error' : 'game-status'} role="status">{error || gameStatus}</div>
           <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
+          {canAct && <PieceTray label="Your pieces" pieces={pieces} selected={activeMode} onTap={tapPiece} drag={drag} />}
           <TurnPanel gameState={gameState} playerNumber={playerNumber} canMove={canMove} mode={activeMode} spots={spots}
             victims={choosing === null ? null : victimsAt(choosing)} onMode={setMode}
             onSteal={victim => choosing !== null && send({ type: 'moveRobber', hex: choosing, victim })} onMove={send} />

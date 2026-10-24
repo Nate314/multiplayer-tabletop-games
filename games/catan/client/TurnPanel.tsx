@@ -3,6 +3,7 @@ import { RESOURCES } from '../board.ts';
 import { COSTS, covers, describeResources } from '../resources.ts';
 import { tradeRatio } from '../trades.ts';
 import { RESOURCE_LABELS } from './layout.ts';
+import { buildBlocker } from './tray.ts';
 import type { Move, PublicGameState, Resource, Seat } from '../types.ts';
 
 export type BuildMode = 'road' | 'settlement' | 'city' | null;
@@ -86,9 +87,7 @@ export default function TurnPanel(props: TurnPanelProps) {
   } else {
     const have = hand ?? COSTS.road;
     const buildButton = (kind: 'road' | 'settlement' | 'city', label: string) => {
-      let why = '';
-      if (!covers(have, COSTS[kind])) why = `Needs ${describeResources(COSTS[kind])}`;
-      else if (spots[kind] === 0) why = `Nowhere to build a ${kind}`;
+      const why = buildBlocker(kind, hand, spots[kind]);
       return (
         <button type="button" className={mode === kind ? 'selected' : ''} aria-pressed={mode === kind} disabled={why !== '' && mode !== kind}
           title={why || `Costs ${describeResources(COSTS[kind])}`} onClick={() => onMode(mode === kind ? null : kind)}>
