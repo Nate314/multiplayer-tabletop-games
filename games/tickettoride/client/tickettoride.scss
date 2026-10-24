@@ -215,6 +215,18 @@
     --track: var(--card-gray);
   }
 
+  /* The route color's shape on its middle car, dark on the light colors */
+
+  .track .color-symbol {
+    color: var(--card-ink-light);
+    pointer-events: none;
+  }
+
+  .track-white .color-symbol,
+  .track-yellow .color-symbol {
+    color: var(--card-ink-dark);
+  }
+
   /* A claimed route is a row of train cars in the owner's color, with a white outline so it never reads as an open track */
 
   .track.owned rect {
@@ -393,6 +405,13 @@
     font-size: 11px;
     font-weight: 700;
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+  }
+
+  .card .color-symbol {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    margin-right: 2px;
   }
 
   .card-pink {

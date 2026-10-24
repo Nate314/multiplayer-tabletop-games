@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { CITIES, ROUTES, TICKETS } from '../games/tickettoride/map.ts';
 import type { Card, GameState, Hand, PlayerState } from '../games/tickettoride/types.ts';
 
@@ -516,6 +516,20 @@ test.describe('Ticket to Ride rules', () => {
 });
 
 test.describe('Ticket to Ride controls', () => {
+  test('with Color-blind symbols on, train cards and open colored routes show a shape; locomotives and gray routes show none', async ({ seat }) => {
+    const { alice } = await start(seat, 2, { faceUp: ['locomotive', 'green', 'yellow', 'black', 'white'] }, { 1: { hand: { red: 1, blue: 1, pink: 1, orange: 1, locomotive: 1 } } });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes = { red: 'circle', blue: 'square', pink: 'heart', orange: 'hexagon', green: 'triangle', yellow: 'star', black: 'diamond', white: 'ring' };
+    for (const card of ['red', 'blue', 'pink', 'orange']) await expect(myHand(alice).locator(`.card-${card} .color-symbol-${shapes[card as keyof typeof shapes]}`)).toHaveCount(1);
+    await expect(myHand(alice).locator('.card-locomotive .color-symbol')).toHaveCount(0);
+    await expect(faceUp(alice, 0).locator('.color-symbol')).toHaveCount(0);
+    for (const [slot, card] of ['green', 'yellow', 'black', 'white'].entries()) await expect(faceUp(alice, slot + 1).locator(`.color-symbol-${shapes[card as keyof typeof shapes]}`)).toHaveCount(1);
+    await expect(track(alice, KC_STL).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(track(alice, KC_STL_PINK).locator('.color-symbol-heart')).toHaveCount(1);
+    await expect(track(alice, LA_VEGAS).locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('clicking a face-up card or the deck takes a card, twice a turn, and cards you cannot take are dimmed', async ({ seat }) => {
     const { alice, bob } = await start(seat, 2, { faceUp: ['locomotive', 'green', 'yellow', 'black', 'white'] });
     for (const button of await market(bob).locator('.card-button').all()) await expect(button).toBeDisabled();

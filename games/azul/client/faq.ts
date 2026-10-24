@@ -46,6 +46,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Boards are shown in turn order, starting with yours on the left. Play passes to the next board on the right, then back to you.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each tile shows the shape of its color in place of its mark: red circle, blue square, yellow star, black diamond, cyan pentagon. Tiles in factories, the center, pattern lines, the wall and the floor show it; the first player marker does not.'
+  },
+  {
     question: 'What happens if someone leaves?',
     answer: 'Their board stays and is still scored, but their turns are skipped, they cannot win, and a full row on their board does not end the game. The last player left wins. Nobody can join after the first move.'
   }

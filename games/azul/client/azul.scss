@@ -221,6 +221,11 @@
     user-select: none;
   }
 
+  .tile .color-symbol {
+    width: 62%;
+    height: 62%;
+  }
+
   .slot {
     display: inline-block;
     background: var(--slot-bg);

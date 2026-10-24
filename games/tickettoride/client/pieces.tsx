@@ -1,3 +1,4 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { CITIES, TICKETS } from '../map.ts';
 import { cardLabel } from './labels.ts';
 import type { Card } from '../types.ts';
@@ -6,6 +7,7 @@ import type { Card } from '../types.ts';
 export function CardFace({ card, count }: { card: Card; count?: number }) {
   return (
     <span className={`card card-${card}`}>
+      <ColorSymbol color={card === 'locomotive' ? null : card} />
       <span className="card-name">{card === 'locomotive' ? 'Loco' : cardLabel(card)}</span>
       {count !== undefined && <span className="card-count">{count}</span>}
     </span>
