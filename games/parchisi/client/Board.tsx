@@ -1,4 +1,5 @@
 import Pawn from './Pawn';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import { CENTER_AREA, HOME_COLUMN, SEATS, TRACK_CELLS, cellKey, cellOf, cellPlacement, gridPlacement, nestArea } from './geometry.ts';
 import { dieLabel } from './dice.ts';
 import { HOME, NEST, PAWN_COUNT, entryIndex, getLegalMoves, isSafe, sideOf } from '../rules.ts';
@@ -6,6 +7,8 @@ import type { Cell } from './geometry.ts';
 import type { LegalMove, Move, PawnRef, PublicGameState, Seat } from '../types.ts';
 
 const HOME_KEY = 'home';
+const PAWN_PREFIX = 'pawn-'; // a pawn's drag id is pawn-<index>
+const pawnOf = (id: string) => Number(id.slice(PAWN_PREFIX.length));
 
 type BoardProps = {
   gameState: PublicGameState;
@@ -50,11 +53,27 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
     return ref.seat === playerNumber;
   }
 
+  // Sends the first option for a square, by click or drop
+  function play(options: LegalMove[]) {
+    onMove({ type: 'move', pawn: options[0].pawn, die: options[0].die });
+  }
+
+  // The options that land on `key` for the pawn a drag id names, read from the latest render rather than the selection
+  const optionsFor = (id: string, key: string) =>
+    legalMoves.filter(move => move.pawn === pawnOf(id) && destinationKey(playerNumber, move) === key);
+  const drag = useDrag({
+    canLift: id => movable.has(pawnOf(id)),
+    canDrop: (id, target) => optionsFor(id, target).length > 0,
+    onLift: id => onSelectPawn(pawnOf(id)),
+    onDrop: (id, target) => play(optionsFor(id, target)),
+    onCancel: () => onSelectPawn(null)
+  });
+
   // A click on a destination moves; a click on one of your movable pawns selects it, or clears it if already selected
   function handleClick(key: string, there: PawnRef[]) {
     const options = destinations.get(key);
     if (options) {
-      onMove({ type: 'move', pawn: options[0].pawn, die: options[0].die });
+      play(options);
       return;
     }
     const mine = there.find(ref => isMine(ref) && movable.has(ref.pawn));
@@ -71,6 +90,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
         name={playerNames[seat]}
         movable={mine}
         selected={mine && pawn === selectedPawn}
+        dragProps={seat === playerNumber ? drag.source(`${PAWN_PREFIX}${pawn}`) : undefined}
       />
     );
   }
@@ -95,7 +115,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
     const key = cellKey(cell);
     const there = pawnsByCell.get(key) ?? [];
     return (
-      <div key={key} className={squareClass(cell, extra)} style={cellPlacement(cell)} onClick={() => handleClick(key, there)}>
+      <div key={key} className={squareClass(cell, extra)} style={cellPlacement(cell)} data-drop={key} onClick={() => handleClick(key, there)}>
         {there.map(renderPawn)}
         {renderBadge(key)}
       </div>
@@ -134,6 +154,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
           lastMove?.to === HOME ? 'last-move-to' : ''
         ].join(' ')}
         style={gridPlacement(CENTER_AREA)}
+        data-drop={HOME_KEY}
         onClick={() => handleClick(HOME_KEY, [])}
       >
         {SEATS.filter(seat => pawns[seat]).map(seat => (

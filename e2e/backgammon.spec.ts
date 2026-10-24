@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { POINT_COUNT, diceToPlay, pointIndex } from '../games/backgammon/rules.ts';
 import type { PointStack, Position, Seat as SeatNumber } from '../games/backgammon/types.ts';
 
@@ -503,5 +503,58 @@ test.describe('Backgammon differences from Wikipedia', () => {
       await expect(cube(page)).toHaveText('Alice won 1 point');
       await expect(page.locator('.bg-actions')).toHaveCount(0);
     }
+  });
+});
+
+test.describe('Backgammon drag and drop', () => {
+  const lifted = (page: Page, number: number) => point(page, number).locator('[data-drag]');
+
+  test('a checker dragged to a highlighted point moves there', async ({ seat, server }) => {
+    const { table, alice, bob } = await start(seat, server);
+    await craft(table, { 1: { points: { 6: 2 } }, 2: { points: { 6: 2 } } }, [3, 2]);
+    await drag(alice, lifted(alice, 6), point(alice, 3));
+    await expect(checkers(bob, 22, 'white')).toHaveCount(1); // Alice's 3 point is Bob's 22
+    await expect(checkers(alice, 3, 'white')).toHaveCount(1);
+    await expect(checkers(alice, 6, 'white')).toHaveCount(1);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(alice.locator('.selected')).toHaveCount(0);
+  });
+
+  test('a checker dragged from the bar enters', async ({ seat, server }) => {
+    const { table, alice } = await start(seat, server);
+    await craft(table, { 1: { points: { 13: 2 }, bar: 1 }, 2: { points: { 1: 2 } } }, [3, 5]);
+    await drag(alice, myBar(alice).locator('[data-drag]'), point(alice, 22));
+    await expect(checkers(alice, 22, 'white')).toHaveCount(1);
+    await expect(myBar(alice).locator('.bg-checker')).toHaveCount(0);
+  });
+
+  test('a checker dragged to the tray bears off, and two dice that both reach it still ask which die', async ({ seat, server }) => {
+    const { table, alice } = await start(seat, server);
+    await craft(table, { 1: { points: { 5: 1, 2: 1, 1: 2 } }, 2: { points: { 6: 2 } } }, [5, 6]);
+    await drag(alice, lifted(alice, 5), myTray(alice));
+    const choice = alice.locator('.bg-die-choice');
+    await expect(choice.getByRole('button')).toHaveText(['5', '6', 'Cancel']);
+    await choice.getByRole('button', { name: '6', exact: true }).click();
+    await expect(myTray(alice).locator('.bg-point-label')).toHaveText('1/15');
+
+    await craft(table, { 1: { points: { 1: 2 } }, 2: { points: { 6: 2 } } }, [3]);
+    await drag(alice, lifted(alice, 1), myTray(alice));
+    await expect(myTray(alice).locator('.bg-point-label')).toHaveText('1/15');
+    await expect(alice.locator('.bg-die-choice')).toHaveCount(0);
+  });
+
+  test('a checker dropped on a point it cannot reach goes back, and nothing stays selected', async ({ seat, server }) => {
+    const { table, alice } = await start(seat, server);
+    await craft(table, { 1: { points: { 6: 2 } }, 2: { points: { 6: 2 } } }, [3, 2]);
+    const before = await table.state();
+    await drag(alice, lifted(alice, 6), point(alice, 5));
+    await expect(checkers(alice, 6, 'white')).toHaveCount(2);
+    await expect(alice.locator('.selected')).toHaveCount(0);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    expect(await table.state()).toEqual(before);
+    // Its own point, at an offset so the pointer moves enough to lift
+    await drag(alice, lifted(alice, 6), point(alice, 6), { x: 5, y: 60 });
+    await expect(alice.locator('.selected')).toHaveCount(0);
+    expect(await table.state()).toEqual(before);
   });
 });

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { HOME, LAST_TRACK, NEST, TRACK_LENGTH, entryIndex, isOnTrack, trackIndex } from '../games/parchisi/rules.ts';
 import type { Progress, Seat as SeatNumber } from '../games/parchisi/types.ts';
 
@@ -505,5 +505,35 @@ test.describe('Parchisi differences from Wikipedia', () => {
     await expect(turn(bob)).toContainText('Your turn');
     await expect.poll(() => diceLabels(bob)).toEqual(['5', '3']);
     await expect(bob.getByRole('button', { name: /roll/i })).toHaveCount(0);
+  });
+});
+
+test.describe('Parchisi drag and drop', () => {
+  test('a pawn dragged to a square with a badge moves there', async ({ seat, server }) => {
+    const { table, alice, bob } = await start(seat, server);
+    await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4]);
+    await drag(alice, pawn(alice, 1, 0), square(alice, 1, 4));
+    await expect(pawnAt(alice, 1, 0, 4)).toHaveCount(1);
+    await expect(pawnAt(bob, 1, 0, 4)).toHaveCount(1);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+  });
+
+  test('a pawn dragged into home goes home', async ({ seat, server }) => {
+    const { table, alice, bob } = await start(seat, server);
+    await craft(table, { 1: [HOME - 3, N, N, N], 2: [N, N, N, N] }, [3, 1]);
+    await drag(alice, pawn(alice, 1, 0), alice.locator('.center'));
+    await expect(pawnAt(bob, 1, 0, HOME)).toHaveCount(1);
+  });
+
+  test('a pawn dropped elsewhere goes back with nothing selected', async ({ seat, server }) => {
+    const { table, alice } = await start(seat, server);
+    await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4]);
+    const before = await table.state();
+    await drag(alice, pawn(alice, 1, 0), square(alice, 1, 10));
+    await expect(pawnAt(alice, 1, 0, 0)).toHaveCount(1);
+    await expect(pawn(alice, 1, 0)).not.toHaveClass(/selected/);
+    await expect(alice.locator('.destination')).toHaveCount(0);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    expect(await table.state()).toEqual(before);
   });
 });

@@ -31,7 +31,8 @@ export const FAQS: FaqItem[] = [
     question: 'How do I move a pawn?',
     answer: 'On your turn, the pawns you can move glow. Click one to select it: each square it can reach is ' +
       'marked with the dice that get it there, such as 4 for one die, 2+3 for the total of both, or +20 for a ' +
-      'bonus. Click a marked square to move. Click the selected pawn again to unselect it. The board is dimmed ' +
+      'bonus. Click a marked square to move. Click the selected pawn again to unselect it. You can also drag a glowing pawn onto a marked ' +
+      'square, or into the center to go home; drop it anywhere else to put it back. The board is dimmed ' +
       'when it is not your turn.'
   },
   {
