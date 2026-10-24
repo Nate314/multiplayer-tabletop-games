@@ -32,6 +32,7 @@ export function bankTrade(state: GameState, seat: Seat, give: Resource, get: Res
 
 function offerError(state: GameState, seat: Seat): string | null {
   if (state.setup) return 'Trading starts after setup';
+  if (state.specialBuild) return 'No trading during the special build phase';
   if (state.turnHolder !== seat) return 'Only the player whose turn it is can offer a trade';
   if (!state.rolled) return 'Roll the dice first';
   if (state.pending) return 'Finish the robber, discards or free roads first';

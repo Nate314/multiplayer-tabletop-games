@@ -45,6 +45,7 @@ flowchart TD
 - A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
 - House rules: a game declares options (toggles and choices) and may allow a player-count override; the host (the first seated player, passed on if they leave) sets them before play, every seated player must agree to the current revision before the first move, and any seat change clears the agreements. Rules are locked once play starts
 - Out-of-turn moves for a game that allows them (`allowsOutOfTurn`), refused with "Someone else moved first" when the mover's `moveCount` is stale
+  - Used by Catan's special build phase (`games/catan/specialBuild.ts`): the builder whose chance it is builds, buys or clicks Done building while the next player holds the turn
 - Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
 - Calling the game's `toPublicState` for each player before anything is sent to them, so each player gets their own view
 - The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, House rules, theme toggle), FAQ dialog, house rules panel and dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`

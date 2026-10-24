@@ -33,6 +33,9 @@ export type Trade = { from: Seat; to: Seat | null; give: Resources; get: Resourc
 // Who stole from whom; the resource is seen only by those two
 export type Steal = { thief: Seat; victim: Seat; resource: Resource | null };
 
+// The 5-6 player special build phase after a turn: builders[0] has the build chance now; the rest wait in turn order
+export type SpecialBuild = { builders: Seat[] };
+
 export type Move =
   | { type: 'placeSettlement'; vertex: number } // setup
   | { type: 'placeRoad'; edge: number } // setup, or a free road from Road Building
@@ -47,7 +50,8 @@ export type Move =
   | { type: 'playMonopoly'; resource: Resource }
   | { type: 'moveRobber'; hex: number; victim: Seat | null }
   | { type: 'bankTrade'; give: Resource; get: Resource }
-  | { type: 'endTurn' };
+  | { type: 'endTurn' }
+  | { type: 'passBuild' }; // Done building, in the special build phase
 
 // Not turn-bound and not undoable
 export type Action =
@@ -79,6 +83,7 @@ export type GameState = BaseGameState & {
   rolled: boolean;
   dice: [number, number] | null; // the most recent roll
   pending: Pending | null;
+  specialBuild: SpecialBuild | null; // missing in older saves, read by truthiness only
   trade: Trade | null;
   steal: Steal | null; // the most recent steal, shown until the next
   log: string[]; // the most recent events, newest last

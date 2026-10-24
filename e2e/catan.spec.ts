@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -263,6 +263,7 @@ test.describe('Catan rules', () => {
       const everyone = [alice, bob, cara];
       await expect(status(bob)).toHaveText(
         'Cara joined (3/6 players). Highest roll goes first: Alice 12, Bob 12, Cara 2; tie: Alice 3, Bob 8. Bob goes first');
+      await agreeToHouseRules(alice, bob, cara); // Cara's join cleared the agreements
       await expect(turnMessage(bob)).toHaveText('You place first. Joining closes after the first move.');
       await expect(turnMessage(alice)).toHaveText('Bob places first. Joining closes after the first move.');
 

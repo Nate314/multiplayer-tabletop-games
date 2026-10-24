@@ -14,6 +14,13 @@ export const FAQS: FaqItem[] = [
       'colors. The island is chosen when the lobby resets, so it changes back if a player leaves before the first move.'
   },
   {
+    question: 'What is the special build phase?',
+    answer: 'A house rule for five or six players, off unless the host turns it on. After each turn, every other player ' +
+      'in turn order, starting with the next player, gets a build chance: build or buy a development card, with no ' +
+      'trading or playing cards, then click Done building. Players holding fewer than 2 cards, or away, are skipped. A ' +
+      'card bought then is playable from your next turn, and 10 points reached then win when your own turn begins.'
+  },
+  {
     question: 'What is the goal?',
     answer: 'Be the first to reach 10 points on your own turn. A settlement is 1 point, a city 2, each Victory Point card ' +
       '1, and the Longest Road and Largest Army cards 2 each.'

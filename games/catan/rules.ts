@@ -16,6 +16,7 @@ import {
   LOG_SIZE, checkWin, endGame, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
 } from './state.ts';
 import { editionFor } from './editions.ts';
+import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
 
@@ -46,6 +47,7 @@ export function createGameState(gameId: string): GameState {
     rolled: false,
     dice: null,
     pending: null,
+    specialBuild: null,
     trade: null,
     steal: null,
     log: [],
@@ -105,6 +107,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     rolled: false,
     dice: null,
     pending: null,
+    specialBuild: null,
     trade: null,
     steal: null,
     log: [],
@@ -144,7 +147,9 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
 
 const VERTEX_MOVES = ['placeSettlement', 'buildSettlement', 'buildCity'] as const;
 const EDGE_MOVES = ['placeRoad', 'buildRoad'] as const;
-const PLAIN_MOVES = ['roll', 'buyDevCard', 'playKnight', 'playRoadBuilding', 'endTurn'] as const;
+const PLAIN_MOVES = ['roll', 'buyDevCard', 'playKnight', 'playRoadBuilding', 'endTurn', 'passBuild'] as const;
+// What a builder may do out of turn in the special build phase
+const BUILD_CHANCE_MOVES: Move['type'][] = ['buildRoad', 'buildSettlement', 'buildCity', 'buyDevCard', 'passBuild'];
 
 function parseMove(move: unknown, board: Board): Move | null {
   const input = asRecord(move);
@@ -178,9 +183,11 @@ export function describeMove(lastMove: LastMove): string {
   return lastMove.events.join('. ');
 }
 
-// Everything that follows by itself: the award cards, a win, and who must act now
+// Everything that follows by itself: the award cards, a win, and who must act now.
+// A player wins only on their own turn, so never in the special build phase
 function settle(state: GameState): GameState {
-  return syncTurn(checkWin(settleAwards(state)));
+  const awarded = settleAwards(state);
+  return syncTurn(awarded.specialBuild ? awarded : checkWin(awarded));
 }
 
 // The rules run with an empty log, so what they noted is exactly what this change did
@@ -202,13 +209,15 @@ function playSetup(state: GameState, seat: Seat, move: Move): Result<GameState> 
 }
 
 function endTurn(state: GameState, seat: Seat): Result<GameState> {
-  return { state: note(startTurn(state, nextActivePlayer(state, seat)), `${nameOf(state, seat)} ended their turn`) };
+  const next = note(startTurn(state, nextActivePlayer(state, seat)), `${nameOf(state, seat)} ended their turn`);
+  return { state: startSpecialBuild(next, seat) };
 }
 
 // The turn holder's moves: a pending robber, discard or free road comes first; development cards may be played
-// before rolling; everything else needs the roll
+// before rolling; everything else needs the roll. A special build phase comes before all of it.
 function play(state: GameState, seat: Seat, move: Move, random: Random): Result<GameState> {
   if (state.setup) return playSetup(state, seat, move);
+  if (state.specialBuild) return playSpecialBuild(state, seat, move);
   const { pending } = state;
   if (pending?.kind === 'discard') return { error: 'Wait for everyone to discard' };
   if (pending?.kind === 'robber') {
@@ -226,6 +235,7 @@ function play(state: GameState, seat: Seat, move: Move, random: Random): Result<
     case 'placeSettlement':
     case 'placeRoad':
     case 'moveRobber':
+    case 'passBuild':
       return { error: 'You cannot do that now' };
   }
   if (!state.rolled) return { error: 'Roll the dice first' };
@@ -237,6 +247,13 @@ function play(state: GameState, seat: Seat, move: Move, random: Random): Result<
     case 'bankTrade': return bankTrade(state, seat, move.give, move.get);
     case 'endTurn': return endTurn(state, seat);
   }
+}
+
+// Only the builder whose chance it is moves out of turn, and only to build, buy or be done
+export function allowsOutOfTurn(state: GameState, seat: Seat, move: unknown): boolean {
+  if (!buildChance(state, seat)) return false;
+  const parsed = parseMove(move, boardOf(state.layout));
+  return parsed !== null && BUILD_CHANCE_MOVES.includes(parsed.type);
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
@@ -293,7 +310,8 @@ function setupWithout(state: GameState, seat: Seat): GameState {
 
 // A dismissed player's pieces stay on the board as dead pieces: they score and produce nothing, but still block and
 // break roads. Their cards go back to the bank, and their development cards out of the game. A discard or trade
-// waiting on them is dropped; on their turn, the next player's turn begins. With fewer than three left, the game ends
+// waiting on them is dropped, and so is their build chance; on their turn, the next player's turn begins (ending any
+// special build phase). With fewer than three left, the game ends
 // and the player with the most points wins.
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const working: GameState = { ...state, log: [] };
@@ -314,7 +332,9 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   next = setupWithout(next, seat);
   if (!next.setup && state.turnHolder === seat) {
     const following = nextActivePlayer(next, seat);
-    next = note(startTurn(next, following), `${nameOf(state, following)}'s turn`);
+    next = note(startTurn({ ...next, specialBuild: null }, following), `${nameOf(state, following)}'s turn`);
+  } else {
+    next = withoutBuilder(next, seat);
   }
   if (next.activePlayers.length < MIN_PLAYERS) {
     const awarded = settleAwards(next);
@@ -328,10 +348,11 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 }
 
 // An offer from or to a player who disconnects is dropped, so it never holds up the turn
-// A trade with the player is dropped, and a discard they owe is made for them
+// A trade with the player is dropped, a discard they owe is made for them, and their build chance is skipped
 export function onPlayerDisconnected(state: GameState, seat: Seat, random: Random): GameState {
   let next: GameState = { ...state, log: [] };
   if (state.trade?.from === seat || state.trade?.to === seat) next = note({ ...next, trade: null }, 'The open trade offer was dropped');
   next = discardForAbsent(next, random);
+  if (buildChance(next, seat)) next = withoutBuilder(note(next, `${nameOf(state, seat)} is away, so their build chance is skipped`), seat);
   return next.log.length > 0 ? finish(state, next) : state;
 }
