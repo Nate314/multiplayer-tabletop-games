@@ -1,9 +1,10 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
-import { rememberingKeys } from './testing.ts';
+import { agreeAll, rememberingKeys } from './testing.ts';
+import { openGameStore } from './store.ts';
 import type { GameStore, SavedRoom } from './store.ts';
-import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
+import { rulesGame, testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
 import type { BaseGameState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
@@ -933,4 +934,104 @@ test('undoing the first move past a dismissal keeps the game started', () => {
   assert.deepEqual(restored.activePlayers, [1, 3]);
   assert.equal(restored.currentPlayer, 1);
   assert.equal(restored.moves, 0);
+});
+
+function rulesManager(store?: GameStore): Manager {
+  return rememberingKeys(createGameManager([rulesGame], seededRandom, store), keys);
+}
+
+function rulesGameWith(...names: string[]): Manager {
+  const manager = rulesManager();
+  for (const name of names) manager.join('test', 'g1', name);
+  return manager;
+}
+
+test('a move before everyone agreed is refused', () => {
+  const manager = rulesGameWith('A', 'B');
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
+  ok(manager.agreeHouseRules(ROOM, 1, manager.getState(ROOM)?.houseRules?.revision));
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
+});
+
+test('the move goes through once every seated player agreed', () => {
+  const manager = rulesGameWith('A', 'B');
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.move(ROOM, 1, tick)).started, true);
+});
+
+test('a game with no house rules and no override needs no agreement', () => {
+  assert.equal(ok(gameWith('A', 'B').move(ROOM, 1, tick)).started, true);
+});
+
+test('only the host may set the house rules and a change clears the agreements', () => {
+  const manager = rulesGameWith('A', 'B');
+  const proposal = { values: { fast: true }, override: false, maxPlayers: null };
+  assert.deepEqual(manager.setHouseRules(ROOM, 2, proposal), { error: 'Only the host can change the house rules' });
+  assert.deepEqual(manager.setHouseRules(ROOM, 3, proposal), { error: 'You are not in this game' });
+  ok(manager.agreeHouseRules(ROOM, 2, manager.getState(ROOM)?.houseRules?.revision));
+  const view = ok(manager.setHouseRules(ROOM, 1, proposal));
+  assert.equal(view.houseRules?.values.fast, true);
+  assert.deepEqual(view.houseRules?.agreed, []);
+});
+
+test('an agreement to an old revision is refused after the host changed the rules', () => {
+  const manager = rulesGameWith('A', 'B');
+  const seen = manager.getState(ROOM)?.houseRules?.revision;
+  ok(manager.setHouseRules(ROOM, 1, { values: { goal: 5 }, override: false, maxPlayers: null }));
+  assert.deepEqual(manager.agreeHouseRules(ROOM, 2, seen), { error: 'The house rules changed. Check them and agree again' });
+  assert.deepEqual(manager.getState(ROOM)?.houseRules?.agreed, []);
+});
+
+test('a move that names an old move count is refused', () => {
+  const manager = rulesGameWith('A', 'B');
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.move(ROOM, 1, tick, 0)).moveCount, 1);
+  assert.deepEqual(manager.move(ROOM, 2, tick, 0), { error: 'Someone else moved first' });
+  assert.equal(ok(manager.move(ROOM, 2, tick, 1)).moveCount, 2);
+});
+
+test('every view, history step and game file step carries the house rules', () => {
+  const manager = rulesGameWith('A', 'B');
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  const file = manager.gameFile('test', 'g1', new Date());
+  assert.ok(file && 'file' in file);
+  const views = [manager.getState(ROOM, 1), manager.getState(ROOM, null), ...(manager.history('test', 'g1') ?? []), ...file.file.steps];
+  assert.equal(views.length, 2 + 4 + 4);
+  for (const view of views) assert.equal(view?.houseRules?.host, 1);
+});
+
+test('a game saved without house rules loads, plays and builds its history', () => {
+  const store = memoryStore();
+  const manager = rulesManager(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  const old = saved(store);
+  const strip = (state: BaseGameState) => { const { houseRules: _rules, ...rest } = state; return rest as BaseGameState; };
+  const legacy = memoryStore();
+  legacy.save(ROOM, 'test', strip(old.state), { type: 'push', index: 0, before: strip(old.history[0]), after: strip(old.timeline[0]) });
+  const back = rulesManager(legacy);
+  assert.equal(back.getState(ROOM)?.houseRules?.host, 1);
+  assert.equal(back.history('test', 'g1')?.length, 2);
+  joined(back.join('test', 'g1', 'A', true));
+  joined(back.join('test', 'g1', 'B', true));
+  assert.equal(ok(back.move(ROOM, 2, tick)).moveCount, 2);
+});
+
+test('the house rules survive a restart', () => {
+  const store = openGameStore(':memory:');
+  const manager = rulesManager(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.setHouseRules(ROOM, 1, { values: { fast: true, goal: 5 }, override: false, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  const rules = rulesManager(store).getState(ROOM)?.houseRules;
+  assert.equal(rules?.values.goal, 5);
+  assert.equal(rules?.values.fast, true);
+  assert.deepEqual(rules?.agreed, [1, 2]);
 });

@@ -110,7 +110,13 @@ function handleMessage(ws: WebSocket, data: unknown): void {
   const payload = asRecord(message?.payload);
   switch (message?.type) {
     case MESSAGE_TYPES.MAKE_MOVE:
-      respond(ws, roomId, manager.move(roomId, seat, payload?.move));
+      respond(ws, roomId, manager.move(roomId, seat, payload?.move, payload?.moveCount));
+      break;
+    case MESSAGE_TYPES.SET_HOUSE_RULES:
+      respond(ws, roomId, manager.setHouseRules(roomId, seat, payload?.proposal));
+      break;
+    case MESSAGE_TYPES.AGREE_HOUSE_RULES:
+      respond(ws, roomId, manager.agreeHouseRules(roomId, seat, payload?.revision));
       break;
     case MESSAGE_TYPES.GAME_ACTION:
       respond(ws, roomId, manager.action(roomId, seat, payload?.action));

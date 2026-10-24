@@ -15,3 +15,14 @@ export function rememberingKeys(manager: Manager, keys = new Map<string, string>
     }
   };
 }
+
+// Every seated player agrees to the current house rules
+export function agreeAll(manager: Manager, roomId: string): void {
+  const state = manager.rawState(roomId);
+  if (!state) throw new Error(`no game ${roomId}`);
+  const revision = state.houseRules?.revision ?? 0;
+  for (const seat of state.activePlayers) {
+    const result = manager.agreeHouseRules(roomId, seat, revision);
+    if ('error' in result) throw new Error(result.error);
+  }
+}

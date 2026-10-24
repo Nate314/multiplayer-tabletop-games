@@ -4,6 +4,7 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
+import { agreeToHouseRules, everyoneAgreed, houseRulesOf, needsAgreement, setHouseRules } from '../shared/houseRules.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
@@ -82,7 +83,7 @@ export function createGameManager(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
     const { seatKeys: _seatKeys, ...view } = room.game.toPublicState(state, undoAvailable, viewer);
-    return { ...view, moveCount };
+    return { ...view, moveCount, houseRules: houseRulesOf(room.game.info, state) };
   }
 
   // The current state as `viewer` may see it
@@ -246,10 +247,14 @@ export function createGameManager(
       return { state: view(room, seat) };
     },
 
-    move(roomId: string, seat: Seat, move: unknown): Result<BasePublicState> {
+    move(roomId: string, seat: Seat, move: unknown, moveCount?: unknown): Result<BasePublicState> {
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
+      if (!room.state.started && needsAgreement(room.game.info) && !everyoneAgreed(room.game.info, room.state)) {
+        return { error: 'Everyone must agree to the house rules first' };
+      }
+      if (moveCount !== undefined && moveCount !== room.timeline.length) return { error: 'Someone else moved first' };
 
       const result = applyMove(room.game, room.state, seat, move, random);
       if ('error' in result) return result;
@@ -258,6 +263,30 @@ export function createGameManager(
       room.timeline.push(result.state);
       room.state = result.state;
       save(roomId, room, { type: 'push', index, before: room.history[index], after: result.state });
+      return { state: view(room, seat) };
+    },
+
+    setHouseRules(roomId: string, seat: Seat, proposal: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+
+      const result = setHouseRules(room.game.info, room.state, seat, proposal);
+      if ('error' in result) return result;
+      room.state = room.game.resetLobby(result.state, random);
+      save(roomId, room);
+      return { state: view(room, seat) };
+    },
+
+    agreeHouseRules(roomId: string, seat: Seat, revision: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+
+      const result = agreeToHouseRules(room.game.info, room.state, seat, revision);
+      if ('error' in result) return result;
+      room.state = result.state;
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 

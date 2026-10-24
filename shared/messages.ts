@@ -1,3 +1,4 @@
+import type { HouseRulesProposal } from './houseRules.ts';
 import type { BasePublicState, Seat } from './types.ts';
 
 // WebSocket message types shared by the browser and the server
@@ -6,6 +7,8 @@ export const MESSAGE_TYPES = {
   GAME_JOINED: 'GAME_JOINED',
   MAKE_MOVE: 'MAKE_MOVE',
   GAME_ACTION: 'GAME_ACTION',
+  SET_HOUSE_RULES: 'SET_HOUSE_RULES',
+  AGREE_HOUSE_RULES: 'AGREE_HOUSE_RULES',
   REQUEST_UNDO: 'REQUEST_UNDO',
   VOTE_UNDO: 'VOTE_UNDO',
   REQUEST_DISMISS: 'REQUEST_DISMISS',
@@ -16,8 +19,10 @@ export const MESSAGE_TYPES = {
 
 export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string }
-  | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown } }
+  | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown; moveCount?: number } } // moveCount: the count the mover saw
   | { type: typeof MESSAGE_TYPES.GAME_ACTION; payload: { action: unknown } }
+  | { type: typeof MESSAGE_TYPES.SET_HOUSE_RULES; payload: { proposal: HouseRulesProposal } }
+  | { type: typeof MESSAGE_TYPES.AGREE_HOUSE_RULES; payload: { revision: number } }
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }
   | { type: typeof MESSAGE_TYPES.VOTE_UNDO; payload: { approve: boolean } }
   | { type: typeof MESSAGE_TYPES.REQUEST_DISMISS; payload: { seat: Seat } }
