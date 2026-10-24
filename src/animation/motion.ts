@@ -62,3 +62,17 @@ export function ghostSlide(root: HTMLElement, ghost: HTMLElement, from: DOMRect,
     { duration: MOVE_DURATION_MS, delay: delayMs, easing: 'ease-in', fill: 'both' }
   ).finished.then(() => ghost.remove(), () => ghost.remove());
 }
+
+// A short roll for a die: a full turn and a hop. Animates `rotate` and `translate`, so any `transform` the element has stays.
+export function tumble(element: Element, durationMs = MOVE_DURATION_MS): void {
+  cancelAnimations(element);
+  if (prefersReducedMotion()) return;
+  element.animate(
+    [
+      { rotate: '0deg', translate: '0 0' },
+      { rotate: '180deg', translate: '0 -14px', offset: 0.5 },
+      { rotate: '360deg', translate: '0 0' }
+    ],
+    { duration: durationMs, easing: 'ease-in-out' }
+  );
+}

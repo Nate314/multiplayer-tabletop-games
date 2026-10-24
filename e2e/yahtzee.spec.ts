@@ -7,8 +7,8 @@ import type { Sheet } from '../games/yahtzee/types.ts';
 
 const NONE = [false, false, false, false, false];
 
-async function start(seat: Seat, names = ['Alice', 'Bob']) {
-  const table = await seat('yahtzee', names);
+async function start(seat: Seat, names = ['Alice', 'Bob'], motion = false) {
+  const table = await seat('yahtzee', names, { motion });
   const [alice, bob] = table.pages;
   // Crafts the dice on the table, as if the player to move had already rolled
   const rolled = (dice: number[], rollsLeft = 2) => table.patch({ dice, held: NONE, rollsLeft, lastMove: null });
@@ -211,6 +211,37 @@ test.describe('Yahtzee rules', () => {
     await expect(rolls(alice)).toHaveText('1 of 3 rolls left');
     await expect(die(alice, 1)).toHaveAttribute('aria-pressed', 'true');
     expect(await faces(alice)).toEqual([6, 2, 6, 6, 6]);
+  });
+
+  test('dice tumble and the score slides to its box, and nothing animates with reduced motion', async ({ seat }) => {
+    const animated = await start(seat, ['Alice', 'Bob'], true);
+    const running = (page: Page, key: string) => page.evaluate(
+      key => document.querySelector(`[data-anim-key="${key}"]`)?.getAnimations().length ?? 0, key
+    );
+    await animated.table.dice(1, 2, 3, 4, 5);
+    await rollButton(animated.alice).click();
+    for (let index = 0; index < 5; index++) await expect.poll(() => running(animated.bob, `die-${index}`)).toBeGreaterThan(0);
+
+    // A held die stays still while the other dice roll again
+    await expect.poll(() => running(animated.bob, 'die-1')).toBe(0);
+    await die(animated.alice, 0).click();
+    await animated.table.dice(6, 6, 6, 6);
+    await rollButton(animated.alice).click();
+    await expect.poll(async () => (await running(animated.bob, 'die-1')) > 0 && (await running(animated.bob, 'die-0')) === 0).toBe(true);
+
+    await option(animated.alice, 25, 'Chance').click();
+    await expect.poll(() => animated.bob.locator('.yz-flying-points').count()).toBe(1);
+    await expect(animated.bob.locator('.yz-flying-points')).toHaveText('25');
+    await expect(animated.bob.locator('.yz-flying-points')).toHaveCount(0);
+    await expect(animated.bob.locator('[data-anim-key="cell-1-chance"]')).toHaveText('25');
+
+    const still = await start(seat);
+    await still.table.dice(1, 2, 3, 4, 5);
+    await rollButton(still.alice).click();
+    await expect(still.bob.getByText('Alice rolled 1 2 3 4 5, 2 rolls left')).toBeVisible();
+    await option(still.alice, 15, 'Chance').click();
+    await expect(still.bob.getByText('Alice scored 15 points in Chance')).toBeVisible();
+    expect(await still.bob.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 
   test('History steps through every move, and FAQ shows the rules', async ({ seat }) => {
