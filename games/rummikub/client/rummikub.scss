@@ -477,10 +477,12 @@
 
   /* History */
 
+  /* A fixed width, so the table's sets wrap instead of stretching the History board into one long row */
   .rk-history {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 520px;
   }
 
   .rk-history .rk-table {

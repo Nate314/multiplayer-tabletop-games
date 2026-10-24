@@ -82,6 +82,7 @@
   .history-button,
   .faq-button,
   .github-link,
+  .share-button,
   .theme-toggle {
     height: 2.5rem;
     padding: 0 1rem;
@@ -95,6 +96,7 @@
   }
 
   .github-link,
+  .share-button,
   .theme-toggle {
     flex: none;
     width: 2.5rem;
@@ -107,6 +109,7 @@
   .history-button:hover:enabled,
   .faq-button:hover,
   .github-link:hover,
+  .share-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
   }
@@ -166,13 +169,9 @@
 
   /* History dialog */
 
-  .modal.history {
-    max-width: 900px;
-  }
-
   /* Its own stacking context, so the frame's outer edge paints above the dialog; the padding leaves room for that edge */
 
-  .history-board {
+  .history-board-content {
     isolation: isolate;
     padding: 8px;
   }
@@ -635,7 +634,7 @@
     background: var(--button-hover-bg);
   }
 
-  /* Phones: the five header buttons fill about 360px, so the title takes its own row above them, with an ellipsis */
+  /* Phones: the six header buttons fill about 360px, so the title takes its own row above them, with an ellipsis */
 
   @media (max-width: 480px) {
     .game-header {

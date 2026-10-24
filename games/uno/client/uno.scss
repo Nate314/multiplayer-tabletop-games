@@ -694,6 +694,12 @@
 
   /* The history shows the table and any hand without their panel shadow */
 
+  /* A fixed width, so a hand shown with View as wraps instead of stretching the History board into one long row;
+     an UNO hand has no upper size */
+  .history-board-content {
+    width: 520px;
+  }
+
   .history-board .table,
   .history-board .hand {
     box-shadow: none;

@@ -651,6 +651,7 @@ test.describe('Catan rules', () => {
     await visitor.locator('input[type="file"]').setInputFiles(file);
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved.locator('.hand-panel')).toHaveCount(0);
+    await saved.getByRole('button', { name: 'Playback settings' }).click();
     await saved.getByLabel('View as').selectOption({ label: 'Alice' });
     await expect(saved.locator('.hand-panel .res-wood .resource-count')).toHaveText('3');
     await visitor.context().close();

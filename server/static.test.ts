@@ -50,3 +50,10 @@ test('a missing file is a 404, not the app shell', async () => {
   const response = await fetch(`${base}/missing.js`);
   assert.equal(response.status, 404);
 });
+
+test('a join link gets the app shell', async () => {
+  const response = await fetch(`${base}/join/chess/fri%20day`);
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /<title>app<\/title>/);
+  assert.equal((await fetch(`${base}/join/chess/v1%2E2`)).status, 200);
+});

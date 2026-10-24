@@ -54,7 +54,7 @@
 
 .lobby-header,
 .lobby-main {
-  max-width: 640px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
@@ -111,9 +111,42 @@
   text-transform: uppercase;
 }
 
-.lobby-games {
+.lobby-filters {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lobby-filters > .themed-input[type='search'] {
+  flex: 1 1 200px;
+}
+
+.lobby-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lobby-players {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--lobby-muted);
+}
+
+.lobby-players .themed-input {
+  width: 5rem;
+}
+
+.lobby-empty {
+  color: var(--lobby-muted);
+}
+
+.lobby-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -122,9 +155,13 @@
 
 .lobby-game {
   display: flex;
+  flex-wrap: wrap;
+  align-content: center;
   align-items: center;
   gap: 16px;
   width: 100%;
+  height: 100%;
+  box-sizing: border-box;
   padding: 16px;
   border: 1px solid var(--lobby-border);
   border-radius: 10px;
@@ -162,11 +199,14 @@
 }
 
 .lobby-game-players {
+  width: 100%;
+  padding-left: calc(2rem + 16px);
   white-space: nowrap;
 }
 
 .lobby-rejoin {
   display: block;
+  max-width: 640px;
   width: 100%;
   margin-bottom: 12px;
   padding: 12px 16px;
@@ -259,17 +299,6 @@
   background: var(--lobby-accent-hover);
 }
 
-@media (max-width: 480px) {
-  .lobby-game {
-    flex-wrap: wrap;
-  }
-
-  .lobby-game-players {
-    width: 100%;
-    padding-left: calc(2rem + 16px);
-  }
-}
-
 /*
  * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
  * the disconnected players bar, the dismiss vote, and resign and draw offers.
@@ -325,7 +354,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .github-link) {
+:where([data-game] .game-header .github-link, [data-game] .share-button) {
   box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
@@ -339,11 +368,48 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Phones: the five header buttons fill the width, so the title takes its own row above them */
+/* The status and the copy-by-hand panel hang under the button so the header never reflows */
+:where([data-game] .share-wrapper) {
+  position: relative;
+}
+
+:where([data-game] .share-button) {
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+:where([data-game] .share-status, [data-game] .share-panel) {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:where([data-game] .share-panel) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2rem);
+}
+
+:where([data-game] .share-panel .themed-input) {
+  min-width: 0;
+}
+
+/* Phones: the six header buttons fill the width, so the title takes its own row above them */
 @media (max-width: 480px) {
   :where([data-game] .game-header) {
     flex-wrap: wrap;
@@ -411,29 +477,108 @@
   margin: 4px 0 0;
 }
 
-/* The history dialog is as wide as the board it shows; a board wider than the window scrolls sideways */
-:where([data-game] .modal.history) {
-  max-width: 1100px;
+/* Outside :where() on purpose: the platform owns the History dialog's size so it never resizes between steps,
+   and (0,3,0) beats every game's .modal rule */
+[data-game] .modal.history {
+  position: relative;
+  box-sizing: border-box;
+  width: 90vw;
+  height: 90dvh;
+  max-width: none;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+/* Over the dialog's bottom padding, so showing it never resizes the board box */
+:where([data-game] .history-download-error) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  margin: 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* No padding, so a 90vw dialog keeps its width on a 320 px phone */
+:where([data-game] .history-overlay) {
+  padding: 0;
+}
+
+/* Two lines kept for the move, and a longer description scrolls, so the board never moves between steps */
 :where([data-game] .history-move) {
+  flex: none;
   margin: 0 0 8px;
+  height: 3em;
+  overflow-y: auto;
+  line-height: 1.5;
   font-weight: 600;
 }
 
 :where([data-game] .history-slider) {
-  width: 100%;
-  margin: 0 0 16px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
-/* Play, Animations and View as in one row, which wraps on a narrow window */
+/* One row that never wraps (the slider shrinks), so the dialog layout holds still between steps */
 :where([data-game] .history-controls) {
+  flex: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  margin: 0 0 16px;
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+:where([data-game] .history-viewer) {
+  flex: none;
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+:where([data-game] .history-settings-wrapper) {
+  position: relative;
+  flex: none;
+}
+
+:where([data-game] .history-settings-button) {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+:where([data-game] .history-settings-button:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+/* Above the gear and inside the dialog; absolute, so opening it moves nothing */
+:where([data-game] .history-settings) {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  z-index: 1;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  text-align: left;
+  white-space: nowrap;
 }
 
 :where([data-game] .history-play) {
@@ -450,15 +595,85 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-:where([data-game] .history-animations) {
+/* Shared control looks: .themed-select (select), .themed-checkbox (label wrapping a checkbox),
+   .themed-input (text, search or number input) and .themed-chip (button with aria-pressed).
+   Platform pieces should use these for any new control. */
+:where(.themed-select, .themed-checkbox, .themed-chip) {
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font: inherit;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where(.themed-select:hover, .themed-checkbox:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+:where(.themed-select) {
+  padding: 6px 10px;
+}
+
+:where(.themed-select option) {
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+}
+
+:where(.themed-checkbox) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 14px;
 }
 
+:where(.themed-checkbox input) {
+  accent-color: var(--platform-panel-bg, var(--lobby-surface));
+}
+
+:where(.themed-input) {
+  padding: 8px 10px;
+  border: 1px solid var(--platform-button-bg, var(--lobby-accent));
+  border-radius: 6px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  font: inherit;
+}
+
+:where(.themed-chip) {
+  padding: 6px 14px;
+  border: 1px solid var(--platform-button-bg, var(--lobby-accent));
+  border-radius: 999px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+}
+
+:where(.themed-chip:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+:where(.themed-chip[aria-pressed="true"]) {
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+/* The board fills the rest of the dialog; its content is scaled down to fit (fitScale) and centered */
 :where([data-game] .history-board) {
-  max-width: 100%;
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+:where([data-game] .history-board-content) {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max-content;
+  transform-origin: top center;
+  transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
 :where([data-game] .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {
@@ -638,6 +853,7 @@
 :where(.open-saved-game) {
   display: block;
   width: 100%;
+  max-width: 640px;
   margin-bottom: 12px;
   padding: 10px 16px;
   border: 1px solid var(--lobby-border);

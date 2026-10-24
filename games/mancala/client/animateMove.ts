@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from '../../../src/animation/motion.ts';
+import { boardScale, prefersReducedMotion } from '../../../src/animation/motion.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import { playPit } from '../rules.ts';
 import { drawnCount, stoneSpot } from './stoneLayout.ts';
@@ -70,6 +70,7 @@ export default function animateMove({ previous, next, root, rectOf }: MoveChange
   if (sweep.length > 0) replay(holes, settled, sweep, time, spread(sweep.length, FLY_STAGGER_MS, FLY_SPREAD_MS), FLY_MS);
   // The times above are at full speed; a move that would take longer than LONGEST_MS is played faster throughout
   const speed = Math.min(1, LONGEST_MS / Math.max(...settled.values()));
+  const fitScale = boardScale(root);
 
   // A stone lands where the board would draw it with that many stones in the hole
   function spotIn({ hole, index, count }: Place): Point | undefined {
@@ -93,7 +94,8 @@ export default function animateMove({ previous, next, root, rectOf }: MoveChange
     if (!element || !startRect) continue;
 
     const end = centerOf(element.getBoundingClientRect());
-    const offset = ({ x, y }: Point) => `${x - end.x}px ${y - end.y}px`;
+    // Screen distances, divided by the scale of a board scaled to fit (History)
+    const offset = ({ x, y }: Point) => `${(x - end.x) / fitScale}px ${(y - end.y) / fitScale}px`;
     let at = offset(centerOf(startRect));
     let scale = 1;
     const frames: Keyframe[] = [{ offset: 0, translate: at, scale }];

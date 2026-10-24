@@ -569,7 +569,7 @@
   }
 
   input[type="number"],
-  select {
+  select:not(.themed-select) {
     width: 90px;
     padding: 4px 6px;
     border: 1px solid var(--panel-border);
@@ -579,7 +579,7 @@
     font: inherit;
   }
 
-  select {
+  select:not(.themed-select) {
     width: auto;
   }
 
