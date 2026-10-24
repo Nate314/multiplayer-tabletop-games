@@ -579,8 +579,9 @@ test('with any order the phase must be named, and it must be a real phase', () =
   const { state, run } = holdingRun();
   assert.deepEqual(move(state, 1, { type: 'layDown', groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
   assert.deepEqual(move(state, 1, { type: 'layDown', phase: 11, groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
-  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 2.5, groups: [ids(run)] }), { error: 'Invalid move' });
-  assert.deepEqual(move(state, 1, { type: 'layDown', phase: '5', groups: [ids(run)] }), { error: 'Invalid move' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 2.5, groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: '5', groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: null, groups: [ids(run)] }), { error: 'Choose which phase to lay down' });
   // The cards must match the phase named
   assert.deepEqual(move(state, 1, { type: 'layDown', phase: 6, groups: [ids(run)] }), { error: 'Group 1 is not a run of 9' });
 });
@@ -662,4 +663,14 @@ test('a save from before the rule, with no phasesDone or laidPhase, loads and pl
   assert.equal(ended.phases[1], 4);
   assert.equal(ended.handSummary?.seats[1].phase, 3);
   assert.equal(toPublicState(ended, false, 1).phases[1], 4);
+});
+
+test('with the rule off a tiebreaker layDown needs no phase, and a stray phase field is ignored', () => {
+  const five = [num(1), num(1, 'blue'), num(1, 'green'), num(1, 'yellow'), num(1, 'red')];
+  const three = [num(2), num(2, 'blue'), num(2, 'green')];
+  const state = game({ drawnBy: 1, tiebreak: [1, 2], phases: { 1: 10, 2: 10 }, hands: { 1: [...five, ...three, num(9)], 2: [num(4)] } });
+  const laid = ok(move(state, 1, { type: 'layDown', groups: [ids(five), ids(three)] }));
+  assert.deepEqual(laid.laidPhase, { 1: 10 });
+  ok(move(state, 1, { type: 'layDown', phase: null, groups: [ids(five), ids(three)] }));
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five), ids(three)] }), { error: 'The tiebreaker hand is phase 10' });
 });

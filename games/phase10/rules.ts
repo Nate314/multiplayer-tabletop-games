@@ -330,8 +330,8 @@ function parseMove(move: unknown): Move | null {
     case 'layDown': {
       const groups = Array.isArray(input.groups) ? input.groups.map(parseIds) : null;
       if (!groups || groups.some(ids => ids === null)) return null;
-      if (input.phase === undefined) return { type: 'layDown', groups: groups.filter(ids => ids !== null) };
-      return isCardId(input.phase) ? { type: 'layDown', groups: groups.filter(ids => ids !== null), phase: input.phase } : null;
+      // A phase that is not a whole number is treated as not named, so only the rule's own check refuses it
+      return { type: 'layDown', groups: groups.filter(ids => ids !== null), phase: isCardId(input.phase) ? input.phase : undefined };
     }
     case 'hit': {
       const cards = parseIds(input.cards);
@@ -515,7 +515,8 @@ function draw(state: GameState, seat: Seat, source: DrawSource, random: Random):
 function chosenPhase(state: GameState, seat: Seat, named: number | undefined): Result<number> {
   const allowed = layablePhases(state, seat);
   if (state.tiebreak.includes(seat)) {
-    return named === LAST_PHASE ? { state: LAST_PHASE } : { error: 'The tiebreaker hand is phase 10' };
+    // Without the rule a layDown names no phase, as before
+    return named === LAST_PHASE || (named === undefined && !anyOrder(state)) ? { state: LAST_PHASE } : { error: 'The tiebreaker hand is phase 10' };
   }
   if (!anyOrder(state)) {
     return named === undefined || named === allowed[0] ? { state: allowed[0] } : { error: `Phase ${allowed[0]} is your next phase` };
