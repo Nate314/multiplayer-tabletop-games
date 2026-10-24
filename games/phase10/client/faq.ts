@@ -58,6 +58,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star. Number cards show it in their top left corner; Wild and Skip cards already carry a letter.'
   },
   {
+    question: 'Why is a card in my hand outlined?',
+    answer: 'It is the card you just drew. The outline stays from your draw until your discard ends the turn, even after you lay down or hit. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
   },

@@ -271,6 +271,12 @@
   }
 }
 
+/* A card or tile you just drew (Highlight newly drawn cards in Settings). A game sets --newly-drawn-outline, or restyles .newly-drawn where its selected outline clashes. */
+:where([data-game] .newly-drawn) {
+  outline: 3px solid var(--newly-drawn-outline, #f5b301);
+  outline-offset: 2px;
+}
+
 /*
  * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
  * the disconnected players bar, the dismiss vote, and resign and draw offers.

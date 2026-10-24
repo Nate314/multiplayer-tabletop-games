@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat } from './fixtures.ts';
 import type { GameState } from '../games/racko/types.ts';
 
 // One test per rule, control and difference in games/racko/README.md. Seat 1 is Alice, 2 Bob, 3 Cara.
@@ -218,6 +218,19 @@ test.describe('Rack-O controls and platform', () => {
     await expect(alice.getByLabel('Your card 40')).toBeVisible();
     await expect(slot(alice, 3)).toBeEnabled();
     await expect(discardButton(alice)).toBeVisible();
+  });
+
+  test('the card you drew is outlined while you hold it, and not with the setting off', async ({ seat }) => {
+    const { alice } = await start(seat);
+    await drawPile(alice).click();
+    await expect(alice.locator('.held .tile.newly-drawn')).toHaveAccessibleName('Your card 40');
+    await slot(alice, 2).click();
+    await expect(alice.locator('.newly-drawn')).toHaveCount(0);
+    const quiet = (await start(seat)).alice;
+    await setPreference(quiet, 'Highlight newly drawn cards', false);
+    await drawPile(quiet).click();
+    await expect(quiet.getByLabel('Your card 40')).toBeVisible();
+    await expect(quiet.locator('.newly-drawn')).toHaveCount(0);
   });
 
   test('a dismissed player\'s rack goes back into the draw pile and the turn moves on', async ({ seat }) => {

@@ -442,6 +442,21 @@ test.describe('Phase 10 controls', () => {
     await expect(alice.locator('.history-board .color-symbol').first()).toBeVisible();
   });
 
+  test('the card you drew is outlined until you discard, and not with the setting off', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await deal(table, { hands: { 1: tenCards('blue'), 2: tenCards('green') }, drawTop: [n(9, 'red'), n(10, 'red')] });
+    await drawPile(alice).click();
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(1);
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveAccessibleName('red 10');
+    await discard(alice, 'blue 1');
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
+    await table.patch({ currentPlayer: 1, drawnBy: null });
+    await setPreference(alice, 'Highlight newly drawn cards', false);
+    await drawPile(alice).click();
+    await expect(handCards(alice).getByRole('button', { name: 'red 9' })).toHaveCount(1);
+    await expect(handCards(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('on your turn, click the draw pile or the discard pile to draw; both are outlined while you can draw', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await deal(table, { hands: { 1: tenCards('red'), 2: tenCards('blue') }, discardPile: [n(12, 'green')] });

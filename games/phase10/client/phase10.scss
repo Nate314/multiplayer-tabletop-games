@@ -270,6 +270,12 @@
     opacity: 1;
   }
 
+  /* Dashed and not lifted, so it reads differently from a selected card's solid outline */
+  .newly-drawn {
+    outline-style: dashed;
+    outline-offset: 3px;
+  }
+
   .card-selected {
     transform: translateY(-8px);
     outline: 3px solid var(--highlight);

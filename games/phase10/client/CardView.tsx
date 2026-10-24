@@ -13,12 +13,15 @@ type CardViewProps = {
   disabled?: boolean;
   // Where moves slide this card from or to
   animKey?: string;
+  // Outlined as a card you just drew
+  drawn?: boolean;
 };
 
-export default function CardView({ card, standsFor = null, selected = false, small = false, onClick, disabled = false, animKey }: CardViewProps) {
+export default function CardView({ card, standsFor = null, selected = false, small = false, onClick, disabled = false, animKey, drawn = false }: CardViewProps) {
   const classes = ['card', `card-${card.kind === 'number' ? card.color : card.kind}`];
   if (selected) classes.push('card-selected');
   if (small) classes.push('card-small');
+  if (drawn) classes.push('newly-drawn');
   const content = (
     <>
       {card.kind === 'number' && <ColorSymbol color={card.color} className="card-symbol" />}

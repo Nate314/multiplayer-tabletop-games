@@ -1,4 +1,5 @@
 import Tile from './Tile';
+import usePreferences from '../../../src/hooks/usePreferences.ts';
 import { DECK_KEY, DISCARD_KEY, HELD_KEY, slotKey } from './animateMove.ts';
 import { RACK_SIZE } from '../rules.ts';
 import type { PublicGameState } from '../types.ts';
@@ -22,6 +23,8 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
   const lastSlot = lastMove?.type === 'place' ? lastMove.slot : null;
   const others = activePlayers.filter(seat => seat !== viewer);
   const mine = viewer !== null && activePlayers.includes(viewer);
+  const { highlightDrawn } = usePreferences();
+  const drawnHeld = highlightDrawn && onPlace !== undefined;
   const canPlace = onPlace !== undefined && myHeld !== null;
 
   return (
@@ -44,7 +47,7 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
         {holding && (
           <div className="pile held" aria-label="The card in hand">
             <span className="pile-name">{myHeld !== null ? 'You hold' : `${playerNames[currentPlayer ?? 0] ?? 'A player'} holds`}</span>
-            {myHeld !== null ? <Tile card={myHeld} label={`Your card ${myHeld}`} selected animKey={HELD_KEY} /> : <Tile label="A card from the draw pile" animKey={HELD_KEY} />}
+            {myHeld !== null ? <Tile card={myHeld} label={`Your card ${myHeld}`} selected={!drawnHeld} drawn={drawnHeld} animKey={HELD_KEY} /> : <Tile label="A card from the draw pile" animKey={HELD_KEY} />}
             {onDiscard && myHeld !== null && heldFrom === 'deck' && <button type="button" className="discard-button" onClick={onDiscard}>Discard</button>}
           </div>
         )}

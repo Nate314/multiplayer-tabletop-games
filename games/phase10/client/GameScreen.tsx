@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import CardView from './CardView';
 import GameStatus from './GameStatus';
@@ -9,6 +10,7 @@ import LayDownPanel from './LayDownPanel';
 import Piles from './Piles';
 import Table from './Table';
 import animateMove, { cardKey } from './animateMove.ts';
+import { drawnStep } from './drawn.ts';
 import { DEFAULT_SORT_ORDER, sortHand, type SortOrder } from './sortHand.ts';
 import { hasLaidDown, phaseRequirements, skipTargets } from '../rules.ts';
 import { phase10 } from '../index.ts';
@@ -34,6 +36,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const showSummary = handSummary !== null && !(isGameOver && finalScoringClosed);
 
   useMoveAnimation(screenRef, gameState, animateMove);
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   useEffect(() => {
     // Nothing stays picked or staged across moves, undos or hands
@@ -124,6 +127,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                 card={card}
                 animKey={cardKey(card.id)}
                 selected={selected.includes(card.id)}
+                drawn={newlyDrawn.includes(card.id)}
                 disabled={!hasDrawn}
                 onClick={() => toggle(card)}
               />

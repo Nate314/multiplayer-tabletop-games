@@ -26,6 +26,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The discard pile, except its top card, is shuffled to make a new draw pile. If there is nothing to shuffle, only the discard pile can be drawn from.'
   },
   {
+    question: 'Why is the card in my hand outlined?',
+    answer: 'It is the card you just drew. The outline stays while you hold it, until you swap it into your rack or discard it. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. The draw pile is reshuffled after an undo, so redrawing does not show what was coming.'
   },
