@@ -8,6 +8,9 @@ export const REVEAL_MS = 5_000;
 export const CANVAS_W = 800;
 export const CANVAS_H = 600;
 export const MAX_POINTS = 20_000;
+export const PALETTE = ['#000000', '#ffffff', '#e03131', '#f76707', '#fcc419', '#2f9e44', '#1c7ed6', '#1864ab', '#7048e8', '#f06595', '#7f4f24', '#868e96'];
+export const PALETTE_NAMES = ['Black', 'White', 'Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Navy', 'Purple', 'Pink', 'Brown', 'Gray'];
+export const BRUSH_SIZES = [4, 10, 24]; // canvas px
 
 type Clocked = Pick<GameState, 'phase' | 'houseRules' | 'phaseStartedAt' | 'started' | 'isGameOver'>;
 
