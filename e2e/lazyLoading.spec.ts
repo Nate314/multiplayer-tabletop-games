@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { connectfour } from '../games/connectfour/index.ts';
 import { buildGameFile } from '../shared/gameFile.ts';
-import { test, expect, joinGame, newPlayer, openFaq } from './fixtures.ts';
+import { test, expect, joinGame, newPlayer } from './fixtures.ts';
 
 // Each game's code is its own chunk, named after the game (vite.config.ts), downloaded only when that game is opened
 
@@ -26,7 +26,7 @@ test('the landing page and a chess game download only chess, and opening Catan d
   expect(urls.filter(url => url.includes('catan'))).toEqual([]);
   await page.getByRole('button', { name: 'Back to games' }).click();
   await openDialog(page, 'Catan');
-  await expect(page.getByRole('button', { name: 'FAQ' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rules' })).toBeVisible();
   expect(urls.some(url => /\/catan-.*\.js$/.test(url))).toBe(true);
   expect(urls.some(url => /\/catan-.*\.css$/.test(url))).toBe(true);
 });
@@ -44,18 +44,20 @@ test('a failed download shows Could not load with Retry, and Retry loads the gam
   await openDialog(page, 'Connect Four');
   const dialog = page.getByRole('dialog', { name: 'Join Connect Four' });
   await expect(dialog.getByRole('alert')).toHaveText(/Could not load Connect Four/);
-  await expect(dialog.getByRole('button', { name: 'FAQ' })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Rules' })).toHaveCount(0);
   await page.getByLabel('Your name').fill('Alice');
   await page.getByLabel('Game ID').fill('retry');
   // A fresh page, with the same dialog and form
   await dialog.getByRole('button', { name: 'Retry' }).click();
-  await expect(dialog.getByRole('button', { name: 'FAQ' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Rules' })).toBeVisible();
   await expect(dialog.getByRole('alert')).toHaveCount(0);
   await expect(page.getByLabel('Your name')).toHaveValue('Alice');
   await expect(page.getByLabel('Game ID')).toHaveValue('retry');
-  const faq = await openFaq(page);
-  await expect(faq).toBeVisible();
-  await faq.getByRole('button', { name: 'Close' }).click();
+  await dialog.getByRole('button', { name: 'Rules' }).click();
+  const rules = page.getByRole('dialog', { name: / rules$/ });
+  await rules.getByRole('button', { name: 'FAQ', exact: true }).click();
+  await expect(rules.locator('.faq')).toBeVisible();
+  await rules.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
   await expect(page.locator('[data-game="connectfour"]').first()).toBeVisible();
