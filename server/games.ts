@@ -32,6 +32,8 @@ type Room = {
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout
 export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => void };
 
+const STAMP_KEYS = ['turnStartedAt', 'turnPausedAt'] as const;
+
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
 export type JoinResult = { roomId: string; seat: Seat; seatKey: string; state: BasePublicState } | { error: string };
@@ -77,11 +79,9 @@ export function createGameManager(
   }
 
   // The turn timer only displays: it stamps the live state, never the timeline, and never schedules anything.
-  // With the timer off nothing is touched, since a game with its own turn clock keeps its own `turnStartedAt`
   function stampRoom(room: Room): void {
-    if (turnLimitMs(room.state) === 0) return;
     const { state } = room;
-    const running = !state.isGameOver && clockMayRun(room) && state.currentPlayer !== null;
+    const running = turnLimitMs(state) > 0 && !state.isGameOver && clockMayRun(room) && state.currentPlayer !== null;
     ({ state: room.state, clockSeat: room.clockSeat } = stampTurn(state, room.clockSeat, running, now()));
   }
 
@@ -155,7 +155,7 @@ export function createGameManager(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
     const { seatKeys: _seatKeys, ...view } = room.game.toPublicState(state, undoAvailable, viewer);
-    const stamp = 'turnStartedAt' in state ? { turnStartedAt: state.turnStartedAt, turnPausedAt: state.turnPausedAt } : {};
+    const stamp = Object.fromEntries(STAMP_KEYS.filter(key => key in state).map(key => [key, state[key]]));
     return { ...view, ...stamp, moveCount, houseRules: houseRulesOf(room.game.info, state) };
   }
 
@@ -183,7 +183,8 @@ export function createGameManager(
   }
 
   function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
-    return { ...publicView(room, state, false, moveCount, viewer), historyStep };
+    const { turnStartedAt: _started, turnPausedAt: _paused, ...past } = state; // a past turn has no live clock
+    return { ...publicView(room, past, false, moveCount, viewer), historyStep };
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
@@ -217,10 +218,10 @@ export function createGameManager(
       started: true,
       playerNames: state.playerNames,
       undoVote: null,
+      turnStartedAt: null, // the next save starts a fresh full turn
       disconnected: state.disconnected,
       dismissVote: null
     };
-    if (turnLimitMs(restored) > 0) restored = { ...restored, turnStartedAt: null }; // the next save starts a fresh full turn
     if (room.game.onUndo) restored = room.game.onUndo(restored, random);
     if (room.game.resumeClock) restored = room.game.resumeClock(restored, now());
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
@@ -253,8 +254,7 @@ export function createGameManager(
     const game = findGame(saved.gameType);
     if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
-    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
-    if (turnLimitMs(state) > 0) state = { ...state, turnStartedAt: null, turnPausedAt: null }; // downtime is never charged
+    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected, turnStartedAt: null, turnPausedAt: null }; // downtime is never charged
     if (game.resumeClock) state = game.resumeClock(state, now());
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
     rooms.set(roomId, room);

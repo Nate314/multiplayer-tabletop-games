@@ -209,7 +209,7 @@ export function createGameState(gameId: string): GameState {
     bag: [],
     scores: {},
     scorelessTurns: 0,
-    turnStartedAt: null,
+    turnLimitStartedAt: null,
     lastMove: null,
     endAdjustments: null
   };
@@ -261,7 +261,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     scorelessTurns: 0,
     lastMove: null,
     endAdjustments: null,
-    turnStartedAt: null,
+    turnLimitStartedAt: null,
     currentPlayer: opening ? opening.first : state.currentPlayer,
     gameStatus: opening ? `${state.gameStatus}. ${opening.status}` : state.gameStatus
   };
@@ -419,7 +419,7 @@ const MINUTE_MS = 60_000;
 // The turn timer starts afresh for whoever is to move, and stops when the game is over or the timer is off
 function startTurn(state: GameState, now: number): GameState {
   const running = houseRule(state, TURN_MINUTES) !== 'off' && !state.isGameOver;
-  return { ...state, turnStartedAt: running ? now : null };
+  return { ...state, turnLimitStartedAt: running ? now : null };
 }
 
 // Everyone has agreed, an undo was approved, or the server restarted: the current turn gets its full time from `now`
@@ -428,10 +428,10 @@ export function resumeClock(state: GameState, now: number): GameState {
 }
 
 // When the player to move runs out of time, in server ms
-export function deadline(state: Pick<GameState, 'houseRules' | 'turnStartedAt' | 'isGameOver' | 'currentPlayer'>): number | null {
+export function deadline(state: Pick<GameState, 'houseRules' | 'turnLimitStartedAt' | 'isGameOver' | 'currentPlayer'>): number | null {
   const minutes = houseRule(state, TURN_MINUTES);
-  if (minutes === 'off' || (state.turnStartedAt ?? null) === null || state.isGameOver || state.currentPlayer === null) return null;
-  return (state.turnStartedAt as number) + minutes * MINUTE_MS;
+  if (minutes === 'off' || (state.turnLimitStartedAt ?? null) === null || state.isGameOver || state.currentPlayer === null) return null;
+  return (state.turnLimitStartedAt as number) + minutes * MINUTE_MS;
 }
 
 // Tiles placed but not played are only in the browser, so the turn simply passes, as a scoreless turn

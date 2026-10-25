@@ -48,3 +48,10 @@ test('off or not running clears the stamp and adds no keys', () => {
   assert.equal(out.state.turnPausedAt, null);
   assert.equal(out.clockSeat, null);
 });
+
+test('a stamp left on a state whose timer is off is removed, keys and all', () => {
+  const out = stampTurn(stateWith(0, { turnStartedAt: 1000, turnPausedAt: null }), 1, true, 5000);
+  assert.equal('turnStartedAt' in out.state, false);
+  assert.equal('turnPausedAt' in out.state, false);
+  assert.equal(out.clockSeat, null);
+});

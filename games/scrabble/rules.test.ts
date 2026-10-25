@@ -364,7 +364,7 @@ const timed = (minutes: 'off' | 1 | 2 | 3 | 5 = 2): GameState => ({
 
 test('with the timer off there is no deadline', () => {
   const state = scrabble.resumeClock?.(timed('off'), T0) as GameState;
-  assert.equal(state.turnStartedAt, null);
+  assert.equal(state.turnLimitStartedAt, null);
   assert.equal(scrabble.deadline?.(state), null);
   assert.equal(scrabble.deadline?.(scrabble.createGameState('g1')), null);
 });
@@ -389,7 +389,7 @@ test('a timed-out turn counts as scoreless', () => {
 test('each turn gets the full time', () => {
   const started = scrabble.resumeClock?.(timed(), T0) as GameState;
   const next = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 90_000));
-  assert.equal(next.turnStartedAt, T0 + 90_000);
+  assert.equal(next.turnLimitStartedAt, T0 + 90_000);
   assert.equal(scrabble.deadline?.(next), T0 + 90_000 + 2 * MINUTE);
   const late = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 3 * MINUTE));
   assert.equal(late.lastMove?.type === 'pass' && late.lastMove.timedOut, true); // a move that arrives late is a timeout

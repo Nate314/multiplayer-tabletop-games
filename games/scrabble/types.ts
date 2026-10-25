@@ -39,7 +39,7 @@ export type GameState = BaseGameState & {
   bag: RackTile[];
   scores: Record<Seat, number>;
   scorelessTurns: number; // passes, exchanges and zero-point plays in a row
-  turnStartedAt: number | null; // server time the current turn began; null with the timer off or the game not running
+  turnLimitStartedAt: number | null; // server time the current turn began; null with the timer off or the game not running
   lastMove: LastMove | null;
   endAdjustments: Record<Seat, number> | null; // the rack points each score gained or lost when the game ended
 };

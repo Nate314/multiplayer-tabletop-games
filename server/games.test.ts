@@ -1277,3 +1277,24 @@ test('the timer stops when the game is over', () => {
   ok(manager.move(ROOM, 1, tick));
   assert.equal(current(manager).turnStartedAt, null);
 });
+
+test('switching the timer off in the lobby leaves no stamp in views, history or the store', () => {
+  const store = openGameStore(':memory:');
+  const { manager } = timerTable(store);
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnTimer: 0 }, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal('turnStartedAt' in current(manager), false);
+  assert.equal('turnPausedAt' in current(manager), false);
+  assert.equal('turnStartedAt' in (store.loadAll().get(ROOM)?.state ?? {}), false);
+});
+
+test('history views never carry the turn stamp', () => {
+  const { manager } = timerTable();
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal('turnStartedAt' in current(manager), true);
+  for (const step of manager.history('test', 'g1')!) {
+    assert.equal('turnStartedAt' in step, false);
+    assert.equal('turnPausedAt' in step, false);
+  }
+});

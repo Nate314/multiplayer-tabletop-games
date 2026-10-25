@@ -15,6 +15,11 @@ export function votePauses(state: BaseGameState): boolean {
 export function stampTurn(
   state: BaseGameState, clockSeat: Seat | null | undefined, running: boolean, now: number
 ): { state: BaseGameState; clockSeat: Seat | null } {
+  if (turnLimitMs(state) === 0) { // off: no stamp keys at all, so views and files are what they were before the rule
+    if (!('turnStartedAt' in state) && !('turnPausedAt' in state)) return { state, clockSeat: null };
+    const { turnStartedAt: _started, turnPausedAt: _paused, ...bare } = state;
+    return { state: bare, clockSeat: null };
+  }
   if (!running) {
     const stamped = state.turnStartedAt != null || state.turnPausedAt != null;
     return { state: stamped ? { ...state, turnStartedAt: null, turnPausedAt: null } : state, clockSeat: null };

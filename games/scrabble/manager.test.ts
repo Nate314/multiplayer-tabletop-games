@@ -111,15 +111,33 @@ test('the turn timer starts when the last player agrees and a restored turn gets
   manager.join('scrabble', 'g1', 'B');
   ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
-  const raw = () => manager.rawState(ROOM) as unknown as { turnStartedAt: number };
-  assert.equal(raw().turnStartedAt, time);
+  const raw = () => manager.rawState(ROOM) as unknown as { turnLimitStartedAt: number };
+  assert.equal(raw().turnLimitStartedAt, time);
   time += 30_000;
   ok(manager.move(ROOM, 1, FIRST_WORD));
-  assert.equal(raw().turnStartedAt, time);
+  assert.equal(raw().turnLimitStartedAt, time);
   ok(manager.requestUndo(ROOM, 2));
   time += 20_000;
   ok(manager.voteUndo(ROOM, 1, true));
-  assert.equal(raw().turnStartedAt, time);
+  assert.equal(raw().turnLimitStartedAt, time);
+});
+
+test('a vote pauses the platform turn timer but never moves the Turn limit deadline', () => {
+  let time = 1_000_000;
+  const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
+  manager.join('scrabble', 'g1', 'A');
+  manager.join('scrabble', 'g1', 'B');
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2, turnTimer: 60 }, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  time += 10_000;
+  ok(manager.move(ROOM, 1, FIRST_WORD));
+  const raw = () => manager.rawState(ROOM) as unknown as { turnLimitStartedAt: number; turnStartedAt: number };
+  const before = raw();
+  ok(manager.requestUndo(ROOM, 2));
+  time += 20_000;
+  ok(manager.voteUndo(ROOM, 1, false));
+  assert.equal(raw().turnLimitStartedAt, before.turnLimitStartedAt);
+  assert.equal(raw().turnStartedAt, before.turnStartedAt + 20_000);
 });
 
 test('dismissing the player to move gives the next player a full turn timer', () => {
@@ -129,14 +147,14 @@ test('dismissing the player to move gives the next player a full turn timer', ()
   ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, FIRST_WORD));
-  const raw = () => manager.rawState(ROOM) as unknown as { turnStartedAt: number; currentPlayer: Seat };
+  const raw = () => manager.rawState(ROOM) as unknown as { turnLimitStartedAt: number; currentPlayer: Seat };
   assert.equal(raw().currentPlayer, 2);
   manager.disconnect(ROOM, 2);
   time += 100_000; // B has 20 seconds left
   ok(manager.requestDismiss(ROOM, 1, 2));
   ok(manager.voteDismiss(ROOM, 3, true));
   assert.equal(raw().currentPlayer, 3);
-  assert.equal(raw().turnStartedAt, time);
+  assert.equal(raw().turnLimitStartedAt, time);
 });
 
 test('dismissing a player not to move leaves the turn timer alone', () => {
@@ -151,7 +169,7 @@ test('dismissing a player not to move leaves the turn timer alone', () => {
   time += 30_000;
   ok(manager.requestDismiss(ROOM, 1, 3));
   ok(manager.voteDismiss(ROOM, 2, true));
-  const raw = manager.rawState(ROOM) as unknown as { turnStartedAt: number; currentPlayer: Seat };
+  const raw = manager.rawState(ROOM) as unknown as { turnLimitStartedAt: number; currentPlayer: Seat };
   assert.equal(raw.currentPlayer, 2);
-  assert.equal(raw.turnStartedAt, started);
+  assert.equal(raw.turnLimitStartedAt, started);
 });
