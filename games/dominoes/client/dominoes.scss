@@ -714,31 +714,11 @@
   }
 }
 
-/* Dragging a tile. These styles go when the shared drag defaults arrive with the drag and drop PR. */
+/* Dragging a tile: the shared drag defaults in src/App.scss, with the end under the tile filled and outlined in this game's highlight */
 [data-game="dominoes"] {
-  [data-drag] {
-    touch-action: none;
-  }
-
-  [data-dragging] {
-    opacity: 0.35;
-  }
-
-  .drag-ghost {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    margin: 0;
-    pointer-events: none;
-    opacity: 0.9;
-    transform-origin: 0 0;
-    transition: none;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
-  }
+  --drag-over: var(--highlight);
 
   [data-drag-over] {
     background: var(--slot-fits-bg);
-    box-shadow: 0 0 0 3px var(--highlight);
   }
 }

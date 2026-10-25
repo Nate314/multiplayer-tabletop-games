@@ -6,7 +6,7 @@ import Table from './Table';
 import Tile from './Tile';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
-import { useDrag } from './useDrag.ts';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import animateMove, { handKey } from './animateMove.ts';
 import { boardOf, endLabel, openEnd, pendingArms } from '../board.ts';
 import { layoutOf, legalPlays, stuckMove, tilePips, usableEnds } from '../rules.ts';

@@ -1,5 +1,5 @@
 import { pipsName } from '../rules.ts';
-import type { DragSourceProps } from './useDrag.ts';
+import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 
 // Which of the nine spots in a half-tile hold a pip, for 0 to 9 pips (rows of three, left to right)
 const SPOTS: number[][] = [

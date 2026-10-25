@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
 import { GAMES } from '../games/registry.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
+import { boardFromLine } from '../games/dominoes/board.ts';
 
 // The History dialog is the same size at every step, whatever the game: 90% of the window, the board scaled down to fit
 
@@ -38,13 +39,13 @@ for (const { info } of GAMES) {
 
 // Dominoes: each play lays one more tile on the line, so the board grows from step to step
 test('stepping through History never enlarges the board or moves its top edge, and a resized window fits it again', async ({ seat }) => {
-  const table = await seat('dominoes', ['Alice', 'Bob']);
+  const table = await seat('dominoes', ['Alice', 'Bob'], { houseRules: { branching: 'none' } });
   const [alice, bob] = table.pages;
   const tile = (a: number, b: number) => tilesOf(6).findIndex(([low, high]) => low === Math.min(a, b) && high === Math.max(a, b));
   await table.patch({
     started: true, set: 6, roundNumber: 1, leadTile: null, lastWinner: null, roundSummary: null, lastMove: null, currentPlayer: 1,
     hands: { 1: [tile(4, 5), tile(5, 1), tile(0, 0)], 2: [tile(3, 6), tile(6, 2), tile(0, 1)] },
-    boneyard: [], line: [{ tile: tile(3, 4), left: 3, right: 4 }], scores: { 1: 0, 2: 0 }
+    boneyard: [], board: boardFromLine([{ tile: tile(3, 4), left: 3, right: 4 }]), openTrains: [], scores: { 1: 0, 2: 0 }
   });
   for (const [page, a, b] of [[alice, 4, 5], [bob, 3, 6], [alice, 5, 1], [bob, 6, 2]] as const) {
     await page.getByRole('region', { name: 'Your hand' }).getByRole('button', { name: pipsName([Math.min(a, b), Math.max(a, b)]), exact: true }).click();
