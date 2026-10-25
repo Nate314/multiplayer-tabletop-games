@@ -1,7 +1,7 @@
 import { el, svgDoc, type SvgAsset } from './svg.ts';
 
 // The face or back of a game's own cards and tiles (Phase 10, Skip-Bo, Rack-O, The Crew, Rook, Ticket to Ride,
-// Splendor, Rummikub, Scrabble, Monopoly's houses and hotels): a plain fill, diagonal stripes, or diagonal bands from
+// Splendor, Rummikub, Scrabble): a plain fill, diagonal stripes, or diagonal bands from
 // --art-fill to --art-fill-4 (through --art-fill-2 and --art-fill-3 when set, else evenly between the two). It
 // stretches to its box, and each game colors it on the page element with those variables and --art-stripe, so one
 // drawing serves every color, card and theme. The card's own text stays on the page

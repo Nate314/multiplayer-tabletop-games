@@ -286,14 +286,14 @@
     width: 1.1cqw;
     height: 1.1cqw;
     border: 1px solid #0B3D1A;
-    --art-fill: #2FBF5A; /* the server's card art (shared/svg/cardArt.ts) */
+    background: #2FBF5A;
   }
 
   .hotel {
     width: 2.4cqw;
     height: 1.3cqw;
     border: 1px solid #5A0A0A;
-    --art-fill: #D32F2F;
+    background: #D32F2F;
   }
 
   .side-left .hotel,

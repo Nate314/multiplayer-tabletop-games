@@ -38,6 +38,9 @@
 .dev-card-svg {
   width: 96px;
   height: 96px;
+  /* Drawings that take their color from the page, such as the color-blind symbols, show in the text color */
+  color: var(--lobby-text);
+  fill: currentColor;
 }
 
 .dev-card-url {
