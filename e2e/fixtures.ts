@@ -64,6 +64,7 @@ async function pointIn(locator: Locator, position?: { x: number; y: number }): P
 
 // Drags with the mouse from the center of `from` to `to` (its center, or `position` inside it), in 8 steps as a person would
 export async function drag(page: Page, from: Locator, to: Locator, position?: { x: number; y: number }): Promise<void> {
+  await from.scrollIntoViewIfNeeded(); // the mouse does not scroll, and a lobby panel above the game can push pieces down
   const start = await pointIn(from);
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
@@ -74,6 +75,7 @@ export async function drag(page: Page, from: Locator, to: Locator, position?: { 
 
 // Presses on `from` and moves `by` (default 20, 0) without releasing, so a test can act mid-drag; finish with page.mouse.move/up
 export async function lift(page: Page, from: Locator, by = { x: 20, y: 0 }): Promise<void> {
+  await from.scrollIntoViewIfNeeded();
   const start = await pointIn(from);
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
