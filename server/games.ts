@@ -10,7 +10,7 @@ import {
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
-import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
+import type { BaseGameState, BasePublicState, HistoryStep, OpenGame, Random, Result, Seat } from '../shared/types.ts';
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
 
@@ -481,6 +481,24 @@ export function createGameManager(
         )
       }));
       return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };
+    },
+
+    // Lobbies, then games in progress, with player names only; takes no `this` so it can be passed as a callback
+    openGames(): OpenGame[] {
+      const open: OpenGame[] = [];
+      for (const room of rooms.values()) {
+        const { state } = room;
+        if (state.isGameOver || (state.started && connectedPlayers(state).length === 0)) continue;
+        // Built field by field so no state field can leak
+        open.push({
+          gameType: room.game.info.id,
+          gameId: state.gameId,
+          players: state.activePlayers.map(seat => state.playerNames[seat]),
+          playing: state.started
+        });
+      }
+      return open.sort((a, b) =>
+        Number(a.playing) - Number(b.playing) || a.gameType.localeCompare(b.gameType) || a.gameId.localeCompare(b.gameId));
     },
 
     // As `viewer` sees it; null sees no player's hidden information

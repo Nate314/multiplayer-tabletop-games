@@ -1203,3 +1203,39 @@ test('a timeout that leaves its deadline already past is not run again', (t: Tes
   assert.equal(current(manager).moveCount, 1);
   assert.equal(logged.mock.callCount(), 1);
 });
+
+test('open games lists lobbies and games in progress with names only', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.join('test', 'g2', 'C');
+  assert.deepEqual(manager.openGames(), [
+    { gameType: 'test', gameId: 'g2', players: ['C'], playing: false },
+    { gameType: 'test', gameId: 'g1', players: ['A', 'B'], playing: true }
+  ]);
+});
+
+test('open games never carry a key', () => {
+  const manager = gameWith('A', 'B');
+  manager.join('test', 'g2', 'C');
+  const open = manager.openGames();
+  assert.ok(open.length > 0 && keys.size > 0);
+  for (const entry of open) assert.deepEqual(Object.keys(entry).sort(), ['gameId', 'gameType', 'players', 'playing']);
+  for (const key of keys.values()) assert.ok(!JSON.stringify(open).includes(key));
+});
+
+test('finished games and games everyone left are not listed', () => {
+  assert.deepEqual(wonGame().openGames(), []);
+
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  assert.deepEqual(manager.openGames(), []);
+});
+
+test('a game waiting on one disconnected player is still listed as playing', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  assert.deepEqual(manager.openGames(), [{ gameType: 'test', gameId: 'g1', players: ['A', 'B'], playing: true }]);
+});

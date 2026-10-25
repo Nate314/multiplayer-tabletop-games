@@ -31,5 +31,8 @@ export type BasePublicState = BaseGameState & {
   serverTime?: number; // only on live views, so a client countdown can correct for its own clock
 };
 
+// A room anyone can see in the open games list: names only, never a seat key
+export type OpenGame = { gameType: string; gameId: string; players: string[]; playing: boolean };
+
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it
 export type HistoryStep = BasePublicState & { historyStep: 'start' | 'move' | 'end' };
