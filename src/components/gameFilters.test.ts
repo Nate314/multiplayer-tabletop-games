@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GAMES } from '../../games/registry.ts';
 import type { GameCategory } from '../../shared/categories.ts';
-import { DEFAULT_FILTERS, arrangeGames, hasActiveFilters, matchesFilters, parsePlayers } from './gameFilters.ts';
+import { DEFAULT_FILTERS, arrangeGames, hasActiveFilters, matchesFilters, needsHouseRule, parsePlayers } from './gameFilters.ts';
 
 const fake = (name: string, category: GameCategory, min = 2, max = 4, description = '') => ({ info: { id: name, name, description, minPlayers: min, maxPlayers: max, category } });
 
@@ -27,6 +27,13 @@ test('the player count keeps games whose range includes it', () => {
   const game = fake('G', 'card', 2, 4).info;
   const keeps = (players: number) => matchesFilters(game, { ...DEFAULT_FILTERS, players });
   assert.deepEqual([1, 2, 3, 4, 5].map(keeps), [false, true, true, true, false]);
+});
+
+test('the player count includes the stretched range, and only those counts need a house rule', () => {
+  const game = { ...fake('G', 'card', 3, 4).info, stretchedPlayers: { min: 2, max: 6 } };
+  const keeps = (players: number) => matchesFilters(game, { ...DEFAULT_FILTERS, players });
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(keeps), [false, true, true, true, true, true, false]);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(players => needsHouseRule(game, players)), [false, true, false, false, true, true, false]);
 });
 
 test('sorting by category keeps the group order, and A to Z is one list with no heading', () => {
@@ -62,7 +69,8 @@ test('every registered game is shown with the default filters', () => {
   assert.equal(arrangeGames(GAMES, DEFAULT_FILTERS).flatMap(s => s.games).length, 31);
 });
 
-test('seven players lists the five games that seat seven', () => {
-  const names = arrangeGames(GAMES, { ...DEFAULT_FILTERS, players: 7, sort: 'name' })[0].games.map(g => g.info.name);
-  assert.deepEqual(names, ['Farkle', 'Monopoly', "Texas Hold'em", 'UNO', 'Yahtzee']);
+test('seven players lists the seven games that seat seven, two of them only with the override', () => {
+  const games = arrangeGames(GAMES, { ...DEFAULT_FILTERS, players: 7, sort: 'name' })[0].games;
+  assert.deepEqual(games.map(g => g.info.name), ['Farkle', 'Monopoly', 'Phase 10', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  assert.deepEqual(games.filter(g => needsHouseRule(g.info, 7)).map(g => g.info.name), ['Phase 10', 'Rook']);
 });

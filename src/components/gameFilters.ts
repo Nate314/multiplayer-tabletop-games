@@ -8,9 +8,18 @@ export type GameSection<T> = { key: string; heading: string | null; games: T[] }
 
 export const DEFAULT_FILTERS: LandingFilters = { search: '', sort: 'category', categories: [], players: null };
 
-// Hook point: with house rules this switches to the stretched range, and a sibling reports whether the count needs a house rule (the card is then marked "house rule").
-export function supportsPlayers(info: GameInfo, players: number): boolean {
-  return info.minPlayers <= players && players <= info.maxPlayers;
+type PlayerCounts = Pick<GameInfo, 'minPlayers' | 'maxPlayers' | 'stretchedPlayers'>;
+
+// The game seats `players`, counting the stretched range the host can unlock with "I know what I'm doing"
+export function supportsPlayers(info: PlayerCounts, players: number): boolean {
+  const min = Math.min(info.minPlayers, info.stretchedPlayers?.min ?? info.minPlayers);
+  const max = Math.max(info.maxPlayers, info.stretchedPlayers?.max ?? info.maxPlayers);
+  return min <= players && players <= max;
+}
+
+// The game seats `players` only with the player-count override, so its card is marked "house rule"
+export function needsHouseRule(info: PlayerCounts, players: number): boolean {
+  return supportsPlayers(info, players) && (players < info.minPlayers || players > info.maxPlayers);
 }
 
 export function matchesFilters(info: GameInfo, filters: LandingFilters): boolean {

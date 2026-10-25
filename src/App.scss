@@ -215,6 +215,16 @@
   white-space: nowrap;
 }
 
+/* With the Players filter at a count only the "I know what I'm doing" override reaches */
+.lobby-game-house-rule {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border: 1px solid var(--lobby-accent);
+  border-radius: 999px;
+  color: var(--lobby-text);
+  font-size: 0.8rem;
+}
+
 .lobby-rejoin {
   display: block;
   max-width: 640px;

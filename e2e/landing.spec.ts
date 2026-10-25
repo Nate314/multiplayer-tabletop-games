@@ -6,6 +6,10 @@ async function landing(browser: Parameters<typeof newPlayer>[0], server: Paramet
   return { page, cards: page.locator('.lobby-game-name') };
 }
 
+// A game's card on the landing page, by its exact name
+const card = (page: Awaited<ReturnType<typeof newPlayer>>, name: string) =>
+  page.locator('.lobby-game', { has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${name}$`) }) });
+
 test('search finds games by name or description', async ({ browser, server }) => {
   const { page, cards } = await landing(browser, server);
   await page.getByLabel('Search games').fill('meeples');
@@ -35,11 +39,16 @@ test('category chips show only the picked categories', async ({ browser, server 
   await expect(cards).toHaveCount(5);
 });
 
-test('the players filter shows games that seat that many', async ({ browser, server }) => {
+test('the players filter shows games that seat that many, marking those that need a house rule', async ({ browser, server }) => {
   const { page, cards } = await landing(browser, server);
   await page.getByLabel('Players').fill('7');
-  await expect(cards).toHaveCount(5);
-  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Monopoly', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  await expect(cards).toHaveCount(7);
+  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Monopoly', 'Phase 10', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  const marked = page.locator('.lobby-game', { has: page.locator('.lobby-game-house-rule') }).locator('.lobby-game-name');
+  expect((await marked.allTextContents()).sort()).toEqual(['Phase 10', 'Rook']);
+  await expect(card(page, 'Rook').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
+  await page.getByLabel('Players').fill('2');
+  await expect(card(page, 'Catan').locator('.lobby-game-house-rule')).toHaveText('2 with a house rule');
   await page.getByLabel('Players').fill('');
   await expect(cards).toHaveCount(31);
 });

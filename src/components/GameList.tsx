@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { PlayableGame } from '../clientGames.ts';
 import { loadLandingFilters, saveLandingFilters } from '../services/settings.ts';
 import GameFilters from './GameFilters.tsx';
-import { arrangeGames } from './gameFilters.ts';
+import { arrangeGames, needsHouseRule } from './gameFilters.ts';
 import type { LandingFilters } from './gameFilters.ts';
 
 type GameListProps = {
@@ -30,18 +30,25 @@ export default function GameList({ games, onSelect }: GameListProps) {
         >
           {heading !== null && <h2 id={`lobby-category-${key}`} className="lobby-category-heading">{heading}</h2>}
           <ul className="lobby-games">
-            {group.map(({ info: { id, name, description, minPlayers, maxPlayers }, client }) => (
-              <li key={id}>
-                <button type="button" className="lobby-game" onClick={() => onSelect(id)}>
-                  <span className="lobby-game-icon" aria-hidden="true">{client.icon}</span>
-                  <span className="lobby-game-text">
-                    <span className="lobby-game-name">{name}</span>
-                    <span className="lobby-game-description">{description}</span>
-                  </span>
-                  <span className="lobby-game-players">{minPlayers === maxPlayers ? `${minPlayers} players` : `${minPlayers} to ${maxPlayers} players`}</span>
-                </button>
-              </li>
-            ))}
+            {group.map(({ info, client }) => {
+              const { id, name, description, minPlayers, maxPlayers } = info;
+              const houseRule = filters.players !== null && needsHouseRule(info, filters.players);
+              return (
+                <li key={id}>
+                  <button type="button" className="lobby-game" onClick={() => onSelect(id)}>
+                    <span className="lobby-game-icon" aria-hidden="true">{client.icon}</span>
+                    <span className="lobby-game-text">
+                      <span className="lobby-game-name">{name}</span>
+                      <span className="lobby-game-description">{description}</span>
+                    </span>
+                    <span className="lobby-game-players">
+                      {minPlayers === maxPlayers ? `${minPlayers} players` : `${minPlayers} to ${maxPlayers} players`}
+                      {houseRule && <span className="lobby-game-house-rule">{`${filters.players} with a house rule`}</span>}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ))}
