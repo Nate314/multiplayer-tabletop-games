@@ -187,7 +187,7 @@ The platform (server, landing page, join dialog, undo voting, Docker, CI) needs 
    - optionally an SCSS file (`<id>.scss`) whose rules are all nested in one `[data-game="<id>"] { ... }` block, so the game's colors never leak into other games or the landing page
    - optionally move animations: give the elements to animate a `data-anim-key` and call `useMoveAnimation(rootRef, gameState, animate)` (`src/animation/useMoveAnimation.ts`) in the game's screen, not in its `HistoryBoard`. It calls `animate({ previous, next, root, rectOf })` only when exactly one move was added, so the first render, a rejoin and an undo snap into place. `rectOf(key)` is where that keyed element was before the move. `slideFrom` and `fadeIn` (`src/animation/motion.ts`) last `MOVE_DURATION_MS` (300 ms), `slideFrom` can wait a delay first so pieces follow one another, and do nothing under `prefers-reduced-motion: reduce`. Nothing animates unless the game asks for it
 3. Put the game in the `GAMES` array of `games/registry.ts`, and its info at the same place in `GAME_INFOS` in `games/infos.ts`.
-4. In `src/clientGames.ts`, add a loader to `CLIENT_LOADERS` (`<id>: () => import('../games/<id>/client/index.ts').then(m => m.<id>Client)`) and the landing page's glyph or emoji to `GAME_ICONS`.
+4. In `src/clientGames.ts`, add a loader to `CLIENT_LOADERS` (`<id>: () => import('../games/<id>/client/index.ts').then(m => m.<id>Client)`). Draw the landing page icon in `shared/svg/gameIcons.ts`.
 
 The platform styles its own pieces by default (in `src/App.scss`): the game header with Back to games, History, Rules and the theme toggle, the Rules and history dialogs, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
 

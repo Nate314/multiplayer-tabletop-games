@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GAME_INFOS } from '../../games/infos.ts';
-import { CLIENT_LOADERS, GAME_ICONS, type ClientGame } from '../clientGames.ts';
+import { CLIENT_LOADERS, type ClientGame } from '../clientGames.ts';
+import { gameIconSvg } from '../../shared/svg/gameIcons.ts';
 import { loadClientGame, loadedClientGame } from './loadClientGame.ts';
 
 const fakeClient = (id: string) => ({ id }) as ClientGame;
@@ -37,7 +38,7 @@ test('an unknown game rejects', async () => {
 test('every listed game has a loader and an icon', () => {
   for (const { id } of GAME_INFOS) {
     assert.equal(typeof CLIENT_LOADERS[id], 'function', id);
-    assert.ok(GAME_ICONS[id], id);
+    assert.match(gameIconSvg(id) ?? '', /^<svg/, id);
   }
   assert.deepEqual(Object.keys(CLIENT_LOADERS).sort(), GAME_INFOS.map(i => i.id).sort());
 });

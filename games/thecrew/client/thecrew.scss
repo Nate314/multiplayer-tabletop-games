@@ -356,6 +356,11 @@
     height: max(10px, calc(var(--card-w) * 0.24));
   }
 
+  .crew-rocket {
+    width: 1em;
+    height: 1em;
+  }
+
   .crew-card-small .crew-card-corner {
     display: none;
   }

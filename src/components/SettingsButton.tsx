@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 import SettingsDialog from './SettingsDialog';
+import ServerSvg from '../assets/ServerSvg.tsx';
+import { svgUrl } from '../assets/svgCache.ts';
 
 // `phoneControls` are header buttons that phones show in Settings instead, as the header has no room for them.
 // `children` go after the preferences: the game screen puts the current game's house rules there
@@ -11,7 +13,7 @@ export default function SettingsButton({ phoneControls, children }: { phoneContr
   return (
     <>
       <button type="button" className="settings-button" aria-label="Settings" onClick={() => setOpen(true)}>
-        ⚙️
+        <ServerSvg url={svgUrl('icon', 'gear')} className="header-icon" />
       </button>
       {open && <SettingsDialog onClose={close} phoneControls={phoneControls}>{children}</SettingsDialog>}
     </>

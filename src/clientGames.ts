@@ -58,39 +58,3 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   war: () => import('../games/war/client/index.ts').then(m => m.warClient),
   yahtzee: () => import('../games/yahtzee/client/index.ts').then(m => m.yahtzeeClient)
 };
-
-// A short glyph or emoji per game for the landing row, kept here so the landing page needs no game's chunk
-export const GAME_ICONS: Record<string, string> = {
-  azul: '◆',
-  backgammon: '🎲',
-  carcassonne: '🏰',
-  catan: '🏝️',
-  checkers: '⛀',
-  chess: '♚',
-  connectfour: '🔴',
-  dominoes: '🁫',
-  euchre: '🂫',
-  farkle: '🔥',
-  gofish: '🐟',
-  hearts: '♥️',
-  holdem: '♣️',
-  mancala: '🪨',
-  monopoly: '🎩',
-  parchisi: '⚄',
-  phase10: '10',
-  quoridor: '♟',
-  racko: '📶',
-  risk: '🌍',
-  rook: '🐦',
-  rummikub: '🀄',
-  scrabble: '▦',
-  skipbo: '🃏',
-  spades: '♠️',
-  splendor: '💎',
-  thecrew: '🚀',
-  tickettoride: '🚂',
-  uno: '🃏',
-  war: '⚔️',
-  yahtzee: '🎲'
-};
-

@@ -8,6 +8,7 @@ import Dice from './Dice';
 import type { PublicGameState, Seat } from '../types.ts';
 import ServerSvg from '../../../src/assets/ServerSvg.tsx';
 import { DISC_URL } from '../../../src/components/pieces.ts';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 type BoardProps = {
   gameState: PublicGameState;
@@ -16,15 +17,14 @@ type BoardProps = {
   highlight?: number | null; // the space the last move ended on
 };
 
-const ICONS: Partial<Record<string, string>> = {
-  railroad: '🚂', chance: '?', chest: '🧰', tax: '💲', go: '⬅', parking: '🅿', goToJail: '👮', jail: '🔒'
-};
+// The kinds games/monopoly/svg.ts draws a picture for
+const ICONS = new Set(['railroad', 'chance', 'chest', 'tax', 'go', 'parking', 'goToJail', 'jail']);
 
 function iconFor(space: number): string | null {
   const target = BOARD[space];
-  if (target.kind === 'utility') return target.name === 'Water Works' ? '🚰' : '💡';
-  if (target.kind === 'card') return ICONS[target.deck] ?? null;
-  return ICONS[target.kind] ?? null;
+  if (target.kind === 'utility') return target.name === 'Water Works' ? 'water' : 'electric';
+  const kind = target.kind === 'card' ? target.deck : target.kind;
+  return ICONS.has(kind) ? kind : null;
 }
 
 function Buildings({ level }: { level: number }) {
@@ -63,7 +63,7 @@ function Space({ space, gameState, selected, onSelect, highlight }: BoardProps &
         </span>
       )}
       <span className="space-name">{shortName(space)}</span>
-      {iconFor(space) && <span className="space-icon" aria-hidden="true">{iconFor(space)}</span>}
+      {iconFor(space) && <ServerSvg url={svgUrl('monopoly-space', iconFor(space)!)} className="space-icon" />}
       {property && owner === undefined && <span className="space-price">${property.price}</span>}
       {target.kind === 'tax' && <span className="space-price">${target.amount}</span>}
       {target.kind === 'parking' && freeParkingJackpot(gameState) && (

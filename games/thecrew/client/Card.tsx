@@ -3,6 +3,7 @@ import { cardName } from '../rules.ts';
 import type { Card as CardData } from '../types.ts';
 import ServerSvg from '../../../src/assets/ServerSvg.tsx';
 import { cardArtUrl } from '../../../src/components/pieces.ts';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 type CardProps = {
   card: CardData;
@@ -16,7 +17,7 @@ type CardProps = {
 };
 
 // A letter per suit as well as its color, as the rulebook gives a symbol per color for players who cannot tell them apart
-const MARK = { pink: 'P', blue: 'B', green: 'G', yellow: 'Y', rocket: '🚀' } as const;
+const MARK = { pink: 'P', blue: 'B', green: 'G', yellow: 'Y' } as const;
 
 // One Crew card: its value in the middle and its suit's mark in the corner
 export default function Card({ card, animKey, playable = false, selected = false, highlighted = false, small = false, onClick }: CardProps) {
@@ -29,7 +30,9 @@ export default function Card({ card, animKey, playable = false, selected = false
   const face = (
     <>
       <ServerSvg url={cardArtUrl(card.suit === 'rocket' ? 'bands' : 'solid')} className="piece-art" />
-      <span className="crew-card-corner">{MARK[card.suit]}</span>
+      <span className="crew-card-corner">
+        {card.suit === 'rocket' ? <ServerSvg url={svgUrl('icon', 'rocket')} className="crew-rocket" /> : MARK[card.suit]}
+      </span>
       <ColorSymbol color={card.suit === 'rocket' ? null : card.suit} className="crew-symbol" />
       <span className="crew-card-value">{card.value}</span>
     </>

@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
+import ServerSvg from '../assets/ServerSvg.tsx';
+import { svgUrl } from '../assets/svgCache.ts';
 
 const STORAGE_KEY = 'theme';
 
@@ -38,7 +40,7 @@ export default function ThemeToggle() {
       onClick={() => applyTheme(nextTheme)}
       aria-label={`Switch to ${nextTheme} mode`}
     >
-      {theme === 'dark' ? '☀️' : '🌙'}
+      <ServerSvg url={svgUrl('icon', theme === 'dark' ? 'sun' : 'moon')} className="header-icon" />
     </button>
   );
 }

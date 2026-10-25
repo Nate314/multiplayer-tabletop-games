@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
-import { GAME_ICONS } from '../clientGames.ts';
+import ServerSvg from '../assets/ServerSvg.tsx';
+import { svgUrl } from '../assets/svgCache.ts';
 import { loadLandingFilters, saveLandingFilters } from '../services/settings.ts';
 import GameFilters from './GameFilters.tsx';
 import { arrangeGames, clearFilters, needsHouseRule } from './gameFilters.ts';
@@ -43,7 +44,7 @@ export default function GameList({ games, onSelect }: GameListProps) {
               return (
                 <li key={id}>
                   <button type="button" className="lobby-game" onClick={() => onSelect(id)}>
-                    <span className="lobby-game-icon" aria-hidden="true">{GAME_ICONS[id]}</span>
+                    <ServerSvg url={svgUrl('game-icon', id)} className="lobby-game-icon" />
                     <span className="lobby-game-text">
                       <span className="lobby-game-name">{name}</span>
                       <span className="lobby-game-description">{description}</span>

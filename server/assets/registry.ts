@@ -1,6 +1,7 @@
 import type { SvgAsset } from '../../shared/svg/svg.ts';
 import { SYMBOL_ASSETS } from '../../shared/svg/symbols.ts';
 import { ICON_ASSETS } from '../../shared/svg/icons.ts';
+import { GAME_ICON_ASSETS } from '../../shared/svg/gameIcons.ts';
 import { DICE_ASSETS } from '../../shared/svg/dice.ts';
 import { PLAYING_CARD_ASSETS } from '../../shared/svg/playingCards.ts';
 import { DISC_ASSETS } from '../../shared/svg/disc.ts';
@@ -15,6 +16,7 @@ import { CHECKERS_ASSETS } from '../../games/checkers/svg.ts';
 import { UNO_ASSETS } from '../../games/uno/svg.ts';
 import { DOMINOES_ASSETS } from '../../games/dominoes/svg.ts';
 import { CATAN_ASSETS } from '../../games/catan/svg.ts';
+import { MONOPOLY_ASSETS } from '../../games/monopoly/svg.ts';
 
 export type { SvgAsset };
 
@@ -23,6 +25,7 @@ export type { SvgAsset };
 export const SVG_ASSETS: SvgAsset[] = [
   ...SYMBOL_ASSETS,
   ...ICON_ASSETS,
+  ...GAME_ICON_ASSETS,
   ...DICE_ASSETS,
   ...PLAYING_CARD_ASSETS,
   ...DISC_ASSETS,
@@ -37,6 +40,7 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...UNO_ASSETS,
   ...DOMINOES_ASSETS,
   ...CATAN_ASSETS,
+  ...MONOPOLY_ASSETS,
 ];
 
 export function findSvg(name: string, assets: SvgAsset[] = SVG_ASSETS): SvgAsset | undefined {

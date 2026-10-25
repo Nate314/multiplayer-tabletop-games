@@ -3,6 +3,8 @@ import useDismiss from '../hooks/useDismiss.ts';
 import type { Seat } from '../../shared/types.ts';
 import { PLAYBACK_SPEEDS } from './playback.ts';
 import type { PlaybackSpeed } from './playback.ts';
+import ServerSvg from '../assets/ServerSvg.tsx';
+import { svgUrl } from '../assets/svgCache.ts';
 
 type PlaybackSettingsProps = {
   animations: boolean;
@@ -31,7 +33,7 @@ export default function PlaybackSettings({ animations, onAnimationsChange, sound
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
-        ⚙
+        <ServerSvg url={svgUrl('icon', 'gear')} className="header-icon" />
       </button>
       {open && (
         <div className="history-settings" role="group" aria-label="Playback settings">
