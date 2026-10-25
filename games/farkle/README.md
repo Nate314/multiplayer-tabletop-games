@@ -1,6 +1,6 @@
 # Farkle
 
-Roll six dice, bank your points or push your luck and risk them all, first to 10,000 sets the pace, for 2 to 8 players (up to 10 with the house rules override). The scoring and rules follow the standard game in Wikipedia's Farkle article.
+Roll six dice, bank your points or push your luck and risk them all, first to 10,000 sets the pace, for 2 to 8 players (up to 10 as a house rule). The scoring and rules follow the standard game in Wikipedia's Farkle article.
 
 ## Rules
 
@@ -13,7 +13,7 @@ Roll six dice, bank your points or push your luck and risk them all, first to 10
 - **Farkle.** A roll with no scoring die ends the turn and you lose the points you had not banked
 - **Hot dice.** Setting aside all six dice lets you roll all six again, with no limit on how often in one turn
 - **Banking.** Banking adds the turn total, plus the dice you set aside with it, to your score. There is no minimum to get on the board
-- **House rules.** Before the first roll the host picks the target score: 5,000, 10,000 (standard), 15,000 or 20,000. Everyone must agree to the rules before play starts, and they cannot change afterwards. Ticking "I know what I'm doing" lets the host raise the most players to anything from 2 to 10
+- **House rules.** Before the first roll the host picks the target score: 5,000, 10,000 (standard), 15,000 or 20,000. Everyone must agree to the rules before play starts, and they cannot change afterwards. The host can set Most players to anything from 2 to 10; above 8 it is listed as a house rule
 - **Winning.** The first player to bank to the target score (10,000 unless the host chose another) gives every other player one last turn. The highest total then wins, and equal totals share the win
 - Nothing is hidden: everyone sees the dice, the dice set aside, the turn total and every score
 - **Leaving.** A disconnected player keeps their seat and the game waits for them on their turn. A dismissed player drops out with their score and their turn, if it was under way, is dropped. They are no longer owed a last turn, and the game ends when no last turns are left
@@ -31,7 +31,7 @@ Roll six dice, bank your points or push your luck and risk them all, first to 10
 
 These follow the standard scoring in [Wikipedia's Farkle article](https://en.wikipedia.org/wiki/Farkle). What is different:
 
-- **Players.** The article does not limit the number of players. This game seats 2 to 8, or up to 10 when the host ticks the override
+- **Players.** The article does not limit the number of players. This game seats 2 to 8, or up to 10 when the host raises Most players
 - **Target score.** The article plays to 10,000. The host can choose 5,000, 15,000 or 20,000 instead
 - **Opening score.** The article lists a minimum score to get on the board only as a variation. There is none here
 - **Four of a kind with a pair.** The article does not say whether this counts as three pair. Here it does not: three pair needs three different pairs

@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: "Before the first roll the host chooses the target score: 5,000, 10,000, 15,000 or 20,000. Everyone has to agree before play starts. Ticking \"I know what I'm doing\" lets the host seat up to 10 players instead of 8."
+    answer: "Before the first roll the host chooses the target score: 5,000, 10,000, 15,000 or 20,000. Everyone has to agree before play starts. The host can also set Most players to as many as 10 instead of 8."
   },
   {
     question: 'Can I take back a move?',

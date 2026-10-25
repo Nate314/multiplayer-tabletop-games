@@ -696,7 +696,7 @@ test.describe('Phase 10 house rules', () => {
 });
 
 test.describe('Phase 10 house rules', () => {
-  test('8 players can join with the override', async ({ seat }) => {
+  test('8 players can join with Most players raised', async ({ seat }) => {
     const names = Array.from({ length: 8 }, (_, index) => `Player${index + 1}`);
     const table = await seat('phase10', names, { maxPlayers: 8 });
     expect(table.pages).toHaveLength(8);

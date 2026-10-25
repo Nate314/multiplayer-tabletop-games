@@ -1,6 +1,6 @@
 # UNO
 
-Match colors and numbers, empty your hand to score the cards left in the others, and reach the target score first (500 unless the host chose another), for 2 to 8 players (up to 10 with the house rules override).
+Match colors and numbers, empty your hand to score the cards left in the others, and reach the target score first (500 unless the host chose another), for 2 to 8 players (up to 10 as a house rule).
 
 ## Rules
 
@@ -49,4 +49,4 @@ These follow the classic official rules described on [Wikipedia](https://en.wiki
 - **Cutting for the dealer.** Wikipedia says only that the highest number deals. Here a card that is not a number counts lowest and tied players draw again
 - **Calling and catching UNO.** At a table a player shouts "UNO" and anyone may catch them. Here the call is a button, and the catch window closes when any move is made, which is the next player beginning their turn
 - **Leaving.** The rules do not cover a player leaving mid-game. Here their cards go under the draw pile, and a Wild Draw Four played by or on them is dropped
-- **Players.** This game seats 2 to 8, or up to 10 when the host ticks the override. With 10 players the 108 cards deal 7 each and leave 38 to draw from
+- **Players.** This game seats 2 to 8, or up to 10 when the host raises Most players. With 10 players the 108 cards deal 7 each and leave 38 to draw from

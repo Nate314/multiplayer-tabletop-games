@@ -21,13 +21,20 @@ test.describe('House rules lobby', () => {
     await expect(panel(bob)).toContainText('Alice sets the house rules');
     await expect(targetField(alice)).toBeEnabled();
     await expect(targetField(bob)).toBeDisabled();
-    await expect(bob.getByLabel("I know what I'm doing")).toBeDisabled();
+    // Most players is shown straight away, at the normal maximum, with no checkbox in front of it
+    for (const page of [alice, bob]) await expect(panel(page)).not.toContainText("I know what I'm doing");
+    await expect(bob.getByLabel('Most players')).toHaveValue('8');
+    await expect(bob.getByLabel('Most players')).toBeDisabled();
+    await expect(panel(bob)).not.toContainText('(house rule)');
     await setHouseRules(alice, 'farkle', { targetScore: 15000 });
     await expect(targetField(bob)).toHaveValue('15000');
     await setHouseRules(alice, 'farkle', {}, 9);
-    await expect(bob.getByLabel("I know what I'm doing")).toBeChecked();
     await expect(bob.getByLabel('Most players')).toHaveValue('9');
-    await expect(bob.getByLabel('Most players')).toBeDisabled();
+    await expect(panel(bob)).toContainText('Most players: 9 (house rule)');
+    // Back at the normal maximum it is no longer a house rule
+    await setHouseRules(alice, 'farkle', {}, 8);
+    await expect(bob.getByLabel('Most players')).toHaveValue('8');
+    await expect(panel(bob)).not.toContainText('(house rule)');
   });
 
   test('the game screen is dimmed until every player agreed', async ({ seat }) => {
@@ -84,7 +91,7 @@ test.describe('House rules lobby', () => {
     await expect(targetField(cara)).toHaveValue('20000');
   });
 
-  test('the override lets more players join, and cannot go below the players seated', async ({ seat }) => {
+  test('raising Most players lets more players join, and it cannot go below the players seated', async ({ seat }) => {
     const names = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
     const table = await seat('farkle', names, { agree: false });
     const [host] = table.pages;
@@ -101,14 +108,14 @@ test.describe('House rules lobby', () => {
   });
 
   test('Settings shows the chosen rules all game, the house rule marked, and the header has no House rules button', async ({ seat }) => {
-    const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { houseRules: { targetScore: 5000 }, maxPlayers: 6 });
+    const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { houseRules: { targetScore: 5000 }, maxPlayers: 9 });
     await expect(alice.getByRole('button', { name: 'House rules', exact: true })).toHaveCount(0);
     await rollButton(alice).click();
     await expect(panel(bob)).toHaveCount(0);
     for (const page of [alice, bob]) {
       const section = await openHouseRules(page);
       await expect(section).toContainText('Target score5,000 (house rule)');
-      await expect(section).toContainText('Most players6 (house rule)');
+      await expect(section).toContainText('Most players9 (house rule)');
       await page.keyboard.press('Escape');
       await expect(section).toHaveCount(0);
     }

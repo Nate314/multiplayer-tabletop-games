@@ -253,6 +253,39 @@ test.describe('Catan rules', () => {
     await seventh.context().close();
   });
 
+  test('two players can play once both agree to the seat count as a house rule', async ({ seat }) => {
+    const table = await seat('catan', ['Alice', 'Bob'], { agree: false });
+    for (const page of table.pages) {
+      await expect(page.locator('.house-rules-panel')).toContainText('Players: 2 (house rule)');
+      await expect(page.getByLabel('Most players')).toHaveValue('6');
+    }
+    await table.pages[0].getByRole('button', { name: 'Settings' }).click();
+    await expect(table.pages[0].getByRole('dialog', { name: 'Settings' })).toContainText('Players2 (house rule)');
+    await table.pages[0].keyboard.press('Escape');
+    await agreeToHouseRules(...table.pages);
+    const { currentPlayer } = await table.state<GameState>();
+    const first = table.pages[currentPlayer! - 1];
+    await expect(first.getByText(SETTLEMENT_PROMPT)).toBeVisible();
+    await vertex(first, corner(9, 0)).click();
+    await clickPath(first, VERTEX_EDGES[corner(9, 0)][0]);
+    expect((await table.state<GameState>()).started).toBe(true);
+  });
+
+  test('a third player can still join a table of two before the first move, and everyone agrees again', async ({ seat, browser, server }) => {
+    const table = await seat('catan', ['Alice', 'Bob']);
+    const cara = await newPlayer(browser, server);
+    try {
+      await joinGame(cara, 'catan', table.gameId, 'Cara');
+      for (const page of [...table.pages, cara]) {
+        await expect(page.locator('.house-rules-list li')).toHaveCount(3);
+        await expect(page.locator('.house-rules-panel')).not.toContainText('(house rule)');
+        await expect(page.locator('.house-rules-list li.house-rules-agreed')).toHaveCount(0);
+      }
+    } finally {
+      await cara.context().close();
+    }
+  });
+
   test('the highest roll places first after tied players roll again, setup goes 1, 2, 3, 3, 2, 1 and the second settlement takes its resources', async ({ seat, browser, server }) => {
     const table = await seat('catan', ['Alice', 'Bob']);
     const cara = await newPlayer(browser, server);

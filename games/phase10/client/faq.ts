@@ -67,7 +67,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can turn on "Phases in any order". Then each hand you choose which phase to lay down, any phase you have not completed yet, instead of the next one in order. Completing all ten finishes the game, with the same lowest-score win and tiebreaker hand of phase 10. Everyone has to agree before play starts, and the rules cannot change afterwards. Ticking \'I know what I\'m doing\' lets the host seat up to 8 players instead of 6.'
+    answer: 'Before play starts the host can turn on "Phases in any order". Then each hand you choose which phase to lay down, any phase you have not completed yet, instead of the next one in order. Completing all ten finishes the game, with the same lowest-score win and tiebreaker hand of phase 10. Everyone has to agree before play starts, and the rules cannot change afterwards. The host can also set Most players to as many as 8 instead of 6.'
   },
   {
     question: 'What happens if someone leaves?',

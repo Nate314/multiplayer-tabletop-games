@@ -63,6 +63,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How many can play?',
-    answer: '2 to 8 players. Ticking \'I know what I\'m doing\' in the house rules lets the host seat up to 10. Everyone has to agree to the table before play starts.'
+    answer: '2 to 8 players. The host can set Most players in the house rules to as many as 10. Everyone has to agree to the table before play starts.'
   }
 ];

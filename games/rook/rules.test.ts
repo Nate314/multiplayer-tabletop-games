@@ -463,7 +463,7 @@ test('the game ends at the chosen target', () => {
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay', 'Gus'];
 
-// `count` players seated with "I know what I'm doing" ticked; `values` are set by the host once everyone is seated
+// `count` players seated with Most players set to `count`; `values` are set by the host once everyone is seated
 function lobbyOf(count: number, values: HouseRuleValues = {}): GameState {
   let state: GameState = {
     ...createGameState('g'),

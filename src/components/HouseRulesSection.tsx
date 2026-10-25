@@ -11,7 +11,7 @@ type HouseRulesSectionProps = {
 // non-standard value marked. A game with no house rule options shows nothing
 export default function HouseRulesSection({ game, gameState }: HouseRulesSectionProps) {
   if (!needsAgreement(game)) return null;
-  const lines = describeHouseRules(game, houseRulesOf(game, gameState));
+  const lines = describeHouseRules(game, houseRulesOf(game, gameState), gameState.activePlayers.length);
 
   return (
     <section className="settings-house-rules" aria-label="House rules">
