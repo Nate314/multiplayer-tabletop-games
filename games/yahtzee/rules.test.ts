@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CATEGORIES, allowedCategories, createGameState, scoreFor, totals } from './rules.ts';
@@ -239,4 +240,15 @@ test('table view hides hands', () => {
     assert.equal(views[0].includes('seatKeys'), false);
     state = state.dice.length === 0 ? ok(play(state, seat, ROLL, random)) : score(state, seat, allowedCategories(state.dice, state.sheets[seat])[0]);
   }
+});
+
+test('finalStandings ranks by the grand total with the Yahtzee bonuses', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [1],
+    sheets: { 1: { chance: 30 }, 2: { chance: 20 }, 3: { chance: 20 } }, yahtzeeBonuses: { 1: 1, 2: 0, 3: 0 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '130 points' },
+    { seat: 2, place: 2, score: '20 points' }, { seat: 3, place: 2, score: '20 points' }
+  ]);
 });

@@ -1,10 +1,11 @@
 // Farkle rules shared by the browser (the score of a selection) and the server (validation),
 // from https://en.wikipedia.org/wiki/Farkle.
+import { pointsText as groupedPoints, rankStandings } from '../../shared/standings.ts';
 import { rollDice } from '../../shared/dice.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import { canScore, score } from './scoring.ts';
 import type { GameState, LastMove, PublicGameState, Result, Seat } from './types.ts';
 import { TARGET_RULE } from './options.ts';
@@ -145,4 +146,9 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
     case 'bank': return bank(state, seat, input);
     default: return { error: 'Unknown move type' };
   }
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.scores[seat] ?? 0;
+  return rankStandings(state, (a, b) => points(b) - points(a), seat => groupedPoints(points(seat)));
 }
