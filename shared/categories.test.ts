@@ -18,7 +18,8 @@ test('every registered game has the spec\'s category', () => {
     dice: ['farkle', 'yahtzee'],
     tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
     classic: ['backgammon', 'checkers', 'chess', 'connectfour', 'mancala', 'parchisi', 'quoridor'],
-    strategy: ['catan', 'monopoly', 'risk', 'splendor', 'tickettoride']
+    strategy: ['catan', 'monopoly', 'risk', 'splendor', 'tickettoride'],
+    party: []
   };
   const actual = Object.fromEntries(Object.keys(expected).map(c => [c, GAMES.filter(g => g.info.category === c).map(g => g.info.id).sort()]));
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
