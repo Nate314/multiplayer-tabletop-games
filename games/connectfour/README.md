@@ -23,7 +23,7 @@ Exactly two players: Player 1 plays Red and moves first, Player 2 plays Yellow.
 - Click Undo to ask your opponent to undo the last disc
 - Click Offer draw to offer a draw; the button reads Draw offered until it is answered. When your opponent offers, Accept draw and Decline appear in the side panel
 - Click Resign and then Confirm resign to resign, at any time; click Keep playing to change your mind
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each disc color also shows its shape: Red circle, Yellow star. Discs and the player list show it
 
 ## Differences from Wikipedia

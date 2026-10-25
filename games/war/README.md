@@ -21,7 +21,7 @@ Flip cards, the higher card takes both, and win the whole deck, for 2 players.
 - Tick Auto-flip to have your card flipped for you one second after your turn comes up. It is kept only in your own browser tab and is off again when the page reloads
 - The table shows each player's pile and card count, and the cards each put into the current battle in order: war cards face down, then face up. After a battle the cards stay on the table, with the winner's side highlighted, until the next flip. The player whose turn it is is outlined
 - Click Undo to ask the other player to undo the last flip
-- Click History to step through every flip, and FAQ at the top of the page for a short guide to the rules and controls
+- Click History to step through every flip, and Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

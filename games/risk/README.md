@@ -29,7 +29,7 @@ Raise armies, roll for battles and conquer the world, for 3 to 6 players.
 - Your cards are listed with their symbol and territory. While placing armies, pick three and click Trade
 - The player list shows everyone's territories, armies, cards, whole continents and the armies they would get next turn, plus the value of the next set and the cards left in the deck. Recent events lists what happened, newest first
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, black diamond. Territory discs (beside the army count) and the player list show it; neutral grey territories show none
 
 ## Differences from Wikipedia

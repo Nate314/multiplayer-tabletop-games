@@ -38,7 +38,7 @@ Settle an island, trade resources and build roads, settlements and cities to rea
 - Offer a trade to other players opens the trade form: choose Everyone or a player, set what you give and what you get, and click Send offer. The players it is for see Accept and Decline; you can Withdraw it until someone accepts
 - The player list shows each player's points, cards, unplayed development cards, Knights played, longest road and award cards, and the bank's cards. Recent events lists what happened, newest first
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, orange hexagon, purple cross, white ring, green triangle. Settlements, cities, the middle of each road and the player list show it
 
 ## Differences from Wikipedia

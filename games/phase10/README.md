@@ -29,7 +29,7 @@ Collect sets and runs to complete ten phases first, for 2 to 6 players (up to 8 
 - With Highlight newly drawn cards on in Settings (the default), the card you draw is outlined from your draw until your discard ends the turn; laying down and hitting keep it
 - Moves slide into place: draws, discards, laid-down phases and hits; a skipped player's seat flashes
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
-- Click FAQ at the top of the page for the rules, the ten phases and the controls
+- Click Rules at the top of the page for these rules, and FAQ in it for the rules, the ten phases and the controls
 
 ## Differences from Wikipedia
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import FaqButton from './FaqButton';
+import RulesButton from './RulesButton';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import { ClientGameNotice } from '../games/ClientGameGate.tsx';
 import { useClientGame } from '../games/useClientGame.ts';
@@ -78,7 +78,7 @@ export default function JoinDialog({
         </label>
         <ClientGameNotice status={status} name={game.name} onRetry={retry} />
         <div className="lobby-dialog-actions">
-          {client && <FaqButton game={game} items={client.faq} />}
+          {client && <RulesButton game={game} faq={client.faq} />}
           <button type="button" className="lobby-button" onClick={onCancel}>Cancel</button>
           <button type="submit" className="lobby-button lobby-button-primary">Join</button>
         </div>

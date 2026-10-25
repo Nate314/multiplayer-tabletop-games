@@ -25,7 +25,7 @@ Bid your tricks with your partner, spades are always trump, first team to the ta
 - The table shows both teams' scores and bags, each team's contract and tricks once the bidding is done, the hand number, whether spades are broken, and the four seats with you at the bottom and your partner across. Each seat shows its card count, the dealer, its bid and the tricks it has taken. The middle shows the trick being played, or the last trick taken with who took it
 - After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

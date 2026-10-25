@@ -31,7 +31,7 @@ Bid for the nest, name trump and take counters in tricks with your partner, firs
 - With 5 or 7 players the table shows the called cards. If you hold one, it says you are the bidder's partner; once a called card is played, its holder's seat is marked partner
 - After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

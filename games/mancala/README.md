@@ -39,7 +39,7 @@ A game saved before house rules existed has none set, so it plays with both rule
 - The board is dimmed when it is not your turn
 - The status describes the last turn, such as "Alice picked up 4 stones and kept going 3 times, ending in an empty pit", and shows the final score
 - Click Undo to ask the other player to undo the last turn
-- Click FAQ at the top of the page for the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for the rules and controls
 - With Color-blind symbols on in Settings, each player color also shows its shape: blue square, red circle. Stones, banks and bank labels show it
 
 ## Differences from Wikipedia

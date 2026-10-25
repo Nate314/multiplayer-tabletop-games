@@ -36,7 +36,7 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 - With Color-blind symbols on in Settings, each color also shows its shape: red circle, blue square, green triangle, yellow star. Colored cards, the current color and the color buttons show it; Wild cards carry no color
 - With Highlight newly drawn cards on in Settings (the default), the cards you draw are outlined, including those a Draw Two or Wild Draw Four makes you take, until your next move (the 2 cards a caught missed UNO makes you draw are not outlined)
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

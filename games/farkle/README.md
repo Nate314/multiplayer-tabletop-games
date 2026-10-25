@@ -25,7 +25,7 @@ Roll six dice, bank your points or push your luck and risk them all, first to 10
 - Click the dice you want to set aside (click again to put one back). The screen shows what banking would give you. Then click Roll again, or Bank to add the points to your score. When you have picked all the dice the button reads Roll six new dice
 - The table shows the turn total, the dice set aside this turn, and everyone's score with who has reached the target score and who still has a last turn to come
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

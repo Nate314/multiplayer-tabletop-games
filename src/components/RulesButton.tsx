@@ -1,26 +1,26 @@
 import { useCallback, useState } from 'react';
-import FaqDialog from './FaqDialog';
+import RulesDialog from './RulesDialog';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { FaqItem } from '../clientGames.ts';
 
-type FaqButtonProps = {
+type RulesButtonProps = {
   game: GameInfo;
-  items: FaqItem[];
+  faq: FaqItem[];
 };
 
-export default function FaqButton({ game, items }: FaqButtonProps) {
+export default function RulesButton({ game, faq }: RulesButtonProps) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
   return (
     <>
-      <button type="button" className="faq-button" onClick={() => setOpen(true)}>
-        FAQ
+      <button type="button" className="rules-button" onClick={() => setOpen(true)}>
+        Rules
       </button>
       {open && (
         // The game's own styles apply here, even on the landing page
         <div data-game={game.id}>
-          <FaqDialog title={`${game.name} FAQ`} items={items} onClose={close} />
+          <RulesDialog game={game} faq={faq} onClose={close} />
         </div>
       )}
     </>

@@ -31,7 +31,7 @@ Collect gems, buy development cards and attract nobles to reach the prestige to 
 - The last move is outlined: a reserved card among its player's reserved cards, and for a bought card the bonus it added. Pieces slide to where they went
 - Click Undo to ask everyone to undo the last move
 - With Color-blind symbols on in Settings, each gem color also shows its shape: white ring, blue square, green triangle, red circle, black diamond, gold star. Gem tokens, card bonuses and card costs show it
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

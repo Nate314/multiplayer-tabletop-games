@@ -1,4 +1,4 @@
-import FaqButton from './FaqButton';
+import RulesButton from './RulesButton';
 import HistoryButton from './HistoryButton';
 import ShareButton from './ShareButton';
 import SettingsButton from './SettingsButton';
@@ -39,7 +39,7 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <h1>{game.name}</h1>
         <HistoryButton gameType={game.id} gameState={gameState} client={client} />
         <ShareButton game={game} gameId={gameState.gameId} />
-        <FaqButton game={game} items={client.faq} />
+        <RulesButton game={game} faq={client.faq} />
         <SettingsButton phoneControls={(
           <>
             <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>

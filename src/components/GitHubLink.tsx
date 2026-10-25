@@ -1,4 +1,4 @@
-const REPO_URL = 'https://github.com/Nate314/multiplayer-tabletop-games';
+export const REPO_URL = 'https://github.com/Nate314/multiplayer-tabletop-games';
 
 export default function GitHubLink() {
   return (
