@@ -66,6 +66,24 @@ flowchart TD
 - `shared/categories.ts` defines `GameCategory` (every `GameInfo` has one), `CATEGORIES` (the landing page groups, in order) and `groupByCategory`
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
 - `shared/houseRules.ts` defines the house rules model: `HouseRule` (`ToggleRule` or `ChoiceRule`, with `offered` for rules that depend on the seat count), `HouseRulesState`, `HouseRulesProposal`, and the pure functions `needsAgreement`, `houseRulesOf`, `houseRule`, `tableLimit`, `minimumToStart`, `afterSeatChange`, `setHouseRules`, `agreeToHouseRules`, `everyoneAgreed`, `describeHouseRules` and `targetScoreRule`. `GameInfo` has the optional `houseRules` and `stretchedPlayers` (the range the player-count override allows), `GameDefinition` has the optional `allowsOutOfTurn` and the timed-rule hooks `deadline`, `onDeadline` and `resumeClock`, and every game state carries `houseRules`
+- The house rules each game declares (standard value first; the declarations are in each game's rules file, and the player-count override range is `stretchedPlayers` in its `index.ts`):
+  - Catan: points to win (10; 8, 12), friendly robber (off); override 2 to 4 players
+  - Chess: clock (off; 5, 10 or 15 minutes), increment per move (none; 2, 5 or 10 seconds, offered only with a clock)
+  - Dominoes: target score (100 for 2 players, 61 for 3 or 4; 61, 100, 150, 200)
+  - Euchre: target score (10; 5, 15)
+  - Farkle: target score (10,000; 5,000, 15,000, 20,000); override 2 to 10 players
+  - Hearts: target score (100; 50, 75, 150), Jack of Diamonds worth minus 10 (off)
+  - Mancala: play from the other side when yours is empty (on), avalanche (on, off plays Kalah)
+  - Monopoly: Free Parking jackpot (off), $400 for landing exactly on GO (off), auctions (on)
+  - Phase 10: phases in any order (off); override 2 to 8 players
+  - Rack-O: target score (500; 250, 1,000)
+  - Rook: target score (500; 300, 1,000), teams at 6 players (two of three; three of two), defending teams score (each its own counters; together, offered only for three teams); override 4 to 7 players
+  - Scrabble: turn timer (off; 1, 2, 3 or 5 minutes)
+  - Spades: target score (500; 250, 300)
+  - Splendor: prestige to win (15; 10, 21)
+  - UNO: target score (500; 250, 1,000), stack +2 and +4 (off), 7-0 (off), draw until you can play (off), jump-in (off, the out-of-turn move); override 2 to 10 players
+  - Texas Hold'em and Yahtzee: no rules, override 2 to 10 players
+  - Every other game declares no house rules and no override
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 - `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard deck (`PlayingCard`, `JokerCard`, `DeckCard`, `standardDeck`, `isJoker`, `rankValue`, `cardName`, `sameCard`), for any game to use; `standardDeck` takes `ranks`, `suits` and `jokers` options to build a smaller deck or add jokers
 - `shared/tricks.ts` has the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions, and `describeTrickPlay` for the move description of a played card
