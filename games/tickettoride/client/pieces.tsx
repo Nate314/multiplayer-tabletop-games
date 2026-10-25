@@ -2,11 +2,14 @@ import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { CITIES, TICKETS } from '../map.ts';
 import { cardLabel } from './labels.ts';
 import type { Card } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 // One train card face: its color, with the name written on it so colors are never the only cue
 export function CardFace({ card, count, drawn = false }: { card: Card; count?: number; drawn?: boolean }) {
   return (
     <span className={drawn ? `card card-${card} newly-drawn` : `card card-${card}`}>
+      <ServerSvg url={cardArtUrl(card === 'locomotive' ? 'bands' : 'solid')} className="piece-art" />
       <ColorSymbol color={card === 'locomotive' ? null : card} />
       <span className="card-name">{card === 'locomotive' ? 'Loco' : cardLabel(card)}</span>
       {count !== undefined && <span className="card-count">{count}</span>}

@@ -220,34 +220,39 @@
     border-radius: 5px;
   }
 
+  /* The faces and back are the server's card art (shared/svg/cardArt.ts) in these colors */
   .card-red {
-    background: #d33a2c;
+    --art-fill: #d33a2c;
   }
 
   .card-blue {
-    background: #1f62c4;
+    --art-fill: #1f62c4;
   }
 
   .card-green {
-    background: #2c8a3c;
+    --art-fill: #2c8a3c;
   }
 
   .card-yellow {
-    background: #e9b318;
+    --art-fill: #e9b318;
     color: #3a2a00;
   }
 
   .card-wild {
-    background: linear-gradient(135deg, #d33a2c, #e9b318 35%, #2c8a3c 65%, #1f62c4);
+    --art-fill: #d33a2c;
+    --art-fill-2: #e9b318;
+    --art-fill-3: #2c8a3c;
+    --art-fill-4: #1f62c4;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   }
 
   .card-skip {
-    background: #262b33;
+    --art-fill: #262b33;
   }
 
   .card-back {
-    background: repeating-linear-gradient(45deg, #2c6e49, #2c6e49 6px, #23583a 6px, #23583a 12px);
+    --art-fill: #2c6e49;
+    --art-stripe: #23583a;
     font-size: calc(var(--card-w) * 0.36);
   }
 

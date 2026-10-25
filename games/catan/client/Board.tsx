@@ -6,6 +6,9 @@ import {
   robberKey, seatClass, vertexPoint
 } from './layout.ts';
 import type { PublicGameState, Resource, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
+import usePreloadSvgs from '../../../src/assets/usePreloadSvgs.ts';
 
 // What the player may click now; anything left out is not clickable
 export type Targets = { vertices?: number[]; edges?: number[]; hexes?: number[] };
@@ -33,47 +36,9 @@ const onKey = (action: () => void) => (event: KeyboardEvent) => {
   }
 };
 
-// A small drawing of each terrain, above the number token
-function Motif({ resource, x, y }: { resource: Resource | null; x: number; y: number }) {
-  const at = (dx: number, dy: number) => `${x + dx},${y + dy}`;
-  switch (resource) {
-    case 'wood':
-      return (
-        <g className="motif motif-wood">
-          {[-11, 0, 11].map(dx => <polygon key={dx} points={`${at(dx, -9)} ${at(dx - 6, 4)} ${at(dx + 6, 4)}`} />)}
-        </g>
-      );
-    case 'brick':
-      return (
-        <g className="motif motif-brick">
-          <rect x={x - 13} y={y - 7} width={12} height={6} />
-          <rect x={x + 1} y={y - 7} width={12} height={6} />
-          <rect x={x - 6} y={y} width={12} height={6} />
-        </g>
-      );
-    case 'sheep':
-      return (
-        <g className="motif motif-sheep">
-          <ellipse cx={x - 6} cy={y - 1} rx={8} ry={5} />
-          <ellipse cx={x + 8} cy={y + 1} rx={6} ry={4} />
-        </g>
-      );
-    case 'wheat':
-      return (
-        <g className="motif motif-wheat">
-          {[-8, 0, 8].map(dx => <line key={dx} x1={x + dx} y1={y + 5} x2={x + dx} y2={y - 9} />)}
-        </g>
-      );
-    case 'ore':
-      return (
-        <g className="motif motif-ore">
-          <polygon points={`${at(-4, -10)} ${at(-15, 5)} ${at(7, 5)}`} />
-          <polygon points={`${at(8, -5)} ${at(0, 5)} ${at(16, 5)}`} />
-        </g>
-      );
-    default:
-      return <path className="motif motif-desert" d={`M${x - 16},${y + 3} q8,-10 16,0 q8,-10 16,0`} />;
-  }
+// A drawing from games/catan/svg.ts, 40 units square, centered on x, y
+function Drawn({ url, x, y }: { url: string; x: number; y: number }) {
+  return <ServerSvg url={url} inSvg svgProps={{ x: x - 20, y: y - 20, width: 40, height: 40 }} />;
 }
 
 function NumberToken({ number, x, y }: { number: number; x: number; y: number }) {
@@ -90,18 +55,14 @@ function NumberToken({ number, x, y }: { number: number; x: number; y: number })
   );
 }
 
-function Settlement({ x, y }: { x: number; y: number }) {
-  return <polygon points={`${x},${y - 11} ${x + 9},${y - 3} ${x + 9},${y + 8} ${x - 9},${y + 8} ${x - 9},${y - 3}`} />;
-}
-
-function City({ x, y }: { x: number; y: number }) {
-  return (
-    <polygon points={`${x - 13},${y + 9} ${x - 13},${y - 4} ${x - 6},${y - 12} ${x + 1},${y - 4} ${x + 1},${y - 1} ${x + 13},${y - 1} ${x + 13},${y + 9}`} />
-  );
-}
+const CATAN_PIECES = [
+  ...['wood', 'brick', 'sheep', 'wheat', 'ore', 'desert'].map(terrain => svgUrl('catan-motif', terrain)),
+  ...['settlement', 'city', 'robber'].map(piece => svgUrl('catan-piece', piece)),
+];
 
 // The island: hexes with their number tokens, ports, roads, settlements, cities and the robber, plus clickable targets
 export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex }: BoardProps) {
+  usePreloadSvgs(CATAN_PIECES);
   const board = boardOf(gameState.layout);
   const { viewBox, sea } = boardFrame(board);
   const { layout, robber, roads, buildings, playerNames, activePlayers } = gameState;
@@ -121,7 +82,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
         } : {})}>
         <title>{label}</title>
         <polygon points={hexPolygon(board, index)} />
-        <Motif resource={hex.resource} x={x} y={y - 30} />
+        <Drawn url={svgUrl('catan-motif', hex.resource ?? 'desert')} x={x} y={y - 30} />
         {hex.number !== null && <NumberToken number={hex.number} x={x} y={y + 4} />}
       </g>
     );
@@ -175,7 +136,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
     return (
       <g key={`building-${vertex}`} className={`building ${pieceClass(building.seat)}`} data-anim-key={buildingKey(vertex)}>
         <title>{`${playerNames[building.seat]}'s ${building.city ? 'city' : 'settlement'}`}</title>
-        {building.city ? <City x={x} y={y} /> : <Settlement x={x} y={y} />}
+        <Drawn url={svgUrl('catan-piece', building.city ? 'city' : 'settlement')} x={x} y={y} />
         {building.city ? symbolAt(building.seat, x - 6, y + 3, BUILDING_SYMBOL) : symbolAt(building.seat, x, y + 2.5, BUILDING_SYMBOL)}
       </g>
     );
@@ -206,8 +167,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
       {edgeTargets}
       <g className="robber" data-anim-key={robberKey}>
         <title>The robber</title>
-        <circle cx={robberAt.x + 22} cy={robberAt.y - 10} r={6} />
-        <path d={`M${robberAt.x + 14},${robberAt.y + 16} q8,-28 16,0 z`} />
+        <Drawn url={svgUrl('catan-piece', 'robber')} x={robberAt.x + 22} y={robberAt.y} />
       </g>
       {pieces}
       {vertexTargets}

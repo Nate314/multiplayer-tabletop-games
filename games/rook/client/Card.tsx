@@ -1,5 +1,7 @@
 import { cardName, cardPoints } from '../rules.ts';
 import type { Card as CardData } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type CardProps = {
   card: CardData | null; // null draws a face-down card
@@ -22,13 +24,15 @@ export default function Card({ card, animKey, playable = false, selected = false
   const label = card ? cardName(card) : 'face-down card';
   const points = card ? cardPoints(card) : 0;
   const mark = card === null ? '' : card.color === 'rook' ? 'R' : String(card.number);
-  const face = card && (
+  const art = <ServerSvg url={cardArtUrl(card === null ? 'stripes' : card.color === 'rook' ? 'bands' : 'solid')} className="piece-art" />;
+  const face = card ? (
     <>
+      {art}
       <span className="rook-card-corner">{mark}</span>
       <span className="rook-card-middle">{card.color === 'rook' ? <span className="rook-card-word">ROOK</span> : card.number}</span>
       {points > 0 && <span className="rook-card-points">{points}</span>}
     </>
-  );
+  ) : art;
 
   if (!onClick) {
     return <span className={classes.join(' ')} title={label} aria-label={label} role="img" data-anim-key={animKey}>{face}</span>;

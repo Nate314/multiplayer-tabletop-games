@@ -12,6 +12,9 @@ export const cardUrl = (card: DeckCard | null) => {
 // The round piece of shared/svg/disc.ts, colored by the game's --disc-* variables
 export const DISC_URL = svgUrl('disc');
 
+// A game's own card or tile face (shared/svg/cardArt.ts), colored by its --art-* variables
+export const cardArtUrl = (pattern: 'solid' | 'stripes' | 'bands') => svgUrl('card-art', pattern);
+
 // For usePreloadSvgs on a screen that shows dice or cards
 export const DICE_PIECES = [1, 2, 3, 4, 5, 6].map(dieUrl);
 export const DECK_PIECES = [

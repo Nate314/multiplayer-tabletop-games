@@ -281,7 +281,8 @@
     padding: 0;
     border: 1px solid var(--card-edge);
     border-radius: 7px;
-    background: var(--card-face);
+    /* The face and back are the server's card art (shared/svg/cardArt.ts) */
+    --art-fill: var(--card-face);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     color: var(--card-color, var(--crew-rocket));
     font: inherit;
@@ -316,12 +317,14 @@
   }
 
   .crew-card-rocket {
-    background: linear-gradient(160deg, #3b3f5c, #11131f);
+    --art-fill: #3b3f5c;
+    --art-fill-4: #11131f;
     --card-color: #fff;
   }
 
   .crew-card-back {
-    background: repeating-linear-gradient(45deg, #3a46a0 0 5px, #232a66 5px 10px);
+    --art-fill: #3a46a0;
+    --art-stripe: #232a66;
     color: #fff;
   }
 

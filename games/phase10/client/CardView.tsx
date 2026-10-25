@@ -1,6 +1,8 @@
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { cardFace, cardName } from '../rules.ts';
 import type { Card } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type CardViewProps = {
   card: Card;
@@ -24,6 +26,7 @@ export default function CardView({ card, standsFor = null, selected = false, sma
   if (drawn) classes.push('newly-drawn');
   const content = (
     <>
+      <ServerSvg url={cardArtUrl(card.kind === 'wild' ? 'bands' : 'solid')} className="piece-art" />
       {card.kind === 'number' && <ColorSymbol color={card.color} className="card-symbol" />}
       <span className="card-face">{cardFace(card)}</span>
       {standsFor !== null && card.kind === 'wild' && <span className="card-stands-for">{standsFor}</span>}

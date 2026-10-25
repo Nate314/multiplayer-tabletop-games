@@ -856,11 +856,20 @@
     filter: drop-shadow(0 0 1px #1A140C);
   }
 
-  .tray-road,
+  .tray-road {
+    display: block;
+    background: var(--seat, currentColor); /* the seat class on the icon sets your color */
+  }
+
+  /* The settlement and city are the server drawings (games/catan/svg.ts), in your color */
   .tray-settlement,
   .tray-city {
     display: block;
-    background: var(--seat, currentColor); /* the seat class on the icon sets your color */
+  }
+
+  .tray-settlement polygon,
+  .tray-city polygon {
+    fill: var(--seat, currentColor);
   }
 
   .tray-road {
@@ -870,15 +879,13 @@
   }
 
   .tray-settlement {
-    width: 18px;
-    height: 20px;
-    clip-path: polygon(50% 0, 100% 35%, 100% 100%, 0 100%, 0 35%);
+    width: 26px;
+    height: 26px;
   }
 
   .tray-city {
-    width: 26px;
-    height: 22px;
-    clip-path: polygon(0 100%, 0 30%, 25% 0, 50% 30%, 50% 45%, 100% 45%, 100% 100%);
+    width: 30px;
+    height: 30px;
   }
 
   .vertex-drop[data-drag-over] .vertex-target {

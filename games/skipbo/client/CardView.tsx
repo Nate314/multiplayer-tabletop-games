@@ -1,6 +1,8 @@
 import { cardName } from '../rules.ts';
 import { cardKey } from './animKeys.ts';
 import type { Card } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type CardViewProps = {
   card: Card;
@@ -28,14 +30,19 @@ export default function CardView({ card, standsFor = null, selected = false, sma
   if (small) classes.push('card-small');
   if (drawn) classes.push('newly-drawn');
   const label = standsFor !== null && card.kind === 'skipbo' ? `Skip-Bo as ${standsFor}` : cardName(card);
-  const content = card.kind === 'skipbo'
-    ? (
-      <>
-        <span className="card-face card-face-wild">SB</span>
-        {standsFor !== null && <span className="card-stands-for">{standsFor}</span>}
-      </>
-    )
-    : <span className="card-face">{card.value}</span>;
+  const content = (
+    <>
+      <ServerSvg url={cardArtUrl(card.kind === 'skipbo' ? 'bands' : 'solid')} className="piece-art" />
+      {card.kind === 'skipbo'
+        ? (
+          <>
+            <span className="card-face card-face-wild">SB</span>
+            {standsFor !== null && <span className="card-stands-for">{standsFor}</span>}
+          </>
+        )
+        : <span className="card-face">{card.value}</span>}
+    </>
+  );
 
   if (!onClick) return <span className={classes.join(' ')} aria-label={label} title={label} data-anim-key={cardKey(card)}>{content}</span>;
   return (

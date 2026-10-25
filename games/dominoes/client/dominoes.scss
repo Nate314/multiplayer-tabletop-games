@@ -605,7 +605,7 @@
     width: calc(var(--tile-w) * 2);
   }
 
-  /* Tiles: two halves of a three-by-three grid of pips, laid sideways */
+  /* Tiles laid sideways: the face and edge here, the pips the server drawing (games/dominoes/svg.ts) */
 
   .tile {
     display: inline-flex;
@@ -623,36 +623,6 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     user-select: none;
     transition: transform 0.12s, opacity 0.12s;
-  }
-
-  .tile-half {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    padding: 3px;
-  }
-
-  .pip {
-    align-self: center;
-    justify-self: center;
-    width: 70%;
-    aspect-ratio: 1;
-    max-width: 9px;
-    border-radius: 50%;
-    background: var(--tile-pip);
-  }
-
-  .pip-empty {
-    visibility: hidden;
-  }
-
-  .tile-divider {
-    flex: none;
-    width: 2px;
-    margin: 4px 0;
-    background: var(--tile-edge);
-    opacity: 0.6;
   }
 
   .tile-back {

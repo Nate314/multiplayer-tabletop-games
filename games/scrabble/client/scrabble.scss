@@ -321,7 +321,8 @@
     height: 100%;
     border-radius: 12%;
     border: 1px solid var(--tile-border);
-    background: var(--tile-bg);
+    /* The face is the server's card art (shared/svg/cardArt.ts) */
+    --art-fill: var(--tile-bg);
     color: var(--tile-text);
     box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15);
     user-select: none;

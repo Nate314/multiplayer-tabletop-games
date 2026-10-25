@@ -1,6 +1,8 @@
 import CardView from './CardView';
 import { DISCARD_KEY, PILE_KEY } from './animateMove.ts';
 import type { DrawSource, PublicGameState } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type PilesProps = {
   gameState: PublicGameState;
@@ -19,7 +21,7 @@ export default function Piles({ gameState, canDraw, onDraw, lastPile = null }: P
   return (
     <div className="piles">
       <button type="button" className={pileClass('pile')} disabled={!canDraw} onClick={() => onDraw('pile')}>
-        <span className="card card-back" aria-hidden="true" data-anim-key={PILE_KEY}>10</span>
+        <span className="card card-back" aria-hidden="true" data-anim-key={PILE_KEY}>{<ServerSvg url={cardArtUrl('stripes')} className="piece-art" />}10</span>
         <span className="pile-label">Draw pile ({drawCount})</span>
       </button>
       <button type="button" className={pileClass('discard')} disabled={!canTakeDiscard} onClick={() => onDraw('discard')}>

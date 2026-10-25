@@ -2,7 +2,7 @@ import { el, svgDoc, type SvgAsset } from '../../shared/svg/svg.ts';
 import { MAP_HEIGHT, MAP_LEFT, MAP_WIDTH } from './map.ts';
 
 // The map's sea and land, drawn on the server; routes and cities on top stay in the client, where they can be
-// clicked. The classes are the ones client/tickettoride.scss colors
+// clicked. The classes are the ones client/tickettoride.scss colors; the fills are only its defaults, for the gallery
 
 // A rough outline of the United States and the southern edge of Canada, in map coordinates (this site's own drawing)
 const LAND_OUTLINE =
@@ -17,9 +17,9 @@ const CANADA_OUTLINE = `${MAP_LEFT},0 ${MAP_WIDTH},0 ${MAP_WIDTH},125 ${NORTHERN
 
 export function landSvg(): string {
   return svgDoc(`${MAP_LEFT} 0 ${MAP_WIDTH - MAP_LEFT} ${MAP_HEIGHT}`, {},
-    el('rect', { class: 'sea', x: MAP_LEFT, y: 0, width: MAP_WIDTH - MAP_LEFT, height: MAP_HEIGHT }),
-    el('polygon', { class: 'land canada', points: CANADA_OUTLINE }),
-    el('polygon', { class: 'land usa', points: LAND_OUTLINE }));
+    el('rect', { class: 'sea', x: MAP_LEFT, y: 0, width: MAP_WIDTH - MAP_LEFT, height: MAP_HEIGHT, fill: '#b9d3dd' }),
+    el('polygon', { class: 'land canada', points: CANADA_OUTLINE, fill: '#e2dcc4' }),
+    el('polygon', { class: 'land usa', points: LAND_OUTLINE, fill: '#efe3c2' }));
 }
 
 export const TICKETTORIDE_ASSETS: SvgAsset[] = [{ name: 'tickettoride-land', params: [], samples: [], render: landSvg }];

@@ -366,7 +366,8 @@
     width: 36px;
     height: 50px;
     border-radius: 6px;
-    background: var(--tile-face);
+    /* The face is the server's card art (shared/svg/cardArt.ts) */
+    --art-fill: var(--tile-face);
     border: 1px solid var(--tile-edge);
     box-shadow: 0 2px 0 var(--tile-edge), 0 3px 4px rgba(0, 0, 0, 0.25);
     font-size: 1.25rem;

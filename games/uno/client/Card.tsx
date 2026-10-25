@@ -1,6 +1,8 @@
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { cardName } from '../rules.ts';
 import type { Card as CardData, Value } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 // The mark in the middle of each card; numbers show themselves
 const SYMBOLS: Partial<Record<Value, string>> = {
@@ -29,6 +31,7 @@ export default function Card({ card, animKey, highlighted = false, onClick, play
   if (drawn) classes.push('newly-drawn');
   const face = (
     <>
+      <ServerSvg url={svgUrl('uno-card', card.color)} className="piece-art" />
       <ColorSymbol color={card.color === 'wild' ? null : card.color} className="card-symbol" />
       <span className="card-face">{SYMBOLS[card.value] ?? card.value}</span>
     </>
