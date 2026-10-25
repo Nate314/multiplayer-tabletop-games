@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { GAME_INFOS } from '../games/infos.ts'
-import { CLIENT_GAMES, type PlayableGame } from './clientGames.ts'
+import ClientGameGate from './games/ClientGameGate.tsx'
 import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
@@ -14,16 +14,9 @@ import { loadJoinForm, saveJoinForm } from './services/settings.ts'
 import { parseJoinLink } from './services/share.ts'
 import './App.scss'
 
-// Every game needs a screen as well as rules; a missing one fails at startup instead of hiding the game
-const PLAYABLE_GAMES: PlayableGame[] = GAME_INFOS.map(info => {
-  const client = CLIENT_GAMES[info.id]
-  if (!client) throw new Error(`Game "${info.id}" has no entry in CLIENT_GAMES`)
-  return { info, client }
-})
-
 function App() {
   // A /join/<game type>/<game ID> address, read once
-  const [link] = useState(() => parseJoinLink(window.location.pathname, PLAYABLE_GAMES.map(({ info }) => info.id)))
+  const [link] = useState(() => parseJoinLink(window.location.pathname, GAME_INFOS.map(({ id }) => id)))
   const [selectedId, setSelectedId] = useState<string | null>(link?.gameType ?? null)
   // Kept here so the form is still filled in after leaving or a disconnect
   // The last name and game ID used to join, read once
@@ -37,9 +30,9 @@ function App() {
   }, [])
   const joined = gameState !== null && playerNumber !== null
   // The game on screen however it was joined: dialog, refresh or rejoin button
-  const joinedGame = PLAYABLE_GAMES.find(({ info }) => info.id === gameType)
+  const joinedGame = GAME_INFOS.find(({ id }) => id === gameType)
   // The remembered game the list offers to rejoin, which may differ from a lobby just left
-  const sessionGame = PLAYABLE_GAMES.find(({ info }) => info.id === session?.gameType)
+  const sessionGame = GAME_INFOS.find(({ id }) => id === session?.gameType)
 
   // Leaving or losing the connection goes back to the list, not to the dialog
   const [wasJoined, setWasJoined] = useState(joined)
@@ -60,18 +53,23 @@ function App() {
     setSelectedId(null)
   }, [leave])
 
-  const selected = PLAYABLE_GAMES.find(({ info }) => info.id === selectedId)
+  const selected = GAME_INFOS.find(({ id }) => id === selectedId)
 
   if (joinedGame && joined) {
+    // A refresh lands here straight away, so the game's code may still be downloading
     return (
-      <GameView
-        game={joinedGame.info}
-        client={joinedGame.client}
-        gameState={gameState}
-        playerNumber={playerNumber}
-        error={error}
-        onBack={backToGames}
-      />
+      <ClientGameGate id={joinedGame.id} name={joinedGame.name}>
+        {client => (
+          <GameView
+            game={joinedGame}
+            client={client}
+            gameState={gameState}
+            playerNumber={playerNumber}
+            error={error}
+            onBack={backToGames}
+          />
+        )}
+      </ClientGameGate>
     )
   }
 
@@ -86,15 +84,14 @@ function App() {
       <main className="lobby-main">
         {error && !selected && <div className="lobby-error">{error}</div>}
         {session && !session.inGame && sessionGame && (
-          <RejoinButton gameName={sessionGame.info.name} gameId={session.gameId} onRejoin={rejoin} />
+          <RejoinButton gameName={sessionGame.name} gameId={session.gameId} onRejoin={rejoin} />
         )}
-        <OpenSavedGame games={PLAYABLE_GAMES} />
-        <GameList games={PLAYABLE_GAMES} onSelect={openDialog} />
+        <OpenSavedGame games={GAME_INFOS} />
+        <GameList games={GAME_INFOS} onSelect={openDialog} />
       </main>
       {selected && (
         <JoinDialog
-          game={selected.info}
-          faq={selected.client.faq}
+          game={selected}
           playerName={playerName}
           gameId={gameId}
           error={error}
@@ -102,7 +99,7 @@ function App() {
           onGameIdChange={setGameId}
           onJoin={() => {
             saveJoinForm({ playerName, gameId })
-            join(selected.info.id, gameId, playerName)
+            join(selected.id, gameId, playerName)
           }}
           onCancel={closeDialog}
         />

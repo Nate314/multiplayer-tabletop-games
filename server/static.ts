@@ -21,6 +21,7 @@ export function serveClient(app: Express, distDir: string): void {
       return;
     }
     res.setHeader('Cache-Control', 'no-cache');
-    res.sendFile(path.join(distDir, 'index.html'));
+    // Relative to root, so a dot folder above dist/ (such as .claude/) is not refused as a dotfile
+    res.sendFile('index.html', { root: distDir });
   });
 }
