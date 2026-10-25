@@ -9,7 +9,7 @@ export function squareOf(id: string): Position {
   return { row, col };
 }
 
-// What a tap on the tray's wall, or Rotate (button or R key), selects next
+// What a tap on the tray's wall, or Rotate (the R key), selects next
 export function nextWallAction(current: Action, input: 'tap' | 'rotate'): Action {
   if (current === 'move') return input === 'tap' ? 'wall-h' : 'wall-v';
   return current === 'wall-h' ? 'wall-v' : 'wall-h';

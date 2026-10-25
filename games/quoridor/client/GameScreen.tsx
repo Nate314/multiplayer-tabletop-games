@@ -4,7 +4,6 @@ import ActionButtons from './ActionButtons';
 import Board from './Board';
 import GameStatus from './GameStatus';
 import GoalList from './GoalList';
-import TurnActions from './TurnActions';
 import PieceTray from '../../../src/components/PieceTray';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
@@ -85,9 +84,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         </div>
         <div className="game-info side-panel">
           <GameStatus gameState={gameState} error={error} />
-          <TurnActions selectedAction={selectedAction} onSelectAction={setSelectedAction} />
           <PieceTray
-            label="Your walls"
+            label="Your action"
+            leading={
+              <button type="button" className="piece-tray-piece" aria-pressed={!wallHeld} onClick={() => setSelectedAction('move')}>
+                <span className="tray-pawn" style={{ background: `var(--player${playerNumber}, var(--wall))` }} />
+                Move
+              </button>
+            }
             pieces={[{
               id: 'wall',
               label: 'Wall',
@@ -98,11 +102,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             selected={wallHeld ? 'wall' : null}
             onTap={() => setSelectedAction(action => nextWallAction(action, 'tap'))}
             drag={drag}
-          >
-            <button type="button" disabled={!!wallBlocked} onClick={() => setSelectedAction(action => nextWallAction(action, 'rotate'))}>
-              Rotate
-            </button>
-          </PieceTray>
+          />
           <ActionButtons
             gameState={gameState}
             playerNumber={playerNumber}

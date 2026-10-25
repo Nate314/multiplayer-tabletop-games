@@ -513,16 +513,6 @@
     font-weight: bold;
   }
 
-  .turn-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .turn-actions button {
-    margin: 0;
-  }
-
   .action-buttons {
     display: flex;
     gap: 10px;
@@ -731,7 +721,7 @@
   }
 }
 
-/* The wall tray: one wall to tap or drag, with its count, and Rotate */
+/* The action tray: Move, then one wall to tap or drag, with its count */
 
 [data-game="quoridor"] {
   .piece-tray {
@@ -771,7 +761,14 @@
     height: 40px;
   }
 
-  .piece-tray > button {
-    margin: 0;
+  .piece-tray-pieces {
+    justify-content: center;
+  }
+
+  .tray-pawn {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
   }
 }
