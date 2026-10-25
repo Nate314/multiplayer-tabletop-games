@@ -16,6 +16,8 @@ import { canBeSource, targetsFrom } from './selection.ts';
 import { inGame } from '../state.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, Placements, PublicGameState } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 function turnMessage(state: PublicGameState, playerNumber: number): string {
   const { isGameOver, winners, playerNames, activePlayers, started, turnHolder, phase } = state;
@@ -90,7 +92,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     onDrop: (_id, target) => select(target.replace('land-', ''))
   });
   const armies = [{
-    id: 'armies', label: 'Armies', count: placing ? left : 0, icon: <span className={`tray-army ${seatClass(playerNumber)}`} aria-hidden="true" />,
+    id: 'armies', label: 'Armies', count: placing ? left : 0, icon: <span className={`tray-army ${seatClass(playerNumber)}`} aria-hidden="true"><ServerSvg url={DISC_URL} className="piece-art" /></span>,
     blocked: placing && left > 0 ? undefined : 'No armies to place now'
   }];
 

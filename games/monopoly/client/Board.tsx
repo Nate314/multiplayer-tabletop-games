@@ -7,7 +7,7 @@ import { gridPosition, seatClass, shortName, sideOf, tokenKey } from './layout.t
 import Dice from './Dice';
 import type { PublicGameState, Seat } from '../types.ts';
 import ServerSvg from '../../../src/assets/ServerSvg.tsx';
-import { DISC_URL } from '../../../src/components/pieces.ts';
+import { DISC_URL, cardArtUrl } from '../../../src/components/pieces.ts';
 
 type BoardProps = {
   gameState: PublicGameState;
@@ -28,8 +28,9 @@ function iconFor(space: number): string | null {
 }
 
 function Buildings({ level }: { level: number }) {
-  if (level === HOTEL) return <span className="hotel" title="Hotel" />;
-  return <>{Array.from({ length: level }, (_, index) => <span key={index} className="house" title="House" />)}</>;
+  const art = <ServerSvg url={cardArtUrl('solid')} className="piece-art" />;
+  if (level === HOTEL) return <span className="hotel" title="Hotel">{art}</span>;
+  return <>{Array.from({ length: level }, (_, index) => <span key={index} className="house" title="House">{art}</span>)}</>;
 }
 
 function Token({ seat, name }: { seat: Seat; name: string }) {

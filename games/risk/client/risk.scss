@@ -321,8 +321,10 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--seat);
-    border: 2px solid var(--piece-tray-text);
+    /* The shared disc drawing (shared/svg/disc.ts) in your color */
+    --disc-fill: var(--seat);
+    --disc-edge: var(--piece-tray-text);
+    --disc-edge-width: 9;
   }
 
   .draft-badge circle {
