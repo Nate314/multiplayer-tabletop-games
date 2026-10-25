@@ -67,8 +67,8 @@ export const FAQS: FaqItem[] = [
     answer: 'The game waits for you while you owe money: sell buildings, mortgage property or trade for cash, and the ' +
       'debt is paid as soon as you have enough. If you cannot raise it, click Declare bankruptcy. Bankrupt to a player, ' +
       'your buildings are sold to the bank at half price and that player takes your cash, properties and jail cards. ' +
-      'Bankrupt to the bank, your properties are auctioned to the others. You may also declare bankruptcy on your turn to ' +
-      'leave the game; your properties then go to auction.'
+      'Bankrupt to the bank, your properties are auctioned to the others, or with Auctions off go back to the bank ' +
+      'unowned. You may also declare bankruptcy on your turn to leave the game; your properties then go the same way.'
   },
   {
     question: 'Is there Free Parking money?',

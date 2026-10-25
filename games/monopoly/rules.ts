@@ -151,7 +151,8 @@ function buy(state: GameState, seat: Seat): Result<GameState> {
   const property = space === null ? null : ownable(space);
   if (space === null || !property) return { error: 'There is nothing to buy' };
   if ((state.cash[seat] ?? 0) < property.price) {
-    return { error: `You need ${money(property.price)}: sell buildings or mortgage first, or decline to auction it` };
+    const otherwise = auctionsOn(state) ? 'decline to auction it' : 'decline it';
+    return { error: `You need ${money(property.price)}: sell buildings or mortgage first, or ${otherwise}` };
   }
   const bought = giveCash({ ...state, pendingBuy: null, owners: { ...state.owners, [space]: seat } }, seat, -property.price);
   return { state: note(bought, `${nameOf(state, seat)} bought ${property.name} for ${money(property.price)}`) };
@@ -264,7 +265,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const owed = state.debts.find(debt => debt.debtor === seat)?.creditor ?? null;
   const creditor = owed !== null && inGame(state).includes(owed) ? owed : null;
   const reason = creditor === null
-    ? 'left the game, so their properties go to auction'
+    ? `left the game, so their properties go ${auctionsOn(state) ? 'to auction' : 'back to the bank'}`
     : `left the game owing ${nameOf(state, creditor)}, who takes everything`;
   return finish(state, goBankrupt(working, seat, creditor, reason));
 }

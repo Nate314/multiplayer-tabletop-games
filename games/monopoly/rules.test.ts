@@ -512,8 +512,11 @@ test('taxes, card fees and the jail fine go into the pot with the jackpot on', (
 
   const poor = played(game({ ...JACKPOT, positions: { 1: 2, 2: 0, 3: 0 }, cash: { 1: 100, 2: 1500, 3: 1500 } }), 1, { type: 'roll' }, dice(1, 1));
   assert.deepEqual(poor.debts, [{ debtor: 1, creditor: null, amount: 200, reason: 'Income Tax', toPot: true }]);
+  assert.ok(poor.log.includes('Alice owes Free Parking $200 (Income Tax)'), poor.log.join(' | '));
   const mortgaged = game({ ...JACKPOT, cash: { 1: 180, 2: 1500, 3: 1500 }, owners: { 1: 1 }, debts: poor.debts });
-  assert.equal(played({ ...mortgaged, currentPlayer: 1 }, 1, { type: 'mortgage', space: 1 }).freeParkingPot, 200);
+  const raised = played({ ...mortgaged, currentPlayer: 1 }, 1, { type: 'mortgage', space: 1 });
+  assert.equal(raised.freeParkingPot, 200);
+  assert.ok(raised.log.includes('Alice paid Free Parking $200 (Income Tax)'), raised.log.join(' | '));
 });
 
 test('landing on Free Parking collects the pot', () => {
@@ -549,6 +552,11 @@ test('passing GO still pays $200 with the rule on', () => {
   const state = played(game({ houseRules: houseRules({ goBonus: true }), positions: { 1: 38, 2: 0, 3: 0 } }), 1, { type: 'roll' }, dice(2, 3));
   assert.equal(state.positions[1], 3);
   assert.equal(state.cash[1], 1700);
+});
+
+test('with auctions off the buy error offers a plain decline', () => {
+  const landed = played(game({ ...NO_AUCTIONS, cash: { 1: 50, 2: 1500, 3: 1500 } }), 1, { type: 'roll' }, dice(2, 4));
+  assert.deepEqual(move(landed, 1, { type: 'buy' }), { error: 'You need $100: sell buildings or mortgage first, or decline it' });
 });
 
 test('with auctions off a declined property stays with the bank', () => {
