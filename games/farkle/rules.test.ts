@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { farkle } from './index.ts';
-import { FARKLE_RULES, targetScore } from './rules.ts';
+import { FARKLE_RULES } from './options.ts';
+import { targetScore } from './rules.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import { score } from './scoring.ts';
@@ -173,7 +174,7 @@ test('table view hides hands: nothing is hidden, so the history and every seat s
 test('the game ends at the target score the host chose', () => {
   const chosen = (value: number) => turn([1, 2, 3, 4, 6, 6], {
     turnTotal: 4900, scores: { 1: 0, 2: 0, 3: 0 },
-    houseRules: { host: 1, values: { targetScore: value }, override: false, maxPlayers: null, agreed: [], revision: 0 }
+    houseRules: { host: 1, values: { targetScore: value }, maxPlayers: null, agreed: [], revision: 0 }
   });
   assert.equal(targetScore(chosen(5000)), 5000);
   const banked = play(chosen(5000), 1, { type: 'bank', keep: [0] });
@@ -188,7 +189,7 @@ test('ten players can play a full game', () => {
   let seed = 7;
   const random: Random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   const names = Array.from({ length: 10 }, (_, index) => `P${index + 1}`);
-  const tenSeats = { host: 1, values: { targetScore: 5000 }, override: true, maxPlayers: 10, agreed: [], revision: 0 };
+  const tenSeats = { host: 1, values: { targetScore: 5000 }, maxPlayers: 10, agreed: [], revision: 0 };
   let state: GameState = { ...lobby(names, { houseRules: tenSeats }), started: true };
   assert.equal(state.activePlayers.length, 10);
   for (let step = 0; step < 100000 && !state.isGameOver; step++) {

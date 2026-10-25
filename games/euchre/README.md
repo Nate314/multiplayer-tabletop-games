@@ -28,7 +28,7 @@ Make trump with your partner and take at least three of the five tricks, with th
 - The dealer sees the card they discarded below their hand
 - After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

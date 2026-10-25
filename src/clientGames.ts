@@ -1,51 +1,18 @@
 import type { ComponentType } from 'react';
-import type { GameInfo } from '../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../shared/types.ts';
 import type { MoveChange } from './animation/useMoveAnimation.ts';
-import { quoridorClient } from '../games/quoridor/client/index.ts';
-import { azulClient } from '../games/azul/client/index.ts';
-import { carcassonneClient } from '../games/carcassonne/client/index.ts';
-import { chessClient } from '../games/chess/client/index.ts';
-import { checkersClient } from '../games/checkers/client/index.ts';
-import { connectfourClient } from '../games/connectfour/client/index.ts';
-import { euchreClient } from '../games/euchre/client/index.ts';
-import { backgammonClient } from '../games/backgammon/client/index.ts';
-import { catanClient } from '../games/catan/client/index.ts';
-import { mancalaClient } from '../games/mancala/client/index.ts';
-import { monopolyClient } from '../games/monopoly/client/index.ts';
-import { parchisiClient } from '../games/parchisi/client/index.ts';
-import { rummikubClient } from '../games/rummikub/client/index.ts';
-import { scrabbleClient } from '../games/scrabble/client/index.ts';
-import { unoClient } from '../games/uno/client/index.ts';
-import { phase10Client } from '../games/phase10/client/index.ts';
-import { skipboClient } from '../games/skipbo/client/index.ts';
-import { gofishClient } from '../games/gofish/client/index.ts';
-import { heartsClient } from '../games/hearts/client/index.ts';
-import { warClient } from '../games/war/client/index.ts';
-import { riskClient } from '../games/risk/client/index.ts';
-import { rackoClient } from '../games/racko/client/index.ts';
-import { rookClient } from '../games/rook/client/index.ts';
-import { spadesClient } from '../games/spades/client/index.ts';
-import { splendorClient } from '../games/splendor/client/index.ts';
-import { farkleClient } from '../games/farkle/client/index.ts';
-import { holdemClient } from '../games/holdem/client/index.ts';
-import { tickettorideClient } from '../games/tickettoride/client/index.ts';
-import { dominoesClient } from '../games/dominoes/client/index.ts';
-import { yahtzeeClient } from '../games/yahtzee/client/index.ts';
-import { thecrewClient } from '../games/thecrew/client/index.ts';
 
 export type FaqItem = { question: string; answer: string };
 
 export type GameScreenProps<P extends BasePublicState> = { gameState: P; playerNumber: Seat; error: string | null };
 
-// Everything the browser needs to show a game; GameInfo in games/registry.ts holds the rest
+// Everything the browser needs to show a game, loaded on demand; GameInfo in games/<id>/info.ts holds the rest
 export type ClientGame = {
   id: string; // matches GameInfo.id
   // Games differ in their state types, so the registry holds screens type-erased
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Screen: ComponentType<GameScreenProps<any>>;
   faq: FaqItem[];
-  icon: string; // a short glyph or emoji shown in the landing row
   // A read-only board of one public state with its lastMove highlighted, for the history dialog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   HistoryBoard: ComponentType<{ gameState: any; viewer: Seat | null }>;
@@ -57,39 +24,37 @@ export type ClientGame = {
   animateMove?: (change: MoveChange<any>, viewer: Seat | null) => void;
 };
 
-export const CLIENT_GAMES: Record<string, ClientGame> = {
-  [quoridorClient.id]: quoridorClient,
-  [azulClient.id]: azulClient,
-  [carcassonneClient.id]: carcassonneClient,
-  [chessClient.id]: chessClient,
-  [checkersClient.id]: checkersClient,
-  [connectfourClient.id]: connectfourClient,
-  [euchreClient.id]: euchreClient,
-  [backgammonClient.id]: backgammonClient,
-  [catanClient.id]: catanClient,
-  [mancalaClient.id]: mancalaClient,
-  [monopolyClient.id]: monopolyClient,
-  [parchisiClient.id]: parchisiClient,
-  [rummikubClient.id]: rummikubClient,
-  [scrabbleClient.id]: scrabbleClient,
-  [unoClient.id]: unoClient,
-  [phase10Client.id]: phase10Client,
-  [skipboClient.id]: skipboClient,
-  [gofishClient.id]: gofishClient,
-  [heartsClient.id]: heartsClient,
-  [warClient.id]: warClient,
-  [riskClient.id]: riskClient,
-  [rackoClient.id]: rackoClient,
-  [rookClient.id]: rookClient,
-  [spadesClient.id]: spadesClient,
-  [splendorClient.id]: splendorClient,
-  [tickettorideClient.id]: tickettorideClient,
-  [dominoesClient.id]: dominoesClient,
-  [farkleClient.id]: farkleClient,
-  [holdemClient.id]: holdemClient,
-  [yahtzeeClient.id]: yahtzeeClient,
-  [thecrewClient.id]: thecrewClient
+// Each game's client is its own chunk, downloaded when first needed; use loadClientGame, which shares one download per game
+export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
+  azul: () => import('../games/azul/client/index.ts').then(m => m.azulClient),
+  backgammon: () => import('../games/backgammon/client/index.ts').then(m => m.backgammonClient),
+  carcassonne: () => import('../games/carcassonne/client/index.ts').then(m => m.carcassonneClient),
+  catan: () => import('../games/catan/client/index.ts').then(m => m.catanClient),
+  checkers: () => import('../games/checkers/client/index.ts').then(m => m.checkersClient),
+  chess: () => import('../games/chess/client/index.ts').then(m => m.chessClient),
+  connectfour: () => import('../games/connectfour/client/index.ts').then(m => m.connectfourClient),
+  dominoes: () => import('../games/dominoes/client/index.ts').then(m => m.dominoesClient),
+  euchre: () => import('../games/euchre/client/index.ts').then(m => m.euchreClient),
+  farkle: () => import('../games/farkle/client/index.ts').then(m => m.farkleClient),
+  gofish: () => import('../games/gofish/client/index.ts').then(m => m.gofishClient),
+  hearts: () => import('../games/hearts/client/index.ts').then(m => m.heartsClient),
+  holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),
+  mancala: () => import('../games/mancala/client/index.ts').then(m => m.mancalaClient),
+  monopoly: () => import('../games/monopoly/client/index.ts').then(m => m.monopolyClient),
+  parchisi: () => import('../games/parchisi/client/index.ts').then(m => m.parchisiClient),
+  phase10: () => import('../games/phase10/client/index.ts').then(m => m.phase10Client),
+  quoridor: () => import('../games/quoridor/client/index.ts').then(m => m.quoridorClient),
+  racko: () => import('../games/racko/client/index.ts').then(m => m.rackoClient),
+  risk: () => import('../games/risk/client/index.ts').then(m => m.riskClient),
+  rook: () => import('../games/rook/client/index.ts').then(m => m.rookClient),
+  rummikub: () => import('../games/rummikub/client/index.ts').then(m => m.rummikubClient),
+  scrabble: () => import('../games/scrabble/client/index.ts').then(m => m.scrabbleClient),
+  skipbo: () => import('../games/skipbo/client/index.ts').then(m => m.skipboClient),
+  spades: () => import('../games/spades/client/index.ts').then(m => m.spadesClient),
+  splendor: () => import('../games/splendor/client/index.ts').then(m => m.splendorClient),
+  thecrew: () => import('../games/thecrew/client/index.ts').then(m => m.thecrewClient),
+  tickettoride: () => import('../games/tickettoride/client/index.ts').then(m => m.tickettorideClient),
+  uno: () => import('../games/uno/client/index.ts').then(m => m.unoClient),
+  war: () => import('../games/war/client/index.ts').then(m => m.warClient),
+  yahtzee: () => import('../games/yahtzee/client/index.ts').then(m => m.yahtzeeClient)
 };
-
-// A game's rules and screen together, as the landing list and game view use them
-export type PlayableGame = { info: GameInfo; client: ClientGame };

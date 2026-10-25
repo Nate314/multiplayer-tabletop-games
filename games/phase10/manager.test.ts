@@ -177,7 +177,7 @@ function laidTurn(manager: Manager, seat: Seat): PublicGameState {
 test('a full game at 8 players is dealt ten cards each and plays to a winner', () => {
   const manager = rememberingKeys(createGameManager([phase10], seeded(5)));
   manager.join('phase10', 'g1', 'P1');
-  ok(manager.setHouseRules(ROOM, 1, { values: { anyOrder: true }, override: true, maxPlayers: 8 }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { anyOrder: true }, maxPlayers: 8 }));
   for (let seat = 2; seat <= 8; seat++) manager.join('phase10', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = viewOf(manager, null);

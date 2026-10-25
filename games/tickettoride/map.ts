@@ -4,6 +4,11 @@
 // City positions are this site's own drawing: a plain projection of each city's longitude and latitude.
 import type { City, Route, RouteColor, Ticket } from './types.ts';
 
+// The drawn map's edges, in map units
+export const MAP_LEFT = -50;  // room for the names of the westernmost cities
+export const MAP_WIDTH = 1060;
+export const MAP_HEIGHT = 630;
+
 type CitySpec = [name: string, x: number, y: number, label?: City['label']];
 
 const CITY_SPECS: CitySpec[] = [

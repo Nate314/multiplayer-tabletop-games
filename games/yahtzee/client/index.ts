@@ -10,7 +10,6 @@ export const yahtzeeClient: ClientGame = {
   id: 'yahtzee',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🎲',
   HistoryBoard,
   describeMove,
   animateMove

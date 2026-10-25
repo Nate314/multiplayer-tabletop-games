@@ -7,8 +7,9 @@ import path from 'path';
 import type { AddressInfo } from 'net';
 import { serveClient } from './static.ts';
 
-// A stand-in for dist/: the app shell, the worker, the manifest and one hashed asset
-const dist = fs.mkdtempSync(path.join(os.tmpdir(), 'dist-'));
+// A stand-in for dist/: the app shell, the worker, the manifest and one hashed asset, in a dot folder as a checkout
+// under .claude/worktrees/ is
+const dist = fs.mkdtempSync(path.join(os.tmpdir(), '.dist-'));
 fs.mkdirSync(path.join(dist, 'assets'));
 fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><title>app</title>');
 fs.writeFileSync(path.join(dist, 'sw.js'), '// worker');

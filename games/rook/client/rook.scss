@@ -15,6 +15,10 @@
   --button-bg: #17594c;
   --button-hover-bg: #0f4237;
   --button-text: #fff;
+  /* The shared controls (house rules, History gear) take the game's button colors in either theme */
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
   --status-bg: #e4f2ef;
   --status-text: #10231f;
   --error-bg: #fbe3e1;
@@ -80,7 +84,7 @@
 
   .back-button,
   .history-button,
-  .faq-button {
+  .rules-button {
     height: 2.5rem;
     padding: 0 1rem;
     border: none;
@@ -105,7 +109,7 @@
 
   .back-button:hover,
   .history-button:hover:enabled,
-  .faq-button:hover,
+  .rules-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
@@ -302,7 +306,8 @@
     padding: 0;
     border: 1px solid var(--card-edge);
     border-radius: 7px;
-    background: var(--card-face);
+    /* The face and back are the server's card art (shared/svg/cardArt.ts) */
+    --art-fill: var(--card-face);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     color: var(--card-color, var(--rook-black));
     font: inherit;
@@ -332,12 +337,14 @@
   }
 
   .rook-card-rook {
-    background: linear-gradient(160deg, #f4d35e, #e07a1f);
+    --art-fill: #f4d35e;
+    --art-fill-4: #e07a1f;
     --card-color: #1b1b1b;
   }
 
   .rook-card-back {
-    background: repeating-linear-gradient(45deg, var(--card-back) 0 6px, #2f2f2f 6px 12px);
+    --art-fill: var(--card-back);
+    --art-stripe: #2f2f2f;
   }
 
   .rook-card-corner {

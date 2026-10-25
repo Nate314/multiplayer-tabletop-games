@@ -20,8 +20,8 @@ import { editionFor } from './editions.ts';
 import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
+import { PLAYERS } from './options.ts';
 
-export const PLAYERS = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 
 export function createGameState(gameId: string): GameState {
@@ -290,7 +290,7 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   if (state.isGameOver) return { error: 'The game is over' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-  if (state.activePlayers.length < minimumToStart(PLAYERS, state)) return { error: 'Waiting for more players' };
+  if (state.activePlayers.length < minimumToStart(PLAYERS)) return { error: 'Waiting for more players' };
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = act({ ...state, log: [] }, seat, action);
   if ('error' in result) return result;
@@ -311,8 +311,8 @@ function setupWithout(state: GameState, seat: Seat): GameState {
 // A dismissed player's pieces stay on the board as dead pieces: they score and produce nothing, but still block and
 // break roads. Their cards go back to the bank, and their development cards out of the game. A discard or trade
 // waiting on them is dropped, and so is their build chance; on their turn, the next player's turn begins (ending any
-// special build phase). With fewer than three left (two at a table set for two), the game ends and the player with
-// the most points wins.
+// special build phase). With fewer than three left, the game ends and the player with the most points wins; a game
+// that started with two ends in the shared seating code once one is left.
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const working: GameState = { ...state, log: [] };
   const returned: GameState = {
@@ -336,7 +336,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   } else {
     next = withoutBuilder(next, seat);
   }
-  if (next.activePlayers.length < minimumToStart(PLAYERS, next)) {
+  if (next.activePlayers.length < PLAYERS.minPlayers) {
     const awarded = settleAwards(next);
     const scores = awarded.activePlayers.map(other => points(awarded, other));
     const best = Math.max(...scores);

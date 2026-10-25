@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import gameService from '../../../src/services/gameService';
 import ActionButtons from './ActionButtons';
 import Board from './Board';
 import GameStatus from './GameStatus';
 import GoalList from './GoalList';
-import TurnActions from './TurnActions';
 import PieceTray from '../../../src/components/PieceTray';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
@@ -14,6 +13,9 @@ import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState } from '../types.ts';
 import type { Action } from './types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { WALL_URL } from './pieces.ts';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [selectedAction, setSelectedAction] = useState<Action>('move');
@@ -85,24 +87,27 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         </div>
         <div className="game-info side-panel">
           <GameStatus gameState={gameState} error={error} />
-          <TurnActions selectedAction={selectedAction} onSelectAction={setSelectedAction} />
           <PieceTray
-            label="Your walls"
+            label="Your action"
+            leading={
+              <button type="button" className="piece-tray-piece" aria-pressed={!wallHeld} onClick={() => setSelectedAction('move')}>
+                <span className="tray-pawn" style={{ '--disc-fill': `var(--player${playerNumber}, var(--wall))` } as CSSProperties}>
+                  <ServerSvg url={DISC_URL} className="piece-art" />
+                </span>
+                Move
+              </button>
+            }
             pieces={[{
               id: 'wall',
               label: 'Wall',
-              icon: <span className={`tray-wall ${selectedAction === 'wall-v' ? 'vertical' : 'horizontal'}`} />,
+              icon: <ServerSvg url={WALL_URL} className={`tray-wall ${selectedAction === 'wall-v' ? 'vertical' : 'horizontal'}`} />,
               count: wallsLeft,
               blocked: wallBlocked
             }]}
             selected={wallHeld ? 'wall' : null}
             onTap={() => setSelectedAction(action => nextWallAction(action, 'tap'))}
             drag={drag}
-          >
-            <button type="button" disabled={!!wallBlocked} onClick={() => setSelectedAction(action => nextWallAction(action, 'rotate'))}>
-              Rotate
-            </button>
-          </PieceTray>
+          />
           <ActionButtons
             gameState={gameState}
             playerNumber={playerNumber}

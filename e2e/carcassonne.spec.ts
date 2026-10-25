@@ -97,9 +97,9 @@ test.describe('Carcassonne rules', () => {
     await craft(table, { board: [START], currentTile: 'E', drawPile: ['U'], currentPlayer: 1 });
     await expect(cells(alice)).toHaveCount(2);
     await cell(alice, 0, -1).click();
-    await expect(alice.locator('.cc-preview > g').first()).toHaveAttribute('transform', 'rotate(180 50 50)');
+    await expect(alice.locator('.cc-preview .cc-tile-art')).toHaveAttribute('transform', 'rotate(180 50 50)');
     await button(alice, 'Turn right').click();
-    await expect(alice.locator('.cc-preview > g').first()).toHaveAttribute('transform', 'rotate(180 50 50)');
+    await expect(alice.locator('.cc-preview .cc-tile-art')).toHaveAttribute('transform', 'rotate(180 50 50)');
   });
 
   test('a tile that fits nowhere is set aside out of the game, another is drawn, and the count set aside is shown', async ({ seat }) => {
@@ -327,8 +327,8 @@ test.describe('Carcassonne controls', () => {
     await craft(table, { board: [START], currentTile: 'E', drawPile: ['U'] });
     await expect(cells(alice)).toHaveCount(2);
     await expect(cells(bob)).toHaveCount(0);
-    const panelTile = alice.locator('svg.cc-current-tile > g');
-    const preview = alice.locator('.cc-preview > g').first();
+    const panelTile = alice.locator('svg.cc-current-tile .cc-tile-art');
+    const preview = alice.locator('.cc-preview .cc-tile-art');
     await button(alice, 'Turn right').click();
     await expect(panelTile).toHaveAttribute('transform', 'rotate(90 50 50)');
     await button(alice, 'Turn left').click();

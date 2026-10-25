@@ -233,8 +233,8 @@ function okState(result: { state: TestState } | { error: string }): TestState {
   return result.state;
 }
 
-const proposal = (values: Record<string, boolean | number>, override = false, maxPlayers: number | null = null) =>
-  ({ values, override, maxPlayers });
+const proposal = (values: Record<string, boolean | number>, maxPlayers: number | null = null) =>
+  ({ values, maxPlayers });
 
 test('the first player to join is the host', () => {
   const state = joinRules(rulesGame.createGameState('g'), 'A', 'B');
@@ -266,7 +266,7 @@ test('the host leaving before the first move passes the host to the next seat an
 
 test('the table is full at the chosen most players', () => {
   let state = joinRules(rulesGame.createGameState('g'), 'A', 'B');
-  state = okState(setHouseRules(rulesGame.info, state, 1, proposal({}, true, 5)));
+  state = okState(setHouseRules(rulesGame.info, state, 1, proposal({}, 5)));
   state = joinRules(state, 'C', 'D');
   const fifth = addPlayer(rulesGame, state, 'E');
   assert.ok('seat' in fifth);
@@ -274,12 +274,11 @@ test('the table is full at the chosen most players', () => {
   assert.deepEqual(addPlayer(rulesGame, fifth.state, 'F'), { error: 'Game is full' });
 });
 
-test('with the override a game starts at the stretched minimum', () => {
+test('a game starts at the stretched minimum', () => {
   const stretched = { ...rulesGame, info: { ...rulesGame.info, stretchedPlayers: { min: 1, max: 6 } } };
-  let state = okState(addPlayer(stretched, stretched.createGameState('g'), 'A') as { state: TestState });
-  assert.deepEqual(applyMove(stretched, state, 1, { type: 'tick' }), { error: 'Waiting for more players' });
-  state = okState(setHouseRules(stretched.info, state, 1, proposal({}, true, 4)));
+  const state = okState(addPlayer(stretched, stretched.createGameState('g'), 'A') as { state: TestState });
   assert.equal(okState(applyMove(stretched, state, 1, { type: 'tick' })).started, true);
+  assert.deepEqual(applyMove(rulesGame, state, 1, { type: 'tick' }), { error: 'Waiting for more players' });
 });
 
 test('an out-of-turn move needs the game to allow it', () => {

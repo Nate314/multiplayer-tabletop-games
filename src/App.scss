@@ -91,7 +91,7 @@
   border: 1px solid var(--lobby-border);
   border-radius: 50%;
   background: var(--lobby-surface);
-  font-size: 1.2rem;
+  color: var(--lobby-text);
 }
 
 .lobby-header .github-link {
@@ -122,16 +122,41 @@
   text-transform: uppercase;
 }
 
+/* The search box and the Filter button share one row; the panel hangs under it, over the cards */
 .lobby-filters {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.lobby-filters > .themed-input[type='search'] {
-  flex: 1 1 200px;
+.lobby-filters > input[type='search'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.lobby-filters > .lobby-button {
+  flex-shrink: 0;
+}
+
+/* Right-aligned under the Filter button, and the full row wide once the row is narrower than the panel */
+.lobby-filter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  width: min(100%, 32rem);
+  padding: 12px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 10px;
+  background: var(--lobby-surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
 }
 
 .lobby-chips {
@@ -147,11 +172,15 @@
   color: var(--lobby-muted);
 }
 
-.lobby-players .themed-input {
+.lobby-players input {
   width: 5rem;
 }
 
 .lobby-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   color: var(--lobby-muted);
 }
 
@@ -187,8 +216,10 @@
 }
 
 .lobby-game-icon {
-  font-size: 2rem;
-  line-height: 1;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  color: var(--lobby-accent);
 }
 
 .lobby-game-text {
@@ -215,7 +246,7 @@
   white-space: nowrap;
 }
 
-/* With the Players filter at a count only the "I know what I'm doing" override reaches */
+/* With the Players filter at a count only the player-count house rule reaches */
 .lobby-game-house-rule {
   margin-left: 8px;
   padding: 1px 8px;
@@ -225,11 +256,25 @@
   font-size: 0.8rem;
 }
 
-.lobby-rejoin {
-  display: block;
-  max-width: 640px;
-  width: 100%;
+/* Back to a game and Open a saved game span the game list: side by side where two game cards fit, else stacked */
+.lobby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.lobby-actions > button {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.lobby-actions > .lobby-error {
+  flex-basis: 100%;
+  margin-bottom: 0;
+}
+
+.lobby-rejoin {
   padding: 12px 16px;
   font-size: 1rem;
 }
@@ -240,6 +285,26 @@
   border-radius: 6px;
   background: var(--lobby-error-bg);
   color: var(--lobby-error-text);
+}
+
+// A game's code still downloading, or failed to (src/games/ClientGameGate.tsx)
+.client-game-loading {
+  margin: 0 0 12px;
+  color: var(--lobby-muted);
+}
+
+.client-game-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+// In place of the whole game view, after a refresh into a game
+#root > .client-game-loading,
+#root > .client-game-error {
+  margin: 16px;
 }
 
 .lobby-overlay {
@@ -295,7 +360,7 @@
   margin-top: 16px;
 }
 
-.lobby-dialog .faq-button,
+.lobby-dialog .rules-button,
 .lobby-button {
   padding: 8px 16px;
   border: 1px solid var(--lobby-border);
@@ -305,8 +370,8 @@
   font-weight: 600;
 }
 
-/* FAQ sits on the left, Cancel and Join on the right */
-.lobby-dialog .faq-button {
+/* Rules sits on the left, Cancel and Join on the right */
+.lobby-dialog .rules-button {
   margin-right: auto;
 }
 
@@ -327,7 +392,7 @@
 }
 
 /*
- * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
+ * Default look for the platform pieces a game screen shows: the game header, the Rules and history dialogs, the undo vote,
  * the disconnected players bar, the dismiss vote, and resign and draw offers.
  * Every selector sits in :where(), so it has no specificity and any rule in a game's own CSS wins.
  * A game can restyle these pieces with its own rules, or just set these variables on [data-game="<id>"]:
@@ -358,7 +423,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -377,7 +442,7 @@
   border: none;
   border-radius: 50%;
   background: var(--platform-button-bg, var(--lobby-accent));
-  font-size: 1.2rem;
+  color: var(--platform-button-text, var(--lobby-accent-text));
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -395,7 +460,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -432,11 +497,11 @@
   max-width: calc(100vw - 2rem);
 }
 
-:where([data-game] .share-panel .themed-input) {
+:where([data-game] .share-panel input) {
   min-width: 0;
 }
 
-/* Phones: the title takes its own row, and Back to games, History, FAQ and Settings fit one row under it.
+/* Phones: the title takes its own row, and Back to games, History, Rules and Settings fit one row under it.
    Share and the theme toggle move into Settings and the GitHub link stays on the landing page only.
    Outside :where(), so no game's header rule can show them again. */
 @media (max-width: 480px) {
@@ -457,20 +522,20 @@
     order: -1;
   }
 
-  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+  :where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
     padding: 0 0.6rem;
   }
 }
 
-/* The narrowest phones (320 px): tighter text buttons keep Back to games, History, FAQ and Settings on one row.
+/* The narrowest phones (320 px): tighter text buttons keep Back to games, History, Rules and Settings on one row.
    Outside :where(), so the games with their own header rules (Azul, Quoridor) get it too */
 @media (max-width: 360px) {
   [data-game].game-root > .game-header {
     column-gap: 0.25rem;
   }
 
-  [data-game] .game-header > :is(.back-button, .history-button, .faq-button) {
-    padding: 0 0.45rem;
+  [data-game] .game-header > :is(.back-button, .history-button, .rules-button) {
+    padding: 0 0.375rem;
   }
 }
 
@@ -480,7 +545,7 @@
   cursor: not-allowed;
 }
 
-/* FAQ and history dialogs */
+/* Rules and history dialogs */
 
 :where([data-game] .overlay, .lobby .overlay) {
   position: fixed;
@@ -522,6 +587,111 @@
 
 :where([data-game] .faq dd) {
   margin: 4px 0 0;
+}
+
+/* Rules dialog: the README or the FAQ scrolls between the title and Close, so Close stays in view on a phone.
+   Outside :where() on purpose, like .modal.history, so no game's .modal rule lets it grow past the window */
+[data-game] .modal.rules {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+[data-game] .modal.rules .rules-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  text-align: left;
+}
+
+:where([data-game] .rules-switch) {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+:where([data-game] .rules-switch button) {
+  padding: 6px 18px;
+  border: 2px solid var(--platform-button-bg, var(--lobby-accent));
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+}
+
+:where([data-game] .rules-switch button:first-child) {
+  border-radius: 6px 0 0 6px;
+}
+
+:where([data-game] .rules-switch button:last-child) {
+  border-radius: 0 6px 6px 0;
+}
+
+:where([data-game] .rules-switch button[aria-pressed="true"]) {
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+:where([data-game] .rules-failed) {
+  text-align: center;
+}
+
+/* A README rendered by src/markdown/Markdown.tsx */
+:where([data-game] .markdown h2) {
+  margin: 18px 0 6px;
+  font-size: 1.2rem;
+}
+
+:where([data-game] .markdown h3) {
+  margin: 14px 0 6px;
+  font-size: 1.05rem;
+}
+
+:where([data-game] .markdown p) {
+  margin: 8px 0;
+}
+
+:where([data-game] .markdown ul, [data-game] .markdown ol) {
+  margin: 6px 0;
+  padding-left: 1.4em;
+}
+
+:where([data-game] .markdown li) {
+  margin: 4px 0;
+}
+
+:where([data-game] .markdown a) {
+  color: inherit;
+}
+
+:where([data-game] .markdown code) {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(127, 127, 127, 0.18);
+  font-size: 0.9em;
+}
+
+:where([data-game] .markdown pre) {
+  overflow-x: auto;
+}
+
+/* Wide tables scroll sideways instead of widening the dialog */
+:where([data-game] .markdown-table) {
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+:where([data-game] .markdown table) {
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+:where([data-game] .markdown th, [data-game] .markdown td) {
+  padding: 4px 8px;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  text-align: left;
 }
 
 /* Outside :where() on purpose: the platform owns the History dialog's size so it never resizes between steps,
@@ -600,8 +770,6 @@
   border-radius: 50%;
   background: var(--platform-button-bg, var(--lobby-accent));
   color: var(--platform-button-text, var(--lobby-accent-text));
-  font-size: 1.3rem;
-  line-height: 1;
 }
 
 :where([data-game] .history-settings-button:hover) {
@@ -642,10 +810,13 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Shared control looks: .themed-select (select), .themed-checkbox (label wrapping a checkbox),
-   .themed-input (text, search or number input), .themed-chip (button with aria-pressed) and .themed-range (range slider).
-   Platform pieces should use these for any new control. */
-:where(.themed-select, .themed-checkbox, .themed-chip) {
+/* Native controls are themed by default: select, checkbox, and text, search and number inputs.
+   A checkbox inside a label in the Settings dialog or the History gear panel reads as a pill (.checkbox-pill rules below).
+   .themed-chip (button with aria-pressed) and .themed-range (range slider) stay opt-in classes.
+   Everything sits in :where(), so any game's own control rule wins. */
+$text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
+
+:where(select, .themed-chip) {
   border: none;
   border-radius: 6px;
   background: var(--platform-button-bg, var(--lobby-accent));
@@ -655,37 +826,128 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where(.themed-select:hover, .themed-checkbox:hover) {
+:where(select:enabled:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-:where(.themed-select) {
+:where(select) {
   padding: 6px 10px;
+  cursor: pointer;
 }
 
-:where(.themed-select option) {
+:where(select option) {
   background: var(--platform-panel-bg, var(--lobby-surface));
   color: var(--platform-panel-text, var(--lobby-text));
 }
 
-:where(.themed-checkbox) {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-}
-
-:where(.themed-checkbox input) {
-  accent-color: var(--platform-panel-bg, var(--lobby-surface));
-}
-
-:where(.themed-input) {
+:where(input:is(#{$text-inputs})) {
   padding: 8px 10px;
   border: 1px solid var(--platform-button-bg, var(--lobby-accent));
   border-radius: 6px;
   background: var(--platform-panel-bg, var(--lobby-surface));
   color: var(--platform-panel-text, var(--lobby-text));
   font: inherit;
+}
+
+:where(input[type="checkbox"]) {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0;
+  border: 2px solid var(--platform-button-bg, var(--lobby-accent));
+  border-radius: 4px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font: inherit;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* The tick: an L of two borders turned 45 degrees, hidden until checked */
+:where(input[type="checkbox"])::before {
+  content: '';
+  width: 0.28em;
+  height: 0.55em;
+  margin-top: -0.12em;
+  border: solid currentColor;
+  border-width: 0 0.14em 0.14em 0;
+  transform: rotate(45deg) scale(0);
+}
+
+:where(input[type="checkbox"]:checked) {
+  background: var(--platform-button-bg, var(--lobby-accent));
+}
+
+:where(input[type="checkbox"]:checked)::before {
+  transform: rotate(45deg);
+}
+
+:where(select, input[type="checkbox"], input:is(#{$text-inputs})):focus-visible {
+  outline: 2px solid var(--platform-button-bg, var(--lobby-accent));
+  outline-offset: 2px;
+}
+
+/* Disabled (a guest's house rules): the value stays at full strength, and a dashed border says it cannot be changed */
+:where(select:disabled) {
+  appearance: none;
+  padding: 5px 9px;
+  border: 1px dashed var(--platform-button-bg, var(--lobby-accent));
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: none;
+  opacity: 1;
+}
+
+:where(input[type="checkbox"]:disabled, input:is(#{$text-inputs}):disabled) {
+  border-style: dashed;
+  opacity: 1;
+}
+
+/* A disabled box stays unfilled, so its tick is drawn in the button color */
+:where(input[type="checkbox"]:disabled) {
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-button-bg, var(--lobby-accent));
+}
+
+:where(select:disabled, input[type="checkbox"]:disabled, input:is(#{$text-inputs}):disabled) {
+  cursor: not-allowed;
+}
+
+/* checkbox-pill: a label wrapping a checkbox in Settings or the History gear panel, colored like a button */
+:where(.modal.settings, .history-settings) :where(label:has(> input[type="checkbox"])) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+:where(.modal.settings, .history-settings) :where(label:has(> input[type="checkbox"]):hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+/* On the pill the box takes the panel color, so it shows against the button color */
+:where(.modal.settings, .history-settings) :where(label > input[type="checkbox"]) {
+  border-color: var(--platform-panel-bg, var(--lobby-surface));
+  background: transparent;
+  color: var(--platform-button-bg, var(--lobby-accent));
+}
+
+:where(.modal.settings, .history-settings) :where(label > input[type="checkbox"]:checked) {
+  background: var(--platform-panel-bg, var(--lobby-surface));
+}
+
+:where(.modal.settings, .history-settings) :where(label > input[type="checkbox"]):focus-visible {
+  outline-color: var(--platform-panel-bg, var(--lobby-surface));
 }
 
 :where(.themed-chip) {
@@ -1005,10 +1267,6 @@
 }
 
 :where(.open-saved-game) {
-  display: block;
-  width: 100%;
-  max-width: 640px;
-  margin-bottom: 12px;
   padding: 10px 16px;
   border: 1px solid var(--lobby-border);
   border-radius: 8px;
@@ -1049,6 +1307,7 @@
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
   user-select: none;
 }
 
@@ -1063,35 +1322,12 @@
   color: var(--playing-card-red, var(--playing-card-red-default));
 }
 
-:where(.playing-card-back) {
-  background:
-    repeating-linear-gradient(45deg, var(--playing-card-stripe, var(--playing-card-stripe-default)) 0 4px, transparent 4px 8px),
-    var(--playing-card-back, var(--playing-card-back-default));
-}
-
-:where(.playing-card-corner) {
+/* The server drawing fills the card; the rounded corners clip the back's stripes */
+:where(.playing-card > .server-svg) {
   position: absolute;
-  top: 6%;
-  left: 8%;
-  font-size: 0.8em;
-}
-
-:where(.playing-card-corner-bottom) {
-  top: auto;
-  left: auto;
-  right: 8%;
-  bottom: 6%;
-  transform: rotate(180deg);
-}
-
-:where(.playing-card-pip) {
-  font-size: 1.9em;
-}
-
-:where(.playing-card-joker .playing-card-pip) {
-  font-size: 0.75em;
-  letter-spacing: 0.05em;
-  writing-mode: vertical-rl;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 :where(button.playing-card) {
@@ -1142,8 +1378,7 @@
 }
 
 :where(.dice-die) {
-  display: grid;
-  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  display: block;
   flex: none;
   width: 48px;
   height: 48px;
@@ -1157,12 +1392,11 @@
   user-select: none;
 }
 
-:where(.dice-pip) {
-  place-self: center;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--dice-pip, var(--dice-pip-default));
+/* The pips are the server drawing (shared/svg/dice.ts), painted with --dice-pip; the face is this box */
+:where(.dice-die > .server-svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 :where(button.dice-die) { cursor: pointer; }
@@ -1306,7 +1540,7 @@
 }
 
 /* Each checkbox is a themed pill as wide as its text */
-:where([data-game] .modal.settings .themed-checkbox, .lobby .modal.settings .themed-checkbox) {
+:where([data-game] .modal.settings label:has(> input[type="checkbox"]), .lobby .modal.settings label:has(> input[type="checkbox"])) {
   align-self: flex-start;
 }
 
@@ -1320,4 +1554,54 @@
   stroke: var(--color-symbol-stroke, rgba(0, 0, 0, 0.6));
   stroke-width: 1px;
   paint-order: stroke;
+}
+
+/* A drawing from /api/svg (ServerSvg): the caller's class sizes the box, and the drawing fills it */
+:where(.server-svg) {
+  display: inline-block;
+}
+
+:where(span.server-svg > svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Inside a board the drawing is a nested <svg>, which would clip strokes on its edge */
+:where(svg.server-svg, svg.server-svg > svg) {
+  overflow: visible;
+}
+
+/* A piece whose look is a server drawing behind its own content (a symbol, an initial, a count). The piece makes its
+   own stacking context, so the drawing sits just behind that content and above whatever the piece stands on */
+:where(:has(> .piece-art)) {
+  position: relative;
+  isolation: isolate;
+}
+
+:where(.piece-art) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* The header icons: Share, GitHub, Settings, the theme toggle and the playback gear */
+:where(.header-icon) {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+/* The piece's name, kept for screen readers when its drawing could not load */
+:where(.server-svg-fallback) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

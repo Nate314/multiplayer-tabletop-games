@@ -1,15 +1,6 @@
-// Pip positions on a 3 by 3 grid, numbered 0-8 from the top left
-const PIPS: Record<number, number[]> = {
-  1: [4],
-  2: [0, 8],
-  3: [0, 4, 8],
-  4: [0, 2, 6, 8],
-  5: [0, 2, 4, 6, 8],
-  6: [0, 2, 3, 5, 6, 8]
-};
-
-const pips = (value: number) =>
-  Array.from({ length: 9 }, (_, spot) => <span key={spot} className={PIPS[value]?.includes(spot) ? 'dice-pip' : ''} />);
+import ServerSvg from '../assets/ServerSvg.tsx';
+import usePreloadSvgs from '../assets/usePreloadSvgs.ts';
+import { DICE_PIECES, dieUrl } from './pieces.ts';
 
 type DieProps = {
   value: number;
@@ -19,8 +10,9 @@ type DieProps = {
   animKey?: string;
 };
 
-// One six-sided die face
+// One six-sided die face; the pips are drawn by the server (shared/svg/dice.ts)
 export function Die({ value, className, label, title, animKey }: DieProps) {
+  usePreloadSvgs(DICE_PIECES); // every face, so a roll never shows an empty die
   return (
     <span
       className={className ? `dice-die ${className}` : 'dice-die'}
@@ -29,7 +21,7 @@ export function Die({ value, className, label, title, animKey }: DieProps) {
       title={title}
       data-anim-key={animKey}
     >
-      {pips(value)}
+      <ServerSvg url={dieUrl(value)} />
     </span>
   );
 }
@@ -46,6 +38,7 @@ type DiceProps = {
 
 // A row of six-sided dice, shared by the games that roll them
 export default function Dice({ values, selected = [], onToggle, disabled = false, label, animKeyPrefix }: DiceProps) {
+  usePreloadSvgs(DICE_PIECES);
   return (
     <div className="dice-row" role="group" aria-label={label}>
       {values.map((value, index) => {
@@ -63,7 +56,7 @@ export default function Dice({ values, selected = [], onToggle, disabled = false
             disabled={disabled}
             onClick={() => onToggle(index)}
           >
-            {pips(value)}
+            <ServerSvg url={dieUrl(value)} />
           </button>
         ) : (
           <Die key={index} value={value} className={className} label={dieLabel} animKey={animKey} />

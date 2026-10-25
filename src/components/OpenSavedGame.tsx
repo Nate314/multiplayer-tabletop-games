@@ -1,10 +1,11 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { parseGameFile, type GameFile } from '../../shared/gameFile.ts';
-import type { PlayableGame } from '../clientGames.ts';
+import type { GameInfo } from '../../shared/gameDefinition.ts';
+import ClientGameGate from '../games/ClientGameGate.tsx';
 import HistoryDialog from './HistoryDialog';
 
 type OpenSavedGameProps = {
-  games: PlayableGame[];
+  games: GameInfo[];
 };
 
 const NOT_A_GAME_FILE = 'This file is not a saved game';
@@ -14,7 +15,7 @@ export default function OpenSavedGame({ games }: OpenSavedGameProps) {
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<GameFile | null>(null);
-  const client = games.find(({ info }) => info.id === file?.gameType)?.client;
+  const game = games.find(({ id }) => id === file?.gameType);
 
   async function pick(event: ChangeEvent<HTMLInputElement>) {
     const picked = event.target.files?.[0];
@@ -29,7 +30,7 @@ export default function OpenSavedGame({ games }: OpenSavedGameProps) {
       setError(NOT_A_GAME_FILE);
       return;
     }
-    const result = parseGameFile(text, games.map(({ info }) => info.id));
+    const result = parseGameFile(text, games.map(({ id }) => id));
     if ('error' in result) setError(result.error);
     else setFile(result.file);
   }
@@ -52,15 +53,19 @@ export default function OpenSavedGame({ games }: OpenSavedGameProps) {
         onChange={pick}
       />
       {error && <div className="lobby-error">{error}</div>}
-      {file && client && (
-        <div data-game={file.gameType}>
-          <HistoryDialog
-            client={client}
-            history={{ status: 'loaded', steps: file.steps }}
-            title={`Saved game: ${file.gameId}`}
-            onClose={close}
-          />
-        </div>
+      {file && game && (
+        <ClientGameGate id={game.id} name={game.name}>
+          {client => (
+            <div data-game={file.gameType}>
+              <HistoryDialog
+                client={client}
+                history={{ status: 'loaded', steps: file.steps }}
+                title={`Saved game: ${file.gameId}`}
+                onClose={close}
+              />
+            </div>
+          )}
+        </ClientGameGate>
       )}
     </>
   );

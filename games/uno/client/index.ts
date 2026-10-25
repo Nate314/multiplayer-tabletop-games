@@ -10,7 +10,6 @@ export const unoClient: ClientGame = {
   id: 'uno',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🃏',
   HistoryBoard,
   describeMove,
   animateMove

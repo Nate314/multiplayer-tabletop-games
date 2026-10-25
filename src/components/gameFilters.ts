@@ -10,14 +10,14 @@ export const DEFAULT_FILTERS: LandingFilters = { search: '', sort: 'category', c
 
 type PlayerCounts = Pick<GameInfo, 'minPlayers' | 'maxPlayers' | 'stretchedPlayers'>;
 
-// The game seats `players`, counting the stretched range the host can unlock with "I know what I'm doing"
+// The game seats `players`, counting the stretched range the host can set as a house rule
 export function supportsPlayers(info: PlayerCounts, players: number): boolean {
   const min = Math.min(info.minPlayers, info.stretchedPlayers?.min ?? info.minPlayers);
   const max = Math.max(info.maxPlayers, info.stretchedPlayers?.max ?? info.maxPlayers);
   return min <= players && players <= max;
 }
 
-// The game seats `players` only with the player-count override, so its card is marked "house rule"
+// The game seats `players` only as a player-count house rule, so its card is marked "house rule"
 export function needsHouseRule(info: PlayerCounts, players: number): boolean {
   return supportsPlayers(info, players) && (players < info.minPlayers || players > info.maxPlayers);
 }
@@ -42,6 +42,16 @@ export function arrangeGames<T extends { info: GameInfo }>(games: readonly T[], 
 
 export function hasActiveFilters(filters: LandingFilters): boolean {
   return filters.search.trim() !== '' || filters.categories.length > 0 || filters.players !== null;
+}
+
+// Clear filters keeps the sort, as sort is not a filter
+export function clearFilters(filters: LandingFilters): LandingFilters {
+  return { ...DEFAULT_FILTERS, sort: filters.sort };
+}
+
+// The number on the Filter button: search stays visible beside it and sort is not a filter
+export function activeFilterCount(filters: LandingFilters): number {
+  return filters.categories.length + (filters.players === null ? 0 : 1);
 }
 
 export function parsePlayers(text: string): number | null {

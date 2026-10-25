@@ -10,7 +10,6 @@ export const tickettorideClient: ClientGame = {
   id: 'tickettoride',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🚂',
   HistoryBoard,
   describeMove,
   animateMove

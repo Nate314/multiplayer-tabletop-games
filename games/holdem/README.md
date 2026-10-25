@@ -1,6 +1,6 @@
 # Texas Hold'em
 
-No-limit Texas Hold'em with play chips: two private cards each, five shared cards, and four rounds of betting, for 2 to 8 players (up to 10 with the house rules override).
+No-limit Texas Hold'em with play chips: two private cards each, five shared cards, and four rounds of betting, for 2 to 8 players (up to 10 as a house rule).
 
 ## Rules
 
@@ -27,7 +27,7 @@ No-limit Texas Hold'em with play chips: two private cards each, five shared card
 - The table shows each player's chips, their bet this round, their cards (yours face up, everyone else's face down) and the D for the dealer button, with the current player outlined. The middle shows the board, the pot and each side pot with who can win it
 - After a hand, read the result and click Continue. Click Vote to end the game to vote, and click again to take your vote back
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 
@@ -41,4 +41,4 @@ These follow no-limit play in [Wikipedia's Texas hold 'em article](https://en.wi
 - **No mucking or showing by choice.** At a showdown every hand still in is shown at once, in no order, and a player who wins uncontested cannot choose to show
 - **Running out of chips and ending.** The article does not cover the end of a cash game. Here a player with no chips is out, and the game ends by a unanimous vote of the players with chips or when one player has every chip, the owner's choices
 - **Leaving.** The article does not cover a player leaving mid-hand. Here their hand is folded and their chips leave the table
-- **Players.** This game seats 2 to 8, or up to 10 when the host ticks the override. With 10 players the deck still covers 20 hole cards, the burn cards and the five shared cards
+- **Players.** This game seats 2 to 8, or up to 10 when the host raises Most players. With 10 players the deck still covers 20 hole cards, the burn cards and the five shared cards

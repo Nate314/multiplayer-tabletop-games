@@ -10,7 +10,6 @@ export const checkersClient: ClientGame = {
   id: 'checkers',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '⛀',
   HistoryBoard,
   describeMove,
   animateMove

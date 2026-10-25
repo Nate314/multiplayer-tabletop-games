@@ -10,7 +10,6 @@ export const backgammonClient: ClientGame = {
   id: 'backgammon',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🎲',
   HistoryBoard,
   describeMove,
   animateMove

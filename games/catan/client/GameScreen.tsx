@@ -8,7 +8,7 @@ import { boardOf } from '../board.ts';
 import { cityError, piecesLeft, roadSpots, settlementError, settlementSpotError } from '../building.ts';
 import { robberVictims } from '../dice.ts';
 import { minimumToStart, tableLimit } from '../../../shared/houseRules.ts';
-import { PLAYERS } from '../rules.ts';
+import { PLAYERS } from '../options.ts';
 import { buildChance } from '../specialBuild.ts';
 import Board from './Board';
 import { boardAreaClass, seatClass } from './layout.ts';
@@ -26,6 +26,8 @@ import type { TrayKind } from './tray.ts';
 import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 const indexes = (count: number) => Array.from({ length: count }, (_, index) => index);
 const allVertices = (state: PublicGameState) => indexes(boardOf(state.layout).vertexCount);
@@ -34,8 +36,8 @@ const allHexes = (state: PublicGameState) => indexes(boardOf(state.layout).hexCo
 function turnMessage(state: PublicGameState, playerNumber: Seat): string {
   const { isGameOver, winners, playerNames, activePlayers, started, currentPlayer } = state;
   if (isGameOver) return winners.length > 0 ? `Game over: ${winners.map(winner => playerNames[winner]).join(' and ')} won` : 'Game over';
-  if (activePlayers.length < minimumToStart(PLAYERS, state)) {
-    return `Waiting for at least ${minimumToStart(PLAYERS, state)} players (up to ${tableLimit(PLAYERS, state)})`;
+  if (activePlayers.length < minimumToStart(PLAYERS)) {
+    return `Waiting for at least ${minimumToStart(PLAYERS)} players (up to ${tableLimit(PLAYERS, state)})`;
   }
   if (currentPlayer === null) return '';
   const name = currentPlayer === playerNumber ? 'You' : playerNames[currentPlayer];
@@ -71,11 +73,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const boardRef = useRef<HTMLDivElement>(null);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, pending, devPlayed, setup, specialBuild } = gameState;
   const noVote = !undoVote && !dismissVote;
-  const ready = activePlayers.length >= minimumToStart(PLAYERS, gameState) && !isGameOver && noVote;
+  const ready = activePlayers.length >= minimumToStart(PLAYERS) && !isGameOver && noVote;
   const canMove = ready && currentPlayer === playerNumber;
   const canBuild = ready && buildChance(gameState, playerNumber);
   const canAct = ready && activePlayers.includes(playerNumber);
-  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= minimumToStart(PLAYERS, gameState);
+  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= minimumToStart(PLAYERS);
   const canPlay = canMove && !setup && !pending && !devPlayed;
 
   // Only the live board animates; the history dialog's board renders without this hook
@@ -144,7 +146,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const pieces = (['road', 'settlement', 'city'] as const).map(kind => ({
     id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind],
     // The outline is on a wrapper, as the piece's own clip-path would cut it off; it keeps white (seat 5) readable
-    icon: <span className="tray-icon" aria-hidden="true"><span className={`tray-${kind} ${seatClass(playerNumber)}`} /></span>,
+    icon: (
+      <span className="tray-icon" aria-hidden="true">
+        {kind === 'road'
+          ? <span className={`tray-road ${seatClass(playerNumber)}`} />
+          : <ServerSvg url={svgUrl('catan-piece', kind)} className={`tray-${kind} ${seatClass(playerNumber)}`} />}
+      </span>
+    ),
     blocked: blockedFor(kind) || undefined
   }));
 

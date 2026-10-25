@@ -2,10 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
 import {
-  BID_STEP, DEFENDERS, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, SIX_TEAMS, targetScore, buildDeck, calledCount, canPlayCard,
+  BID_STEP, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, targetScore, buildDeck, calledCount, canPlayCard,
   cardName, sameCard, cardPoints, createGameState, dealHand, dealSizes, handPoints, rookTeams, teamOf, teamOfSeat, toPublicState,
   trickWinner
 } from './rules.ts';
+import { DEFENDERS, SIX_TEAMS } from './options.ts';
 import { rook } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { houseRulesOf, setHouseRules, type HouseRuleValues } from '../../shared/houseRules.ts';
@@ -463,11 +464,11 @@ test('the game ends at the chosen target', () => {
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay', 'Gus'];
 
-// `count` players seated with "I know what I'm doing" ticked; `values` are set by the host once everyone is seated
+// `count` players seated with Most players set to `count`; `values` are set by the host once everyone is seated
 function lobbyOf(count: number, values: HouseRuleValues = {}): GameState {
   let state: GameState = {
     ...createGameState('g'),
-    houseRules: { host: 1, values: {}, override: true, maxPlayers: count, agreed: [], revision: 0 }
+    houseRules: { host: 1, values: {}, maxPlayers: count, agreed: [], revision: 0 }
   };
   for (const name of NAMES.slice(0, count)) {
     const result = addPlayer(rook, state, name, seeded(7));
@@ -475,7 +476,7 @@ function lobbyOf(count: number, values: HouseRuleValues = {}): GameState {
     state = result.state;
   }
   if (Object.keys(values).length === 0) return state;
-  return rook.resetLobby(ok(setHouseRules(rook.info, state, 1, { values, override: true, maxPlayers: count })), seeded(7));
+  return rook.resetLobby(ok(setHouseRules(rook.info, state, 1, { values, maxPlayers: count })), seeded(7));
 }
 
 // The first `calledCount` cards of the deck that `seat` does not hold
@@ -600,13 +601,13 @@ test('the defenders option is offered only for three teams of two', () => {
 
   const six = lobbyOf(6);
   assert.deepEqual(houseRulesOf(rook.info, six).values, { targetScore: 500, sixTeams: 'twoOfThree' });
-  assert.deepEqual(setHouseRules(rook.info, six, 1, { values: { defenders: 'together' }, override: true, maxPlayers: 6 }),
+  assert.deepEqual(setHouseRules(rook.info, six, 1, { values: { defenders: 'together' }, maxPlayers: 6 }),
     { error: 'That is not a house rule of this game' });
-  const three = ok(setHouseRules(rook.info, six, 1, { values: { sixTeams: 'threeOfTwo', defenders: 'together' }, override: true, maxPlayers: 6 }));
+  const three = ok(setHouseRules(rook.info, six, 1, { values: { sixTeams: 'threeOfTwo', defenders: 'together' }, maxPlayers: 6 }));
   assert.deepEqual(three.houseRules?.values, { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'together' });
   assert.deepEqual(houseRulesOf(rook.info, lobbyOf(6, { sixTeams: 'threeOfTwo' })).values,
     { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'separate' });
-  assert.deepEqual(setHouseRules(rook.info, lobby(), 1, { values: { sixTeams: 'threeOfTwo' }, override: false, maxPlayers: null }),
+  assert.deepEqual(setHouseRules(rook.info, lobby(), 1, { values: { sixTeams: 'threeOfTwo' }, maxPlayers: null }),
     { error: 'That is not a house rule of this game' });
 });
 
@@ -628,7 +629,7 @@ function sixLastTrick(captured: number[], bid: number, defenders: 'separate' | '
       bidding: { high: { seat: 1, amount: bid }, passed: [2, 3, 4, 5, 6] }
     }),
     teams: [[1, 4], [2, 5], [3, 6]],
-    houseRules: { ...withRules({ targetScore: 500, sixTeams: 'threeOfTwo', defenders }), override: true, maxPlayers: 6 }
+    houseRules: { ...withRules({ targetScore: 500, sixTeams: 'threeOfTwo', defenders }), maxPlayers: 6 }
   };
   let next = state;
   for (const seat of [1, 2, 3, 4, 5, 6]) next = ok(move(next, seat, { type: 'play', card: next.hands[seat][0] }));
@@ -756,7 +757,7 @@ function calledLastTrick(cards: Card[], captured: number[], bid: number, called:
     }),
     teams: seats.map(seat => [seat]),
     called: { cards: called, partners },
-    houseRules: { ...withRules({ targetScore: 500 }), override: true, maxPlayers: seats.length }
+    houseRules: { ...withRules({ targetScore: 500 }), maxPlayers: seats.length }
   };
   let next = state;
   for (const seat of seats) next = ok(move(next, seat, { type: 'play', card: next.hands[seat][0] }));

@@ -7,6 +7,8 @@ import { createGameManager } from './games.ts';
 import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
+import { mountRulesRoute } from './rules.ts';
+import { mountAssetRoutes } from './assets/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, Result, Seat } from '../shared/types.ts';
@@ -50,7 +52,11 @@ app.get('/api/game-file/:gameType/:gameId', (req, res) => {
   }
 });
 
+mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
+
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
+
+mountAssetRoutes(app);
 
 serveClient(app, path.join(__dirname, '../dist'));
 

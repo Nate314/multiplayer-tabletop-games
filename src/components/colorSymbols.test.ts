@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { COLOR_SYMBOLS, SHAPE_PATHS } from './colorSymbols.ts';
+import { COLOR_SYMBOLS } from './colorSymbols.ts';
+import { SHAPE_PATHS } from '../../shared/svg/symbols.ts';
 
 test('every color has its own shape and every shape has a path', () => {
   const shapes = Object.values(COLOR_SYMBOLS);

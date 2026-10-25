@@ -10,7 +10,6 @@ export const heartsClient: ClientGame = {
   id: 'hearts',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '♥️',
   HistoryBoard,
   describeMove,
   animateMove

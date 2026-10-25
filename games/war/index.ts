@@ -1,17 +1,11 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffleEach } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
+import { warInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const war: GameDefinition<GameState, PublicGameState> = {
-  info: {
-    id: 'war',
-    category: 'card',
-    name: 'War',
-    description: 'Flip cards, higher card takes both, and win the whole deck',
-    minPlayers: 2,
-    maxPlayers: 2
-  },
+  info: warInfo,
   createGameState,
   resetLobby,
   applyMove,

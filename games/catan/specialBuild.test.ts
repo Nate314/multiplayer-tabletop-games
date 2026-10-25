@@ -4,7 +4,7 @@ import { afterSeatChange } from '../../shared/houseRules.ts';
 import { boardOf } from './board.ts';
 import { catan } from './index.ts';
 import { allowsOutOfTurn, onPlayerDisconnected, onPlayerLeft, toPublicState } from './rules.ts';
-import { SPECIAL_BUILD } from './specialBuild.ts';
+import { SPECIAL_BUILD } from './options.ts';
 import { FIVE_SIX_LAYOUT, act, dice, fiveSixGame, holding, move, played } from './testing.ts';
 import type { GameState, Seat } from './types.ts';
 
@@ -12,7 +12,7 @@ const board = boardOf(FIVE_SIX_LAYOUT);
 
 const withRule = (state: GameState): GameState => ({
   ...state,
-  houseRules: { host: 1, values: { specialBuild: true }, override: false, maxPlayers: null, agreed: [1, 2, 3, 4, 5], revision: 1 }
+  houseRules: { host: 1, values: { specialBuild: true }, maxPlayers: null, agreed: [1, 2, 3, 4, 5], revision: 1 }
 });
 
 // Every seat holds two of each resource

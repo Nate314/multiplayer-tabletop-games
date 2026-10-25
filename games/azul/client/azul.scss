@@ -84,7 +84,7 @@
 
   .back-button,
   .history-button,
-  .faq-button {
+  .rules-button {
     height: 2.5rem;
     padding: 0 1rem;
     border: none;
@@ -116,7 +116,7 @@
 
   .back-button:hover,
   .history-button:hover:enabled,
-  .faq-button:hover,
+  .rules-button:hover,
   .github-link:hover,
   .share-button:hover,
   .settings-button:hover,
@@ -201,13 +201,13 @@
     font-weight: 600;
   }
 
-  /* Always rendered, so the layout does not jump when the turn changes */
+  /* Always rendered with room for two lines, so the layout does not jump when the turn changes or tiles are picked up (a drag aims at a line) */
 
   .hint {
     color: var(--highlight);
     font-weight: 600;
     margin-top: 4px;
-    min-height: 1.5em;
+    min-height: 3em;
   }
 
   /* Tiles */
@@ -221,14 +221,13 @@
     flex: none;
   }
 
+  /* The tile is the server drawing (games/azul/svg.ts); its color-blind symbol sits on top, in the tile's color */
   .tile {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(var(--tile) * 0.5);
-    line-height: 1;
+    overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.35);
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
     user-select: none;
   }
 
@@ -243,28 +242,17 @@
     border: 1px dashed var(--slot-border);
   }
 
-  .tile-blue {
-    background: #1e6fd9;
+  .tile-blue,
+  .tile-red,
+  .tile-black {
     color: #fff;
   }
 
   .tile-yellow {
-    background: #f2b61b;
     color: #3a2a00;
   }
 
-  .tile-red {
-    background: #d6392e;
-    color: #fff;
-  }
-
-  .tile-black {
-    background: #2b2b2b;
-    color: #fff;
-  }
-
   .tile-cyan {
-    background: #7fdcdf;
     color: #053a3c;
   }
 
@@ -273,15 +261,11 @@
   }
 
   .tile-first {
-    background: #fff;
-    color: #1c2b3a;
-    font-weight: 700;
     border-radius: 50%;
   }
 
   .tile-faded {
     opacity: 0.22;
-    box-shadow: none;
   }
 
   .tile-selected {
@@ -472,7 +456,9 @@
   }
 
   .pattern-line.legal:hover,
-  .floor-line.legal:hover {
+  .floor-line.legal:hover,
+  .pattern-line[data-drag-over],
+  .floor-line[data-drag-over] {
     background: var(--slot-bg);
   }
 
@@ -704,7 +690,7 @@
 
     .back-button,
     .history-button,
-    .faq-button {
+    .rules-button {
       padding: 0 0.6rem;
     }
   }

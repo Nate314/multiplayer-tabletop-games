@@ -165,7 +165,8 @@
     padding: 0;
     border: 2px solid #fff;
     border-radius: 7px;
-    background: hsl(var(--hue, 0), 62%, 38%);
+    /* The face is the server's card art (shared/svg/cardArt.ts) in the card's own hue */
+    --art-fill: hsl(var(--hue, 0), 62%, 38%);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
     color: #fff;
     font-weight: 800;
@@ -184,7 +185,8 @@
   }
 
   .tile-back {
-    background: repeating-linear-gradient(45deg, #1f6fa8, #1f6fa8 6px, #17598a 6px, #17598a 12px);
+    --art-fill: #1f6fa8;
+    --art-stripe: #17598a;
   }
 
   .tile-empty {

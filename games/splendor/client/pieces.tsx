@@ -3,6 +3,8 @@ import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import { CARDS, GEMS, NOBLES } from '../cards.ts';
 import type { Gems, Level, Token } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL, cardArtUrl } from '../../../src/components/pieces.ts';
 
 // Gold is shown as the yellow shape
 const symbolOf = (token: Token): SymbolColor => (token === 'gold' ? 'yellow' : token);
@@ -24,6 +26,7 @@ export function GemToken({ token, count, animKey, size = 'small', selected = 0, 
   const name = label ?? (count === undefined ? token : `${count} ${token}`);
   const content = (
     <>
+      <ServerSvg url={DISC_URL} className="piece-art" />
       <ColorSymbol color={symbolOf(token)} />
       {count !== undefined && <span className="gem-count">{count}</span>}
       {selected > 0 && <span className="gem-picked" aria-hidden="true">{selected}</span>}
@@ -75,10 +78,12 @@ export function CardView({ card, level, animKey, selected, highlighted, affordab
   if (highlighted) classes.push('dev-card-highlighted');
   if (affordable) classes.push('dev-card-affordable');
   const label = card === null ? `Face-down level ${level} card` : cardLabel(card);
+  const art = <ServerSvg url={cardArtUrl('solid')} className="piece-art" />;
   const face = card === null
-    ? <span className="dev-card-back-label">{'I'.repeat(level)}</span>
+    ? <>{art}<span className="dev-card-back-label">{'I'.repeat(level)}</span></>
     : (
       <>
+        {art}
         <span className="dev-card-top">
           <span className="dev-card-points">{CARDS[card].points > 0 ? CARDS[card].points : ''}</span>
           <span className={`dev-card-bonus gem-${CARDS[card].bonus}`} aria-hidden="true"><ColorSymbol color={CARDS[card].bonus} /></span>
@@ -105,6 +110,7 @@ export function NobleView({ noble, animKey, highlighted, onClick }: NobleViewPro
   const className = `noble${highlighted ? ' noble-highlighted' : ''}`;
   const face = (
     <>
+      <ServerSvg url={cardArtUrl('solid')} className="piece-art" />
       <span className="noble-points">{points}</span>
       <span className="noble-cost">
         {GEMS.filter(gem => cost[gem] > 0).map(gem => (

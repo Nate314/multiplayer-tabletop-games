@@ -1,20 +1,13 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffleEach } from '../../shared/shuffle.ts';
 import {
-  MONOPOLY_RULES, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState
+  applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState
 } from './rules.ts';
+import { monopolyInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const monopoly: GameDefinition<GameState, PublicGameState> = {
-  info: {
-    id: 'monopoly',
-    category: 'strategy',
-    name: 'Monopoly',
-    description: 'Buy, trade and build on properties and bankrupt every other player',
-    minPlayers: 2,
-    maxPlayers: 8,
-    houseRules: MONOPOLY_RULES
-  },
+  info: monopolyInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

@@ -75,7 +75,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points, and turn on four house rules: stacking, 7-0, drawing until you can play, and jump-in. Everyone has to agree before play starts, and the rules cannot change afterwards. Ticking \'I know what I\'m doing\' lets the host seat up to 10 players instead of 8.'
+    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points, and turn on four house rules: stacking, 7-0, drawing until you can play, and jump-in. Everyone has to agree before play starts, and the rules cannot change afterwards. The host can also set Most players to as many as 10 instead of 8.'
   },
   {
     question: 'How does stacking work?',

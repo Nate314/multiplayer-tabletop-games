@@ -981,13 +981,13 @@ test('an action that would start play before everyone agreed is refused and chan
   assert.equal(ok(manager.action(ROOM, 1, { type: 'start' })).started, true);
 });
 
-test('a game with no house rules and no override needs no agreement', () => {
+test('a game with no house rules and no stretched range needs no agreement', () => {
   assert.equal(ok(gameWith('A', 'B').move(ROOM, 1, tick)).started, true);
 });
 
 test('only the host may set the house rules and a change clears the agreements', () => {
   const manager = rulesGameWith('A', 'B');
-  const proposal = { values: { fast: true }, override: false, maxPlayers: null };
+  const proposal = { values: { fast: true }, maxPlayers: null };
   assert.deepEqual(manager.setHouseRules(ROOM, 2, proposal), { error: 'Only the host can change the house rules' });
   assert.deepEqual(manager.setHouseRules(ROOM, 3, proposal), { error: 'You are not in this game' });
   ok(manager.agreeHouseRules(ROOM, 2, manager.getState(ROOM)?.houseRules?.revision));
@@ -999,7 +999,7 @@ test('only the host may set the house rules and a change clears the agreements',
 test('an agreement to an old revision is refused after the host changed the rules', () => {
   const manager = rulesGameWith('A', 'B');
   const seen = manager.getState(ROOM)?.houseRules?.revision;
-  ok(manager.setHouseRules(ROOM, 1, { values: { goal: 5 }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { goal: 5 }, maxPlayers: null }));
   assert.deepEqual(manager.agreeHouseRules(ROOM, 2, seen), { error: 'The house rules changed. Check them and agree again' });
   assert.deepEqual(manager.getState(ROOM)?.houseRules?.agreed, []);
 });
@@ -1049,7 +1049,7 @@ test('the house rules survive a restart', () => {
   const manager = rulesManager(store);
   manager.join('test', 'g1', 'A');
   manager.join('test', 'g1', 'B');
-  ok(manager.setHouseRules(ROOM, 1, { values: { fast: true, goal: 5 }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { fast: true, goal: 5 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, tick));
   const rules = rulesManager(store).getState(ROOM)?.houseRules;

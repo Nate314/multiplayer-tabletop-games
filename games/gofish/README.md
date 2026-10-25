@@ -23,7 +23,7 @@ Ask for ranks, go fish, and collect the most books of four, for 2 to 6 players.
 - A card you just drew is shown in the status panel
 - With Highlight newly drawn cards on in Settings (the default), the card you fish from the stock is outlined until your next ask; cards handed to you are not
 - Click Undo to ask everyone to undo the last ask
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

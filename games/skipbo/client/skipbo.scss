@@ -179,25 +179,28 @@
     border-radius: 5px;
   }
 
+  /* The faces and back are the server's card art (shared/svg/cardArt.ts) in these colors */
   .card-low {
-    background: #1f62c4;
+    --art-fill: #1f62c4;
   }
 
   .card-mid {
-    background: #2c8a3c;
+    --art-fill: #2c8a3c;
   }
 
   .card-high {
-    background: #c7302a;
+    --art-fill: #c7302a;
   }
 
   .card-skipbo {
-    background: linear-gradient(160deg, #f08a24, #d8471f);
+    --art-fill: #f08a24;
+    --art-fill-4: #d8471f;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 
   .card-back {
-    background: repeating-linear-gradient(45deg, #c2551f, #c2551f 6px, #a44516 6px, #a44516 12px);
+    --art-fill: #c2551f;
+    --art-stripe: #a44516;
     font-size: calc(var(--card-w) * 0.2);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }

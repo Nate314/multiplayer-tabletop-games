@@ -1,6 +1,6 @@
 # Yahtzee
 
-Roll five dice up to three times a turn and fill every scoring box on your sheet, for 2 to 8 players (up to 10 with the house rules override). The highest total after 13 rounds wins.
+Roll five dice up to three times a turn and fill every scoring box on your sheet, for 2 to 8 players (up to 10 as a house rule). The highest total after 13 rounds wins.
 
 ## Rules
 
@@ -22,13 +22,13 @@ Roll five dice up to three times a turn and fill every scoring box on your sheet
 - After your first roll, each empty box in your column shows the points the dice would score there. Click one to write it in. Under the Joker rule only the boxes you may use can be clicked
 - The score sheet has a column per player, with the player on the move marked, an upper section subtotal and bonus, the Yahtzee bonus and each player's total
 - Click Undo to ask the other players to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 
 These follow the standard and official Yahtzee rules in [Wikipedia's Yahtzee article](https://en.wikipedia.org/wiki/Yahtzee), with the forced Joker rule. What is different:
 
-- **Players.** The game needs 2 to 8 players, or up to 10 when the host ticks the override, and everyone must agree to the table before play starts. There is no solo game
+- **Players.** The game needs 2 to 8 players, or up to 10 when the host raises Most players, and everyone must agree to the table before play starts. There is no solo game
 - **Joker rule.** The article describes both the official forced Joker and a free choice variant. Only the forced Joker is played
 - **Holding every die.** A roll that holds all five dice would change nothing, so it is refused. Score instead
 - **Held dice.** The dice you hold are sent with the roll and shown to everyone as outlined. Dice held in the previous roll start held again, and you can release them

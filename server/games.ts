@@ -90,7 +90,7 @@ export function createGameManager(
   // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it
   function clockMayRun(room: Room): boolean {
     const { game, state } = room;
-    return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info, state));
+    return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info));
   }
 
   // Open votes and disconnects do not pause a clock; only the game's own deadline does

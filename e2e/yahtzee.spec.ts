@@ -310,7 +310,7 @@ test.describe('Yahtzee differences from Wikipedia', () => {
 });
 
 test.describe('Yahtzee house rules', () => {
-  test('10 players can join with the override', async ({ seat }) => {
+  test('10 players can join with Most players raised', async ({ seat }) => {
     const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
     const table = await seat('yahtzee', names, { maxPlayers: 10 });
     expect(table.pages).toHaveLength(10);

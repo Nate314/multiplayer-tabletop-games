@@ -1,7 +1,8 @@
+import ServerSvg from '../assets/ServerSvg.tsx';
+import usePreloadSvgs from '../assets/usePreloadSvgs.ts';
+import { DECK_PIECES, cardUrl } from './pieces.ts';
 import { cardName, isJoker } from '../../shared/playingCards.ts';
-import type { DeckCard, Suit } from '../../shared/playingCards.ts';
-
-const SUIT_SYMBOLS: Record<Suit, string> = { clubs: '♣', diamonds: '♦', hearts: '♥', spades: '♠' };
+import type { DeckCard } from '../../shared/playingCards.ts';
 
 type PlayingCardProps = {
   card: DeckCard | null; // null draws the back of a face-down card
@@ -17,6 +18,7 @@ type PlayingCardProps = {
 
 // A standard playing card, shared by the games that use the 52-card deck
 export default function PlayingCard({ card, size = 'medium', animKey, highlighted = false, selected = false, drawn = false, onClick, disabled = false }: PlayingCardProps) {
+  usePreloadSvgs(DECK_PIECES); // the whole deck, so a card dealt or turned later is already drawn
   const classes = ['playing-card', `playing-card-${size}`];
   if (!card) classes.push('playing-card-back');
   else if (isJoker(card)) classes.push('playing-card-joker');
@@ -25,19 +27,8 @@ export default function PlayingCard({ card, size = 'medium', animKey, highlighte
   if (selected) classes.push('playing-card-selected');
   if (drawn) classes.push('newly-drawn');
   const label = card ? cardName(card) : 'face-down card';
-  const face = card && (isJoker(card) ? (
-    <>
-      <span className="playing-card-corner">★</span>
-      <span className="playing-card-pip">JOKER</span>
-      <span className="playing-card-corner playing-card-corner-bottom">★</span>
-    </>
-  ) : (
-    <>
-      <span className="playing-card-corner">{card.rank}{SUIT_SYMBOLS[card.suit]}</span>
-      <span className="playing-card-pip">{SUIT_SYMBOLS[card.suit]}</span>
-      <span className="playing-card-corner playing-card-corner-bottom">{card.rank}{SUIT_SYMBOLS[card.suit]}</span>
-    </>
-  ));
+  // The marks are drawn by the server (shared/svg/playingCards.ts); the face color and outlines stay here
+  const face = <ServerSvg url={cardUrl(card)} />;
 
   if (!onClick) {
     return <span className={classes.join(' ')} title={label} aria-label={label} role="img" data-anim-key={animKey}>{face}</span>;

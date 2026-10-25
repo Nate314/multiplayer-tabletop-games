@@ -1,6 +1,6 @@
 # Phase 10
 
-Collect sets and runs to complete ten phases first, for 2 to 6 players (up to 8 with the house rules override).
+Collect sets and runs to complete ten phases first, for 2 to 6 players (up to 8 as a house rule).
 
 ## Rules
 
@@ -29,9 +29,9 @@ Collect sets and runs to complete ten phases first, for 2 to 6 players (up to 8 
 - With Highlight newly drawn cards on in Settings (the default), the card you draw is outlined from your draw until your discard ends the turn; laying down and hitting keep it
 - Moves slide into place: draws, discards, laid-down phases and hits; a skipped player's seat flashes
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
-- Click FAQ at the top of the page for the rules, the ten phases and the controls
+- Click Rules at the top of the page for these rules, and FAQ in it for the rules, the ten phases and the controls
 
 ## Differences from Wikipedia
 
 The [Wikipedia article](https://en.wikipedia.org/wiki/Phase_10) covers only the goal, the phases, hitting, scoring and the tiebreaker, and the game follows it. Playing the phases in any order is not part of the official rules, so it is off unless the host turns it on and everyone agrees. Where it is silent, the game follows the published Mattel rules, including one Wikipedia does not mention: a Skip turned up to start the discard pile skips the first player (Mattel's Phase 10 instructions).
-- **Players.** The article does not limit the number of players. This game seats 2 to 6, or up to 8 when the host ticks the override. With 8 players the 108 cards deal 10 each and leave 27 to draw from
+- **Players.** The article does not limit the number of players. This game seats 2 to 6, or up to 8 when the host raises Most players. With 8 players the 108 cards deal 10 each and leave 27 to draw from

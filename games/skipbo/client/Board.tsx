@@ -1,6 +1,8 @@
 import CardView from './CardView';
 import { PILES, nextValue } from '../rules.ts';
 import type { Card, PileIndex, PublicGameState } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type BoardProps = {
   gameState: PublicGameState;
@@ -17,7 +19,7 @@ export default function Board({ gameState, picked, onPlay, lastPile = null }: Bo
   return (
     <section className="board" aria-label="Building piles">
       <div className="pile draw-pile">
-        <span className="card card-back" aria-hidden="true">Skip-Bo</span>
+        <span className="card card-back" aria-hidden="true"><ServerSvg url={cardArtUrl('stripes')} className="piece-art" />Skip-Bo</span>
         <span className="pile-label">Draw pile ({drawCount})</span>
       </div>
       {PILES.map(index => {

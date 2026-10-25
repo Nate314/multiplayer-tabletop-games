@@ -1,15 +1,10 @@
 // Turn order, points, the two award cards, the end of the game and the event log, shared by every part of the rules
-import { houseRule, targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { AWARD_POINTS, LARGEST_ARMY_MINIMUM, LONGEST_ROAD_MINIMUM, awardHolder, roadLengths } from './roads.ts';
 import type { GameState, Seat } from './types.ts';
+import { POINTS_RULE, FRIENDLY_ROBBER_RULE } from './options.ts';
 
 export const LOG_SIZE = 40;
-const POINTS_RULE = targetScoreRule(10, [8, 12], 'Points to win');
-const FRIENDLY_ROBBER_RULE: ToggleRule = {
-  id: 'friendlyRobber', label: 'Friendly robber: players with 2 points or fewer cannot be robbed', kind: 'toggle', standard: false,
-  help: 'The robber may still be moved to their hex, where it blocks production but steals nothing'
-};
-export const CATAN_RULES: HouseRule[] = [POINTS_RULE, FRIENDLY_ROBBER_RULE];
 
 export const friendlyRobber = (state: Pick<GameState, 'houseRules'>): boolean => houseRule(state, FRIENDLY_ROBBER_RULE) === true;
 

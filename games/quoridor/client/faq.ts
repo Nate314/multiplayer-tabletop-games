@@ -17,12 +17,12 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I place a wall?',
-    answer: 'On your turn, choose Horizontal Wall or Vertical Wall, then hover over the board to preview the wall ' +
-      'and click to place it. A horizontal wall runs under the square you click and the one to its right. A ' +
+    answer: 'On your turn, tap the wall in the Your action box to pick it up horizontal, and tap it again or press R ' +
+      'to turn it vertical. A dot on the bottom right corner of a square marks each place it can go, the middle of ' +
+      'the wall it would make; hover over the board to preview the wall and click to place it, or drag the wall ' +
+      'from the box onto the board. A horizontal wall runs under the square you click and the one to its right. A ' +
       'vertical wall runs along the right of the square you click and the one below it. Placing a wall uses ' +
-      'your turn. Or use the tray of walls below the action buttons: tap the wall to pick it up, and a dot on the ' +
-      'bottom right corner of a square marks each place it can go, the middle of the wall it would make. Tap it again, click Rotate or press R to turn it, then click a dotted square, ' +
-      'or drag the wall from the tray onto the board.'
+      'your turn. Tap Move to put the wall down and move your pawn instead.'
   },
   {
     question: 'Where can walls go?',

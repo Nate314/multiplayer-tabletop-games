@@ -10,7 +10,6 @@ export const catanClient: ClientGame = {
   id: 'catan',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🏝️',
   HistoryBoard,
   describeMove,
   animateMove

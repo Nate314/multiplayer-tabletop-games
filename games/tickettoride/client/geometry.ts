@@ -3,9 +3,7 @@
 import { CITIES } from '../map.ts';
 import type { Route } from '../types.ts';
 
-export const MAP_LEFT = -50;  // room for the names of the westernmost cities
-export const MAP_WIDTH = 1060;
-export const MAP_HEIGHT = 630;
+export { MAP_LEFT, MAP_WIDTH, MAP_HEIGHT } from '../map.ts';
 export const CITY_RADIUS = 7;
 export const TRACK_WIDTH = 9;
 const TRACK_GAP = 3;          // between train spaces
@@ -67,14 +65,3 @@ export function labelPlacement(label: 'left' | 'right' | 'above' | 'below' = 'be
     case 'below': return { dx: 0, dy: 19, anchor: 'middle' };
   }
 }
-
-// A rough outline of the United States and the southern edge of Canada, in map coordinates (this site's own drawing)
-export const LAND_OUTLINE =
-  '28,100 58,87 550,87 647,109 730,142 770,169 772,219 832,213 876,193 902,175 964,175 990,142 1029,129 1043,175 987,206 ' +
-  '980,228 990,248 959,257 920,274 916,294 894,320 880,351 890,386 851,419 799,461 790,496 813,573 807,611 783,591 767,549 ' +
-  '749,507 721,512 700,496 645,501 649,527 621,523 568,514 512,554 508,595 476,582 438,510 410,527 380,507 348,466 318,477 ' +
-  '267,477 202,450 161,450 139,422 100,404 77,360 66,334 44,290 35,241 40,149 28,100';
-
-// Canada: the top of the map down to the northern border of the outline above, from Maine back to the Pacific
-const NORTHERN_BORDER = LAND_OUTLINE.split(' ').slice(0, 13).reverse().join(' ');
-export const CANADA_OUTLINE = `${MAP_LEFT},0 ${MAP_WIDTH},0 ${MAP_WIDTH},125 ${NORTHERN_BORDER} ${MAP_LEFT},92`;

@@ -321,8 +321,10 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--seat);
-    border: 2px solid var(--piece-tray-text);
+    /* The shared disc drawing (shared/svg/disc.ts) in your color */
+    --disc-fill: var(--seat);
+    --disc-edge: var(--piece-tray-text);
+    --disc-edge-width: 9;
   }
 
   .draft-badge circle {
@@ -509,9 +511,6 @@
   }
 
   .die {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
     width: 30px;
     height: 30px;
     padding: 4px;
@@ -526,19 +525,12 @@
     background: var(--attack-die);
   }
 
-  .die span {
-    place-self: center;
+  .die {
+    --dice-pip: var(--die-pip);
   }
 
-  .die .dice-pip {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--die-pip);
-  }
-
-  .die-attack .dice-pip {
-    background: #FFFFFF;
+  .die-attack {
+    --dice-pip: #FFFFFF;
   }
 
   /* Cards */

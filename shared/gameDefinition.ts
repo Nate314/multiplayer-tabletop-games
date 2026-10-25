@@ -10,7 +10,7 @@ export type GameInfo = {
   minPlayers: number;
   maxPlayers: number;
   houseRules?: HouseRule[];
-  stretchedPlayers?: PlayerRange; // allowed with the player-count override; contains minPlayers..maxPlayers
+  stretchedPlayers?: PlayerRange; // the table the host may set as a house rule; contains minPlayers..maxPlayers
 };
 
 // Everything a game supplies; seating, turn order and undo are handled by the platform

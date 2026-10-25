@@ -109,7 +109,7 @@ test('the turn timer starts when the last player agrees and a restored turn gets
   const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
   manager.join('scrabble', 'g1', 'A');
   manager.join('scrabble', 'g1', 'B');
-  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   const raw = () => manager.rawState(ROOM) as unknown as { turnStartedAt: number };
   assert.equal(raw().turnStartedAt, time);
@@ -126,7 +126,7 @@ test('dismissing the player to move gives the next player a full turn timer', ()
   let time = 1_000_000;
   const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
   for (const name of ['A', 'B', 'C']) manager.join('scrabble', 'g1', name);
-  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, FIRST_WORD));
   const raw = () => manager.rawState(ROOM) as unknown as { turnStartedAt: number; currentPlayer: Seat };
@@ -143,7 +143,7 @@ test('dismissing a player not to move leaves the turn timer alone', () => {
   let time = 1_000_000;
   const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
   for (const name of ['A', 'B', 'C']) manager.join('scrabble', 'g1', name);
-  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, FIRST_WORD));
   const started = time;

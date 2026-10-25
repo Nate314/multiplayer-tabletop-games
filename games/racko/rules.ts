@@ -1,7 +1,7 @@
 // Rack-O rules shared by the browser (move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Rack-O, and the default target score of 500 from the official rules.
 import { viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -9,12 +9,11 @@ import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, GameState, LastMove, Move, Pile, PublicGameState, Result, RoundSummary, Seat } from './types.ts';
+import { TARGET_RULE } from './options.ts';
 
 export const RACK_SIZE = 10;
 export const RACKO_POINTS = 75;
 export const CARD_POINTS = 5;
-const TARGET_RULE = targetScoreRule(500, [250, 1000]);
-export const RACKO_RULES: HouseRule[] = [TARGET_RULE];
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 

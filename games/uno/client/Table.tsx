@@ -4,6 +4,8 @@ import { DISCARD_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import { targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 type TableProps = {
   gameState: PublicGameState;
@@ -65,10 +67,11 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
         <div className="pile">
           {onDraw ? (
             <button type="button" className="card card-back card-playable" onClick={onDraw} aria-label="Draw a card">
+              <ServerSvg url={svgUrl('uno-card', 'back')} className="piece-art" />
               <span className="card-face">UNO</span>
             </button>
           ) : (
-            <span className="card card-back"><span className="card-face">UNO</span></span>
+            <span className="card card-back"><ServerSvg url={svgUrl('uno-card', 'back')} className="piece-art" /><span className="card-face">UNO</span></span>
           )}
           <span className="pile-label">Draw pile: {drawPileCount}</span>
         </div>

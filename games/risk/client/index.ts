@@ -10,7 +10,6 @@ export const riskClient: ClientGame = {
   id: 'risk',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🌍',
   HistoryBoard,
   describeMove,
   animateMove

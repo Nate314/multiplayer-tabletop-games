@@ -10,7 +10,6 @@ export const warClient: ClientGame = {
   id: 'war',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '⚔️',
   HistoryBoard,
   describeMove,
   animateMove

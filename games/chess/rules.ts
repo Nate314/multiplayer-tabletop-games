@@ -1,6 +1,6 @@
 // Chess rules shared by the browser (legal move hints, check) and the server (validation).
 import { applyEndingAction, endGame, endingRefusal, lapseDrawOffer, otherSeat } from '../../shared/drawOffer.ts';
-import { houseRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import type { Random } from '../../shared/types.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
@@ -19,29 +19,9 @@ import type {
   Seat,
   Square
 } from './types.ts';
+import { CLOCK_MINUTES, INCREMENT_SECONDS } from './options.ts';
 
 export const BOARD_SIZE = 8;
-
-export const CLOCK_MINUTES: ChoiceRule<'off' | 5 | 10 | 15> = {
-  id: 'clockMinutes', label: 'Clock', kind: 'choice', standard: 'off',
-  choices: [
-    { value: 'off', label: 'Off' },
-    { value: 5, label: '5 minutes' },
-    { value: 10, label: '10 minutes' },
-    { value: 15, label: '15 minutes' }
-  ]
-};
-export const INCREMENT_SECONDS: ChoiceRule<0 | 2 | 5 | 10> = {
-  id: 'incrementSeconds', label: 'Increment per move', kind: 'choice', standard: 0,
-  choices: [
-    { value: 0, label: 'None' },
-    { value: 2, label: '2 seconds' },
-    { value: 5, label: '5 seconds' },
-    { value: 10, label: '10 seconds' }
-  ],
-  offered: (_, values) => values.clockMinutes !== 'off'
-};
-export const CHESS_RULES: HouseRule[] = [CLOCK_MINUTES, INCREMENT_SECONDS];
 
 export const PROMOTION_TYPES: PromotionType[] = ['queen', 'rook', 'bishop', 'knight'];
 
@@ -451,7 +431,6 @@ function asSquare(value: unknown): Square | null {
     ? square as Square
     : null;
 }
-
 
 function repetitions(positions: string[]): number {
   const current = positions[positions.length - 1];

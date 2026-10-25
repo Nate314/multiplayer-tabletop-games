@@ -1,17 +1,10 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { HEARTS_RULES, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { heartsInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const hearts: GameDefinition<GameState, PublicGameState> = {
-  info: {
-    id: 'hearts',
-    category: 'card',
-    name: 'Hearts',
-    description: 'Dodge the hearts and the queen of spades, or shoot the moon and take them all',
-    minPlayers: 4,
-    maxPlayers: 4,
-    houseRules: HEARTS_RULES
-  },
+  info: heartsInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

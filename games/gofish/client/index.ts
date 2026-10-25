@@ -10,7 +10,6 @@ export const gofishClient: ClientGame = {
   id: 'gofish',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🐟',
   HistoryBoard,
   describeMove,
   animateMove

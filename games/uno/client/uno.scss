@@ -12,6 +12,10 @@
   --button-bg: #c8261b;
   --button-hover-bg: #a01d14;
   --button-text: #fff;
+  /* The shared controls (house rules, History gear) take the game's button colors in either theme */
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
   --status-bg: #fbe8e3;
   --status-text: #2a1712;
   --error-bg: #fbe3e1;
@@ -73,7 +77,7 @@
 
   .back-button,
   .history-button,
-  .faq-button {
+  .rules-button {
     height: 2.5rem;
     padding: 0 1rem;
     border: none;
@@ -103,7 +107,7 @@
 
   .back-button:hover,
   .history-button:hover:enabled,
-  .faq-button:hover,
+  .rules-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
@@ -260,18 +264,8 @@
     line-height: 1;
   }
 
-  .card-face::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: 50%;
-    background: #fff;
-    transform: rotate(-20deg);
-  }
-
+  /* The card color and its oval are the server drawing (games/uno/svg.ts) */
   .card-red {
-    background: var(--card-red);
     --face-color: var(--card-red);
   }
 
@@ -280,31 +274,19 @@
   }
 
   .card-yellow {
-    background: var(--card-yellow);
     --face-color: #8a6d00;
   }
 
   .card-green {
-    background: var(--card-green);
     --face-color: var(--card-green);
   }
 
   .card-blue {
-    background: var(--card-blue);
     --face-color: var(--card-blue);
   }
 
-  .card-wild {
-    background: conic-gradient(var(--card-red) 0 25%, var(--card-blue) 0 50%, var(--card-yellow) 0 75%, var(--card-green) 0);
-  }
-
   .card-back {
-    background: var(--card-dark);
     --face-color: var(--card-red);
-  }
-
-  .card-back .card-face::before {
-    background: var(--card-red);
   }
 
   .card-back .card-face {
@@ -819,7 +801,7 @@
 
     .back-button,
     .history-button,
-    .faq-button {
+    .rules-button {
       padding: 0 0.6rem;
     }
 

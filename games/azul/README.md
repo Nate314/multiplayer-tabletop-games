@@ -17,13 +17,14 @@ Each round, players take turns picking tiles and placing them on their own board
 
 - On your turn, click a tile in a factory or the center to pick up every tile of that color there. Click it again to put them back
 - Your legal pattern lines and your floor line are outlined. Click one to place the tiles
+- Or drag a tile from a factory or the center onto one of your outlined lines or your floor line: every tile of that color there comes with it. Let go anywhere else and the tiles go back, still picked up, so a click can place them
 - The table is dimmed when it is not your turn
 - Boards are shown in turn order starting with yours, so play always passes to the board on the right
 - In the center, each color stays together on one row
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
 - After each round, read the scoring screen and click Continue; the next round starts once everyone has
 - With Color-blind symbols on in Settings, each tile shows the shape of its color in place of its mark: red circle, blue square, yellow star, black diamond, cyan pentagon. Tiles in factories, the center, pattern lines, the wall and the floor show it; the first player marker does not
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

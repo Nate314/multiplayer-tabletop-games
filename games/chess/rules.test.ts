@@ -445,7 +445,7 @@ test('a move after the time ran out is refused as a loss on time', () => {
 });
 
 test('the increment is offered only with the clock on', () => {
-  const labels = (state: GameState) => describeHouseRules(chess.info, houseRulesOf(chess.info, state)).map(line => line.label);
+  const labels = (state: GameState) => describeHouseRules(chess.info, houseRulesOf(chess.info, state), 2).map(line => line.label);
   const off = { ...lobby('A', 'B'), houseRules: withRules({ clockMinutes: 'off' }) }; // the platform leaves out a rule that is not offered
   assert.deepEqual(labels(off), ['Clock']);
   assert.deepEqual(labels(clocked(5)), ['Clock', 'Increment per move']);

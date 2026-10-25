@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react';
 import TileArt from './TileArt';
+import { CARCASSONNE_PIECES } from './pieces.ts';
+import usePreloadSvgs from '../../../src/assets/usePreloadSvgs.ts';
 import Meeple from './Meeple';
-import { spotOf } from './spots.ts';
+import { spotOf } from '../spots.ts';
 import { cellTarget, meepleKey, spotTarget, tileKey } from './keys.ts';
 import type { FeatureRef, Placement, Seat, TileType } from '../types.ts';
 import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
@@ -52,6 +54,7 @@ function around(cell: Cell): View {
 // While the player has not moved the view, it refits by itself as the board grows, or shows `focus` up close.
 export default function Board({ board, highlight = null, cells = [], preview = null, onCell, meepleSeat, meepleChoices = [], onMeeple, focus = null }: BoardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  usePreloadSvgs(CARCASSONNE_PIECES);
   const fitted = useMemo(() => (focus ? around(focus) : fit(board, cells)), [board, cells, focus]);
   // A view the player moved to, kept until the focus comes or goes; null follows the fitted view
   const focusKey = focus ? `${focus.x},${focus.y}` : '';

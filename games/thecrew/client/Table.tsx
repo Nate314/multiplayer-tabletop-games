@@ -3,6 +3,8 @@ import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { leftOf, missionRules, tokenName, totalTricks } from '../rules.ts';
 import { missionOf } from '../missions.ts';
 import type { PublicGameState, PublicTask, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type TaskPick = {
   label: string; // the button's verb, e.g. 'Take'
@@ -40,7 +42,7 @@ export function TaskChip({ task, index, pick }: { task: PublicTask; index: numbe
   const label = task.card ? `task ${task.card.suit} ${task.card.value}` : 'face-down task';
   const body = (
     <>
-      {task.card ? <Card card={task.card} small /> : <span className="crew-card crew-card-small crew-card-back" aria-hidden="true">?</span>}
+      {task.card ? <Card card={task.card} small /> : <span className="crew-card crew-card-small crew-card-back" aria-hidden="true"><ServerSvg url={cardArtUrl('stripes')} className="piece-art" />?</span>}
       {task.token !== null && <span className="task-token" title="Order token">{tokenName(task.token)}</span>}
       {task.done && <span className="task-done">done</span>}
     </>

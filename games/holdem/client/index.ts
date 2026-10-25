@@ -10,7 +10,6 @@ export const holdemClient: ClientGame = {
   id: 'holdem',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '♣️',
   HistoryBoard,
   describeMove,
   animateMove

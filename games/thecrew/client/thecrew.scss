@@ -15,6 +15,10 @@
   --button-bg: #3a46a0;
   --button-hover-bg: #2b3580;
   --button-text: #fff;
+  /* The shared controls (house rules, History gear) take the game's button colors in either theme */
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
   --status-bg: #e7e9f7;
   --status-text: #151a33;
   --error-bg: #fbe3e1;
@@ -79,7 +83,7 @@
 
   .back-button,
   .history-button,
-  .faq-button {
+  .rules-button {
     height: 2.5rem;
     padding: 0 1rem;
     border: none;
@@ -104,7 +108,7 @@
 
   .back-button:hover,
   .history-button:hover:enabled,
-  .faq-button:hover,
+  .rules-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
@@ -281,7 +285,8 @@
     padding: 0;
     border: 1px solid var(--card-edge);
     border-radius: 7px;
-    background: var(--card-face);
+    /* The face and back are the server's card art (shared/svg/cardArt.ts) */
+    --art-fill: var(--card-face);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     color: var(--card-color, var(--crew-rocket));
     font: inherit;
@@ -316,12 +321,14 @@
   }
 
   .crew-card-rocket {
-    background: linear-gradient(160deg, #3b3f5c, #11131f);
+    --art-fill: #3b3f5c;
+    --art-fill-4: #11131f;
     --card-color: #fff;
   }
 
   .crew-card-back {
-    background: repeating-linear-gradient(45deg, #3a46a0 0 5px, #232a66 5px 10px);
+    --art-fill: #3a46a0;
+    --art-stripe: #232a66;
     color: #fff;
   }
 
@@ -347,6 +354,11 @@
     right: 3px;
     width: max(10px, calc(var(--card-w) * 0.24));
     height: max(10px, calc(var(--card-w) * 0.24));
+  }
+
+  .crew-rocket {
+    width: 1em;
+    height: 1em;
   }
 
   .crew-card-small .crew-card-corner {

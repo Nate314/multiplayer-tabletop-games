@@ -10,7 +10,6 @@ export const farkleClient: ClientGame = {
   id: 'farkle',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🔥',
   HistoryBoard,
   describeMove,
   animateMove

@@ -1,19 +1,7 @@
 import { pipsName } from '../rules.ts';
 import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
-
-// Which of the nine spots in a half-tile hold a pip, for 0 to 9 pips (rows of three, left to right)
-const SPOTS: number[][] = [
-  [], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8],
-  [0, 2, 3, 4, 5, 6, 8], [0, 1, 2, 3, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8]
-];
-
-function Half({ pips }: { pips: number }) {
-  return (
-    <span className="tile-half" aria-hidden="true">
-      {Array.from({ length: 9 }, (_, spot) => <span key={spot} className={SPOTS[pips].includes(spot) ? 'pip' : 'pip pip-empty'} />)}
-    </span>
-  );
-}
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 type TileProps = {
   pips: [number, number]; // left and right, as laid
@@ -31,13 +19,8 @@ export default function Tile({ pips, animKey, highlighted = false, onClick, play
   if (pips[0] === pips[1]) classes.push('tile-double');
   if (highlighted) classes.push('tile-highlighted');
   if (selected) classes.push('tile-selected');
-  const face = (
-    <>
-      <Half pips={pips[0]} />
-      <span className="tile-divider" aria-hidden="true" />
-      <Half pips={pips[1]} />
-    </>
-  );
+  // The pips are the server drawing (games/dominoes/svg.ts); the face and edge stay on this element
+  const face = <ServerSvg url={svgUrl('domino', pips[0], pips[1])} className="piece-art" />;
 
   if (!onClick) {
     return <span className={classes.join(' ')} title={pipsName(pips)} data-anim-key={animKey}>{face}</span>;

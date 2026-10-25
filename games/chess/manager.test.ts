@@ -85,7 +85,7 @@ test('the clock starts when the last player agrees and runs out through the plat
   const manager = rememberingKeys(createGameManager([chess], Math.random, undefined, { now: () => time }));
   manager.join('chess', 'g1', 'A');
   manager.join('chess', 'g1', 'B');
-  ok(manager.setHouseRules('chess/g1', 1, { values: { clockMinutes: 5 }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules('chess/g1', 1, { values: { clockMinutes: 5 }, maxPlayers: null }));
   agreeAll(manager, 'chess/g1');
   const raw = manager.rawState('chess/g1') as unknown as { clock: { runningSince: number } };
   assert.equal(raw.clock.runningSince, time);

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GAMES } from '../../games/registry.ts';
 import type { GameCategory } from '../../shared/categories.ts';
-import { DEFAULT_FILTERS, arrangeGames, hasActiveFilters, matchesFilters, needsHouseRule, parsePlayers } from './gameFilters.ts';
+import { DEFAULT_FILTERS, activeFilterCount, arrangeGames, hasActiveFilters, matchesFilters, needsHouseRule, parsePlayers } from './gameFilters.ts';
 
 const fake = (name: string, category: GameCategory, min = 2, max = 4, description = '') => ({ info: { id: name, name, description, minPlayers: min, maxPlayers: max, category } });
 
@@ -59,6 +59,12 @@ test('only search, categories and players count as active filters', () => {
   assert.equal(hasActiveFilters({ ...DEFAULT_FILTERS, players: 3 }), true);
 });
 
+test('the Filter button counts picked categories and a player count, not search or sort', () => {
+  assert.equal(activeFilterCount(DEFAULT_FILTERS), 0);
+  assert.equal(activeFilterCount({ ...DEFAULT_FILTERS, search: 'uno', sort: 'name' }), 0);
+  assert.equal(activeFilterCount({ ...DEFAULT_FILTERS, categories: ['classic', 'card'], players: 4 }), 3);
+});
+
 test('player counts are whole numbers from 1 to 99', () => {
   assert.equal(parsePlayers('3'), 3);
   assert.equal(parsePlayers('99'), 99);
@@ -69,7 +75,7 @@ test('every registered game is shown with the default filters', () => {
   assert.equal(arrangeGames(GAMES, DEFAULT_FILTERS).flatMap(s => s.games).length, 31);
 });
 
-test('seven players lists the seven games that seat seven, two of them only with the override', () => {
+test('seven players lists the seven games that seat seven, two of them only as a house rule', () => {
   const games = arrangeGames(GAMES, { ...DEFAULT_FILTERS, players: 7, sort: 'name' })[0].games;
   assert.deepEqual(games.map(g => g.info.name), ['Farkle', 'Monopoly', 'Phase 10', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
   assert.deepEqual(games.filter(g => needsHouseRule(g.info, 7)).map(g => g.info.name), ['Phase 10', 'Rook']);

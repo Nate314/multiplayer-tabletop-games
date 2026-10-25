@@ -129,7 +129,7 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
   await expect(control).toBeChecked({ checked: want });
 }
 
-// The host sets each rule in `values` by its label; `maxPlayers` ticks "I know what I'm doing" and fills "Most players"
+// The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
 export async function setHouseRules(page: Page, gameType: string, values: HouseRuleValues, maxPlayers?: number): Promise<void> {
   for (const rule of gameOf(gameType).houseRules ?? []) {
     if (!(rule.id in values)) continue;
@@ -143,7 +143,6 @@ export async function setHouseRules(page: Page, gameType: string, values: HouseR
     }
   }
   if (maxPlayers !== undefined) {
-    await setCheckbox(page.getByLabel("I know what I'm doing"), true);
     const field = page.getByLabel('Most players');
     await field.fill(String(maxPlayers));
     await field.press('Enter');
@@ -159,10 +158,12 @@ export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   }
 }
 
-// Opens the FAQ from the game view and returns the dialog
+// Opens Rules from the game view, switches it to the FAQ and returns the dialog
 export async function openFaq(page: Page) {
-  await page.getByRole('button', { name: 'FAQ' }).click();
-  return page.getByRole('dialog', { name: 'Frequently asked questions' });
+  await page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: / rules$/ });
+  await dialog.getByRole('button', { name: 'FAQ', exact: true }).click();
+  return dialog;
 }
 
 export const test = base.extend<{ seat: Seat }, { server: Server }>({

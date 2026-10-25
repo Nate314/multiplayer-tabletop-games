@@ -18,7 +18,7 @@ const plugins = {
 }
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'playwright-report', 'test-results', '.claude'] },
   {
     files: ['**/*.js'],
     extends: [js.configs.recommended],
