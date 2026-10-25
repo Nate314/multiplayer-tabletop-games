@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -906,4 +907,16 @@ test('five players deal 7 each with a 6-card nest', () => {
   // The bidder sees the laid-aside cards while calling, and may call one of them
   assert.equal(rook.toPublicState(calling, false, 1).discards.length, 6);
   assert.equal(rook.toPublicState(calling, false, 2).discards.length, 0);
+});
+
+test('finalStandings ranks by the team total', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4, 5, 6], teams: [[1, 4], [2, 5], [3, 6]], scores: [120, 300, 120],
+    isGameOver: true, winners: [2, 5]
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '300 points' }, { seat: 5, place: 1, score: '300 points' },
+    { seat: 1, place: 2, score: '120 points' }, { seat: 3, place: 2, score: '120 points' },
+    { seat: 4, place: 2, score: '120 points' }, { seat: 6, place: 2, score: '120 points' }
+  ]);
 });

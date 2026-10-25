@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -527,4 +528,14 @@ test('the pots are public, the deck count is not needed, and the viewer\'s optio
   const view = toPublicState(state, false, 2);
   assert.deepEqual(view.pots, [{ amount: 90, eligible: [1, 2, 3] }]);
   assert.deepEqual(options(view, 2), { toCall: 50, canCheck: false, canRaise: true, minTo: 100, maxTo: 1000 });
+});
+
+test('finalStandings ranks by chips', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [3], chips: { 1: 0, 2: 0, 3: 3000 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 3, place: 1, score: '3,000 chips' },
+    { seat: 1, place: 2, score: '0 chips' }, { seat: 2, place: 2, score: '0 chips' }
+  ]);
 });

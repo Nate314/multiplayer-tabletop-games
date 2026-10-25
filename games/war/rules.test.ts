@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { applyMove as rulesMove, createGameState } from './rules.ts';
@@ -287,4 +288,10 @@ test('table view hides hands', () => {
     state = flip(state, random);
   }
   assert.equal(sawFaceDown, true, 'expected the short game to have a war');
+});
+
+test('finalStandings ranks by cards held', () => {
+  const pile = (count: number) => Array.from({ length: count }, () => ({ suit: 'spades' as const, rank: 'A' as const }));
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2], isGameOver: true, winners: [2], piles: { 1: pile(0), 2: pile(52) } };
+  assert.deepEqual(finalStandings(state), [{ seat: 2, place: 1, score: '52 cards' }, { seat: 1, place: 2, score: '0 cards' }]);
 });

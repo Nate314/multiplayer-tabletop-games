@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import { skipboInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -16,5 +16,6 @@ export const skipbo: GameDefinition<GameState, PublicGameState> = {
     drawPile: shuffle(state.drawPile, random),
     stocks: Object.fromEntries(Object.entries(state.stocks).map(([seat, stock]) => [seat, [...shuffle(stock.slice(0, -1), random), ...stock.slice(-1)]]))
   }),
-  toPublicState
+  toPublicState,
+  finalStandings
 };

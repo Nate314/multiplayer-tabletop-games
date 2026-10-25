@@ -1,10 +1,11 @@
 // Skip-Bo rules shared by the browser (what fits where, move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Skip-Bo, and Mattel's rules where the article is silent.
+import { rankStandings } from '../../shared/standings.ts';
 import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { Card, GameState, LastMove, Move, PileIndex, PublicGameState, Result, Seat, Source } from './types.ts';
 
 export const MAX_VALUE = 12;
@@ -304,4 +305,9 @@ export function applyMove(input: GameState, seat: Seat, move: unknown, random: R
     case 'discard': return discard(state, seat, parsed.handIndex, parsed.pile);
     case 'endTurn': return endTurn(state, seat);
   }
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const left = (seat: Seat) => state.stocks[seat]?.length ?? 0;
+  return rankStandings(state, (a, b) => left(a) - left(b), seat => `${left(seat)} left in stock`);
 }
