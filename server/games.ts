@@ -361,6 +361,8 @@ export function createGameManager(
 
       const result = room.game.applyAction(room.state, seat, action, random);
       if ('error' in result) return result;
+      // An action may start play (a Hearts pass), so it meets the same agreement gate as a move
+      if (result.state.started && awaitingAgreement(room)) return { error: 'Everyone must agree to the house rules first' };
 
       room.state = result.state;
       save(roomId, room);

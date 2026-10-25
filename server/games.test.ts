@@ -960,6 +960,27 @@ test('the move goes through once every seated player agreed', () => {
   assert.equal(ok(manager.move(ROOM, 1, tick)).started, true);
 });
 
+// rulesGame with an action that starts play, as a Hearts pass does
+const startingGame: GameDefinition<TestState, TestPublicState> = {
+  ...rulesGame,
+  applyAction(state, seat, action, random) {
+    if ((action as { type?: unknown } | null)?.type === 'start') return { state: { ...state, started: true, gameStatus: 'started' } };
+    return testGame.applyAction!(state, seat, action, random);
+  }
+};
+
+test('an action that would start play before everyone agreed is refused and changes nothing', () => {
+  const manager = rememberingKeys(createGameManager([startingGame], seededRandom), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  const before = manager.rawState(ROOM);
+  assert.deepEqual(manager.action(ROOM, 1, { type: 'start' }), { error: 'Everyone must agree to the house rules first' });
+  assert.equal(manager.rawState(ROOM), before);
+  assert.equal(ok(manager.action(ROOM, 1, { type: 'ping' })).started, false); // a lobby action still works
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.action(ROOM, 1, { type: 'start' })).started, true);
+});
+
 test('a game with no house rules and no override needs no agreement', () => {
   assert.equal(ok(gameWith('A', 'B').move(ROOM, 1, tick)).started, true);
 });
