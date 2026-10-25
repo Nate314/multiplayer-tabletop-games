@@ -16,13 +16,14 @@ type PieceTrayProps = {
   selected: string | null;       // shown with aria-pressed
   onTap: (id: string) => void;
   drag: Drag;                    // each piece button spreads drag.source(piece.id)
-  children?: ReactNode;          // extra controls after the pieces, such as Rotate
+  leading?: ReactNode;           // a control shown before the pieces, such as Quoridor's Move
 };
 
-export default function PieceTray({ label, pieces, selected, onTap, drag, children }: PieceTrayProps) {
+export default function PieceTray({ label, pieces, selected, onTap, drag, leading }: PieceTrayProps) {
   return (
     <section className="piece-tray" aria-label={label}>
       <div className="piece-tray-pieces">
+        {leading}
         {pieces.map(piece => (
           <button
             key={piece.id}
@@ -40,7 +41,6 @@ export default function PieceTray({ label, pieces, selected, onTap, drag, childr
           </button>
         ))}
       </div>
-      {children}
     </section>
   );
 }

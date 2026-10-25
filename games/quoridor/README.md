@@ -18,10 +18,10 @@ Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2
 
 ## Controls
 
+- The "Your action" box holds a "Move" button and your walls, with the count left. Move is highlighted while moving, and the wall while you hold it
 - Click "Move" and then click a valid square to move your pawn
-- Click "Horizontal Wall" or "Vertical Wall" to place walls
 - Or drag your pawn onto a highlighted square, with the mouse or a finger; drop it anywhere else to put it back
-- Your walls sit in a tray under the action buttons, with the count left. Tap the wall to pick it up (horizontal) and a dot on the bottom right corner of a square marks each place it can go, the middle of the wall it would make; tap it again, click "Rotate" or press R to turn it. Then click a dotted square, or drag the wall from the tray onto one
+- Tap the wall to pick it up (horizontal) and a dot on the bottom right corner of a square marks each place it can go, the middle of the wall it would make; tap it again or press R to turn it, and click "Move" to put it down. Then click a dotted square, or drag the wall from the box onto one. With no walls left the wall is greyed out
 - Valid moves (diagonal ones included) and wall placements are highlighted
 - The game board is dimmed when it's not your turn; its frame stays colored to show each player's goal side
 - Click "FAQ" at the top of the page for FAQs on moving, placing walls and the rules
