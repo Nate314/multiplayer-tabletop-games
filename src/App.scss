@@ -734,6 +734,17 @@
   font-weight: 600;
 }
 
+/* Always one row tall, so a step with reactions does not move the board */
+:where([data-game] .history-reactions) {
+  flex: none;
+  margin: 0 0 8px;
+  height: 1.5em;
+  overflow: hidden;
+  white-space: pre;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+
 :where([data-game] .history-slider) {
   flex: 1;
   min-width: 0;

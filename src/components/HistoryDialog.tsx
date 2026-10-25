@@ -4,7 +4,8 @@ import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
-import { seatOptions, viewFor } from './historyView.ts';
+import { reactionsOf, seatOptions, viewFor } from './historyView.ts';
+import { reactionLabel } from './reactions.ts';
 import PlaybackSettings from './PlaybackSettings';
 import { nextPlayIndex, stepDelayMs } from './playback.ts';
 import type { PlaybackSpeed } from './playback.ts';
@@ -60,7 +61,8 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
   const { step: view, viewer: shownViewer } = viewFor(step, viewer);
-  const boardState = view.historyStep === 'move' ? view : { ...view, lastMove: null };
+  // The board never reads reactions; a step's list lacks the moveCount the live log's has
+  const boardState = (view.historyStep === 'move' ? view : { ...view, lastMove: null }) as BasePublicState;
   const seatNames = seatOptions(steps[0]);
   const { HistoryBoard } = client;
 
@@ -141,6 +143,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   return (
     <>
       <p className="history-move">{stepLabel(client, step, moveTotal)}</p>
+      <p className="history-reactions">{reactionsOf(step).map(r => reactionLabel(r, step.playerNames)).join('  ·  ')}</p>
       <div className="history-board" ref={boxRef}>
         <div className="history-board-content" ref={boardRef}>
           <StepErrorBoundary key={`${index}-${viewer}`}>

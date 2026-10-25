@@ -161,20 +161,29 @@ export function createGameManager(
     return room ? { game, room } : null;
   }
 
+  function hasEndMoment(room: Room): boolean {
+    return room.state.isGameOver && !room.timeline.at(-1)?.isGameOver;
+  }
+
   // The states a history shows, oldest first: the start, each move, and the live state when the game ended without one
   function historyMoments(room: Room): HistoryMoment[] {
     const moments: HistoryMoment[] = [
       { state: room.history[0] ?? room.state, moveCount: 0, historyStep: 'start' },
       ...room.timeline.map((state, index): HistoryMoment => ({ state, moveCount: index + 1, historyStep: 'move' }))
     ];
-    if (room.state.isGameOver && !room.timeline.at(-1)?.isGameOver) {
+    if (hasEndMoment(room)) {
       moments.push({ state: room.state, moveCount: room.timeline.length, historyStep: 'end' });
     }
     return moments;
   }
 
   function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
-    return { ...publicView(room, state, false, moveCount, viewer), historyStep };
+    // The end moment shares the last move's count and takes that count's reactions
+    const shared = historyStep === 'move' && moveCount === room.timeline.length && hasEndMoment(room);
+    const reactions = shared ? [] : (room.state.reactions ?? [])
+      .filter(reaction => reaction.moveCount === moveCount)
+      .map(({ at, emoji, from, fromSpectator, target }): Reaction => ({ from, fromSpectator, target, emoji, at }));
+    return { ...publicView(room, state, false, moveCount, viewer), historyStep, ...(reactions.length > 0 && { reactions }) };
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {

@@ -92,3 +92,12 @@ test('parseGameFile rejects a game type the site does not have', () => {
     error: 'This saved game is for a game this site does not have'
   });
 });
+
+test('a version 2 file with reactions parses, and one without still does', () => {
+  const reaction = { from: 'A', fromSpectator: false, target: 2, emoji: '😂', at: 1 };
+  const withReactions = [{ historyStep: 'start', reactions: [reaction] }, { historyStep: 'end' }] as unknown as HistoryStep[];
+  for (const list of [withReactions, steps]) {
+    const file = buildGameFile('chess', 'friday', list, new Date('2026-10-18T20:15:00.000Z'));
+    assert.deepEqual(parseGameFile(JSON.stringify(file), ['chess']), { file });
+  }
+});

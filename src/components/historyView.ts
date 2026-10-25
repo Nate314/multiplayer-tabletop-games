@@ -1,5 +1,6 @@
 import type { GameFileStep } from '../../shared/gameFile.ts';
 import { asRecord } from '../../shared/messages.ts';
+import type { Reaction } from '../../shared/reactions.ts';
 import type { HistoryStep, Seat } from '../../shared/types.ts';
 
 // The step to draw and the seat to draw it for; a seat the file has no view for falls back to the table with no seat
@@ -15,4 +16,14 @@ export function seatOptions(step: GameFileStep): { seat: string; name: string }[
     seat,
     name: typeof name === 'string' ? name : `Seat ${seat}`,
   }));
+}
+
+// A hand-edited or old file may lack the list or hold odd entries; only well-formed reactions are shown
+export function reactionsOf(step: GameFileStep): Reaction[] {
+  if (!Array.isArray(step.reactions)) return [];
+  return step.reactions.filter((entry): entry is Reaction => {
+    const r = asRecord(entry);
+    return r !== null && typeof r.from === 'string' && typeof r.emoji === 'string' &&
+      typeof r.fromSpectator === 'boolean' && typeof r.target === 'number';
+  });
 }

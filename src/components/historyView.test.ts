@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seatOptions, viewFor } from './historyView.ts';
+import { reactionsOf, seatOptions, viewFor } from './historyView.ts';
 import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { HistoryStep } from '../../shared/types.ts';
 
@@ -50,4 +50,11 @@ test('seatOptions names a seat by number when its name is not a string', () => {
     { seat: '1', name: 'Seat 1' },
     { seat: '2', name: 'Seat 2' },
   ]);
+});
+
+test('reactionsOf reads old and odd files', () => {
+  const good = { from: 'A', fromSpectator: false, target: 2, emoji: '😂', at: 1 };
+  assert.deepEqual(reactionsOf({ historyStep: 'start' } as GameFileStep), []);
+  assert.deepEqual(reactionsOf({ historyStep: 'start', reactions: 'x' } as unknown as GameFileStep), []);
+  assert.deepEqual(reactionsOf({ historyStep: 'start', reactions: [good, { from: 1 }] } as unknown as GameFileStep), [good]);
 });

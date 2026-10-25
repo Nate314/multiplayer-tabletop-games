@@ -1,5 +1,5 @@
 import type { HouseRulesState } from './houseRules.ts';
-import type { RecordedReaction } from './reactions.ts';
+import type { Reaction, RecordedReaction } from './reactions.ts';
 
 export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
 
@@ -34,4 +34,4 @@ export type BasePublicState = BaseGameState & {
 };
 
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it
-export type HistoryStep = BasePublicState & { historyStep: 'start' | 'move' | 'end' };
+export type HistoryStep = Omit<BasePublicState, 'reactions'> & { historyStep: 'start' | 'move' | 'end'; reactions?: Reaction[] };

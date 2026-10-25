@@ -1299,3 +1299,36 @@ test('the reaction log keeps the last 200', () => {
   assert.equal(reactions.length, 200);
   assert.equal(reactions[0].at, 1000 + 15_000);
 });
+
+test('history and the game file show each reaction at its step', () => {
+  const clock = { now: 1000 };
+  const manager = rememberingKeys(createGameManager([testGame], seededRandom, undefined, { now: () => clock.now }), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  assert.ok('reaction' in manager.react(ROOM, 2, 1, '👍'));
+  ok(manager.move(ROOM, 1, tick));
+  assert.deepEqual(manager.react(ROOM, 1, 2, '😂'), { error: 'Reactions open once the game starts' });
+  const first = { from: 'A', fromSpectator: false, target: 2, emoji: '😂', at: 1000 };
+  const second = { from: 'B', fromSpectator: false, target: 1, emoji: '👍', at: 1000 };
+  const steps = manager.history('test', 'g1') ?? [];
+  assert.deepEqual(steps.map(step => step.historyStep), ['start', 'move', 'move', 'move']);
+  assert.deepEqual(steps.map(step => step.reactions), [[first], undefined, [second], undefined]);
+  const file = manager.gameFile('test', 'g1', new Date());
+  assert.ok(file && 'file' in file);
+  for (const step of file.file.steps) {
+    assert.deepEqual(step.reactions, steps[file.file.steps.indexOf(step)].reactions);
+    for (const view of Object.values(step.views ?? {})) assert.deepEqual(view.reactions, step.reactions);
+  }
+  const quiet = wonGame().gameFile('test', 'g1', new Date());
+  assert.ok(quiet && 'file' in quiet);
+  for (const step of quiet.file.steps) {
+    assert.equal('reactions' in step, false);
+    for (const view of Object.values(step.views ?? {})) assert.equal('reactions' in view, false);
+  }
+});
