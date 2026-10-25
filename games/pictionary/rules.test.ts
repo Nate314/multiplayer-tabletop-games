@@ -161,11 +161,20 @@ test('the drawer leaving mid-turn reveals the word', () => {
   assert.equal(onDeadline(state, NOW, first).currentPlayer, 2);
 });
 
-test('a guesser leaving when everyone left has guessed reveals the word', () => {
-  const state = removePlayer(pictionary, chat(drawing(), 2, 'castle'), 3, first);
+test('a guesser leaving when everyone left has guessed ends the drawing at once, with the reveal timed from then', () => {
+  const left = removePlayer(pictionary, chat(drawing(), 2, 'castle'), 3, first);
+  assert.equal(left.phase, 'drawing');
+  assert.ok((deadline(left) ?? Infinity) <= NOW);
+  const state = onDeadline(left, NOW + 7_000, first);
   assert.equal(state.phase, 'reveal');
+  assert.equal(state.phaseStartedAt, NOW + 7_000);
   assert.deepEqual(state.lastMove, { type: 'reveal', word: 'castle', reason: 'allGuessed' });
-  assert.equal(removePlayer(pictionary, drawing(['A', 'B', 'C', 'D']), 3, first).phase, 'drawing');
+  assert.equal(removePlayer(pictionary, drawing(['A', 'B', 'C', 'D']), 3, first).phaseStartedAt, NOW);
+});
+
+test('a drawing deadline after the drawer left reveals with the drawerLeft reason', () => {
+  const state = onDeadline({ ...drawing(), activePlayers: [2, 3] }, NOW + 7_000, first);
+  assert.deepEqual(state.lastMove, { type: 'reveal', word: 'castle', reason: 'drawerLeft' });
 });
 
 test('resumeClock gives the current phase its full time', () => {

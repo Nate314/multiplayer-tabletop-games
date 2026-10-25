@@ -46,3 +46,35 @@ test('the turn times out on the server clock', (t: TestContext) => {
   assert.equal(raw().phase, 'reveal');
   assert.equal(raw().lastMove?.type, 'reveal');
 });
+
+// Dismisses `seat` 10 s into the drawing, with seat 1 or 2 left to approve
+function dismiss(manager: ReturnType<typeof table>['manager'], advance: (ms: number) => void, seat: number): void {
+  advance(10_000);
+  manager.disconnect(ROOM, seat);
+  ok(manager.requestDismiss(ROOM, seat === 1 ? 2 : 1, seat));
+  ok(manager.voteDismiss(ROOM, seat === 3 ? 2 : 3, true));
+}
+
+test('dismissing the last guesser who had not guessed ends the turn at once, with the full reveal pause', (t: TestContext) => {
+  const { manager, raw, advance } = table(t);
+  ok(manager.action(ROOM, 2, { type: 'chat', text: raw().word ?? '' }));
+  dismiss(manager, advance, 3);
+  advance(0);
+  assert.equal(raw().phase, 'reveal');
+  assert.deepEqual(raw().lastMove, { type: 'reveal', word: raw().word, reason: 'allGuessed' });
+  advance(4_999);
+  assert.equal(raw().phase, 'reveal');
+  advance(1);
+  assert.equal(raw().phase, 'choosing');
+});
+
+test('dismissing the drawer reveals the word, with the full reveal pause', (t: TestContext) => {
+  const { manager, raw, advance } = table(t);
+  dismiss(manager, advance, 1);
+  assert.deepEqual(raw().lastMove, { type: 'reveal', word: raw().word, reason: 'drawerLeft' });
+  advance(4_999);
+  assert.equal(raw().phase, 'reveal');
+  advance(1);
+  assert.equal(raw().phase, 'choosing');
+  assert.equal(raw().drawer, 2);
+});

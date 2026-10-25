@@ -5,12 +5,13 @@ import { shuffle } from '../../shared/shuffle.ts';
 import type { Random, Result, Seat } from '../../shared/types.ts';
 import { phaseDeadline, phaseMs } from './clock.ts';
 import { DRAWS_PER_PLAYER, TURN_SECONDS, WORD_CHOICES } from './options.ts';
-import { isCorrect, maskOf } from './text.ts';
+import { isClose, isCorrect, maskOf } from './text.ts';
 import type { ChatLine, GameState, LastMove, PublicGameState } from './types.ts';
 import { WORDS } from './words.ts';
 
 export const DRAWER_POINTS = 25;
 const MAX_CHAT_LENGTH = 100;
+const CHAT_LINES = 200;
 
 export function guesserPoints(msLeft: number, turnMs: number): number {
   return 10 + Math.round(90 * msLeft / turnMs);
@@ -66,16 +67,18 @@ export function resetLobby(state: GameState, random: Random): GameState {
 }
 
 function addLine(state: GameState, line: Omit<ChatLine, 'id'>): Pick<GameState, 'chat' | 'nextChatId'> {
-  return { chat: [...state.chat, { id: state.nextChatId, ...line }], nextChatId: state.nextChatId + 1 };
+  return { chat: [...state.chat, { id: state.nextChatId, ...line }].slice(-CHAT_LINES), nextChatId: state.nextChatId + 1 };
 }
 
 function reveal(state: GameState, reason: 'allGuessed' | 'timeUp' | 'drawerLeft', now: number): GameState {
   const word = state.word ?? '';
   const drawer = state.drawer as Seat;
   const lastMove: LastMove = { type: 'reveal', word, reason };
+  // The word is public now, and a later turn's `guessed` would otherwise decide who sees these lines
+  const opened = { ...state, chat: state.chat.map(line => line.audience === 'guessed' ? { ...line, audience: 'all' as const } : line) };
   return {
-    ...state,
-    ...addLine(state, { kind: 'system', seat: null, text: `The word was ${word}`, audience: 'all' }),
+    ...opened,
+    ...addLine(opened, { kind: 'system', seat: null, text: `The word was ${word}`, audience: 'all' }),
     phase: 'reveal',
     phaseStartedAt: now,
     draws: { ...state.draws, [drawer]: (state.draws[drawer] ?? 0) + 1 },
@@ -174,7 +177,7 @@ function scoreGuess(state: GameState, seat: Seat, now: number): GameState {
   const name = state.playerNames[seat];
   const next: GameState = {
     ...state,
-    ...addLine(state, { kind: 'guessed', seat, text: `${name} guessed the word`, audience: 'all' }),
+    ...addLine(state, { kind: 'guessed', seat, text: `${name} guessed the word!`, audience: 'all' }),
     guessed: [...state.guessed, seat],
     scores: { ...state.scores, [seat]: (state.scores[seat] ?? 0) + points, [drawer]: (state.scores[drawer] ?? 0) + DRAWER_POINTS },
     lastMove: { type: 'guess', playerNumber: seat, points },
@@ -183,15 +186,20 @@ function scoreGuess(state: GameState, seat: Seat, now: number): GameState {
   return everyoneGuessed(next) ? reveal(next, 'allGuessed', now) : next;
 }
 
-// Chat doubles as guessing. Task 3 adds "So close!" lines and the full audience rules
+// Chat doubles as guessing
 export function applyAction(state: GameState, seat: Seat, action: unknown, _random: Random, now: number): Result<GameState> {
+  if (asRecord(action)?.type !== 'chat') return { error: 'Invalid action' };
   const text = chatText(action);
-  if (text === null) return { error: 'Invalid action' };
+  if (text === null) return { error: 'Messages are 1 to 100 characters' };
   if (state.isGameOver) return { error: 'The game is over' };
   if (isScoringGuess(state, seat, text)) return { state: scoreGuess(state, seat, now) };
   // While the drawing is on, the drawer and those who guessed talk only among themselves, so they cannot give it away
   const knows = state.phase === 'drawing' && (seat === state.drawer || state.guessed.includes(seat));
-  return { state: { ...state, ...addLine(state, { kind: 'chat', seat, text, audience: knows ? 'guessed' : 'all' }) } };
+  const close = state.phase === 'drawing' && !knows && state.word !== null && isClose(text, state.word);
+  const line: Omit<ChatLine, 'id'> = close
+    ? { kind: 'close', seat, text: `${text}: So close!`, audience: seat }
+    : { kind: 'chat', seat, text, audience: knows ? 'guessed' : 'all' };
+  return { state: { ...state, ...addLine(state, line) } };
 }
 
 export function deadline(state: GameState): number | null {
@@ -205,7 +213,11 @@ export function onDeadline(state: GameState, now: number, random: Random): GameS
     const chosen = startDrawing(state, index, now, { type: 'autoChoose', playerNumber: drawer });
     return { ...chosen, gameStatus: `${state.playerNames[drawer]} ran out of time, so a word was chosen for them` };
   }
-  if (state.phase === 'drawing') return reveal(state, 'timeUp', now);
+  if (state.phase === 'drawing') {
+    const reason = !state.activePlayers.includes(state.drawer as Seat) ? 'drawerLeft'
+      : state.guessed.length > 0 && everyoneGuessed(state) ? 'allGuessed' : 'timeUp';
+    return reveal(state, reason, now);
+  }
   return nextTurn(state, now, random);
 }
 
@@ -214,8 +226,9 @@ export function resumeClock(state: GameState, now: number): GameState {
   return state.started && !state.isGameOver ? { ...state, phaseStartedAt: now } : state;
 }
 
-// shortcut: no `now` reaches this hook, so a reveal made here keeps the old phaseStartedAt and its pause can be cut
-// short; the drawer leaving moves the turn, and the platform then calls resumeClock, which restarts it
+// No `now` reaches this hook. The drawer leaving moves the turn, so the platform's resumeClock times the reveal or
+// the next turn from now. A guesser leaving does not, so the drawing deadline is put in the past (0, since JSON
+// saves -Infinity as null) and onDeadline makes the reveal on the server clock
 export function onPlayerLeft(state: GameState, seat: Seat, random: Random): GameState {
   const now = state.phaseStartedAt ?? 0;
   if (seat === state.drawer) {
@@ -223,22 +236,50 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
     if (state.phase === 'choosing') return nextTurn(state, now, random);
     return state;
   }
-  if (state.phase === 'drawing' && state.guessed.length > 0 && everyoneGuessed(state)) return reveal(state, 'allGuessed', now);
+  if (state.phase === 'drawing' && state.guessed.length > 0 && everyoneGuessed(state)) return { ...state, phaseStartedAt: 0 };
   return state;
 }
 
-// shortcut: a minimal safe view; Task 3 finalizes the audiences, spectators and history
-export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
-  const { deck: _deck, wordChoices, word, chat, ...view } = state;
-  const isDrawer = viewer !== null && viewer === state.drawer;
-  const knows = isDrawer || (viewer !== null && state.guessed.includes(viewer));
+// The one chat filter: 'guessed' lines go to those who know the word, a seat's own lines only to that seat
+function visibleLines(chat: ChatLine[], viewer: Seat | null, knowsWord: boolean): ChatLine[] {
+  return chat.filter(line => line.audience === 'all' || (line.audience === 'guessed' ? knowsWord : line.audience === viewer));
+}
+
+function view(state: GameState, undoAvailable: boolean, viewer: Seat | null, knowsWord: boolean, seesChoices: boolean): Omit<PublicGameState, 'moveCount'> {
+  const { deck: _deck, wordChoices, word, chat, ...rest } = state;
   const open = state.phase === 'reveal' || state.isGameOver;
   return {
-    ...view,
+    ...rest,
     undoAvailable,
     mask: word === null ? '' : maskOf(word),
-    word: knows || open ? word : null,
-    wordChoices: isDrawer && state.phase === 'choosing' ? wordChoices : [],
-    chat: chat.filter(line => line.audience === 'all' || (line.audience === 'guessed' ? knows : line.audience === viewer))
+    word: knowsWord || open ? word : null,
+    wordChoices: seesChoices && state.phase === 'choosing' ? wordChoices : [],
+    chat: visibleLines(chat, viewer, knowsWord)
   };
+}
+
+// A seat sees the word once it guessed it or while drawing it; `null` is the history and the table screen
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
+  const isDrawer = viewer !== null && viewer === state.drawer;
+  return view(state, undoAvailable, viewer, isDrawer || (viewer !== null && state.guessed.includes(viewer)), isDrawer);
+}
+
+export function privateSeatView(state: GameState, seat: Seat): Pick<PublicGameState, 'word' | 'wordChoices' | 'chat'> {
+  const { word, wordChoices, chat } = toPublicState(state, false, seat);
+  return { word, wordChoices, chat };
+}
+
+// Spectators send no chat, so they may see the word; a table screen is in view of the players and gets the blanks
+export function spectatorState(state: GameState, undoAvailable: boolean, tableScreen: boolean): Omit<PublicGameState, 'moveCount'> {
+  return tableScreen ? toPublicState(state, undoAvailable, null) : view(state, undoAvailable, null, true, true);
+}
+
+// shortcut: the Standing shape is typed here until the stats plan adds the shared one
+export function finalStandings(state: GameState): { seat: Seat; place: number; score: string }[] {
+  const score = (seat: Seat) => state.scores[seat] ?? 0;
+  return [...state.activePlayers].sort((a, b) => score(b) - score(a)).map(seat => ({
+    seat,
+    place: 1 + state.activePlayers.filter(other => score(other) > score(seat)).length,
+    score: `${score(seat)} points`
+  }));
 }

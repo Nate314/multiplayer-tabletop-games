@@ -11,7 +11,7 @@ Draw a word while everyone else races to guess it in the chat, for 2 to 10 playe
 - **Blanks.** Guessers see a blank for each letter of the word, with its spaces and hyphens, so they know how long it is
 - **So close!** A guess one letter away from the word (one letter added, missing or wrong) tells only the player who typed it that they are close
 - **Guessed-only chat.** Once you have guessed the word, and always for the drawer, what you type during the drawing is seen only by the drawer and the others who have guessed, so nobody can give the word away
-- **Reveal.** The turn ends when time runs out or when everyone has guessed. The word is shown to everyone for 5 seconds, and the next player chooses a word
+- **Reveal.** The turn ends when time runs out or when everyone has guessed. The word is shown to everyone for 5 seconds, along with the guessed-only chat of that turn, and the next player chooses a word
 - **Scoring.** A correct guess scores 10 + 90 x the share of the drawing time left, rounded: 100 for a guess at once, 55 halfway, 10 at the buzzer. The drawer scores 25 for each player who guesses the word
 - **Winning.** After every player has drawn their turns, the highest score wins. Players with equal scores share the win
 - **House rules.** The host can set the time per turn (30 seconds, 1 minute, 90 seconds, 2 minutes or 3 minutes), the word choices offered (3, 4 or 5) and the draws per player (1 to 5). Everyone must agree to them before play starts
