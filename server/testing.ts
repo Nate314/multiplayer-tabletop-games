@@ -8,9 +8,9 @@ type Manager = ReturnType<typeof createGameManager>;
 export function rememberingKeys(manager: Manager, keys = new Map<string, string>()): Manager {
   return {
     ...manager,
-    join(gameType, gameId, playerName, rejoin, seatKey) {
-      const seat = `${String(gameType)}/${String(gameId).trim()}/${String(playerName).trim().toLowerCase()}`;
-      const result = manager.join(gameType, gameId, playerName, rejoin, seatKey ?? keys.get(seat));
+    join(gameType, gameId, playerName, rejoin, seatKey, role) {
+      const seat = `${role ?? 'player'}/${String(gameType)}/${String(gameId).trim()}/${String(playerName).trim().toLowerCase()}`;
+      const result = manager.join(gameType, gameId, playerName, rejoin, seatKey ?? keys.get(seat), role);
       if ('seatKey' in result) keys.set(seat, result.seatKey);
       return result;
     }

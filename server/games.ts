@@ -9,7 +9,9 @@ import {
 } from '../shared/houseRules.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
+import { MAX_SPECTATORS, spectatorView } from '../shared/spectators.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
+import type { JoinRole } from '../shared/types.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
@@ -25,6 +27,7 @@ type Room = {
   timeline: BaseGameState[];
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
+  watching: Set<string>; // ids of the connected spectators; in memory only, like sockets
 };
 
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout
@@ -32,7 +35,9 @@ export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => v
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
-export type JoinResult = { roomId: string; seat: Seat; seatKey: string; state: BasePublicState } | { error: string };
+export type JoinResult =
+  | { roomId: string; seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }
+  | { error: string };
 
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
@@ -141,13 +146,33 @@ export function createGameManager(
   function publicView(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
-    const { seatKeys: _seatKeys, ...view } = room.game.toPublicState(state, undoAvailable, viewer);
+    return stamp(room, state, room.game.toPublicState(state, undoAvailable, viewer), moveCount);
+  }
+
+  // Secrets and per-viewer lists are never part of a stored or shared view; the live view adds back what its viewer may see
+  function stamp(room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number): BasePublicState {
+    const {
+      seatKeys: _seatKeys, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
+      seatViews: _seatViews, ...view
+    } = raw;
     return { ...view, moveCount, houseRules: houseRulesOf(room.game.info, state) };
   }
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
-    return { ...publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer), serverTime: now() };
+    const live = {
+      spectators: (room.state.spectators ?? []).filter(spectator => room.watching.has(spectator.id))
+      // Task 3 adds handRequests here
+    };
+    return { ...publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer), ...live, serverTime: now() };
+  }
+
+  // A spectator sees the table plus the seats that allowed them, and can never undo
+  function spectatorViewOf(room: Room, spectatorId: string): BasePublicState | undefined {
+    const spectator = room.state.spectators?.find(candidate => candidate.id === spectatorId);
+    if (!spectator) return undefined;
+    const { seatViews } = spectatorView(room.game, room.state, spectator) as Partial<BasePublicState>;
+    return { ...view(room, null), ...(seatViews && { seatViews }) };
   }
 
   function findHistoryRoom(gameType: unknown, gameId: unknown) {
@@ -202,6 +227,9 @@ export function createGameManager(
       ...previous,
       started: true,
       playerNames: state.playerNames,
+      spectators: state.spectators,
+      spectatorKeys: state.spectatorKeys,
+      handRequests: state.handRequests,
       undoVote: null,
       disconnected: state.disconnected,
       dismissVote: null
@@ -240,7 +268,7 @@ export function createGameManager(
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
     if (game.resumeClock) state = game.resumeClock(state, now());
-    const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
+    const room: Room = { game, state, history: saved.history, timeline: saved.timeline, watching: new Set() };
     rooms.set(roomId, room);
     save(roomId, room);
     startEmptyTimer(roomId, room);
@@ -260,7 +288,9 @@ export function createGameManager(
   return {
     // `rejoin` only takes back a held seat; it never creates a game or takes a new seat.
     // A held seat is taken back only with the `seatKey` its player was given on joining
-    join(gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown): JoinResult {
+    join(
+      gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown, role?: JoinRole
+    ): JoinResult {
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
 
@@ -271,9 +301,34 @@ export function createGameManager(
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
-      if (!existing && rejoin === true) return { error: 'Game not found' };
-      const room: Room = existing ?? { game, state: game.createGameState(id), history: [], timeline: [] };
+      if (!existing && (rejoin === true || role === 'spectator')) return { error: 'Game not found' };
+      const room: Room = existing ?? { game, state: game.createGameState(id), history: [], timeline: [], watching: new Set() };
       const { state } = room;
+      const spectator = state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
+
+      if (role === 'spectator') {
+        if (findSeatByName(state, name) !== undefined) return { error: 'That name is taken in this game' };
+        if (spectator) {
+          if (room.watching.has(spectator.id)) return { error: `${spectator.name} is already in this game` };
+          if (seatKey !== state.spectatorKeys?.[spectator.id]) return { error: 'That name is taken in this game' };
+          room.watching.add(spectator.id);
+          save(roomId, room);
+          return { roomId, seat: null, spectatorId: spectator.id, seatKey: seatKey as string, state: spectatorViewOf(room, spectator.id)! };
+        }
+        if (rejoin === true) return { error: 'You are not in this game' };
+        // shortcut: departed spectators keep their slot so a refresh keeps its permissions; prune them if the cap is ever reached in practice
+        if ((state.spectators ?? []).length >= MAX_SPECTATORS) return { error: 'Too many people are watching this game' };
+        const added = { id: randomUUID(), name, tableScreen: false, allowedSeats: [] };
+        const key = randomUUID();
+        room.state = {
+          ...state,
+          spectators: [...(state.spectators ?? []), added],
+          spectatorKeys: { ...state.spectatorKeys, [added.id]: key }
+        };
+        room.watching.add(added.id);
+        save(roomId, room);
+        return { roomId, seat: null, spectatorId: added.id, seatKey: key, state: spectatorViewOf(room, added.id)! };
+      }
 
       const known = findSeatByName(state, name);
       if (known !== undefined) {
@@ -289,6 +344,7 @@ export function createGameManager(
         return { roomId, seat: known, seatKey: key, state: view(room, known) };
       }
       if (rejoin === true) return { error: 'You are not in this game' };
+      if (spectator) return { error: 'That name is taken in this game' };
 
       const result = addPlayer(game, state, name, random);
       if ('error' in result) return result;
@@ -498,9 +554,39 @@ export function createGameManager(
     replaceState(roomId: string, state: BaseGameState): boolean {
       const room = rooms.get(roomId);
       if (!room) return false;
-      room.state = { ...state, seatKeys: room.state.seatKeys };
+      room.state = { ...state, seatKeys: room.state.seatKeys, spectatorKeys: room.state.spectatorKeys };
       save(roomId, room);
       return true;
+    },
+
+    disconnectSpectator(roomId: string, spectatorId: string): void {
+      const room = rooms.get(roomId);
+      if (!room?.watching.delete(spectatorId)) return;
+      save(roomId, room);
+    },
+
+    getSpectatorState(roomId: string, spectatorId: string): BasePublicState | undefined {
+      const room = rooms.get(roomId);
+      return room && spectatorViewOf(room, spectatorId);
+    },
+
+    // Only before the first move; the spectator's entry goes and they are seated the usual way
+    switchToPlayer(roomId: string, spectatorId: string): JoinResult {
+      const room = rooms.get(roomId);
+      const spectator = room?.state.spectators?.find(candidate => candidate.id === spectatorId);
+      if (!room || !spectator) return { error: 'You are not in this game' };
+      if (room.state.started) return { error: 'The game has started; keep watching until the rematch' };
+
+      const { [spectatorId]: _key, ...spectatorKeys } = room.state.spectatorKeys ?? {};
+      const spectators = (room.state.spectators ?? []).filter(candidate => candidate.id !== spectatorId);
+      const result = addPlayer(room.game, { ...room.state, spectators, spectatorKeys }, spectator.name, random);
+      if ('error' in result) return result;
+
+      const key = randomUUID();
+      room.watching.delete(spectatorId);
+      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
+      save(roomId, room);
+      return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
     }
   };
 }
