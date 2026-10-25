@@ -122,16 +122,41 @@
   text-transform: uppercase;
 }
 
+/* The search box and the Filter button share one row; the panel hangs under it, over the cards */
 .lobby-filters {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
 }
 
 .lobby-filters > input[type='search'] {
-  flex: 1 1 200px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lobby-filters > .lobby-button {
+  flex-shrink: 0;
+}
+
+/* Right-aligned under the Filter button, and the full row wide once the row is narrower than the panel */
+.lobby-filter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  width: min(100%, 32rem);
+  padding: 12px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 10px;
+  background: var(--lobby-surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
 }
 
 .lobby-chips {
@@ -152,6 +177,10 @@
 }
 
 .lobby-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   color: var(--lobby-muted);
 }
 

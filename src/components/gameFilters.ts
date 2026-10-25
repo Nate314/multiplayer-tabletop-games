@@ -44,6 +44,16 @@ export function hasActiveFilters(filters: LandingFilters): boolean {
   return filters.search.trim() !== '' || filters.categories.length > 0 || filters.players !== null;
 }
 
+// Clear filters keeps the sort, as sort is not a filter
+export function clearFilters(filters: LandingFilters): LandingFilters {
+  return { ...DEFAULT_FILTERS, sort: filters.sort };
+}
+
+// The number on the Filter button: search stays visible beside it and sort is not a filter
+export function activeFilterCount(filters: LandingFilters): number {
+  return filters.categories.length + (filters.players === null ? 0 : 1);
+}
+
 export function parsePlayers(text: string): number | null {
   if (!/^\d{1,2}$/.test(text.trim())) return null;
   const count = Number(text);

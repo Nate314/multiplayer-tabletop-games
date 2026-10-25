@@ -3,7 +3,7 @@ import type { GameInfo } from '../../shared/gameDefinition.ts';
 import { GAME_ICONS } from '../clientGames.ts';
 import { loadLandingFilters, saveLandingFilters } from '../services/settings.ts';
 import GameFilters from './GameFilters.tsx';
-import { arrangeGames, needsHouseRule } from './gameFilters.ts';
+import { arrangeGames, clearFilters, needsHouseRule } from './gameFilters.ts';
 import type { LandingFilters } from './gameFilters.ts';
 
 type GameListProps = {
@@ -21,7 +21,13 @@ export default function GameList({ games, onSelect }: GameListProps) {
   return (
     <>
       <GameFilters filters={filters} onChange={change} />
-      {sections.length === 0 && <p className="lobby-empty">No games match these filters</p>}
+      {sections.length === 0 && (
+        // A filter can hide the whole list while its panel is closed, so the way out sits right here
+        <p className="lobby-empty">
+          No games match these filters{' '}
+          <button type="button" className="lobby-button" onClick={() => change(clearFilters(filters))}>Clear filters</button>
+        </p>
+      )}
       {sections.map(({ key, heading, games: group }) => (
         <section
           key={key}
