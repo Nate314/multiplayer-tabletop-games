@@ -7,6 +7,7 @@ import {
 import {
   agreeToHouseRules, everyoneAgreed, houseRulesOf, minimumToStart, needsAgreement, setHouseRules
 } from '../shared/houseRules.ts';
+import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
@@ -23,6 +24,7 @@ type Room = {
   state: BaseGameState;
   history: BaseGameState[];
   timeline: BaseGameState[];
+  clockSeat?: Seat | null; // whose turn the turn timer was stamped for; memory only
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
 };
@@ -65,12 +67,22 @@ export function createGameManager(
   // `step` is how this change moved `history` and `timeline`, so only that step is written
   // Every change passes through here, so this is also where the room's deadline is rescheduled
   function save(roomId: string, room: Room, step?: StepChange): void {
+    stampRoom(room);
     const { game, state } = room;
     writeStore(roomId, target => {
       if (state.started) target.save(roomId, game.info.id, state, step);
       else target.remove(roomId);
     });
     scheduleDeadline(roomId, room);
+  }
+
+  // The turn timer only displays: it stamps the live state, never the timeline, and never schedules anything.
+  // With the timer off nothing is touched, since a game with its own turn clock keeps its own `turnStartedAt`
+  function stampRoom(room: Room): void {
+    if (turnLimitMs(room.state) === 0) return;
+    const { state } = room;
+    const running = !state.isGameOver && clockMayRun(room) && state.currentPlayer !== null;
+    ({ state: room.state, clockSeat: room.clockSeat } = stampTurn(state, room.clockSeat, running, now()));
   }
 
   // Records `next` as a move after the current state, for undo, history and the store
@@ -93,7 +105,8 @@ export function createGameManager(
     return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info));
   }
 
-  // Open votes and disconnects do not pause a clock; only the game's own deadline does
+  // Open votes and disconnects do not pause a clock; only the game's own deadline does.
+  // The turn timer is display only and never schedules
   function scheduleDeadline(roomId: string, room: Room): void {
     clearTimeout(room.deadlineTimer);
     room.deadlineTimer = undefined;
@@ -142,7 +155,8 @@ export function createGameManager(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
     const { seatKeys: _seatKeys, ...view } = room.game.toPublicState(state, undoAvailable, viewer);
-    return { ...view, moveCount, houseRules: houseRulesOf(room.game.info, state) };
+    const stamp = 'turnStartedAt' in state ? { turnStartedAt: state.turnStartedAt, turnPausedAt: state.turnPausedAt } : {};
+    return { ...view, ...stamp, moveCount, houseRules: houseRulesOf(room.game.info, state) };
   }
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
@@ -206,6 +220,7 @@ export function createGameManager(
       disconnected: state.disconnected,
       dismissVote: null
     };
+    if (turnLimitMs(restored) > 0) restored = { ...restored, turnStartedAt: null }; // the next save starts a fresh full turn
     if (room.game.onUndo) restored = room.game.onUndo(restored, random);
     if (room.game.resumeClock) restored = room.game.resumeClock(restored, now());
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
@@ -239,6 +254,7 @@ export function createGameManager(
     if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
+    if (turnLimitMs(state) > 0) state = { ...state, turnStartedAt: null, turnPausedAt: null }; // downtime is never charged
     if (game.resumeClock) state = game.resumeClock(state, now());
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
     rooms.set(roomId, room);

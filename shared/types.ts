@@ -22,6 +22,8 @@ export type BaseGameState = {
   disconnected: Seat[]; // held seats, sorted ascending; always a subset of activePlayers
   dismissVote: DismissVote | null;
   houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
+  turnStartedAt?: number | null; // server time the turn began, shifted later by paused time; absent with the turn timer off
+  turnPausedAt?: number | null; // server time a pausing vote opened; null while the clock runs
   seatKeys?: Record<Seat, string>; // the secret each seat's rejoin must send; the server strips it from every view
 };
 
