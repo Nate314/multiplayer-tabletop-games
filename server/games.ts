@@ -221,9 +221,12 @@ export function createGameManager(
   // Settles a dismiss vote. When it passes and the turn moves on from the dismissed player, the next player's clock
   // restarts from now, so they never inherit what was left of the leaver's turn
   function settleDismissVote(room: Room, voted: BaseGameState): void {
-    const next = resolveDismissVote(room.game, voted, random);
-    const turnMoved = next.started && !next.isGameOver && next.currentPlayer !== voted.currentPlayer;
-    room.state = turnMoved && room.game.resumeClock ? room.game.resumeClock(next, now()) : next;
+    room.state = resumeIfTurnMoved(room, voted, resolveDismissVote(room.game, voted, random));
+  }
+
+  function resumeIfTurnMoved(room: Room, before: BaseGameState, next: BaseGameState): BaseGameState {
+    const turnMoved = next.started && !next.isGameOver && next.currentPlayer !== before.currentPlayer;
+    return turnMoved && room.game.resumeClock ? room.game.resumeClock(next, now()) : next;
   }
 
   function clearEmptyTimer(room: Room): void {
@@ -306,7 +309,8 @@ export function createGameManager(
       if ('error' in found) return null;
       const { room } = found;
 
-      room.state = disconnectPlayer(room.game, room.state, seat, random);
+      // A disconnect can settle a dismiss vote, which may move the turn on like any other dismissal
+      room.state = resumeIfTurnMoved(room, room.state, disconnectPlayer(room.game, room.state, seat, random));
       if (room.state.activePlayers.length === 0) {
         deleteRoom(roomId);
         return null;

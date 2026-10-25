@@ -119,9 +119,18 @@ test('a spectator sees the word and the guessed chat; a table screen sees only t
   assert.equal(screen.mask, '_________');
 });
 
+// Before any chat; once there is chat, `chat` is the seat's whole chat, so laying it over the null view gives the seat's view
 test('privateSeatView of a guesser who has not guessed is empty', () => {
   assert.deepEqual(privateSeatView(drawing(), 2), { word: null, wordChoices: [], chat: [] });
   assert.equal(privateSeatView(drawing(), 1).word, 'xylophone');
+});
+
+test('the null view plus privateSeatView is the seat view', () => {
+  const state = chat(chat(chat(chat(drawing(), 3, 'a piano'), 2, 'xylophon'), 4, 'xylophone'), 4, 'easy');
+  for (const seat of [1, 2, 3, 4]) {
+    assert.deepEqual({ ...toPublicState(state, false, null), ...privateSeatView(state, seat) }, toPublicState(state, false, seat));
+  }
+  assert.deepEqual(texts(privateSeatView(state, 2)), ['a piano', 'xylophon: So close!', 'Dan guessed the word!']);
 });
 
 test('finalStandings shares a place between equal scores', () => {

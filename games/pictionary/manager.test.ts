@@ -68,6 +68,20 @@ test('dismissing the last guesser who had not guessed ends the turn at once, wit
   assert.equal(raw().phase, 'choosing');
 });
 
+test('a dismiss vote on the drawer settled by a voter disconnecting keeps the full reveal pause', (t: TestContext) => {
+  const { manager, raw, advance } = table(t);
+  advance(10_000);
+  manager.disconnect(ROOM, 1);
+  ok(manager.requestDismiss(ROOM, 2, 1));
+  manager.disconnect(ROOM, 3);
+  assert.deepEqual(raw().lastMove, { type: 'reveal', word: raw().word, reason: 'drawerLeft' });
+  assert.equal(raw().phaseStartedAt, 1_010_000);
+  advance(4_999);
+  assert.equal(raw().phase, 'reveal');
+  advance(1);
+  assert.equal(raw().phase, 'choosing');
+});
+
 test('dismissing the drawer reveals the word, with the full reveal pause', (t: TestContext) => {
   const { manager, raw, advance } = table(t);
   dismiss(manager, advance, 1);
