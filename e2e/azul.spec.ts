@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat as SeatFixture } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openFaq, setPreference, test, touchDrag, undo, type Seat as SeatFixture } from './fixtures.ts';
 import type { Color, FloorItem, PlayerBoard } from '../games/azul/types.ts';
 
 // One test per rule and control in games/azul/README.md. Seat 1 (Alice) goes first. Two players get five factories,
@@ -266,6 +266,41 @@ test.describe('Azul controls', () => {
     await line(board, 2).click();
     await expect(line(board, 2).locator('.tile-red')).toHaveCount(2);
     await expect(board.locator('.legal')).toHaveCount(0);
+  });
+
+  test('a tile dragged onto a pattern line places every tile of that color, as clicking does', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch({ factories: factoriesOf(5, ['blue', 'red', 'red', 'blue'], ['black']) });
+    await drag(alice, tilesOf(factory(alice, 0), 'blue').first(), line(mine(alice), 2));
+    await expect(line(mine(alice), 2).locator('.tile-blue')).toHaveCount(2);
+    await expect(factory(alice, 0).locator('.tile')).toHaveCount(0);
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+
+    // A finger works the same, from the center to the floor line
+    await touchDrag(bob, tilesOf(center(bob), 'red').first(), floorLine(mine(bob)));
+    await expect(floorLine(mine(bob)).locator('.tile-red')).toHaveCount(2);
+  });
+
+  test('a drag onto a line that cannot take the color, or onto another board, returns the tiles and keeps them picked up', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch({ factories: factoriesOf(5, ['blue', 'blue', 'red'], ['black']), boards: { 1: boardOf({ lines: { 1: ['red', 1] } }), 2: boardOf() } });
+    await drag(alice, tilesOf(factory(alice, 0), 'blue').first(), line(mine(alice), 2)); // line 2 holds red
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(tilesOf(factory(alice, 0), 'blue')).toHaveCount(2);
+    await expect(line(mine(alice), 2).locator('.tile-blue')).toHaveCount(0);
+    await expect(factory(alice, 0).locator('.tile-selected')).toHaveCount(2);
+
+    await drag(alice, tilesOf(factory(alice, 0), 'blue').first(), line(boardOfPlayer(alice, 'Bob'), 3));
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(tilesOf(factory(alice, 0), 'blue')).toHaveCount(2);
+    await line(mine(alice), 3).click(); // still picked up, so a click finishes the move
+    await expect(line(mine(alice), 3).locator('.tile-blue')).toHaveCount(2);
+  });
+
+  test('tiles cannot be dragged when it is not your turn', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await expect(alice.locator('.factories [data-drag]').first()).toBeVisible();
+    await expect(bob.locator('[data-drag]')).toHaveCount(0);
   });
 
   test('the table is dimmed when it is not your turn', async ({ seat }) => {

@@ -201,13 +201,13 @@
     font-weight: 600;
   }
 
-  /* Always rendered, so the layout does not jump when the turn changes */
+  /* Always rendered with room for two lines, so the layout does not jump when the turn changes or tiles are picked up (a drag aims at a line) */
 
   .hint {
     color: var(--highlight);
     font-weight: 600;
     margin-top: 4px;
-    min-height: 1.5em;
+    min-height: 3em;
   }
 
   /* Tiles */
@@ -472,7 +472,9 @@
   }
 
   .pattern-line.legal:hover,
-  .floor-line.legal:hover {
+  .floor-line.legal:hover,
+  .pattern-line[data-drag-over],
+  .floor-line[data-drag-over] {
     background: var(--slot-bg);
   }
 

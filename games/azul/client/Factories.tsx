@@ -2,6 +2,8 @@ import Tile from './Tile';
 import { COLORS } from '../rules.ts';
 import { CENTER_MARKER_KEY, byColor, centerKey, factoryKey } from './animateMove.ts';
 import { sameSource, type Selection } from './selection.ts';
+import { dragId } from './drag.ts';
+import type { Drag } from '../../../src/drag/useDrag.ts';
 import type { Color, PublicGameState, Source } from '../types.ts';
 
 type FactoriesProps = {
@@ -9,11 +11,12 @@ type FactoriesProps = {
   isMyTurn: boolean;
   selection: Selection | null;
   onSelect: (selection: Selection | null) => void;
+  drag?: Drag; // the live table only: every tile is a drag source for its color there
 };
 
 const CENTER: Source = { type: 'center' };
 
-export default function Factories({ gameState, isMyTurn, selection, onSelect }: FactoriesProps) {
+export default function Factories({ gameState, isMyTurn, selection, onSelect, drag }: FactoriesProps) {
   const { factories, center, centerHasMarker } = gameState;
   const centerShown = byColor(center);
 
@@ -29,6 +32,7 @@ export default function Factories({ gameState, isMyTurn, selection, onSelect }: 
           disabled={!isMyTurn}
           aria-label={`Take ${color}`}
           onClick={() => onSelect(selected ? null : { source, color })}
+          {...drag?.source(dragId({ source, color }))}
         >
           <Tile kind={color} selected={selected} animKey={keyOf(index)} />
         </button>
