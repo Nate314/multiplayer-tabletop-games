@@ -11,7 +11,8 @@ export const uno: GameDefinition<GameState, PublicGameState> = {
     description: 'Match colors and numbers, empty your hand and be first to the target score (500 unless the host chose another)',
     minPlayers: 2,
     maxPlayers: 8,
-    houseRules: UNO_RULES
+    houseRules: UNO_RULES,
+    stretchedPlayers: { min: 2, max: 10 }
   },
   createGameState,
   resetLobby,

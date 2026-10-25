@@ -228,3 +228,16 @@ test('the second of two jump-ins on the same card is refused', () => {
   const late = view.activePlayers.find(seat => seat !== jumper) ?? assert.fail('no other player');
   assert.deepEqual(manager.move(ROOM, late, move, view.moveCount), { error: 'Someone else moved first' });
 });
+
+test('a full game at 10 players', () => {
+  const manager = rememberingKeys(createGameManager([uno], seeded(3)));
+  manager.join('uno', 'g1', 'P1');
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 10 }));
+  for (let seat = 2; seat <= 10; seat++) manager.join('uno', 'g1', `P${seat}`);
+  agreeAll(manager, ROOM);
+  let state = viewOf(manager, null);
+  assert.equal(state.activePlayers.length, 10);
+  for (let moves = 0; !state.isGameOver && moves < 100000; moves++) state = step(manager);
+  assert.equal(state.isGameOver, true);
+  assert.equal(state.winners.length, 1);
+});

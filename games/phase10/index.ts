@@ -11,7 +11,8 @@ export const phase10: GameDefinition<GameState, PublicGameState> = {
     description: 'Collect sets and runs to complete ten phases first',
     minPlayers: 2,
     maxPlayers: 6,
-    houseRules: PHASE10_RULES
+    houseRules: PHASE10_RULES,
+    stretchedPlayers: { min: 2, max: 8 }
   },
   createGameState,
   resetLobby,

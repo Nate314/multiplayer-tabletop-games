@@ -782,3 +782,13 @@ test.describe('UNO differences from Wikipedia', () => {
     await expect(cara.getByRole('group', { name: 'Answer the Wild Draw Four' })).toHaveCount(0);
   });
 });
+
+test.describe('UNO house rules', () => {
+  test('10 players can join with the override', async ({ seat }) => {
+    const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
+    const table = await seat('uno', names, { maxPlayers: 10 });
+    expect(table.pages).toHaveLength(10);
+    expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(10);
+    for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
+  });
+});

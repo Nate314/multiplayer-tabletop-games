@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const FAQS: FaqItem[] = [
   {
     question: 'How do I join a game?',
-    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Yahtzee is for 2 to 8 players. Joining closes after the first roll.'
+    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Yahtzee is for 2 to 8 players, or up to 10 when the host ticks \'I know what I\'m doing\' in the house rules. Joining closes after the first roll.'
   },
   {
     question: 'How does a turn work?',

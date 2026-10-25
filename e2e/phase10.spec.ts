@@ -636,3 +636,13 @@ test.describe('Phase 10 house rules', () => {
     await expect(alice.getByLabel('Phase to lay down')).toHaveCount(0);
   });
 });
+
+test.describe('Phase 10 house rules', () => {
+  test('8 players can join with the override', async ({ seat }) => {
+    const names = Array.from({ length: 8 }, (_, index) => `Player${index + 1}`);
+    const table = await seat('phase10', names, { maxPlayers: 8 });
+    expect(table.pages).toHaveLength(8);
+    expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(8);
+    for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
+  });
+});

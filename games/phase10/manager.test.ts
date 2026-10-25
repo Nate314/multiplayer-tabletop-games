@@ -119,3 +119,20 @@ test('an unknown action is refused, and there is nothing to continue mid-hand', 
   assert.deepEqual(manager.action(ROOM, 1, { type: 'nonsense' }), { error: 'Unknown action' });
   assert.deepEqual(manager.action(ROOM, 1, { type: 'acknowledgeHand' }), { error: 'Nothing to continue' });
 });
+
+test('a full game at 8 players deals ten cards each and plays on', () => {
+  const manager = rememberingKeys(createGameManager([phase10], seeded(5)));
+  manager.join('phase10', 'g1', 'P1');
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 8 }));
+  for (let seat = 2; seat <= 8; seat++) manager.join('phase10', 'g1', `P${seat}`);
+  agreeAll(manager, ROOM);
+  let state = viewOf(manager, null);
+  assert.equal(state.activePlayers.length, 8);
+  assert.ok(Object.values(state.handCounts).every(count => count === 10));
+  // Every player draws and discards for a few rounds without the piles running dry
+  for (let turn = 0; turn < 80; turn++) {
+    state = viewOf(manager, null);
+    if (state.currentPlayer === null) assert.fail('nobody to move');
+    playTurn(manager, state.currentPlayer);
+  }
+});

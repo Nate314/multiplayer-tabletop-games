@@ -10,7 +10,8 @@ export const holdem: GameDefinition<GameState, PublicGameState> = {
     name: "Texas Hold'em",
     description: 'Two private cards, five shared ones, and betting with play chips',
     minPlayers: 2,
-    maxPlayers: 8
+    maxPlayers: 8,
+    stretchedPlayers: { min: 2, max: 10 }
   },
   createGameState,
   resetLobby,

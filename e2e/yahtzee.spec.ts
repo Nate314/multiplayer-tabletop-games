@@ -266,3 +266,13 @@ test.describe('Yahtzee differences from Wikipedia', () => {
     await expect(alice.locator('.turn-message')).toHaveText('Game over: Cara won');
   });
 });
+
+test.describe('Yahtzee house rules', () => {
+  test('10 players can join with the override', async ({ seat }) => {
+    const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
+    const table = await seat('yahtzee', names, { maxPlayers: 10 });
+    expect(table.pages).toHaveLength(10);
+    expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(10);
+    for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
+  });
+});

@@ -60,5 +60,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'What happens if someone leaves?',
     answer: 'If they disconnect, the game waits for them on their turn and the others may vote to dismiss them. A dismissed player folds their hand, and their chips leave the table; what they already bet stays in the pot and the hand goes on.'
+  },
+  {
+    question: 'How many can play?',
+    answer: 'Two to 8 players. Ticking \'I know what I\'m doing\' in the house rules lets the host seat up to 10. Everyone has to agree to the table before play starts.'
   }
 ];
