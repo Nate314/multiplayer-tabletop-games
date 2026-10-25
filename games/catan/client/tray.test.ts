@@ -34,3 +34,10 @@ test('after the roll an affordable piece with a spot is ready', () => {
   assert.equal(trayBlocker(viewOf(state), 'road', 0), 'Nowhere to build a road');
   assert.equal(trayBlocker(viewOf(state), 'city', 1), `Needs ${describeResources(COSTS.city)}`);
 });
+
+test('in a special build phase the tray works only for the player whose build chance it is, whatever was rolled', () => {
+  const chance = (builder: number) => holding(game({ rolled: false, turnHolder: 2, specialBuild: { builders: [builder] } }), 1, COSTS.road);
+  assert.equal(trayBlocker(viewOf(chance(1)), 'road', 1), '');
+  assert.equal(trayBlocker(viewOf(chance(1)), 'city', 1), `Needs ${describeResources(COSTS.city)}`);
+  assert.equal(trayBlocker(viewOf(chance(3)), 'road', 1), 'Not now');
+});

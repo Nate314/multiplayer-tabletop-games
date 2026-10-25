@@ -264,7 +264,6 @@ test.describe('Catan rules', () => {
       const everyone = [alice, bob, cara];
       await expect(status(bob)).toHaveText(
         'Cara joined (3/6 players). Highest roll goes first: Alice 12, Bob 12, Cara 2; tie: Alice 3, Bob 8. Bob goes first');
-      await agreeToHouseRules(alice, bob, cara); // Cara's join cleared the agreements
       await expect(turnMessage(bob)).toHaveText('You place first. Joining closes after the first move.');
       await expect(turnMessage(alice)).toHaveText('Bob places first. Joining closes after the first move.');
       for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(3);
@@ -1265,6 +1264,25 @@ test.describe('Catan building tray', () => {
     await expectHand(alice, { wood: 1, brick: 1 });
     await expect(road(alice)).toHaveAccessibleName('Road, 12 left');
     await expect(road(alice)).toBeEnabled();
+  });
+
+  test('the tray works during your special build chance, and only then', async ({ seat }) => {
+    const table = await seat('catan', FIVE, { agree: false });
+    await setHouseRules(table.pages[0], 'catan', { specialBuild: true });
+    await agreeToHouseRules(...table.pages);
+    const [alice, bob, cara] = table.pages;
+    const bobRoad = edgeBetween(corner(0, 0), corner(0, 1));
+    const newRoad = edgeBetween(corner(0, 1), corner(0, 2));
+    await craft(table, { rolled: true, dice: [3, 4], roads: roadsOf(2, [bobRoad]), hands: { 2: ROAD, 3: ROAD } });
+    await button(alice, 'End turn').click();
+    await expect(turnMessage(bob)).toHaveText('Your build chance');
+    await expect(road(cara)).toBeDisabled();
+    await expect(road(cara)).toHaveAttribute('title', 'Not your turn');
+    await expect(road(bob)).toBeEnabled();
+    await dropOn(bob, road(bob), path(bob, newRoad));
+    await expect(alice.locator('.road.seat2')).toHaveCount(2);
+    await expectHand(bob, {});
+    await expect(road(bob)).toBeDisabled();
   });
 
   test('a settlement dragged in setup is placed', async ({ seat }) => {

@@ -118,7 +118,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   };
 
   const left = piecesLeft(gameState, playerNumber);
-  const blockedFor = (kind: TrayKind) => canMove ? trayBlocker(gameState, kind, spots[kind]) : 'Not your turn';
+  const blockedFor = (kind: TrayKind) => canMove || canBuild ? trayBlocker(gameState, kind, spots[kind]) : 'Not your turn';
   const beforeLift = useRef<BuildMode>(null);
   const targetOf = (id: string, target: string) => {
     const kind = id as TrayKind, number = Number(target.split('-')[1]);
@@ -126,7 +126,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     return (target.startsWith('edge-') ? legal.edges : legal.vertices)?.includes(number) ? number : null;
   };
   const drag = useDrag({
-    canLift: id => canMove && blockedFor(id as TrayKind) === '',
+    canLift: id => (canMove || canBuild) && blockedFor(id as TrayKind) === '',
     canDrop: (id, target) => targetOf(id, target) !== null,
     onLift: id => {
       beforeLift.current = activeMode;
@@ -142,7 +142,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   });
   const tapPiece = (id: string) => setMode(activeMode === id ? null : id as TrayKind);
   const pieces = (['road', 'settlement', 'city'] as const).map(kind => ({
-    id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind], icon: <span className={`tray-${kind} ${seatClass(playerNumber)}`} aria-hidden="true" />,
+    id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind],
+    // The outline is on a wrapper, as the piece's own clip-path would cut it off; it keeps white (seat 5) readable
+    icon: <span className="tray-icon" aria-hidden="true"><span className={`tray-${kind} ${seatClass(playerNumber)}`} /></span>,
     blocked: blockedFor(kind) || undefined
   }));
 

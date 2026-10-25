@@ -80,7 +80,7 @@ export const DEV_CARD_HELP: Record<DevCard, string> = {
 };
 
 // The color-blind symbol for each seat's color
-export const SEAT_SYMBOLS: Record<Seat, SymbolColor> = { 1: 'red', 2: 'blue', 3: 'orange', 4: 'purple' };
+export const SEAT_SYMBOLS: Record<Seat, SymbolColor> = { 1: 'red', 2: 'blue', 3: 'orange', 4: 'purple', 5: 'white', 6: 'green' };
 
 export const seatClass = (seat: Seat) => `seat${seat}`;
 
