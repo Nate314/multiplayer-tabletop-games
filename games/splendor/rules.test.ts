@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import { CARDS, GEMS, NOBLES, gems } from './cards.ts';
-import { bonuses, createGameState, payment, prestige, toPublicState } from './rules.ts';
+import { bonuses, createGameState, winningPrestige, payment, prestige, toPublicState } from './rules.ts';
 import { splendor } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { GameState, Gem, Level, PlayerState, Result, Tokens } from './types.ts';
@@ -381,4 +382,21 @@ test('table view hides hands: no deck order and no card reserved unseen', () => 
   assert.deepEqual(table.players[2].reserved, [{ level: 1, card: shown }]);
   assert.deepEqual(toPublicState(state, false, 2).players[1].reserved, [{ level: 2, card: null }]);
   assert.deepEqual(toPublicState(state, false, 1).players[1].reserved, [{ level: 2, card: hidden }]);
+});
+
+test('the game ends at the chosen prestige', () => {
+  const nearly = (target: number) => {
+    const state = withPlayer(seatedGame(2), 1, { cards: FIVES.slice(0, 2) }); // 10 prestige
+    return { ...state, houseRules: withRules({ targetScore: target }) };
+  };
+  const take = (state: GameState) => move(state, 1, { type: 'takeThree', colors: ['white', 'blue', 'green'] });
+  assert.equal(winningPrestige(nearly(10)), 10);
+  assert.equal(take(nearly(10)).finalRound, true);
+  assert.equal(take(nearly(15)).finalRound, false);
+  const finished = move(take(nearly(10)), 2, { type: 'takeThree', colors: ['white', 'blue', 'green'] });
+  assert.equal(finished.isGameOver, true);
+  assert.deepEqual(finished.winners, [1]);
+  const reachedFifteen = { ...nearly(21), players: withPlayer(nearly(21), 1, { cards: FIVES.slice(0, 3) }).players };
+  assert.equal(take(reachedFifteen).finalRound, false);
+  assert.equal(winningPrestige({}), 15);
 });

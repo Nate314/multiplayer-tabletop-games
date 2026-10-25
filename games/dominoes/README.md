@@ -1,6 +1,6 @@
 # Dominoes
 
-Match tile ends to build a single line, draw from the boneyard when you are stuck, and be first to play out your hand, first to 100 points (61 with three or four players), for 2 to 4 players. This is the Draw game, the blocking game where you draw when you cannot play.
+Match tile ends to build a single line, draw from the boneyard when you are stuck, and be first to play out your hand, first to the target score (100 points, or 61 with three or four players, unless the host chose another), for 2 to 4 players. This is the Draw game, the blocking game where you draw when you cannot play.
 
 ## Rules
 
@@ -12,7 +12,7 @@ Match tile ends to build a single line, draw from the boneyard when you are stuc
 - **Passing.** A player with no tile that fits when the boneyard is empty passes
 - **Going out.** A round ends when a player plays their last tile. They score the pips left in every other hand plus the pips in the boneyard
 - **Blocked.** A round also ends the moment nobody can play and the boneyard is empty. The player with the fewest pips left wins the round and scores the pips in the other hands. If two or more players tie for the fewest, nobody scores
-- **Winning.** The first player to reach 100 points wins with two players, or 61 with three or four. A scoring screen shows each round, and the next round is dealt once every connected player has pressed Continue (disconnected players are not waited for)
+- **Winning.** The first player to reach the target score wins: 100 points with two players, or 61 with three or four, unless the host chose 61, 100, 150 or 200 before play starts (everyone must agree). A scoring screen shows each round, and the next round is dealt once every connected player has pressed Continue (disconnected players are not waited for)
 - You see only your own hand, how many tiles each other player holds and how many tiles are in the boneyard. Which tiles are in the boneyard is hidden from everyone
 - **Leaving.** A disconnected player keeps their seat and the game waits for them on their turn. A dismissed player's tiles go back into the boneyard and their turns are skipped. If only one player is left, they win
 - Any player can ask to undo the last move. It is undone only if every player still in the game approves, and the boneyard is shuffled again so an undone draw cannot show the next tile. Choosing the set and Continue are not moves, so an undo goes back past them too
@@ -37,6 +37,6 @@ These follow the Draw game and Blocking game in the [Dominoes article](https://e
 - **No spinner.** The line has two ends only. A double is not played crosswise and does not open a third or fourth end
 - **Scoring.** The article scores the pips in the losing hands plus the stock. Here a player who goes out scores the other hands plus the boneyard, as the article says, and a blocked round scores the other hands only (the boneyard is empty then)
 - **Blocked rounds.** The article awards a blocked round to the lightest hand, and gives no rule for a tie. Here a tie for the lightest hand scores nothing, and the first-round lead rule applies again in the next round
-- **Target score.** The article gives no target for the Draw game. Following Pagat's Draw Dominoes, the game is played to 100 points for 2 players and 61 for 3 or 4 players (the target follows the players still seated)
+- **Target score.** The article gives no target for the Draw game. Following Pagat's Draw Dominoes, the game is played to 100 points for 2 players and 61 for 3 or 4 players (the target follows the players still seated). The host can instead choose 61, 100, 150 or 200 for every player count
 - **Players.** The article describes two players, with adaptations for more. Here 2 to 4 play individually, with no teams
 - **Leaving.** The rules do not cover a player leaving mid-game. Here their tiles go back into the boneyard, and if they held the tile that had to lead, the opening tile is chosen again among the hands left

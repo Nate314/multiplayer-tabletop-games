@@ -348,7 +348,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button, [data-game] .house-rules-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -447,7 +447,7 @@
     order: -1;
   }
 
-  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button, [data-game] .house-rules-button) {
     padding: 0 0.6rem;
   }
 }
@@ -821,6 +821,97 @@
 :where([data-game] .ending-controls button:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* House rules, above the game screen until play starts */
+
+:where([data-game] .house-rules-panel) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .house-rules-title) {
+  font-weight: 700;
+}
+
+:where([data-game] .house-rules-host) {
+  font-size: 0.9rem;
+}
+
+:where([data-game] .house-rules-rule) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:where([data-game] .house-rules-rule > span) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+}
+
+/* A long label wraps its own text beside the control instead of dropping below it */
+:where([data-game] .house-rules-rule > span > :is(input, select)) {
+  flex: none;
+}
+
+:where([data-game] .house-rules-help) {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+:where([data-game] .house-rules-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where([data-game] .house-rules-agreed) {
+  font-weight: 600;
+}
+
+/* The error colors come as a pair, so the line reads on any game's panel color, in either theme */
+:where([data-game] .house-rules-error) {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  background: var(--lobby-error-bg);
+  color: var(--lobby-error-text);
+}
+
+:where([data-game] .house-rules-actions) {
+  display: flex;
+  gap: 8px;
+}
+
+:where([data-game] .modal.house-rules dl) {
+  margin: 0 0 16px;
+}
+
+:where([data-game] .modal.house-rules dl > div) {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+:where([data-game] .modal.house-rules dd) {
+  margin: 0;
+  font-weight: 600;
 }
 
 /* Disconnected players, above the game screen */

@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { ROOK_RULES, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const rook: GameDefinition<GameState, PublicGameState> = {
@@ -7,9 +7,11 @@ export const rook: GameDefinition<GameState, PublicGameState> = {
     id: 'rook',
     category: 'card',
     name: 'Rook',
-    description: 'Bid, take the nest, name trump and win tricks with your partner to 500',
+    description: 'Bid, take the nest, name trump and win tricks with your partner to the target score (500 unless the host chose another)',
     minPlayers: 4,
-    maxPlayers: 4
+    maxPlayers: 4,
+    stretchedPlayers: { min: 4, max: 7 }, // 6 in fixed teams; 5 and 7 with called partners
+    houseRules: ROOK_RULES
   },
   createGameState,
   resetLobby,

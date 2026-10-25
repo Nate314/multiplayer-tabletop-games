@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Be the highest scorer once someone has reached 10,000 and everyone else has had one last turn.'
+    answer: 'Be the highest scorer once someone has reached the target score (10,000 unless the host chose another) and everyone else has had one last turn.'
   },
   {
     question: 'How does a turn work?',
@@ -27,7 +27,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does the game end?',
-    answer: 'When a player banks to 10,000 or more, each other player gets one last turn. Then the highest total wins, and players with equal totals share the win.'
+    answer: 'When a player banks to the target score or more, each other player gets one last turn. Then the highest total wins, and players with equal totals share the win.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: "Before the first roll the host chooses the target score: 5,000, 10,000, 15,000 or 20,000. Everyone has to agree before play starts. Ticking \"I know what I'm doing\" lets the host seat up to 10 players instead of 8."
   },
   {
     question: 'Can I take back a move?',

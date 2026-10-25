@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import { EDGES, HEX_VERTICES, VERTEX_COUNT, VERTEX_EDGES, VERTEX_HEXES } from './board.ts';
 import { settlementSpotError } from './building.ts';
 import { longestRoadOf } from './roads.ts';
 import { createGameState, toPublicState } from './rules.ts';
+import { winningPoints } from './state.ts';
 import { resources, total } from './resources.ts';
 import { catan } from './index.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -541,4 +543,66 @@ test('table view hides hands over every step of a short game', () => {
       assert.deepEqual(toPublicState(step, false, seat).hand, step.hands[seat]);
     }
   }
+});
+
+test('the game ends at the chosen points', () => {
+  // Four cities and a settlement is 9 points; a Development Card that is not a Victory Point card adds none
+  const buildings = Object.fromEntries([0, 2, 4].map(k => [corner(9, k), city(1)]).concat([[corner(0, 0), city(1)], [corner(2, 0), settlement(1)]]));
+  const buy = (target: number) => played(holding(
+    rolled({ buildings, devDeck: ['knight'], houseRules: withRules({ targetScore: target }) }), 1, { sheep: 1, wheat: 1, ore: 1 }
+  ), 1, { type: 'buyDevCard' });
+  const won = buy(8);
+  assert.equal(won.isGameOver, true);
+  assert.deepEqual(won.winners, [1]);
+  assert.match(won.gameStatus, /Alice wins with 9 points/);
+  assert.equal(buy(10).isGameOver, false);
+  assert.equal(buy(12).isGameOver, false);
+  assert.equal(winningPoints({}), 10);
+});
+
+const friendly = withRules({ friendlyRobber: true });
+const overridden = { ...withRules({}), override: true, maxPlayers: 4 };
+
+test('the friendly robber cannot steal from a player with 2 points', () => {
+  const buildings = { [corner(4, 0)]: settlement(2), [corner(4, 3)]: settlement(2) };
+  const state = holding(game({ buildings, pending: { kind: 'robber' }, rolled: true, houseRules: friendly }), 2, { sheep: 3 });
+  assert.deepEqual(move(state, 1, { type: 'moveRobber', hex: 4, victim: 2 }), { error: 'Nobody there can be stolen from' });
+  const moved = played(state, 1, { type: 'moveRobber', hex: 4, victim: null });
+  assert.equal(moved.robber, 4);
+  assert.equal(moved.hands[2].sheep, 3);
+  assert.equal(moved.steal, null);
+  // Without the rule the same move steals
+  const standard = { ...state, houseRules: withRules({ friendlyRobber: false }) };
+  assert.deepEqual(move(standard, 1, { type: 'moveRobber', hex: 4, victim: null }), { error: 'Choose a player to steal from' });
+});
+
+test('it can steal from a player with 3', () => {
+  const buildings = { [corner(4, 0)]: city(2), [corner(4, 3)]: settlement(2) };
+  const state = holding(game({ buildings, pending: { kind: 'robber' }, rolled: true, houseRules: friendly }), 2, { sheep: 3 });
+  const stolen = played(state, 1, { type: 'moveRobber', hex: 4, victim: 2 });
+  assert.equal(stolen.hands[2].sheep, 2);
+  assert.equal(stolen.hands[1].sheep, 1);
+});
+
+test('hidden Victory Point cards do not count', () => {
+  const buildings = { [corner(4, 0)]: settlement(2), [corner(4, 3)]: settlement(2) };
+  const hidden = holding(game({
+    buildings, pending: { kind: 'robber' }, rolled: true, houseRules: friendly,
+    devCards: { 1: [], 2: ['victoryPoint', 'victoryPoint'], 3: [] }
+  }), 2, { sheep: 3 });
+  assert.deepEqual(move(hidden, 1, { type: 'moveRobber', hex: 4, victim: 2 }), { error: 'Nobody there can be stolen from' });
+});
+
+test('two players can play with the override', () => {
+  const two = game({ activePlayers: [1, 2], houseRules: overridden });
+  assert.deepEqual(act(game({ activePlayers: [1, 2] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
+  assert.notDeepEqual(act(two, 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
+});
+
+test('a three-player game with the override plays on after a dismissal leaves two', () => {
+  const three = game({ disconnected: [3], houseRules: overridden });
+  const left = removePlayer(catan, three, 3);
+  assert.equal(left.isGameOver, false);
+  assert.deepEqual(left.activePlayers, [1, 2]);
+  assert.equal(removePlayer(catan, { ...three, houseRules: withRules({}) }, 3).isGameOver, true);
 });

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { ownable, streetAt } from './board.ts';
 import { buildError, mortgageError, sellError } from './buildings.ts';
 import { inGame } from './state.ts';
@@ -27,6 +27,7 @@ function seeded(seed: number): Random {
 function gameWith(seed: number, ...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([monopoly], seeded(seed)));
   for (const name of names) manager.join('monopoly', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 

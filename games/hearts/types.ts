@@ -27,6 +27,7 @@ export type HandSummary = {
   taken: Record<Seat, number>; // points each player took in tricks
   change: Record<Seat, number>; // what each score moved by
   moon: Seat | null; // the player who took all 26
+  jack: Seat | null; // the player who took the jack of diamonds under the house rule
   acknowledged: Seat[]; // the next hand waits for every connected player
 };
 
@@ -42,6 +43,7 @@ export type GameState = BaseGameState & {
   tricksPlayed: number; // tricks finished this hand
   heartsBroken: boolean;
   taken: Record<Seat, number>; // points taken this hand
+  jackTaker: Seat | null; // who has taken the jack of diamonds this hand, when it is worth minus 10
   roundSummary: HandSummary | null;
   lastMove: LastMove | null;
 };

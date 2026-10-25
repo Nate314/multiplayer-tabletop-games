@@ -23,15 +23,17 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What happens when my last stone lands in a pit with stones?',
-    answer: 'You keep going. If that pit, on either side of the board, already had stones, you pick up every stone ' +
+    answer: 'In Avalanche, the standard way, you keep going. If that pit, on either side of the board, already had stones, you pick up every stone ' +
       'in it, including the one that just landed, and drop them the same way. This repeats until your last stone ' +
       'lands in an empty pit or in your bank, so one click can send stones all around the board. The whole chain ' +
-      'plays out on the board, faster when it is long.'
+      'plays out on the board, faster when it is long. In Kalah there are no relays: your turn simply ends.'
   },
   {
     question: 'When does my turn end?',
-    answer: 'When your last stone lands in an empty pit, on your side or your opponent\'s, your turn ends. There ' +
-      'are no captures: the stones stay where they are.'
+    answer: 'When your last stone lands in an empty pit, on your side or your opponent\'s, your turn ends. In ' +
+      'Avalanche there are no captures: the stones stay where they are. In Kalah, a last stone in an empty pit on ' +
+      'your own side captures it together with every stone in the pit opposite, if there are any, and moves them ' +
+      'all into your bank.'
   },
   {
     question: 'When do I get an extra turn?',
@@ -40,8 +42,17 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does the game end?',
-    answer: 'As soon as either row is empty after a turn, each player moves every stone left on their own side into ' +
-      'their own bank. Whoever has the most stones in their bank wins. Equal banks are a draw.'
+    answer: "When your side is empty on your turn, you pick any pit with stones on your opponent's side and sow from " +
+      "it counter-clockwise as usual; your own bank gets a stone as you pass it, and your opponent's is skipped. The " +
+      "game ends only when every pit is empty. Whoever has the most stones in their bank wins. Equal banks are a " +
+      "draw. If the host turns play from the other side off, the game ends as soon as either row is empty after a " +
+      "turn, and each player moves every stone left on their own side into their own bank."
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before the first move the host can turn off playing from the other side, so the game ends as soon as a ' +
+      'row is empty, and can turn off Avalanche to play Kalah, with captures and no relays. Both are on by default. ' +
+      'Everyone has to agree before play starts.'
   },
   {
     question: 'What is highlighted on the board?',

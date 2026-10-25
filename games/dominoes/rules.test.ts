@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import {
-  HAND_SIZES, dealRound, legalPlays, openingTile, pipTotal, place, targetScore, tilesOf, toPublicState
+  HAND_SIZES, dealRound, legalPlays, openingTile, pipTotal, place, standardTarget, targetScore, tilesOf, toPublicState
 } from './rules.ts';
 import { dominoes } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
@@ -222,9 +223,9 @@ test('a play that blocks the game ends the round at once', () => {
 });
 
 test('the game ends at the article\'s target score', () => {
-  assert.equal(targetScore(2), 100);
-  assert.equal(targetScore(3), 61);
-  assert.equal(targetScore(4), 61);
+  assert.equal(standardTarget(2), 100);
+  assert.equal(standardTarget(3), 61);
+  assert.equal(standardTarget(4), 61);
   const state = game({
     scores: { 1: 90, 2: 0, 3: 0 },
     hands: { 1: [t(4, 5)], 2: [t(3, 6), t(2, 2)], 3: [t(1, 1), t(5, 5)] }
@@ -408,4 +409,28 @@ test('a dismissed leader who held the lead tile hands the opening to the tile no
   const other = removePlayer(dominoes, { ...state, currentPlayer: 2 }, 3, seeded(1));
   assert.equal(other.leadTile, t(6, 6));
   assert.equal(other.currentPlayer, 2);
+});
+
+test('the game ends at the chosen target', () => {
+  const finish = (mine: number, target: string | number) => ok(play(game({
+    scores: { 1: mine, 2: 0, 3: 0 },
+    hands: { 1: [t(4, 5)], 2: [t(3, 6), t(2, 2)], 3: [t(1, 1), t(5, 5)] },
+    houseRules: withRules({ targetScore: target })
+  }), 1, t(4, 5), 'right'));
+  const over = finish(23, 60); // the round is worth 37
+  assert.equal(over.isGameOver, true);
+  assert.equal(over.scores[1], 60);
+  assert.equal(finish(22, 60).isGameOver, false);
+  assert.equal(finish(23, 100).isGameOver, false);
+  assert.equal(finish(23, 'standard').isGameOver, false);
+});
+
+test('the standard target is still 100 for two players and 61 for three', () => {
+  const seated = (players: number[], values: Record<string, string | number> = { targetScore: 'standard' }) =>
+    ({ activePlayers: players, houseRules: withRules(values) });
+  assert.equal(targetScore(seated([1, 2])), 100);
+  assert.equal(targetScore(seated([1, 2, 3])), 61);
+  assert.equal(targetScore(seated([1, 2, 3, 4])), 61);
+  assert.equal(targetScore({ activePlayers: [1, 2] }), 100);
+  assert.equal(targetScore(seated([1, 2], { targetScore: 150 })), 150);
 });

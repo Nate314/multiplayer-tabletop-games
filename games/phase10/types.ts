@@ -28,7 +28,7 @@ export type DrawSource = 'pile' | 'discard';
 
 export type Move =
   | { type: 'draw'; source: DrawSource }
-  | { type: 'layDown'; groups: number[][] } // card ids, one list per part of the phase, in order
+  | { type: 'layDown'; groups: number[][]; phase?: number } // card ids, one list per part of the phase, in order; phase is required with "Phases in any order"
   | { type: 'hit'; group: number; cards: number[] } // a group's index on the table
   | { type: 'discard'; card: number; skip: Seat | null }; // whom a Skip skips
 
@@ -42,7 +42,7 @@ export type LastMove =
 
 // How one player's hand went. Cards left in hand are counted, not shown.
 export type SeatSummary = {
-  phase: number;      // the phase played this hand
+  phase: number;      // the phase played this hand; 0 when nothing was laid down under "Phases in any order"
   completed: boolean; // laid it down, so they move on
   cardsLeft: number;
   points: number;
@@ -60,7 +60,9 @@ export type GameState = BaseGameState & {
   drawPile: Card[];                // drawn from the end
   discardPile: Card[];             // the last card is on top
   groups: Group[];                 // in the order they were laid down
-  phases: Record<Seat, number>;    // the phase each player is on; 11 once phase 10 is done
+  phases: Record<Seat, number>;    // the phase each player is on; 11 once phase 10 is done (with any order, the lowest not completed)
+  phasesDone: Record<Seat, number[]>; // phases completed; saves from before "Phases in any order" lack it, so derive it from phases
+  laidPhase: Record<Seat, number>; // the phase each player laid down this hand; saves from before lack it
   scores: Record<Seat, number>;
   skipped: Seat[];                 // players who lose their next turn
   tiebreak: Seat[];                // the tied players replaying phase 10 in a tiebreaker hand; empty otherwise

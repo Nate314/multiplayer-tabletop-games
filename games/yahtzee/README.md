@@ -1,6 +1,6 @@
 # Yahtzee
 
-Roll five dice up to three times a turn and fill every scoring box on your sheet, for 2 to 8 players. The highest total after 13 rounds wins.
+Roll five dice up to three times a turn and fill every scoring box on your sheet, for 2 to 8 players (up to 10 with the house rules override). The highest total after 13 rounds wins.
 
 ## Rules
 
@@ -28,7 +28,7 @@ Roll five dice up to three times a turn and fill every scoring box on your sheet
 
 These follow the standard and official Yahtzee rules in [Wikipedia's Yahtzee article](https://en.wikipedia.org/wiki/Yahtzee), with the forced Joker rule. What is different:
 
-- **Players.** The game needs 2 to 8 players. There is no solo game
+- **Players.** The game needs 2 to 8 players, or up to 10 when the host ticks the override, and everyone must agree to the table before play starts. There is no solo game
 - **Joker rule.** The article describes both the official forced Joker and a free choice variant. Only the forced Joker is played
 - **Holding every die.** A roll that holds all five dice would change nothing, so it is refused. Score instead
 - **Held dice.** The dice you hold are sent with the roll and shown to everyone as outlined. Dice held in the previous roll start held again, and you can release them

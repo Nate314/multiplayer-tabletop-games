@@ -3,7 +3,7 @@ import { rollDie } from '../../shared/dice.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { HEX_VERTICES, RESOURCES } from './board.ts';
 import { add, covers, describeResources, noResources, subtract, total } from './resources.ts';
-import { nameOf, note } from './state.ts';
+import { friendlyRobber, nameOf, note, visiblePoints } from './state.ts';
 import type { GameState, Random, Resource, Resources, Result, Seat } from './types.ts';
 
 export const HAND_LIMIT = 7; // more than this on a 7 discards half
@@ -112,9 +112,13 @@ export function afterDiscards(counts: Record<Seat, number>): GameState['pending'
 }
 
 // The players `seat` could steal from with the robber on `hex`: others with a building there and a card in hand
-export function robberVictims(state: Pick<GameState, 'activePlayers' | 'buildings'>, seat: Seat, hex: number, cardCount: (seat: Seat) => number): Seat[] {
+// With the friendly robber, players showing 2 points or fewer are left out
+type VictimState = Pick<GameState, 'activePlayers' | 'buildings' | 'houseRules' | 'longestRoad' | 'largestArmy'>;
+export function robberVictims(state: VictimState, seat: Seat, hex: number, cardCount: (seat: Seat) => number): Seat[] {
   const owners = new Set(HEX_VERTICES[hex].map(vertex => state.buildings[vertex]?.seat).filter(owner => owner !== undefined));
-  return state.activePlayers.filter(other => other !== seat && owners.has(other) && cardCount(other) > 0);
+  const friendly = friendlyRobber(state);
+  return state.activePlayers.filter(other => other !== seat && owners.has(other) && cardCount(other) > 0
+    && !(friendly && visiblePoints(state, other) <= 2));
 }
 
 // The robber moves to another hex, and the mover steals one random card from a player there, if any has one

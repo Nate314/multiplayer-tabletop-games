@@ -190,6 +190,7 @@
   .primary-button,
   .action-buttons button,
   .color-picker button,
+  .swap-picker button,
   .undo-vote-actions button {
     padding: 8px 18px;
     border: none;
@@ -493,7 +494,8 @@
 
   /* Choosing a Wild's color */
 
-  .color-picker {
+  .color-picker,
+  .swap-picker {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -622,6 +624,14 @@
 
   .round {
     font-weight: 600;
+  }
+
+  .stack-count {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 2px solid var(--highlight);
+    font-weight: 600;
+    text-align: center;
   }
 
   .player-score {

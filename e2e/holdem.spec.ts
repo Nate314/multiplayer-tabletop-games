@@ -529,3 +529,13 @@ test.describe("Texas Hold'em differences from Wikipedia", () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 });
+
+test.describe("Texas Hold'em house rules", () => {
+  test('10 players can join with the override', async ({ seat }) => {
+    const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
+    const table = await seat('holdem', names, { maxPlayers: 10 });
+    expect(table.pages).toHaveLength(10);
+    expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(10);
+    for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
+  });
+});

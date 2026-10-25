@@ -27,3 +27,7 @@ test('describes an exchange and a pass', () => {
 test('describes nothing before the first move', () => {
   assert.equal(describeMove({ lastMove: null, playerNames }), '');
 });
+
+test('describes a turn that timed out', () => {
+  assert.equal(describeMove({ lastMove: { type: 'pass', playerNumber: 1, timedOut: true }, playerNames }), 'Alice ran out of time');
+});

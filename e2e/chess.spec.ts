@@ -682,3 +682,35 @@ test.describe('Chess drag and drop', () => {
     await expect.poll(() => alice.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   });
 });
+
+test.describe('Chess clock', () => {
+  const clocks = (page: Page) => page.locator('.chess-clock');
+
+  test("the clock shows each player's time", async ({ seat }) => {
+    const table = await seat('chess', ['Alice', 'Bob'], { houseRules: { clockMinutes: 5, incrementSeconds: 2 } });
+    const [alice, bob] = table.pages;
+    await expect(clocks(alice)).toHaveCount(2);
+    await expect(clocks(alice).nth(1)).toHaveText('5:00');
+    await expect(alice.locator('.chess-clock-running')).toHaveCount(1);
+    await expect(alice.locator('.player-row.to-move .chess-clock-running')).toBeVisible();
+    await clicks(alice, 'e2', 'e4');
+    await expect(bob.locator('.player-row.to-move .chess-clock-running')).toContainText(/^[45]:\d\d$/);
+    // White paid for the seconds used and got the increment, so it never reads 5:02 or less than 4:50
+    await expect(clocks(bob).first()).toHaveText(/^(5:0[0-2]|4:5\d)$/);
+    const before = await clocks(bob).nth(1).textContent();
+    await expect(clocks(bob).nth(1)).not.toHaveText(before as string, { timeout: 3000 });
+    await bob.reload(); // the countdown keeps going after a reload
+    await expect(bob.locator('.chess-clock-running')).toBeVisible();
+    const reloaded = await clocks(bob).nth(1).textContent();
+    await expect(clocks(bob).nth(1)).not.toHaveText(reloaded as string, { timeout: 3000 });
+  });
+
+  test('a player whose clock runs out loses', async ({ seat }) => {
+    const table = await seat('chess', ['Alice', 'Bob'], { houseRules: { clockMinutes: 5 } });
+    const [alice, bob] = table.pages;
+    await table.patch({ clock: { remainingMs: { 1: 300_000, 2: 300_000 }, runningSince: Date.now() - 301_000 }, started: true });
+    await expect(status(bob)).toHaveText('Alice ran out of time. Bob wins!');
+    await expect(alice.getByText('Game Over')).toBeVisible();
+    await expect(alice.locator('.chess-clock-running')).toHaveCount(0);
+  });
+});

@@ -34,7 +34,7 @@ export type CardEffect =
 export type Card = { text: string; effect: CardEffect };
 
 // Money `debtor` owes and cannot pay yet; null creditor is the bank. The turn waits for the first debt.
-export type Debt = { debtor: Seat; creditor: Seat | null; amount: number; reason: string };
+export type Debt = { debtor: Seat; creditor: Seat | null; amount: number; reason: string; toPot?: true };
 
 // Bidding is open to every player still in the game; a pass is final, and the last bidder standing buys
 export type Auction = { space: number; highBid: number; highBidder: Seat | null; passed: Seat[] };
@@ -91,6 +91,7 @@ export type GameState = BaseGameState & {
   dice: [number, number] | null; // the most recent roll
   pendingBuy: number | null; // the space the turn holder may buy, or decline to start an auction
   auction: Auction | null;
+  freeParkingPot: number; // cash on Free Parking with the jackpot rule on; missing (read as 0) in games saved earlier
   auctionQueue: number[]; // spaces of a player bankrupt to the bank, auctioned one after another
   debts: Debt[];
   trade: Trade | null; // one open offer at a time

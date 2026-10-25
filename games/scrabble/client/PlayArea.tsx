@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { shuffle } from '../../../shared/shuffle.ts';
 import gameService from '../../../src/services/gameService';
 import Board from './Board';
@@ -34,7 +34,7 @@ const numberAfter = (prefix: string, id: string) => id.startsWith(prefix) ? Numb
 // Rack tiles can be dragged onto the board on your turn, or between places on the rack at any time; tiles placed
 // this turn can be dragged to another square or back to the rack. Only placing and Play reach the server.
 export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle }: PlayAreaProps) {
-  const { board, rack, bagCount, lastMove } = gameState;
+  const { board, rack, bagCount, lastMove, currentPlayer } = gameState;
   const rootRef = useRef<HTMLDivElement>(null);
   const slide = useSlides(rootRef);
   const [order, setOrder] = useState(initialOrder);
@@ -44,6 +44,13 @@ export default function PlayArea({ gameState, isMyTurn, initialOrder, onShuffle 
   const [exchanging, setExchanging] = useState<number[] | null>(null);
 
   const liftSelected = useRef(false); // the current drag selected its rack tile, so a drag that ends without placing clears it
+  // The turn passed on (the turn timer ran out): tiles put down but not played go back to the rack
+  useEffect(() => {
+    setPending([]);
+    setSelected(null);
+    setBlankSquare(null);
+    setExchanging(null);
+  }, [currentPlayer]);
 
   const isPlaced = (slot: number) => pending.some(tile => tile.slot === slot);
   const pendingAt = ({ row, col }: Square) => pending.find(tile => tile.row === row && tile.col === col);

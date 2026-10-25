@@ -24,6 +24,9 @@ export type LastMove = {
   pickedUp: number; // stones in the first pickup
   laps: number; // pickups in the chain, 1 when the first lap ended in an empty pit or the bank
   extraTurn: boolean;
+  captured?: number; // Kalah: stones moved into the bank by a capture, the last stone included
+  fromOpponent?: true; // the first pit was on the opponent's side, played because the mover's side was empty
+  endedOnStones?: true; // Kalah: the last stone landed in a pit that already had stones
 };
 
 export type GameState = BaseGameState & {

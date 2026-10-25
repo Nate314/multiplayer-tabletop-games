@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import {
-  TARGET_SCORE, applyAction, applyMove, createGameState, deal, deckSize, onPlayerLeft, onUndo, resetLobby, roundPoints, toPublicState
+  targetScore, applyAction, applyMove, createGameState, deal, deckSize, onPlayerLeft, onUndo, resetLobby, roundPoints, toPublicState
 } from './rules.ts';
 import type { Card, GameState, PublicGameState, Result, Seat } from './types.ts';
 
@@ -139,7 +140,7 @@ test('an empty draw pile reshuffles the discards but the top card', () => {
 });
 
 test("the game ends at the article's target score", () => {
-  assert.equal(TARGET_SCORE, 500);
+  assert.equal(targetScore({}), 500);
   const finish = (scores: Record<Seat, number>) =>
     move(move({ ...nearlyDone(), scores }, 1, { type: 'draw', from: 'discard' }), 1, { type: 'place', slot: 4 });
 
@@ -281,4 +282,16 @@ test('setup: nothing is dealt for one player, and the first seat takes the first
   assert.equal(two.round, 1);
   assert.deepEqual(two.scores, { 1: 0, 2: 0 });
   assert.equal(two.drawPile.length, 40 - 20 - 1);
+});
+
+test('the game ends at the chosen target', () => {
+  const finish = (mine: number, target: number) => move(
+    move({ ...nearlyDone(), scores: { 1: mine, 2: 0 }, houseRules: withRules({ targetScore: target }) }, 1, { type: 'draw', from: 'discard' }),
+    1, { type: 'place', slot: 4 });
+  const over = finish(175, 250); // the round is worth 75
+  assert.equal(over.scores[1], 250);
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [1]);
+  assert.equal(finish(174, 250).isGameOver, false);
+  assert.equal(finish(175, 500).isGameOver, false);
 });

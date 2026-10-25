@@ -12,12 +12,10 @@ import Table from './Table';
 import animateMove, { cardKey } from './animateMove.ts';
 import { drawnStep } from './drawn.ts';
 import { DEFAULT_SORT_ORDER, sortHand, type SortOrder } from './sortHand.ts';
-import { hasLaidDown, phaseRequirements, skipTargets } from '../rules.ts';
-import { phase10 } from '../index.ts';
+import { hasLaidDown, layablePhases, phaseRequirements, skipTargets } from '../rules.ts';
+import { seatOrder } from './seatOrder.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Card, DrawSource, PublicGameState, Seat } from '../types.ts';
-
-const MAX_PLAYERS = phase10.info.maxPlayers;
 
 type HandCardsProps = {
   gameState: PublicGameState;
@@ -52,6 +50,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const screenRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [staged, setStaged] = useState<number[][]>([]);
+  const [chosenPhase, setChosenPhase] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(DEFAULT_SORT_ORDER);
   const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const {
@@ -61,6 +60,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const hasDrawn = isMyTurn && drawnBy === playerNumber;
   const laidDown = hasLaidDown(gameState, playerNumber);
+  // With phases in any order the player picks one; otherwise there is only the next phase
+  const choices = layablePhases(gameState, playerNumber);
+  const layPhase = chosenPhase !== null && choices.includes(chosenPhase) ? chosenPhase : choices[0];
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const showSummary = handSummary !== null && !(isGameOver && finalScoringClosed);
 
@@ -70,6 +72,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     // Nothing stays picked or staged across moves, undos or hands
     setSelected([]);
     setStaged([]);
+    setChosenPhase(null);
   }, [moveCount, handNumber]);
 
   useEffect(() => {
@@ -90,9 +93,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   }
 
   function stage(part: number) {
-    setStaged(current => phaseRequirements(phases[playerNumber]).map((_, index) =>
+    setStaged(current => phaseRequirements(layPhase).map((_, index) =>
       index === part ? [...(current[index] ?? []), ...selected] : current[index] ?? []));
     setSelected([]);
+  }
+
+  function choosePhase(phase: number) {
+    setChosenPhase(phase);
+    setStaged([]);
   }
 
   function unstage(card: Card) {
@@ -100,7 +108,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   }
 
   const draw = (source: DrawSource) => gameService.makeMove({ type: 'draw', source });
-  const layDown = () => gameService.makeMove({ type: 'layDown', groups: staged });
+  const layDown = () => gameService.makeMove({ type: 'layDown', groups: staged, phase: layPhase });
   const hit = (group: number) => gameService.makeMove({ type: 'hit', group, cards: selected });
   const discard = (card: Card, skip: Seat | null) => gameService.makeMove({ type: 'discard', card: card.id, skip });
 
@@ -110,8 +118,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   else if (hasDrawn) hint = 'Select cards to hit on any group, or one card to discard';
 
   // Turn order starting with this player
-  const stepsAfterMe = (seat: Seat) => (seat - playerNumber + MAX_PLAYERS) % MAX_PLAYERS;
-  const seats = Object.keys(phases).map(Number).sort((a, b) => stepsAfterMe(a) - stepsAfterMe(b));
+  const seats = seatOrder(Object.keys(phases).map(Number), playerNumber);
 
   return (
     <>
@@ -179,9 +186,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           {hasDrawn && !laidDown && (
             <LayDownPanel
               seat={playerNumber}
-              phase={phases[playerNumber]}
+              phase={layPhase}
+              choices={choices}
               staged={stagedCards}
               hasSelection={selected.length > 0}
+              onChoose={choosePhase}
               onAdd={stage}
               onReturn={unstage}
               onClear={() => setStaged([])}

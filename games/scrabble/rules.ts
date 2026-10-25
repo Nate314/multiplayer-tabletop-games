@@ -1,6 +1,7 @@
 // Scrabble rules shared by the browser (score preview) and the server (validation).
 // There is no dictionary: any placement that follows the rules below is accepted, and players dispute a word with Undo.
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -25,6 +26,17 @@ export const RACK_SIZE = 7;
 export const BINGO_BONUS = 50;
 export const MAX_SCORELESS_TURNS = 6;
 export const BLANK = '?';
+export const TURN_MINUTES: ChoiceRule<'off' | 1 | 2 | 3 | 5> = {
+  id: 'turnMinutes', label: 'Turn timer', kind: 'choice', standard: 'off',
+  choices: [
+    { value: 'off', label: 'Off' },
+    { value: 1, label: '1 minute' },
+    { value: 2, label: '2 minutes' },
+    { value: 3, label: '3 minutes' },
+    { value: 5, label: '5 minutes' }
+  ]
+};
+export const SCRABBLE_RULES: HouseRule[] = [TURN_MINUTES];
 export const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 // The standard English set: how many of each tile, and what each is worth
@@ -207,6 +219,7 @@ export function createGameState(gameId: string): GameState {
     bag: [],
     scores: {},
     scorelessTurns: 0,
+    turnStartedAt: null,
     lastMove: null,
     endAdjustments: null
   };
@@ -258,6 +271,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     scorelessTurns: 0,
     lastMove: null,
     endAdjustments: null,
+    turnStartedAt: null,
     currentPlayer: opening ? opening.first : state.currentPlayer,
     gameStatus: opening ? `${state.gameStatus}. ${opening.status}` : state.gameStatus
   };
@@ -410,7 +424,48 @@ function exchange(state: GameState, seat: Seat, letters: RackTile[], random: Ran
   return { state: finishTurn(next, seat, false) };
 }
 
-export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
+const MINUTE_MS = 60_000;
+
+// The turn timer starts afresh for whoever is to move, and stops when the game is over or the timer is off
+function startTurn(state: GameState, now: number): GameState {
+  const running = houseRule(state, TURN_MINUTES) !== 'off' && !state.isGameOver;
+  return { ...state, turnStartedAt: running ? now : null };
+}
+
+// Everyone has agreed, an undo was approved, or the server restarted: the current turn gets its full time from `now`
+export function resumeClock(state: GameState, now: number): GameState {
+  return state.isGameOver ? state : startTurn(state, now);
+}
+
+// When the player to move runs out of time, in server ms
+export function deadline(state: Pick<GameState, 'houseRules' | 'turnStartedAt' | 'isGameOver' | 'currentPlayer'>): number | null {
+  const minutes = houseRule(state, TURN_MINUTES);
+  if (minutes === 'off' || (state.turnStartedAt ?? null) === null || state.isGameOver || state.currentPlayer === null) return null;
+  return (state.turnStartedAt as number) + minutes * MINUTE_MS;
+}
+
+// Tiles placed but not played are only in the browser, so the turn simply passes, as a scoreless turn
+function timeOut(state: GameState, seat: Seat, now: number): GameState {
+  const passed: GameState = {
+    ...state,
+    lastMove: { type: 'pass', playerNumber: seat, timedOut: true },
+    gameStatus: `${state.playerNames[seat]} ran out of time`
+  };
+  return startTurn(finishTurn(passed, seat, false), now);
+}
+
+export function onDeadline(state: GameState, now: number): GameState {
+  return timeOut(state, state.currentPlayer as Seat, now);
+}
+
+export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random, now: number): Result<GameState> {
+  const limit = deadline(state);
+  if (limit !== null && now >= limit) return { state: timeOut(state, seat, now) }; // the move came too late
+  const result = playMove(state, seat, move, random);
+  return 'error' in result ? result : { state: startTurn(result.state, now) };
+}
+
+function playMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
   if (parsed.type === 'play') return play(state, seat, parsed.tiles, random);

@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Play out your hand to win the round. You then score the pips on the tiles left in everyone else\'s hands, plus the pips in the boneyard, and the first player to reach 100 points (61 with three or four players) wins the game.'
+    answer: 'Play out your hand to win the round. You then score the pips on the tiles left in everyone else\'s hands, plus the pips in the boneyard, and the first player to reach the target score wins the game. That is 100 points (61 with three or four players) unless the host chose another.'
   },
   {
     question: 'Which set is used?',
@@ -44,5 +44,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'What happens if someone leaves?',
     answer: 'If they disconnect, the game waits for them on their turn, the scoring screen does not wait for them, and the others may vote to dismiss them. A dismissed player\'s tiles go back into the boneyard and their turns are skipped. If only one player is left, they win.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose the target score: 100 points for two players and 61 for three or four (the standard), or 61, 100, 150 or 200 for any number of players. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Put the ten cards in your rack in ascending order, lowest in slot 1 and highest in slot 10. The first player to do it calls Rack-O and ends the round. The first player to reach 500 points wins the game.'
+    answer: 'Put the ten cards in your rack in ascending order, lowest in slot 1 and highest in slot 10. The first player to do it calls Rack-O and ends the round. The first player to reach the target score (500 unless the host chose another) wins the game.'
   },
   {
     question: 'What is in the deck?',
@@ -36,5 +36,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'What happens if someone leaves?',
     answer: 'A disconnected player keeps their seat, and their turn waits for them. If the others vote to dismiss them, their rack goes back into the draw pile and their turns are skipped. The last player left wins. Nobody can join after the first move.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose a target score of 250, 500 or 1,000 points. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

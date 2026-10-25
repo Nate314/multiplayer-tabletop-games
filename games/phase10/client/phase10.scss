@@ -370,6 +370,26 @@
     margin-bottom: 8px;
   }
 
+  .lay-down-choice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .lay-down-choice select {
+    max-width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--slot-bg);
+    color: inherit;
+    font: inherit;
+  }
+
   .lay-down-parts {
     display: flex;
     flex-wrap: wrap;

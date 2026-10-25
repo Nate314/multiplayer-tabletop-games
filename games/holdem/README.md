@@ -1,6 +1,6 @@
 # Texas Hold'em
 
-No-limit Texas Hold'em with play chips: two private cards each, five shared cards, and four rounds of betting, for 2 to 8 players.
+No-limit Texas Hold'em with play chips: two private cards each, five shared cards, and four rounds of betting, for 2 to 8 players (up to 10 with the house rules override).
 
 ## Rules
 
@@ -41,3 +41,4 @@ These follow no-limit play in [Wikipedia's Texas hold 'em article](https://en.wi
 - **No mucking or showing by choice.** At a showdown every hand still in is shown at once, in no order, and a player who wins uncontested cannot choose to show
 - **Running out of chips and ending.** The article does not cover the end of a cash game. Here a player with no chips is out, and the game ends by a unanimous vote of the players with chips or when one player has every chip, the owner's choices
 - **Leaving.** The article does not cover a player leaving mid-hand. Here their hand is folded and their chips leave the table
+- **Players.** This game seats 2 to 8, or up to 10 when the host ticks the override. With 10 players the deck still covers 20 hole cards, the burn cards and the five shared cards

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type SeatOptions } from './fixtures.ts';
 import type { GameState } from '../games/racko/types.ts';
 
 // One test per rule, control and difference in games/racko/README.md. Seat 1 is Alice, 2 Bob, 3 Cara.
@@ -8,8 +8,8 @@ const range = (from: number, to: number) => Array.from({ length: to - from + 1 }
 // Alice's rack is 1 to 10 with a 50 in slot 5; the discard top is 5 and the draw pile ends in 40
 const NEARLY = { racks: { 1: [1, 2, 3, 4, 50, 6, 7, 8, 9, 10], 2: range(11, 20) }, drawPile: [60, 40], discardPile: [30, 5] };
 
-async function start(seat: Seat, names = ['Alice', 'Bob'], fields: object = NEARLY, motion = false) {
-  const table = await seat('racko', names, { motion });
+async function start(seat: Seat, names = ['Alice', 'Bob'], fields: object = NEARLY, options?: SeatOptions) {
+  const table = await seat('racko', names, options);
   if (Object.keys(fields).length > 0) await table.patch({ scores: Object.fromEntries(names.map((_, index) => [index + 1, 0])), ...fields });
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
@@ -180,11 +180,22 @@ test.describe('Rack-O rules', () => {
     await expect(discardPile(bob)).toBeDisabled();
     await expect(drawPile(alice)).toBeEnabled();
   });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { alice, bob } = await start(seat, ['Alice', 'Bob'], { ...NEARLY, scores: { 1: 175, 2: 100 } }, { houseRules: { targetScore: 250 } });
+    await discardPile(alice).click();
+    await slot(alice, 5).click();
+    for (const page of [alice, bob]) {
+      await expect(scoring(page)).toContainText('Alice called Rack-O! Alice wins with 250 points');
+      await expect(scoring(page).locator('.summary-target')).toHaveText('First to 250 points wins');
+    }
+    await expect(bob.locator('.turn-message')).toHaveText('Game over');
+  });
 });
 
 test.describe('Rack-O controls and platform', () => {
   test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
-    const animated = await start(seat, ['Alice', 'Bob'], NEARLY, true);
+    const animated = await start(seat, ['Alice', 'Bob'], NEARLY, { motion: true });
     const animations = (page: Page) => page.evaluate(() => document.getAnimations().length);
     await drawPile(animated.alice).click();
     await expect.poll(() => animations(animated.bob)).toBeGreaterThan(0);

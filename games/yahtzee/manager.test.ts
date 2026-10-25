@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { yahtzee } from './index.ts';
 import { allowedCategories } from './rules.ts';
 import type { PublicGameState } from './types.ts';
@@ -21,6 +21,7 @@ function dice(...faces: number[]): Random {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([yahtzee], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
   for (const name of names) manager.join('yahtzee', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -80,4 +81,22 @@ test('dismissing the player to move hands the turn on', () => {
   assert.equal(state.currentPlayer, 2);
   assert.deepEqual(state.dice, []);
   assert.equal(state.rollsLeft, 3);
+});
+
+test('a full game at 10 players', () => {
+  const manager = rememberingKeys(createGameManager([yahtzee], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
+  manager.join('yahtzee', 'g1', 'P1');
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 10 }));
+  for (let seat = 2; seat <= 10; seat++) manager.join('yahtzee', 'g1', `P${seat}`);
+  agreeAll(manager, ROOM);
+  let state = manager.getState(ROOM, null) as PublicGameState;
+  assert.equal(state.activePlayers.length, 10);
+  for (let moves = 0; !state.isGameOver && moves < 1000; moves++) {
+    const seat = state.currentPlayer ?? assert.fail('nobody to play');
+    state = state.dice.length === 0
+      ? ok(manager.move(ROOM, seat, { type: 'roll', hold: NONE }))
+      : ok(manager.move(ROOM, seat, { type: 'score', category: allowedCategories(state.dice, state.sheets[seat])[0] }));
+  }
+  assert.equal(state.isGameOver, true);
+  assert.equal(Object.keys(state.sheets[10]).length, 13);
 });

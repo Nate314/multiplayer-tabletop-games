@@ -22,7 +22,8 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do buying and auctions work?',
     answer: 'Landing on a property the bank owns lets you buy it at its price, or decline. A declined property is ' +
-      'auctioned to every player still in the game, you included. Bid with the quick buttons or type an amount; you can ' +
+      'auctioned to every player still in the game, you included (unless the house rules turned auctions off, when the ' +
+      'bank keeps it). Bid with the quick buttons or type an amount; you can ' +
       'never bid more cash than you hold. A pass is final, and the last bidder left buys at their bid. If nobody bids, ' +
       'the bank keeps it.'
   },
@@ -66,12 +67,20 @@ export const FAQS: FaqItem[] = [
     answer: 'The game waits for you while you owe money: sell buildings, mortgage property or trade for cash, and the ' +
       'debt is paid as soon as you have enough. If you cannot raise it, click Declare bankruptcy. Bankrupt to a player, ' +
       'your buildings are sold to the bank at half price and that player takes your cash, properties and jail cards. ' +
-      'Bankrupt to the bank, your properties are auctioned to the others. You may also declare bankruptcy on your turn to ' +
-      'leave the game; your properties then go to auction.'
+      'Bankrupt to the bank, your properties are auctioned to the others, or with Auctions off go back to the bank ' +
+      'unowned. You may also declare bankruptcy on your turn to leave the game; your properties then go the same way.'
   },
   {
     question: 'Is there Free Parking money?',
-    answer: 'No. As in the official rules, Free Parking is just a resting place, and taxes and fees go to the bank.'
+    answer: 'Not unless the house rules turn on the Free Parking jackpot. By default, as in the official rules, Free Parking is ' +
+      'just a resting place, and taxes and fees go to the bank. With the jackpot on, the taxes, the Chance and Community ' +
+      'Chest payments to the bank and the $50 Jail fine go into a pot shown on Free Parking, and landing there takes all of it.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before the first roll the host can turn on the Free Parking jackpot, turn on $400 for landing exactly on GO (passing GO ' +
+      'still pays $200), and turn auctions off, when a declined property stays with the bank and the properties of ' +
+      'a bankrupt player go back to it unowned. Everyone has to agree before play starts.'
   },
   {
     question: 'What do Undo and History do?',

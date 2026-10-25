@@ -9,7 +9,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What is the goal?',
-    answer: 'Be the first to reach 10 points on your own turn. A settlement is 1 point, a city 2, each Victory Point card ' +
+    answer: 'Be the first to reach the points to win (10 unless the host chose another) on your own turn. A settlement is 1 point, a city 2, each Victory Point card ' +
       '1, and the Longest Road and Largest Army cards 2 each.'
   },
   {
@@ -71,7 +71,8 @@ export const FAQS: FaqItem[] = [
     question: 'What if a player leaves?',
     answer: 'A dismissed player\'s roads, settlements and cities stay on the board but score and produce nothing. Their ' +
       'cards go back to the bank, and any discard or trade waiting on them is dropped. If it was their turn, the next ' +
-      'player\'s turn begins. With fewer than three players left, the game ends and the player with the most points wins.'
+      'player\'s turn begins. With fewer than three players left (two, if the host set the table for two), the game ' +
+      'ends and the player with the most points wins.'
   },
   {
     question: 'Can we undo a move?',
@@ -81,5 +82,10 @@ export const FAQS: FaqItem[] = [
   {
     question: 'Can I tell the colors apart without seeing color?',
     answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, orange hexagon, purple cross. Settlements, cities, the middle of each road and the player list show it.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose the points to win (8, 10 or 12), switch on the friendly robber (a player with 2 points or fewer cannot be robbed; the robber can still be moved to their hex but steals nothing), or ' +
+      'tick "I know what I\'m doing" to play with two players. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

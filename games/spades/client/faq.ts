@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'You and your partner, who sits across from you, bid how many tricks you will take and then try to take exactly that many. Seats 1 and 3 play against seats 2 and 4. The first team to reach 500 points wins, and a team that falls to -200 loses.'
+    answer: 'You and your partner, who sits across from you, bid how many tricks you will take and then try to take exactly that many. Seats 1 and 3 play against seats 2 and 4. The first team to reach the target score (500 unless the host chose another) wins, and a team that falls to -200 loses.'
   },
   {
     question: 'How are the cards dealt?',
@@ -34,7 +34,7 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'A player who bids nil and takes no trick wins 100 points for the team; one who takes any trick loses 100. This is scored on its own, on top of whatever the partner\'s bid scores. If both partners bid nil, there is no contract and only the two nils score.'
   },
   {
-    question: 'What if both teams pass 500 in the same hand?',
+    question: 'What if both teams pass the target in the same hand?',
     answer: 'The higher total wins. If the totals are equal, another hand is played. The same goes when a team falls to -200: the other team wins unless the scores are tied.'
   },
   {
@@ -44,5 +44,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose a target score of 250, 300 or 500 points. A team that falls to -200 still loses. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

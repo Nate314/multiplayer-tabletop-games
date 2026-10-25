@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
 import type { GameState, SetSize } from '../games/dominoes/types.ts';
 
@@ -39,8 +39,8 @@ async function deal(table: Table, { hands, boneyard = [], line = [[3, 4]], curre
   });
 }
 
-async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara']) {
-  const table = await seat('dominoes', names);
+async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara'], options?: SeatOptions) {
+  const table = await seat('dominoes', names, options);
   return { table, pages: table.pages };
 }
 
@@ -95,6 +95,7 @@ test.describe('Dominoes rules', () => {
     await expect(button(cara, 'Double-nine (55 tiles)')).toHaveAttribute('aria-pressed', 'true');
     await expect(hand(cara).getByRole('button')).toHaveCount(9);
     await leave(cara);
+    await agreeToHouseRules(alice, bob); // a player leaving clears every agreement
 
     const state = await table.state<GameState>();
     const leader = table.pages[(state.currentPlayer as number) - 1];
@@ -303,5 +304,15 @@ test.describe('Dominoes rules', () => {
     const faq = await openFaq(bob);
     await expect(faq).toContainText('Double-six (28 tiles) or double-nine (55 tiles)');
     await expect(faq).toContainText('Click Draw, or the boneyard');
+  });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, ['Dan', 'Eve'], { houseRules: { targetScore: 61 } });
+    await expect(pages[0].locator('.round')).toHaveText('Round 1: first to 61 points wins (double-six)');
+    await deal(table, { hands: { 1: [[4, 5]], 2: [[3, 6], [2, 2]] }, boneyard: [[6, 6]], scores: { 1: 40, 2: 20 } });
+    await play(pages[0], 4, 5);
+    await expect(scoring(pages[1]).getByText('First to 61 points wins')).toBeVisible();
+    await expect(scoring(pages[1]).locator('.summary-result')).toHaveText('Dan wins with 65 points!');
+    await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
   });
 });

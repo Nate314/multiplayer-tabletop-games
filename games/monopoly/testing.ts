@@ -41,3 +41,8 @@ export const act = (state: GameState, seat: Seat, value: unknown) => applyAction
 export const played = (state: GameState, seat: Seat, value: unknown, random: Random = dice()) => ok(move(state, seat, value, random));
 
 export const acted = (state: GameState, seat: Seat, value: unknown) => ok(act(state, seat, value));
+
+// House rules as the host set them, e.g. houseRules({ freeParkingJackpot: true })
+export function houseRules(values: Record<string, boolean>): GameState['houseRules'] {
+  return { host: 1, values, override: false, maxPlayers: null, agreed: [1, 2, 3], revision: 1 };
+}

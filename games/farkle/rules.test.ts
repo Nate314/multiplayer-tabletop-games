@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { farkle } from './index.ts';
-import { TARGET_SCORE } from './rules.ts';
+import { FARKLE_RULES, targetScore } from './rules.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
+import { score } from './scoring.ts';
 import type { GameState, Move } from './types.ts';
 
 // Each value is one die, read in order
@@ -12,8 +13,8 @@ function dice(...values: number[]): Random {
   return () => (values[next++ % values.length] - 0.5) / 6;
 }
 
-function lobby(names = ['A', 'B', 'C']): GameState {
-  let state = farkle.createGameState('g1');
+function lobby(names = ['A', 'B', 'C'], fields: Partial<GameState> = {}): GameState {
+  let state = { ...farkle.createGameState('g1'), ...fields };
   for (const name of names) {
     const added = addPlayer(farkle, state, name, dice(1));
     if ('error' in added) assert.fail(added.error);
@@ -167,4 +168,42 @@ test('table view hides hands: nothing is hidden, so the history and every seat s
   const table = farkle.toPublicState(state, false, null);
   for (const seat of [1, 2, 3]) assert.deepEqual(farkle.toPublicState(state, false, seat), table);
   assert.deepEqual(table.dice, [1, 2, 5, 3, 4, 6]);
+});
+
+test('the game ends at the target score the host chose', () => {
+  const chosen = (value: number) => turn([1, 2, 3, 4, 6, 6], {
+    turnTotal: 4900, scores: { 1: 0, 2: 0, 3: 0 },
+    houseRules: { host: 1, values: { targetScore: value }, override: false, maxPlayers: null, agreed: [], revision: 0 }
+  });
+  assert.equal(targetScore(chosen(5000)), 5000);
+  const banked = play(chosen(5000), 1, { type: 'bank', keep: [0] });
+  assert.equal(banked.triggeredBy, 1);
+  assert.deepEqual(banked.finalTurns, [2, 3]);
+  const standard = play(chosen(FARKLE_RULES[0].standard as number), 1, { type: 'bank', keep: [0] });
+  assert.equal(standard.triggeredBy, null);
+  assert.equal(targetScore({}), 10000);
+});
+
+test('ten players can play a full game', () => {
+  let seed = 7;
+  const random: Random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const names = Array.from({ length: 10 }, (_, index) => `P${index + 1}`);
+  const tenSeats = { host: 1, values: { targetScore: 5000 }, override: true, maxPlayers: 10, agreed: [], revision: 0 };
+  let state: GameState = { ...lobby(names, { houseRules: tenSeats }), started: true };
+  assert.equal(state.activePlayers.length, 10);
+  for (let step = 0; step < 100000 && !state.isGameOver; step++) {
+    const seat = state.currentPlayer as number;
+    // The best-scoring subset of the roll
+    let keep: number[] = [];
+    let best = 0;
+    for (let mask = 1; mask < 1 << state.dice.length; mask++) {
+      const picked = state.dice.map((_, index) => index).filter(index => mask & (1 << index));
+      const points = score(picked.map(index => state.dice[index]));
+      if (points !== null && points > best) { best = points; keep = picked; }
+    }
+    const bankNow = state.dice.length > 0 && state.turnTotal + best >= 300;
+    state = play(state, seat, { type: bankNow ? 'bank' : 'roll', keep }, random);
+  }
+  assert.equal(state.isGameOver, true);
+  assert.ok(state.winners.length >= 1);
 });

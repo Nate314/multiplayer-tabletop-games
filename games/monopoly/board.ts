@@ -8,6 +8,7 @@ export const JAIL = 10;
 export const START_CASH = 1500;
 export const GO_SALARY = 200;
 export const JAIL_FINE = 50;
+export const GO_BONUS_SALARY = 400; // for landing exactly on GO with the house rule
 export const HOUSE_SUPPLY = 32;
 export const HOTEL_SUPPLY = 12;
 export const HOTEL = 5; // a hotel stands for the fifth building level

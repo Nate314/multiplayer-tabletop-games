@@ -28,6 +28,14 @@ test('describes plays and who took the trick', () => {
     'Dan played black 5; Bob took the trick');
 });
 
+test('describes calling partners and a partner revealed', () => {
+  assert.equal(describe({ type: 'callPartner', playerNumber: 1, cards: [{ color: 'red', number: 14 }] }), 'Alice called red 14 for a partner');
+  assert.equal(describe({ type: 'callPartner', playerNumber: 1, cards: [{ color: 'rook' }, { color: 'green', number: 5 }] }),
+    'Alice called the Rook and green 5 for partners');
+  assert.equal(describe({ type: 'play', playerNumber: 3, card: { color: 'red', number: 14 }, trickWinner: 3, partnerOf: 1 }),
+    'Cara played red 14 and took the trick. Cara is Alice\'s partner');
+});
+
 test('nothing before the first move', () => {
   assert.equal(describe(null), '');
 });

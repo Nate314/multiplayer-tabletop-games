@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { CARDS, GEMS, LEVELS } from './cards.ts';
 import { TOKENS, payment, prestige, takeThreeCount, tokenTotal } from './rules.ts';
 import { splendor } from './index.ts';
@@ -26,6 +26,7 @@ function seeded(seed: number): Random {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([splendor], seeded(1)));
   for (const name of names) manager.join('splendor', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 

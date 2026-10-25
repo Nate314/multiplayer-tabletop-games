@@ -5,8 +5,11 @@ import SettingsButton from './SettingsButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
 import PresenceBar from './PresenceBar';
+import HouseRulesButton from './HouseRulesButton';
+import HouseRulesPanel from './HouseRulesPanel';
 import DismissVote from './DismissVote';
 import gameService from '../services/gameService';
+import { needsAgreement } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -40,10 +43,12 @@ export default function GameView({ game, client, gameState, playerNumber, error,
             <div className="settings-row">Theme <ThemeToggle /></div>
           </>
         )} />
+        <HouseRulesButton game={game} gameState={gameState} />
         <GitHubLink />
         <ThemeToggle />
       </header>
       <PresenceBar gameState={gameState} onDismiss={(seat) => gameService.requestDismiss(seat)} />
+      {!gameState.started && needsAgreement(game) && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
       <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
       <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
     </div>

@@ -1,5 +1,6 @@
 // Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
 import { handCounts, mapSeats, viewHand } from '../../shared/hands.ts';
+import { houseRule, type ToggleRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -29,6 +30,12 @@ export const WILD_COUNT = 8;
 export const SKIP_COUNT = 4;
 export const HAND_SIZE = 10;
 export const LAST_PHASE = 10;
+
+const ANY_ORDER_RULE: ToggleRule = {
+  id: 'anyOrder', label: 'Phases in any order', kind: 'toggle', standard: false,
+  help: 'Each hand a player lays down any phase they have not completed; completing all ten finishes'
+};
+export const PHASE10_RULES = [ANY_ORDER_RULE];
 
 const set = (size: number): Requirement => ({ kind: 'set', size });
 const run = (size: number): Requirement => ({ kind: 'run', size });
@@ -174,6 +181,29 @@ export function runValue(group: Group, index: number): number | null {
   return group.kind === 'run' ? group.start + index : null;
 }
 
+export const anyOrder = (state: Pick<GameState, 'houseRules'>): boolean => houseRule(state, ANY_ORDER_RULE);
+
+// The phases a player has completed. Without the rule they are all those before their current phase, which is
+// also how a save from before the rule is read.
+export function phasesDoneOf(state: Pick<GameState, 'houseRules' | 'phases' | 'phasesDone'>, seat: Seat): number[] {
+  const recorded = state.phasesDone?.[seat];
+  if (anyOrder(state) && recorded) return recorded;
+  return Array.from({ length: Math.min(state.phases[seat] - 1, LAST_PHASE) }, (_, index) => index + 1);
+}
+
+// The phases a player may lay down now: their next one, any one not completed, or in a tiebreaker only phase 10
+export function layablePhases(state: Pick<GameState, 'houseRules' | 'phases' | 'phasesDone' | 'tiebreak'>, seat: Seat): number[] {
+  if (state.tiebreak.includes(seat)) return [LAST_PHASE];
+  if (!anyOrder(state)) return [state.phases[seat]];
+  const done = phasesDoneOf(state, seat);
+  return PHASES.map((_, index) => index + 1).filter(phase => !done.includes(phase));
+}
+
+// The phase a player laid down this hand, if they have. Saves from before the rule did not record it.
+export function laidPhaseOf(state: Pick<GameState, 'groups' | 'phases' | 'laidPhase'>, seat: Seat): number | null {
+  return state.laidPhase?.[seat] ?? (hasLaidDown(state, seat) ? state.phases[seat] : null);
+}
+
 export function hasLaidDown(state: Pick<GameState, 'groups'>, seat: Seat): boolean {
   return state.groups.some(group => group.owner === seat);
 }
@@ -239,6 +269,8 @@ export function createGameState(gameId: string): GameState {
     discardPile: [],
     groups: [],
     phases: {},
+    phasesDone: {},
+    laidPhase: {},
     scores: {},
     skipped: [],
     tiebreak: [],
@@ -262,6 +294,8 @@ export function resetLobby(state: GameState, random: Random): GameState {
     currentPlayer: skipsFirst ? seats[1] : state.currentPlayer,
     groups: [],
     phases: Object.fromEntries(seats.map(seat => [seat, 1])),
+    phasesDone: Object.fromEntries(seats.map(seat => [seat, []])),
+    laidPhase: {},
     scores: Object.fromEntries(seats.map(seat => [seat, 0])),
     skipped: [],
     tiebreak: [],
@@ -303,7 +337,8 @@ function parseMove(move: unknown): Move | null {
     case 'layDown': {
       const groups = Array.isArray(input.groups) ? input.groups.map(parseIds) : null;
       if (!groups || groups.some(ids => ids === null)) return null;
-      return { type: 'layDown', groups: groups.filter(ids => ids !== null) };
+      // A phase that is not a whole number is treated as not named, so only the rule's own check refuses it
+      return { type: 'layDown', groups: groups.filter(ids => ids !== null), phase: isCardId(input.phase) ? input.phase : undefined };
     }
     case 'hit': {
       const cards = parseIds(input.cards);
@@ -334,20 +369,26 @@ function endHand(state: GameState, wentOut: Seat): GameState {
   const seats = Object.fromEntries(handPlayers(state).map((seat): [Seat, SeatSummary] => {
     const cards = state.hands[seat] ?? [];
     const points = handPoints(cards);
+    const laid = laidPhaseOf(state, seat);
     return [seat, {
-      phase: state.phases[seat],
-      completed: hasLaidDown(state, seat),
+      phase: anyOrder(state) ? laid ?? 0 : state.phases[seat],
+      completed: laid !== null,
       cardsLeft: cards.length,
       points,
       scoreAfter: state.scores[seat] + points
     }];
   }));
-  const phases = mapSeats(state.phases, (phase, seat) => (seats[seat]?.completed ? phase + 1 : phase));
+  const phasesDone = mapSeats(state.phasesDone ?? {}, (done, seat) =>
+    seats[seat]?.completed && !done.includes(seats[seat].phase) ? [...done, seats[seat].phase].sort((a, b) => a - b) : done);
+  const phases = anyOrder(state)
+    ? mapSeats(state.phases, (_, seat) => Math.min(...layablePhases({ ...state, phasesDone, tiebreak: [] }, seat), LAST_PHASE + 1))
+    : mapSeats(state.phases, (phase, seat) => (seats[seat]?.completed ? phase + 1 : phase));
   const scores = mapSeats(state.scores, (score, seat) => seats[seat]?.scoreAfter ?? score);
   const handSummary: HandSummary = { handNumber: state.handNumber, wentOut, seats, acknowledged: [] };
-  const scored: GameState = { ...state, phases, scores, handSummary, currentPlayer: null, drawnBy: null, skipped: [] };
+  const scored: GameState = { ...state, phases, phasesDone, scores, handSummary, currentPlayer: null, drawnBy: null, skipped: [] };
 
-  const finishers = handPlayers(state).filter(seat => seats[seat].completed && seats[seat].phase === LAST_PHASE);
+  const finishers = handPlayers(state).filter(seat =>
+    seats[seat].completed && (anyOrder(state) ? phasesDoneOf({ ...state, phasesDone }, seat).length === LAST_PHASE : seats[seat].phase === LAST_PHASE));
   if (finishers.length === 0) {
     return { ...scored, gameStatus: `${state.playerNames[wentOut]} went out. Hand ${state.handNumber} scored. Waiting for everyone to continue.` };
   }
@@ -415,6 +456,7 @@ function startNextHandIfReady(state: GameState, random: Random): GameState {
     dealer,
     currentPlayer: first,
     groups: [],
+    laidPhase: {},
     skipped: [],
     drawnBy: null,
     handSummary: null,
@@ -476,9 +518,25 @@ function draw(state: GameState, seat: Seat, source: DrawSource, random: Random):
   } };
 }
 
-function layDown(state: GameState, seat: Seat, groupIds: number[][]): Result<GameState> {
+// The phase a layDown names: with the rule it must be named and not completed, without it only the next phase
+function chosenPhase(state: GameState, seat: Seat, named: number | undefined): Result<number> {
+  const allowed = layablePhases(state, seat);
+  if (state.tiebreak.includes(seat)) {
+    // Without the rule a layDown names no phase, as before
+    return named === LAST_PHASE || (named === undefined && !anyOrder(state)) ? { state: LAST_PHASE } : { error: 'The tiebreaker hand is phase 10' };
+  }
+  if (!anyOrder(state)) {
+    return named === undefined || named === allowed[0] ? { state: allowed[0] } : { error: `Phase ${allowed[0]} is your next phase` };
+  }
+  if (named === undefined || named < 1 || named > LAST_PHASE) return { error: 'Choose which phase to lay down' };
+  return allowed.includes(named) ? { state: named } : { error: `You have already completed phase ${named}` };
+}
+
+function layDown(state: GameState, seat: Seat, groupIds: number[][], named: number | undefined): Result<GameState> {
   if (hasLaidDown(state, seat)) return { error: 'You have already laid down your phase this hand' };
-  const phase = state.phases[seat];
+  const chosen = chosenPhase(state, seat, named);
+  if ('error' in chosen) return chosen;
+  const phase = chosen.state;
   const requirements = phaseRequirements(phase);
   if (groupIds.length !== requirements.length) return { error: `Phase ${phase} needs ${phaseName(phase)}` };
   const taken = takeCards(state.hands[seat], groupIds.flat());
@@ -494,6 +552,7 @@ function layDown(state: GameState, seat: Seat, groupIds: number[][]): Result<Gam
     ...state,
     hands: { ...state.hands, [seat]: taken.rest },
     groups: [...state.groups, ...groups.filter(group => group !== null)],
+    laidPhase: { ...state.laidPhase, [seat]: phase },
     lastMove: { playerNumber: seat, type: 'layDown', phase }
   } };
 }
@@ -547,7 +606,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   let result: Result<GameState>;
   switch (parsed.type) {
     case 'draw': result = draw(state, seat, parsed.source, random); break;
-    case 'layDown': result = layDown(state, seat, parsed.groups); break;
+    case 'layDown': result = layDown(state, seat, parsed.groups, parsed.phase); break;
     case 'hit': result = hit(state, seat, parsed.group, parsed.cards); break;
     case 'discard': result = discard(state, seat, parsed.card, parsed.skip); break;
   }

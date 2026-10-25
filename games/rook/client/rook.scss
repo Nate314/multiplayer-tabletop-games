@@ -207,7 +207,8 @@
     margin-top: 8px;
   }
 
-  .bid-amount select {
+  .bid-amount select,
+  .call-partner select {
     padding: 6px 8px;
     border-radius: 6px;
     border: 1px solid var(--panel-border);
@@ -219,6 +220,7 @@
   .primary-button,
   .action-buttons button,
   .color-picker button,
+  .call-partner button,
   .undo-vote-actions button {
     padding: 8px 18px;
     border: none;
@@ -231,16 +233,27 @@
 
   .primary-button:hover,
   .action-buttons button:not(:disabled):hover,
+  .call-partner button:not(:disabled):hover,
   .undo-vote-actions button:hover {
     background: var(--button-hover-bg);
   }
 
-  .action-buttons button:disabled {
+  .action-buttons button:disabled,
+  .call-partner button:disabled {
     opacity: 0.45;
     cursor: default;
   }
 
   .color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  /* The bidder's cards to call at 5 and 7 players */
+  .call-partner {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -446,6 +459,13 @@
     font-size: 0.9rem;
   }
 
+  .called-mine {
+    flex-basis: 100%;
+    text-align: center;
+    color: var(--text);
+    font-weight: 600;
+  }
+
   .color-name {
     text-transform: capitalize;
     color: var(--text);
@@ -539,6 +559,11 @@
     overflow-wrap: anywhere;
   }
 
+  /* "(you)" and "(partner)" never break inside a narrow seat */
+  .seat-tag {
+    white-space: nowrap;
+  }
+
   .seat-count {
     color: var(--muted);
     font-size: 0.8rem;
@@ -587,6 +612,29 @@
 
   .trick-bottom {
     grid-area: bottom;
+  }
+
+  /* Five to seven seats: a ring of the top row and the two sides, with the trick laid out the same way */
+  .seats-ring {
+    grid-template-areas:
+    "top-left top top-right"
+    "upper-left trick upper-right"
+    "lower-left trick lower-right"
+    ". bottom .";
+
+    .trick {
+      grid-template-areas:
+      "top-left top top-right"
+      "upper-left taken upper-right"
+      "lower-left bottom lower-right";
+    }
+  }
+
+  @each $position in top-left, top-right, upper-left, upper-right, lower-left, lower-right {
+    .seat-#{$position},
+    .trick-#{$position} {
+      grid-area: $position;
+    }
   }
 
   .trick-taken {

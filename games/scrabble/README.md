@@ -17,6 +17,18 @@ Build crossing words from your letter tiles on the premium-square board.
 - If a player leaves mid-game, their tiles go back in the bag and their turns are skipped. The last player left wins
 - Any player can ask to undo the last turn. It is undone only if every player still in the game approves
 
+## House rules
+
+Before the first move the host picks the rules and every player must agree. They cannot change once play starts.
+
+- **Turn timer.** Off (standard), 1, 2, 3 or 5 minutes per turn. The timer starts when everyone has agreed, and starts again, with the full time, at every turn
+- When the time runs out the turn passes and counts as a scoreless turn: "<name> ran out of time". It counts toward the six scoreless turns that let a player end the game. A move that arrives after the time ran out is treated the same way
+- Tiles placed on the board but not played go back to the rack, since they are only in your browser
+- Undo gives the restored turn a full timer from the moment of the undo. A server restart restarts the current turn's timer, so downtime is not charged
+- The timer keeps running when players are away or disconnected, so a table nobody is playing at times out turn after turn, each a scoreless turn, and after six any player may end the game. This also happens after a server restart if nobody comes back within six turn lengths
+- When the player to move is dismissed, the next player's turn starts with the full time
+- The timer stops when the game ends
+
 ## Controls
 
 - Click a tile on your rack, then an empty square, to place it. Click a tile you placed this turn to take it back, or click Recall to take them all back
@@ -30,8 +42,10 @@ Build crossing words from your letter tiles on the premium-square board.
 - After six scoreless turns in a row, every player sees an End game button next to Undo. Clicking it ends the game at once
 - The tiles of the last play are outlined, and the board and rack are dimmed when it is not your turn
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
+- With the turn timer on, the time left shows under the turn message
 - Click FAQ at the top of the page for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 
 - **No dictionary.** [Wikipedia](https://en.wikipedia.org/wiki/Scrabble) has words checked against an agreed dictionary and settles disputes by challenge: an unacceptable word is taken off the board and scores 0, and a failed challenge costs the challenger their turn. The site checks no words. A disputed word is taken back by an Undo vote instead, which every player still in the game must approve, and nobody loses a turn over it
+- **Turn timer.** Official tournament Scrabble uses a game clock for each player's total time. This site's optional timer instead limits each turn, and running out passes the turn rather than costing points or the game

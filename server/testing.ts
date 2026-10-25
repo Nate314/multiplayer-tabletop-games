@@ -1,3 +1,4 @@
+import type { HouseRuleValues, HouseRulesState } from '../shared/houseRules.ts';
 import type { createGameManager } from './games.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
@@ -14,4 +15,20 @@ export function rememberingKeys(manager: Manager, keys = new Map<string, string>
       return result;
     }
   };
+}
+
+// Every seated player agrees to the current house rules
+export function agreeAll(manager: Manager, roomId: string): void {
+  const state = manager.rawState(roomId);
+  if (!state) throw new Error(`no game ${roomId}`);
+  const revision = state.houseRules?.revision ?? 0;
+  for (const seat of state.activePlayers) {
+    const result = manager.agreeHouseRules(roomId, seat, revision);
+    if ('error' in result) throw new Error(result.error);
+  }
+}
+
+// House rules with these values, for building a test state directly
+export function withRules(values: HouseRuleValues): HouseRulesState {
+  return { host: 1, values, override: false, maxPlayers: null, agreed: [], revision: 0 };
 }

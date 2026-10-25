@@ -1,11 +1,14 @@
 // Chess rules shared by the browser (legal move hints, check) and the server (validation).
 import { applyEndingAction, endGame, endingRefusal, lapseDrawOffer, otherSeat } from '../../shared/drawOffer.ts';
+import { houseRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
+import type { Random } from '../../shared/types.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type {
   Board,
   BoardState,
   CastlingRights,
+  ChessClock,
   Color,
   GameState,
   Piece,
@@ -18,6 +21,27 @@ import type {
 } from './types.ts';
 
 export const BOARD_SIZE = 8;
+
+export const CLOCK_MINUTES: ChoiceRule<'off' | 5 | 10 | 15> = {
+  id: 'clockMinutes', label: 'Clock', kind: 'choice', standard: 'off',
+  choices: [
+    { value: 'off', label: 'Off' },
+    { value: 5, label: '5 minutes' },
+    { value: 10, label: '10 minutes' },
+    { value: 15, label: '15 minutes' }
+  ]
+};
+export const INCREMENT_SECONDS: ChoiceRule<0 | 2 | 5 | 10> = {
+  id: 'incrementSeconds', label: 'Increment per move', kind: 'choice', standard: 0,
+  choices: [
+    { value: 0, label: 'None' },
+    { value: 2, label: '2 seconds' },
+    { value: 5, label: '5 seconds' },
+    { value: 10, label: '10 seconds' }
+  ],
+  offered: (_, values) => values.clockMinutes !== 'off'
+};
+export const CHESS_RULES: HouseRule[] = [CLOCK_MINUTES, INCREMENT_SECONDS];
 
 export const PROMOTION_TYPES: PromotionType[] = ['queen', 'rook', 'bishop', 'knight'];
 
@@ -356,13 +380,64 @@ export function createGameState(gameId: string): GameState {
     positions: [positionKey(position, 'white')],
     captured: { white: [], black: [] },
     lastMove: null,
-    drawOffer: null
+    drawOffer: null,
+    clock: null
   };
 }
 
-// The board does not depend on who is seated: seat 1 is always white
+const SECONDS = 1000;
+const MINUTE_MS = 60 * SECONDS;
+
+// A clock with everyone's full time, standing still until `runningSince` is set
+function freshClock(state: Pick<GameState, 'houseRules'>, runningSince: number | null): ChessClock | null {
+  const minutes = houseRule(state, CLOCK_MINUTES);
+  if (minutes === 'off') return null;
+  return { remainingMs: { 1: minutes * MINUTE_MS, 2: minutes * MINUTE_MS }, runningSince };
+}
+
+// The board does not depend on who is seated: seat 1 is always white. A seat change or rule change stops the clock
+// until everyone has agreed again
 export function resetLobby(state: GameState): GameState {
-  return state;
+  return { ...state, clock: freshClock(state, null) };
+}
+
+// The clock starts, with White's time running, when the last player agrees; after an undo or a restart the running
+// clock restarts from `now`, so time spent on an undone move, or while the server was down, is not charged
+export function resumeClock(state: GameState, now: number): GameState {
+  if (state.isGameOver) return state;
+  if (!state.started) return { ...state, clock: freshClock(state, now) };
+  const clock = state.clock ?? null;
+  return clock ? { ...state, clock: { ...clock, runningSince: now } } : state;
+}
+
+// When the player to move runs out of time, in server ms
+export function deadline(state: GameState): number | null {
+  const clock = state.clock ?? null;
+  if (!clock || clock.runningSince === null || state.isGameOver || state.currentPlayer === null) return null;
+  return clock.runningSince + clock.remainingMs[state.currentPlayer];
+}
+
+// Running out of time loses, even when the opponent could not checkmate
+function flagFall(state: GameState, seat: Seat): GameState {
+  const winner = otherSeat(state, seat);
+  const clock = state.clock as ChessClock;
+  return endGame(
+    { ...state, clock: { remainingMs: { ...clock.remainingMs, [seat]: 0 }, runningSince: null } },
+    [winner],
+    `${state.playerNames[seat]} ran out of time. ${state.playerNames[winner]} wins!`
+  );
+}
+
+export function onDeadline(state: GameState): GameState {
+  return flagFall(state, state.currentPlayer as Seat);
+}
+
+// Charges the mover for the time since the clock started running and adds the increment, then hands the clock on
+function chargeMove(before: GameState, after: GameState, seat: Seat, now: number): GameState {
+  const clock = before.clock ?? null;
+  if (!clock || clock.runningSince === null) return after;
+  const left = clock.remainingMs[seat] - (now - clock.runningSince) + houseRule(before, INCREMENT_SECONDS) * SECONDS;
+  return { ...after, clock: { remainingMs: { ...clock.remainingMs, [seat]: left }, runningSince: after.isGameOver ? null : now } };
 }
 
 export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
@@ -413,7 +488,7 @@ export function claimableAfterMove(state: GameState, from: Square, to: Square): 
   return claimableDraw({ positions: positionsAfter(state, from, to, play(state, from, to).next) });
 }
 
-export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
+function playMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const input = asRecord(move);
   if (input?.type !== 'move') return { error: 'Unknown move type' };
 
@@ -458,6 +533,13 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   return { state: { ...next, currentPlayer: nextActivePlayer(next, seat) } };
 }
 
+export function applyMove(state: GameState, seat: Seat, move: unknown, _random: Random, now: number): Result<GameState> {
+  const limit = deadline(state);
+  if (limit !== null && now >= limit) return { state: flagFall(state, seat) }; // the move came too late
+  const result = playMove(state, seat, move);
+  return 'error' in result ? result : { state: chargeMove(state, result.state, seat, now) };
+}
+
 // A claim by the player to move, for the position on the board
 function claimDraw(state: GameState, seat: Seat): Result<GameState> {
   const refusal = endingRefusal(state);
@@ -475,6 +557,9 @@ function resignationDraws(state: GameState, seat: Seat): boolean {
 
 // Claiming a draw is chess's own action; resigning and draw offers are the shared ending actions
 export function applyAction(state: GameState, seat: Seat, action: unknown): Result<GameState> {
-  if (asRecord(action)?.type === 'claimDraw') return claimDraw(state, seat);
-  return applyEndingAction(state, seat, action, resignationDraws);
+  const result = asRecord(action)?.type === 'claimDraw'
+    ? claimDraw(state, seat)
+    : applyEndingAction(state, seat, action, resignationDraws);
+  if ('error' in result || !result.state.isGameOver || !result.state.clock) return result;
+  return { state: { ...result.state, clock: { ...result.state.clock, runningSince: null } } }; // the clock stops at game over
 }

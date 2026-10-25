@@ -43,9 +43,11 @@ flowchart TD
 - Holding the seat of a player who disconnects after the first move (refresh, closed tab, lost connection or Back to games), rejoining by the same name with the seat's key, and dismissing a disconnected player by vote
 - Turn rotation that skips dismissed players; a disconnected player's turn waits for them
 - A heartbeat that closes the sockets of devices that drop off silently, and deleting a game 10 minutes after its last connected player leaves
+- House rules: a game declares options (toggles and choices) and may allow a player-count override; the host (the first seated player, passed on if they leave) sets them before play, every seated player must agree to the current revision before the first move, and any seat change clears the agreements. Rules are locked once play starts
+- Out-of-turn moves for a game that allows them (`allowsOutOfTurn`), refused with "Someone else moved first" when the mover's `moveCount` is stale
 - Undo: the history of states before each move, requests, voting, and restoring the state once every connected player approves
 - Calling the game's `toPublicState` for each player before anything is sent to them, so each player gets their own view
-- The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, theme toggle), FAQ dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`
+- The landing page, join dialog, rejoin button, game view header (Back to games, FAQ, House rules, theme toggle), FAQ dialog, house rules panel and dialog, undo vote panel, disconnected players bar, dismiss vote panel, connection hook and service, and the remembered game, in `src/`
 - Docker, compose, launcher, CI, lint and TypeScript config
 
 **Each game owns (`games/<id>/`):**
@@ -63,6 +65,25 @@ flowchart TD
 - `games/registry.ts` lists every `GameDefinition`
 - `shared/categories.ts` defines `GameCategory` (every `GameInfo` has one), `CATEGORIES` (the landing page groups, in order) and `groupByCategory`
 - `src/clientGames.ts` defines `ClientGame` (`id`, `Screen`, `faq`, `icon`, `HistoryBoard`, `describeMove`, `animateMove`) and lists them in `CLIENT_GAMES`
+- `shared/houseRules.ts` defines the house rules model: `HouseRule` (`ToggleRule` or `ChoiceRule`, with `offered` for rules that depend on the seat count), `HouseRulesState`, `HouseRulesProposal`, and the pure functions `needsAgreement`, `houseRulesOf`, `houseRule`, `tableLimit`, `minimumToStart`, `afterSeatChange`, `setHouseRules`, `agreeToHouseRules`, `everyoneAgreed`, `describeHouseRules` and `targetScoreRule`. `GameInfo` has the optional `houseRules` and `stretchedPlayers` (the range the player-count override allows), `GameDefinition` has the optional `allowsOutOfTurn` and the timed-rule hooks `deadline`, `onDeadline` and `resumeClock`, and every game state carries `houseRules`
+- The house rules each game declares (standard value first; the declarations are in each game's rules file, and the player-count override range is `stretchedPlayers` in its `index.ts`):
+  - Catan: points to win (10; 8, 12), friendly robber (off); override 2 to 4 players
+  - Chess: clock (off; 5, 10 or 15 minutes), increment per move (none; 2, 5 or 10 seconds, offered only with a clock)
+  - Dominoes: target score (100 for 2 players, 61 for 3 or 4; 61, 100, 150, 200)
+  - Euchre: target score (10; 5, 15)
+  - Farkle: target score (10,000; 5,000, 15,000, 20,000); override 2 to 10 players
+  - Hearts: target score (100; 50, 75, 150), Jack of Diamonds worth minus 10 (off)
+  - Mancala: play from the other side when yours is empty (on), avalanche (on, off plays Kalah)
+  - Monopoly: Free Parking jackpot (off), $400 for landing exactly on GO (off), auctions (on)
+  - Phase 10: phases in any order (off); override 2 to 8 players
+  - Rack-O: target score (500; 250, 1,000)
+  - Rook: target score (500; 300, 1,000), teams at 6 players (two of three; three of two), defending teams score (each its own counters; together, offered only for three teams); override 4 to 7 players
+  - Scrabble: turn timer (off; 1, 2, 3 or 5 minutes)
+  - Spades: target score (500; 250, 300)
+  - Splendor: prestige to win (15; 10, 21)
+  - UNO: target score (500; 250, 1,000), stack +2 and +4 (off), 7-0 (off), draw until you can play (off), jump-in (off, the out-of-turn move); override 2 to 10 players
+  - Texas Hold'em and Yahtzee: no rules, override 2 to 10 players
+  - Every other game declares no house rules and no override
 - `shared/messages.ts` defines the WebSocket messages; `shared/types.ts` defines the base state types
 - `shared/shuffle.ts` has `shuffle(items, random)`, and `shared/playingCards.ts` the standard deck (`PlayingCard`, `JokerCard`, `DeckCard`, `standardDeck`, `isJoker`, `rankValue`, `cardName`, `sameCard`), for any game to use; `standardDeck` takes `ranks`, `suits` and `jokers` options to build a smaller deck or add jokers
 - `shared/tricks.ts` has the trick-taking rules (`canFollow`, `trickWinner`) that take each game's own suit and rank functions, and `describeTrickPlay` for the move description of a played card
@@ -139,7 +160,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Styles are scoped under `[data-game="<id>"]` so palettes never overwrite each other
 
 6. **Default styles for the platform pieces (`/src/App.scss`)**
-   - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.share-button`, `.faq-button`, `.settings-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-overlay`, `.history-move`, `.history-slider`, `.history-board`, `.history-board-content`, `.history-controls`, `.history-viewer`, `.history-settings-wrapper`, `.history-settings-button`, `.history-settings`), the share button's `.share-wrapper`, `.share-status` and `.share-panel`, the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
+   - The game header (`.game-root`, `.game-header`, `.back-button`, `.history-button`, `.share-button`, `.faq-button`, `.settings-button`, `.theme-toggle`), the FAQ dialog (`.overlay`, `.modal`, `.faq`, `.primary-button`), the history dialog (`.modal.history`, `.history-overlay`, `.history-move`, `.history-slider`, `.history-board`, `.history-board-content`, `.history-controls`, `.history-viewer`, `.history-settings-wrapper`, `.history-settings-button`, `.history-settings`), the share button's `.share-wrapper`, `.share-status` and `.share-panel`, the undo vote (`.undo-vote`, `.undo-vote-panel`, `.undo-vote-title`, `.undo-vote-list`, `.undo-vote-actions`), the disconnected players bar (`.presence-bar`, `.presence-list`, `.presence-player`, `.presence-waiting`, `.dismiss-button`) house rules (`.house-rules-panel`, `.house-rules-title`, `.house-rules-host`, `.house-rules-help`, `.house-rules-list`, `.house-rules-agreed`, `.house-rules-actions`, `.house-rules-button`, `.modal.house-rules`), the dismiss vote (`.dismiss-vote`, `.dismiss-vote-panel`, `.dismiss-vote-title`, `.dismiss-vote-list`, `.dismiss-vote-actions`) and the resign and draw controls (`.ending-controls`, `.ending-buttons`, `.draw-offer`, `.draw-offer-title`, `.draw-offer-actions`) have a neutral default look, so a game with no CSS of its own still gets a working header, an FAQ overlay and its vote panels
    - Drag and drop: `[data-drag]` (a piece that can be lifted: `touch-action: none`, no text selection, a grab cursor), `[data-dragging]` (the faded piece left behind), `.drag-ghost` (the floating copy) and `[data-drag-over]` (an outline on the legal target under the pointer, recolored with `--drag-over`)
    - The piece tray (`.piece-tray`, `.piece-tray-pieces`, `.piece-tray-piece` with `[aria-pressed="true"]` and `:disabled`, `.piece-tray-count`), rethemed with `--piece-tray-bg`, `--piece-tray-border`, `--piece-tray-text` and `--piece-tray-selected`
    - Every default selector is wrapped in `:where()`, so it has no specificity and any rule in a game's CSS wins. The one exception is `[data-game] .modal.history`, which sets the History dialog's size outside `:where()` so it beats every game's `.modal` rule; games no longer set its width, and a game whose History board takes the width it is given sets a fixed width on its own history root instead
@@ -185,7 +206,8 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
    - Holds each game's full state in memory, written through to SQLite, and sends only the public view
    - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state
-   - Takes a `GameStore` as a parameter, so tests can pass an in-memory one or none
+   - Takes a `GameStore` as a parameter, so tests can pass an in-memory one or none, and `ManagerHooks`: `now` (the server clock, default `Date.now`) and `changed(roomId)`, which `server.ts` sets to its per-room `broadcast` so a change no player made reaches every seat
+   - Runs timed rules. `applyMove` gets the server time as `now`. A game with a clock gives `deadline(state)` (server ms, or null), `onDeadline(state, now, random)` and `resumeClock(state, now)`. The manager keeps one unref'd timer per room, rescheduled on every save (none once the game is over, and none in a lobby until everyone has agreed and enough players are seated, so a join or leave stops it until the last Agree; open votes and disconnects do not pause it; a timeout that leaves its deadline already past is logged and not run again) and cleared when the room is deleted. When it fires and the deadline has passed, `onDeadline`'s state is recorded as a move (so it can be undone), an open undo vote is canceled since it was for the move before, and the result is saved and broadcast. `resumeClock` runs when the last player agrees to the house rules, after an approved undo, and on every room loaded after a restart, so the time the server was down is never charged. Every live view carries `serverTime` (history steps and game files do not), and `src/hooks/useCountdown.ts` turns a deadline into the milliseconds left on the device's own clock, with `formatClock` for `m:ss`
 
 3. **Game store (`/server/store.ts`)**
 
@@ -195,7 +217,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - A room is saved after every change once the game has started (moves, actions, undo and dismiss requests and votes, joins, rejoins and disconnects) and removed when the room is deleted. Lobbies are not saved
    - A store failure is logged and play continues
    - With Docker, `docker-compose.yml` mounts the `game-data` named volume at `/app/data` (the container is read-only otherwise, and the Dockerfile makes `/app/data` writable by the `node` user), so started games survive restarts and rebuilds
-   - On start the manager loads every saved room: each active seat is marked disconnected directly, without running any game hook, so the usual rejoin works; open undo and dismiss votes are cleared; the saved status is kept; and the 10-minute empty-game timer restarts. A room whose state or steps do not parse, have the wrong shape or skip an index, that names a game that no longer exists, or that fails to load for any other reason is logged and deleted with its steps
+   - On start the manager loads every saved room: each active seat is marked disconnected directly, without running any game hook, so the usual rejoin works; open undo and dismiss votes are cleared; the saved status is kept; a game clock restarts through `resumeClock`; and the 10-minute empty-game timer restarts. A room whose state or steps do not parse, have the wrong shape or skip an index, that names a game that no longer exists, or that fails to load for any other reason is logged and deleted with its steps
 
 4. **Game registry (`/games/registry.ts`)**
    - `GAMES` lists the games, alphabetical by name
@@ -225,9 +247,11 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
 2. **Playing**
 
    ```
-   Client -> Server: MAKE_MOVE (move)
+   Client -> Server: MAKE_MOVE (move, moveCount?)
    Server -> All clients in the game: GAME_STATE, or GAME_ERROR to the sender
    ```
+
+   `moveCount` is sent only for an out-of-turn move: the server refuses it with "Someone else moved first" if the count it names is no longer current.
 
 3. **Game actions**
 
@@ -262,6 +286,16 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
    Each connected client -> Server: VOTE_DISMISS (approve)
    Server -> All clients in the game: GAME_STATE (vote progress, then the dismissal or the decline)
    ```
+
+7. **House rules**
+
+   ```
+   Host -> Server: SET_HOUSE_RULES (proposal: values, override, maxPlayers)
+   Each player -> Server: AGREE_HOUSE_RULES (revision)
+   Server -> All clients in the game: GAME_STATE (houseRules: host, values, override, maxPlayers, agreed, revision), or GAME_ERROR to the sender
+   ```
+
+   Only the host may change the rules, and only before the first move; every key and value is checked against the game's declarations. Each change, and each join or leave, bumps `revision` and clears `agreed`. An agreement names the revision the player saw and is refused as stale otherwise. For a game that declares rules or a player-count override, MAKE_MOVE is refused with "Everyone must agree to the house rules first" until every seated player has agreed.
 
 ## Single Port
 

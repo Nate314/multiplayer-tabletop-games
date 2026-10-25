@@ -7,7 +7,8 @@ import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import { EDGES, HEX_COUNT, VERTEX_COUNT } from '../board.ts';
 import { cityError, piecesLeft, roadSpots, settlementError, settlementSpotError } from '../building.ts';
 import { robberVictims } from '../dice.ts';
-import { MIN_PLAYERS } from '../rules.ts';
+import { minimumToStart, tableLimit } from '../../../shared/houseRules.ts';
+import { PLAYERS } from '../rules.ts';
 import Board from './Board';
 import { seatClass } from './layout.ts';
 import type { Targets } from './Board';
@@ -31,7 +32,9 @@ const ALL_HEXES = Array.from({ length: HEX_COUNT }, (_, hex) => hex);
 function turnMessage(state: PublicGameState, playerNumber: Seat): string {
   const { isGameOver, winners, playerNames, activePlayers, started, currentPlayer } = state;
   if (isGameOver) return winners.length > 0 ? `Game over: ${winners.map(winner => playerNames[winner]).join(' and ')} won` : 'Game over';
-  if (activePlayers.length < MIN_PLAYERS) return `Waiting for at least ${MIN_PLAYERS} players (up to 4)`;
+  if (activePlayers.length < minimumToStart(PLAYERS, state)) {
+    return `Waiting for at least ${minimumToStart(PLAYERS, state)} players (up to ${tableLimit(PLAYERS, state)})`;
+  }
   if (currentPlayer === null) return '';
   const name = currentPlayer === playerNumber ? 'You' : playerNames[currentPlayer];
   if (!started) return `${name} ${currentPlayer === playerNumber ? 'place' : 'places'} first. Joining closes after the first move.`;
@@ -62,10 +65,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const boardRef = useRef<HTMLDivElement>(null);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, pending, devPlayed, setup } = gameState;
   const noVote = !undoVote && !dismissVote;
-  const ready = activePlayers.length >= MIN_PLAYERS && !isGameOver && noVote;
+  const ready = activePlayers.length >= minimumToStart(PLAYERS, gameState) && !isGameOver && noVote;
   const canMove = ready && currentPlayer === playerNumber;
   const canAct = ready && activePlayers.includes(playerNumber);
-  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= MIN_PLAYERS;
+  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= minimumToStart(PLAYERS, gameState);
   const canPlay = canMove && !setup && !pending && !devPlayed;
 
   // Only the live board animates; the history dialog's board renders without this hook

@@ -9,7 +9,8 @@ export const yahtzee: GameDefinition<GameState, PublicGameState> = {
     name: 'Yahtzee',
     description: 'Roll five dice up to three times and fill every scoring box',
     minPlayers: 2,
-    maxPlayers: 8
+    maxPlayers: 8,
+    stretchedPlayers: { min: 2, max: 10 }
   },
   createGameState,
   resetLobby,
