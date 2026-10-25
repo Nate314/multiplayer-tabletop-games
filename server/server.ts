@@ -24,7 +24,7 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real messages are well under 1 KB
 
-type Connection = { roomId: string; seat: Seat | null; spectatorId?: string }; // a spectator has no seat
+type Connection = { roomId: string; seat: Seat; spectatorId?: undefined } | { roomId: string; seat: null; spectatorId: string }; // a spectator has no seat
 
 const e2eRandom = E2E ? createE2eRandom() : null;
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), { changed: broadcast });
@@ -112,10 +112,10 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     return;
   }
 
-  const { roomId, seat, spectatorId } = connection;
+  const { roomId, seat } = connection;
   const payload = asRecord(message?.payload);
-  if (seat === null || spectatorId !== undefined) {
-    handleSpectatorMessage(ws, connection, message?.type, payload);
+  if (seat === null) {
+    handleSpectatorMessage(ws, roomId, connection.spectatorId, message?.type, payload);
     return;
   }
   switch (message?.type) {
@@ -165,9 +165,14 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  connections.set(ws, { roomId: result.roomId, seat: result.seat, spectatorId: result.spectatorId });
+  connections.set(ws, connectionFor(result.roomId, result.seat, result.spectatorId));
   sendJoined(ws, result);
   broadcast(result.roomId);
+}
+
+// A joined spectator has an id and no seat; a player has a seat
+function connectionFor(roomId: string, seat: Seat | null, spectatorId?: string): Connection {
+  return spectatorId !== undefined ? { roomId, seat: null, spectatorId } : { roomId, seat: seat as Seat };
 }
 
 function sendJoined(ws: WebSocket, joined: { seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }): void {
@@ -178,9 +183,9 @@ function sendJoined(ws: WebSocket, joined: { seat: Seat | null; spectatorId?: st
 }
 
 // A spectator may only ask to see a hand or sit down; everything else is refused
-function handleSpectatorMessage(ws: WebSocket, connection: Connection, type: unknown, payload: Record<string, unknown> | null): void {
-  const { roomId, spectatorId } = connection;
-  if (spectatorId === undefined) return;
+function handleSpectatorMessage(
+  ws: WebSocket, roomId: string, spectatorId: string, type: unknown, payload: Record<string, unknown> | null
+): void {
   if (type === MESSAGE_TYPES.REQUEST_HAND) {
     respond(ws, roomId, manager.requestHand(roomId, spectatorId, payload?.seat));
   } else if (type === MESSAGE_TYPES.SWITCH_TO_PLAYER) {
@@ -189,11 +194,9 @@ function handleSpectatorMessage(ws: WebSocket, connection: Connection, type: unk
       sendError(ws, result.error);
       return;
     }
-    connections.set(ws, { roomId, seat: result.seat });
+    connections.set(ws, connectionFor(roomId, result.seat));
     sendJoined(ws, result);
     broadcast(roomId);
-  } else if (type === MESSAGE_TYPES.ANSWER_HAND) {
-    sendError(ws, 'Only players can do that');
   } else if (typeof type === 'string' && type in MESSAGE_TYPES) {
     sendError(ws, 'Spectators cannot do that');
   }

@@ -1,25 +1,59 @@
 import { test, expect, newPlayer } from './fixtures.ts';
+import type { Page } from '@playwright/test';
 
 type Received = { type: string; payload: Record<string, unknown> };
+type Sent = { type: string; payload?: Record<string, unknown> };
 
-test('a spectator cannot move', async ({ seat, browser, server }) => {
+// A bare socket, since the spectator screen comes later: joins, then sends each message and waits for its GAME_ERROR.
+// Returns the GAME_JOINED payload and the error text each message got.
+async function protocol(page: Page, gameId: string, join: Record<string, unknown>, messages: Sent[]) {
+  return page.evaluate(({ gameId, join, messages }) => new Promise<{ joined: Received; errors: string[] }>(resolve => {
+    const ws = new WebSocket(`ws://${window.location.host}`);
+    let joined: Received | undefined;
+    const errors: string[] = [];
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'JOIN_GAME', gameType: 'connectfour', gameId, ...join }));
+    ws.onmessage = event => {
+      const message: Received = JSON.parse(event.data);
+      if (message.type === 'GAME_JOINED') {
+        joined = message;
+        ws.send(JSON.stringify(messages[0]));
+      } else if (message.type === 'GAME_ERROR') {
+        errors.push(String(message.payload.message));
+        if (errors.length === messages.length) resolve({ joined: joined!, errors });
+        else ws.send(JSON.stringify(messages[errors.length]));
+      }
+    };
+  }), { gameId, join, messages });
+}
+
+test('a spectator cannot move or act', async ({ seat, browser, server }) => {
   const table = await seat('connectfour', ['Alice', 'Bob']);
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/');
-  // A bare socket, since the spectator screen comes later; the server must refuse the move by itself
-  const messages = await visitor.evaluate(({ gameId }) => new Promise<Received[]>(resolve => {
-    const ws = new WebSocket(`ws://${window.location.host}`);
-    const received: Received[] = [];
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'JOIN_GAME', gameType: 'connectfour', gameId, playerName: 'Dana', role: 'spectator' }));
-    ws.onmessage = event => {
-      const message = JSON.parse(event.data);
-      received.push(message);
-      if (message.type === 'GAME_JOINED') ws.send(JSON.stringify({ type: 'MAKE_MOVE', payload: { move: { column: 0 } } }));
-      if (message.type === 'GAME_ERROR') resolve(received);
-    };
-  }), { gameId: table.gameId });
-  expect(messages[0].type).toBe('GAME_JOINED');
-  expect(messages[0].payload.playerNumber).toBeNull();
-  expect(typeof messages[0].payload.spectatorId).toBe('string');
-  expect(messages.at(-1)?.payload.message).toBe('Spectators cannot do that');
+  const refused: Sent[] = [
+    { type: 'MAKE_MOVE', payload: { move: { column: 0 } } },
+    { type: 'GAME_ACTION', payload: { action: {} } },
+    { type: 'SET_HOUSE_RULES', payload: { proposal: {} } },
+    { type: 'AGREE_HOUSE_RULES', payload: { revision: 0 } },
+    { type: 'REQUEST_UNDO' },
+    { type: 'VOTE_UNDO', payload: { approve: true } },
+    { type: 'REQUEST_DISMISS', payload: { seat: 1 } },
+    { type: 'VOTE_DISMISS', payload: { approve: true } },
+    { type: 'ANSWER_HAND', payload: { spectator: 'x', allow: true } }
+  ];
+  const { joined, errors } = await protocol(visitor, table.gameId, { playerName: 'Dana', role: 'spectator' }, refused);
+  expect(joined.payload.playerNumber).toBeNull();
+  expect(typeof joined.payload.spectatorId).toBe('string');
+  expect(errors).toEqual(refused.map(() => 'Spectators cannot do that'));
+});
+
+test('a player cannot ask to see a hand or switch to player', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice']); // still a lobby, so a second player can take a seat
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto('/');
+  const { errors } = await protocol(visitor, table.gameId, { playerName: 'Eli' }, [
+    { type: 'REQUEST_HAND', payload: { seat: 1 } },
+    { type: 'SWITCH_TO_PLAYER' }
+  ]);
+  expect(errors).toEqual(['Only spectators can do that', 'Only spectators can do that']);
 });
