@@ -612,10 +612,14 @@
 
 :where([data-game] .house-rules-rule > span) {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 4px 8px;
+}
+
+/* A long label wraps its own text beside the control instead of dropping below it */
+:where([data-game] .house-rules-rule > span > :is(input, select)) {
+  flex: none;
 }
 
 :where([data-game] .house-rules-help) {
