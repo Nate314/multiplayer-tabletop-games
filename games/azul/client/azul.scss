@@ -22,6 +22,15 @@
   --slot-border: rgba(28, 43, 58, 0.25);
   --highlight: #e08a00;
   --tile: 34px;
+  /* The shared platform controls (Settings, the History gear, the house rules panel) in Azul's colors; each follows the
+     dark values below, which redefine the variables they point at */
+  --platform-page-bg: var(--page-bg-start);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
 
   :root[data-theme="dark"] & {
     color-scheme: dark;
@@ -557,6 +566,11 @@
 
   .modal h2 {
     margin: 0 0 12px;
+  }
+
+  /* Settings reads as a list, left aligned like every other game's */
+  .modal.settings {
+    text-align: left;
   }
 
   .undo-vote-panel {
