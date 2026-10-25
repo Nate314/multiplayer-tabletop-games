@@ -10,7 +10,6 @@ export const parchisiClient: ClientGame = {
   id: 'parchisi',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '⚄',
   HistoryBoard,
   describeMove,
   animateMove

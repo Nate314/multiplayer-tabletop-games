@@ -10,7 +10,6 @@ export const phase10Client: ClientGame = {
   id: 'phase10',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '10',
   HistoryBoard,
   describeMove,
   animateMove

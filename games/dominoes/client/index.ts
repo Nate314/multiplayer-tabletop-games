@@ -10,7 +10,6 @@ export const dominoesClient: ClientGame = {
   id: 'dominoes',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🁫',
   HistoryBoard,
   describeMove,
   animateMove

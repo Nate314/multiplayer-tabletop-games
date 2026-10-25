@@ -10,7 +10,6 @@ export const azulClient: ClientGame = {
   id: 'azul',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '◆',
   HistoryBoard,
   describeMove,
   animateMove

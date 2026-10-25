@@ -10,7 +10,6 @@ export const rackoClient: ClientGame = {
   id: 'racko',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '📶',
   HistoryBoard,
   describeMove,
   animateMove

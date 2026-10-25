@@ -10,7 +10,6 @@ export const splendorClient: ClientGame = {
   id: 'splendor',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '💎',
   HistoryBoard,
   describeMove,
   animateMove

@@ -10,7 +10,6 @@ export const monopolyClient: ClientGame = {
   id: 'monopoly',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🎩',
   HistoryBoard,
   describeMove,
   animateMove

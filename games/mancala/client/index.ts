@@ -10,7 +10,6 @@ export const mancalaClient: ClientGame = {
   id: 'mancala',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🪨',
   HistoryBoard,
   describeMove,
   animateMove

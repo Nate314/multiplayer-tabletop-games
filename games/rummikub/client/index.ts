@@ -10,7 +10,6 @@ export const rummikubClient: ClientGame = {
   id: 'rummikub',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🀄',
   HistoryBoard,
   describeMove,
   animateMove: (change) => animateMove(change)

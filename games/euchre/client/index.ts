@@ -10,7 +10,6 @@ export const euchreClient: ClientGame = {
   id: 'euchre',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🂫',
   HistoryBoard,
   describeMove,
   animateMove
