@@ -1,20 +1,34 @@
 import type { BasePublicState, Seat } from '../../shared/types.ts';
+import { formatTurnClock } from '../hooks/useCountdown.ts';
+import useTurnTimer from '../sound/useTurnTimer.ts';
 
 type PresenceBarProps = {
   gameState: BasePublicState;
+  playerNumber: Seat | null;
   onDismiss: (seat: Seat) => void;
 };
 
-// Lists held seats, each with a way to start a dismiss vote; hidden while everyone is connected
-export default function PresenceBar({ gameState, onDismiss }: PresenceBarProps) {
+// Lists held seats, each with a way to start a dismiss vote, and shows the turn timer; hidden when neither applies
+export default function PresenceBar({ gameState, playerNumber, onDismiss }: PresenceBarProps) {
   const { disconnected, playerNames, currentPlayer, isGameOver, undoVote, dismissVote } = gameState;
-  if (disconnected.length === 0) return null;
+  const { msLeft, paused } = useTurnTimer(gameState, playerNumber);
+  const timed = msLeft !== null && currentPlayer !== null && !isGameOver;
+  if (disconnected.length === 0 && !timed) return null;
 
   const voteOpen = undoVote !== null || dismissVote !== null;
   const waitingFor = !isGameOver && currentPlayer !== null && disconnected.includes(currentPlayer) ? currentPlayer : null;
 
   return (
     <div className="presence-bar">
+      {timed && (
+        <div className="presence-timer" data-low={msLeft > 0 && msLeft <= 10_000 ? '' : undefined} data-over={msLeft <= 0 ? '' : undefined}>
+          <span>{playerNames[currentPlayer]}</span>
+          <span className="presence-clock">{formatTurnClock(msLeft) + (paused ? ' (paused)' : '')}</span>
+          {msLeft <= 0 && (currentPlayer === playerNumber
+            ? <span role="status">Time's up</span>
+            : <span>{`${playerNames[currentPlayer]} is over time`}</span>)}
+        </div>
+      )}
       <ul className="presence-list">
         {disconnected.map(seat => (
           <li key={seat} className="presence-player">

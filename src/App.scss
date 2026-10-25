@@ -1248,6 +1248,23 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   font-weight: 600;
 }
 
+:where([data-game] .presence-timer) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-weight: 600;
+}
+
+:where([data-game] .presence-clock) {
+  white-space: nowrap; /* never wraps under the name on a narrow phone */
+  font-variant-numeric: tabular-nums;
+}
+
+:where([data-game] .presence-timer[data-low], [data-game] .presence-timer[data-over]) {
+  color: var(--lobby-error-text);
+}
+
 :where([data-game] .dismiss-button) {
   padding: 4px 12px;
   border: none;
