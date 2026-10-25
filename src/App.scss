@@ -859,6 +859,7 @@
   border-radius: 10px;
   background: var(--platform-panel-bg, var(--lobby-surface));
   color: var(--platform-panel-text, var(--lobby-text));
+  text-align: start;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -879,7 +880,6 @@
 :where([data-game] .house-rules-rule > span) {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 4px 8px;
 }
 
