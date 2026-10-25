@@ -1,15 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import HistoryDialog, { type History } from './HistoryDialog';
 import { downloadJson } from '../services/download';
 import { gameFileName } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
-
-type HistoryButtonProps = {
-  gameType: string;
-  gameState: BasePublicState;
-  client: ClientGame;
-};
 
 async function fetchHistory(gameType: string, gameId: string): Promise<History> {
   try {
@@ -22,7 +16,9 @@ async function fetchHistory(gameType: string, gameId: string): Promise<History> 
   }
 }
 
-export default function HistoryButton({ gameType, gameState, client }: HistoryButtonProps) {
+// The History dialog and what opens it, so the header button and the game-over screen share one dialog
+// eslint-disable-next-line react-refresh/only-export-components -- the hook belongs with its button; fast refresh reloads this file in full
+export function useHistoryDialog(gameType: string, gameState: BasePublicState, client: ClientGame): { open: () => void; dialog: ReactNode } {
   const [history, setHistory] = useState<History | null>(null);
   const close = useCallback(() => setHistory(null), []);
 
@@ -46,12 +42,14 @@ export default function HistoryButton({ gameType, gameState, client }: HistoryBu
     }
   }
 
+  const dialog = history && <HistoryDialog client={client} history={history} title="History" onClose={close} onDownload={download} />;
+  return { open, dialog };
+}
+
+export default function HistoryButton({ onOpen }: { onOpen: () => void }) {
   return (
-    <>
-      <button type="button" className="history-button" onClick={open}>
-        History
-      </button>
-      {history && <HistoryDialog client={client} history={history} title="History" onClose={close} onDownload={download} />}
-    </>
+    <button type="button" className="history-button" onClick={onOpen}>
+      History
+    </button>
   );
 }

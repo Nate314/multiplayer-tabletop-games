@@ -22,6 +22,12 @@ export type ClientGame = {
   // Animates one step forward in the history dialog, as seen by the chosen seat (null for the table only)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   animateMove?: (change: MoveChange<any>, viewer: Seat | null) => void;
+  // How long the finished game took on the game-over screen, e.g. '5 rounds'; without it, the move count
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gameLength?(gameState: any): string;
+  // The last round's scoring, shown under the standings on the game-over screen
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  FinalRound?: ComponentType<{ gameState: any; viewer: Seat | null }>;
 };
 
 // Each game's client is its own chunk, downloaded when first needed; use loadClientGame, which shares one download per game
