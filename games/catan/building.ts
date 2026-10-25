@@ -1,6 +1,6 @@
 // Where pieces may go and building them: roads, settlements and cities, with their costs and piece limits,
 // the two setup rounds, and free roads from a Road Building card
-import { EDGES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS } from './board.ts';
+import { boardOf } from './board.ts';
 import { COSTS, add, covers, describeResources, noResources, subtract } from './resources.ts';
 import { nameOf, note, startTurn } from './state.ts';
 import type { GameState, Resources, Result, Seat } from './types.ts';
@@ -8,7 +8,7 @@ import type { GameState, Resources, Result, Seat } from './types.ts';
 export const PIECES = { road: 15, settlement: 5, city: 4 };
 
 // What placement checks read; the browser has all of it too
-type Placement = Pick<GameState, 'roads' | 'buildings'>;
+type Placement = Pick<GameState, 'layout' | 'roads' | 'buildings'>;
 
 export function piecesLeft(state: Placement, seat: Seat): { road: number; settlement: number; city: number } {
   const mine = Object.values(state.buildings).filter(building => building.seat === seat);
@@ -22,14 +22,14 @@ export function piecesLeft(state: Placement, seat: Seat): { road: number; settle
 // An empty intersection with no building on any neighbouring intersection (the distance rule)
 export function settlementSpotError(state: Placement, vertex: number): string | null {
   if (state.buildings[vertex]) return 'That intersection is taken';
-  if (VERTEX_NEIGHBORS[vertex].some(other => state.buildings[other])) return 'Too close to another settlement or city';
+  if (boardOf(state.layout).vertexNeighbors[vertex].some(other => state.buildings[other])) return 'Too close to another settlement or city';
   return null;
 }
 
 export function settlementError(state: Placement, seat: Seat, vertex: number): string | null {
   const spot = settlementSpotError(state, vertex);
   if (spot) return spot;
-  if (!VERTEX_EDGES[vertex].some(edge => state.roads[edge] === seat)) return 'A settlement must be next to one of your roads';
+  if (!boardOf(state.layout).vertexEdges[vertex].some(edge => state.roads[edge] === seat)) return 'A settlement must be next to one of your roads';
   if (piecesLeft(state, seat).settlement <= 0) return 'You have no settlements left';
   return null;
 }
@@ -45,17 +45,18 @@ export function cityError(state: Placement, seat: Seat, vertex: number): string 
 export function roadError(state: Placement, seat: Seat, edge: number): string | null {
   if (state.roads[edge] !== undefined) return 'That path has a road';
   if (piecesLeft(state, seat).road <= 0) return 'You have no roads left';
-  const joins = EDGES[edge].some(vertex => {
+  const board = boardOf(state.layout);
+  const joins = board.edges[edge].some(vertex => {
     const building = state.buildings[vertex];
     if (building) return building.seat === seat;
-    return VERTEX_EDGES[vertex].some(other => other !== edge && state.roads[other] === seat);
+    return board.vertexEdges[vertex].some(other => other !== edge && state.roads[other] === seat);
   });
   return joins ? null : 'A road must join one of your roads, settlements or cities';
 }
 
 // Every path where `seat` could build a road now
 export function roadSpots(state: Placement, seat: Seat): number[] {
-  return EDGES.map((_, edge) => edge).filter(edge => roadError(state, seat, edge) === null);
+  return boardOf(state.layout).edges.map((_, edge) => edge).filter(edge => roadError(state, seat, edge) === null);
 }
 
 function pay(state: GameState, seat: Seat, cost: Resources): Result<GameState> {
@@ -96,7 +97,7 @@ export function placeFreeRoad(state: GameState, seat: Seat, edge: number): Resul
   if (error) return { error };
   const roads = { ...state.roads, [edge]: seat };
   const left = state.pending?.kind === 'roadBuilding' ? state.pending.roads - 1 : 0;
-  const done = left <= 0 || roadSpots({ roads, buildings: state.buildings }, seat).length === 0;
+  const done = left <= 0 || roadSpots({ layout: state.layout, roads, buildings: state.buildings }, seat).length === 0;
   const pending = done ? null : { kind: 'roadBuilding' as const, roads: left };
   return { state: note({ ...state, roads, pending }, `${nameOf(state, seat)} placed a free road`) };
 }
@@ -118,7 +119,7 @@ export function placeSetupRoad(state: GameState, seat: Seat, edge: number): Resu
   const settlement = setup.settlement;
   if (settlement === null) return { error: 'Place a settlement first' };
   if (state.roads[edge] !== undefined) return { error: 'That path has a road' };
-  if (!EDGES[edge].includes(settlement)) return { error: 'The road must touch the settlement you just placed' };
+  if (!boardOf(state.layout).edges[edge].includes(settlement)) return { error: 'The road must touch the settlement you just placed' };
   const placed = note({ ...state, roads: { ...state.roads, [edge]: seat } }, `${nameOf(state, seat)} placed a road`);
   // The second round's settlement takes one of each resource around it
   const second = setup.order.slice(0, setup.step).includes(seat);
@@ -128,7 +129,7 @@ export function placeSetupRoad(state: GameState, seat: Seat, edge: number): Resu
 
 function collectAround(state: GameState, seat: Seat, vertex: number): GameState {
   const gained = noResources();
-  for (const hex of VERTEX_HEXES[vertex]) {
+  for (const hex of boardOf(state.layout).vertexHexes[vertex]) {
     const resource = state.layout.hexes[hex].resource;
     if (resource && state.bank[resource] - gained[resource] > 0) gained[resource]++;
   }

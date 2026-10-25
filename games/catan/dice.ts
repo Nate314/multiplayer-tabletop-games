@@ -1,7 +1,7 @@
 // Rolling: production on the rolled number, or on a 7 the discards and the robber, which also moves for a Knight
 import { rollDie } from '../../shared/dice.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { HEX_VERTICES, RESOURCES } from './board.ts';
+import { RESOURCES, boardOf } from './board.ts';
 import { add, covers, describeResources, noResources, subtract, total } from './resources.ts';
 import { friendlyRobber, nameOf, note, visiblePoints } from './state.ts';
 import type { GameState, Random, Resource, Resources, Result, Seat } from './types.ts';
@@ -35,7 +35,7 @@ export function produce(state: GameState, sum: number): GameState {
   const owed: Record<Seat, Resources> = {};
   state.layout.hexes.forEach((hex, index) => {
     if (hex.number !== sum || hex.resource === null || index === state.robber) return;
-    for (const vertex of HEX_VERTICES[index]) {
+    for (const vertex of boardOf(state.layout).hexVertices[index]) {
       const building = state.buildings[vertex];
       if (!building || !state.activePlayers.includes(building.seat)) continue;
       owed[building.seat] ??= noResources();
@@ -113,9 +113,9 @@ export function afterDiscards(counts: Record<Seat, number>): GameState['pending'
 
 // The players `seat` could steal from with the robber on `hex`: others with a building there and a card in hand
 // With the friendly robber, players showing 2 points or fewer are left out
-type VictimState = Pick<GameState, 'activePlayers' | 'buildings' | 'houseRules' | 'longestRoad' | 'largestArmy'>;
+type VictimState = Pick<GameState, 'layout' | 'activePlayers' | 'buildings' | 'houseRules' | 'longestRoad' | 'largestArmy'>;
 export function robberVictims(state: VictimState, seat: Seat, hex: number, cardCount: (seat: Seat) => number): Seat[] {
-  const owners = new Set(HEX_VERTICES[hex].map(vertex => state.buildings[vertex]?.seat).filter(owner => owner !== undefined));
+  const owners = new Set(boardOf(state.layout).hexVertices[hex].map(vertex => state.buildings[vertex]?.seat).filter(owner => owner !== undefined));
   const friendly = friendlyRobber(state);
   return state.activePlayers.filter(other => other !== seat && owners.has(other) && cardCount(other) > 0
     && !(friendly && visiblePoints(state, other) <= 2));

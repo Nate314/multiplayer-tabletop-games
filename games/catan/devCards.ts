@@ -1,4 +1,5 @@
-// Development cards: 14 Knights, 5 Victory Points, 2 each of Road Building, Year of Plenty and Monopoly.
+// Development cards: 14 Knights, 5 Victory Points, 2 each of Road Building, Year of Plenty and Monopoly
+// (the 5-6 player extension: 20, 5 and 3 each).
 // One may be played a turn, at any time in it, but not a card bought that turn; Victory Point cards are never played,
 // they count for their owner and are shown when the game ends.
 import { piecesLeft, roadSpots } from './building.ts';
@@ -10,6 +11,11 @@ import type { DevCard, GameState, Resource, Result, Seat } from './types.ts';
 export const DEV_DECK: DevCard[] = [
   ...Array<DevCard>(14).fill('knight'), ...Array<DevCard>(5).fill('victoryPoint'),
   ...Array<DevCard>(2).fill('roadBuilding'), ...Array<DevCard>(2).fill('yearOfPlenty'), ...Array<DevCard>(2).fill('monopoly')
+];
+
+export const FIVE_SIX_DEV_DECK: DevCard[] = [
+  ...Array<DevCard>(20).fill('knight'), ...Array<DevCard>(5).fill('victoryPoint'),
+  ...Array<DevCard>(3).fill('roadBuilding'), ...Array<DevCard>(3).fill('yearOfPlenty'), ...Array<DevCard>(3).fill('monopoly')
 ];
 
 export const DEV_CARD_NAMES: Record<DevCard, string> = {

@@ -1,11 +1,13 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
-  EDGES, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
+  EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
 import { DEV_DECK } from '../games/catan/devCards.ts';
 import { COSTS, describeResources } from '../games/catan/resources.ts';
-import { LAYOUT } from '../games/catan/testing.ts';
+import { editionFor } from '../games/catan/editions.ts';
+import { settlementSpotError } from '../games/catan/building.ts';
+import { FIVE_SIX_LAYOUT, LAYOUT } from '../games/catan/testing.ts';
 import type { Building, GameState, Resources } from '../games/catan/types.ts';
 
 // One test per rule, control and difference in games/catan/README.md. Players join as Alice (seat 1), Bob (seat 2),
@@ -15,6 +17,8 @@ import type { Building, GameState, Resources } from '../games/catan/types.ts';
 
 const NAMES = ['Alice', 'Bob', 'Cara'];
 const FOUR = ['Alice', 'Bob', 'Cara', 'Dan'];
+const FIVE = [...FOUR, 'Eve'];
+const SIX = [...FIVE, 'Finn'];
 
 type Hand = Partial<Resources>;
 type Crafted = Partial<Omit<GameState, 'hands' | 'bank'>> & { hands?: Record<number, Hand>; bank?: Partial<Resources> };
@@ -51,10 +55,12 @@ function craftedState(players: number, { hands = {}, bank = {}, ...fields }: Cra
   const seats = Array.from({ length: players }, (_, index) => index + 1);
   const each = <T>(value: (seat: number) => T) => Object.fromEntries(seats.map(seat => [seat, value(seat)]));
   const held = each(seat => full(hands[seat] ?? {}));
-  const left = full(Object.fromEntries(RESOURCES.map(resource => [resource, 19 - seats.reduce((sum, seat) => sum + held[seat][resource], 0)])));
+  const edition = editionFor(players);
+  const large = edition.board === FIVE_SIX_BOARD;
+  const left = full(Object.fromEntries(RESOURCES.map(resource => [resource, edition.bankSize - seats.reduce((sum, seat) => sum + held[seat][resource], 0)])));
   return {
-    started: true, setup: null, layout: LAYOUT, robber: 18, roads: {}, buildings: {}, hands: held, bank: { ...left, ...bank },
-    devDeck: [...DEV_DECK], devCards: each(() => []), boughtThisTurn: [], devPlayed: false, knights: each(() => 0),
+    started: true, setup: null, layout: large ? FIVE_SIX_LAYOUT : LAYOUT, robber: large ? 28 : 18, roads: {}, buildings: {}, hands: held, bank: { ...left, ...bank },
+    devDeck: [...edition.devDeck], devCards: each(() => []), boughtThisTurn: [], devPlayed: false, knights: each(() => 0),
     longestRoad: null, largestArmy: null, turnHolder: 1, currentPlayer: fields.turnHolder ?? 1, rolled: false, dice: null,
     pending: null, trade: null, steal: null, log: [], lastMove: null, isGameOver: false, winners: [],
     ...fields
@@ -188,6 +194,65 @@ test.describe('Catan rules', () => {
     expect(boards[0]).not.toEqual(boards[1]);
   });
 
+  test('five players get the 30-hex board, 28 number tokens, 11 ports, two deserts, 24 of each resource and 34 development cards', async ({ seat }) => {
+    const page = (await seat('catan', FIVE)).pages[0];
+    await expect(page.locator('.hex')).toHaveCount(30);
+    for (const [terrain, count] of [['wood', 6], ['sheep', 6], ['wheat', 6], ['brick', 5], ['ore', 5], ['desert', 2]] as const) {
+      await expect(page.locator(`.hex.terrain-${terrain}`)).toHaveCount(count);
+    }
+    const tokens = (await page.locator('.token-number').allTextContents()).map(Number).sort((a, b) => a - b);
+    expect(tokens).toEqual(FIVE_SIX_BOARD.numberTokens);
+    await expect(page.locator('.port')).toHaveCount(11);
+    await expect(page.locator('.port-any')).toHaveCount(5);
+    await expect(page.locator('.port-sheep')).toHaveCount(2);
+    for (const resource of ['wood', 'brick', 'wheat', 'ore']) await expect(page.locator(`.port-${resource}`)).toHaveCount(1);
+    for (const label of ['Wood', 'Brick', 'Sheep', 'Wheat', 'Ore']) await expect(bankCount(page, label)).toHaveText(`${label} 24`);
+    await expect(page.getByLabel('Bank').getByText('Dev 34')).toBeVisible();
+    const labels = await hexLabels(page);
+    const deserts = await Promise.all(labels.flatMap((label, index) => label === 'Desert' ? [hex(page, index).boundingBox()] : []));
+    const robber = await page.locator('.robber').boundingBox();
+    if (!robber || deserts.length !== 2 || deserts.some(box => !box)) throw new Error('The deserts or robber are not drawn');
+    const middle = { x: robber.x + robber.width / 2, y: robber.y + robber.height / 2 };
+    expect(deserts.some(box => box && middle.x > box.x && middle.x < box.x + box.width && middle.y > box.y && middle.y < box.y + box.height)).toBe(true);
+  });
+
+  test('six players place in setup order round the table and back, each in their own color', async ({ seat }) => {
+    const table = await seat('catan', SIX);
+    const { setup } = await table.state<GameState>();
+    if (!setup) throw new Error('Expected setup');
+    expect(setup.order).toHaveLength(12);
+    const [alice] = table.pages;
+    for (const [step, who] of setup.order.entries()) {
+      const placer = table.pages[who - 1];
+      await expect(placer.getByText(SETTLEMENT_PROMPT)).toBeVisible();
+      const other = table.pages[who % 6];
+      await expect(other.locator('.turn-waiting')).toHaveText(`Waiting for ${SIX[who - 1]} to place a settlement`);
+      const live = await table.state<GameState>();
+      const spot = FIVE_SIX_BOARD.vertices.findIndex((_, id) => settlementSpotError(live, id) === null);
+      await vertex(placer, spot).click();
+      const road = FIVE_SIX_BOARD.vertexEdges[spot].find(edge => live.roads[edge] === undefined);
+      if (road === undefined) throw new Error(`No free path at intersection ${spot} on step ${step}`);
+      await clickPath(placer, road);
+    }
+    await expect(alice.locator('.building.seat6')).toHaveCount(2);
+    await expect(alice.locator('.road.seat5')).toHaveCount(2);
+    await expect(alice.locator('.player-row')).toHaveCount(6);
+    await expect(status(alice)).toContainText('Setup is over');
+  });
+
+  test('a sixth player can join and a seventh cannot', async ({ seat, browser, server }) => {
+    const table = await seat('catan', FIVE);
+    await table.join('Finn');
+    const seventh = await newPlayer(browser, server);
+    await seventh.goto('/');
+    await seventh.locator('.lobby-game').filter({ has: seventh.locator('.lobby-game-name', { hasText: /^Catan$/ }) }).click();
+    await seventh.getByLabel('Your name').fill('Gus');
+    await seventh.getByLabel('Game ID').fill(table.gameId);
+    await seventh.getByRole('button', { name: 'Join', exact: true }).click();
+    await expect(seventh.locator('.lobby-error')).toHaveText('Game is full');
+    await seventh.context().close();
+  });
+
   test('the highest roll places first after tied players roll again, setup goes 1, 2, 3, 3, 2, 1 and the second settlement takes its resources', async ({ seat, browser, server }) => {
     const table = await seat('catan', ['Alice', 'Bob']);
     const cara = await newPlayer(browser, server);
@@ -198,7 +263,8 @@ test.describe('Catan rules', () => {
       const [alice, bob] = table.pages;
       const everyone = [alice, bob, cara];
       await expect(status(bob)).toHaveText(
-        'Cara joined (3/4 players). Highest roll goes first: Alice 12, Bob 12, Cara 2; tie: Alice 3, Bob 8. Bob goes first');
+        'Cara joined (3/6 players). Highest roll goes first: Alice 12, Bob 12, Cara 2; tie: Alice 3, Bob 8. Bob goes first');
+      await agreeToHouseRules(alice, bob, cara); // Cara's join cleared the agreements
       await expect(turnMessage(bob)).toHaveText('You place first. Joining closes after the first move.');
       await expect(turnMessage(alice)).toHaveText('Bob places first. Joining closes after the first move.');
       for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(3);
@@ -1029,6 +1095,45 @@ test.describe('Catan controls', () => {
     await expect(faq).toContainText('Click a highlighted intersection');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+
+  test('the special build phase is offered only with five or more seated', async ({ seat }) => {
+    const table = await seat('catan', FOUR, { agree: false });
+    await expect(table.pages[0].getByLabel('Special build phase')).toHaveCount(0);
+    await table.join('Eve');
+    await expect(table.pages[0].getByLabel('Special build phase')).not.toBeChecked();
+  });
+
+  test('with the special build phase on, each other player in turn order gets a build chance, builds or buys without trading or playing cards, and Done building passes it on', async ({ seat }) => {
+    const table = await seat('catan', FIVE, { agree: false });
+    await setHouseRules(table.pages[0], 'catan', { specialBuild: true });
+    await agreeToHouseRules(...table.pages);
+    const [alice, bob, cara, , eve] = table.pages;
+    const bobRoad = edgeBetween(corner(0, 0), corner(0, 1));
+    const newRoad = edgeBetween(corner(0, 1), corner(0, 2));
+    // Alice rolled; Bob holds ROAD and an old Knight next to his road; Cara holds DEV_CARD; Dan holds nothing; Eve holds ROAD
+    await craft(table, {
+      rolled: true, dice: [3, 4], roads: roadsOf(2, [bobRoad]), devCards: { 1: [], 2: ['knight'], 3: [], 4: [], 5: [] },
+      hands: { 2: ROAD, 3: DEV_CARD, 5: ROAD }
+    });
+    await button(alice, 'End turn').click();
+    await expect(turnMessage(alice)).toHaveText("Bob's build chance");
+    await expect(bob.locator('.turn-panel .panel-title')).toHaveText('Your build chance');
+    await expect(bob.getByLabel('Give to the bank')).toHaveCount(0);
+    await expect(button(bob, 'End turn')).toHaveCount(0);
+    await expect(devCardRow(bob, 'Knight').getByRole('button', { name: 'Play' })).toBeDisabled();
+    await expect(cara.locator('.turn-waiting')).toHaveText('Waiting for Bob to build');
+    await button(bob, 'Build road').click();
+    await clickPath(bob, newRoad);
+    await expect(alice.locator('.road.seat2')).toHaveCount(2);
+    await button(bob, 'Done building').click();
+    await expect(turnMessage(bob)).toHaveText("Cara's build chance");
+    await button(cara, 'Buy development card').click();
+    await expect(row(alice, 'Cara')).toContainText('Dev 1');
+    await button(cara, 'Done building').click();
+    await expect(turnMessage(alice)).toHaveText("Eve's build chance"); // Dan, with no cards, is skipped
+    await button(eve, 'Done building').click();
+    await expect(button(bob, 'Roll the dice')).toBeVisible();
   });
 });
 

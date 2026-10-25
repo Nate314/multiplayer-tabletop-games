@@ -12,6 +12,7 @@ type TurnPanelProps = {
   gameState: PublicGameState;
   playerNumber: Seat;
   canMove: boolean; // it is this player's move and no vote is running
+  canBuild: boolean; // it is this player's build chance in the special build phase and no vote is running
   mode: BuildMode;
   spots: Record<'road' | 'settlement' | 'city', number>; // how many places each piece could go now
   victims: Seat[] | null; // players to choose from after clicking a robber hex with more than one
@@ -46,15 +47,58 @@ function BankTrade({ gameState, playerNumber, onMove }: { gameState: PublicGameS
   );
 }
 
+// The pieces and development cards a player can pay for now, with the note for the piece being placed
+function BuildButtons({ gameState, mode, spots, onMode, onMove }: Pick<TurnPanelProps, 'gameState' | 'mode' | 'spots' | 'onMode' | 'onMove'>) {
+  const have = gameState.hand ?? COSTS.road;
+  const buildButton = (kind: 'road' | 'settlement' | 'city', label: string) => {
+    const why = buildBlocker(kind, gameState.hand, spots[kind]);
+    return (
+      <button type="button" className={mode === kind ? 'selected' : ''} aria-pressed={mode === kind} disabled={why !== '' && mode !== kind}
+        title={why || `Costs ${describeResources(COSTS[kind])}`} onClick={() => onMode(mode === kind ? null : kind)}>
+        {mode === kind ? 'Cancel' : label}
+      </button>
+    );
+  };
+  const cardWhy = gameState.devDeckCount === 0 ? 'The deck is empty' : covers(have, COSTS.devCard) ? '' : `Needs ${describeResources(COSTS.devCard)}`;
+  return (
+    <>
+      <div className="turn-buttons build-buttons">
+        {buildButton('road', 'Build road')}
+        {buildButton('settlement', 'Build settlement')}
+        {buildButton('city', 'Build city')}
+        <button type="button" disabled={cardWhy !== ''} title={cardWhy || `Costs ${describeResources(COSTS.devCard)}`}
+          onClick={() => onMove({ type: 'buyDevCard' })}>Buy development card</button>
+      </div>
+      {mode && <p className="turn-note">Click a highlighted {mode === 'road' ? 'path' : 'intersection'}.</p>}
+    </>
+  );
+}
+
 // What the player who must move can do now: place in setup, move the robber, place free roads, roll, build, buy, trade, end the turn
 export default function TurnPanel(props: TurnPanelProps) {
-  const { gameState, playerNumber, canMove, mode, spots, victims, onMode, onSteal, onMove } = props;
-  const { setup, pending, rolled, playerNames, currentPlayer, isGameOver, hand, devDeckCount } = gameState;
+  const { gameState, playerNumber, canMove, canBuild, mode, spots, victims, onMode, onSteal, onMove } = props;
+  const { setup, pending, rolled, playerNames, currentPlayer, isGameOver, specialBuild } = gameState;
   if (isGameOver || currentPlayer === null) return null;
 
   const discarding = pending?.kind === 'discard'
     ? Object.entries(pending.counts).map(([seat, count]) => `${playerNames[Number(seat)]} (${count})`).join(', ')
     : '';
+
+  if (specialBuild) {
+    if (!canBuild && specialBuild.builders[0] !== playerNumber) {
+      return <section className="panel turn-panel" aria-label="Turn"><div className="turn-waiting">Waiting for {playerNames[specialBuild.builders[0]]} to build</div></section>;
+    }
+    return (
+      <section className="panel turn-panel" aria-label="Your build chance">
+        <div className="panel-title">Your build chance</div>
+        <p className="turn-note">Build or buy a development card. No trading or playing cards.</p>
+        {canBuild && <BuildButtons gameState={gameState} mode={mode} spots={spots} onMode={onMode} onMove={onMove} />}
+        <div className="turn-buttons">
+          <button type="button" className="primary" disabled={!canBuild} onClick={() => onMove({ type: 'passBuild' })}>Done building</button>
+        </div>
+      </section>
+    );
+  }
 
   if (!canMove || discarding) {
     let waiting = `Waiting for ${playerNames[currentPlayer]}`;
@@ -85,27 +129,9 @@ export default function TurnPanel(props: TurnPanelProps) {
       </div>
     );
   } else {
-    const have = hand ?? COSTS.road;
-    const buildButton = (kind: 'road' | 'settlement' | 'city', label: string) => {
-      const why = buildBlocker(kind, hand, spots[kind]);
-      return (
-        <button type="button" className={mode === kind ? 'selected' : ''} aria-pressed={mode === kind} disabled={why !== '' && mode !== kind}
-          title={why || `Costs ${describeResources(COSTS[kind])}`} onClick={() => onMode(mode === kind ? null : kind)}>
-          {mode === kind ? 'Cancel' : label}
-        </button>
-      );
-    };
-    const cardWhy = devDeckCount === 0 ? 'The deck is empty' : covers(have, COSTS.devCard) ? '' : `Needs ${describeResources(COSTS.devCard)}`;
     body = (
       <>
-        <div className="turn-buttons build-buttons">
-          {buildButton('road', 'Build road')}
-          {buildButton('settlement', 'Build settlement')}
-          {buildButton('city', 'Build city')}
-          <button type="button" disabled={cardWhy !== ''} title={cardWhy || `Costs ${describeResources(COSTS.devCard)}`}
-            onClick={() => onMove({ type: 'buyDevCard' })}>Buy development card</button>
-        </div>
-        {mode && <p className="turn-note">Click a highlighted {mode === 'road' ? 'path' : 'intersection'}.</p>}
+        <BuildButtons gameState={gameState} mode={mode} spots={spots} onMode={onMode} onMove={onMove} />
         <BankTrade gameState={gameState} playerNumber={playerNumber} onMove={onMove} />
         <div className="turn-buttons">
           <button type="button" className="primary" onClick={() => onMove({ type: 'endTurn' })}>End turn</button>

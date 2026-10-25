@@ -4,6 +4,7 @@ import { RESOURCES } from './board.ts';
 import type { Resource, Resources } from './types.ts';
 
 export const BANK_SIZE = 19; // of each resource
+export const FIVE_SIX_BANK_SIZE = 24;
 
 export function noResources(): Resources {
   return { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
@@ -47,7 +48,7 @@ export function parseResources(value: unknown): Resources | null {
   const counts = noResources();
   for (const resource of RESOURCES) {
     const count = input[resource] ?? 0;
-    if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > BANK_SIZE * 5) return null;
+    if (typeof count !== 'number' || !Number.isInteger(count) || count < 0 || count > FIVE_SIX_BANK_SIZE * 5) return null;
     counts[resource] = count;
   }
   return counts;

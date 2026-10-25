@@ -3,9 +3,22 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const FAQS: FaqItem[] = [
   {
     question: 'How do I join a game?',
-    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game, up to four players. ' +
+    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game, up to six players. ' +
       'The game needs at least three, and nobody can join after the first move. Everyone rolls the dice and the highest ' +
       'total places first; players tied for highest roll again.'
+  },
+  {
+    question: 'What changes with five or six players?',
+    answer: 'The 5-6 player extension is played: a bigger island of 30 hexes with two deserts, 28 number tokens, 11 ' +
+      'harbors, 24 cards of each resource in the bank and 34 development cards. White and green join the other ' +
+      'colors. The island is chosen when the lobby resets, so it changes back if a player leaves before the first move.'
+  },
+  {
+    question: 'What is the special build phase?',
+    answer: 'A house rule for five or six players, off unless the host turns it on. After each turn, every other player ' +
+      'in turn order, starting with the next player, gets a build chance: build or buy a development card, with no ' +
+      'trading or playing cards, then click Done building. Players holding fewer than 2 cards, or away, are skipped. A ' +
+      'card bought then is playable from your next turn, and 10 points reached then win when your own turn begins.'
   },
   {
     question: 'What is the goal?',
