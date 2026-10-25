@@ -1,6 +1,6 @@
 // Where things sit on a tile drawn 100 units square, as the tile is printed (before it is turned):
 // a meeple's spot on each feature, and the pennant
-import type { FeatureRef, TileType } from '../types.ts';
+import type { FeatureRef, TileType } from './types.ts';
 
 export type Point = { x: number; y: number };
 

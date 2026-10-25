@@ -1,5 +1,14 @@
 // String-built SVG, so the server can draw pieces without JSX (Node strips types but does not compile JSX)
 
+// One drawing the server offers: `params` names its URL parameters for the gallery, `samples` are parameter sets to show
+// there, and `render` returns the full <svg> document, or null for parameters it does not draw
+export type SvgAsset = {
+  name: string;
+  params: string[];
+  samples: string[][];
+  render: (params: string[]) => string | null;
+};
+
 export type Attrs = Record<string, string | number | undefined>;
 
 export function escapeText(text: string): string {

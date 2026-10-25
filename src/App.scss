@@ -1333,6 +1333,18 @@
   height: 100%;
 }
 
+/* Inside a board the drawing is a nested <svg>, which would clip strokes on its edge */
+:where(svg.server-svg, svg.server-svg > svg) {
+  overflow: visible;
+}
+
+/* The Share and GitHub icons in the headers */
+:where(.header-icon) {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
 /* The piece's name, kept for screen readers when its drawing could not load */
 :where(.server-svg-fallback) {
   position: absolute;

@@ -1,12 +1,17 @@
-// Every SVG the server draws: the routes and the /dev/svgs gallery both read this list, so a new asset is one entry
-export type SvgAsset = {
-  name: string;
-  params: string[];
-  samples: string[][];
-  render: (params: string[]) => string | null;
-};
+import type { SvgAsset } from '../../shared/svg/svg.ts';
+import { SYMBOL_ASSETS } from '../../shared/svg/symbols.ts';
+import { ICON_ASSETS } from '../../shared/svg/icons.ts';
+import { CARCASSONNE_ASSETS } from '../../games/carcassonne/svg.ts';
 
-export const SVG_ASSETS: SvgAsset[] = [];
+export type { SvgAsset };
+
+// Every SVG the server draws: the routes and the /dev/svgs gallery both read this list. A generator file exports its
+// assets next to the data it draws from, and is listed here once
+export const SVG_ASSETS: SvgAsset[] = [
+  ...SYMBOL_ASSETS,
+  ...ICON_ASSETS,
+  ...CARCASSONNE_ASSETS,
+];
 
 export function findSvg(name: string, assets: SvgAsset[] = SVG_ASSETS): SvgAsset | undefined {
   return assets.find(asset => asset.name === name);

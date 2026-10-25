@@ -21,7 +21,7 @@ export function mountAssetRoutes(app: Express, assets: SvgAsset[] = SVG_ASSETS):
     const params = (req.params as { params?: string[] }).params ?? [];
     let markup: string | null = null;
     try {
-      markup = asset.render(params);
+      if (params.length === asset.params.length) markup = asset.render(params);
     } catch {
       // A generator that throws on an odd parameter is the same as one that refuses it
     }

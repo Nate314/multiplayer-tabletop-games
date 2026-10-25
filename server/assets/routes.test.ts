@@ -35,6 +35,7 @@ test('an unknown asset is a 404', async () => {
 test('a parameter the asset refuses is a 400', async () => {
   assert.equal((await fetch(`${base}/api/svg/test-dot/green`)).status, 400);
   assert.equal((await fetch(`${base}/api/svg/test-dot`)).status, 400);
+  assert.equal((await fetch(`${base}/api/svg/test-dot/red/extra`)).status, 400);
 });
 
 test('the listing names every asset with its samples', async () => {
