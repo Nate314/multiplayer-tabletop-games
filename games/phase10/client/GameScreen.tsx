@@ -9,11 +9,9 @@ import Piles from './Piles';
 import Table from './Table';
 import { DEFAULT_SORT_ORDER, sortHand, type SortOrder } from './sortHand.ts';
 import { hasLaidDown, layablePhases, phaseRequirements, skipTargets } from '../rules.ts';
-import { phase10 } from '../index.ts';
+import { seatOrder } from './seatOrder.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Card, DrawSource, PublicGameState, Seat } from '../types.ts';
-
-const MAX_PLAYERS = phase10.info.maxPlayers;
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [selected, setSelected] = useState<number[]>([]);
@@ -84,8 +82,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   else if (hasDrawn) hint = 'Select cards to hit on any group, or one card to discard';
 
   // Turn order starting with this player
-  const stepsAfterMe = (seat: Seat) => (seat - playerNumber + MAX_PLAYERS) % MAX_PLAYERS;
-  const seats = Object.keys(phases).map(Number).sort((a, b) => stepsAfterMe(a) - stepsAfterMe(b));
+  const seats = seatOrder(Object.keys(phases).map(Number), playerNumber);
 
   return (
     <>
