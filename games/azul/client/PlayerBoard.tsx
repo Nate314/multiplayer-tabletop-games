@@ -1,6 +1,7 @@
 import Tile from './Tile';
 import { FLOOR_PENALTIES, canPlaceOnLine, wallColor } from '../rules.ts';
 import { floorKey, lineKey, wallKey } from './animateMove.ts';
+import { lineTarget } from './drag.ts';
 import type { Color, PlayerBoard as Board, Seat } from '../types.ts';
 
 type PlayerBoardProps = {
@@ -50,6 +51,7 @@ export default function PlayerBoard({ board, seat, name, isMe, isCurrent, hasLef
                 className={lineClass('pattern-line', legal, row)}
                 disabled={!legal}
                 aria-label={`Pattern line ${row + 1}`}
+                data-drop={isMe ? lineTarget(row) : undefined}
                 onClick={() => onPlace(row)}
               >
                 {Array.from({ length: row + 1 }, (_, slot) =>
@@ -74,6 +76,7 @@ export default function PlayerBoard({ board, seat, name, isMe, isCurrent, hasLef
         className={lineClass('floor-line', selectedColor !== null, 'floor')}
         disabled={selectedColor === null}
         aria-label="Floor line"
+        data-drop={isMe ? 'floor' : undefined}
         onClick={() => onPlace('floor')}
       >
         {FLOOR_PENALTIES.map((penalty, slot) => (

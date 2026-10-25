@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'How do I take tiles?',
-    answer: 'On your turn, click a tile in a factory or in the center. You pick up every tile of that color from that one place. From a factory, the tiles you leave behind move to the center. Click the tiles again to put them back.'
+    answer: 'On your turn, click a tile in a factory or in the center. You pick up every tile of that color from that one place. From a factory, the tiles you leave behind move to the center. Click the tiles again to put them back. You can also drag a tile straight onto one of your lines.'
   },
   {
     question: 'Where can I put them?',

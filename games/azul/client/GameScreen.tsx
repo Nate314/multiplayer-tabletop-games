@@ -7,6 +7,9 @@ import RoundSummary from './RoundSummary';
 import UndoVote from '../../../src/components/UndoVote';
 import { MOVE_DURATION_MS, prefersReducedMotion } from '../../../src/animation/motion.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import { useDrag } from '../../../src/drag/useDrag.ts';
+import { canPlaceOnLine } from '../rules.ts';
+import { parseDragId, parseDropTarget } from './drag.ts';
 import animateMove from './animateMove.ts';
 import { azul } from '../index.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
@@ -65,11 +68,29 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     if (!isGameOver) setFinalScoringClosed(false);
   }, [isGameOver]);
 
-  function place(line: number | 'floor') {
-    if (!selection) return;
-    gameService.makeMove({ ...selection, line });
+  function place(line: number | 'floor', picked = selection) {
+    if (!picked) return;
+    gameService.makeMove({ ...picked, line });
     setSelection(null);
   }
+
+  // Only your own board carries drop targets, so a release over anyone else's board is a cancel
+  const drag = useDrag({
+    canLift: id => {
+      const picked = parseDragId(id);
+      if (!isMyTurn || !picked) return false;
+      const tiles = picked.source.type === 'center' ? gameState.center : gameState.factories[picked.source.index] ?? [];
+      return tiles.includes(picked.color);
+    },
+    canDrop: (id, target) => {
+      const picked = parseDragId(id);
+      const line = parseDropTarget(target);
+      return picked !== null && line !== null && (line === 'floor' || canPlaceOnLine(boards[playerNumber], line, picked.color));
+    },
+    onLift: id => setSelection(parseDragId(id)),
+    onDrop: (id, target) => place(parseDropTarget(target)!, parseDragId(id))
+    // A canceled drag keeps the tiles picked up, so a click can still place them
+  });
 
   let hint: string | null = null;
   if (isMyTurn) {
@@ -121,7 +142,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             )}
           </div>
         </div>
-        <Factories gameState={gameState} isMyTurn={isMyTurn} selection={selection} onSelect={setSelection} />
+        <Factories gameState={gameState} isMyTurn={isMyTurn} selection={selection} onSelect={setSelection} drag={drag} />
         <div className="boards">
           {renderBoard(playerNumber)}
           {otherSeats.length > 0 && <div className="other-boards">{otherSeats.map(renderBoard)}</div>}
