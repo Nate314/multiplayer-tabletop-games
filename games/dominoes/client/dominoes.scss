@@ -12,6 +12,10 @@
   --button-bg: #1f7a4a;
   --button-hover-bg: #165c37;
   --button-text: #fff;
+  /* The shared controls (house rules, History gear) take the game's button colors in either theme */
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
   --status-bg: #e3f3e8;
   --status-text: #11261a;
   --error-bg: #fbe3e1;
