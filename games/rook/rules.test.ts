@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
 import {
-  BID_STEP, DEFENDERS, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, SIX_TEAMS, targetScore, buildDeck, canPlayCard,
-  cardName, cardPoints, createGameState, dealHand, dealSizes, handPoints, rookTeams, teamOf, teamOfSeat, toPublicState,
+  BID_STEP, DEFENDERS, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, SIX_TEAMS, targetScore, buildDeck, calledCount, canPlayCard,
+  cardName, sameCard, cardPoints, createGameState, dealHand, dealSizes, handPoints, rookTeams, teamOf, teamOfSeat, toPublicState,
   trickWinner
 } from './rules.ts';
 import { rook } from './index.ts';
@@ -478,22 +478,43 @@ function lobbyOf(count: number, values: HouseRuleValues = {}): GameState {
   return rook.resetLobby(ok(setHouseRules(rook.info, state, 1, { values, override: true, maxPlayers: count })), seeded(7));
 }
 
-// One hand played with legal moves: the first bidder bids 70, everyone else passes, the bidder lays aside the first
-// cards of their hand and names black, then everyone plays their first legal card
-function playHand(start: GameState, random: Random = seeded(3)): GameState {
+// The first `calledCount` cards of the deck that `seat` does not hold
+function notHeldBy(state: GameState, seat: number): Card[] {
+  return buildDeck().filter(card => !state.hands[seat].some(held => sameCard(held, card))).slice(0, calledCount(state.activePlayers.length));
+}
+
+// Bids 70 with the first bidder, everyone else passes, the bidder lays aside the first cards of their hand and names
+// black: at 5 and 7 the bidder is then to call partners
+function toCalling(start: GameState, random: Random = seeded(3)): GameState {
   let state = start;
   const first = state.currentPlayer ?? assert.fail('nobody to bid');
   state = ok(move(state, first, { type: 'bid', amount: 70 }, random));
   while (state.phase === 'bidding') state = ok(move(state, state.currentPlayer ?? assert.fail(), { type: 'pass' }, random));
   const nest = dealSizes(Object.keys(state.hands).length).nest;
   state = ok(move(state, first, { type: 'discard', cards: state.hands[first].slice(0, nest) }, random));
-  state = ok(move(state, first, { type: 'nameTrump', color: 'black' }, random));
+  return ok(move(state, first, { type: 'nameTrump', color: 'black' }, random));
+}
+
+// Everyone plays their first legal card until the hand is over
+function playOut(start: GameState, random: Random = seeded(3)): GameState {
+  let state = start;
   while (state.phase === 'play') {
     const seat = state.currentPlayer ?? assert.fail('nobody to play');
     const card = state.hands[seat].find(held => canPlayCard(state.hands[seat], held, state.trick, 'black'));
     state = ok(move(state, seat, { type: 'play', card }, random));
   }
   return state;
+}
+
+// One hand played with legal moves: as toCalling, then at 5 and 7 the bidder calls the first cards they do not hold,
+// then everyone plays their first legal card
+function playHand(start: GameState, random: Random = seeded(3)): GameState {
+  let state = toCalling(start, random);
+  if (state.phase === 'callPartner') {
+    const bidder = state.bidder ?? assert.fail('no bidder');
+    state = ok(move(state, bidder, { type: 'callPartner', cards: notHeldBy(state, bidder) }, random));
+  }
+  return playOut(state, random);
 }
 
 // Hands until the game ends, everyone clicking Continue between them
@@ -656,7 +677,7 @@ test('six players deal 6 each and a 5-card nest', () => {
   five = ok(move(five, 1, { type: 'discard', cards: five.hands[1].slice(0, 6) }));
   assert.equal(five.gameStatus, 'Alice laid aside 6 cards');
 
-  // Five and seven players have no partners yet: each plays for themselves
+  // Five and seven players: each seat is its own team, and called partners join the bidder hand by hand
   assert.deepEqual(lobbyOf(5).teams, [[1], [2], [3], [4], [5]]);
   assert.deepEqual(rookTeams([1, 2, 3, 4, 5, 6, 7], 'twoOfThree'), [[1], [2], [3], [4], [5], [6], [7]]);
   for (const count of [5, 7]) {
@@ -704,4 +725,176 @@ test('a dismissal at six ends the game', () => {
   const gone = removePlayer(rook, two, 1, seeded(1));
   assert.deepEqual(gone.winners, [2, 4, 6]);
   assert.equal(gone.gameStatus, 'Alice left, so the partnership is broken: Bob, Dan and Fay win');
+});
+
+// Rook at 5 and 7: after naming trump the bidder calls cards, and whoever holds one is their partner for the hand
+
+// The last trick at `cards.length` players, red trump: Alice (the bidder) leads red 13 and nobody beats it, the nest
+// holds no counters. Each seat is its own team, `captured` are the counters each took before it
+function calledLastTrick(cards: Card[], captured: number[], bid: number, called: Card[], scores = cards.map(() => 0), partners: number[] = []): GameState {
+  const seats = cards.map((_card, index) => index + 1);
+  const state: GameState = {
+    ...game({
+      activePlayers: seats,
+      playerNames: Object.fromEntries(NAMES.slice(0, seats.length).map((name, index) => [index + 1, name])),
+      dealer: seats.length,
+      hands: Object.fromEntries(cards.map((card, index) => [index + 1, [card]])),
+      nest: [black(6), yellow(6), yellow(7), yellow(8), black(8), black(9)],
+      captured,
+      tricksWon: seats.map(() => 0),
+      scores,
+      bid,
+      bidding: { high: { seat: 1, amount: bid }, passed: seats.slice(1) }
+    }),
+    teams: seats.map(seat => [seat]),
+    called: { cards: called, partners },
+    houseRules: { ...withRules({ targetScore: 500 }), override: true, maxPlayers: seats.length }
+  };
+  let next = state;
+  for (const seat of seats) next = ok(move(next, seat, { type: 'play', card: next.hands[seat][0] }));
+  return next;
+}
+
+const FIVE_LAST = [red(13), green(12), green(14), green(11), yellow(13)];
+
+test('five players call one partner card and it is 2 against 3', () => {
+  assert.deepEqual([4, 5, 6, 7].map(calledCount), [0, 1, 0, 2]);
+  const calling = toCalling(lobbyOf(5));
+  assert.equal(calling.phase, 'callPartner');
+  assert.equal(calling.currentPlayer, 1);
+  assert.equal(calling.gameStatus, 'Alice named black trump');
+  assert.deepEqual(move(calling, 1, { type: 'play', card: calling.hands[1][0] }), { error: 'Wait for Alice to call a partner' });
+  assert.deepEqual(move(calling, 1, { type: 'callPartner', cards: [] }), { error: 'Call exactly 1 card' });
+  const [card] = notHeldBy(calling, 1);
+  const called = ok(move(calling, 1, { type: 'callPartner', cards: [card] }));
+  assert.equal(called.phase, 'play');
+  assert.equal(called.currentPlayer, 1); // the dealer's left leads
+  assert.deepEqual(called.called, { cards: [card], partners: [] });
+  assert.equal(called.gameStatus, `Alice called ${cardName(card)} for a partner`);
+  assert.deepEqual(move(called, 1, { type: 'callPartner', cards: [card] }), { error: 'Only the bid winner calls partners, after naming trump' });
+
+  // Cara holds the called green 14 and plays it in the last trick: Alice and Cara took 70 of the bid of 70, and the
+  // three defenders took 50 together
+  const done = calledLastTrick(FIVE_LAST, [40, 10, 20, 15, 25], 70, [green(14)]);
+  assert.deepEqual(done.called?.partners, [3]);
+  assert.deepEqual(done.roundSummary?.points, [50, 10, 20, 15, 25]);
+  assert.equal(done.roundSummary?.made, true);
+  assert.deepEqual(done.roundSummary?.partners, [3]);
+  assert.deepEqual(done.roundSummary?.change, [70, 50, 70, 50, 50]);
+  assert.equal(done.gameStatus, 'Alice and Cara bid 70 and took 70: they score 70');
+});
+
+test('seven players call two and it is 3 against 4', () => {
+  const calling = toCalling(lobbyOf(7));
+  assert.equal(calling.phase, 'callPartner');
+  const cards = notHeldBy(calling, 1);
+  assert.deepEqual(move(calling, 1, { type: 'callPartner', cards: [cards[0]] }), { error: 'Call exactly 2 cards' });
+  assert.deepEqual(move(calling, 1, { type: 'callPartner', cards: [cards[0], cards[0]] }), { error: 'Call 2 different cards' });
+  const called = ok(move(calling, 1, { type: 'callPartner', cards }));
+  assert.equal(called.gameStatus, `Alice called ${cardName(cards[0])} and ${cardName(cards[1])} for partners`);
+  const played = playOut(called);
+  assert.equal(played.roundSummary?.points.reduce((sum, points) => sum + points, 0), MAX_BID);
+
+  // Cara and Fay hold the called cards: Alice's side took 80 of 85 and is set, the four defenders took 40
+  const set = calledLastTrick(
+    [red(13), green(12), green(14), green(11), yellow(13), yellow(14), yellow(12)], [30, 10, 20, 10, 10, 10, 10], 85,
+    [green(14), yellow(14)]
+  );
+  assert.deepEqual(set.called?.partners, [3, 6]);
+  assert.equal(set.roundSummary?.made, false);
+  assert.deepEqual(set.roundSummary?.change, [-85, 40, -85, 40, 40, -85, 40]);
+  assert.equal(set.gameStatus, 'Alice, Cara and Fay bid 85 and took 80: they lose 85');
+
+  // A player who holds both called cards is one partner: Cara played the yellow 14 earlier
+  const both = calledLastTrick(
+    [red(13), green(12), green(14), green(11), yellow(13), yellow(9), yellow(12)], [30, 10, 30, 10, 10, 10, 10], 85,
+    [green(14), yellow(14)], undefined, [3]
+  );
+  assert.deepEqual(both.called?.partners, [3]);
+});
+
+test('a called card in the laid-aside cards leaves the bidder alone', () => {
+  const calling = toCalling(lobbyOf(5));
+  const [laidAside] = calling.nest;
+  const called = ok(move(calling, 1, { type: 'callPartner', cards: [laidAside] }));
+  const done = playOut(called);
+  const summary = done.roundSummary ?? assert.fail('no summary');
+  assert.deepEqual(done.called?.partners, []);
+  assert.deepEqual(summary.partners, []);
+  const defended = summary.points.slice(1).reduce((sum, points) => sum + points, 0);
+  assert.deepEqual(summary.change.slice(1), [defended, defended, defended, defended]);
+  assert.equal(summary.change[0], summary.made ? summary.points[0] : -70);
+});
+
+test('the bidder cannot call a card in their own hand', () => {
+  const calling = toCalling(lobbyOf(5));
+  assert.deepEqual(move(calling, 1, { type: 'callPartner', cards: [calling.hands[1][0]] }),
+    { error: 'You cannot call a card in your own hand' });
+  assert.deepEqual(move(calling, 2, { type: 'callPartner', cards: notHeldBy(calling, 1) }), { error: 'Not your turn' });
+  assert.deepEqual(move(calling, 1, { type: 'callPartner', cards: [{ color: 'red', number: 4 }] }), { error: 'Invalid move' });
+});
+
+test('a partner stays hidden until the called card is played', () => {
+  const calling = toCalling(lobbyOf(5));
+  const [card] = notHeldBy(calling, 1);
+  const holder = calling.activePlayers.find(seat => calling.hands[seat].some(held => sameCard(held, card)));
+  assert.ok(holder !== undefined, 'the called card is in a hand for this seed');
+  let state = ok(move(calling, 1, { type: 'callPartner', cards: [card] }));
+  const viewers = [null, 1, 2, 3, 4, 5];
+  while (state.called?.partners.length === 0) {
+    assert.equal(state.phase, 'play');
+    // No view says who holds the called card; only the holder sees it, in their own hand
+    for (const viewer of viewers) {
+      const view = rook.toPublicState(state, false, viewer);
+      assert.deepEqual(view.called, { cards: [card], partners: [] });
+      assert.equal(view.hand.some(held => sameCard(held, card)), viewer === holder);
+    }
+    const seat = state.currentPlayer ?? assert.fail('nobody to play');
+    const next = state.hands[seat].find(held => canPlayCard(state.hands[seat], held, state.trick, 'black'));
+    state = ok(move(state, seat, { type: 'play', card: next }));
+  }
+  assert.equal(state.lastMove?.type === 'play' && sameCard(state.lastMove.card, card), true);
+  for (const viewer of viewers) assert.deepEqual(rook.toPublicState(state, false, viewer).called?.partners, [holder]);
+  assert.match(state.gameStatus, new RegExp(`${NAMES[holder - 1]} is Alice's partner$`));
+});
+
+test('each player scores individually', () => {
+  const done = calledLastTrick(FIVE_LAST, [40, 10, 20, 15, 25], 70, [green(14)], [100, 20, 30, 40, 50]);
+  assert.deepEqual(done.scores, [170, 70, 100, 90, 100]);
+  assert.equal(done.isGameOver, false);
+  // The next hand calls partners afresh
+  let next = done;
+  for (const seat of [1, 2, 3, 4, 5]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
+  assert.equal(next.called, null);
+  assert.deepEqual(next.scores, [170, 70, 100, 90, 100]);
+  const again = playHand(next);
+  assert.equal(again.scores.length, 5);
+});
+
+test('equal top totals share the win', () => {
+  const shared = calledLastTrick(FIVE_LAST, [40, 10, 20, 15, 25], 70, [green(14)], [450, 0, 450, 0, 0]);
+  assert.equal(shared.isGameOver, true);
+  assert.deepEqual(shared.winners, [1, 3]);
+  assert.equal(shared.gameStatus, 'Alice and Cara win with 520 points!');
+
+  const alone = calledLastTrick(FIVE_LAST, [40, 10, 20, 15, 25], 70, [green(14)], [450, 0, 440, 0, 0]);
+  assert.deepEqual(alone.winners, [1]);
+  assert.equal(alone.gameStatus, 'Alice wins with 520 points!');
+
+  const over = playGame(lobbyOf(7));
+  assert.ok(over.winners.length >= 1);
+});
+
+test('five players deal 7 each with a 6-card nest', () => {
+  assert.deepEqual(dealSizes(5), { hand: 7, nest: 6 });
+  const state = lobbyOf(5);
+  assert.deepEqual(state.teams, [[1], [2], [3], [4], [5]]);
+  assert.equal(state.nest.length, 6);
+  for (const seat of [1, 2, 3, 4, 5]) assert.equal(state.hands[seat].length, 7);
+  const calling = toCalling(state);
+  assert.equal(calling.hands[1].length, 7);
+  assert.equal(calling.nest.length, 6);
+  // The bidder sees the laid-aside cards while calling, and may call one of them
+  assert.equal(rook.toPublicState(calling, false, 1).discards.length, 6);
+  assert.equal(rook.toPublicState(calling, false, 2).discards.length, 0);
 });

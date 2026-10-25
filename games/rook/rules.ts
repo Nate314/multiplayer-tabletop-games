@@ -20,7 +20,11 @@
 //   This game plays to 500 by default (the owner's choice), or the host's target; see the README.
 // - More players (this game's house rules, not the article's): with "I know what I'm doing", 4 to 7 play. The seats
 //   go around in seat order and the hand and nest sizes change so the 41 cards deal evenly (dealSizes). At 6 the
-//   teams are two of three or three of two; at 5 and 7 each player is their own team for now.
+//   teams are two of three or three of two. At 5 and 7 each player scores alone, and after naming trump the bidder
+//   calls one card (two at 7) that they do not hold: whoever holds a called card is their partner for the hand, kept
+//   secret until the card is played. A called card may be among the cards laid aside, leaving the bidder fewer
+//   partners or none. Each member of the bidding side scores what the side took if it made the bid, else loses the
+//   bid; each defender scores what all the defenders took. Equal top totals at the target share the win.
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule, targetScoreRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -66,6 +70,11 @@ export const DEFENDERS: ChoiceRule<'separate' | 'together'> = {
 
 export const ROOK_RULES: HouseRule[] = [TARGET_RULE, SIX_TEAMS, DEFENDERS];
 
+// How many cards the bidder calls for partners: one at 5 players, two at 7, none with fixed teams
+export function calledCount(players: number): number {
+  return players === 5 ? 1 : players === 7 ? 2 : 0;
+}
+
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 const ROOK_POINTS = 20;
 
@@ -106,10 +115,20 @@ export function seatAfter(state: Pick<GameState, 'teams'>, seat: Seat): Seat {
   return seats[(seats.indexOf(seat) + 1) % seats.length];
 }
 
+// Words joined for a sentence, e.g. 'red 14', 'red 14 and the Rook' or 'Bob, Dan and Fay'
+export function listOf(words: string[]): string {
+  return words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
 // The seats' names, e.g. 'Alice and Cara' or 'Bob, Dan and Fay'
 export function namesOf(seats: Seat[], playerNames: Record<Seat, string>): string {
-  const names = seats.map(seat => playerNames[seat]);
-  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return listOf(seats.map(seat => playerNames[seat]));
+}
+
+// The bidder and the called partners revealed so far, in seat order
+export function biddingSide(state: Pick<GameState, 'bidder' | 'called'>): Seat[] {
+  if (state.bidder === null) return [];
+  return [state.bidder, ...(state.called?.partners ?? [])].sort((a, b) => a - b);
 }
 
 // How many cards the bid winner lays aside: as many as the nest held
@@ -164,6 +183,7 @@ const HAND_START = {
   bidder: null,
   bid: null,
   trump: null,
+  called: null,
   trick: [],
   lastTrick: null,
   tricksWon: [0, 0],
@@ -247,10 +267,11 @@ function parseMove(move: unknown): Move | null {
       const card = parseCard(input.card);
       return card ? { type: 'play', card } : null;
     }
-    case 'discard': {
+    case 'discard':
+    case 'callPartner': {
       if (!Array.isArray(input.cards)) return null;
       const cards = input.cards.map(parseCard);
-      return cards.every(card => card !== null) ? { type: 'discard', cards: cards as Card[] } : null;
+      return cards.every(card => card !== null) ? { type: input.type, cards: cards as Card[] } : null;
     }
     default:
       return null;
@@ -271,9 +292,12 @@ export function describeMove(lastMove: LastMove, playerNames: Record<Seat, strin
       return `${name} laid aside ${lastMove.count ?? NEST_SIZE} cards`;
     case 'nameTrump':
       return `${name} named ${lastMove.color} trump`;
+    case 'callPartner':
+      return `${name} called ${listOf(lastMove.cards.map(cardName))} for ${lastMove.cards.length === 1 ? 'a partner' : 'partners'}`;
     case 'play': {
       const played = `${name} played ${cardName(lastMove.card)}`;
-      return describeTrickPlay(played, lastMove.playerNumber, lastMove.trickWinner, playerNames);
+      const described = describeTrickPlay(played, lastMove.playerNumber, lastMove.trickWinner, playerNames);
+      return lastMove.partnerOf === undefined ? described : `${described}. ${name} is ${playerNames[lastMove.partnerOf]}'s partner`;
     }
   }
 }
@@ -356,13 +380,33 @@ function discard(state: GameState, seat: Seat, cards: Card[]): Result<GameState>
   return { state: recorded(next, { type: 'discard', playerNumber: seat, count }) };
 }
 
+// The player left of the dealer leads the first trick
+const firstLeader = (state: GameState, seat: Seat): Seat => seatAfter(state, state.dealer ?? seat);
+
+// At 5 and 7 players the bidder calls partners next; otherwise play starts
 function nameTrump(state: GameState, seat: Seat, color: Color): GameState {
-  const leader = seatAfter(state, state.dealer ?? seat);
-  return recorded({ ...state, phase: 'play', trump: color, currentPlayer: leader }, { type: 'nameTrump', playerNumber: seat, color });
+  const lastMove: LastMove = { type: 'nameTrump', playerNumber: seat, color };
+  if (calledCount(seatsInPlay(state).length) > 0) return recorded({ ...state, phase: 'callPartner', trump: color }, lastMove);
+  return recorded({ ...state, phase: 'play', trump: color, currentPlayer: firstLeader(state, seat) }, lastMove);
 }
 
-// Scores a finished hand. The first team at or over the target score wins, the highest total if several are; on a tie
-// for the lead another hand is played.
+// The called cards are public; who holds them is not, so `partners` starts empty and fills as the cards are played
+function callPartner(state: GameState, seat: Seat, cards: Card[]): Result<GameState> {
+  const count = calledCount(seatsInPlay(state).length);
+  if (cards.length !== count) return { error: `Call exactly ${count} ${count === 1 ? 'card' : 'cards'}` };
+  if (cards.some((card, i) => cards.findIndex(other => sameCard(other, card)) !== i)) {
+    return { error: `Call ${count} different cards` };
+  }
+  if (cards.some(card => state.hands[seat].some(held => sameCard(held, card)))) {
+    return { error: 'You cannot call a card in your own hand' };
+  }
+  const next: GameState = { ...state, phase: 'play', called: { cards, partners: [] }, currentPlayer: firstLeader(state, seat) };
+  return { state: recorded(next, { type: 'callPartner', playerNumber: seat, cards }) };
+}
+
+// Scores a finished hand. The bidding side is the bidder's team, or at 5 and 7 the bidder and their called partners.
+// The first team at or over the target score wins, the highest total if several are; on a tie for the lead another
+// hand is played, except that players scoring alone (5 and 7) share the win.
 function endHand(state: GameState, lastTrick: Seat): GameState {
   const teams = teamsOf(state);
   const bidder = state.bidder ?? lastTrick;
@@ -370,24 +414,34 @@ function endHand(state: GameState, lastTrick: Seat): GameState {
   const nestPoints = handPoints(state.nest);
   const points: TeamScores = [...state.captured];
   points[teamOfSeat(state, lastTrick)] += nestPoints;
-  const bidTeam = teamOfSeat(state, bidder);
-  const made = points[bidTeam] >= bid;
-  // With "together", each defending team scores what all the defending teams took
-  const defended = points.reduce((sum, taken, team) => (team === bidTeam ? sum : sum + taken), 0);
-  const together = houseRule(state, DEFENDERS) === 'together';
+  const called = state.called ?? null;
+  const side = biddingSide({ bidder, called });
+  const sideTeams = new Set(side.map(seat => teamOfSeat(state, seat)));
+  const took = points.reduce((sum, taken, team) => (sideTeams.has(team) ? sum + taken : sum), 0);
+  const made = took >= bid;
+  // With "together", and always with called partners, each defending team scores what all the defending teams took
+  const defended = points.reduce((sum, taken, team) => (sideTeams.has(team) ? sum : sum + taken), 0);
+  const together = called !== null || houseRule(state, DEFENDERS) === 'together';
   const change: TeamScores = points.map((taken, team) => {
-    if (team === bidTeam) return made ? taken : -bid;
+    if (sideTeams.has(team)) return made ? took : -bid;
     return together ? defended : taken;
   });
   const scores: TeamScores = state.scores.map((score, team) => score + change[team]);
-  const summary: HandSummary = { handNumber: state.handNumber, bidder, bid, made, points, change, nestPoints, lastTrick, acknowledged: [] };
+  const summary: HandSummary = {
+    handNumber: state.handNumber, bidder, bid, made, points, change, nestPoints, lastTrick, acknowledged: [],
+    ...(called && { partners: called.partners })
+  };
   const scored: GameState = { ...state, phase: 'handOver', scores, currentPlayer: null, roundSummary: summary };
 
-  const bidderName = state.playerNames[bidder];
-  const outcome = `${bidderName}'s team bid ${bid} and took ${points[bidTeam]}: ${made ? `they score ${points[bidTeam]}` : `they lose ${bid}`}`;
+  const bidders = called ? namesOf(side, state.playerNames) : `${state.playerNames[bidder]}'s team`;
+  const outcome = `${bidders} bid ${bid} and took ${took}: ${made ? `they score ${took}` : `they lose ${bid}`}`;
   const top = Math.max(...scores);
   if (top < targetScore(state)) return { ...scored, gameStatus: outcome };
   const leaders = teams.filter((_team, index) => scores[index] === top);
+  if (leaders.length > 1 && called) {
+    const winners = leaders.flat().sort((a, b) => a - b);
+    return { ...scored, isGameOver: true, winners, gameStatus: `${namesOf(winners, state.playerNames)} win with ${top} points!` };
+  }
   if (leaders.length > 1) {
     const tied = teams.length === 2 ? 'Both teams are' : 'The leading teams are';
     return { ...scored, gameStatus: `${outcome}. ${tied} tied at ${top}, so another hand is played` };
@@ -408,10 +462,19 @@ function play(state: GameState, seat: Seat, card: Card): Result<GameState> {
     return { error: `Follow suit: play ${suitOf(state.trick[0].card, state.trump)}` };
   }
   const trick = [...state.trick, { seat, card }];
-  const played: GameState = { ...state, hands: { ...state.hands, [seat]: hand.filter(held => !sameCard(held, card)) }, trick };
+  // Playing a called card reveals its holder as a partner
+  const called = state.called ?? null;
+  const reveals = called !== null && called.cards.some(other => sameCard(other, card)) && !called.partners.includes(seat);
+  const partnerOf = reveals && state.bidder !== null ? { partnerOf: state.bidder } : {};
+  const played: GameState = {
+    ...state,
+    hands: { ...state.hands, [seat]: hand.filter(held => !sameCard(held, card)) },
+    trick,
+    called: reveals ? { ...called, partners: [...called.partners, seat].sort((a, b) => a - b) } : called
+  };
   if (trick.length < seatsInPlay(state).length) {
     const next = { ...played, currentPlayer: seatAfter(state, seat) };
-    return { state: recorded(next, { type: 'play', playerNumber: seat, card, trickWinner: null }) };
+    return { state: recorded(next, { type: 'play', playerNumber: seat, card, trickWinner: null, ...partnerOf }) };
   }
 
   const winner = trickWinner(trick, state.trump);
@@ -421,7 +484,7 @@ function play(state: GameState, seat: Seat, card: Card): Result<GameState> {
   tricksWon[team] += 1;
   captured[team] += handPoints(trick.map(p => p.card));
   const taken: GameState = { ...played, trick: [], lastTrick: { plays: trick, winner }, tricksWon, captured, currentPlayer: winner };
-  const lastMove: LastMove = { type: 'play', playerNumber: seat, card, trickWinner: winner };
+  const lastMove: LastMove = { type: 'play', playerNumber: seat, card, trickWinner: winner, ...partnerOf };
   if (Object.values(taken.hands).some(rest => rest.length > 0)) return { state: recorded(taken, lastMove) };
   const ended = endHand(taken, winner);
   return { state: { ...ended, lastMove } };
@@ -443,8 +506,12 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
       if (phase === 'discard') return { error: `Lay aside ${nestSize(state)} cards first` };
       if (phase !== 'trump') return { error: 'Trump is named by the bid winner after the bidding' };
       return { state: nameTrump(state, seat, parsed.color) };
+    case 'callPartner':
+      if (phase !== 'callPartner') return { error: 'Only the bid winner calls partners, after naming trump' };
+      return callPartner(state, seat, parsed.cards);
     case 'play':
       if (phase === 'bidding') return { error: 'Finish the bidding first' };
+      if (phase === 'callPartner') return { error: `Wait for ${state.playerNames[state.bidder ?? seat]} to call a partner` };
       if (phase !== 'play') return { error: 'Wait for trump to be named' };
       return play(state, seat, parsed.card);
   }
@@ -456,7 +523,7 @@ const ROUND: RoundAccess<GameState, HandSummary> = {
   noun: 'hand'
 };
 
-// Deals the next hand once every connected player has acknowledged the summary. The deal passes to the left.
+// Deals the next hand once every connected player has acknowledged the summary. The deal passes to the next seat.
 function startNextHandIfReady(state: GameState, random: Random): GameState {
   if (!everyoneReady(state, ROUND)) return state;
   const seats = seatsInPlay(state);

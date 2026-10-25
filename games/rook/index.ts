@@ -10,7 +10,7 @@ export const rook: GameDefinition<GameState, PublicGameState> = {
     description: 'Bid, take the nest, name trump and win tricks with your partner to the target score (500 unless the host chose another)',
     minPlayers: 4,
     maxPlayers: 4,
-    stretchedPlayers: { min: 4, max: 7 }, // 6 in fixed teams; 5 and 7 each play alone until called partners
+    stretchedPlayers: { min: 4, max: 7 }, // 6 in fixed teams; 5 and 7 with called partners
     houseRules: ROOK_RULES
   },
   createGameState,

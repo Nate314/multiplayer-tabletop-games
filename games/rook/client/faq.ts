@@ -3,11 +3,11 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'You and your partner, who sits across from you, try to capture counters in tricks. Seats 1 and 3 play against seats 2 and 4 (six players play in teams of three or two). The first team to reach the target score (500 unless the host chose another) wins.'
+    answer: 'You and your partner, who sits across from you, try to capture counters in tricks. Seats 1 and 3 play against seats 2 and 4 (six players play in teams of three or two; with five or seven the bidder calls partners each hand). The first team to reach the target score (500 unless the host chose another) wins.'
   },
   {
     question: 'What is in the deck?',
-    answer: '41 cards: 5 to 14 in red, yellow, green and black, and the Rook. With four players each gets 9 cards and 5 go face down to the nest; with six, 6 each and a 5-card nest.'
+    answer: '41 cards: 5 to 14 in red, yellow, green and black, and the Rook. With four players each gets 9 cards and 5 go face down to the nest; with five, 7 each and a 6-card nest; with six, 6 each and a 5-card nest; with seven, 5 each and a 6-card nest.'
   },
   {
     question: 'Which cards count?',
@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How is a hand scored?',
-    answer: 'If the bidding team took at least its bid, it scores what it took; otherwise it loses the amount of its bid. The other team always scores what it took; with three teams of two, the host chooses whether each defending team scores its own counters or what both took together. Scores can go below zero. After the scoring, everyone clicks Continue for the next hand, and the deal passes to the left.'
+    answer: 'If the bidding team took at least its bid, it scores what it took; otherwise it loses the amount of its bid. The other team always scores what it took; with three teams of two, the host chooses whether each defending team scores its own counters or what both took together. Scores can go below zero. After the scoring, everyone clicks Continue for the next hand, and the deal passes to the next seat.'
   },
   {
     question: 'What if several teams pass the target in the same hand?',
@@ -52,5 +52,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Can more than four play?',
     answer: 'Yes, up to 7, when the host ticks "I know what I\'m doing". With six the host picks two teams of three (seats 1, 3 and 5 against 2, 4 and 6) or three teams of two, partners sitting three apart, and with three teams how the two defending teams score. Teams are fixed for the game, and the hands and nest are sized so the 41 cards deal evenly.'
+  },
+  {
+    question: 'How do partners work with five or seven players?',
+    answer: 'After naming trump the bidder calls one card (two with seven) that is not in their hand, using the list and Call. Whoever holds a called card is their partner for the hand, but nobody else knows who until the card is played. The bidder may call a card they laid aside and so play with fewer partners or alone. Each player keeps their own score: if the bidding side took its bid, each member scores what the side took, otherwise each loses the bid, and each defender scores what all the defenders took. Players with equal top totals at the target share the win.'
   }
 ];

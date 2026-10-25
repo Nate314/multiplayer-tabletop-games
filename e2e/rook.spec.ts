@@ -612,3 +612,62 @@ test.describe('Rook at six players', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 });
+
+test.describe('Rook at five players', () => {
+  test('calling a partner at five players', async ({ seat }) => {
+    const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'];
+    const table = await seat('rook', names, { maxPlayers: 5 });
+    const { pages } = table;
+    const [alice, bob, cara, dan, eve] = pages;
+
+    // Each plays alone on the scoreboard; seven cards each and a six-card nest
+    await expect(alice.locator('.scoreboard .team-names')).toHaveText(['Alice (you)', 'Bob', 'Cara', 'Dan', 'Eve']);
+    await expect(hand(alice).getByRole('button')).toHaveCount(7);
+    await expect(alice.locator('.nest-label')).toHaveText('Nest: 6 cards');
+
+    // Alice wins the bid, lays aside six and names trump, then calls a card for a partner
+    await bid(alice, 70);
+    for (const page of pages.slice(1)) await pass(page).click();
+    for (let index = 0; index < 6; index++) await hand(alice).getByRole('button').nth(index).click();
+    await alice.getByRole('button', { name: 'Lay aside 6/6' }).click();
+    await alice.getByRole('group', { name: 'Name trump' }).getByRole('button', { name: 'black' }).click();
+    await expect(alice.locator('.hint')).toHaveText('Call 1 card: whoever holds it is your partner for this hand, kept secret until it is played');
+    await expect(bob.locator('.call-partner')).toHaveCount(0);
+
+    // The last trick: Cara holds the red 14
+    const cards = [red(5), red(6), red(14), red(7), red(8)];
+    await table.patch({
+      hands: Object.fromEntries(cards.map((card, index) => [index + 1, [card]])),
+      nest: [black(6), black(7), black(8), black(9), yellow(6), yellow(7)],
+      captured: [60, 10, 0, 20, 15],
+      tricksWon: [2, 1, 0, 1, 2]
+    });
+    const picker = alice.locator('.call-partner');
+    await expect(picker.getByRole('combobox', { name: 'Called card 1' }).locator('option', { hasText: 'red 5' })).toHaveCount(0);
+    await picker.getByRole('combobox', { name: 'Called card 1' }).selectOption('red 14');
+    await picker.getByRole('button', { name: 'Call' }).click();
+    await expect(status(bob)).toHaveText('Alice called red 14 for a partner');
+    for (const page of pages) await expect(page.locator('.called-cards')).toHaveText('Called: red 14');
+
+    // Only Cara knows she is the partner until she plays the card
+    await expect(cara.locator('.called-mine')).toHaveText('You hold a called card: you are Alice\'s partner');
+    for (const page of [alice, bob, dan, eve]) await expect(page.locator('.called-mine')).toHaveCount(0);
+    await expect(alice.locator('.seats')).not.toContainText('partner');
+    await expect(seatOf(cara, 'Alice')).toContainText('(partner)');
+
+    for (const [index, page] of pages.slice(0, 3).entries()) await handCard(page, cards[index]).click();
+    await expect(status(dan)).toHaveText('Cara played red 14. Cara is Alice\'s partner');
+    await expect(seatOf(alice, 'Cara')).toContainText('(partner)');
+    await expect(seatOf(bob, 'Cara').locator('.seat-bid')).toHaveText('partner');
+    await handCard(dan, red(7)).click();
+    await handCard(eve, red(8)).click();
+
+    // Cara took the last trick's 15: Alice and Cara took 75 of 70 and each scores it, each defender scores the 45 the three took
+    await expect(status(bob)).toHaveText('Alice and Cara bid 70 and took 75: they score 75');
+    const rows = scoring(bob).locator('.summary-team');
+    await expect(rows.locator('.summary-name')).toHaveText(['Alice', 'Bob (you)', 'Cara', 'Dan', 'Eve']);
+    await expect(rows.locator('.summary-reason')).toHaveText(['took 60: +75', 'took 10: +45', 'took 15: +75', 'took 20: +45', 'took 15: +45']);
+    await expect(scoring(bob).locator('.summary-detail')).toContainText('Cara was Alice\'s partner');
+    await expect(bob.locator('.scoreboard .team-score')).toHaveText(['75', '45', '75', '45', '45']);
+  });
+});

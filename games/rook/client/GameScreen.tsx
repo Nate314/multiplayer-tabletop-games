@@ -3,11 +3,12 @@ import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import Card from './Card';
+import CallPartner from './CallPartner';
 import RoundSummary from './RoundSummary';
 import Table from './Table';
 import animateMove, { sortedHand } from './animateMove.ts';
 import { handKey } from '../../../src/animation/animKeys.ts';
-import { BID_STEP, COLORS, MAX_BID, MIN_BID, MIN_PLAYERS, canPlayCard, nestSize, sameCard } from '../rules.ts';
+import { BID_STEP, COLORS, MAX_BID, MIN_BID, MIN_PLAYERS, calledCount, canPlayCard, nestSize, sameCard, seatsInPlay } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Card as CardData, PublicGameState } from '../types.ts';
 
@@ -63,6 +64,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     if (phase === 'bidding') hint = bidding.high ? `Bid more than ${bidding.high.amount}, or pass for this hand` : `Open the bidding at ${MIN_BID} or more, or pass`;
     else if (phase === 'discard') hint = `The nest is in your hand: pick ${laying} cards to lay aside`;
     else if (phase === 'trump') hint = 'Name trump';
+    else if (phase === 'callPartner') {
+      const count = calledCount(seatsInPlay(gameState).length);
+      hint = count === 1
+        ? 'Call 1 card: whoever holds it is your partner for this hand, kept secret until it is played'
+        : `Call ${count} cards: whoever holds one is your partner for this hand, kept secret until it is played`;
+    }
     else if (trick.length === 0) hint = 'Lead any card';
     else hint = 'Follow suit if you can; the Rook may be played at any time';
   }
@@ -119,6 +126,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                 </button>
               ))}
             </div>
+          )}
+          {isMyTurn && phase === 'callPartner' && (
+            <CallPartner hand={hand} laidAside={discards} count={calledCount(seatsInPlay(gameState).length)}
+              onCall={cards => gameService.makeMove({ type: 'callPartner', cards })} />
           )}
         </div>
         <Table gameState={gameState} viewer={playerNumber} />

@@ -14,13 +14,15 @@ export type Card = NumberCard | RookCard;
 // One entry per team, in the order of GameState.teams. A game saved before teams has two: seats 1 and 3, then 2 and 4
 export type TeamScores = number[];
 
-export type Phase = 'bidding' | 'discard' | 'trump' | 'play' | 'handOver';
+// 'callPartner' comes after naming trump at 5 and 7 players only
+export type Phase = 'bidding' | 'discard' | 'trump' | 'callPartner' | 'play' | 'handOver';
 
 export type Move =
   | { type: 'bid'; amount: number }
   | { type: 'pass' }
   | { type: 'discard'; cards: Card[] } // the bid winner lays aside as many cards as the nest held
   | { type: 'nameTrump'; color: Color }
+  | { type: 'callPartner'; cards: Card[] } // at 5 and 7 players, cards the bidder does not hold
   | { type: 'play'; card: Card };
 
 // Not turn-bound and not undoable
@@ -34,7 +36,11 @@ export type LastMove =
   | { type: 'pass'; playerNumber: Seat; won: { seat: Seat; amount: number } | null; redeal: boolean }
   | { type: 'discard'; playerNumber: Seat; count?: number } // count is missing in old saves, which laid aside 5
   | { type: 'nameTrump'; playerNumber: Seat; color: Color }
-  | { type: 'play'; playerNumber: Seat; card: Card; trickWinner: Seat | null };
+  | { type: 'callPartner'; playerNumber: Seat; cards: Card[] }
+  // `partnerOf` is the bidder when this play revealed the player as their called partner
+  | { type: 'play'; playerNumber: Seat; card: Card; trickWinner: Seat | null; partnerOf?: Seat };
+
+export type Called = { cards: Card[]; partners: Seat[] };
 
 export type Bidding = {
   high: { seat: Seat; amount: number } | null;
@@ -51,6 +57,7 @@ export type HandSummary = {
   change: TeamScores; // what each team's score moved by
   nestPoints: number; // counters in the nest, which went with the last trick
   lastTrick: Seat; // who took the last trick, and with it the nest
+  partners?: Seat[]; // the bidder's called partners, at 5 and 7 players only
   acknowledged: Seat[]; // the next hand waits for every connected player
 };
 
@@ -69,6 +76,9 @@ export type GameState = BaseGameState & {
   bidder: Seat | null;
   bid: number | null;
   trump: Color | null;
+  // At 5 and 7 players, the cards the bidder called and the partners revealed so far: a holder joins `partners` only
+  // when they play the called card, so no view tells who holds one before that. Missing in older saves
+  called: Called | null;
   trick: Play[]; // the trick being played, in play order
   lastTrick: { plays: Play[]; winner: Seat } | null;
   tricksWon: TeamScores;
