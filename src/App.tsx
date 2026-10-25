@@ -5,6 +5,7 @@ import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
 import GameView from './components/GameView'
 import JoinDialog from './components/JoinDialog'
+import OpenGames from './components/OpenGames'
 import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
@@ -89,6 +90,13 @@ function App() {
           )}
           <OpenSavedGame games={GAME_INFOS} />
         </div>
+        <OpenGames
+          games={GAME_INFOS}
+          onSelect={game => {
+            setGameId(game.gameId)
+            openDialog(game.gameType)
+          }}
+        />
         <GameList games={GAME_INFOS} onSelect={openDialog} />
       </main>
       {selected && (

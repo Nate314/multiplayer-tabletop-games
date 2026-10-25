@@ -229,7 +229,10 @@
   gap: 2px;
 }
 
-.lobby-game-name {
+// An open game's name has its own class, so the specs that find a game card by its name skip these entries
+.lobby-game-name,
+.open-game-name {
+
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -254,6 +257,18 @@
   border-radius: 999px;
   color: var(--lobby-text);
   font-size: 0.8rem;
+}
+
+/* A game ID and a player name are free text, so both break anywhere rather than push the card wider than a phone */
+.open-game-id {
+  color: var(--lobby-muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.open-game .lobby-game-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Back to a game and Open a saved game span the game list: side by side where two game cards fit, else stacked */

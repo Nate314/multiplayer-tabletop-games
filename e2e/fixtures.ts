@@ -166,11 +166,14 @@ export async function openFaq(page: Page) {
   return dialog;
 }
 
-export const test = base.extend<{ seat: Seat }, { server: Server }>({
-  server: [async ({}, use, workerInfo) => {
+export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Record<string, string> }>({
+  // Extra environment for the worker's server, set per file with test.use
+  serverEnv: [{}, { scope: 'worker', option: true }],
+
+  server: [async ({ serverEnv }, use, workerInfo) => {
     const port = Number(process.env.E2E_PORT_BASE ?? 4300) + workerInfo.workerIndex;
     const child = spawn(process.execPath, ['server/server.ts'], {
-      env: { ...process.env, E2E: '1', PORT: String(port), DATABASE_PATH: ':memory:' },
+      env: { ...process.env, ...serverEnv, E2E: '1', PORT: String(port), DATABASE_PATH: ':memory:' },
       stdio: ['ignore', 'pipe', 'pipe']
     });
     await new Promise<void>((resolve, reject) => {
