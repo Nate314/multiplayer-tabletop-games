@@ -218,6 +218,14 @@ export function createGameManager(
     return { type: 'pop', index: room.history.length };
   }
 
+  // Settles a dismiss vote. When it passes and the turn moves on from the dismissed player, the next player's clock
+  // restarts from now, so they never inherit what was left of the leaver's turn
+  function settleDismissVote(room: Room, voted: BaseGameState): void {
+    const next = resolveDismissVote(room.game, voted, random);
+    const turnMoved = next.started && !next.isGameOver && next.currentPlayer !== voted.currentPlayer;
+    room.state = turnMoved && room.game.resumeClock ? room.game.resumeClock(next, now()) : next;
+  }
+
   function clearEmptyTimer(room: Room): void {
     clearTimeout(room.emptyTimer);
     room.emptyTimer = undefined;
@@ -425,7 +433,7 @@ export function createGameManager(
         dismissVote: { target: held, requestedBy: seat, votes: { [seat]: true } },
         gameStatus: `${state.playerNames[seat]} wants to dismiss ${state.playerNames[held]}`
       };
-      room.state = resolveDismissVote(room.game, opened, random); // a lone connected player passes it at once
+      settleDismissVote(room, opened); // a lone connected player passes it at once
       save(roomId, room);
       return { state: view(room, seat) };
     },
@@ -448,7 +456,7 @@ export function createGameManager(
       }
 
       const approved = { ...state, dismissVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
-      room.state = resolveDismissVote(room.game, approved, random);
+      settleDismissVote(room, approved);
       save(roomId, room);
       return { state: view(room, seat) };
     },
