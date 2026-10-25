@@ -160,7 +160,8 @@ export function describeHouseRules(info: RulesInfo, rules: HouseRulesState, seat
       : (rule.choices.find(choice => choice.value === value)?.label ?? String(value));
     lines.push({ label: rule.label, value: text, standard: value === rule.standard });
   }
-  if (seated < info.minPlayers) lines.push({ label: 'Players', value: String(seated), standard: false });
+  // Fewer than the stretched minimum is still waiting for players, not a smaller table
+  if (seated < info.minPlayers && seated >= minimumToStart(info)) lines.push({ label: 'Players', value: String(seated), standard: false });
   if (rules.maxPlayers !== null && rules.maxPlayers > info.maxPlayers) {
     lines.push({ label: 'Most players', value: String(rules.maxPlayers), standard: false });
   }

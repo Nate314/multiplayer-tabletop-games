@@ -189,6 +189,9 @@ test('describeHouseRules lists a seat count below the normal minimum', () => {
   const rules = afterSeatChange(CATAN, undefined, [1, 2]);
   assert.deepEqual(describeHouseRules(CATAN, rules, 2), [{ label: 'Players', value: '2', standard: false }]);
   assert.deepEqual(describeHouseRules(CATAN, rules, 3), []);
+  // Still waiting for players, not a smaller table
+  assert.deepEqual(describeHouseRules(CATAN, afterSeatChange(CATAN, undefined, [1]), 1), []);
+  assert.deepEqual(describeHouseRules(UNO, afterSeatChange(UNO, undefined, [1]), 1), []);
 });
 
 test('targetScoreRule offers the standard target among the others, sorted', () => {
