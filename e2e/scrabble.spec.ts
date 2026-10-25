@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, recordTones, test, tones, undo, type Seat } from './fixtures.ts';
 import { BLANK, emptyBoard } from '../games/scrabble/rules.ts';
 import type { GameState, Placement } from '../games/scrabble/types.ts';
 
@@ -49,6 +49,8 @@ const square = (page: Page, row: number, col: number) =>
   page.getByRole('button', { name: `Row ${row + 1}, column ${col + 1}`, exact: true });
 const rackLetters = (page: Page) => rack(page).locator('.tile-letter').allTextContents();
 const hint = (page: Page) => page.locator('.hint');
+// The rack's places, in the order shown
+const rackPlace = (page: Page, place: number) => rack(page).locator('.rack-cell').nth(place);
 const status = (page: Page) => page.locator('.game-status');
 const turn = (page: Page) => page.locator('.turn-message');
 const scoreRow = (page: Page, name: string) => page.locator('.score-row', { hasText: name });
@@ -95,7 +97,7 @@ test.describe('Scrabble rules', () => {
     const [alice] = first.pages;
     // Alice draws the bag's first tile, an A; Bob the ninth of what is left, a B
     await first.random(0, 8.5 / 99);
-    const [bob] = (await seat('scrabble', ['Bob'], { gameId: first.gameId })).pages;
+    const bob = await first.join('Bob');
     await expect(status(alice)).toContainText('Alice drew A, Bob drew B. Alice goes first.');
     await expect(turn(bob)).toHaveText('Alice goes first. Joining closes after the first move.');
     // The drawn tiles went back before the racks were dealt
@@ -103,7 +105,7 @@ test.describe('Scrabble rules', () => {
 
     // Cara joins and the draw is redone: she draws the last tile, a blank, and beats the two As
     await first.random(0, 0, 97.5 / 98);
-    const [cara] = (await seat('scrabble', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     await expect(status(alice)).toContainText('Alice drew A, Bob drew A, Cara drew a blank. Cara goes first.');
     await expect(turn(cara)).toHaveText('Cara goes first. Joining closes after the first move.');
 
@@ -118,7 +120,7 @@ test.describe('Scrabble rules', () => {
     const first = await seat('scrabble', ['Alice', 'Bob']);
     // Alice draws a B, Bob an A and Cara a C, so Bob (seat 2) goes first
     await first.random(9.5 / 100, 0, 9.5 / 98);
-    const [cara] = (await seat('scrabble', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     const [alice, bob] = first.pages;
     await expect(turn(bob)).toHaveText('Bob goes first. Joining closes after the first move.');
     await button(bob, 'Pass').click();
@@ -485,6 +487,73 @@ test.describe('Scrabble controls', () => {
   });
 });
 
+test.describe('Scrabble drag and drop', () => {
+  test('a rack tile dragged onto a square is placed, and a blank dragged there asks for its letter', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: '?ATSXYZ' } });
+    await drag(alice, rackTile(alice, 'A'), square(alice, 7, 7));
+    await expect(square(alice, 7, 7).locator('.tile-pending')).toHaveText('A1');
+    await expect(rack(alice).locator('.rack-slot-placed')).toHaveCount(1);
+    await expect(rack(alice).locator('.rack-slot-selected')).toHaveCount(0);
+
+    await drag(alice, rackTile(alice, BLANK), square(alice, 7, 6));
+    await expect(hint(alice)).toHaveText('Pick the letter for your blank');
+    await alice.getByRole('group', { name: 'Letter for the blank' }).getByRole('button', { name: 'C', exact: true }).click();
+    await expect(square(alice, 7, 6).locator('.tile')).toHaveClass(/tile-blank/);
+    await expect(square(alice, 7, 6).locator('.tile')).toHaveText('C');
+    await drag(alice, rackTile(alice, 'T'), square(alice, 7, 8));
+    await expect(hint(alice)).toHaveText('CAT: 4 points');
+    await expect(playButton(alice)).toBeEnabled();
+  });
+
+  test('a placed tile dragged to another square moves, and dragged to the rack goes back', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: 'CATSXYZ' } });
+    await place(alice, 'C', 7, 7);
+    await drag(alice, square(alice, 7, 7), square(alice, 7, 6));
+    await expect(square(alice, 7, 6).locator('.tile-pending')).toHaveText('C3');
+    await expect(square(alice, 7, 7).locator('.tile')).toHaveCount(0);
+    await place(alice, 'A', 7, 7);
+    await place(alice, 'T', 7, 8);
+    await expect(hint(alice)).toHaveText('CAT: 10 points');
+
+    // Dropped on its own square it stays, and the release does not also click it back to the rack
+    await drag(alice, square(alice, 7, 8), square(alice, 7, 8), { x: 2, y: 2 });
+    await expect(square(alice, 7, 8).locator('.tile-pending')).toHaveText('T1');
+    await expect(hint(alice)).toHaveText('CAT: 10 points');
+
+    await drag(alice, square(alice, 7, 6), rack(alice));
+    await expect(square(alice, 7, 6).locator('.tile')).toHaveCount(0);
+    await expect(rack(alice).locator('.rack-slot-placed')).toHaveCount(2);
+    await expect(hint(alice)).toHaveText('AT: 4 points');
+    expect(await rackLetters(alice)).toEqual(['C', 'A', 'T', 'S', 'X', 'Y', 'Z']);
+  });
+
+  test('rack tiles dragged between places rearrange the rack, also off turn, and the order survives the other player\'s move', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat, { racks: { 1: 'CATSXYZ', 2: 'ABCDEFG' } });
+    await drag(bob, rackPlace(bob, 0), rackPlace(bob, 4));
+    await expect.poll(() => rackLetters(bob)).toEqual(['B', 'C', 'D', 'E', 'A', 'F', 'G']);
+    // Nothing went to the server
+    expect((await table.state<GameState>()).racks[2].join('')).toBe('ABCDEFG');
+
+    await placeWord(alice, spell('CAT', 7, 6));
+    await playButton(alice).click();
+    await expect(turn(bob)).toHaveText('Your turn');
+    expect(await rackLetters(bob)).toEqual(['B', 'C', 'D', 'E', 'A', 'F', 'G']);
+  });
+
+  test('off turn, a rack tile dropped on the board goes back', async ({ seat }) => {
+    const { bob } = await start(seat, { racks: { 2: 'ABCDEFG' } });
+    await lift(bob, rackPlace(bob, 0));
+    await expect(bob.locator('.drag-ghost')).toBeVisible();
+    const box = (await square(bob, 7, 7).boundingBox())!;
+    await bob.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+    await bob.mouse.up();
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    await expect(bob.locator('.board .tile')).toHaveCount(0);
+    await expect(rack(bob).locator('.rack-slot-placed')).toHaveCount(0);
+    expect(await rackLetters(bob)).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+  });
+});
+
 test.describe('Scrabble differences from Wikipedia', () => {
   test('no dictionary: an approved Undo takes a disputed word back and nobody loses a turn', async ({ seat }) => {
     const { alice, bob } = await start(seat, { racks: { 1: 'QXZJKVW' } });
@@ -498,5 +567,36 @@ test.describe('Scrabble differences from Wikipedia', () => {
     await expect(turn(alice)).toHaveText('Your turn');
     await button(alice, 'Pass').click();
     await expect(turn(bob)).toHaveText('Your turn');
+  });
+});
+
+test.describe('Scrabble turn timer', () => {
+  test('tiles placed when the time runs out go back to the rack and the turn passes', async ({ seat }) => {
+    const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
+    const [alice, bob] = table.pages;
+    const dealt = (await table.state<GameState>()).racks;
+    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnStartedAt: Date.now() + 5000 });
+    await expect(alice.locator('.turn-timer')).toHaveText(/^[01]:\d\d$/);
+    await placeWord(alice, spell('CAT', 7, 6));
+    await expect(freeSlots(alice)).toHaveCount(4);
+    await table.patch({ turnStartedAt: Date.now() - 61_000 });
+    await expect(status(bob)).toHaveText('Alice ran out of time');
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(freeSlots(alice)).toHaveCount(7);
+    expect(await rackLetters(alice)).toEqual('CATAAAA'.split(''));
+    await expect(points(alice, 'Alice')).toHaveText('0');
+  });
+
+  test('the last 10 seconds tick for the player on turn, and rack tiles still drag while the timer runs', async ({ seat }) => {
+    const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
+    const [alice, bob] = table.pages;
+    await recordTones(alice);
+    await recordTones(bob);
+    const dealt = (await table.state<GameState>()).racks;
+    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnStartedAt: Date.now() - 50_000 });
+    await drag(alice, rackTile(alice, 'C'), square(alice, 7, 7));
+    await expect(square(alice, 7, 7).locator('.tile-pending')).toHaveText('C3');
+    await expect.poll(async () => (await tones(alice)).filter(tone => tone === 'square:1000').length).toBeGreaterThan(1);
+    expect((await tones(bob)).filter(tone => tone === 'square:1000')).toEqual([]);
   });
 });

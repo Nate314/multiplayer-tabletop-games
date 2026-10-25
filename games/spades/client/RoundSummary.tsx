@@ -1,5 +1,5 @@
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
-import { BAG_LIMIT, LOSING_SCORE, TARGET_SCORE, teamNames, teamOf } from '../rules.ts';
+import { BAG_LIMIT, LOSING_SCORE, targetScore, teamNames, teamOf } from '../rules.ts';
 import type { HandSummary, PublicGameState, Seat, Team, TeamResult } from '../types.ts';
 
 type RoundSummaryProps = {
@@ -53,7 +53,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           </li>
         ))}
       </ul>
-      <div className="summary-target">First to {TARGET_SCORE} points wins; a team at {LOSING_SCORE} loses</div>
+      <div className="summary-target">First to {targetScore(gameState).toLocaleString('en-US')} points wins; a team at {LOSING_SCORE} loses</div>
     </RoundSummaryDialog>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import gameService from '../services/gameService';
 import { loadSession, saveSession, clearSession, type Session } from '../services/session';
+import type { JoinLink } from '../services/share.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
 // After a refresh the old socket can still hold the seat for a moment, so a rejoin tries again a few times
@@ -10,7 +11,7 @@ const STILL_CONNECTED = ' is already in this game';
 
 type Rejoining = { retriesLeft: number; timer?: ReturnType<typeof setTimeout> };
 
-export default function useGameConnection() {
+export default function useGameConnection(joinLink: JoinLink | null = null) {
   const [playerNumber, setPlayerNumber] = useState<Seat | null>(null);
   const [gameState, setGameState] = useState<BasePublicState | null>(null);
   const [gameType, setGameType] = useState<string | null>(null); // the game being played, remembered or not
@@ -146,7 +147,15 @@ export default function useGameConnection() {
     window.addEventListener('pageshow', handlePageShow);
 
     // A page that went away mid-game (refresh, closed tab) takes its seat back
-    if (sessionRef.current?.inGame) rejoin();
+    const remembered = sessionRef.current;
+    if (remembered?.inGame) {
+      // A share link to another game wins, and the old one stays one click away
+      if (joinLink && (joinLink.gameType !== remembered.gameType || joinLink.gameId !== remembered.gameId)) {
+        updateSession({ ...remembered, inGame: false });
+      } else {
+        rejoin();
+      }
+    }
 
     return () => {
       window.removeEventListener('pagehide', handlePageHide);
@@ -154,7 +163,7 @@ export default function useGameConnection() {
       stopRejoining();
       gameService.disconnect();
     };
-  }, [connect, rejoin, rememberIfStarted, stopRejoining, updateSession]);
+  }, [connect, joinLink, rejoin, rememberIfStarted, stopRejoining, updateSession]);
 
   const join = useCallback((type: string, gameId: string, playerName: string) => {
     const trimmedGameId = gameId.trim();

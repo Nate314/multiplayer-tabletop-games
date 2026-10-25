@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { JAIL_FINE, ownable } from '../board.ts';
+import { auctionsOn } from '../options.ts';
 import MortgageChoice from './MortgageChoice';
 import type { Move, PublicGameState, Seat } from '../types.ts';
 
@@ -22,7 +23,7 @@ export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: 
     <div className="bankruptcy">
       {confirming ? (
         <>
-          <span>{debt ? `Give everything to ${debt.creditor === null ? 'the bank' : playerNames[debt.creditor]}?` : 'Leave the game and give your properties to the bank for auction?'}</span>
+          <span>{debt ? `Give everything to ${debt.creditor === null ? 'the bank' : playerNames[debt.creditor]}?` : `Leave the game and give your properties to the bank${auctionsOn(gameState) ? ' for auction' : ''}?`}</span>
           <button type="button" className="danger" onClick={() => { setConfirming(false); onMove({ type: 'declareBankruptcy' }); }}>
             Confirm bankruptcy
           </button>
@@ -61,7 +62,7 @@ export default function TurnPanel({ gameState, playerNumber, canMove, onMove }: 
         <button type="button" className="primary" onClick={() => onMove({ type: 'buy' })} disabled={(cash[playerNumber] ?? 0) < (property?.price ?? 0)}>
           Buy {property?.name} for ${property?.price}
         </button>
-        <button type="button" onClick={() => onMove({ type: 'decline' })}>Decline and auction</button>
+        <button type="button" onClick={() => onMove({ type: 'decline' })}>{auctionsOn(gameState) ? 'Decline and auction' : 'Decline'}</button>
       </div>
     );
   } else if (canRoll && playerNumber in jailed) {

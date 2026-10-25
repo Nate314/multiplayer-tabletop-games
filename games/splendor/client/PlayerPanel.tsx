@@ -1,3 +1,4 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { CardView, GemToken, NobleView } from './pieces';
 import { bonusKey, nobleKey, reservedKey, tokenKey } from './animateMove.ts';
 import { canBuy } from './selection.ts';
@@ -48,7 +49,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
         <span className="player-bonuses">
           {GEMS.map(gem => (
             <span key={gem} className={`bonus gem-${gem}${gem === boughtBonus ? ' bonus-highlighted' : ''}`} data-anim-key={bonusKey(seat, gem)} title={`${owned[gem]} ${gem} bonus`}>
-              {owned[gem]}
+              <ColorSymbol color={gem} />{owned[gem]}
             </span>
           ))}
         </span>

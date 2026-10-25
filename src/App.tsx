@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { GAMES } from '../games/registry.ts'
 import { CLIENT_GAMES, type PlayableGame } from './clientGames.ts'
 import useGameConnection from './hooks/useGameConnection'
@@ -8,9 +8,11 @@ import JoinDialog from './components/JoinDialog'
 import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
 import GitHubLink from './components/GitHubLink'
+import SettingsButton from './components/SettingsButton'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJoinForm, saveJoinForm } from './services/settings.ts'
-import './App.css'
+import { parseJoinLink } from './services/share.ts'
+import './App.scss'
 
 // Every game needs a screen as well as rules; a missing one fails at startup instead of hiding the game
 const PLAYABLE_GAMES: PlayableGame[] = GAMES.map(({ info }) => {
@@ -20,13 +22,19 @@ const PLAYABLE_GAMES: PlayableGame[] = GAMES.map(({ info }) => {
 })
 
 function App() {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // A /join/<game type>/<game ID> address, read once
+  const [link] = useState(() => parseJoinLink(window.location.pathname, PLAYABLE_GAMES.map(({ info }) => info.id)))
+  const [selectedId, setSelectedId] = useState<string | null>(link?.gameType ?? null)
   // Kept here so the form is still filled in after leaving or a disconnect
   // The last name and game ID used to join, read once
   const [initialForm] = useState(loadJoinForm)
   const [playerName, setPlayerName] = useState(initialForm.playerName)
-  const [gameId, setGameId] = useState(initialForm.gameId)
-  const { playerNumber, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection()
+  const [gameId, setGameId] = useState(link?.gameId ?? initialForm.gameId)
+  const { playerNumber, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection(link)
+  // So a refresh or Back does not reopen the dialog
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/join/')) window.history.replaceState(null, '', '/')
+  }, [])
   const joined = gameState !== null && playerNumber !== null
   // The game on screen however it was joined: dialog, refresh or rejoin button
   const joinedGame = PLAYABLE_GAMES.find(({ info }) => info.id === gameType)
@@ -72,6 +80,7 @@ function App() {
       <header className="lobby-header">
         <h1>Multiplayer Tabletop Games</h1>
         <GitHubLink />
+        <SettingsButton />
         <ThemeToggle />
       </header>
       <main className="lobby-main">

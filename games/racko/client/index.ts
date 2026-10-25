@@ -1,9 +1,10 @@
 import type { ClientGame } from '../../../src/clientGames.ts';
+import animateMove from './animateMove.ts';
 import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './racko.css';
+import './racko.scss';
 
 export const rackoClient: ClientGame = {
   id: 'racko',
@@ -11,5 +12,6 @@ export const rackoClient: ClientGame = {
   faq: QUESTIONS,
   icon: '📶',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

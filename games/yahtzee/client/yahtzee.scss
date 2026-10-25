@@ -1,0 +1,299 @@
+[data-game="yahtzee"] {
+  /* Yahtzee's green baize table. Every rule is scoped to data-game="yahtzee", so none of it reaches the landing page or other games.
+   The header, FAQ dialog and vote panels use the platform defaults, rethemed through the --platform-* variables. */
+
+  color-scheme: light;
+  --baize: #2a5d6b;
+  --baize-dark: #1e4651;
+  --text: #1c2a2e;
+  --muted: #53656a;
+  --panel-bg: rgba(255, 255, 255, 0.95);
+  --panel-border: rgba(28, 42, 46, 0.18);
+  --button-bg: #8c2a1f;
+  --button-hover-bg: #6f2017;
+  --button-text: #fff;
+  --status-bg: #e4eff1;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --current: #f2c14e;
+  --winner: #f7e08a;
+  --option-bg: #e4f1e8;
+  --option-text: #1d5a34;
+  --platform-page-bg: var(--baize);
+  --platform-text: #fff;
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: #fff;
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --baize: #14343c;
+    --baize-dark: #0d2329;
+    --text: #e6eef0;
+    --muted: #a6b8bc;
+    --panel-bg: rgba(27, 40, 44, 0.96);
+    --panel-border: rgba(230, 238, 240, 0.16);
+    --button-bg: #b23a2c;
+    --button-hover-bg: #cc4b3c;
+    --status-bg: #22363b;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --current: #e0aa2e;
+    --winner: #b49a3a;
+    --option-bg: #24402f;
+    --option-text: #b8e6c8;
+    --platform-panel-bg: #1b282c;
+    --platform-panel-text: var(--text);
+  }
+}
+
+.game-root[data-game="yahtzee"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 30%, var(--baize), var(--baize-dark)) fixed;
+}
+
+[data-game="yahtzee"] {
+  .game-header {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+    color: var(--text);
+  }
+
+  .game-info,
+  .yz-sheet-wrap {
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  }
+
+  .game-info {
+    padding: 14px 20px;
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  /* The dice, the rolls left and the buttons, wrapping on a narrow window */
+
+  .yz-turn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .yz-turn .dice-row {
+    justify-content: center;
+  }
+
+  .yz-rolls {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .yz-button,
+  .undo-vote-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .yz-button:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .yz-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  /* The score sheet scrolls sideways inside its panel when many players do not fit */
+
+  .yz-sheet-wrap {
+    overflow-x: auto;
+  }
+
+  .yz-table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 420px;
+    color: var(--text);
+  }
+
+  .yz-table .dice-row {
+    justify-content: center;
+  }
+
+  .yz-sheet {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yz-sheet th,
+  .yz-sheet td {
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--panel-border);
+    text-align: center;
+  }
+
+  .yz-sheet tbody th {
+    position: sticky;
+    left: 0;
+    background: var(--panel-bg);
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .yz-player {
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+  }
+
+  .yz-sheet th.yz-player-current {
+    border-bottom-color: var(--current);
+  }
+
+  .yz-sheet th.yz-player-winner {
+    background: color-mix(in srgb, var(--winner) 55%, var(--panel-bg));
+  }
+
+  .yz-cell {
+    min-width: 56px;
+    height: 36px;
+  }
+
+  .yz-cell-last {
+    outline: 3px solid var(--current);
+    outline-offset: -3px;
+    font-weight: 700;
+  }
+
+  /* The points that fly from the dice to the box they were written in (the animation sizes it like the box) */
+
+  .yz-flying-points {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1px solid var(--option-text);
+    border-radius: 6px;
+    background: var(--option-bg);
+    color: var(--option-text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yz-option {
+    min-width: 44px;
+    padding: 4px 8px;
+    border: 1px solid var(--option-text);
+    border-radius: 6px;
+    background: var(--option-bg);
+    color: var(--option-text);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .yz-option:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .yz-sum td,
+  .yz-sum th {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .yz-total td,
+  .yz-total th {
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .yz-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .faq dd {
+    color: var(--muted);
+  }
+
+  @media (max-width: 900px) {
+    .yz-sheet th,
+    .yz-sheet td {
+      padding: 4px 6px;
+    }
+
+    .yz-cell {
+      min-width: 44px;
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { SEATS } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -19,7 +21,7 @@ export default function GoalList({ gameState, playerNumber }: GoalListProps) {
         if (!activePlayers.includes(seat)) classNames.push('player-left');
         return (
           <div key={seat} className={classNames.join(' ')}>
-            <span className={`goal-dot player${seat}`} />
+            <span className={`goal-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat]} className="dot-symbol" /></span>
             {playerNames[seat]}
             {seat === playerNumber && ' (you)'} → {SEATS[seat].goalLabel}
           </div>

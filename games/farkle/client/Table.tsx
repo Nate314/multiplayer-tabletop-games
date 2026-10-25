@@ -1,5 +1,5 @@
 import Dice from '../../../src/components/Dice';
-import { TARGET_SCORE } from '../rules.ts';
+import { targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -17,7 +17,7 @@ function shownRoll(state: PublicGameState): number[] {
 
 function standing(state: PublicGameState, seat: Seat): string {
   if (state.winners.includes(seat)) return state.winners.length > 1 ? 'Tied for the win' : 'Winner';
-  if (state.triggeredBy === seat) return `Reached ${TARGET_SCORE.toLocaleString()}`;
+  if (state.triggeredBy === seat) return `Reached ${targetScore(state).toLocaleString()}`;
   if (state.finalTurns.includes(seat)) return 'Last turn to come';
   return '';
 }

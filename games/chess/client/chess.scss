@@ -1,0 +1,419 @@
+[data-game="chess"] {
+  color-scheme: light;
+  --page-bg: #EFE9DD;
+  --text: #2B2420;
+  --panel-bg: #FFFDF8;
+  --panel-border: #DDD3C2;
+  --button-bg: #6B4F3A;
+  --button-hover-bg: #573F2E;
+  --button-text: #FFF;
+  --status-bg: #F3EBDD;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
+  --light-square: #F0D9B5;
+  --dark-square: #B58863;
+  --frame: #5A3F2C;
+  --last-move: rgba(205, 210, 106, 0.75);
+  --selected: rgba(20, 85, 30, 0.5);
+  --legal: rgba(20, 85, 30, 0.45);
+  /* The outline on the square under a dragged piece (src/App.scss [data-drag-over]) */
+  --drag-over: #14551E;
+  --check: radial-gradient(circle, #FF3B30 0%, rgba(231, 0, 0, 0.6) 45%, rgba(169, 0, 0, 0) 80%);
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  /* Squares shrink to fit a phone: eight of them plus the frame and page gutters */
+  --square: min(64px, calc((100vw - 48px) / 8));
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #1C1A18;
+    --text: #EDE6DA;
+    --panel-bg: #2A2623;
+    --panel-border: #3D3732;
+    --button-bg: #7A5C44;
+    --button-hover-bg: #8F6D52;
+    --status-bg: #36302B;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --light-square: #B9A386;
+    --dark-square: #7A5C44;
+    --frame: #3A2B20;
+    --drag-over: #8FD19E;
+  }
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    max-width: 100%;
+    padding: 16px 0;
+  }
+
+  .game-id {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  .board-area {
+    position: relative;
+  }
+
+  .board-frame {
+    position: relative;
+    border: 6px solid var(--frame);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--square));
+    grid-template-rows: repeat(8, var(--square));
+  }
+
+  .board:is(.not-your-turn, .game-over) {
+    opacity: 0.75;
+  }
+
+  .board:is(.not-your-turn, .game-over) .square {
+    cursor: default;
+  }
+
+  /* The board at full strength, though nothing on it can be clicked */
+
+  .history-board .board:is(.not-your-turn, .game-over) {
+    opacity: 1;
+  }
+
+  /* Smaller in the dialog, which adds its own padding */
+
+  .history-board {
+    --square: min(48px, calc((100vw - 96px) / 8));
+  }
+
+  .history-board .board-frame {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .square.light {
+    background: var(--light-square);
+  }
+
+  .square.dark {
+    background: var(--dark-square);
+  }
+
+  .square.last-move {
+    box-shadow: inset 0 0 0 var(--square) var(--last-move);
+  }
+
+  .square.selected {
+    box-shadow: inset 0 0 0 var(--square) var(--selected);
+  }
+
+  .square.in-check {
+    background-image: var(--check);
+  }
+
+  .square.legal-move::after {
+    content: '';
+    width: 30%;
+    height: 30%;
+    border-radius: 50%;
+    background: var(--legal);
+  }
+
+  .square.legal-capture::after {
+    content: '';
+    position: absolute;
+    inset: 4%;
+    border: calc(var(--square) * 0.07) solid var(--legal);
+    border-radius: 50%;
+  }
+
+  .coord {
+    position: absolute;
+    font-size: calc(var(--square) * 0.2);
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .coord.rank {
+    top: 3px;
+    left: 3px;
+  }
+
+  .coord.file {
+    right: 3px;
+    bottom: 3px;
+  }
+
+  .square.light .coord {
+    color: var(--dark-square);
+  }
+
+  .square.dark .coord {
+    color: var(--light-square);
+  }
+
+  .piece {
+    font-family: 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', serif;
+    line-height: 1;
+  }
+
+  .piece.white {
+    color: #FFF;
+    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  .piece.black {
+    color: #1A1A1A;
+    /* A thin light outline keeps black pieces readable on dark squares and dark panels */
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.9), 0 0 1px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Above the squares it passes over while it glides */
+
+  .square .piece {
+    position: relative;
+    z-index: 1;
+    font-size: calc(var(--square) * 0.78);
+  }
+
+  /* Promotion choice and draw claim prompt, over the board */
+
+  .board-prompt {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .board-prompt-panel {
+    padding: 16px;
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .promotion-choices {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .claim-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 12px 0;
+  }
+
+  .promotion-choices button {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--light-square);
+    font-size: 40px;
+    cursor: pointer;
+  }
+
+  .promotion-choices button:hover {
+    background: var(--dark-square);
+  }
+
+  /* Side panel */
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+    width: min(320px, 100%);
+    padding: 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  .panel-title {
+    font-weight: bold;
+  }
+
+  .game-status {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-row {
+    padding: 8px 10px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--status-bg);
+  }
+
+  .player-row.to-move {
+    border-color: var(--button-bg);
+  }
+
+  .player-row.player-left {
+    opacity: 0.5;
+  }
+
+  .player-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .chess-clock {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--panel-bg);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .chess-clock-running {
+    background: var(--button-bg);
+    color: var(--button-text);
+  }
+
+  .player-name .piece {
+    font-size: 22px;
+  }
+
+  .captured {
+    min-height: 26px;
+    margin-top: 4px;
+    font-size: 24px;
+    overflow-wrap: anywhere;
+  }
+
+  .captured-none {
+    font-size: 13px;
+    opacity: 0.7;
+  }
+
+  .ending-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ending-buttons,
+  .draw-offer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .draw-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border: 2px solid var(--button-bg);
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .side-panel button,
+  .board-prompt-cancel,
+  .claim-choices button,
+  .undo-vote-actions button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .side-panel button:hover:enabled,
+  .board-prompt-cancel:hover,
+  .claim-choices button:hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button.danger {
+    background: var(--danger-bg);
+  }
+
+  .side-panel button.danger:hover {
+    background: var(--danger-hover-bg);
+  }
+
+  .side-panel button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The undo vote covers the board while it runs */
+
+  .undo-vote {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+  }
+}

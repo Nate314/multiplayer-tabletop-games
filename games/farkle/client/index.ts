@@ -4,7 +4,7 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './farkle.css';
+import './farkle.scss';
 
 export const farkleClient: ClientGame = {
   id: 'farkle',

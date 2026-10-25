@@ -1,6 +1,6 @@
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { plural } from '../../../shared/text.ts';
-import { TARGET_SCORE } from '../rules.ts';
+import { targetScore } from '../rules.ts';
 import type { PublicGameState, RoundSummary as Summary, Seat } from '../types.ts';
 
 type RoundSummaryProps = {
@@ -42,7 +42,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           </li>
         ))}
       </ul>
-      <div className="summary-target">First to {TARGET_SCORE} points wins</div>
+      <div className="summary-target">First to {targetScore(gameState).toLocaleString('en-US')} points wins</div>
     </RoundSummaryDialog>
   );
 }

@@ -1,3 +1,4 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { cardName } from '../rules.ts';
 import type { Card as CardData } from '../types.ts';
 
@@ -26,6 +27,7 @@ export default function Card({ card, animKey, playable = false, selected = false
   const face = (
     <>
       <span className="crew-card-corner">{MARK[card.suit]}</span>
+      <ColorSymbol color={card.suit === 'rocket' ? null : card.suit} className="crew-symbol" />
       <span className="crew-card-value">{card.value}</span>
     </>
   );

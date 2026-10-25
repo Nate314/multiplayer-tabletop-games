@@ -1,7 +1,8 @@
 import Card from './Card';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { DISCARD_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
-import { TARGET_SCORE } from '../rules.ts';
+import { targetScore } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -19,6 +20,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
     handCounts, playerNames, currentPlayer, winners, direction, discardTop, currentColor, drawPileCount, lastMove,
     scores, dealer, roundNumber, unoWindow
   } = gameState;
+  const pendingDraw = gameState.pendingDraw ?? null;
   const seats = Object.keys(handCounts).map(Number).sort((a, b) => a - b);
   const arrow = direction === 1 ? '→' : '←';
   const lastMover = showLastMove ? lastMove?.playerNumber : undefined;
@@ -28,7 +30,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
 
   return (
     <div className="table">
-      <div className="round">Round {roundNumber}: first to {TARGET_SCORE} points wins</div>
+      <div className="round">Round {roundNumber}: first to {targetScore(gameState).toLocaleString('en-US')} points wins</div>
       <div className="direction">
         Direction: <span className="direction-arrow" aria-hidden="true">{arrow}</span> {direction === 1 ? 'in seat order' : 'reversed'}
       </div>
@@ -54,6 +56,11 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
           );
         })}
       </ol>
+      {pendingDraw && (
+        <div className="stack-count">
+          Stack: {playerNames[pendingDraw.target]} draws {pendingDraw.count} unless they stack
+        </div>
+      )}
       <div className="piles">
         <div className="pile">
           {onDraw ? (
@@ -70,7 +77,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
             ? <Card card={discardTop} animKey={DISCARD_KEY} highlighted={showLastMove && lastMove?.type === 'play'} />
             : <span className="card card-empty" />}
           <span className="pile-label">
-            Color: <span className={`color-swatch swatch-${currentColor ?? 'any'}`} /> <span className="color-name">{currentColor ?? 'any'}</span>
+            Color: <span className={`color-swatch swatch-${currentColor ?? 'any'}`}><ColorSymbol color={currentColor} className="swatch-symbol" /></span> <span className="color-name">{currentColor ?? 'any'}</span>
           </span>
         </div>
       </div>

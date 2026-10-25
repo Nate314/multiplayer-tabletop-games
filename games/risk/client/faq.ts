@@ -15,7 +15,7 @@ export const FAQS: FaqItem[] = [
     question: 'How does the setup work?',
     answer: 'Each player has 35 armies with three players, 30 with four, 25 with five and 20 with six, less the one on each ' +
       'territory they were dealt. In turn order, each player places all their remaining armies in one move. Click your ' +
-      'territories to add armies (choose 1, 5 or All per click), take one back with -1, then click Place all.'
+      'territories to add armies (choose 1, 5 or All per click), take one back with -1, then click Place all. You can also drag armies from the Your armies tray onto a territory.'
   },
   {
     question: 'How does a turn go?',
@@ -66,5 +66,9 @@ export const FAQS: FaqItem[] = [
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. ' +
       'An attack played again rolls new dice.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, black diamond. Territory discs and the player list show it; neutral grey territories show none.'
   }
 ];

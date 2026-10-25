@@ -1,5 +1,6 @@
 import Dice from '../../../src/components/Dice';
 import ScoreSheet from './ScoreSheet';
+import { DICE_KEY } from './animateMove.ts';
 import type { PublicGameState } from '../types.ts';
 import type { Seat } from '../../../shared/types.ts';
 
@@ -10,7 +11,9 @@ export default function HistoryBoard({ gameState, viewer }: { gameState: PublicG
   return (
     <div className="yz-table">
       {lastMove && (
-        <Dice values={lastMove.dice} selected={lastMove.type === 'roll' ? held : []} label={`${playerNames[lastMove.playerNumber]}'s dice`} />
+        <div data-anim-key={DICE_KEY}>
+          <Dice values={lastMove.dice} selected={lastMove.type === 'roll' ? held : []} label={`${playerNames[lastMove.playerNumber]}'s dice`} animKeyPrefix="die" />
+        </div>
       )}
       <ScoreSheet gameState={gameState} viewer={viewer} showLastMove />
     </div>

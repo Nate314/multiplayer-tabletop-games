@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
-// Capture phase, so Escape closes only the topmost dialog and not the join dialog behind it
+// Capture phase, so Escape closes only the topmost dialog and not the join dialog behind it. On the document, so a
+// panel inside the dialog (useDismiss, on the window) sees the key first
 export default function useEscapeKey(onEscape: () => void) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -8,7 +9,7 @@ export default function useEscapeKey(onEscape: () => void) {
       event.stopPropagation();
       onEscape();
     }
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [onEscape]);
 }

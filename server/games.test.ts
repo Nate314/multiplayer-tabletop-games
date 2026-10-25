@@ -1,9 +1,11 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
-import { rememberingKeys } from './testing.ts';
+import { agreeAll, rememberingKeys } from './testing.ts';
+import { openGameStore } from './store.ts';
 import type { GameStore, SavedRoom } from './store.ts';
-import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
+import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
+import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
 import type { BaseGameState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
@@ -933,4 +935,271 @@ test('undoing the first move past a dismissal keeps the game started', () => {
   assert.deepEqual(restored.activePlayers, [1, 3]);
   assert.equal(restored.currentPlayer, 1);
   assert.equal(restored.moves, 0);
+});
+
+function rulesManager(store?: GameStore): Manager {
+  return rememberingKeys(createGameManager([rulesGame], seededRandom, store), keys);
+}
+
+function rulesGameWith(...names: string[]): Manager {
+  const manager = rulesManager();
+  for (const name of names) manager.join('test', 'g1', name);
+  return manager;
+}
+
+test('a move before everyone agreed is refused', () => {
+  const manager = rulesGameWith('A', 'B');
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
+  ok(manager.agreeHouseRules(ROOM, 1, manager.getState(ROOM)?.houseRules?.revision));
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
+});
+
+test('the move goes through once every seated player agreed', () => {
+  const manager = rulesGameWith('A', 'B');
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.move(ROOM, 1, tick)).started, true);
+});
+
+// rulesGame with an action that starts play, as a Hearts pass does
+const startingGame: GameDefinition<TestState, TestPublicState> = {
+  ...rulesGame,
+  applyAction(state, seat, action, random) {
+    if ((action as { type?: unknown } | null)?.type === 'start') return { state: { ...state, started: true, gameStatus: 'started' } };
+    return testGame.applyAction!(state, seat, action, random);
+  }
+};
+
+test('an action that would start play before everyone agreed is refused and changes nothing', () => {
+  const manager = rememberingKeys(createGameManager([startingGame], seededRandom), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  const before = manager.rawState(ROOM);
+  assert.deepEqual(manager.action(ROOM, 1, { type: 'start' }), { error: 'Everyone must agree to the house rules first' });
+  assert.equal(manager.rawState(ROOM), before);
+  assert.equal(ok(manager.action(ROOM, 1, { type: 'ping' })).started, false); // a lobby action still works
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.action(ROOM, 1, { type: 'start' })).started, true);
+});
+
+test('a game with no house rules and no override needs no agreement', () => {
+  assert.equal(ok(gameWith('A', 'B').move(ROOM, 1, tick)).started, true);
+});
+
+test('only the host may set the house rules and a change clears the agreements', () => {
+  const manager = rulesGameWith('A', 'B');
+  const proposal = { values: { fast: true }, override: false, maxPlayers: null };
+  assert.deepEqual(manager.setHouseRules(ROOM, 2, proposal), { error: 'Only the host can change the house rules' });
+  assert.deepEqual(manager.setHouseRules(ROOM, 3, proposal), { error: 'You are not in this game' });
+  ok(manager.agreeHouseRules(ROOM, 2, manager.getState(ROOM)?.houseRules?.revision));
+  const view = ok(manager.setHouseRules(ROOM, 1, proposal));
+  assert.equal(view.houseRules?.values.fast, true);
+  assert.deepEqual(view.houseRules?.agreed, []);
+});
+
+test('an agreement to an old revision is refused after the host changed the rules', () => {
+  const manager = rulesGameWith('A', 'B');
+  const seen = manager.getState(ROOM)?.houseRules?.revision;
+  ok(manager.setHouseRules(ROOM, 1, { values: { goal: 5 }, override: false, maxPlayers: null }));
+  assert.deepEqual(manager.agreeHouseRules(ROOM, 2, seen), { error: 'The house rules changed. Check them and agree again' });
+  assert.deepEqual(manager.getState(ROOM)?.houseRules?.agreed, []);
+});
+
+test('a move that names an old move count is refused', () => {
+  const manager = rulesGameWith('A', 'B');
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.move(ROOM, 1, tick, 0)).moveCount, 1);
+  assert.deepEqual(manager.move(ROOM, 2, tick, 0), { error: 'Someone else moved first' });
+  assert.equal(ok(manager.move(ROOM, 2, tick, 1)).moveCount, 2);
+});
+
+test('every view, history step and game file step carries the house rules', () => {
+  const manager = rulesGameWith('A', 'B');
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  const file = manager.gameFile('test', 'g1', new Date());
+  assert.ok(file && 'file' in file);
+  const views = [manager.getState(ROOM, 1), manager.getState(ROOM, null), ...(manager.history('test', 'g1') ?? []), ...file.file.steps];
+  assert.equal(views.length, 2 + 4 + 4);
+  for (const view of views) assert.equal(view?.houseRules?.host, 1);
+});
+
+test('a game saved without house rules loads, plays and builds its history', () => {
+  const store = memoryStore();
+  const manager = rulesManager(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  const old = saved(store);
+  const strip = (state: BaseGameState) => { const { houseRules: _rules, ...rest } = state; return rest as BaseGameState; };
+  const legacy = memoryStore();
+  legacy.save(ROOM, 'test', strip(old.state), { type: 'push', index: 0, before: strip(old.history[0]), after: strip(old.timeline[0]) });
+  const back = rulesManager(legacy);
+  assert.equal(back.getState(ROOM)?.houseRules?.host, 1);
+  assert.equal(back.history('test', 'g1')?.length, 2);
+  joined(back.join('test', 'g1', 'A', true));
+  joined(back.join('test', 'g1', 'B', true));
+  assert.equal(ok(back.move(ROOM, 2, tick)).moveCount, 2);
+});
+
+test('the house rules survive a restart', () => {
+  const store = openGameStore(':memory:');
+  const manager = rulesManager(store);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.setHouseRules(ROOM, 1, { values: { fast: true, goal: 5 }, override: false, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  const rules = rulesManager(store).getState(ROOM)?.houseRules;
+  assert.equal(rules?.values.goal, 5);
+  assert.equal(rules?.values.fast, true);
+  assert.deepEqual(rules?.agreed, [1, 2]);
+});
+
+// A manager for timedGame whose clock the test sets; `changed` lists each room the manager reported
+function timedManager(
+  t: TestContext, store?: GameStore, game: GameDefinition<TimedState, TestPublicState> = timedGame, start = 100_000
+) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const clock = { now: start };
+  const changed: string[] = [];
+  const manager = rememberingKeys(
+    createGameManager([game], seededRandom, store, { now: () => clock.now, changed: roomId => changed.push(roomId) }), keys
+  );
+  // Moves the test's clock and the mocked timers together
+  const advance = (ms: number) => { clock.now += ms; t.mock.timers.tick(ms); };
+  return { manager, clock, changed, advance };
+}
+
+function timedTable(t: TestContext, store?: GameStore, game?: GameDefinition<TimedState, TestPublicState>) {
+  const timed = timedManager(t, store, game);
+  timed.manager.join('test', 'g1', 'A');
+  timed.manager.join('test', 'g1', 'B');
+  agreeAll(timed.manager, ROOM);
+  return timed;
+}
+
+test('a deadline passing makes the game\'s timeout move and tells the server', (t: TestContext) => {
+  const { manager, changed, advance } = timedTable(t);
+  assert.equal(current(manager).serverTime, 100_000);
+  advance(TURN_MS - 1);
+  assert.equal(current(manager).currentPlayer, 1);
+  assert.deepEqual(changed, []);
+  advance(1);
+  assert.equal(current(manager).currentPlayer, 2);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+  assert.equal(current(manager).started, true);
+  assert.equal(current(manager).moveCount, 1);
+  assert.equal(current(manager).serverTime, 100_000 + TURN_MS);
+  assert.deepEqual(changed, [ROOM]);
+  assert.equal(manager.history('test', 'g1')?.[1].serverTime, undefined); // live views only
+});
+
+test('a timeout is a move and can be undone', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  advance(TURN_MS);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(current(manager).currentPlayer, 1);
+  assert.equal(current(manager).moveCount, 0);
+});
+
+test('the clock starts when everyone has agreed', (t: TestContext) => {
+  const resumeClock = t.mock.fn(timedGame.resumeClock);
+  const { manager, advance } = timedManager(t, undefined, { ...timedGame, resumeClock });
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  const revision = current(manager).houseRules?.revision;
+  ok(manager.agreeHouseRules(ROOM, 1, revision));
+  advance(5 * TURN_MS); // nobody's clock runs while waiting for agreement
+  assert.equal(resumeClock.mock.callCount(), 0);
+  assert.equal(current(manager).moveCount, 0);
+  ok(manager.agreeHouseRules(ROOM, 2, revision));
+  ok(manager.agreeHouseRules(ROOM, 2, revision)); // a repeat does not restart it
+  assert.equal(resumeClock.mock.callCount(), 1);
+  advance(TURN_MS);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+});
+
+test('an undo restarts the clock from the moment of the undo', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  ok(manager.move(ROOM, 1, tick));
+  advance(TURN_MS / 2);
+  ok(manager.requestUndo(ROOM, 2));
+  advance(TURN_MS / 4); // an open vote does not pause the clock
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(current(manager).currentPlayer, 1);
+  advance(TURN_MS - 1);
+  assert.equal(current(manager).currentPlayer, 1);
+  advance(1);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+});
+
+test('a restart does not charge the time the server was down', (t: TestContext) => {
+  const store = memoryStore();
+  const { manager } = timedTable(t, store);
+  ok(manager.move(ROOM, 1, tick)); // B's turn ends at 101_000
+  t.mock.timers.reset();
+
+  const back = timedManager(t, store, timedGame, 100_000 + 10 * TURN_MS); // loaded long after the saved deadline
+  assert.equal(current(back.manager).currentPlayer, 2);
+  back.advance(TURN_MS - 1);
+  assert.equal(current(back.manager).currentPlayer, 2);
+  assert.deepEqual(back.changed, []);
+  back.advance(1);
+  assert.equal(current(back.manager).gameStatus, 'B ran out of time');
+});
+
+test('a deleted room\'s deadline never fires', (t: TestContext) => {
+  const { manager, changed, advance } = timedTable(t); // the clock runs from the last agreement
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2); // the last one out of the lobby deletes the room
+  advance(TURN_MS);
+  assert.equal(manager.getState(ROOM), undefined);
+  assert.deepEqual(changed, []);
+});
+
+test('a timeout cancels an open undo vote, which was for the move before it', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  advance(TURN_MS);
+  assert.equal(current(manager).gameStatus, 'B ran out of time');
+  assert.equal(current(manager).undoVote, null);
+  assert.equal(current(manager).moveCount, 2);
+});
+
+test('a join after everyone agreed stops the clock until they agree again', (t: TestContext) => {
+  const { manager, advance } = timedTable(t);
+  manager.join('test', 'g1', 'C'); // clears the agreements
+  advance(5 * TURN_MS);
+  assert.equal(current(manager).moveCount, 0);
+  assert.equal(current(manager).started, false);
+  agreeAll(manager, ROOM);
+  advance(TURN_MS - 1);
+  assert.equal(current(manager).moveCount, 0);
+  advance(1);
+  assert.equal(current(manager).gameStatus, 'A ran out of time');
+});
+
+test('a leave down to one player stops the clock', (t: TestContext) => {
+  const { manager, changed, advance } = timedTable(t);
+  manager.disconnect(ROOM, 2);
+  agreeAll(manager, ROOM); // the one left agrees, but one player cannot start
+  advance(5 * TURN_MS);
+  assert.equal(current(manager).moveCount, 0);
+  assert.equal(current(manager).started, false);
+  assert.deepEqual(changed, []);
+});
+
+test('a timeout that leaves its deadline already past is not run again', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const stuck: GameDefinition<TimedState, TestPublicState> = { ...timedGame, onDeadline: state => state };
+  const { manager, advance } = timedTable(t, undefined, stuck);
+  advance(TURN_MS);
+  advance(5 * TURN_MS);
+  assert.equal(current(manager).moveCount, 1);
+  assert.equal(logged.mock.callCount(), 1);
 });

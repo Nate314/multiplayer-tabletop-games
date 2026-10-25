@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { BOARD, ownable } from '../games/monopoly/board.ts';
 import { DECKS } from '../games/monopoly/cards.ts';
 import type { DeckName, GameState } from '../games/monopoly/types.ts';
@@ -174,7 +174,7 @@ test.describe('Monopoly rules', () => {
     const first = await seat('monopoly', ['Alice', 'Bob']);
     // Cara's join reshuffles both decks (30 numbers), then everyone rolls: Alice and Bob tie on 7, then Bob rolls higher
     await first.random(...Array(30).fill(0), ...faces(3, 4, 5, 2, 1, 1, 1, 2, 6, 5));
-    const [cara] = (await seat('monopoly', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     const [alice, bob] = first.pages;
     await expect(status(cara)).toContainText('Highest roll goes first: Alice 7, Bob 7, Cara 2; tie: Alice 3, Bob 11. Bob goes first');
     await expect(bob.locator('.turn-message')).toHaveText('You go first. Joining closes after the first move.');
@@ -497,6 +497,23 @@ test.describe('Monopoly rules', () => {
     await game.land(17, [1, 2]);
     await expect(token(alice, 20, 'Alice')).toBeVisible();
     await expectCash(game, [1500, 1500]);
+  });
+
+  test('the Free Parking pot is shown and collected', async ({ seat }) => {
+    const table = await seat('monopoly', ['Alice', 'Bob'], { houseRules: { freeParkingJackpot: true } });
+    const game = await prepare(table);
+    const [alice, bob] = game.pages;
+    const pot = (page: Page) => space(page, 20).locator('.space-pot');
+    await expect(pot(alice)).toHaveText('Pot $0');
+
+    await game.land(0, [1, 3]); // Income Tax goes into the pot, not to the bank
+    await expectCash(game, [1300, 1500]);
+    for (const page of [alice, bob]) await expect(pot(page)).toHaveText('Pot $200');
+
+    await game.land(18, [1, 1]); // Free Parking takes the whole pot
+    await expect(token(alice, 20, 'Alice')).toBeVisible();
+    await expectCash(game, [1700, 1500]);
+    for (const page of [alice, bob]) await expect(pot(page)).toHaveText('Pot $0');
   });
 
   test('Go to Jail, a Go to Jail card and a third doubles all jail you, collecting nothing for passing GO', async ({ seat }) => {
@@ -838,6 +855,21 @@ test.describe('Monopoly rules', () => {
 });
 
 test.describe('Monopoly controls', () => {
+  test('with Color-blind symbols on, each token and player list token shows the shape of its color: red circle, blue square, green triangle', async ({ seat }) => {
+    const game = await start(seat, 3);
+    const [alice, bob] = game.pages;
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes = ['circle', 'square', 'triangle'];
+    for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
+      await expect(token(alice, 0, name).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
+      await expect(row(alice, name).locator(`.token .color-symbol-${shapes[index]}`)).toHaveCount(1);
+    }
+    await expect(alice.locator('.color-symbol')).toHaveCount(6);
+    await expect(bob.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('the side panel shows Roll the dice, roll again, Buy or Decline, the Jail choices, End turn and any debt', async ({ seat }) => {
     const game = await start(seat);
     const [alice, bob] = game.pages;

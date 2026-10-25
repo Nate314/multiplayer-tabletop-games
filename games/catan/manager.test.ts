@@ -1,20 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
-import { HEX_COUNT, RESOURCES, VERTEX_COUNT, VERTEX_EDGES } from './board.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { RESOURCES, boardOf } from './board.ts';
 import { cityError, roadSpots, settlementError, settlementSpotError } from './building.ts';
 import { robberVictims } from './dice.ts';
 import { COSTS, covers, total } from './resources.ts';
 import { tradeRatio } from './trades.ts';
 import { catan } from './index.ts';
 import type { Move, PublicGameState, Resources, Seat } from './types.ts';
+import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
 const ROOM = 'catan/g1';
 const NAMES = ['A', 'B', 'C'];
+const SIX_NAMES = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // The same rolls on every run
 function seeded(seed: number): Random {
@@ -27,9 +29,12 @@ function seeded(seed: number): Random {
   };
 }
 
-function gameWith(seed: number, names = NAMES): Manager {
+// Everyone joins and agrees to the house rules, after the first player sets `values` if given
+function gameWith(seed: number, names = NAMES, values?: HouseRuleValues): Manager {
   const manager = rememberingKeys(createGameManager([catan], seeded(seed)));
   for (const name of names) manager.join('catan', 'g1', name);
+  if (values) ok(manager.setHouseRules(ROOM, 1, { values, override: false, maxPlayers: null }));
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -45,8 +50,8 @@ function viewOf(manager: Manager, viewer: Seat | null = null): PublicGameState {
   return state as PublicGameState;
 }
 
-const vertices = Array.from({ length: VERTEX_COUNT }, (_, vertex) => vertex);
-const mine = (state: PublicGameState, seat: Seat) => vertices.filter(vertex => state.buildings[vertex]?.seat === seat);
+const verticesOf = (state: PublicGameState) => Array.from({ length: boardOf(state.layout).vertexCount }, (_, vertex) => vertex);
+const mine = (state: PublicGameState, seat: Seat) => verticesOf(state).filter(vertex => state.buildings[vertex]?.seat === seat);
 
 // The first `count` cards of a hand, for a discard
 function firstCards(hand: Resources, count: number): Resources {
@@ -64,7 +69,7 @@ function firstCards(hand: Resources, count: number): Resources {
 function chooseBuild(state: PublicGameState, seat: Seat, hand: Resources): Move | null {
   const city = mine(state, seat).find(vertex => cityError(state, seat, vertex) === null);
   if (city !== undefined && covers(hand, COSTS.city)) return { type: 'buildCity', vertex: city };
-  const spot = vertices.find(vertex => settlementError(state, seat, vertex) === null);
+  const spot = verticesOf(state).find(vertex => settlementError(state, seat, vertex) === null);
   if (spot !== undefined && covers(hand, COSTS.settlement)) return { type: 'buildSettlement', vertex: spot };
   const roads = roadSpots(state, seat);
   if (spot === undefined && roads.length > 0 && covers(hand, COSTS.road)) return { type: 'buildRoad', edge: roads[0] };
@@ -84,20 +89,24 @@ function step(manager: Manager): PublicGameState {
     const hand = viewOf(manager, seat).hand ?? assert.fail('no hand');
     return ok(manager.action(ROOM, seat, { type: 'discard', resources: firstCards(hand, count) }));
   }
-  const seat = table.currentPlayer ?? assert.fail('nobody to act');
+  const seat = table.specialBuild?.builders[0] ?? table.currentPlayer ?? assert.fail('nobody to act');
   const view = viewOf(manager, seat);
   const hand = view.hand ?? assert.fail('no hand');
   const send = (move: Move) => ok(manager.move(ROOM, seat, move));
+  if (view.specialBuild) {
+    const build = chooseBuild(view, seat, hand);
+    return send(build && build.type !== 'bankTrade' ? build : { type: 'passBuild' });
+  }
   if (view.setup) {
     if (view.setup.settlement === null) {
-      const vertex = vertices.find(v => settlementSpotError(view, v) === null) ?? assert.fail('no room');
+      const vertex = verticesOf(view).find(v => settlementSpotError(view, v) === null) ?? assert.fail('no room');
       return send({ type: 'placeSettlement', vertex });
     }
-    const edge = VERTEX_EDGES[view.setup.settlement].find(e => view.roads[e] === undefined) ?? assert.fail('no edge');
+    const edge = boardOf(view.layout).vertexEdges[view.setup.settlement].find(e => view.roads[e] === undefined) ?? assert.fail('no edge');
     return send({ type: 'placeRoad', edge });
   }
   if (pending?.kind === 'robber') {
-    const hex = Array.from({ length: HEX_COUNT }, (_, h) => h).find(h => h !== view.robber) ?? 0;
+    const hex = Array.from({ length: boardOf(view.layout).hexCount }, (_, h) => h).find(h => h !== view.robber) ?? 0;
     const victim = robberVictims(view, seat, hex, other => view.handCounts[other])[0] ?? null;
     return send({ type: 'moveRobber', hex, victim });
   }
@@ -182,4 +191,46 @@ test('dismissing a player mid-game leaves their pieces and play goes on', () => 
   assert.equal(Object.values(state.roads).filter(owner => owner === 4).length >= 2, true);
   state = step(manager);
   assert.equal(state.isGameOver, false);
+});
+
+test('a seeded five-player game plays to 10 points on the large board', () => {
+  const state = playUntil(gameWith(13, ['A', 'B', 'C', 'D', 'E']), view => view.isGameOver, 9000);
+  assert.equal(state.layout.hexes.length, 30);
+  assert.equal(state.winners.length, 1);
+  assert.ok(state.points[state.winners[0]] >= 10);
+});
+
+test('a seeded six-player game plays to 10 points, and no table step shows a hand', () => {
+  const manager = gameWith(17, ['A', 'B', 'C', 'D', 'E', 'F']);
+  const state = playUntil(manager, view => view.isGameOver, 12000);
+  assert.equal(state.layout.hexes.length, 30);
+  assert.equal(state.winners.length, 1);
+  assert.ok(state.points[state.winners[0]] >= 10);
+  const steps = manager.history('catan', 'g1') ?? assert.fail('no history');
+  assert.ok(steps.length > 50);
+  for (const past of steps) {
+    const view = past as unknown as PublicGameState;
+    for (const key of ['hands', 'devDeck', 'devCards', 'boughtThisTurn']) assert.equal(key in view, false);
+    assert.equal(view.hand, null);
+    assert.deepEqual(view.myDevCards, []);
+    assert.equal(view.steal?.resource ?? null, null);
+  }
+});
+
+test('a seeded six-player game with the special build phase plays to 10 points', () => {
+  const manager = gameWith(19, SIX_NAMES, { specialBuild: true });
+  const state = playUntil(manager, view => view.isGameOver, 12000);
+  assert.equal(state.winners.length, 1);
+  assert.ok(state.points[state.winners[0]] >= 10);
+  const steps = (manager.history('catan', 'g1') ?? assert.fail('no history')) as unknown as PublicGameState[];
+  assert.ok(steps.some(past => past.lastMove?.type === 'passBuild'));
+  assert.ok(steps.some(past => past.lastMove !== null && past.lastMove.type.startsWith('build') && past.lastMove.playerNumber !== past.currentPlayer));
+});
+
+test('a builder\'s move naming an old move count is refused', () => {
+  const manager = gameWith(19, SIX_NAMES, { specialBuild: true });
+  const view = playUntil(manager, state => state.specialBuild !== null);
+  const builder = view.specialBuild?.builders[0] ?? assert.fail('no builder');
+  assert.deepEqual(manager.move(ROOM, builder, { type: 'passBuild' }, view.moveCount - 1), { error: 'Someone else moved first' });
+  ok(manager.move(ROOM, builder, { type: 'passBuild' }, view.moveCount));
 });

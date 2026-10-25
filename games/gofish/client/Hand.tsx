@@ -10,10 +10,12 @@ type HandProps = {
   // Given only while the player may ask: clicking a card picks its rank
   onPickRank?: (rank: Rank) => void;
   rank?: Rank | null;
+  // Keys (cardKey) of the cards to outline as newly drawn
+  drawnKeys?: string[];
 };
 
 // A hand grouped by rank, ace to king
-export default function Hand({ hand, label, waiting = false, onPickRank, rank = null }: HandProps) {
+export default function Hand({ hand, label, waiting = false, onPickRank, rank = null, drawnKeys = [] }: HandProps) {
   return (
     <section className={waiting ? 'hand hand-waiting' : 'hand'} aria-label={label}>
       <header className="hand-header">{label}</header>
@@ -27,6 +29,7 @@ export default function Hand({ hand, label, waiting = false, onPickRank, rank = 
                 card={card}
                 animKey={cardKey(card)}
                 selected={group.rank === rank}
+                drawn={drawnKeys.includes(cardKey(card))}
                 onClick={onPickRank && (() => onPickRank(group.rank))}
               />
             ))}

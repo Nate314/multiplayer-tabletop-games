@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat as SeatFixture } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat as SeatFixture } from './fixtures.ts';
 import type { Color, FloorItem, PlayerBoard } from '../games/azul/types.ts';
 
 // One test per rule and control in games/azul/README.md. Seat 1 (Alice) goes first. Two players get five factories,
@@ -228,6 +228,19 @@ test.describe('Azul rules', () => {
 });
 
 test.describe('Azul controls', () => {
+  test('with Color-blind symbols on, every colored tile shows its shape, in factories, pattern lines and the wall', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch({ factories: factoriesOf(5, ['red', 'blue', 'cyan', 'black']), boards: { 1: boardOf({ lines: { 1: ['yellow', 2] } }), 2: boardOf() } });
+    await expect(factory(alice, 0).locator('.tile')).toHaveCount(4);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['circle', 'square', 'pentagon', 'diamond']) await expect(factory(alice, 0).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(line(mine(alice), 2).locator('.color-symbol-star')).toHaveCount(2);
+    await expect(mine(alice).locator('.wall .color-symbol')).toHaveCount(25);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
   test('clicking a tile picks up every tile of that color there, and clicking it again puts them back', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await table.patch({ factories: factoriesOf(5, ['red', 'blue', 'red', 'red'], ['black']) });

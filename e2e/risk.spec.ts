@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, newPlayer, openFaq, test as base, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, newPlayer, openFaq, setPreference, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/risk/map.ts';
 import { game, ownership } from '../games/risk/testing.ts';
 import type { ContinentId, GameState } from '../games/risk/types.ts';
@@ -54,6 +54,7 @@ const cards = (page: Page) => page.locator('.card-hand .risk-card');
 const card = (page: Page, text: string) => page.locator('.card-hand .risk-card', { hasText: text });
 const battle = (page: Page) => page.getByRole('region', { name: 'Last battle' });
 const slider = (page: Page) => page.locator('.army-slider input[type="range"]');
+const tray = (page: Page, left: number) => page.getByRole('button', { name: `Armies, ${left} left`, exact: true });
 const events = (page: Page) => page.getByRole('region', { name: 'Recent events' }).locator('li');
 
 async function diceShown(page: Page, side: 'attack' | 'defend'): Promise<string[]> {
@@ -215,6 +216,53 @@ test.describe('Risk rules', () => {
     await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, owners: ownership(3, { alaska: 1, peru: 1 }) }));
     await button(cara, 'End turn').click();
     await expect(alice.locator('.armies-left')).toHaveText('3 of 3 armies left to place');
+  });
+
+  test('armies dragged from the tray onto your territory are added to the draft by the chosen step', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted());
+    await expect(tray(alice, 3)).toBeEnabled();
+    await drag(alice, tray(alice, 3), disc(alice, 'alaska'));
+    await expect(land(alice, 'alaska').locator('.draft-badge')).toHaveText('+1');
+    await expect(tray(alice, 2)).toBeVisible();
+    await expect(alice.locator('.armies-left')).toHaveText('2 of 3 armies left to place');
+
+    await button(alice, 'All').click();
+    await drag(alice, tray(alice, 2), disc(alice, 'alberta'));
+    await expect(land(alice, 'alberta').locator('.draft-badge')).toHaveText('+2');
+    await expect(tray(alice, 0)).toBeDisabled();
+    await button(alice, 'Place and attack').click();
+    await expect(armiesOn(alice, 'alaska')).toHaveText('4');
+    await expect(armiesOn(alice, 'alberta')).toHaveText('5');
+  });
+
+  test('armies dropped on an enemy territory go back', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted());
+    await lift(alice, tray(alice, 3));
+    await expect(alice.locator('.drag-ghost')).toBeVisible();
+    const enemy = await disc(alice, 'northwestTerritory').boundingBox();
+    await alice.mouse.move(enemy!.x + enemy!.width / 2, enemy!.y + enemy!.height / 2, { steps: 6 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(alice.locator('.draft-badge')).toHaveCount(0);
+    await expect(tray(alice, 3)).toBeVisible();
+    await expect(alice.locator('.armies-left')).toHaveText('3 of 3 armies left to place');
+  });
+
+  test('the tray is disabled outside placing and for the other players', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(crafted());
+    await expect(tray(alice, 3)).toBeEnabled();
+    await expect(tray(bob, 0)).toBeDisabled();
+    await lift(bob, tray(bob, 0));
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    await bob.mouse.up();
+    await expect(bob.locator('.draft-badge')).toHaveCount(0);
+
+    await table.patch(attacking());
+    await expect(panelTitle(alice)).toHaveText('Attack');
+    await expect(tray(alice, 0)).toBeDisabled();
   });
 
   test('card sets: three alike, one of each, or two with a wild', async ({ seat }) => {
@@ -468,11 +516,15 @@ test.describe('Risk rules', () => {
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved).toContainText(`Saved game: ${table.gameId}`);
     await expect(saved.locator('.risk-card')).toHaveCount(0);
+    await saved.getByRole('button', { name: 'Playback settings' }).click();
     await saved.getByLabel('View as').selectOption({ label: 'Alice' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Alice');
     await expect(saved.locator('.risk-card')).toHaveCount(3);
     await saved.getByLabel('View as').selectOption({ label: 'Cara' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Cara');
     await expect(saved.locator('.risk-card')).toHaveText([/Greenland/]);
     await saved.getByLabel('View as').selectOption({ label: 'Table only' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Table only');
     await expect(saved.locator('.risk-card')).toHaveCount(0);
   });
 
@@ -551,6 +603,14 @@ test.describe('Risk rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
+  test('an eliminated player has no armies tray', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({ owners: ownership(1, { greenland: 3 }), eliminated: [2] }));
+    await expect(playerRow(alice, 'Bob').locator('.player-status')).toHaveText('eliminated');
+    await expect(alice.getByRole('region', { name: 'Your armies' })).toBeVisible();
+    await expect(bob.getByRole('region', { name: 'Your armies' })).toHaveCount(0);
+  });
+
   test('dismissed: the game ends when only one player still holds territory', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
     await table.patch(attacking({ owners: ownership(1, { greenland: 3 }), eliminated: [2] }));
@@ -608,6 +668,24 @@ test.describe('Risk controls', () => {
     await expect(lane).toHaveCount(2);
     await expect(lane.nth(0)).toHaveAttribute('x2', '1000');
     await expect(lane.nth(1)).toHaveAttribute('x1', '0');
+  });
+
+  test('with Color-blind symbols on, each owned territory disc and player list swatch shows a shape for its owner and neutral ones show none', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ owners: { ...game().owners, greenland: null } }));
+    await expect(land(alice, 'greenland')).toHaveClass(/seat-neutral/);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(land(alice, 'alaska').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'northwestTerritory').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(land(alice, 'alberta').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'greenland').locator('.color-symbol')).toHaveCount(0);
+    await expect(playerRow(alice, 'Alice').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(playerRow(alice, 'Bob').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(playerRow(alice, 'Cara').locator('.color-symbol-triangle')).toHaveCount(1);
+    await expect(alice.locator('.player-row', { hasText: 'Neutral' }).locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
   });
 
   test('on a narrow window the map scrolls sideways in its own box', async ({ seat }) => {

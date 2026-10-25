@@ -340,6 +340,18 @@ test.describe('Skip-Bo controls', () => {
     await expect(stockTop(alice, 'Alice')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  test('the card you drew is outlined until your discard ends the turn', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat);
+    await craft(table, { hands: { 2: nums(1, 2, 3, 4) } });
+    await discardLowest(alice);
+    // Bob's hand is refilled to five: one card is new
+    await expect(hand(bob).getByRole('button')).toHaveCount(5);
+    await expect(hand(bob).locator('.newly-drawn')).toHaveCount(1);
+    await expect(hand(bob).locator('.newly-drawn')).toHaveAccessibleName('12');
+    await discardLowest(bob);
+    await expect(hand(bob).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('End turn appears only with no cards in hand and none to draw', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat);
     await craft(table, { drawPile: [] });

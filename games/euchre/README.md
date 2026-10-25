@@ -1,6 +1,6 @@
 # Euchre
 
-Make trump with your partner and take at least three of the five tricks, with the jacks on top, first team to 10, for exactly 4 players. This is the standard North American game.
+Make trump with your partner and take at least three of the five tricks, with the jacks on top, first team to the target score (10 unless the host chose another), for exactly 4 players. This is the standard North American game.
 
 ## Rules
 
@@ -13,7 +13,7 @@ Make trump with your partner and take at least three of the five tricks, with th
 - **Bowers.** The jack of trump (the right bower) is the highest card, and the other jack of the same color (the left bower) is next. The left bower counts as a trump for the whole hand, not as its own suit. Then come the ace, king, queen, 10 and 9 of trump. Other suits run ace high down to 9
 - **Tricks.** The player left of the dealer leads the first trick, and the winner of each trick leads the next. Follow the suit led if you can; otherwise play any card. The highest trump takes the trick, else the highest card of the suit led
 - **Scoring.** If the team that made trump takes 3 or 4 tricks it scores 1 point; all 5 (a march) scores 2, or 4 for a lone player. If it takes fewer than 3 it is euchred and the other team scores 2. A scoring screen shows the hand, and the next hand is dealt once every connected player has pressed Continue (disconnected players are not waited for)
-- **Winning.** The first team to reach 10 points wins
+- **Winning.** The first team to reach the target score (10 points unless the host chose another) wins
 - You see only your own hand and how many cards everyone else holds. The kitty stays hidden except the turned card, and only the dealer sees the card they discarded
 - **Leaving.** A disconnected player keeps their seat and the game waits for them on their turn. A dismissed player breaks their partnership, so the game ends and the other team wins
 - Any player can ask to undo the last move. It is undone only if every connected player approves, and only while all four seats are filled. Continue is not a move, so an undo goes back past it
@@ -34,7 +34,7 @@ Make trump with your partner and take at least three of the five tricks, with th
 
 These follow the standard game in [Wikipedia's Euchre article](https://en.wikipedia.org/wiki/Euchre). What is different:
 
-- **Target score.** The article plays to 5, 7 or 10 points. This game plays to 10
+- **Target score.** The article plays to 5, 7 or 10 points. This game plays to 10 unless the host chooses 5 or 15 before play starts (everyone must agree)
 - **Dealing.** The article deals in batches of 2 and 3. Here the shuffled deck is split straight into four hands and the kitty, which gives the same chances. Who deals first is not in the article: seat 4 deals first
 - **The dealer's discard.** The article does not say which card the dealer may discard. Here any card may go, the turned card included
 - **Going alone.** The article does not say who leads when a player goes alone, or what happens to the turned card when the dealer sits out. Here the player left of the dealer leads, or the next player if that one sits out, and a dealer who sits out does not pick up the turned card

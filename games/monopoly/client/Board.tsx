@@ -1,5 +1,8 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { BOARD, HOTEL, JAIL, ownable } from '../board.ts';
 import { DECKS, DECK_NAMES } from '../cards.ts';
+import { freeParkingJackpot } from '../options.ts';
 import { gridPosition, seatClass, shortName, sideOf, tokenKey } from './layout.ts';
 import Dice from './Dice';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -30,7 +33,8 @@ function Buildings({ level }: { level: number }) {
 function Token({ seat, name }: { seat: Seat; name: string }) {
   return (
     <span className={`token ${seatClass(seat)}`} data-anim-key={tokenKey(seat)} title={name}>
-      {name.slice(0, 1).toUpperCase()}
+      <ColorSymbol color={SEAT_SYMBOLS[seat]} className="token-symbol" />
+      <span className="token-initial">{name.slice(0, 1).toUpperCase()}</span>
     </span>
   );
 }
@@ -59,6 +63,9 @@ function Space({ space, gameState, selected, onSelect, highlight }: BoardProps &
       {iconFor(space) && <span className="space-icon" aria-hidden="true">{iconFor(space)}</span>}
       {property && owner === undefined && <span className="space-price">${property.price}</span>}
       {target.kind === 'tax' && <span className="space-price">${target.amount}</span>}
+      {target.kind === 'parking' && freeParkingJackpot(gameState) && (
+        <span className="space-pot">Pot ${gameState.freeParkingPot ?? 0}</span>
+      )}
       {owner !== undefined && (
         <span className={`owner-tag ${seatClass(owner)}`}>
           {mortgaged.includes(space) ? 'Mortgaged' : playerNames[owner]}

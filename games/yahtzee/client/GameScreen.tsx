@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import Dice from '../../../src/components/Dice';
 import UndoVote from '../../../src/components/UndoVote';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import ScoreSheet from './ScoreSheet';
+import animateMove, { DICE_KEY } from './animateMove.ts';
 import { DICE_COUNT, ROLLS_PER_TURN, roundOf } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
@@ -34,12 +36,15 @@ function Turn({ gameState, isMyTurn }: { gameState: PublicGameState; isMyTurn: b
   return (
     <>
       {rolled && currentPlayer !== null && (
-        <Dice
-          values={dice}
-          selected={hold}
-          onToggle={canHold ? index => setHold(hold.map((flag, spot) => spot === index ? !flag : flag)) : undefined}
-          label={`${playerNames[currentPlayer]}'s dice`}
-        />
+        <div data-anim-key={DICE_KEY}>
+          <Dice
+            values={dice}
+            selected={hold}
+            onToggle={canHold ? index => setHold(hold.map((flag, spot) => spot === index ? !flag : flag)) : undefined}
+            label={`${playerNames[currentPlayer]}'s dice`}
+            animKeyPrefix="die"
+          />
+        </div>
       )}
       <div className="yz-rolls">{rollsLeft} of {ROLLS_PER_TURN} rolls left</div>
       <button
@@ -59,11 +64,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const canScore = isMyTurn && dice.length > 0;
+  const screenRef = useRef<HTMLDivElement>(null);
+  useMoveAnimation(screenRef, gameState, animateMove);
 
   return (
     <>
       <div className="game-id">Game ID: {gameState.gameId}</div>
-      <div className="game-screen">
+      <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
           {(error || gameStatus) && (

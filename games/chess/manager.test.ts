@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { chess } from './index.ts';
 import type { Move, PublicGameState, Square } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -14,6 +14,7 @@ const mv = (from: string, to: string): Move => ({ type: 'move', from: sq(from), 
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([chess]));
   for (const name of names) manager.join('chess', 'g1', name);
+  agreeAll(manager, 'chess/g1');
   return manager;
 }
 
@@ -77,4 +78,23 @@ test('a claim is a game action by the player to move', () => {
   assert.deepEqual(manager.action('chess/g1', 2, { type: 'claimDraw' }), { error: 'You can claim a draw only on your turn' });
   const claimed = ok(manager.action('chess/g1', 1, { type: 'claimDraw' }));
   assert.equal(claimed.gameStatus, 'A claimed a draw by threefold repetition');
+});
+
+test('the clock starts when the last player agrees and runs out through the platform', async () => {
+  let time = 1_000_000;
+  const manager = rememberingKeys(createGameManager([chess], Math.random, undefined, { now: () => time }));
+  manager.join('chess', 'g1', 'A');
+  manager.join('chess', 'g1', 'B');
+  ok(manager.setHouseRules('chess/g1', 1, { values: { clockMinutes: 5 }, override: false, maxPlayers: null }));
+  agreeAll(manager, 'chess/g1');
+  const raw = manager.rawState('chess/g1') as unknown as { clock: { runningSince: number } };
+  assert.equal(raw.clock.runningSince, time);
+  time += 10_000;
+  const moved = ok(manager.move('chess/g1', 1, mv('e2', 'e4')));
+  assert.equal(moved.clock?.remainingMs[1], 290_000);
+  ok(manager.requestUndo('chess/g1', 1));
+  time += 20_000;
+  const undone = ok(manager.voteUndo('chess/g1', 2, true));
+  assert.equal(undone.clock?.remainingMs[1], 300_000); // the time spent on the undone move is given back
+  assert.equal(undone.clock?.runningSince, time);
 });

@@ -39,7 +39,7 @@ export default function HandSummary({ summary, gameState, playerNumber, seats, o
                 {seat === playerNumber && ' (you)'}
               </span>
               <span className="summary-phase">
-                {completed ? `Phase ${phase} done` : `Phase ${phase} not done`}
+                {phase === 0 ? 'No phase laid down' : completed ? `Phase ${phase} done` : `Phase ${phase} not done`}
               </span>
               <span className="summary-reason">{plural(cardsLeft, 'card')} left: +{points}</span>
               <span className="summary-points">{scoreAfter} pts</span>

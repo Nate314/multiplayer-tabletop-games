@@ -45,7 +45,7 @@ function onSquare(seat: Seat, index: number): Progress {
 }
 
 function move(state: GameState, seat: Seat, pawn: number, die: DieChoice, random: Random = rolls()): GameState {
-  const result = parchisi.applyMove(state, seat, { type: 'move', pawn, die }, random);
+  const result = parchisi.applyMove(state, seat, { type: 'move', pawn, die }, random, 0);
   return ok(result);
 }
 
@@ -281,10 +281,10 @@ test('the fourth pawn home wins', () => {
 
 test('malformed and illegal moves are rejected', () => {
   const state = playing({ pawns: { 1: IN_NEST, 2: IN_NEST }, dice: [5, 2] });
-  assert.deepEqual(parchisi.applyMove(state, 1, 'move', rolls()), { error: 'Unknown move type' });
-  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: '0', die: 0 }, rolls()), { error: 'Invalid move' });
-  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: 4, die: 0 }, rolls()), { error: 'Invalid move' });
-  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: 0, die: 1 }, rolls()), { error: 'Invalid move' });
+  assert.deepEqual(parchisi.applyMove(state, 1, 'move', rolls(), 0), { error: 'Unknown move type' });
+  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: '0', die: 0 }, rolls(), 0), { error: 'Invalid move' });
+  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: 4, die: 0 }, rolls(), 0), { error: 'Invalid move' });
+  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: 0, die: 1 }, rolls(), 0), { error: 'Invalid move' });
 });
 
 test('a player who leaves loses their pawns, and the next player rolls if it was their turn', () => {

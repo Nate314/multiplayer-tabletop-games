@@ -12,7 +12,8 @@ export const FAQS: FaqItem[] = [
     answer: 'On your turn, click one of your pieces. Its legal moves are marked: a dot for an empty square and a ' +
       'ring for a capture. Click a marked square to move there. Click the piece again, or an empty unmarked ' +
       'square, to put it down, or click another of your pieces to pick that one instead. Your pieces are always ' +
-      'at the bottom of the board.'
+      'at the bottom of the board. Or drag one of your pieces onto a marked square; drop it anywhere else to put ' +
+      'it back.'
   },
   {
     question: 'How do the pieces move?',
@@ -76,6 +77,14 @@ export const FAQS: FaqItem[] = [
     question: 'What do the highlights and the side panel show?',
     answer: 'The squares of the last move are tinted. The side panel lists both players with their color, ' +
       'whose turn it is, and the pieces each player has captured. The board is dimmed when it is not your turn.'
+  },
+  {
+    question: 'How does the clock work?',
+    answer: 'The host can turn on a clock of 5, 10 or 15 minutes per player, with an optional increment of 2, 5 or ' +
+      '10 seconds added after each move you make. Both players must agree to the house rules first. The clocks ' +
+      'start when both have agreed, with White running first. Your clock runs while it is your turn, even if you ' +
+      'disconnect or a vote is open. If your time runs out you lose, even if your opponent could not checkmate. ' +
+      'Undo gives back the time spent on the undone move. In your last 10 seconds a tick plays each second, unless Timer warnings is off in Settings.'
   },
   {
     question: 'What does Undo do?',

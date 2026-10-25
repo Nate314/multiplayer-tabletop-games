@@ -1,3 +1,4 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { cardName } from '../rules.ts';
 import type { Card as CardData, Value } from '../types.ts';
 
@@ -18,13 +19,20 @@ type CardProps = {
   onClick?: () => void;
   playable?: boolean;
   selected?: boolean;
+  drawn?: boolean; // outlined as a card you just drew
 };
 
-export default function Card({ card, animKey, highlighted = false, onClick, playable = false, selected = false }: CardProps) {
+export default function Card({ card, animKey, highlighted = false, onClick, playable = false, selected = false, drawn = false }: CardProps) {
   const classes = ['card', `card-${card.color}`];
   if (highlighted) classes.push('card-highlighted');
   if (selected) classes.push('card-selected');
-  const face = <span className="card-face">{SYMBOLS[card.value] ?? card.value}</span>;
+  if (drawn) classes.push('newly-drawn');
+  const face = (
+    <>
+      <ColorSymbol color={card.color === 'wild' ? null : card.color} className="card-symbol" />
+      <span className="card-face">{SYMBOLS[card.value] ?? card.value}</span>
+    </>
+  );
 
   if (!onClick) {
     return <span className={classes.join(' ')} title={cardName(card)} data-anim-key={animKey}>{face}</span>;

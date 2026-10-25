@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
-import { canPlayCard, LOSING_SCORE, TARGET_SCORE } from './rules.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { canPlayCard, LOSING_SCORE, targetScore } from './rules.ts';
 import { spades } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -25,6 +25,7 @@ function seeded(seed: number): Random {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([spades], seeded(1)));
   for (const name of names) manager.join('spades', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -120,7 +121,7 @@ test('a whole game played with legal moves ends at 500 or -200', () => {
   for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
   assert.equal(state.isGameOver, true);
   assert.equal(state.winners.length, 2);
-  assert.ok(Math.max(...state.scores) >= TARGET_SCORE || Math.min(...state.scores) <= LOSING_SCORE);
+  assert.ok(Math.max(...state.scores) >= targetScore(state) || Math.min(...state.scores) <= LOSING_SCORE);
   assert.ok(state.handNumber > 1);
   const file = manager.gameFile('spades', 'g1', new Date());
   assert.ok(file && 'file' in file);

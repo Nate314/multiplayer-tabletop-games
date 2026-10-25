@@ -1,5 +1,7 @@
 import CardView from './CardView';
-import { LAST_PHASE, handPlayers, phaseName, runValue } from '../rules.ts';
+import { cardKey } from './animateMove.ts';
+import { seatKey } from '../../../src/animation/animKeys.ts';
+import { LAST_PHASE, anyOrder, handPlayers, phaseName, phasesDoneOf, runValue } from '../rules.ts';
 import type { Group, LastMove, PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -28,16 +30,26 @@ function highlighted(lastMove: LastMove | null, groups: Group[]): number[] {
   return [];
 }
 
+// Which phase a player is on, or with phases in any order, which they have completed
+function progress(gameState: PublicGameState, seat: Seat): string {
+  const { phases, tiebreak } = gameState;
+  if (!anyOrder(gameState) || tiebreak.includes(seat)) {
+    return phases[seat] > LAST_PHASE ? 'All phases done' : `Phase ${phases[seat]}: ${phaseName(phases[seat])}`;
+  }
+  const done = phasesDoneOf(gameState, seat);
+  if (done.length === LAST_PHASE) return 'All phases done';
+  return done.length === 0 ? 'No phases done yet' : `Done: ${done.join(', ')} (${done.length}/${LAST_PHASE})`;
+}
+
 // Every player with their phase, score, card count and the groups they have laid down
 export default function Table({ gameState, seats, playerNumber, canHit, onHit, lastMove = null }: TableProps) {
-  const { groups, phases, scores, handCounts, playerNames, currentPlayer, activePlayers, winners, skipped, dealer } = gameState;
+  const { groups, scores, handCounts, playerNames, currentPlayer, activePlayers, winners, skipped, dealer } = gameState;
   const lit = highlighted(lastMove, groups);
   const playing = handPlayers(gameState);
 
   return (
     <div className="table">
       {seats.map(seat => {
-        const phase = phases[seat];
         const classes = ['seat'];
         if (seat === currentPlayer) classes.push('seat-current');
         if (!activePlayers.includes(seat)) classes.push('seat-left');
@@ -45,7 +57,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
         const own = groups.map((group, index) => ({ group, index })).filter(({ group }) => group.owner === seat);
 
         return (
-          <section key={seat} className={classes.join(' ')}>
+          <section key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
             <header className="seat-header">
               <span className="seat-name">
                 {playerNames[seat]}
@@ -56,7 +68,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
               <span className="seat-score">{scores[seat]} pts</span>
             </header>
             <div className="seat-details">
-              <span>{phase > LAST_PHASE ? 'All phases done' : `Phase ${phase}: ${phaseName(phase)}`}</span>
+              <span>{progress(gameState, seat)}</span>
               <span>
                 {handCounts[seat] ?? 0} {handCounts[seat] === 1 ? 'card' : 'cards'}
                 {seat === dealer && ' · dealer'}
@@ -71,7 +83,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
                     <div className="group-label">{groupLabel(group)}</div>
                     <div className="group-cards">
                       {group.cards.map((card, position) => (
-                        <CardView key={card.id} card={card} small standsFor={runValue(group, position)} />
+                        <CardView key={card.id} card={card} small animKey={cardKey(card.id)} standsFor={runValue(group, position)} />
                       ))}
                     </div>
                     {canHit && (

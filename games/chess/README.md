@@ -20,10 +20,22 @@ The first player to join plays white and moves first; the second plays black. Ea
 - If a player disconnects, the game waits for them to rejoin. If they are dismissed, the other player wins
 - Either player can ask to undo the last move. It is undone only if the other player approves
 
+## House rules
+
+Before the first move the host picks the rules and both players must agree. They cannot change once play starts.
+
+- **Clock.** Off (standard), 5, 10 or 15 minutes per player. The clocks start when both players have agreed, with White's time running
+- **Increment per move.** Offered only with the clock on: none (standard), 2, 5 or 10 seconds added to a player's time after each move they make
+- Each move charges the mover the time since their clock started, then adds the increment. A move that arrives after the mover's time has run out is refused as a loss on time
+- Running out of time loses: "<name> ran out of time. <other> wins!" This holds even when the opponent could never checkmate
+- The clock keeps running through disconnects and votes. Undo puts both clocks back to what they showed when the undone move's turn began and restarts the running clock from the moment of the undo, so time spent on an undone move is given back. A server restart restarts the running clock from the moment the server is back, so neither the downtime nor the time the player to move had already used on that turn is charged
+- The clock stops when the game ends, by resignation, draw or checkmate
+
 ## Controls
 
 - On your turn, click one of your pieces to see its legal moves: a dot marks an empty square and a ring marks a capture. Click a marked square to move
 - Click the piece again, or an unmarked square, to put it down, or click another of your pieces to pick that one instead
+- Or drag one of your pieces onto a marked square, with the mouse or a finger; drop it anywhere else to put it back. A drag to the far rank opens the same box for the pawn's new piece
 - When a pawn reaches the far rank, choose its new piece in the box over the board, or click Cancel
 - The last move's squares are tinted, and a king in check stands on a red square
 - The side panel shows the status, whose turn it is, each player's color and the pieces each player has captured
@@ -32,10 +44,11 @@ The first player to join plays white and moves first; the second plays black. Ea
 - Click Offer draw to offer a draw; the button reads Draw offered until it is answered. When your opponent offers, Accept draw and Decline appear in the side panel
 - On your turn, Claim draw appears when the position allows a claim by threefold repetition or the 50-move rule. When the move you pick would produce such a position, a box over the board offers Move and claim draw, Just move, or Cancel
 - Click Undo to ask your opponent to undo the last move
+- With the clock on, each player's time shows beside their name in the side panel, and the running one is highlighted. In your last 10 seconds a tick plays each second (Timer warnings in Settings)
 - Click FAQ at the top of the page for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 
 - Dead positions are found only in the cases listed under Rules. Other dead positions, such as a blocked position where a king can reach an enemy pawn but no capture could ever lead to mate, are not detected, so play goes on in them until another rule ends the game. The check never declares a position dead wrongly: when unsure (a king in check, or an en passant capture on offer) it says nothing
-- There are no clocks, so the rules on time (flag fall and the draw on time against a side that could never checkmate) do not apply
+- The clock is optional. When it is on, running out of time always loses, even against a side that could never checkmate; the rule that draws such a game does not apply. Without the clock the rules on time do not apply
 - There is no arbiter: a claim with nothing to claim is refused instead of being penalized, and a claim made with a move is only offered when that move really produces the claimable position

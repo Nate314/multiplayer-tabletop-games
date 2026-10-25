@@ -3,6 +3,8 @@ import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { drawnStep } from './drawn.ts';
 import Board from './Board';
 import Hand from './Hand';
 import PlayerArea from './PlayerArea';
@@ -38,6 +40,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const card = isMyTurn ? pickedCard(gameState, playerNumber, picked) : null;
 
   useMoveAnimation(screenRef, gameState, animateMove);
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   useEffect(() => {
     // Nothing stays picked across moves or undos
@@ -96,6 +99,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               label={`Your hand (${myHand.length})`}
               picked={picked?.kind === 'hand' ? picked.index : null}
               onPick={isMyTurn ? index => toggle({ kind: 'hand', index }) : undefined}
+              drawnIds={newlyDrawn}
             />
             <PlayerArea
               gameState={gameState}

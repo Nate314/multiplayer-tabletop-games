@@ -4,7 +4,7 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './monopoly.css';
+import './monopoly.scss';
 
 export const monopolyClient: ClientGame = {
   id: 'monopoly',

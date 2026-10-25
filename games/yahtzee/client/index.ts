@@ -1,9 +1,10 @@
 import type { ClientGame } from '../../../src/clientGames.ts';
+import animateMove from './animateMove.ts';
 import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './yahtzee.css';
+import './yahtzee.scss';
 
 export const yahtzeeClient: ClientGame = {
   id: 'yahtzee',
@@ -11,5 +12,6 @@ export const yahtzeeClient: ClientGame = {
   faq: FAQS,
   icon: '🎲',
   HistoryBoard,
-  describeMove
+  describeMove,
+  animateMove
 };

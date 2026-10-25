@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Take as few points as you can. Each heart you take in a trick is 1 point and the queen of spades 13. The game ends when someone reaches 100, and the lowest score wins. Equal lowest scores share the win.'
+    answer: 'Take as few points as you can. Each heart you take in a trick is 1 point and the queen of spades 13. The game ends when someone reaches the target score (100 unless the host chose another), and the lowest score wins. Equal lowest scores share the win.'
   },
   {
     question: 'How many players?',
@@ -40,5 +40,9 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last card played. It is undone only if every connected player approves. Passing and Continue are not moves, so an undo goes back past them.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose the score that ends the game: 50, 75, 100 or 150 points, and can make the Jack of Diamonds worth minus 10 to whoever takes it. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

@@ -4,7 +4,7 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './catan.css';
+import './catan.scss';
 
 export const catanClient: ClientGame = {
   id: 'catan',

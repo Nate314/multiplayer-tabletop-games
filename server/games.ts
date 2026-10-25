@@ -4,6 +4,9 @@ import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
   resolveDismissVote
 } from '../shared/seating.ts';
+import {
+  agreeToHouseRules, everyoneAgreed, houseRulesOf, minimumToStart, needsAgreement, setHouseRules
+} from '../shared/houseRules.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
@@ -21,7 +24,11 @@ type Room = {
   history: BaseGameState[];
   timeline: BaseGameState[];
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
+  deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
 };
+
+// `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout
+export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => void };
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
@@ -35,9 +42,10 @@ function cleanName(value: unknown): string {
 // With a `store`, started games are saved after every change and come back on creation with every seat held.
 export function createGameManager(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore
+  games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore, hooks: ManagerHooks = {}
 ) {
   const rooms = new Map<string, Room>();
+  const now = hooks.now ?? Date.now;
 
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
@@ -55,15 +63,67 @@ export function createGameManager(
 
   // Only a started game is kept: a lobby lost in a restart is just joined again.
   // `step` is how this change moved `history` and `timeline`, so only that step is written
+  // Every change passes through here, so this is also where the room's deadline is rescheduled
   function save(roomId: string, room: Room, step?: StepChange): void {
     const { game, state } = room;
     writeStore(roomId, target => {
       if (state.started) target.save(roomId, game.info.id, state, step);
       else target.remove(roomId);
     });
+    scheduleDeadline(roomId, room);
+  }
+
+  // Records `next` as a move after the current state, for undo, history and the store
+  function record(roomId: string, room: Room, next: BaseGameState): void {
+    const index = room.history.push(room.state) - 1;
+    room.timeline.push(next);
+    room.state = next;
+    save(roomId, room, { type: 'push', index, before: room.history[index], after: next });
+  }
+
+  // Before the first move, nobody may play until every seated player agreed to the current house rules
+  function awaitingAgreement({ game, state }: Room): boolean {
+    return !state.started && needsAgreement(game.info) && !everyoneAgreed(game.info, state);
+  }
+
+  // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.
+  // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it
+  function clockMayRun(room: Room): boolean {
+    const { game, state } = room;
+    return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info, state));
+  }
+
+  // Open votes and disconnects do not pause a clock; only the game's own deadline does
+  function scheduleDeadline(roomId: string, room: Room): void {
+    clearTimeout(room.deadlineTimer);
+    room.deadlineTimer = undefined;
+    const deadline = room.state.isGameOver || !clockMayRun(room) ? null : room.game.deadline?.(room.state) ?? null;
+    if (deadline === null || !room.game.onDeadline) return;
+    room.deadlineTimer = setTimeout(() => runDeadline(roomId, room), Math.max(0, deadline - now()));
+    room.deadlineTimer.unref(); // never keeps the process alive on its own
+  }
+
+  function runDeadline(roomId: string, room: Room): void {
+    const { game } = room;
+    const deadline = game.deadline?.(room.state) ?? null;
+    if (rooms.get(roomId) !== room || deadline === null || !game.onDeadline) return;
+    if (deadline > now()) { // a timer can fire a little before the clock says the deadline passed
+      scheduleDeadline(roomId, room);
+      return;
+    }
+    // An open undo vote was for the move before this one, so the timeout cancels it
+    record(roomId, room, { ...game.onDeadline(room.state, now(), random), started: true, undoVote: null });
+    const next = game.deadline?.(room.state) ?? null;
+    if (room.deadlineTimer && next !== null && next <= now()) { // would time out again at once, forever
+      clearTimeout(room.deadlineTimer);
+      room.deadlineTimer = undefined;
+      console.error(`${game.info.id} set a deadline that had already passed after a timeout in ${roomId}`);
+    }
+    hooks.changed?.(roomId);
   }
 
   function deleteRoom(roomId: string): void {
+    clearTimeout(rooms.get(roomId)?.deadlineTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
   }
@@ -82,12 +142,12 @@ export function createGameManager(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
     const { seatKeys: _seatKeys, ...view } = room.game.toPublicState(state, undoAvailable, viewer);
-    return { ...view, moveCount };
+    return { ...view, moveCount, houseRules: houseRulesOf(room.game.info, state) };
   }
 
-  // The current state as `viewer` may see it
+  // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
-    return publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
+    return { ...publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer), serverTime: now() };
   }
 
   function findHistoryRoom(gameType: unknown, gameId: unknown) {
@@ -147,6 +207,7 @@ export function createGameManager(
       dismissVote: null
     };
     if (room.game.onUndo) restored = room.game.onUndo(restored, random);
+    if (room.game.resumeClock) restored = room.game.resumeClock(restored, now());
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
       restored = removePlayer(room.game, restored, seat, random);
     }
@@ -157,18 +218,28 @@ export function createGameManager(
     return { type: 'pop', index: room.history.length };
   }
 
+  // Settles a dismiss vote. When it passes and the turn moves on from the dismissed player, the next player's clock
+  // restarts from now, so they never inherit what was left of the leaver's turn
+  function settleDismissVote(room: Room, voted: BaseGameState): void {
+    const next = resolveDismissVote(room.game, voted, random);
+    const turnMoved = next.started && !next.isGameOver && next.currentPlayer !== voted.currentPlayer;
+    room.state = turnMoved && room.game.resumeClock ? room.game.resumeClock(next, now()) : next;
+  }
+
   function clearEmptyTimer(room: Room): void {
     clearTimeout(room.emptyTimer);
     room.emptyTimer = undefined;
   }
 
   // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
-  // No game hook runs: a game's disconnect hook may deal the next round once nobody is waiting
+  // No game hook runs but `resumeClock`: a game's disconnect hook may deal the next round once nobody is waiting,
+  // and a clock restarts from now, so the time the server was down is never charged
   function loadRoom(roomId: string, saved: SavedRoom): void {
     const game = findGame(saved.gameType);
     if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
-    const state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
+    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
+    if (game.resumeClock) state = game.resumeClock(state, now());
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline };
     rooms.set(roomId, room);
     save(roomId, room);
@@ -246,18 +317,46 @@ export function createGameManager(
       return { state: view(room, seat) };
     },
 
-    move(roomId: string, seat: Seat, move: unknown): Result<BasePublicState> {
+    move(roomId: string, seat: Seat, move: unknown, moveCount?: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      if (awaitingAgreement(room)) return { error: 'Everyone must agree to the house rules first' };
+      if (moveCount !== undefined && moveCount !== room.timeline.length) return { error: 'Someone else moved first' };
+
+      const result = applyMove(room.game, room.state, seat, move, random, now());
+      if ('error' in result) return result;
+
+      record(roomId, room, result.state);
+      return { state: view(room, seat) };
+    },
+
+    setHouseRules(roomId: string, seat: Seat, proposal: unknown): Result<BasePublicState> {
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
 
-      const result = applyMove(room.game, room.state, seat, move, random);
+      const result = setHouseRules(room.game.info, room.state, seat, proposal);
       if ('error' in result) return result;
+      room.state = room.game.resetLobby(result.state, random);
+      save(roomId, room);
+      return { state: view(room, seat) };
+    },
 
-      const index = room.history.push(room.state) - 1;
-      room.timeline.push(result.state);
+    agreeHouseRules(roomId: string, seat: Seat, revision: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+
+      const wasAgreed = everyoneAgreed(room.game.info, room.state);
+      const result = agreeToHouseRules(room.game.info, room.state, seat, revision);
+      if ('error' in result) return result;
       room.state = result.state;
-      save(roomId, room, { type: 'push', index, before: room.history[index], after: result.state });
+      // The clock starts on the last agreement, not on a repeat of it
+      if (!wasAgreed && everyoneAgreed(room.game.info, room.state) && room.game.resumeClock) {
+        room.state = room.game.resumeClock(room.state, now());
+      }
+      save(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -270,6 +369,8 @@ export function createGameManager(
 
       const result = room.game.applyAction(room.state, seat, action, random);
       if ('error' in result) return result;
+      // An action may start play (a Hearts pass), so it meets the same agreement gate as a move
+      if (result.state.started && awaitingAgreement(room)) return { error: 'Everyone must agree to the house rules first' };
 
       room.state = result.state;
       save(roomId, room);
@@ -332,7 +433,7 @@ export function createGameManager(
         dismissVote: { target: held, requestedBy: seat, votes: { [seat]: true } },
         gameStatus: `${state.playerNames[seat]} wants to dismiss ${state.playerNames[held]}`
       };
-      room.state = resolveDismissVote(room.game, opened, random); // a lone connected player passes it at once
+      settleDismissVote(room, opened); // a lone connected player passes it at once
       save(roomId, room);
       return { state: view(room, seat) };
     },
@@ -355,7 +456,7 @@ export function createGameManager(
       }
 
       const approved = { ...state, dismissVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
-      room.state = resolveDismissVote(room.game, approved, random);
+      settleDismissVote(room, approved);
       save(roomId, room);
       return { state: view(room, seat) };
     },

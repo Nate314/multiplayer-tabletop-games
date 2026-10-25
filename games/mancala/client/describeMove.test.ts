@@ -33,3 +33,15 @@ test('a last stone in the bank that ends the game gives no extra turn', () => {
 test('describes nothing before the first move', () => {
   assert.equal(describeMove({ lastMove: null, playerNames }), '');
 });
+
+test('names the opponent\'s pit when the mover played from the other side', () => {
+  const lastMove = { playerNumber: 1, pit: 9, end: 3, pickedUp: 4, laps: 1, extraTurn: false, fromOpponent: true as const };
+  assert.equal(describeMove({ lastMove, playerNames }), 'Alice picked up 4 stones from Bob\'s pit 3, ending in an empty pit');
+});
+
+test('describes a Kalah capture and a Kalah ending in a pit with stones', () => {
+  const capture = { playerNumber: 1, pit: 0, end: 1, pickedUp: 1, laps: 1, extraTurn: false, captured: 5 };
+  assert.equal(describeMove({ lastMove: capture, playerNames }), 'Alice picked up 1 stone from pit 1, ending in an empty pit and capturing 5 stones');
+  const stones = { playerNumber: 2, pit: 7, end: 9, pickedUp: 2, laps: 1, extraTurn: false, endedOnStones: true as const };
+  assert.equal(describeMove({ lastMove: stones, playerNames }), 'Bob picked up 2 stones from pit 1, ending in a pit with stones');
+});

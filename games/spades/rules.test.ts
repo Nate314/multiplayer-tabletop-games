@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { HAND_SIZE, LOSING_SCORE, TARGET_SCORE, canPlayCard, createGameState, dealHand, teamOf, toPublicState, trickWinnerOf } from './rules.ts';
+import { withRules } from '../../server/testing.ts';
+import { HAND_SIZE, LOSING_SCORE, targetScore, canPlayCard, createGameState, dealHand, teamOf, toPublicState, trickWinnerOf } from './rules.ts';
 import { spades } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { cardName, standardDeck } from '../../shared/playingCards.ts';
@@ -65,7 +66,7 @@ function game(overrides: Partial<GameState> = {}): GameState {
 }
 
 // The last trick of a hand: hearts all round, and `winner` holds the ace. `taken` are the tricks before it, 12 in all.
-function lastTrickOf(bids: Record<Seat, number>, taken: Record<Seat, number>, scores: TeamScores = [0, 0], bags: TeamScores = [0, 0], winner: Seat = 1): GameState {
+function lastTrickOf(bids: Record<Seat, number>, taken: Record<Seat, number>, scores: TeamScores = [0, 0], bags: TeamScores = [0, 0], winner: Seat = 1, overrides: Partial<GameState> = {}): GameState {
   const low: Rank[] = ['2', '3', '4'];
   const cards = Object.fromEntries([1, 2, 3, 4].map(seat => [seat, H(seat === winner ? 'A' : low.shift() ?? '5')]));
   let state = game({
@@ -74,7 +75,8 @@ function lastTrickOf(bids: Record<Seat, number>, taken: Record<Seat, number>, sc
     tricksTaken: taken,
     scores,
     bags,
-    spadesBroken: true
+    spadesBroken: true,
+    ...overrides
   });
   for (const seat of [1, 2, 3, 4]) state = ok(move(state, seat, { type: 'play', card: cards[seat] }));
   return state;
@@ -235,7 +237,7 @@ test('500 wins and minus 200 loses', () => {
   const tie = lastTrickOf({ 1: 3, 2: 4, 3: 2, 4: 3 }, { 1: 4, 2: 4, 3: 2, 4: 2 }, [500, 622]);
   assert.equal(tie.isGameOver, false);
   assert.match(tie.gameStatus, /Both teams are tied at 552, so another hand is played$/);
-  assert.equal(TARGET_SCORE, 500);
+  assert.equal(targetScore({}), 500);
 });
 
 test('Continue deals the next hand once every connected player is ready, the deal passing left', () => {
@@ -355,4 +357,24 @@ test('a whole hand of legal plays takes 13 tricks', () => {
     assert.equal(teams[0].tricks + teams[1].tricks, 13);
     assert.equal(standardDeck().length, 52);
   }
+});
+
+test('the game ends at the chosen target', () => {
+  const bids = { 1: 3, 2: 4, 3: 2, 4: 3 };
+  const taken = { 1: 4, 2: 4, 3: 2, 4: 2 };
+  const rules = (value: number) => ({ houseRules: withRules({ targetScore: value }) });
+  const won = lastTrickOf(bids, taken, [200, 0], [0, 0], 1, rules(250)); // the first team bid 5 and took 6: +51
+  assert.equal(won.isGameOver, true);
+  assert.deepEqual(won.winners, [1, 3]);
+  assert.equal(lastTrickOf(bids, taken, [190, 0], [0, 0], 1, rules(250)).isGameOver, false);
+  assert.equal(lastTrickOf(bids, taken, [200, 0], [0, 0], 1, rules(500)).isGameOver, false);
+  assert.equal(targetScore(rules(300)), 300);
+});
+
+test('a team still loses at -200 whatever the target', () => {
+  const bids = { 1: 3, 2: 4, 3: 2, 4: 3 };
+  const taken = { 1: 4, 2: 4, 3: 2, 4: 2 };
+  const fell = lastTrickOf(bids, taken, [0, -150], [0, 0], 1, { houseRules: withRules({ targetScore: 250 }) });
+  assert.equal(fell.isGameOver, true);
+  assert.deepEqual(fell.winners, [1, 3]);
 });

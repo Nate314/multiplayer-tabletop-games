@@ -1,5 +1,7 @@
-import { bankOf, isPlayablePit, opponentOf, pitsOf, stoneCount } from '../rules.ts';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { bankOf, isPlayablePit, opponentOf, pitsOf, rulesOf, stoneCount } from '../rules.ts';
 import { holeKey, stoneKey } from './animateMove.ts';
+import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { drawnCount, stoneSpot } from './stoneLayout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -16,6 +18,7 @@ const ARROWS = ['top-left', 'top-right', 'right', 'bottom-left', 'bottom-right',
 // The viewer's row runs along the bottom, left to right, into their bank on the right; the history shows seat 1's view
 export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: BoardProps) {
   const { board, lastMove, playerNames, isGameOver } = gameState;
+  const { otherSide } = rulesOf(gameState);
   const bottomSeat = playerNumber === 2 ? 2 : 1;
   const topSeat = opponentOf(bottomSeat);
 
@@ -44,7 +47,9 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
               className={`stone seat-${stone}`}
               data-anim-key={stoneKey(hole, index)}
               style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: `${size * 100}%`, margin: `${-size * 50}%` }}
-            />
+            >
+              <ColorSymbol color={SEAT_SYMBOLS[stone]} className="stone-symbol" />
+            </span>
           );
         })}
         <span className="count">{stones.length}</span>
@@ -53,7 +58,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
   }
 
   function renderPit(pit: number, row: 'top' | 'bottom') {
-    const playable = isMyTurn && isPlayablePit(board, playerNumber, pit);
+    const playable = isMyTurn && isPlayablePit(board, playerNumber, pit, otherSide);
     return (
       <button
         key={pit}
@@ -78,6 +83,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
         aria-label={`${bankName(seat)}, ${stoneCount(board[bank].length)}`}
       >
         {renderStones(bank)}
+        <ColorSymbol color={SEAT_SYMBOLS[seat]} className="bank-symbol" />
       </div>
     );
   }
@@ -85,7 +91,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
   return (
     <div className="board-wrap">
       <div className="board-caption">
-        <span className={`bank-label bank-label-left seat-${topSeat}`}>{bankName(topSeat)}</span>
+        <span className={`bank-label bank-label-left seat-${topSeat}`}><ColorSymbol color={SEAT_SYMBOLS[topSeat]} /> {bankName(topSeat)}</span>
         <span className="row-label">{playerNames[topSeat] ?? 'Waiting for a player'}</span>
       </div>
       <div className="board-loop" title="Stones move counter-clockwise">
@@ -101,7 +107,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
         <span className="row-label">
           {playerNames[bottomSeat] ?? 'Waiting for a player'}{bottomSeat === playerNumber && ' (you)'}
         </span>
-        <span className={`bank-label bank-label-right seat-${bottomSeat}`}>{bankName(bottomSeat)}</span>
+        <span className={`bank-label bank-label-right seat-${bottomSeat}`}><ColorSymbol color={SEAT_SYMBOLS[bottomSeat]} /> {bankName(bottomSeat)}</span>
       </div>
     </div>
   );

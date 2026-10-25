@@ -25,6 +25,7 @@ Exactly two players. The first to join plays white and the second plays red. The
 - At the start of your turn, click Roll, or Double to offer a double first. When your opponent doubles, click Take or Drop
 - After rolling, the checkers that can move are ringed. Click one, then click one of its highlighted points, or your tray on the right to bear off
 - When either die could bear off the checker, buttons under the board ask which die to use. Cancel picks a different checker
+- Or drag a checker onto one of its highlighted points, or onto your tray to bear off, with the mouse or a finger; drop it anywhere else to put it back. The bear-off die buttons still appear when either die would do
 - Click the selected checker again, or anywhere else, to pick a different one
 - Each click moves one checker by one die. This turn's dice are shown beside the board and used dice are faded
 - The cube's value and owner are shown beside the board, and the points won once the game is over

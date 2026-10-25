@@ -5,6 +5,8 @@ import PlayArea from './PlayArea';
 import Players from './Players';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import { animateMove } from './animateMove.ts';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { drawnStep } from './drawn.ts';
 import { rackOrder } from './draft.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -30,6 +32,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const initialRack = rackOrder(rack, orderRef.current);
 
   useMoveAnimation(layoutRef, gameState, animateMove);
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   return (
     <>
@@ -52,6 +55,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           playerNumber={playerNumber}
           isMyTurn={isMyTurn}
           initialRack={initialRack}
+          newlyDrawn={newlyDrawn}
           onRackOrder={onRackOrder}
         />
       </div>

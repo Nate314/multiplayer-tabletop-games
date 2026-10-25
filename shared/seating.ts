@@ -1,4 +1,5 @@
 import type { GameDefinition } from './gameDefinition.ts';
+import { afterSeatChange, minimumToStart, tableLimit } from './houseRules.ts';
 import type { BaseGameState, BasePublicState, Random, Result, Seat } from './types.ts';
 
 export function baseGameState(gameId: string): BaseGameState {
@@ -44,9 +45,9 @@ export function addPlayer<S extends BaseGameState>(
   name: string,
   random: Random = Math.random
 ): { state: S; seat: Seat } | { error: string } {
-  const { maxPlayers } = game.info;
+  const limit = tableLimit(game.info, state);
   if (state.started) return { error: 'Game already in progress' };
-  if (state.activePlayers.length >= maxPlayers) return { error: 'Game is full' };
+  if (state.activePlayers.length >= limit) return { error: 'Game is full' };
 
   let seat = 1;
   while (state.activePlayers.includes(seat)) seat++;
@@ -55,8 +56,9 @@ export function addPlayer<S extends BaseGameState>(
     ...state,
     activePlayers,
     playerNames: { ...state.playerNames, [seat]: name },
-    gameStatus: `${name} joined (${activePlayers.length}/${maxPlayers} players)`,
-    currentPlayer: activePlayers[0]
+    gameStatus: `${name} joined (${activePlayers.length}/${limit} players)`,
+    currentPlayer: activePlayers[0],
+    houseRules: afterSeatChange(game.info, state.houseRules, activePlayers)
   }, random);
   return { state: next, seat };
 }
@@ -76,7 +78,8 @@ export function removePlayer<S extends BaseGameState>(
       activePlayers,
       playerNames: without(state.playerNames, seat),
       gameStatus: `${name} left`,
-      currentPlayer: activePlayers[0] ?? null
+      currentPlayer: activePlayers[0] ?? null,
+      houseRules: afterSeatChange(game.info, state.houseRules, activePlayers)
     }, random);
   }
 
@@ -160,16 +163,17 @@ export function applyMove<S extends BaseGameState>(
   state: S,
   seat: Seat,
   move: unknown,
-  random: Random = Math.random
+  random: Random = Math.random,
+  now = Date.now()
 ): Result<S> {
   if (state.isGameOver) return { error: 'The game is over' };
   // Only the start needs the minimum: a game that loses players to dismissals plays on, or ends itself in onPlayerLeft
-  if (!state.started && state.activePlayers.length < game.info.minPlayers) return { error: 'Waiting for more players' };
+  if (!state.started && state.activePlayers.length < minimumToStart(game.info, state)) return { error: 'Waiting for more players' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-  if (state.currentPlayer !== seat) return { error: 'Not your turn' };
+  if (state.currentPlayer !== seat && !game.allowsOutOfTurn?.(state, seat, move)) return { error: 'Not your turn' };
 
-  const result = game.applyMove(state, seat, move, random);
+  const result = game.applyMove(state, seat, move, random, now);
   if ('error' in result) return result;
   return { state: { ...result.state, started: true } };
 }

@@ -1,3 +1,6 @@
+import { useCountdown, formatClock } from '../../../src/hooks/useCountdown.ts';
+import useTimerWarning from '../../../src/sound/useTimerWarning.ts';
+import { deadline } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type GameStatusProps = {
@@ -16,7 +19,9 @@ function turnMessage(state: PublicGameState, playerNumber: Seat): string {
 }
 
 export default function GameStatus({ gameState, playerNumber, error }: GameStatusProps) {
-  const { gameStatus } = gameState;
+  const { gameStatus, currentPlayer, isGameOver } = gameState;
+  const timeLeft = useCountdown(deadline(gameState), gameState.serverTime);
+  useTimerWarning(timeLeft, currentPlayer === playerNumber && !isGameOver);
 
   return (
     <>
@@ -26,6 +31,9 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
         </div>
       )}
       <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
+      {timeLeft !== null && (
+        <div className="turn-timer" role="timer" aria-label="Time left this turn">{formatClock(timeLeft)}</div>
+      )}
     </>
   );
 }

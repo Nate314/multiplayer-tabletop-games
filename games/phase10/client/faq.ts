@@ -54,8 +54,20 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The draw pile and discard top are at the top. Your hand is below them; sort it by number or color with the Sort buttons. Every player is listed with their phase, score, card count and the groups they laid down. The player whose turn it is is outlined, and your hand is dimmed when it is not your turn.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star. Number cards show it in their top left corner; Wild and Skip cards already carry a letter.'
+  },
+  {
+    question: 'Why is a card in my hand outlined?',
+    answer: 'It is the card you just drew. The outline stays from your draw until your discard ends the turn, even after you lay down or hit. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can turn on "Phases in any order". Then each hand you choose which phase to lay down, any phase you have not completed yet, instead of the next one in order. Completing all ten finishes the game, with the same lowest-score win and tiebreaker hand of phase 10. Everyone has to agree before play starts, and the rules cannot change afterwards. Ticking \'I know what I\'m doing\' lets the host seat up to 8 players instead of 6.'
   },
   {
     question: 'What happens if someone leaves?',

@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Earn prestige by buying development cards and being visited by nobles. When a player reaches 15 prestige, the round is played to its end so everyone has had the same number of turns, and then the game ends. Most prestige wins.'
+    answer: 'Earn prestige by buying development cards and being visited by nobles. When a player reaches the prestige to win (15 unless the host chose another), the round is played to its end so everyone has had the same number of turns, and then the game ends. Most prestige wins.'
   },
   {
     question: 'What can I do on my turn?',
@@ -42,7 +42,15 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'A dismissed player\'s gems go back to the supply, their reserved cards leave the game and their turns are skipped. Their bought cards and nobles stay on show. If they were in the middle of their turn, that turn ends. The last player left wins.'
   },
   {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each gem color also shows its shape: white ring, blue square, green triangle, red circle, black diamond, gold star. Gem tokens, card bonuses and card costs show it.'
+  },
+  {
     question: 'Can I undo?',
     answer: 'Click Undo to ask everyone to undo the last move. Giving back tokens and choosing a noble are moves of their own. The undo happens only if every player still in the game approves.'
+  },
+  {
+    question: 'Can the rules be changed?',
+    answer: 'Before play starts the host can choose the prestige to win: 10, 15 or 21. Everyone has to agree before play starts, and the rules cannot change afterwards.'
   }
 ];

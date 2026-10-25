@@ -3,26 +3,30 @@
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
+import { minimumToStart } from '../../shared/houseRules.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { EDGE_COUNT, HEX_COUNT, VERTEX_COUNT, desertOf, isIndex, randomLayout } from './board.ts';
+import { type Board, boardOf, desertOf, isIndex, randomLayout } from './board.ts';
 import {
   advanceSetup, buildCity, buildRoad, buildSettlement, placeFreeRoad, placeSetupRoad, placeSetupSettlement
 } from './building.ts';
-import { DEV_DECK, buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
+import { buyDevCard, playKnight, playMonopoly, playRoadBuilding, playYearOfPlenty } from './devCards.ts';
 import { afterDiscards, discard, discardForAbsent, moveRobber, roll } from './dice.ts';
 import { roadLengths } from './roads.ts';
-import { BANK_SIZE, add, isResource, noResources, parseResources, total } from './resources.ts';
+import { add, isResource, noResources, parseResources, total } from './resources.ts';
 import {
   LOG_SIZE, checkWin, endGame, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
 } from './state.ts';
+import { editionFor } from './editions.ts';
+import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
 
-export const MIN_PLAYERS = 3;
+export const PLAYERS = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 
 export function createGameState(gameId: string): GameState {
-  const layout = randomLayout(() => 0.5);
+  const edition = editionFor(0);
+  const layout = randomLayout(() => 0.5, edition.board);
   return {
     ...baseGameState(gameId),
     layout,
@@ -30,7 +34,7 @@ export function createGameState(gameId: string): GameState {
     roads: {},
     buildings: {},
     hands: {},
-    bank: fullBank(),
+    bank: fullBank(edition.bankSize),
     devDeck: [],
     devCards: {},
     boughtThisTurn: [],
@@ -43,6 +47,7 @@ export function createGameState(gameId: string): GameState {
     rolled: false,
     dice: null,
     pending: null,
+    specialBuild: null,
     trade: null,
     steal: null,
     log: [],
@@ -50,8 +55,8 @@ export function createGameState(gameId: string): GameState {
   };
 }
 
-function fullBank(): Resources {
-  return { wood: BANK_SIZE, brick: BANK_SIZE, sheep: BANK_SIZE, wheat: BANK_SIZE, ore: BANK_SIZE };
+function fullBank(size: number): Resources {
+  return { wood: size, brick: size, sheep: size, wheat: size, ore: size };
 }
 
 // Everyone rolls both dice and the highest total goes first; players tied for highest roll again
@@ -80,7 +85,8 @@ function snakeOrder(players: Seat[], first: Seat): Setup {
 export function resetLobby(state: GameState, random: Random): GameState {
   const players = state.activePlayers;
   const each = <T>(value: () => T): Record<Seat, T> => Object.fromEntries(players.map(seat => [seat, value()]));
-  const layout = randomLayout(random);
+  const edition = editionFor(players.length);
+  const layout = randomLayout(random, edition.board);
   const fresh: GameState = {
     ...createGameState(state.gameId),
     ...state,
@@ -89,8 +95,8 @@ export function resetLobby(state: GameState, random: Random): GameState {
     roads: {},
     buildings: {},
     hands: each(noResources),
-    bank: fullBank(),
-    devDeck: shuffle(DEV_DECK, random),
+    bank: fullBank(edition.bankSize),
+    devDeck: shuffle(edition.devDeck, random),
     devCards: each(() => []),
     boughtThisTurn: [],
     devPlayed: false,
@@ -101,6 +107,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     rolled: false,
     dice: null,
     pending: null,
+    specialBuild: null,
     trade: null,
     steal: null,
     log: [],
@@ -140,19 +147,21 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
 
 const VERTEX_MOVES = ['placeSettlement', 'buildSettlement', 'buildCity'] as const;
 const EDGE_MOVES = ['placeRoad', 'buildRoad'] as const;
-const PLAIN_MOVES = ['roll', 'buyDevCard', 'playKnight', 'playRoadBuilding', 'endTurn'] as const;
+const PLAIN_MOVES = ['roll', 'buyDevCard', 'playKnight', 'playRoadBuilding', 'endTurn', 'passBuild'] as const;
+// What a builder may do out of turn in the special build phase
+const BUILD_CHANCE_MOVES: Move['type'][] = ['buildRoad', 'buildSettlement', 'buildCity', 'buyDevCard', 'passBuild'];
 
-function parseMove(move: unknown): Move | null {
+function parseMove(move: unknown, board: Board): Move | null {
   const input = asRecord(move);
   if (!input) return null;
   const vertexMove = VERTEX_MOVES.find(type => type === input.type);
-  if (vertexMove) return isIndex(input.vertex, VERTEX_COUNT) ? { type: vertexMove, vertex: input.vertex } : null;
+  if (vertexMove) return isIndex(input.vertex, board.vertexCount) ? { type: vertexMove, vertex: input.vertex } : null;
   const edgeMove = EDGE_MOVES.find(type => type === input.type);
-  if (edgeMove) return isIndex(input.edge, EDGE_COUNT) ? { type: edgeMove, edge: input.edge } : null;
+  if (edgeMove) return isIndex(input.edge, board.edgeCount) ? { type: edgeMove, edge: input.edge } : null;
   switch (input.type) {
     case 'moveRobber': {
       const { hex, victim } = input;
-      if (!isIndex(hex, HEX_COUNT)) return null;
+      if (!isIndex(hex, board.hexCount)) return null;
       if (victim !== null && !(typeof victim === 'number' && Number.isInteger(victim))) return null;
       return { type: 'moveRobber', hex, victim };
     }
@@ -174,9 +183,11 @@ export function describeMove(lastMove: LastMove): string {
   return lastMove.events.join('. ');
 }
 
-// Everything that follows by itself: the award cards, a win, and who must act now
+// Everything that follows by itself: the award cards, a win, and who must act now.
+// A player wins only on their own turn, so never in the special build phase
 function settle(state: GameState): GameState {
-  return syncTurn(checkWin(settleAwards(state)));
+  const awarded = settleAwards(state);
+  return syncTurn(awarded.specialBuild ? awarded : checkWin(awarded));
 }
 
 // The rules run with an empty log, so what they noted is exactly what this change did
@@ -198,13 +209,15 @@ function playSetup(state: GameState, seat: Seat, move: Move): Result<GameState> 
 }
 
 function endTurn(state: GameState, seat: Seat): Result<GameState> {
-  return { state: note(startTurn(state, nextActivePlayer(state, seat)), `${nameOf(state, seat)} ended their turn`) };
+  const next = note(startTurn(state, nextActivePlayer(state, seat)), `${nameOf(state, seat)} ended their turn`);
+  return { state: startSpecialBuild(next, seat) };
 }
 
 // The turn holder's moves: a pending robber, discard or free road comes first; development cards may be played
-// before rolling; everything else needs the roll
+// before rolling; everything else needs the roll. A special build phase comes before all of it.
 function play(state: GameState, seat: Seat, move: Move, random: Random): Result<GameState> {
   if (state.setup) return playSetup(state, seat, move);
+  if (state.specialBuild) return playSpecialBuild(state, seat, move);
   const { pending } = state;
   if (pending?.kind === 'discard') return { error: 'Wait for everyone to discard' };
   if (pending?.kind === 'robber') {
@@ -222,6 +235,7 @@ function play(state: GameState, seat: Seat, move: Move, random: Random): Result<
     case 'placeSettlement':
     case 'placeRoad':
     case 'moveRobber':
+    case 'passBuild':
       return { error: 'You cannot do that now' };
   }
   if (!state.rolled) return { error: 'Roll the dice first' };
@@ -235,8 +249,15 @@ function play(state: GameState, seat: Seat, move: Move, random: Random): Result<
   }
 }
 
+// Only the builder whose chance it is moves out of turn, and only to build, buy or be done
+export function allowsOutOfTurn(state: GameState, seat: Seat, move: unknown): boolean {
+  if (!buildChance(state, seat)) return false;
+  const parsed = parseMove(move, boardOf(state.layout));
+  return parsed !== null && BUILD_CHANCE_MOVES.includes(parsed.type);
+}
+
 export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
-  const parsed = parseMove(move);
+  const parsed = parseMove(move, boardOf(state.layout));
   if (!parsed) return { error: 'Invalid move' };
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = play({ ...state, log: [], steal: null }, seat, parsed, random);
@@ -269,7 +290,7 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   if (state.isGameOver) return { error: 'The game is over' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-  if (state.activePlayers.length < MIN_PLAYERS) return { error: 'Waiting for more players' };
+  if (state.activePlayers.length < minimumToStart(PLAYERS, state)) return { error: 'Waiting for more players' };
   if (!state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
   const result = act({ ...state, log: [] }, seat, action);
   if ('error' in result) return result;
@@ -289,8 +310,9 @@ function setupWithout(state: GameState, seat: Seat): GameState {
 
 // A dismissed player's pieces stay on the board as dead pieces: they score and produce nothing, but still block and
 // break roads. Their cards go back to the bank, and their development cards out of the game. A discard or trade
-// waiting on them is dropped; on their turn, the next player's turn begins. With fewer than three left, the game ends
-// and the player with the most points wins.
+// waiting on them is dropped, and so is their build chance; on their turn, the next player's turn begins (ending any
+// special build phase). With fewer than three left (two at a table set for two), the game ends and the player with
+// the most points wins.
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const working: GameState = { ...state, log: [] };
   const returned: GameState = {
@@ -310,9 +332,11 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   next = setupWithout(next, seat);
   if (!next.setup && state.turnHolder === seat) {
     const following = nextActivePlayer(next, seat);
-    next = note(startTurn(next, following), `${nameOf(state, following)}'s turn`);
+    next = note(startTurn({ ...next, specialBuild: null }, following), `${nameOf(state, following)}'s turn`);
+  } else {
+    next = withoutBuilder(next, seat);
   }
-  if (next.activePlayers.length < MIN_PLAYERS) {
+  if (next.activePlayers.length < minimumToStart(PLAYERS, next)) {
     const awarded = settleAwards(next);
     const scores = awarded.activePlayers.map(other => points(awarded, other));
     const best = Math.max(...scores);
@@ -324,10 +348,11 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 }
 
 // An offer from or to a player who disconnects is dropped, so it never holds up the turn
-// A trade with the player is dropped, and a discard they owe is made for them
+// A trade with the player is dropped, a discard they owe is made for them, and their build chance is skipped
 export function onPlayerDisconnected(state: GameState, seat: Seat, random: Random): GameState {
   let next: GameState = { ...state, log: [] };
   if (state.trade?.from === seat || state.trade?.to === seat) next = note({ ...next, trade: null }, 'The open trade offer was dropped');
   next = discardForAbsent(next, random);
+  if (buildChance(next, seat)) next = withoutBuilder(note(next, `${nameOf(state, seat)} is away, so their build chance is skipped`), seat);
   return next.log.length > 0 ? finish(state, next) : state;
 }

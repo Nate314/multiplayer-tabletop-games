@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { CARDS, GEMS, NOBLES } from '../games/splendor/cards.ts';
 import type { GameState, Gem, Level, PlayerState, Reserved, Token, Tokens } from '../games/splendor/types.ts';
 
@@ -475,9 +475,38 @@ test.describe('Splendor rules', () => {
     await expect(turnPanel(nobles.alice)).toContainText('Several nobles want to visit.');
     await expect(panel(nobles.alice, 'Alice')).toContainText('Cards 11');
   });
+
+  test('the host can set a lower prestige to win', async ({ seat }) => {
+    const table = await seat('splendor', NAMES.slice(0, 2), { houseRules: { targetScore: 10 } });
+    const [alice, bob] = table.pages;
+    // Bob holds 10 prestige (cards 73 and 77) and ends the round
+    await craft(table, { ...fresh(2, { owned: [73, 77] }), players: players(2, { 2: { cards: [73, 77] } }) });
+    await takeGems(alice, 'white', 'blue', 'green');
+    await takeGems(bob, 'white', 'blue', 'green');
+    for (const page of [alice, bob]) await expect(turnMessage(page)).toHaveText('Game over');
+    await expect(status(alice)).toHaveText('Bob wins with 10 prestige!');
+  });
 });
 
 test.describe('Splendor controls', () => {
+  test('with Color-blind symbols on, gem tokens, card bonuses and card costs show a shape, and gold a star', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await craft(table, fresh(2, { faceUp: { 1: [0] } }));
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    const shapes: Record<Token, string> = { white: 'ring', blue: 'square', green: 'triangle', red: 'circle', black: 'diamond', gold: 'star' };
+    for (const token of Object.keys(shapes) as Token[]) await expect(supplyGem(alice, token).locator(`.color-symbol-${shapes[token]}`)).toHaveCount(1);
+    const card = CARDS[0];
+    const first = alice.getByLabel(cardLabel(0), { exact: true });
+    await expect(first.locator('.dev-card-bonus').locator(`.color-symbol-${shapes[card.bonus]}`)).toHaveCount(1);
+    const costs = GEMS.filter(gem => card.cost[gem] > 0);
+    await expect(first.locator('.cost-pip .color-symbol')).toHaveCount(costs.length);
+    for (const gem of costs) await expect(first.locator(`.cost-pip.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+    for (const gem of GEMS) await expect(panel(alice, 'Alice').locator(`.bonus.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+    const noble = alice.locator('.nobles .noble').first();
+    for (const gem of GEMS.filter(gem => NOBLES[0].cost[gem] > 0)) await expect(noble.locator(`.noble-pip.gem-${gem} .color-symbol-${shapes[gem]}`)).toHaveCount(1);
+  });
+
   test('click gems to pick them and Take gems to take them; a color clicked twice takes two, and clicking a picked gem puts it back', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await craft(table, fresh(2));

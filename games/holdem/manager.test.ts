@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { options } from './rules.ts';
 import { holdem } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -25,6 +25,7 @@ function seeded(seed: number): Random {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([holdem], seeded(1)));
   for (const name of names) manager.join('holdem', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -121,4 +122,18 @@ test('dismissing the player whose turn it is folds them and play goes on', () =>
   assert.equal(state.currentPlayer, 3);
   assert.equal('2' in state.chips, false);
   assert.deepEqual((state as PublicGameState).folded, [2]);
+});
+
+test('a full game at 10 players', () => {
+  const manager = rememberingKeys(createGameManager([holdem], seeded(2)));
+  manager.join('holdem', 'g1', 'P1');
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 10 }));
+  for (let seat = 2; seat <= 10; seat++) manager.join('holdem', 'g1', `P${seat}`);
+  agreeAll(manager, ROOM);
+  let state = viewOf(manager, null);
+  assert.equal(state.activePlayers.length, 10);
+  for (let moves = 0; !state.isGameOver && moves < 20000; moves++) state = step(manager);
+  assert.equal(state.isGameOver, true);
+  assert.equal(state.winners.length, 1);
+  assert.equal(state.chips[state.winners[0]], 10000);
 });

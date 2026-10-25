@@ -1,0 +1,347 @@
+[data-game="checkers"] {
+  color-scheme: light;
+  --page-bg: #EFE6D8;
+  --text: #2B2118;
+  --panel-bg: #FFFDF8;
+  --panel-border: #D8C9B2;
+  --button-bg: #7A4A2A;
+  --button-hover-bg: #643B20;
+  --button-text: #FFF;
+  --status-bg: #F3EADC;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
+  --frame: #5A3A22;
+  --square-light: #F0D9B5;
+  --square-dark: #8C5A3C;
+  --target: rgba(102, 187, 106, 0.85);
+  /* The outline on the square under a dragged man (src/App.scss [data-drag-over]) */
+  --drag-over: #2E7D32;
+  --last-move: #FFD54F;
+  --must-capture: #FF9800;
+  --player1: #C62828;
+  --player1-edge: #8E1B1B;
+  --player2: #F7F1E3;
+  --player2-edge: #A89C84;
+  --crown: #FFD54F;
+  /* Eight squares and the frame fit a phone: 100vw less the page's 16px gutters, the 6px frame on each side
+     and room for a desktop scrollbar, which 100vw includes */
+  --square: min(56px, calc((100vw - 64px) / 8));
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #1C1714;
+    --text: #EDE6DC;
+    --panel-bg: #2A231E;
+    --panel-border: #44382F;
+    --button-bg: #8A5A36;
+    --button-hover-bg: #A06A42;
+    --status-bg: #3A3029;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --frame: #3A2618;
+    --square-light: #B89A78;
+    --square-dark: #5E3E2A;
+    --player2: #E8DFCC;
+    --drag-over: #81C784;
+  }
+
+  .game-header {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .game-id {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  /* The board and the side panel side by side, or stacked when the window is narrow */
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .board-area {
+    position: relative;
+    max-width: 100%;
+  }
+
+  .board-frame {
+    width: fit-content;
+    border: 6px solid var(--frame);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--square));
+    grid-template-rows: repeat(8, var(--square));
+    transition: opacity 0.3s ease;
+  }
+
+  /* Not your turn: the board is dimmed and ignores clicks */
+
+  .board.dimmed {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  .square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .square.light {
+    background: var(--square-light);
+  }
+
+  .square.dark {
+    background: var(--square-dark);
+  }
+
+  .square.last-move {
+    box-shadow: inset 0 0 0 3px var(--last-move);
+  }
+
+  /* A cross where a piece was captured last move */
+
+  .square.last-captured {
+    background:
+    linear-gradient(45deg, transparent 46%, var(--last-move) 46%, var(--last-move) 54%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, var(--last-move) 46%, var(--last-move) 54%, transparent 54%),
+    var(--square-dark);
+    background-size: 40% 40%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .square.target {
+    cursor: pointer;
+  }
+
+  .square.target::after {
+    content: '';
+    width: 36%;
+    height: 36%;
+    border-radius: 50%;
+    background: var(--target);
+  }
+
+  /* A landing square already picked in a multi-jump */
+
+  .square.picked {
+    box-shadow: inset 0 0 0 3px var(--target);
+  }
+
+  .piece {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    box-shadow:
+    inset 0 -3px 0 rgba(0, 0, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+    /* Above the squares it passes over while it glides */
+    position: relative;
+    z-index: 1;
+  }
+
+  .piece.player1 {
+    background: radial-gradient(circle at 35% 35%, #EF5350 0%, var(--player1) 70%);
+    border: 3px solid var(--player1-edge);
+  }
+
+  .piece.player2 {
+    background: radial-gradient(circle at 35% 35%, #FFF 0%, var(--player2) 70%);
+    border: 3px solid var(--player2-edge);
+  }
+
+  .crown {
+    color: var(--crown);
+    font-size: calc(var(--square) * 0.42);
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  }
+
+  .piece.movable,
+  .piece.must-capture {
+    cursor: pointer;
+  }
+
+  .piece.movable:hover {
+    outline: 3px solid var(--target);
+  }
+
+  .piece.must-capture {
+    outline: 3px solid var(--must-capture);
+    box-shadow: 0 0 12px var(--must-capture);
+  }
+
+  .piece.selected {
+    outline: 3px solid var(--target);
+    outline-offset: 2px;
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 300px;
+    max-width: 100%;
+    padding: 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .player-list li.current {
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .player-list .player-left {
+    opacity: 0.5;
+  }
+
+  .player-dot {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+
+  .player-dot.player1 {
+    background: var(--player1);
+    border: 2px solid var(--player1-edge);
+  }
+
+  .player-dot.player2 {
+    background: var(--player2);
+    border: 2px solid var(--player2-edge);
+  }
+
+  .piece-count {
+    margin-left: auto;
+    font-weight: normal;
+    opacity: 0.8;
+  }
+
+  .hint {
+    font-size: 14px;
+  }
+
+  .ending-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ending-buttons,
+  .draw-offer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .draw-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .ending-controls button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .ending-controls button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .ending-controls button.danger {
+    background: var(--danger-bg);
+  }
+
+  .ending-controls button.danger:hover {
+    background: var(--danger-hover-bg);
+  }
+
+  .ending-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The history dialog's board, a little smaller than the live one */
+
+  .history-board .board-frame {
+    margin: 0 auto;
+    --square: min(44px, calc((100vw - 96px) / 8));
+  }
+}

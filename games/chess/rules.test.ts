@@ -5,6 +5,8 @@ import {
   pieceAt, positionKey, squareName
 } from './rules.ts';
 import { chess } from './index.ts';
+import { describeHouseRules, houseRulesOf } from '../../shared/houseRules.ts';
+import { withRules } from '../../server/testing.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Board, CastlingRights, GameState, Move, Piece, PieceType, PromotionType, Seat, Square } from './types.ts';
 
@@ -379,4 +381,93 @@ test('the player left after a dismissal wins', () => {
   const state = removePlayer(chess, play(lobby('A', 'B'), 1, mv('e2', 'e4')), 2);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
+});
+
+// Chess clock
+
+const clocked = (minutes: 'off' | 5 | 10 | 15 = 5, increment = 0): GameState =>
+  ({ ...lobby('A', 'B'), houseRules: withRules({ clockMinutes: minutes, incrementSeconds: increment }) });
+const T0 = 1_000_000;
+const FIVE_MINUTES = 300_000;
+const withMove = (state: GameState, seat: Seat, move: Move, now: number) => {
+  const result = applyMove(chess, state, seat, move, Math.random, now);
+  if ('error' in result) assert.fail(result.error);
+  return result.state;
+};
+
+test('with the clock off there is no deadline', () => {
+  const state = chess.resumeClock?.(clocked('off'), T0) as GameState;
+  assert.equal(state.clock, null);
+  assert.equal(chess.deadline?.(state), null);
+  assert.equal(chess.deadline?.(chess.createGameState('g1')), null);
+});
+
+test("the clock starts with White's time when everyone has agreed", () => {
+  const state = chess.resumeClock?.(clocked(), T0) as GameState;
+  assert.deepEqual(state.clock, { remainingMs: { 1: FIVE_MINUTES, 2: FIVE_MINUTES }, runningSince: T0 });
+  assert.equal(state.currentPlayer, 1);
+  assert.equal(chess.deadline?.(state), T0 + FIVE_MINUTES);
+  assert.equal(chess.deadline?.(chess.resetLobby(state, Math.random)), null); // a seat change stops it
+});
+
+test('a move charges the mover and adds the increment', () => {
+  const started = chess.resumeClock?.(clocked(5, 2), T0) as GameState;
+  const afterWhite = withMove(started, 1, mv('e2', 'e4'), T0 + 10_000);
+  assert.equal(afterWhite.clock?.remainingMs[1], 300_000 - 10_000 + 2_000);
+  assert.equal(afterWhite.clock?.remainingMs[2], FIVE_MINUTES);
+  assert.equal(afterWhite.clock?.runningSince, T0 + 10_000);
+  assert.equal(chess.deadline?.(afterWhite), T0 + 10_000 + FIVE_MINUTES);
+});
+
+test('running out of time loses', () => {
+  const started = chess.resumeClock?.(clocked(), T0) as GameState;
+  const lost = chess.onDeadline?.(started, T0 + FIVE_MINUTES, Math.random) as GameState;
+  assert.equal(lost.isGameOver, true);
+  assert.deepEqual(lost.winners, [2]);
+  assert.equal(lost.gameStatus, 'A ran out of time. B wins!');
+  assert.equal(chess.deadline?.(lost), null);
+});
+
+test('running out of time loses even when the opponent could not checkmate', () => {
+  const alone = { ...position({ e1: 'K', e8: 'k', a2: 'P' }), houseRules: withRules({ clockMinutes: 5, incrementSeconds: 0 }) };
+  const state = chess.resumeClock?.({ ...alone, started: true, clock: { remainingMs: { 1: 5, 2: 5 }, runningSince: null } }, T0) as GameState;
+  const lost = chess.onDeadline?.({ ...state, currentPlayer: 2 }, T0 + 5, Math.random) as GameState;
+  assert.deepEqual(lost.winners, [1]);
+});
+
+test('a move after the time ran out is refused as a loss on time', () => {
+  const started = chess.resumeClock?.(clocked(), T0) as GameState;
+  const lost = withMove(started, 1, mv('e2', 'e4'), T0 + FIVE_MINUTES + 1);
+  assert.equal(lost.isGameOver, true);
+  assert.deepEqual(lost.winners, [2]);
+  assert.equal(lost.board[4][4], null);
+  assert.equal(lost.gameStatus, 'A ran out of time. B wins!');
+});
+
+test('the increment is offered only with the clock on', () => {
+  const labels = (state: GameState) => describeHouseRules(chess.info, houseRulesOf(chess.info, state)).map(line => line.label);
+  const off = { ...lobby('A', 'B'), houseRules: withRules({ clockMinutes: 'off' }) }; // the platform leaves out a rule that is not offered
+  assert.deepEqual(labels(off), ['Clock']);
+  assert.deepEqual(labels(clocked(5)), ['Clock', 'Increment per move']);
+});
+
+test('a game over stops the clock', () => {
+  let state = chess.resumeClock?.(clocked(), T0) as GameState;
+  const mated = [mv('f2', 'f3'), mv('e7', 'e5'), mv('g2', 'g4'), mv('d8', 'h4')]
+    .reduce((current, move, index) => withMove(current, index % 2 === 0 ? 1 : 2, move, T0 + 1000 * (index + 1)), state);
+  assert.equal(mated.isGameOver, true);
+  assert.equal(chess.deadline?.(mated), null);
+  assert.equal(mated.clock?.runningSince, null);
+
+  state = withMove(state, 1, mv('e2', 'e4'), T0 + 1000);
+  const resigned = actOk(state, 2, { type: 'resign' });
+  assert.equal(chess.deadline?.(resigned), null);
+  assert.equal(resigned.clock?.runningSince, null);
+});
+
+test('a restart does not charge the downtime', () => {
+  const started = withMove(chess.resumeClock?.(clocked(), T0) as GameState, 1, mv('e2', 'e4'), T0 + 10_000);
+  const loaded = chess.resumeClock?.(started, T0 + 9_999_999) as GameState;
+  assert.deepEqual(loaded.clock?.remainingMs, started.clock?.remainingMs);
+  assert.equal(chess.deadline?.(loaded), T0 + 9_999_999 + FIVE_MINUTES);
 });

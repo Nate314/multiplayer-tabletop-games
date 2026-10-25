@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { playError } from './rules.ts';
 import { hearts } from './index.ts';
 import type { PublicGameState } from './types.ts';
@@ -25,6 +25,7 @@ function seeded(seed: number): Random {
 function gameWith(...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([hearts], seeded(1)));
   for (const name of names) manager.join('hearts', 'g1', name);
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -61,6 +62,7 @@ test('the pass waits for four players, and the first pass locks the seats', () =
   const manager = gameWith('A', 'B', 'C');
   assert.deepEqual(manager.action(ROOM, 1, { type: 'pass', cards: [0, 1, 2] }), { error: 'Waiting for more players' });
   manager.join('hearts', 'g1', 'D');
+  agreeAll(manager, ROOM); // the join cleared the agreements
   assert.equal(viewOf(manager, 1).hand.length, 13);
   assert.equal(viewOf(manager, null).started, false);
   step(manager);
@@ -166,4 +168,17 @@ test('dismissing a player mid-game ends it and the lowest score wins', () => {
   const state = ok(manager.voteDismiss(ROOM, 4, true));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1, 3, 4]);
+});
+
+test('a pass before everyone agreed is refused and changes nothing; after agreeing it goes through', () => {
+  const manager = rememberingKeys(createGameManager([hearts], seeded(1)));
+  for (const name of NAMES) manager.join('hearts', 'g1', name);
+  ok(manager.setHouseRules(ROOM, 1, { values: { jackOfDiamonds: true }, override: false, maxPlayers: null }));
+  const before = manager.rawState(ROOM);
+  const refused = manager.action(ROOM, 1, { type: 'pass', cards: [0, 1, 2] });
+  assert.deepEqual(refused, { error: 'Everyone must agree to the house rules first' });
+  assert.equal(manager.rawState(ROOM), before);
+  assert.equal(viewOf(manager, null).started, false);
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.action(ROOM, 1, { type: 'pass', cards: [0, 1, 2] })).started, true);
 });

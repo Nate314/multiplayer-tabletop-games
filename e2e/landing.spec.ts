@@ -1,0 +1,108 @@
+import { test, expect, newPlayer } from './fixtures.ts';
+
+async function landing(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1]) {
+  const page = await newPlayer(browser, server);
+  await page.goto('/');
+  return { page, cards: page.locator('.lobby-game-name') };
+}
+
+// A game's card on the landing page, by its exact name
+const card = (page: Awaited<ReturnType<typeof newPlayer>>, name: string) =>
+  page.locator('.lobby-game', { has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${name}$`) }) });
+
+test('search finds games by name or description', async ({ browser, server }) => {
+  const { page, cards } = await landing(browser, server);
+  await page.getByLabel('Search games').fill('meeples');
+  await expect(cards).toHaveText(['Carcassonne']);
+  await page.getByLabel('Search games').fill('CONNECT FOUR');
+  await expect(cards).toHaveText(['Connect Four']);
+});
+
+test('A to Z lists every game in one list without category headings', async ({ browser, server }) => {
+  const { page, cards } = await landing(browser, server);
+  await page.getByLabel('Sort').selectOption('A to Z');
+  await expect(page.locator('.lobby-category-heading')).toHaveCount(0);
+  await expect(cards).toHaveCount(31);
+  await expect(cards.first()).toHaveText('Azul');
+  await expect(cards.last()).toHaveText('Yahtzee');
+});
+
+test('category chips show only the picked categories', async ({ browser, server }) => {
+  const { page, cards } = await landing(browser, server);
+  const dice = page.getByRole('button', { name: 'Dice games' });
+  await dice.click();
+  await expect(cards).toHaveText(['Farkle', 'Yahtzee']);
+  await expect(dice).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Tile games' }).click();
+  await expect(cards).toHaveCount(7);
+  await dice.click();
+  await expect(cards).toHaveCount(5);
+});
+
+test('the players filter shows games that seat that many, marking those that need a house rule', async ({ browser, server }) => {
+  const { page, cards } = await landing(browser, server);
+  await page.getByLabel('Players').fill('7');
+  await expect(cards).toHaveCount(7);
+  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Monopoly', 'Phase 10', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  const marked = page.locator('.lobby-game', { has: page.locator('.lobby-game-house-rule') }).locator('.lobby-game-name');
+  expect((await marked.allTextContents()).sort()).toEqual(['Phase 10', 'Rook']);
+  await expect(card(page, 'Rook').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
+  await page.getByLabel('Players').fill('2');
+  await expect(card(page, 'Catan').locator('.lobby-game-house-rule')).toHaveText('2 with a house rule');
+  await page.getByLabel('Players').fill('');
+  await expect(cards).toHaveCount(31);
+});
+
+test('typing a third digit or a zero in the players filter keeps the previous value', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  const players = page.getByLabel('Players');
+  await players.pressSequentially('12');
+  await players.press('3');
+  await expect(players).toHaveValue('12');
+  await players.fill('');
+  await players.press('0');
+  await expect(players).toHaveValue('');
+  await players.press('5');
+  await players.press('0');
+  await expect(players).toHaveValue('50');
+});
+
+test('filters are remembered after a reload and Clear filters shows every game again', async ({ browser, server }) => {
+  const { page, cards } = await landing(browser, server);
+  const search = page.getByLabel('Search games');
+  await search.fill('zzz');
+  await expect(page.getByText('No games match these filters')).toBeVisible();
+  await page.reload();
+  await expect(search).toHaveValue('zzz');
+  await expect(page.getByText('No games match these filters')).toBeVisible();
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(cards).toHaveCount(31);
+  await expect(search).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Clear filters' })).toHaveCount(0);
+});
+
+test('a join link opens its dialog even when a remembered search hides that game', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  await page.getByLabel('Search games').fill('zzz');
+  await page.goto('/join/connectfour/abc');
+  await expect(page.getByRole('dialog', { name: 'Join Connect Four' })).toBeVisible();
+  await expect(page.getByText('No games match these filters')).toBeVisible();
+});
+
+test('wide windows show cards side by side and phones keep one column', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  const games = page.locator('.lobby-game');
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const [first, second] = [await games.nth(0).boundingBox(), await games.nth(1).boundingBox()];
+  expect(first!.y).toBe(second!.y);
+  await page.setViewportSize({ width: 375, height: 667 });
+  const list = await page.locator('.lobby-games').first().boundingBox();
+  const cards = page.locator('.lobby-category').first().locator('.lobby-game');
+  const ys = new Set<number>();
+  for (let i = 0; i < await cards.count(); i++) {
+    const box = (await cards.nth(i).boundingBox())!;
+    ys.add(box.y);
+    expect(Math.abs(box.width - list!.width)).toBeLessThanOrEqual(1);
+  }
+  expect(ys.size).toBe(await cards.count());
+});

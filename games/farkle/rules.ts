@@ -1,13 +1,17 @@
 // Farkle rules shared by the browser (the score of a selection) and the server (validation),
 // from https://en.wikipedia.org/wiki/Farkle.
 import { rollDice } from '../../shared/dice.ts';
+import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import { canScore, score } from './scoring.ts';
 import type { GameState, LastMove, PublicGameState, Result, Seat } from './types.ts';
 
-export const TARGET_SCORE = 10000;
+const TARGET_RULE = targetScoreRule(10000, [5000, 15000, 20000]);
+export const FARKLE_RULES: HouseRule[] = [TARGET_RULE];
+
+export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const DICE_COUNT = 6;
 
 export function createGameState(gameId: string): GameState {
@@ -129,7 +133,7 @@ function bank(state: GameState, seat: Seat, input: Record<string, unknown>): Res
   const scores = { ...state.scores, [seat]: state.scores[seat] + total };
   const lastMove: LastMove = { type: 'bank', playerNumber: seat, kept: aside.kept, points: aside.points, total };
   let next = withLastMove({ ...state, scores }, lastMove);
-  if (state.triggeredBy === null && scores[seat] >= TARGET_SCORE) {
+  if (state.triggeredBy === null && scores[seat] >= targetScore(state)) {
     const finalTurns = state.activePlayers.filter(other => other !== seat);
     next = { ...next, triggeredBy: seat, finalTurns, gameStatus: `${next.gameStatus}. Everyone else gets one more turn` };
   }

@@ -4,7 +4,7 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './quoridor.css';
+import './quoridor.scss';
 
 export const quoridorClient: ClientGame = {
   id: 'quoridor',

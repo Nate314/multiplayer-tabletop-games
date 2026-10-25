@@ -1,0 +1,724 @@
+[data-game="dominoes"] {
+  /* Dominoes' green felt theme. Every rule is scoped to data-game="dominoes", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  color: var(--text);
+  --page-bg-start: #d9efe0;
+  --page-bg-end: #8cc7a1;
+  --text: #11261a;
+  --muted: #4b6556;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(17, 38, 26, 0.15);
+  --button-bg: #1f7a4a;
+  --button-hover-bg: #165c37;
+  --button-text: #fff;
+  --status-bg: #e3f3e8;
+  --status-text: #11261a;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #c26b00;
+  --tile-face: #fbf8ee;
+  --tile-edge: #2b2b2b;
+  --tile-pip: #1b1b1b;
+  --tile-back: #15563a;
+  --tile-w: 46px;
+  --row-bg: rgba(17, 38, 26, 0.05);
+  --open-train: #b3261e;
+  --slot-fits-bg: #fff1d6;
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg-start: #12261a;
+    --page-bg-end: #08130d;
+    --text: #e6f3ea;
+    --muted: #9fbbab;
+    --panel-bg: rgba(22, 44, 31, 0.95);
+    --panel-border: rgba(230, 243, 234, 0.14);
+    --button-bg: #2a9462;
+    --button-hover-bg: #38b078;
+    --status-bg: #1f3b2a;
+    --status-text: #e6f3ea;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --highlight: #ffb020;
+    --tile-back: #2a9462;
+    --row-bg: rgba(230, 243, 234, 0.05);
+    --open-train: #ff8a80;
+    --slot-fits-bg: #4a3a12;
+  }
+}
+
+/* Page: the red background, with the header and the game in a centered column */
+
+.game-root[data-game="dominoes"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+}
+
+[data-game="dominoes"] {
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 0 12px;
+  }
+
+  .game-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+  }
+
+  .back-button,
+  .history-button,
+  .faq-button {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 1.25rem;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .settings-button,
+  .theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--button-bg);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .back-button:hover,
+  .history-button:hover:enabled,
+  .faq-button:hover,
+  .settings-button:hover,
+  .theme-toggle:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  /* Game screen: status, table and hand in one column */
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-info,
+  .table,
+  .hand {
+    box-sizing: border-box;
+    max-width: 100%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-info {
+    width: 440px;
+    padding: 14px 20px;
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+    color: var(--status-text);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  /* Always rendered, so the layout does not jump when the turn changes */
+
+  .hint {
+    color: var(--highlight);
+    font-weight: 600;
+    margin-top: 4px;
+    min-height: 1.5em;
+  }
+
+  /* Draw, Pass and Undo */
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .primary-button,
+  .action-buttons button,
+  .color-picker button,
+  .undo-vote-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+  }
+
+  .primary-button:hover,
+  .action-buttons button:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .action-buttons button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  /* Your hand: the tiles wrap inside the panel, which scrolls only if it grows very tall */
+
+  .hand {
+    width: 100%;
+    padding: 10px 12px 16px;
+    transition: opacity 0.2s;
+  }
+
+  .hand-waiting {
+    opacity: 0.75;
+  }
+
+  /* While waiting the whole hand is dimmed once, not each tile again */
+
+  .hand-waiting button.tile-unplayable {
+    opacity: 1;
+  }
+
+  .hand-header {
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .hand-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-top: 12px;
+  }
+
+  /* The scoring after each round */
+
+  .summary-overlay {
+    z-index: 15;
+  }
+
+  .round-summary {
+    max-width: 420px;
+  }
+
+  .summary-result {
+    color: var(--highlight);
+    margin-bottom: 12px;
+  }
+
+  .summary-seats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .summary-seat {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--status-bg);
+  }
+
+  .summary-winner {
+    border-color: var(--highlight);
+  }
+
+  .summary-name,
+  .summary-points {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .summary-points {
+    text-align: right;
+  }
+
+  .summary-reason,
+  .summary-target,
+  .summary-waiting {
+    color: var(--muted);
+  }
+
+  .summary-target,
+  .summary-waiting {
+    margin-top: 12px;
+  }
+
+  /* Overlays: FAQ, history, undo vote */
+
+  .overlay,
+  .undo-vote {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .undo-vote {
+    z-index: 30;
+  }
+
+  .modal,
+  .undo-vote-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 640px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    color: var(--text);
+    text-align: center;
+  }
+
+  .modal h2 {
+    margin: 0 0 12px;
+  }
+
+  /* The history shows the table and any hand without their panel shadow */
+
+  .history-board .table,
+  .history-board .hand {
+    box-shadow: none;
+  }
+
+  .history-board .hand {
+    margin-top: 12px;
+  }
+
+  .undo-vote-panel {
+    max-width: 340px;
+  }
+
+  .undo-vote-title {
+    font-weight: 600;
+  }
+
+  .undo-vote-list {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+  }
+
+  .undo-vote-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .primary-button {
+    min-width: 140px;
+    margin-top: 16px;
+    padding: 12px;
+  }
+
+  .faq dl {
+    margin: 0;
+    text-align: left;
+  }
+
+  .faq dt {
+    font-weight: 600;
+    margin-top: 14px;
+  }
+
+  .faq dd {
+    margin: 4px 0 0;
+    color: var(--muted);
+  }
+
+  /* Phones: smaller tiles, and the title on its own row above the header buttons */
+
+  @media (max-width: 480px) {
+    & {
+      --tile-w: 36px;
+    }
+
+    .game-header {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .game-header h1 {
+      flex-basis: 100%;
+      order: -1;
+      font-size: 1.4rem;
+    }
+
+    .back-button,
+    .history-button,
+    .faq-button {
+      padding: 0 0.6rem;
+    }
+
+    .game-info {
+      padding: 12px;
+    }
+
+    .hand-tiles {
+      gap: 6px;
+    }
+  }
+
+  /* The table: players, boneyard and the line */
+
+  .table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .round {
+    font-weight: 600;
+  }
+
+  .players {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 84px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--status-bg);
+  }
+
+  .player-current {
+    border-color: var(--button-bg);
+    box-shadow: 0 0 0 2px var(--button-bg);
+  }
+
+  .player-winner,
+  .player-last {
+    border-color: var(--highlight);
+  }
+
+  .player-name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .player-count,
+  .player-score {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .boneyard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .line-ends {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .end-pips {
+    display: inline-block;
+    min-width: 1.4em;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: var(--status-bg);
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  /* The board: the hub row (the line through the starter) in the middle, arms above and below it, and each double's
+     branches in rows of their own, indented a step per level up to a cap. Every row wraps, so nothing widens the page */
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .board-row {
+    --indent: calc(min(var(--depth, 0), 3) * 14px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-sizing: border-box;
+    width: calc(100% - var(--indent));
+    min-width: 0;
+    min-height: calc(var(--tile-w) + 12px);
+    margin-left: var(--indent);
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+  }
+
+  .board-row-above,
+  .board-row-below {
+    background: var(--row-bg);
+    border-color: var(--panel-border);
+  }
+
+  .board-row-label {
+    flex-basis: 100%;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .board-row-open {
+    border: 2px dashed var(--open-train);
+  }
+
+  .board-row-open .board-row-label {
+    color: var(--open-train);
+  }
+
+  .line-slot {
+    display: inline-flex;
+  }
+
+  /* An open end: a tile-sized gap showing the number it takes, outlined when you may play on it and a button when the
+     selected tile fits it */
+
+  .end-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    box-sizing: border-box;
+    width: var(--tile-w);
+    height: var(--tile-w);
+    padding: 0;
+    border: 2px dashed var(--muted);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .end-slot-usable {
+    border: 3px solid var(--highlight);
+    color: var(--highlight);
+  }
+
+  button.end-slot-fits {
+    cursor: pointer;
+    background: var(--slot-fits-bg);
+    box-shadow: 0 0 0 2px var(--highlight);
+  }
+
+  button.end-slot-fits:hover {
+    filter: brightness(1.08);
+  }
+
+  .board-start {
+    width: calc(var(--tile-w) * 2);
+  }
+
+  /* Tiles: two halves of a three-by-three grid of pips, laid sideways */
+
+  .tile {
+    display: inline-flex;
+    align-items: stretch;
+    flex: none;
+    box-sizing: border-box;
+    width: calc(var(--tile-w) * 2);
+    height: var(--tile-w);
+    padding: 2px;
+    border: 2px solid var(--tile-edge);
+    border-radius: 6px;
+    background: var(--tile-face);
+    color: var(--tile-pip);
+    font: inherit;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+
+  .tile-half {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 3px;
+  }
+
+  .pip {
+    align-self: center;
+    justify-self: center;
+    width: 70%;
+    aspect-ratio: 1;
+    max-width: 9px;
+    border-radius: 50%;
+    background: var(--tile-pip);
+  }
+
+  .pip-empty {
+    visibility: hidden;
+  }
+
+  .tile-divider {
+    flex: none;
+    width: 2px;
+    margin: 4px 0;
+    background: var(--tile-edge);
+    opacity: 0.6;
+  }
+
+  .tile-back {
+    background: var(--tile-back);
+    border-color: var(--tile-face);
+  }
+
+  button.tile-playable {
+    cursor: pointer;
+    outline: 3px solid var(--highlight);
+    outline-offset: 1px;
+    transform: translateY(-5px);
+  }
+
+  button.tile-playable:hover {
+    filter: brightness(1.05);
+    transform: translateY(-8px);
+  }
+
+  button.tile-unplayable {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .tile-selected,
+  .tile-highlighted {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+  }
+
+  /* Choosing an end for a tile that fits more than one */
+
+  .end-choice {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 2px solid var(--highlight);
+    background: var(--panel-bg);
+  }
+
+  .end-choice button {
+    padding: 8px 18px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+  }
+
+  .end-choice button:hover {
+    background: var(--button-hover-bg);
+  }
+}
+
+/* Dragging a tile: the shared drag defaults in src/App.scss, with the end under the tile filled and outlined in this game's highlight */
+[data-game="dominoes"] {
+  --drag-over: var(--highlight);
+
+  [data-drag-over] {
+    background: var(--slot-fits-bg);
+  }
+}

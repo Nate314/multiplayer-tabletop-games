@@ -1,0 +1,562 @@
+[data-game="carcassonne"] {
+  /* Carcassonne's countryside. Every rule is scoped to data-game="carcassonne", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  --page-bg: #f1ede2;
+  --text: #2b261c;
+  --muted: #6b6250;
+  --panel-bg: #fffdf7;
+  --panel-border: #d8cfb8;
+  --button-bg: #8a5a2b;
+  --button-hover-bg: #714822;
+  --button-text: #ffffff;
+  --status-bg: #ece4cf;
+  --error-bg: #fbe4e1;
+  --error-text: #8a1c12;
+  --board-bg: #d9d2bd;
+  --field: #8fbf5a;
+  --field-dark: #6f9c40;
+  --road: #f2ead2;
+  --road-edge: #9a8a66;
+  --city: #c9a46a;
+  --city-wall: #6e4d24;
+  --pennant: #2457a6;
+  --pennant-mark: #ffffff;
+  --monastery: #e9dcc0;
+  --monastery-roof: #9b3d2a;
+  --cell: rgba(255, 214, 64, 0.35);
+  --cell-edge: #d29a00;
+  --highlight: #ff7a00;
+  --spot: rgba(255, 255, 255, 0.75);
+  --spot-edge: #2b261c;
+  --seat1: #d32f2f;
+  --seat2: #1e64c8;
+  --seat3: #f2c100;
+  --seat4: #2e8b3e;
+  --seat5: #3a3a3a;
+  --meeple-edge: #1b1712;
+  --drag-over: #d29a00;
+  --piece-tray-bg: var(--panel-bg);
+  --piece-tray-border: var(--panel-border);
+  --piece-tray-text: var(--text);
+  --piece-tray-selected: var(--highlight);
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  background: var(--page-bg);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #17150f;
+    --text: #ece6d6;
+    --muted: #b0a68e;
+    --panel-bg: #24211a;
+    --panel-border: #433c2e;
+    --button-bg: #b07a3e;
+    --button-hover-bg: #c48b4b;
+    --status-bg: #342e22;
+    --error-bg: #4a1d18;
+    --error-text: #ffd6d0;
+    --board-bg: #2b281f;
+    --field: #6f9a45;
+    --field-dark: #557a32;
+    --road: #ddd3b6;
+    --city: #b38d55;
+    --cell: rgba(255, 214, 64, 0.28);
+    --spot-edge: #000000;
+    --seat5: #9e9e9e;
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 8px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  .cc-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 16px;
+    padding: 4px 8px 12px;
+  }
+
+  .cc-board-area {
+    flex: 1 1 560px;
+    min-width: 0;
+    max-width: 1000px;
+  }
+
+  .cc-side-panel {
+    display: flex;
+    flex: 0 1 340px;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  /* The board fills the height of the window below the header, and is never too small to use */
+
+  .cc-board {
+    position: relative;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--board-bg);
+  }
+
+  .cc-board-svg {
+    display: block;
+    width: 100%;
+    height: max(340px, calc(100vh - 170px));
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .cc-board-svg:active {
+    cursor: grabbing;
+  }
+
+  .cc-zoom {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .cc-zoom button {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  /* Tile artwork */
+
+  .cc-field {
+    fill: var(--field);
+  }
+
+  .cc-tile-edge {
+    fill: none;
+    stroke: var(--field-dark);
+    stroke-width: 1.5;
+  }
+
+  .cc-road-edge {
+    fill: none;
+    stroke: var(--road-edge);
+    stroke-width: 14;
+  }
+
+  .cc-road {
+    fill: none;
+    stroke: var(--road);
+    stroke-width: 9;
+  }
+
+  .cc-city {
+    fill: var(--city);
+    stroke: var(--city-wall);
+    stroke-width: 3.5;
+    stroke-linejoin: round;
+  }
+
+  .cc-junction {
+    fill: var(--monastery);
+    stroke: var(--city-wall);
+    stroke-width: 2;
+  }
+
+  .cc-monastery path:first-child {
+    fill: var(--monastery);
+    stroke: var(--monastery-roof);
+    stroke-width: 3;
+    stroke-linejoin: round;
+  }
+
+  .cc-monastery-door {
+    fill: var(--monastery-roof);
+  }
+
+  .cc-monastery-cross {
+    fill: none;
+    stroke: var(--monastery-roof);
+    stroke-width: 3;
+  }
+
+  .cc-pennant path:first-child {
+    fill: var(--pennant);
+    stroke: var(--pennant-mark);
+    stroke-width: 1.2;
+  }
+
+  .cc-pennant-mark {
+    fill: none;
+    stroke: var(--pennant-mark);
+    stroke-width: 1.6;
+  }
+
+  /* Placement */
+
+  .cc-cell {
+    fill: var(--cell);
+    stroke: var(--cell-edge);
+    stroke-width: 3;
+    stroke-dasharray: 8 6;
+    cursor: pointer;
+  }
+
+  .cc-cell:hover {
+    fill: rgba(255, 214, 64, 0.6);
+  }
+
+  .cc-cell-selected {
+    stroke-dasharray: none;
+  }
+
+  /* SVG ignores outline, so a legal target under a dragged tile or meeple takes a solid, thick stroke */
+
+  .cc-cell[data-drag-over] {
+    fill: rgba(255, 214, 64, 0.6);
+    stroke: var(--highlight);
+    stroke-width: 6;
+    stroke-dasharray: none;
+    outline: none;
+  }
+
+  .cc-spot[data-drag-over] circle {
+    stroke: var(--highlight);
+    stroke-width: 4;
+    stroke-dasharray: none;
+  }
+
+  .cc-spot[data-drag-over] {
+    outline: none;
+  }
+
+  .cc-current-tile[data-drag] {
+    cursor: grab;
+  }
+
+  .cc-side-panel .piece-tray {
+    margin-top: 10px;
+  }
+
+  .cc-side-panel .piece-tray-piece {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--piece-tray-border);
+    background: var(--piece-tray-bg);
+  }
+
+  .cc-side-panel .piece-tray-piece .cc-meeple-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .cc-preview {
+    opacity: 0.92;
+  }
+
+  .cc-preview-edge {
+    fill: none;
+    stroke: var(--highlight);
+    stroke-width: 5;
+  }
+
+  .cc-highlight {
+    fill: none;
+    stroke: var(--highlight);
+    stroke-width: 5;
+    pointer-events: none;
+  }
+
+  /* Meeples and the spots for one */
+
+  .cc-meeple {
+    stroke: var(--meeple-edge);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+  }
+
+  .cc-seat1 {
+    fill: var(--seat1);
+  }
+
+  .cc-seat2 {
+    fill: var(--seat2);
+  }
+
+  .cc-seat3 {
+    fill: var(--seat3);
+  }
+
+  .cc-seat4 {
+    fill: var(--seat4);
+  }
+
+  .cc-seat5 {
+    fill: var(--seat5);
+  }
+
+  .cc-meeple-symbol {
+    color: #FFFFFF;
+    pointer-events: none;
+  }
+
+  .cc-symbol-seat3 {
+    color: #3A2A00;
+    --color-symbol-stroke: rgba(58, 42, 0, 0.6);
+  }
+
+  :root[data-theme="dark"] & .cc-symbol-seat5 {
+    color: #1A1714;
+    --color-symbol-stroke: rgba(26, 23, 20, 0.6);
+  }
+
+  .cc-spot {
+    cursor: pointer;
+  }
+
+  .cc-spot circle {
+    fill: var(--spot);
+    stroke: var(--spot-edge);
+    stroke-width: 2;
+    stroke-dasharray: 4 3;
+  }
+
+  .cc-spot:hover circle {
+    stroke-dasharray: none;
+  }
+
+  .cc-spot-selected circle {
+    stroke: var(--highlight);
+    stroke-width: 3;
+    stroke-dasharray: none;
+  }
+
+  .cc-meeple-icon {
+    width: 22px;
+    height: 22px;
+    flex: none;
+  }
+
+  /* Side panel */
+
+  .cc-status {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--status-bg);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .cc-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .cc-turn-message {
+    font-weight: 700;
+  }
+
+  .cc-panel {
+    padding: 10px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+  }
+
+  .cc-panel-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .cc-turn-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cc-current-tile {
+    width: 96px;
+    height: 96px;
+    flex: none;
+  }
+
+  .cc-turn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .cc-tiles-left {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .cc-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .cc-side-panel button {
+    padding: 6px 12px;
+    border: 1px solid var(--button-bg);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .cc-side-panel button.cc-primary {
+    background: var(--button-bg);
+    color: var(--button-text);
+  }
+
+  .cc-side-panel button.cc-primary:hover:not(:disabled) {
+    background: var(--button-hover-bg);
+  }
+
+  .cc-side-panel button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .cc-undo {
+    align-self: flex-start;
+  }
+
+  .cc-player-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cc-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 6px;
+    border-radius: 6px;
+  }
+
+  .cc-player-current {
+    background: var(--status-bg);
+    font-weight: 700;
+  }
+
+  .cc-player-left {
+    opacity: 0.55;
+  }
+
+  .cc-player-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .cc-player-status {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 13px;
+  }
+
+  .cc-player-meeples {
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .cc-player-score {
+    min-width: 2.5em;
+    text-align: right;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .cc-final {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .cc-final caption {
+    margin-bottom: 4px;
+    color: var(--muted);
+    text-align: left;
+  }
+
+  .cc-final th,
+  .cc-final td {
+    padding: 3px 4px;
+    border-top: 1px solid var(--panel-border);
+    text-align: right;
+  }
+
+  .cc-final th[scope="row"],
+  .cc-final thead th:first-child {
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  /* History dialog */
+
+  .cc-history {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(640px, 82vw);
+    text-align: left;
+  }
+
+  .cc-history .cc-board-area {
+    flex: none;
+  }
+
+  .cc-history .cc-board-svg {
+    height: min(52vh, 480px);
+    min-height: 240px;
+  }
+
+  /* Stacked under the board on a narrow window: a shorter board keeps the turn controls in view */
+
+  @media (max-width: 919px) {
+    .cc-board-area {
+      flex-basis: 100%;
+    }
+
+    .cc-side-panel {
+      flex: 1 1 100%;
+      max-width: 720px;
+    }
+
+    .cc-board-svg {
+      height: max(300px, 55vh);
+    }
+  }
+}

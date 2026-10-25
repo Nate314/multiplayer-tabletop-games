@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
+import PieceTray from '../../../src/components/PieceTray';
+import { useDrag } from '../../../src/drag/useDrag.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import BattleDice from './BattleDice';
 import CardHand from './CardHand';
@@ -9,7 +11,9 @@ import PhasePanel, { type PlaceStep } from './PhasePanel';
 import PlayerList from './PlayerList';
 import WorldMap from './WorldMap';
 import animateMove from './animateMove.ts';
+import { seatClass } from './layout.ts';
 import { canBeSource, targetsFrom } from './selection.ts';
+import { inGame } from '../state.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, Placements, PublicGameState } from '../types.ts';
 
@@ -31,6 +35,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const mapRef = useRef<HTMLDivElement>(null);
   const [picked, setPicked] = useState<{ source: string | null; target: string | null } | null>(null);
   const [drafted, setDrafted] = useState<Stamped<Placements> | null>(null);
+  const [trayTapped, setTrayTapped] = useState(false);
   const [placeStep, setPlaceStep] = useState<PlaceStep>(1);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, phase, moveCount, hand } = gameState;
   const noVote = !undoVote && !dismissVote;
@@ -79,6 +84,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     setDraft(rest);
   };
 
+  const drag = useDrag({
+    canLift: () => placing && left > 0,
+    canDrop: (_id, target) => canSelect(target.replace('land-', '')),
+    onDrop: (_id, target) => select(target.replace('land-', ''))
+  });
+  const armies = [{
+    id: 'armies', label: 'Armies', count: placing ? left : 0, icon: <span className={`tray-army ${seatClass(playerNumber)}`} aria-hidden="true" />,
+    blocked: placing && left > 0 ? undefined : 'No armies to place now'
+  }];
+
   const send = (move: Move) => gameService.makeMove(move);
 
   return (
@@ -90,6 +105,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             canSelect={canSelect} onSelect={select} />
         </div>
         <div className="side-panel">
+          {gameState.firstPlayer !== null && !isGameOver && inGame(gameState).includes(playerNumber) && <PieceTray label="Your armies" pieces={armies} selected={placing && trayTapped ? 'armies' : null} onTap={() => setTrayTapped(tapped => !tapped)} drag={drag} />}
           <div className={error ? 'game-status game-status-error' : 'game-status'} role="status">{error || gameStatus}</div>
           <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
           <PhasePanel gameState={gameState} playerNumber={playerNumber} canMove={canMove} source={source} target={target} draft={draft}

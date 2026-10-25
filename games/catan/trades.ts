@@ -1,13 +1,14 @@
 // Trading: with the bank at 4:1, or at a port 3:1 (any resource) or 2:1 (its resource), as moves; and between players,
 // offered by the turn holder to one player or to all and answered as actions, the first to accept making the trade
-import { EDGES } from './board.ts';
+import { boardOf } from './board.ts';
 import { add, covers, describeResources, noResources, subtract, total } from './resources.ts';
 import { nameOf, note } from './state.ts';
 import type { GameState, Resource, Resources, Result, Seat, Trade } from './types.ts';
 
 // The best bank rate `seat` has for giving `resource`
 export function tradeRatio(state: Pick<GameState, 'layout' | 'buildings'>, seat: Seat, resource: Resource): number {
-  const ports = state.layout.ports.filter(port => EDGES[port.edge].some(vertex => state.buildings[vertex]?.seat === seat));
+  const { edges } = boardOf(state.layout);
+  const ports = state.layout.ports.filter(port => edges[port.edge].some(vertex => state.buildings[vertex]?.seat === seat));
   if (ports.some(port => port.kind === resource)) return 2;
   return ports.some(port => port.kind === 'any') ? 3 : 4;
 }
@@ -31,6 +32,7 @@ export function bankTrade(state: GameState, seat: Seat, give: Resource, get: Res
 
 function offerError(state: GameState, seat: Seat): string | null {
   if (state.setup) return 'Trading starts after setup';
+  if (state.specialBuild) return 'No trading during the special build phase';
   if (state.turnHolder !== seat) return 'Only the player whose turn it is can offer a trade';
   if (!state.rolled) return 'Roll the dice first';
   if (state.pending) return 'Finish the robber, discards or free roads first';

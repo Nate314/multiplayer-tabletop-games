@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
 import { seatOptions, viewFor } from './historyView.ts';
-import { PLAY_STEP_MS, nextPlayIndex } from './playback.ts';
+import PlaybackSettings from './PlaybackSettings';
+import { nextPlayIndex, stepDelayMs } from './playback.ts';
+import type { PlaybackSpeed } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
-import { loadAnimations, saveAnimations } from '../services/settings.ts';
+import { loadAnimations, loadHistorySounds, loadPlaybackSpeed, saveAnimations, saveHistorySounds, savePlaybackSpeed } from '../services/settings.ts';
+import { fitScale, nextScale } from './fitScale.ts';
+import useStateSounds from '../sound/useStateSounds.ts';
 
 export type History =
   | { status: 'loading' }
@@ -46,8 +50,12 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const [index, setIndex] = useState(steps.length - 1);
   const [viewer, setViewer] = useState<Seat | null>(null);
   const [animations, setAnimations] = useState(loadAnimations);
+  const [speed, setSpeed] = useState(loadPlaybackSpeed);
+  const [sounds, setSounds] = useState(loadHistorySounds);
   const [playing, setPlaying] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const shownIndexRef = useRef(index);
   const last = steps.length - 1;
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
@@ -66,17 +74,45 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     }
   }, [client, shownViewer, animations]);
   useMoveAnimation(boardRef, boardState, animate);
+  // Only one step forward sounds: a jump over several steps would play the end of the game together with the move
+  const advancedByOne = index === shownIndexRef.current + 1;
+  useEffect(() => {
+    shownIndexRef.current = index;
+  }, [index]);
+  useStateSounds(boardState, null, sounds && advancedByOne);
 
-  // Each shown step waits PLAY_STEP_MS before the next; moving the slider or the picker keeps playing from there
+  // The board shrinks to fit the box. A step that changes the board's size can only lower the scale, so the board never bounces;
+  // only the box changing size (a window resize) starts over. offsetWidth and offsetHeight ignore the scale transform.
+  // Written straight to the element, before the browser paints, so the board never shows a frame at the wrong size.
+  useLayoutEffect(() => {
+    const box = boxRef.current!;
+    const content = boardRef.current!;
+    let boxSize = '';
+    let scale: number | null = null;
+    const observer = new ResizeObserver(() => {
+      const size = `${box.clientWidth}x${box.clientHeight}`;
+      const boxResized = size !== boxSize;
+      boxSize = size;
+      const fit = fitScale({ width: content.offsetWidth, height: content.offsetHeight }, { width: box.clientWidth, height: box.clientHeight });
+      scale = nextScale(scale, fit, boxResized);
+      content.style.setProperty('--fit-scale', String(scale));
+      content.dataset.fitScale = String(scale);
+    });
+    observer.observe(box);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  // Each shown step waits stepDelayMs(speed) before the next, a new speed restarts the current step's wait; moving the slider or the picker keeps playing from there
   useEffect(() => {
     if (!playing) return;
     if (index >= last) {
       setPlaying(false);
       return;
     }
-    const timeout = setTimeout(() => setIndex(i => i + 1), PLAY_STEP_MS);
+    const timeout = setTimeout(() => setIndex(i => i + 1), stepDelayMs(speed));
     return () => clearTimeout(timeout);
-  }, [playing, index, last]);
+  }, [playing, index, last, speed]);
 
   function togglePlay() {
     if (playing) {
@@ -92,40 +128,49 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
     saveAnimations(on);
   }
 
+  function changeSpeed(next: PlaybackSpeed) {
+    setSpeed(next);
+    savePlaybackSpeed(next);
+}
+
+  function toggleSounds(on: boolean) {
+    setSounds(on);
+    saveHistorySounds(on);
+  }
+
   return (
     <>
       <p className="history-move">{stepLabel(client, step, moveTotal)}</p>
-      <input
-        type="range"
-        className="history-slider"
-        min={0}
-        max={last}
-        value={index}
-        aria-label="Step"
-        autoFocus
-        onChange={(e) => setIndex(Number(e.target.value))}
-      />
+      <div className="history-board" ref={boxRef}>
+        <div className="history-board-content" ref={boardRef}>
+          <StepErrorBoundary key={`${index}-${viewer}`}>
+            <HistoryBoard gameState={boardState} viewer={shownViewer} />
+          </StepErrorBoundary>
+        </div>
+      </div>
       <div className="history-controls">
         <button type="button" className="history-play" onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
-        <label className="history-animations">
-          <input type="checkbox" checked={animations} onChange={(e) => toggleAnimations(e.target.checked)} /> Animations
-        </label>
-        {steps[0].views && (
-          <select
-            aria-label="View as"
-            value={viewer === null ? '' : String(viewer)}
-            onChange={(e) => setViewer(e.target.value === '' ? null : Number(e.target.value))}
-          >
-            <option value="">Table only</option>
-            {seatNames.map(({ seat, name }) => <option key={seat} value={seat}>{name}</option>)}
-          </select>
-        )}
+        <input
+          type="range"
+          className="history-slider themed-range"
+          min={0}
+          max={last}
+          value={index}
+          aria-label="Step"
+          autoFocus
+          onChange={(e) => setIndex(Number(e.target.value))}
+        />
+        <PlaybackSettings
+          animations={animations}
+          onAnimationsChange={toggleAnimations}
+          sounds={sounds}
+          onSoundsChange={toggleSounds}
+          speed={speed}
+          onSpeedChange={changeSpeed}
+          viewAs={steps[0].views ? { value: viewer, options: seatNames, onChange: setViewer } : undefined}
+        />
       </div>
-      <div className="history-board" ref={boardRef}>
-        <StepErrorBoundary key={`${index}-${viewer}`}>
-          <HistoryBoard gameState={boardState} viewer={shownViewer} />
-        </StepErrorBoundary>
-      </div>
+      {steps[0].views && <p className="history-viewer">Viewing as {seatNames.find(o => String(o.seat) === String(shownViewer))?.name ?? 'Table only'}</p>}
     </>
   );
 }
@@ -158,7 +203,7 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
   }
 
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay history-overlay" onClick={onClose}>
       <div className="modal history" role="dialog" aria-label="History" onClick={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
         {body}
@@ -168,7 +213,7 @@ export default function HistoryDialog({ client, history, title, onClose, onDownl
           )}
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>
-        {downloadFailed && <p className="history-move">Could not download the game</p>}
+        {downloadFailed && <p role="alert" className="history-download-error">Could not download the game</p>}
       </div>
     </div>
   );

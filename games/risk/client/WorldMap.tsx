@@ -1,5 +1,6 @@
 import { BORDERS, CONTINENTS, TERRITORIES } from '../map.ts';
-import { CONTINENT_LABELS, CONTINENT_SHAPES, MAP_HEIGHT, MAP_WIDTH, TERRITORY_RADIUS, seatClass, shortName, territoryKey } from './layout.ts';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { CONTINENT_LABELS, CONTINENT_SHAPES, MAP_HEIGHT, MAP_WIDTH, SEAT_SYMBOLS, TERRITORY_RADIUS, seatClass, shortName, territoryKey } from './layout.ts';
 import type { PublicGameState } from '../types.ts';
 
 type WorldMapProps = {
@@ -12,6 +13,8 @@ type WorldMapProps = {
   canSelect?: (id: string) => boolean;
   onSelect?: (id: string) => void;
 };
+
+const SYMBOL_SIZE = 9; // under the army count, inside the disc
 
 const byId = new Map(TERRITORIES.map(territory => [territory.id, territory]));
 
@@ -55,13 +58,15 @@ export default function WorldMap({ gameState, source = null, target = null, targ
         const label = `${name}: ${ownerName}, ${count} ${count === 1 ? 'army' : 'armies'}`;
         const added = draft[id] ?? 0;
         return (
-          <g key={id} className={classNames.join(' ')} data-anim-key={territoryKey(id)}
+          <g key={id} className={classNames.join(' ')} data-anim-key={territoryKey(id)} data-drop={onSelect ? `land-${id}` : undefined}
             role={selectable ? 'button' : undefined} tabIndex={selectable ? 0 : undefined} aria-label={label}
             onClick={selectable ? () => onSelect?.(id) : undefined}
             onKeyDown={selectable ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect?.(id); } } : undefined}>
             <title>{label}</title>
             <circle className="disc" cx={x} cy={y} r={TERRITORY_RADIUS} />
             <text className="army-count" x={x} y={y}>{count}</text>
+            <ColorSymbol color={owner ? SEAT_SYMBOLS[owner] : null} className="disc-symbol"
+              svgProps={{ x: x - SYMBOL_SIZE / 2, y: y + 7, width: SYMBOL_SIZE, height: SYMBOL_SIZE }} />
             <text className="territory-name" x={x} y={y + TERRITORY_RADIUS + 11}>{shortName(id)}</text>
             {added > 0 && (
               <g className="draft-badge">

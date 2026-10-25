@@ -4,6 +4,7 @@
 import { dropBidder, nextAuction } from './auctions.ts';
 import { receiveProperties, sellAllBuildings } from './buildings.ts';
 import { giveCash } from './money.ts';
+import { auctionsOn } from './options.ts';
 import { leaveJail, returnJailCards } from './movement.ts';
 import { checkGameOver, nameOf, nextInGame, note, startTurn } from './state.ts';
 import { dropTradesOf } from './trades.ts';
@@ -26,6 +27,7 @@ function toPlayer(state: GameState, seat: Seat, creditor: Seat): GameState {
   return receiveProperties(handed, creditor, spaces);
 }
 
+// Properties go to auction, or with auctions off simply back to the bank unowned
 function toBank(state: GameState, seat: Seat): GameState {
   const spaces = propertiesOf(state, seat).sort((a, b) => a - b);
   const owners = { ...state.owners };
@@ -37,7 +39,7 @@ function toBank(state: GameState, seat: Seat): GameState {
     cash: { ...state.cash, [seat]: 0 },
     jailCards: { ...state.jailCards, [seat]: [] },
     decks: returnJailCards(state.decks, state.jailCards[seat] ?? []),
-    auctionQueue: [...state.auctionQueue, ...spaces]
+    auctionQueue: auctionsOn(state) ? [...state.auctionQueue, ...spaces] : state.auctionQueue
   };
 }
 

@@ -1,5 +1,6 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { RESOURCES } from '../board.ts';
-import { RESOURCE_LABELS, seatClass } from './layout.ts';
+import { RESOURCE_LABELS, SEAT_SYMBOLS, seatClass } from './layout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 // Every player's points, card counts, knights and road, with the award cards, then the bank
@@ -25,7 +26,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
         return (
           <div key={seat} className={classNames.join(' ')}>
             <div className="player-line">
-              <span className={`player-swatch ${seatClass(seat)}`} aria-hidden="true" />
+              <span className={`player-swatch ${seatClass(seat)}`} aria-hidden="true"><ColorSymbol color={SEAT_SYMBOLS[seat as Seat]} className="swatch-symbol" /></span>
               <span className="player-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
               {status && <span className="player-status">{status}</span>}
               <span className="player-points" title={`Points${hiddenNote}`}>{points[seat] ?? 0} pts</span>

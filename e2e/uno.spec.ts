@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/uno/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
 
@@ -61,6 +61,7 @@ async function deal(table: Table, { hands, discard, color, drawPile = GREENS, cu
     currentPlayer: current,
     turnHolder: current,
     pendingFour: null,
+    pendingDraw: null,
     unoWindow: null,
     revealed: null,
     roundSummary: null,
@@ -71,8 +72,8 @@ async function deal(table: Table, { hands, discard, color, drawPile = GREENS, cu
   });
 }
 
-async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara']) {
-  const table = await seat('uno', names);
+async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara'], options?: SeatOptions) {
+  const table = await seat('uno', names, options);
   return { table, pages: table.pages };
 }
 
@@ -472,9 +473,132 @@ test.describe('UNO rules', () => {
     await expect(discardTop(alice)).toHaveAttribute('title', 'red 5');
     await expect(turn(alice)).toHaveText('Your turn');
   });
+
+  test('the host can set a lower target', async ({ seat }) => {
+    const { table, pages } = await start(seat, ['Dan', 'Eve'], { houseRules: { targetScore: 250 } });
+    await expect(pages[0].locator('.round')).toHaveText('Round 1: first to 250 points wins');
+    await deal(table, { hands: { 1: [c('red', '7')], 2: [WILD] }, discard: [c('red', '5')], scores: { 1: 200, 2: 100 } });
+    await play(pages[0], 'red 7');
+    await expect(scoring(pages[1]).locator('h2')).toHaveText('Final scoring');
+    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins');
+    await expect(scoring(pages[1]).locator('.summary-result')).toHaveText('Dan went out and wins with 250 points!');
+    await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
+  });
+
+  test('stacking a Draw Two', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { stacking: true } });
+    await deal(table, {
+      hands: { 1: [c('red', 'drawTwo'), c('red', '1')], 2: [c('red', 'drawTwo'), c('red', '2')], 3: [c('green', '1'), c('green', '2')] },
+      discard: [c('red', '5')]
+    });
+    await play(alice, 'red Draw Two');
+    await expect(bob.locator('.stack-count')).toHaveText('Stack: Bob draws 2 unless they stack');
+    await expect(countOf(bob, 'Bob')).toHaveText('2 cards');
+    await expect(bob.getByRole('group', { name: 'Answer the stack' })).toBeVisible();
+    await expect(button(bob, 'Draw')).toBeDisabled();
+    await play(bob, 'red Draw Two');
+    await expect(cara.locator('.stack-count')).toHaveText('Stack: Cara draws 4 unless they stack');
+    await expect(handCard(cara, 'green 1')).toBeDisabled();
+    await expect(cara.locator('.hint')).toHaveText('Play a Draw Two or Wild Draw Four on it, or accept and draw 4');
+    await expect(cara.getByRole('group', { name: 'Answer the stack' })).toContainText('Play a Draw Two or Wild Draw Four on the stack');
+    await button(cara, 'Accept and draw 4').click();
+    await expect(cara.locator('.stack-count')).toHaveCount(0);
+    await expect(countOf(alice, 'Cara')).toHaveText('6 cards');
+    await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('a Draw Two is not offered on a Wild Draw Four', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { stacking: true } });
+    await deal(table, {
+      hands: { 1: [FOUR, c('red', '1')], 2: [c('blue', 'drawTwo'), c('blue', '2')], 3: [c('green', '1'), c('green', '2')] },
+      discard: [c('red', '5')]
+    });
+    await playWild(alice, 'Wild Draw Four', 'blue');
+    const panel = bob.getByRole('group', { name: 'Answer the Wild Draw Four' });
+    await expect(panel).toContainText('Or play a Wild Draw Four on it.');
+    await expect(panel).not.toContainText('Draw Two');
+    await expect(handCard(bob, 'blue Draw Two')).toBeDisabled();
+    await expect(bob.locator('.hint')).toHaveText('Play a Wild Draw Four on it, or accept and draw 4');
+  });
+
+  test('a 7 swaps hands', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { sevenZero: true } });
+    await deal(table, {
+      hands: { 1: [c('red', '7'), c('red', '8'), c('red', '9')], 2: [c('blue', '1')], 3: [c('green', '1'), c('green', '2')] },
+      discard: [c('red', '5')]
+    });
+    await play(alice, 'red 7');
+    const picker = alice.getByRole('group', { name: 'Swap hands with' });
+    await expect(picker.getByRole('button')).toHaveText(['Bob (1)', 'Cara (2)', 'Cancel']);
+    await picker.getByRole('button', { name: 'Cara (2)' }).click();
+    await expect(status(bob)).toHaveText('Alice played red 7; swaps hands with Cara');
+    await expect(countOf(bob, 'Alice')).toHaveText('2 cards');
+    await expect(countOf(bob, 'Cara')).toHaveText('2 cards');
+    await expect(handCard(alice, 'green 1')).toBeVisible();
+    await expect(handCard(cara, 'red 8')).toBeVisible();
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(cara.getByRole('group', { name: 'Swap hands with' })).toHaveCount(0);
+  });
+
+  test('a player jumps in out of turn and play continues from them', async ({ seat }) => {
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara'], { houseRules: { jumpIn: true } });
+    await deal(table, {
+      hands: {
+        1: [c('red', '7'), c('red', '8')],
+        2: [c('red', '5'), c('red', '6'), c('blue', '5'), c('red', 'skip'), c('green', '1')],
+        3: [c('green', '2'), c('green', '3')]
+      },
+      discard: [c('red', '5')]
+    });
+    await expect(handCard(bob, 'red 5')).toHaveClass(/card-playable/);
+    for (const name of ['red 6', 'blue 5', 'red Skip', 'green 1']) await expect(handCard(bob, name)).toBeDisabled();
+    await expect(bob.locator('.hint')).toHaveText('Jump in: you hold a card identical to the top card');
+    await expect(handCard(cara, 'green 2')).toBeDisabled();
+
+    await play(bob, 'red 5');
+    await expect(status(alice)).toHaveText('Bob jumped in with red 5');
+    await expect(turn(cara)).toHaveText('Your turn');
+    await expect(turn(alice)).not.toHaveText('Your turn');
+    await expect(countOf(alice, 'Bob')).toHaveText('4 cards');
+    await expect(discardTop(alice)).toHaveAttribute('title', 'red 5');
+    // Alice lost her turn, so her cards are no longer playable
+    await expect(handCard(alice, 'red 7')).toBeDisabled();
+    await expect(handCard(bob, 'red 5')).toHaveCount(0);
+
+    await undo(bob, alice, cara);
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(countOf(alice, 'Bob')).toHaveText('5 cards');
+  });
 });
 
 test.describe('UNO controls', () => {
+  test('with Color-blind symbols on, every colored card, the current color and the color choices show a shape', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await deal(table, { hands: { 1: [c('red', '7'), c('blue', '7'), c('green', '7'), c('yellow', '7'), WILD], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const shape of ['circle', 'square', 'triangle', 'star']) await expect(hand(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
+    await expect(hand(alice).locator('.color-symbol')).toHaveCount(4);
+    await expect(discardTop(alice).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.color-swatch .color-symbol-circle')).toHaveCount(1);
+    await handCard(alice, 'Wild').click();
+    await expect(alice.getByRole('group', { name: 'Choose a color' }).locator('.color-symbol')).toHaveCount(4);
+  });
+
+  test('the card you drew is outlined until your next move', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat);
+    await deal(table, {
+      hands: { 1: [c('blue', '1')], 2: [c('blue', '2')], 3: [c('blue', '3')] },
+      discard: [c('red', '5')],
+      drawPile: [c('green', '1'), c('red', '8')]
+    });
+    await button(alice, 'Draw').click();
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(1);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveAttribute('title', 'red 8');
+    await play(alice, 'red 8');
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('playable cards in your hand are raised and outlined, and clicking one plays it', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('green', '9')], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });
@@ -616,6 +740,20 @@ test.describe('UNO controls', () => {
     await expect(dialog.locator('h2')).toHaveText('Final scoring');
   });
 
+  test('the cards a round-ending Draw Two made you take are not outlined again in the next round', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
+    const [one, two] = [c('red', '1'), c('red', '2')];
+    await deal(table, { hands: { 1: [c('blue', '9')], 2: [c('red', 'drawTwo')] }, discard: [c('red', '5')], drawPile: [FOUR, FOUR], current: 2 });
+    await play(bob, 'red Draw Two');
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(2);
+    // The queued shuffle deals Alice red 1 and red 2 among her new cards; Continue deals without a move
+    await table.random(...stacked([one, one, two, two]));
+    await scoring(alice).getByRole('button', { name: 'Continue' }).click();
+    await scoring(bob).getByRole('button', { name: 'Continue' }).click();
+    await expect(hand(alice).getByRole('button')).toHaveCount(7);
+    await expect(hand(alice).locator('.newly-drawn')).toHaveCount(0);
+  });
+
   test('clicking Undo asks everyone to undo the last move', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('red', '8')], 2: [c('blue', '1')], 3: [c('green', '1')] }, discard: [c('red', '5')] });
@@ -637,7 +775,7 @@ test.describe('UNO controls', () => {
 });
 
 test.describe('UNO differences from Wikipedia', () => {
-  test('house rules are not offered: no stacking a Draw Two, and no jumping in out of turn', async ({ seat }) => {
+  test('with house rules off there is no stacking a Draw Two, and no jumping in out of turn', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat);
     await deal(table, {
       hands: { 1: [c('red', 'drawTwo'), c('red', '1')], 2: [c('red', 'drawTwo'), c('red', '2')], 3: [c('red', 'drawTwo'), c('green', '1')] },
@@ -683,5 +821,15 @@ test.describe('UNO differences from Wikipedia', () => {
     expect(state.drawPile.slice(0, 3)).toEqual([c('yellow', '1'), c('yellow', '2'), c('yellow', '3')]);
     expect(state.pendingFour).toBeNull();
     await expect(cara.getByRole('group', { name: 'Answer the Wild Draw Four' })).toHaveCount(0);
+  });
+});
+
+test.describe('UNO house rules', () => {
+  test('10 players can join with the override', async ({ seat }) => {
+    const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
+    const table = await seat('uno', names, { maxPlayers: 10 });
+    expect(table.pages).toHaveLength(10);
+    expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(10);
+    for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
   });
 });

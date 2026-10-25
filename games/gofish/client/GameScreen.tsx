@@ -5,6 +5,8 @@ import PlayingCard from '../../../src/components/PlayingCard';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
 import Hand from './Hand';
+import useNewlyDrawn from '../../../src/hooks/useNewlyDrawn.ts';
+import { drawnStep } from './drawn.ts';
 import Table from './Table';
 import { rankPlural } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
@@ -38,6 +40,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const rank = current.rank !== null && hand.some(card => card.rank === current.rank) ? current.rank : null;
 
   useMoveAnimation(screenRef, gameState, animateMove);
+  const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   function ask() {
     if (!isMyTurn || rank === null || target === null) return;
@@ -86,6 +89,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           hand={hand}
           label={`Your hand (${hand.length})`}
           waiting={!isMyTurn}
+          drawnKeys={newlyDrawn}
           rank={isMyTurn ? rank : null}
           onPickRank={isMyTurn ? picked => setPicks({ ...current, rank: picked }) : undefined}
         />

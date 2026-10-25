@@ -1,0 +1,717 @@
+[data-game="azul"] {
+  /* Azul's blue theme. Every rule is scoped to data-game="azul", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  color: var(--text);
+  --page-bg-start: #e6eef7;
+  --page-bg-end: #bcd0e6;
+  --text: #1c2b3a;
+  --muted: #55677a;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(28, 43, 58, 0.15);
+  --button-bg: #1f5fa8;
+  --button-hover-bg: #174a85;
+  --button-text: #fff;
+  --status-bg: #e3edf8;
+  --status-text: #1c2b3a;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --factory-bg: #f6ecd6;
+  --factory-border: #c9b68c;
+  --slot-bg: rgba(28, 43, 58, 0.07);
+  --slot-border: rgba(28, 43, 58, 0.25);
+  --highlight: #e08a00;
+  --tile: 34px;
+  /* The shared platform controls (Settings, the History gear, the house rules panel) in Azul's colors; each follows the
+     dark values below, which redefine the variables they point at */
+  --platform-page-bg: var(--page-bg-start);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg-start: #14202e;
+    --page-bg-end: #0b131c;
+    --text: #e6edf5;
+    --muted: #9fb0c3;
+    --panel-bg: rgba(27, 40, 56, 0.95);
+    --panel-border: rgba(230, 237, 245, 0.14);
+    --button-bg: #2a6fbe;
+    --button-hover-bg: #3a82d6;
+    --button-text: #fff;
+    --status-bg: #22344a;
+    --status-text: #e6edf5;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --factory-bg: #3a3324;
+    --factory-border: #6f6347;
+    --slot-bg: rgba(230, 237, 245, 0.06);
+    --slot-border: rgba(230, 237, 245, 0.28);
+    --highlight: #ffb020;
+  }
+}
+
+/* Page: the blue background, with the header and the game in a centered column */
+
+.game-root[data-game="azul"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+}
+
+[data-game="azul"] {
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 0 12px;
+  }
+
+  .game-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+  }
+
+  .back-button,
+  .history-button,
+  .faq-button {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 1.25rem;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .github-link,
+  .share-button,
+  .settings-button,
+  .theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--button-bg);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .back-button:hover,
+  .history-button:hover:enabled,
+  .faq-button:hover,
+  .github-link:hover,
+  .share-button:hover,
+  .settings-button:hover,
+  .theme-toggle:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  .game-info {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    min-width: 280px;
+  }
+
+  .primary-button,
+  .action-buttons button,
+  .undo-vote-actions button {
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+  }
+
+  .primary-button:hover,
+  .action-buttons button:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+    color: var(--status-text);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  /* Game screen */
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    /* The same centered 1100px column as the header, so the boards wrap as they always have */
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-screen .game-info {
+    width: 440px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  /* Always rendered, so the layout does not jump when the turn changes */
+
+  .hint {
+    color: var(--highlight);
+    font-weight: 600;
+    margin-top: 4px;
+    min-height: 1.5em;
+  }
+
+  /* Tiles */
+
+  .tile,
+  .slot {
+    width: var(--tile);
+    height: var(--tile);
+    box-sizing: border-box;
+    border-radius: 5px;
+    flex: none;
+  }
+
+  .tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--tile) * 0.5);
+    line-height: 1;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+    user-select: none;
+  }
+
+  .tile .color-symbol {
+    width: 62%;
+    height: 62%;
+  }
+
+  .slot {
+    display: inline-block;
+    background: var(--slot-bg);
+    border: 1px dashed var(--slot-border);
+  }
+
+  .tile-blue {
+    background: #1e6fd9;
+    color: #fff;
+  }
+
+  .tile-yellow {
+    background: #f2b61b;
+    color: #3a2a00;
+  }
+
+  .tile-red {
+    background: #d6392e;
+    color: #fff;
+  }
+
+  .tile-black {
+    background: #2b2b2b;
+    color: #fff;
+  }
+
+  .tile-cyan {
+    background: #7fdcdf;
+    color: #053a3c;
+  }
+
+  :root[data-theme="dark"] & .tile-black {
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tile-first {
+    background: #fff;
+    color: #1c2b3a;
+    font-weight: 700;
+    border-radius: 50%;
+  }
+
+  .tile-faded {
+    opacity: 0.22;
+    box-shadow: none;
+  }
+
+  .tile-selected {
+    outline: 3px solid var(--highlight);
+    outline-offset: 1px;
+    transform: translateY(-3px);
+  }
+
+  .tile-button {
+    padding: 0;
+    border: none;
+    background: none;
+    line-height: 0;
+    border-radius: 5px;
+  }
+
+  .tile-button:disabled {
+    cursor: default;
+  }
+
+  .tile-button:not(:disabled):hover .tile {
+    filter: brightness(1.15);
+  }
+
+  /* The table: factories and the center */
+
+  .table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.2s;
+  }
+
+  .table-waiting {
+    opacity: 0.75;
+  }
+
+  .factories {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .factory {
+    display: grid;
+    grid-template-columns: repeat(2, var(--tile));
+    grid-auto-rows: var(--tile);
+    gap: 4px;
+    align-content: center;
+    justify-content: center;
+    width: calc(var(--tile) * 2 + 4px);
+    height: calc(var(--tile) * 2 + 4px);
+    padding: 14px;
+    border-radius: 50%;
+    background: var(--factory-bg);
+    border: 2px solid var(--factory-border);
+  }
+
+  .center {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    box-sizing: border-box;
+    min-height: var(--tile);
+    min-width: 260px;
+    max-width: min(640px, 100%);
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--panel-bg);
+    border: 2px solid var(--panel-border);
+  }
+
+  .center-label {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* A color's tiles stay on one row. A group too wide for the center shrinks its tiles instead of wrapping. */
+
+  .center-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .center-group .tile-button {
+    flex: 0 1 auto;
+    width: var(--tile);
+    min-width: 0;
+  }
+
+  .center-group .tile {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  /* Player boards */
+
+  .boards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .other-boards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .player-board {
+    background: var(--panel-bg);
+    border: 2px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .board-other {
+    --tile: 22px;
+  }
+
+  .board-current {
+    border-color: var(--button-bg);
+  }
+
+  .board-winner {
+    border-color: var(--highlight);
+  }
+
+  .board-left {
+    opacity: 0.55;
+  }
+
+  .board-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .board-body {
+    display: flex;
+    gap: calc(var(--tile) * 0.5);
+    align-items: flex-start;
+  }
+
+  .pattern-lines {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .pattern-line,
+  .floor-line {
+    display: flex;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: inherit;
+  }
+
+  .pattern-line:disabled,
+  .floor-line:disabled {
+    cursor: default;
+  }
+
+  .pattern-line.legal,
+  .floor-line.legal,
+  .pattern-line.last-line,
+  .floor-line.last-line {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+  }
+
+  .pattern-line.legal:hover,
+  .floor-line.legal:hover {
+    background: var(--slot-bg);
+  }
+
+  .wall {
+    display: grid;
+    grid-template-columns: repeat(5, var(--tile));
+    gap: 4px;
+  }
+
+  .floor-line {
+    margin-top: 12px;
+  }
+
+  .floor-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .floor-penalty {
+    font-size: calc(var(--tile) * 0.36);
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  /* Undo button */
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .action-buttons button {
+    padding: 8px 18px;
+  }
+
+  .action-buttons button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  /* Overlays: FAQ, round scoring, undo vote */
+
+  .overlay,
+  .undo-vote {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .undo-vote {
+    z-index: 30;
+  }
+
+  .modal,
+  .undo-vote-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 640px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    color: var(--text);
+    text-align: center;
+  }
+
+  /* History: the table above the boards, at full strength, though nothing on it can be clicked */
+
+  .history-board-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .history-board .table-waiting {
+    opacity: 1;
+  }
+
+  .modal h2 {
+    margin: 0 0 12px;
+  }
+
+  /* Settings reads as a list, left aligned like every other game's */
+  .modal.settings {
+    text-align: left;
+  }
+
+  .undo-vote-panel {
+    max-width: 340px;
+  }
+
+  .undo-vote-title {
+    font-weight: 600;
+  }
+
+  .undo-vote-list {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+  }
+
+  .undo-vote-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .undo-vote-actions button {
+    padding: 10px 20px;
+  }
+
+  .primary-button {
+    min-width: 140px;
+    margin-top: 16px;
+  }
+
+  .faq dl {
+    margin: 0;
+    text-align: left;
+  }
+
+  .faq dt {
+    font-weight: 600;
+    margin-top: 14px;
+  }
+
+  .faq dd {
+    margin: 4px 0 0;
+    color: var(--muted);
+  }
+
+  .summary-result {
+    color: var(--highlight);
+    margin-bottom: 12px;
+  }
+
+  .summary-seats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    --tile: 22px;
+  }
+
+  .summary-seat {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--slot-bg);
+  }
+
+  .summary-winner {
+    border-color: var(--highlight);
+  }
+
+  .summary-seat header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-weight: 600;
+  }
+
+  .summary-lines {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+  }
+
+  .summary-lines li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+  }
+
+  .summary-floor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .summary-reason {
+    color: var(--muted);
+  }
+
+  .summary-points {
+    margin-left: auto;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-waiting {
+    margin-top: 16px;
+  }
+
+  /* Phones: shrink the tiles so a board fits the screen, and tighten the header */
+
+  @media (max-width: 480px) {
+    & {
+      --tile: 26px;
+    }
+
+    /* The six header buttons fill the width, so the title takes its own row above them */
+
+    .game-header {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .game-header h1 {
+      flex-basis: 100%;
+      order: -1;
+      font-size: 1.4rem;
+    }
+
+    .back-button,
+    .history-button,
+    .faq-button {
+      padding: 0 0.6rem;
+    }
+  }
+
+  @media (max-width: 380px) {
+    & {
+      --tile: 21px;
+    }
+  }
+}

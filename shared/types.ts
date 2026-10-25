@@ -1,3 +1,5 @@
+import type { HouseRulesState } from './houseRules.ts';
+
 export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
 
 export type Seat = number; // 1-based, seated in join order
@@ -19,12 +21,14 @@ export type BaseGameState = {
   undoVote: UndoVote | null;
   disconnected: Seat[]; // held seats, sorted ascending; always a subset of activePlayers
   dismissVote: DismissVote | null;
+  houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
   seatKeys?: Record<Seat, string>; // the secret each seat's rejoin must send; the server strips it from every view
 };
 
 export type BasePublicState = BaseGameState & {
   undoAvailable: boolean;
   moveCount: number; // moves on the timeline; undo lowers it
+  serverTime?: number; // only on live views, so a client countdown can correct for its own clock
 };
 
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it

@@ -12,14 +12,17 @@ export const FAQS: FaqItem[] = [
       'start of every turn. You can move one square up, down, left or right, or jump straight over a pawn ' +
       'next to you if the square behind it is free. If a wall, another pawn or the board edge is behind that ' +
       'pawn, you can step diagonally to either side of it instead, as long as no wall or pawn is in the way. ' +
-      'You can never jump over a wall or over two pawns.'
+      'You can never jump over a wall or over two pawns. You can also drag your pawn onto a highlighted square; ' +
+      'drop it anywhere else to put it back.'
   },
   {
     question: 'How do I place a wall?',
     answer: 'On your turn, choose Horizontal Wall or Vertical Wall, then hover over the board to preview the wall ' +
       'and click to place it. A horizontal wall runs under the square you click and the one to its right. A ' +
       'vertical wall runs along the right of the square you click and the one below it. Placing a wall uses ' +
-      'your turn.'
+      'your turn. Or use the tray of walls below the action buttons: tap the wall to pick it up, and a dot on the ' +
+      'bottom right corner of a square marks each place it can go, the middle of the wall it would make. Tap it again, click Rotate or press R to turn it, then click a dotted square, ' +
+      'or drag the wall from the tray onto the board.'
   },
   {
     question: 'Where can walls go?',
@@ -44,5 +47,9 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What happens if someone leaves?',
     answer: 'Their pawn leaves the board, their walls stay, and their turns are skipped.'
+  },
+  {
+    question: 'Can I tell the colors apart without seeing color?',
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each pawn color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns and the Goals list show it.'
   }
 ];

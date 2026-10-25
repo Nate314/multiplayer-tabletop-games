@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import {
-  HAND_SIZE, KITTY_SIZE, TARGET_SCORE, buildDeck, canPlayCard, cardName, createGameState, dealHand, sittingOut, suitOf,
+  HAND_SIZE, KITTY_SIZE, targetScore, buildDeck, canPlayCard, cardName, createGameState, dealHand, sittingOut, suitOf,
   teamOf, toPublicState, trickWinner
 } from './rules.ts';
 import { euchre } from './index.ts';
@@ -300,7 +301,7 @@ test('first team to 10 wins', () => {
   assert.deepEqual(act(won, 1, { type: 'acknowledgeRound' }), { error: 'The game is over' });
   const defenders = lastTrick([1, 3], { scores: [9, 8] });
   assert.deepEqual(defenders.winners, [2, 4]);
-  assert.equal(TARGET_SCORE, 10);
+  assert.equal(targetScore({}), 10);
 });
 
 test('a player leaving ends the game and the other team wins', () => {
@@ -408,4 +409,14 @@ test('describes plays for the status line', () => {
   assert.equal(state.gameStatus, 'Dan played king of hearts and took the trick');
   assert.deepEqual(state.tricksWon, [2, 2]);
   assert.equal(state.currentPlayer, 4);
+});
+
+test('the game ends at the chosen target', () => {
+  const rules = (value: number) => ({ houseRules: withRules({ targetScore: value }), scores: [3, 0] as TeamScores });
+  assert.equal(targetScore(rules(5)), 5);
+  const won = lastTrick([4, 0], rules(5)); // a march is 2 points: 3 + 2
+  assert.equal(won.isGameOver, true);
+  assert.deepEqual(won.winners, [1, 3]);
+  const standard = lastTrick([4, 0], rules(10));
+  assert.equal(standard.isGameOver, false);
 });
