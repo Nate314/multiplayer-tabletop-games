@@ -9,9 +9,9 @@ import {
 } from '../shared/houseRules.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
-import { MAX_SPECTATORS, spectatorView } from '../shared/spectators.ts';
+import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
-import type { JoinRole } from '../shared/types.ts';
+import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
@@ -160,19 +160,28 @@ export function createGameManager(
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
-    const live = {
-      spectators: (room.state.spectators ?? []).filter(spectator => room.watching.has(spectator.id))
-      // Task 3 adds handRequests here
+    const base = publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
+    return live(room, base, request => request.seat === viewer);
+  }
+
+  // Adds what changes by the minute and is never stored: who is watching, and the open hand requests `wanted` picks
+  function live(room: Room, base: BasePublicState, wanted: (request: HandRequest) => boolean): BasePublicState {
+    return {
+      ...base,
+      spectators: (room.state.spectators ?? []).filter(spectator => room.watching.has(spectator.id)),
+      handRequests: openHandRequests(room.state, room.watching).filter(wanted),
+      serverTime: now()
     };
-    return { ...publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer), ...live, serverTime: now() };
   }
 
   // A spectator sees the table plus the seats that allowed them, and can never undo
   function spectatorViewOf(room: Room, spectatorId: string): BasePublicState | undefined {
     const spectator = room.state.spectators?.find(candidate => candidate.id === spectatorId);
     if (!spectator) return undefined;
-    const { seatViews } = spectatorView(room.game, room.state, spectator) as Partial<BasePublicState>;
-    return { ...view(room, null), ...(seatViews && { seatViews }) };
+    const raw = spectatorView(room.game, room.state, spectator);
+    const base = stamp(room, room.state, raw, room.timeline.length);
+    const { seatViews } = raw as Partial<BasePublicState>;
+    return live(room, { ...base, ...(seatViews && { seatViews }) }, request => request.spectator === spectatorId);
   }
 
   function findHistoryRoom(gameType: unknown, gameId: unknown) {
@@ -266,7 +275,8 @@ export function createGameManager(
     const game = findGame(saved.gameType);
     if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
-    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected };
+    // Nobody is watching either, so no hand request is still open
+    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected, handRequests: [] };
     if (game.resumeClock) state = game.resumeClock(state, now());
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline, watching: new Set() };
     rooms.set(roomId, room);
@@ -310,7 +320,8 @@ export function createGameManager(
         if (findSeatByName(state, name) !== undefined) return { error: 'That name is taken in this game' };
         if (spectator) {
           if (room.watching.has(spectator.id)) return { error: `${spectator.name} is already in this game` };
-          if (seatKey !== state.spectatorKeys?.[spectator.id]) return { error: 'That name is taken in this game' };
+          const expected = state.spectatorKeys?.[spectator.id];
+          if (expected === undefined || seatKey !== expected) return { error: 'That name is taken in this game' };
           room.watching.add(spectator.id);
           save(roomId, room);
           return { roomId, seat: null, spectatorId: spectator.id, seatKey: seatKey as string, state: spectatorViewOf(room, spectator.id)! };
@@ -562,7 +573,49 @@ export function createGameManager(
     disconnectSpectator(roomId: string, spectatorId: string): void {
       const room = rooms.get(roomId);
       if (!room?.watching.delete(spectatorId)) return;
+      room.state = { ...room.state, handRequests: (room.state.handRequests ?? []).filter(r => r.spectator !== spectatorId) };
       save(roomId, room);
+    },
+
+    // Only the asking spectator and the asked player are involved, so the table's status line stays as it is
+    requestHand(roomId: string, spectatorId: string, seat: unknown): Result<BasePublicState> {
+      const room = rooms.get(roomId);
+      const spectator = room?.state.spectators?.find(candidate => candidate.id === spectatorId);
+      if (!room || !spectator) return { error: 'You are not in this game' };
+      const { state } = room;
+      if (!room.game.privateSeatView) return { error: 'Nothing is hidden in this game' };
+      if (spectator.tableScreen) return { error: 'A table screen never asks' };
+      if (!state.started) return { error: 'Wait for the game to start' }; // seats are only fixed from then on
+      if (state.isGameOver) return { error: 'The game is over' };
+      if (typeof seat !== 'number' || !state.activePlayers.includes(seat)) return { error: 'That player is not in this game' };
+      if (spectator.allowedSeats.includes(seat)) return { error: 'You can already see that hand' };
+      const open = openHandRequests(state, room.watching);
+      if (open.some(request => request.spectator === spectatorId && request.seat === seat)) return { error: 'You already asked' };
+
+      room.state = { ...state, handRequests: [...open, { spectator: spectatorId, seat }] };
+      save(roomId, room);
+      return { state: spectatorViewOf(room, spectatorId)! };
+    },
+
+    answerHand(roomId: string, seat: Seat, spectatorId: unknown, allow: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { state } = room;
+      if (!room.game.privateSeatView) return { error: 'Nothing is hidden in this game' };
+      const asked = openHandRequests(state, room.watching).some(r => r.spectator === spectatorId && r.seat === seat);
+      if (!asked) return { error: 'No request to answer' };
+
+      room.state = {
+        ...state,
+        handRequests: (state.handRequests ?? []).filter(r => r.spectator !== spectatorId || r.seat !== seat),
+        spectators: (state.spectators ?? []).map(spectator =>
+          allow === true && spectator.id === spectatorId
+            ? { ...spectator, allowedSeats: [...spectator.allowedSeats, seat] }
+            : spectator)
+      };
+      save(roomId, room);
+      return { state: view(room, seat) };
     },
 
     getSpectatorState(roomId: string, spectatorId: string): BasePublicState | undefined {
