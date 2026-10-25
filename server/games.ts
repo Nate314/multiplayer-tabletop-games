@@ -83,7 +83,7 @@ export function createGameManager(
 
   // Before the first move, nobody may play until every seated player agreed to the current house rules
   function awaitingAgreement({ game, state }: Room): boolean {
-    return !state.started && needsAgreement(game.info) && !everyoneAgreed(game.info, state);
+    return !state.started && needsAgreement(game.info, houseRulesOf(game.info, state).values) && !everyoneAgreed(game.info, state);
   }
 
   // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.

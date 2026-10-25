@@ -9,7 +9,7 @@ import HouseRulesPanel from './HouseRulesPanel';
 import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
 import gameService from '../services/gameService';
-import { everyoneAgreed, needsAgreement } from '../../shared/houseRules.ts';
+import { everyoneAgreed, houseRulesOf, needsAgreement } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -28,9 +28,9 @@ type GameViewProps = {
 export default function GameView({ game, client, gameState, playerNumber, error, onBack }: GameViewProps) {
   const { Screen } = client;
   useStateSounds(gameState, playerNumber, true);
-  const choosingRules = !gameState.started && needsAgreement(game);
+  const choosingRules = !gameState.started; // every game can set the turn timer
   // Nobody can move until everyone agreed, so the game screen is dimmed until then (the server refuses a move anyway)
-  const awaitingAgreement = choosingRules && !everyoneAgreed(game, gameState);
+  const awaitingAgreement = choosingRules && needsAgreement(game, houseRulesOf(game, gameState).values) && !everyoneAgreed(game, gameState);
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>

@@ -1,7 +1,7 @@
 import { test as base, devices, expect, type Browser, type Locator, type Page } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { GAMES } from '../games/registry.ts';
-import { needsAgreement, type HouseRuleValues } from '../shared/houseRules.ts';
+import { needsAgreement, rulesOf, type HouseRuleValues } from '../shared/houseRules.ts';
 
 // The shared harness for the end-to-end rule tests.
 // Each Playwright worker runs its own server with the test hooks on (server/e2e.ts), so a test's queued random numbers
@@ -131,7 +131,7 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
 
 // The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
 export async function setHouseRules(page: Page, gameType: string, values: HouseRuleValues, maxPlayers?: number): Promise<void> {
-  for (const rule of gameOf(gameType).houseRules ?? []) {
+  for (const rule of rulesOf(gameOf(gameType))) {
     if (!(rule.id in values)) continue;
     const control = page.getByLabel(rule.label, { exact: true });
     if (rule.kind === 'toggle') await setCheckbox(control, values[rule.id] === true);
@@ -195,7 +195,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
       const seated: Page[] = [];
       const everyone: Page[] = []; // seated plus anyone added by join
       const agreeAll = async () => {
-        if (!agree || !needsAgreement(gameOf(gameType))) return;
+        if (!agree || !needsAgreement(gameOf(gameType), houseRules ?? {})) return;
         // Every page must list every player first, so no Agree names a revision from before the last join
         for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(everyone.length);
         await agreeToHouseRules(...everyone);

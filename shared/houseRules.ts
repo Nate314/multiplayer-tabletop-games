@@ -27,18 +27,33 @@ export type HouseRulesState = {
 };
 export type HouseRulesProposal = { values: HouseRuleValues; maxPlayers: number | null };
 export type HouseRuleLine = { label: string; value: string; standard: boolean };
-export type RulesInfo = Pick<GameInfo, 'minPlayers' | 'maxPlayers' | 'houseRules' | 'stretchedPlayers'>;
+export type RulesInfo = Pick<GameInfo, 'minPlayers' | 'maxPlayers' | 'houseRules' | 'stretchedPlayers' | 'ownTurnLimit'>;
 
 type RulesHolder = Pick<BaseGameState, 'houseRules'>;
 
-export function needsAgreement(info: RulesInfo): boolean {
-  return (info.houseRules?.length ?? 0) > 0 || info.stretchedPlayers !== undefined;
+export const TURN_TIMER: ChoiceRule<0 | 30 | 60 | 120 | 300> = {
+  id: 'turnTimer', label: 'Turn timer', kind: 'choice', standard: 0,
+  help: "A warning only: nobody's turn is skipped.",
+  choices: [
+    { value: 0, label: 'Off' }, { value: 30, label: '30 seconds' }, { value: 60, label: '1 minute' },
+    { value: 120, label: '2 minutes' }, { value: 300, label: '5 minutes' }
+  ]
+};
+
+// The game's own rules, then the platform turn timer unless the game enforces its own turn limit
+export function rulesOf(info: RulesInfo): HouseRule[] {
+  return info.ownTurnLimit ? (info.houseRules ?? []) : [...(info.houseRules ?? []), TURN_TIMER];
+}
+
+// A game with no rules of its own still starts unprompted while the turn timer is off
+export function needsAgreement(info: RulesInfo, values: HouseRuleValues): boolean {
+  return (info.houseRules?.length ?? 0) > 0 || info.stretchedPlayers !== undefined || !!values.turnTimer;
 }
 
 // The values for `seats`, in declaration order: kept ones from `current`, newly offered ones standard
 function normalize(info: RulesInfo, seats: number, current: HouseRuleValues): HouseRuleValues {
   const values: HouseRuleValues = {};
-  for (const rule of info.houseRules ?? []) {
+  for (const rule of rulesOf(info)) {
     if (rule.offered && !rule.offered(seats, values)) continue;
     values[rule.id] = rule.id in current ? current[rule.id] : rule.standard;
   }
@@ -108,7 +123,7 @@ export function setHouseRules<S extends BaseGameState>(info: RulesInfo, state: S
 
   const seated = state.activePlayers.length;
   const merged: HouseRuleValues = { ...current.values, ...(sent as HouseRuleValues) };
-  const rules = info.houseRules ?? [];
+  const rules = rulesOf(info);
   for (const key of Object.keys(sent)) {
     const rule = rules.find(candidate => candidate.id === key);
     if (!rule || (rule.offered && !rule.offered(seated, merged))) return { error: 'That is not a house rule of this game' };
@@ -152,7 +167,7 @@ export function everyoneAgreed(info: RulesInfo, state: Pick<BaseGameState, 'hous
 
 export function describeHouseRules(info: RulesInfo, rules: HouseRulesState, seated: number): HouseRuleLine[] {
   const lines: HouseRuleLine[] = [];
-  for (const rule of info.houseRules ?? []) {
+  for (const rule of rulesOf(info)) {
     if (!(rule.id in rules.values)) continue;
     const value = rules.values[rule.id];
     const text = rule.kind === 'toggle'

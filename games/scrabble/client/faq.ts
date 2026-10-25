@@ -46,8 +46,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Each player draws a tile from the bag, and the one closest to A goes first; a blank beats every letter. Tied players draw again. The tiles go back in the bag before the racks are dealt, and the status line shows the draw. Play then passes in seat order. The draw is redone whenever someone joins or leaves before the first move, and nobody can join after it.'
   },
   {
-    question: 'How does the turn timer work?',
-    answer: 'The host can turn on a timer of 1, 2, 3 or 5 minutes per turn, and every player must agree to the house rules first. The timer starts when everyone has agreed and begins again at every turn. If your time runs out, your turn passes and counts as a scoreless turn, and any tiles you had put on the board go back to your rack. Undo gives the restored turn a full timer. In the last 10 seconds of your turn a tick plays each second, unless Timer warnings is off in Settings.'
+    question: 'How does the turn limit work?',
+    answer: 'The host can turn on a turn limit of 1, 2, 3 or 5 minutes per turn, and every player must agree to the house rules first. The limit starts when everyone has agreed and begins again at every turn. If your time runs out, your turn passes and counts as a scoreless turn, and any tiles you had put on the board go back to your rack. Undo gives the restored turn a full limit. In the last 10 seconds of your turn a tick plays each second, unless Timer warnings is off in Settings.'
   },
   {
     question: 'Can I take back a move?',

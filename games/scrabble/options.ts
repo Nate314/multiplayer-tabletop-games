@@ -2,7 +2,7 @@
 import { type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 
 export const TURN_MINUTES: ChoiceRule<'off' | 1 | 2 | 3 | 5> = {
-  id: 'turnMinutes', label: 'Turn timer', kind: 'choice', standard: 'off',
+  id: 'turnMinutes', label: 'Turn limit', kind: 'choice', standard: 'off',
   choices: [
     { value: 'off', label: 'Off' },
     { value: 1, label: '1 minute' },

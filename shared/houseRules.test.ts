@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   afterSeatChange, agreeToHouseRules, describeHouseRules, everyoneAgreed, houseRule, houseRulesOf, minimumToStart,
-  needsAgreement, setHouseRules, tableLimit, targetScoreRule, type ChoiceRule, type HouseRulesProposal, type ToggleRule
+  needsAgreement, rulesOf, setHouseRules, tableLimit, targetScoreRule, TURN_TIMER, type ChoiceRule, type HouseRulesProposal, type ToggleRule
 } from './houseRules.ts';
+import { chessInfo } from '../games/chess/info.ts';
 import { rulesGame, testGame, type TestState } from './testGame.ts';
 import type { Seat } from './types.ts';
 
@@ -28,9 +29,9 @@ function ok<T>(result: { state: T } | { error: string }): T {
 }
 
 test('needsAgreement is false only for a game with no rules and no stretched range', () => {
-  assert.equal(needsAgreement(testGame.info), false);
-  assert.equal(needsAgreement(rulesGame.info), true);
-  assert.equal(needsAgreement({ ...testGame.info, stretchedPlayers: { min: 2, max: 6 } }), true);
+  assert.equal(needsAgreement(testGame.info, {}), false);
+  assert.equal(needsAgreement(rulesGame.info, {}), true);
+  assert.equal(needsAgreement({ ...testGame.info, stretchedPlayers: { min: 2, max: 6 } }, {}), true);
 });
 
 test('houseRule falls back to the standard value for a state saved before house rules', () => {
@@ -42,7 +43,7 @@ test('houseRule falls back to the standard value for a state saved before house 
 
 test('houseRulesOf builds defaults for a state saved before house rules', () => {
   assert.deepEqual(houseRulesOf(info, { activePlayers: [2, 3, 4] }), {
-    host: 2, values: { fast: false, goal: 3, big: false }, maxPlayers: null, agreed: [], revision: 0
+    host: 2, values: { fast: false, goal: 3, big: false, turnTimer: 0 }, maxPlayers: null, agreed: [], revision: 0
   });
 });
 
@@ -68,10 +69,10 @@ test('afterSeatChange clears every agreement and bumps the revision', () => {
 
 test('afterSeatChange adds a rule offered at the new seat count and drops one no longer offered', () => {
   const two = afterSeatChange(info, undefined, [1, 2]);
-  assert.deepEqual(Object.keys(two.values), ['fast', 'goal']);
+  assert.deepEqual(Object.keys(two.values), ['fast', 'goal', 'turnTimer']);
   const three = afterSeatChange(info, { ...two, values: { ...two.values, fast: true } }, [1, 2, 3]);
-  assert.deepEqual(three.values, { fast: true, goal: 3, big: false });
-  assert.deepEqual(Object.keys(afterSeatChange(info, three, [1, 2]).values), ['fast', 'goal']);
+  assert.deepEqual(three.values, { fast: true, goal: 3, big: false, turnTimer: 0 });
+  assert.deepEqual(Object.keys(afterSeatChange(info, three, [1, 2]).values), ['fast', 'goal', 'turnTimer']);
 });
 
 test('setHouseRules refuses everyone but the host', () => {
@@ -96,7 +97,7 @@ test('setHouseRules refuses a rule not offered at this seat count', () => {
 
 test('setHouseRules allows a rule that depends on another value sent in the same proposal', () => {
   const next = ok(propose(lobby([1, 2, 3]), 1, { values: { big: true, bigger: true } }));
-  assert.deepEqual(next.houseRules?.values, { fast: false, goal: 3, big: true, bigger: true });
+  assert.deepEqual(next.houseRules?.values, { fast: false, goal: 3, big: true, bigger: true, turnTimer: 0 });
   assert.deepEqual(propose(lobby([1, 2, 3]), 1, { values: { bigger: true } }), { error: 'That is not a house rule of this game' });
 });
 
@@ -138,7 +139,7 @@ test('setHouseRules keeps unsent values, clears agreements and bumps the revisio
   const agreed = ok(agreeToHouseRules(info, start, 2, start.houseRules?.revision));
   const set = ok(propose(agreed, 1, { values: { fast: true } }));
   const again = ok(propose(set, 1, { values: { goal: 5 } }));
-  assert.deepEqual(again.houseRules?.values, { fast: true, goal: 5 });
+  assert.deepEqual(again.houseRules?.values, { fast: true, goal: 5, turnTimer: 0 });
   assert.deepEqual(again.houseRules?.agreed, []);
   assert.equal(again.houseRules?.revision, (start.houseRules?.revision ?? 0) + 2);
   assert.equal(again.gameStatus, 'P1 changed the house rules');
@@ -178,6 +179,7 @@ test('describeHouseRules marks non-standard values and lists a raised table', ()
   assert.deepEqual(describeHouseRules(info, state.houseRules!, 2), [
     { label: 'Fast', value: 'On', standard: false },
     { label: 'Goal', value: '3', standard: true },
+    { label: 'Turn timer', value: 'Off', standard: true },
     { label: 'Most players', value: '6', standard: false }
   ]);
   assert.deepEqual(describeHouseRules(UNO, { ...state.houseRules!, values: {}, maxPlayers: 10 }, 9),
@@ -187,11 +189,11 @@ test('describeHouseRules marks non-standard values and lists a raised table', ()
 
 test('describeHouseRules lists a seat count below the normal minimum', () => {
   const rules = afterSeatChange(CATAN, undefined, [1, 2]);
-  assert.deepEqual(describeHouseRules(CATAN, rules, 2), [{ label: 'Players', value: '2', standard: false }]);
-  assert.deepEqual(describeHouseRules(CATAN, rules, 3), []);
+  assert.deepEqual(describeHouseRules(CATAN, rules, 2), [OFF, { label: 'Players', value: '2', standard: false }]);
+  assert.deepEqual(describeHouseRules(CATAN, rules, 3), [OFF]);
   // Still waiting for players, not a smaller table
-  assert.deepEqual(describeHouseRules(CATAN, afterSeatChange(CATAN, undefined, [1]), 1), []);
-  assert.deepEqual(describeHouseRules(UNO, afterSeatChange(UNO, undefined, [1]), 1), []);
+  assert.deepEqual(describeHouseRules(CATAN, afterSeatChange(CATAN, undefined, [1]), 1), [OFF]);
+  assert.deepEqual(describeHouseRules(UNO, afterSeatChange(UNO, undefined, [1]), 1), [OFF]);
 });
 
 test('targetScoreRule offers the standard target among the others, sorted', () => {
@@ -200,4 +202,40 @@ test('targetScoreRule offers the standard target among the others, sorted', () =
   assert.deepEqual(rule.choices.map(choice => choice.value), [250, 500, 1000]);
   assert.equal(rule.standard, 500);
   assert.equal(targetScoreRule(10000, []).choices[0].label, '10,000');
+});
+
+const OFF = { label: 'Turn timer', value: 'Off', standard: true };
+const plainLobby = { ...testGame.createGameState('g'), activePlayers: [1, 2], playerNames: { 1: 'P1', 2: 'P2' } };
+
+test('every game offers the turn timer last, off by default', () => {
+  for (const each of [testGame.info, chessInfo]) assert.equal(rulesOf(each).at(-1), TURN_TIMER);
+  assert.deepEqual(houseRulesOf(testGame.info, plainLobby).values, { turnTimer: 0 });
+});
+
+test('a game with its own turn limit gets no platform timer', () => {
+  assert.deepEqual(rulesOf({ ...testGame.info, ownTurnLimit: true }), []);
+});
+
+test('the turn timer needs agreement only when it is on', () => {
+  assert.equal(needsAgreement(testGame.info, { turnTimer: 0 }), false);
+  assert.equal(needsAgreement(testGame.info, { turnTimer: 60 }), true);
+  assert.equal(needsAgreement(testGame.info, {}), false);
+  assert.equal(needsAgreement(chessInfo, { turnTimer: 0 }), true);
+});
+
+test('the host sets the turn timer and a value outside the list is refused', () => {
+  const set = (turnTimer: number) => setHouseRules(testGame.info, plainLobby, 1, { values: { turnTimer }, maxPlayers: null });
+  assert.equal(ok(set(30)).houseRules?.values.turnTimer, 30);
+  assert.deepEqual(set(45), { error: 'That value is not allowed for Turn timer' });
+});
+
+test('the turn timer is listed as a house rule when on', () => {
+  const rules = (turnTimer: number) => ({ ...houseRulesOf(testGame.info, plainLobby), values: { turnTimer } });
+  assert.deepEqual(describeHouseRules(testGame.info, rules(120), 2), [{ label: 'Turn timer', value: '2 minutes', standard: false }]);
+  assert.deepEqual(describeHouseRules(testGame.info, rules(0), 2), [{ label: 'Turn timer', value: 'Off', standard: true }]);
+});
+
+test('rules saved before the turn timer read it as off', () => {
+  const saved = lobby([1, 2], { houseRules: { ...lobby([1, 2]).houseRules!, values: { targetScore: 500 } } });
+  assert.equal(houseRule(saved, TURN_TIMER), 0);
 });
