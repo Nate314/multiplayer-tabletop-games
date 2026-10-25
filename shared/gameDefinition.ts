@@ -39,9 +39,11 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   // Called only when `seat` is not currentPlayer, after every other turn guard passed. True lets applyMove run for this
   // out-of-turn move, which is recorded for undo like any other. Validates untrusted `move`.
   allowsOutOfTurn?(state: S, seat: Seat, move: unknown): boolean;
-  // Not turn-bound and not recorded for undo. Validates untrusted `action`.
+  // Not turn-bound, and recorded for undo only when recordsAction says so. Validates untrusted `action`.
   // The platform does not block actions during an undo vote or after the game is over; the game must refuse them itself where needed.
-  applyAction?(state: S, seat: Seat, action: unknown, random: Random): Result<S>;
+  applyAction?(state: S, seat: Seat, action: unknown, random: Random, now: number): Result<S>;
+  // Asked before applyAction: true records the action's result as a move (history, timeline, undo), like a move.
+  recordsAction?(state: S, seat: Seat, action: unknown): boolean;
   // The platform adds moveCount; a game never supplies it.
   // `viewer` is the seat the view is sent to, so a game can show a player their own hand; null (the history) sees no hand.
   toPublicState(state: S, undoAvailable: boolean, viewer: Seat | null): Omit<P, 'moveCount'>;

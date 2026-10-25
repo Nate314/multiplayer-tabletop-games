@@ -360,20 +360,26 @@ export function createGameManager(
       return { state: view(room, seat) };
     },
 
-    // Not turn-bound and never pushed to `history` or `timeline`, so an undo skips over it
+    // Not turn-bound; pushed to `history` and `timeline` only when the game records it, else an undo skips over it
     action(roomId: string, seat: Seat, action: unknown): Result<BasePublicState> {
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
       if (!room.game.applyAction) return { error: 'This game has no actions' };
 
-      const result = room.game.applyAction(room.state, seat, action, random);
+      const recorded = room.game.recordsAction?.(room.state, seat, action) === true;
+      const result = room.game.applyAction(room.state, seat, action, random, now());
       if ('error' in result) return result;
       // An action may start play (a Hearts pass), so it meets the same agreement gate as a move
       if (result.state.started && awaitingAgreement(room)) return { error: 'Everyone must agree to the house rules first' };
 
-      room.state = result.state;
-      save(roomId, room);
+      if (recorded) {
+        // An open undo vote was for the move before this one, so the action cancels it
+        record(roomId, room, { ...result.state, started: true, undoVote: null });
+      } else {
+        room.state = result.state;
+        save(roomId, room);
+      }
       return { state: view(room, seat) };
     },
 
