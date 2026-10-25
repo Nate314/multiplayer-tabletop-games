@@ -177,20 +177,20 @@
     color: var(--light-square);
   }
 
+  /* A piece is the server drawing (games/chess/svg.ts), one em square; black pieces carry a light outline */
   .piece {
-    font-family: 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', serif;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
     line-height: 1;
   }
 
-  .piece.white {
-    color: #FFF;
-    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 1px 2px rgba(0, 0, 0, 0.6);
-  }
-
-  .piece.black {
-    color: #1A1A1A;
-    /* A thin light outline keeps black pieces readable on dark squares and dark panels */
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.9), 0 0 1px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.4);
+  .piece-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
   }
 
   /* Above the squares it passes over while it glides */

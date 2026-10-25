@@ -404,21 +404,27 @@
     height: calc(var(--cell) * 0.8 - 2px);
   }
 
+  /* A checker is the shared disc drawing (shared/svg/disc.ts); a slab in the tray is a plain bar of the same colors */
   .white {
-    background: radial-gradient(circle at 35% 35%, #fff 0%, var(--white-checker) 60%, #ddd6c6 100%);
-    border: 2px solid var(--white-checker-edge);
+    --disc-fill: var(--white-checker);
+    --disc-edge: var(--white-checker-edge);
     color: #333;
   }
 
   .red {
-    background: radial-gradient(circle at 35% 35%, #ef5350 0%, var(--red-checker) 70%);
-    border: 2px solid var(--red-checker-edge);
+    --disc-fill: var(--red-checker);
+    --disc-edge: var(--red-checker-edge);
     color: #fff;
+  }
+
+  .bg-checker {
+    --disc-edge-width: 7;
   }
 
   .bg-slab.white,
   .bg-slab.red {
-    border-width: 1px;
+    background: var(--disc-fill);
+    border: 1px solid var(--disc-edge);
   }
 
   /* The outermost checker of a stack is the one that moves */

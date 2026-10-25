@@ -253,9 +253,11 @@
     flex: 0 1 72%;
     max-width: 72%;
     aspect-ratio: 1;
-    border: 1px solid rgba(0, 0, 0, 0.45);
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--seat) 55%, #FFFFFF) 0%, var(--seat) 70%);
+    /* The shared disc drawing (shared/svg/disc.ts) in the seat's color */
+    --disc-fill: var(--seat);
+    --disc-edge: rgba(0, 0, 0, 0.45);
+    --disc-edge-width: 5;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     box-sizing: border-box;
   }

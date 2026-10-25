@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Pawn from './Pawn';
+import usePreloadSvgs from '../../../src/assets/usePreloadSvgs.ts';
+import { QUORIDOR_PIECES } from './pieces.ts';
 import WallPiece from './WallPiece';
 import { squareKey, wallKey } from './animateMove.ts';
 import { squareId, squareMove, squareOf, wallSlots } from './walls.ts';
@@ -25,6 +27,7 @@ function isSamePosition(a: Position, b: Position): boolean {
 }
 
 export default function Board({ gameState, playerNumber, isMyTurn, selectedAction, showLastMove = false, onMove, drag }: BoardProps) {
+  usePreloadSvgs(QUORIDOR_PIECES);
   const [hoveredSquare, setHoveredSquare] = useState<Position | null>(null);
   const { pawns, walls, playerNames, lastMove, isGameOver } = gameState;
   const seats = Object.keys(pawns).map(Number); // a dismissed player's pawn is off the board

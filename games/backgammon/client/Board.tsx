@@ -4,6 +4,8 @@ import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 import { checkerKey } from './animateMove.ts';
 import { CHECKER_COLORS, CHECKERS_PER_PLAYER, legalSteps, otherSeat, pointIndex } from '../rules.ts';
 import type { From, Move, PublicGameState, Seat, To } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 // A point shows this many checkers; the outermost one carries the count of a taller stack
 const MAX_SHOWN = 5;
@@ -45,6 +47,7 @@ function Stack({ seat, count, location, dragProps }: StackProps) {
             data-anim-key={outermost ? checkerKey(location, seat) : undefined}
             {...(outermost ? dragProps : undefined)}
           >
+            <ServerSvg url={DISC_URL} className="piece-art" />
             {outermost && count > MAX_SHOWN && count}
           </div>
         );

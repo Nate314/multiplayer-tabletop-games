@@ -166,21 +166,25 @@
     z-index: 1;
   }
 
+  /* A man is the shared disc (shared/svg/disc.ts) in the seat's colors, and a king wears the server's crown */
+  .piece {
+    --disc-edge-width: 7;
+  }
+
   .piece.player1 {
-    background: radial-gradient(circle at 35% 35%, #EF5350 0%, var(--player1) 70%);
-    border: 3px solid var(--player1-edge);
+    --disc-fill: var(--player1);
+    --disc-edge: var(--player1-edge);
   }
 
   .piece.player2 {
-    background: radial-gradient(circle at 35% 35%, #FFF 0%, var(--player2) 70%);
-    border: 3px solid var(--player2-edge);
+    --disc-fill: var(--player2);
+    --disc-edge: var(--player2-edge);
   }
 
   .crown {
-    color: var(--crown);
-    font-size: calc(var(--square) * 0.42);
-    line-height: 1;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    width: 50%;
+    height: 50%;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
   }
 
   .piece.movable,

@@ -9,6 +9,9 @@ export const cardUrl = (card: DeckCard | null) => {
   return isJoker(card) ? svgUrl('playing-card-joker') : svgUrl('playing-card', card.rank, card.suit);
 };
 
+// The round piece of shared/svg/disc.ts, colored by the game's --disc-* variables
+export const DISC_URL = svgUrl('disc');
+
 // For usePreloadSvgs on a screen that shows dice or cards
 export const DICE_PIECES = [1, 2, 3, 4, 5, 6].map(dieUrl);
 export const DECK_PIECES = [

@@ -14,6 +14,8 @@ import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState } from '../types.ts';
 import type { Action } from './types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { WALL_URL } from './pieces.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [selectedAction, setSelectedAction] = useState<Action>('move');
@@ -91,7 +93,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             pieces={[{
               id: 'wall',
               label: 'Wall',
-              icon: <span className={`tray-wall ${selectedAction === 'wall-v' ? 'vertical' : 'horizontal'}`} />,
+              icon: <ServerSvg url={WALL_URL} className={`tray-wall ${selectedAction === 'wall-v' ? 'vertical' : 'horizontal'}`} />,
               count: wallsLeft,
               blocked: wallBlocked
             }]}

@@ -4,6 +4,8 @@ import { holeKey, stoneKey } from './animateMove.ts';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { drawnCount, stoneSpot } from './stoneLayout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 type BoardProps = {
   gameState: PublicGameState;
@@ -48,6 +50,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
               data-anim-key={stoneKey(hole, index)}
               style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: `${size * 100}%`, margin: `${-size * 50}%` }}
             >
+              <ServerSvg url={DISC_URL} className="piece-art" />
               <ColorSymbol color={SEAT_SYMBOLS[stone]} className="stone-symbol" />
             </span>
           );
