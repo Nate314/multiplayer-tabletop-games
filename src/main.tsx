@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.scss'
 import App from './App.tsx'
@@ -14,9 +14,16 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 installAudioUnlock(window)
 void loadSounds()
 
+// Hidden pages nothing links to, loaded only when opened so they add nothing to the main bundle
+const DEV_PAGES: Record<string, ReturnType<typeof lazy>> = {
+  '/dev/svgs': lazy(() => import('./dev/SvgGallery.tsx')),
+  '/dev/sounds': lazy(() => import('./dev/SoundGallery.tsx')),
+}
+const DevPage = DEV_PAGES[window.location.pathname]
+
 // index.html always contains the #root element
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {DevPage ? <Suspense fallback={null}><DevPage /></Suspense> : <App />}
   </StrictMode>,
 )

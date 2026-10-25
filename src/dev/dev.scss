@@ -1,0 +1,78 @@
+/* The hidden /dev/svgs and /dev/sounds pages, on the lobby palette */
+
+.dev-page {
+  color: var(--lobby-text);
+}
+
+.dev-section h2 {
+  margin: 24px 0 8px;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.dev-params {
+  color: var(--lobby-muted);
+  font-weight: normal;
+}
+
+.dev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.dev-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px;
+  background: var(--lobby-surface);
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+/* A fixed box, so every drawing is compared at the same size whatever its own proportions */
+.dev-card-svg {
+  width: 96px;
+  height: 96px;
+}
+
+.dev-card-url {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--lobby-muted);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.dev-sounds {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dev-sound {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px;
+  background: var(--lobby-surface);
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+}
+
+.dev-sound-name {
+  font-weight: 600;
+}
+
+.dev-sound-detail {
+  color: var(--lobby-muted);
+  font-size: 0.85rem;
+}

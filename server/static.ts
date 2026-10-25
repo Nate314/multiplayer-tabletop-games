@@ -21,6 +21,7 @@ export function serveClient(app: Express, distDir: string): void {
       return;
     }
     res.setHeader('Cache-Control', 'no-cache');
-    res.sendFile(path.join(distDir, 'index.html'));
+    // With root, only the file name is checked for dot segments, so a checkout under a folder like .claude still works
+    res.sendFile('index.html', { root: distDir });
   });
 }
