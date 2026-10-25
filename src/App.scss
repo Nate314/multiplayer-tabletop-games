@@ -242,6 +242,26 @@
   color: var(--lobby-error-text);
 }
 
+// A game's code still downloading, or failed to (src/games/ClientGameGate.tsx)
+.client-game-loading {
+  margin: 0 0 12px;
+  color: var(--lobby-muted);
+}
+
+.client-game-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+// In place of the whole game view, after a refresh into a game
+#root > .client-game-loading,
+#root > .client-game-error {
+  margin: 16px;
+}
+
 .lobby-overlay {
   position: fixed;
   inset: 0;

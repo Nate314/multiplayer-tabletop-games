@@ -20,8 +20,8 @@ import { editionFor } from './editions.ts';
 import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
 import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
+import { PLAYERS } from './options.ts';
 
-export const PLAYERS = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 
 export function createGameState(gameId: string): GameState {

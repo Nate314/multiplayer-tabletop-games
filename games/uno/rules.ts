@@ -1,6 +1,6 @@
 // UNO rules shared by the browser (playable cards) and the server (validation).
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -10,25 +10,10 @@ import type { Random } from '../../shared/types.ts';
 import type {
   Card, Color, Direction, GameState, LastMove, Move, PendingFour, PublicGameState, Result, RoundSummary, Seat, Value
 } from './types.ts';
+import { TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE, JUMP_IN_RULE } from './options.ts';
 
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'blue'];
 export const HAND_SIZE = 7;
-const TARGET_RULE = targetScoreRule(500, [250, 1000]);
-const STACKING_RULE: ToggleRule = {
-  id: 'stacking', label: 'Stack +2 and +4 cards', kind: 'toggle', standard: false,
-  help: 'A Draw Two or Wild Draw Four can be answered with another one instead of drawing'
-};
-const SEVEN_ZERO_RULE: ToggleRule = {
-  id: 'sevenZero', label: '7-0: a 7 swaps hands, a 0 passes every hand', kind: 'toggle', standard: false
-};
-const DRAW_UNTIL_RULE: ToggleRule = {
-  id: 'drawUntilPlayable', label: 'Draw until you can play', kind: 'toggle', standard: false
-};
-const JUMP_IN_RULE: ToggleRule = {
-  id: 'jumpIn', label: 'Jump-in', kind: 'toggle', standard: false,
-  help: 'Any player can play a number card out of turn if it matches the top card exactly, and play continues from them'
-};
-export const UNO_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE, JUMP_IN_RULE];
 
 type Rules = Pick<GameState, 'houseRules'>;
 export const targetScore = (state: Rules): number => houseRule(state, TARGET_RULE);

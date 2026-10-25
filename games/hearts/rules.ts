@@ -15,7 +15,7 @@
 //   player takes 26 instead.
 // - The game ends when a player reaches the target score (100 unless the host chose another); the lowest score wins, and equal lowest scores share the win.
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -26,17 +26,12 @@ import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, describeTrickPlay, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
 import type { GameState, HandSummary, LastMove, PassDirection, Play, PlayingCard, PublicGameState, Result, Seat } from './types.ts';
+import { TARGET_RULE, JACK_RULE } from './options.ts';
 
 export { SEATS, nextSeat };
 
 export const HAND_SIZE = 13;
 export const PASS_SIZE = 3;
-const TARGET_RULE = targetScoreRule(100, [50, 75, 150]);
-const JACK_RULE: ToggleRule = {
-  id: 'jackOfDiamonds', label: 'Jack of Diamonds is worth minus 10', kind: 'toggle', standard: false,
-  help: 'Whoever takes the jack of diamonds scores 10 less for the hand, even when they shoot the moon'
-};
-export const HEARTS_RULES: HouseRule[] = [TARGET_RULE, JACK_RULE];
 
 const jackScores = (state: Pick<GameState, 'houseRules'>): boolean => houseRule(state, JACK_RULE) === true;
 

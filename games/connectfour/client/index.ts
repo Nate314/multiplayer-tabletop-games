@@ -10,7 +10,6 @@ export const connectfourClient: ClientGame = {
   id: 'connectfour',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🔴',
   HistoryBoard,
   describeMove,
   animateMove

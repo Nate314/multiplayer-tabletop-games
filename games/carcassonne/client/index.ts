@@ -10,7 +10,6 @@ export const carcassonneClient: ClientGame = {
   id: 'carcassonne',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '🏰',
   HistoryBoard,
   describeMove,
   animateMove

@@ -10,7 +10,6 @@ export const rookClient: ClientGame = {
   id: 'rook',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🐦',
   HistoryBoard,
   describeMove,
   animateMove

@@ -1,7 +1,7 @@
 // Scrabble rules shared by the browser (score preview) and the server (validation).
 // There is no dictionary: any placement that follows the rules below is accepted, and players dispute a word with Undo.
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -19,6 +19,7 @@ import type {
   ScoredWord,
   Seat
 } from './types.ts';
+import { TURN_MINUTES } from './options.ts';
 
 export const BOARD_SIZE = 15;
 export const CENTER = 7;
@@ -26,17 +27,6 @@ export const RACK_SIZE = 7;
 export const BINGO_BONUS = 50;
 export const MAX_SCORELESS_TURNS = 6;
 export const BLANK = '?';
-export const TURN_MINUTES: ChoiceRule<'off' | 1 | 2 | 3 | 5> = {
-  id: 'turnMinutes', label: 'Turn timer', kind: 'choice', standard: 'off',
-  choices: [
-    { value: 'off', label: 'Off' },
-    { value: 1, label: '1 minute' },
-    { value: 2, label: '2 minutes' },
-    { value: 3, label: '3 minutes' },
-    { value: 5, label: '5 minutes' }
-  ]
-};
-export const SCRABBLE_RULES: HouseRule[] = [TURN_MINUTES];
 export const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 // The standard English set: how many of each tile, and what each is worth

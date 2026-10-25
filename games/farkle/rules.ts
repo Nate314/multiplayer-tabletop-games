@@ -1,15 +1,13 @@
 // Farkle rules shared by the browser (the score of a selection) and the server (validation),
 // from https://en.wikipedia.org/wiki/Farkle.
 import { rollDice } from '../../shared/dice.ts';
-import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import { canScore, score } from './scoring.ts';
 import type { GameState, LastMove, PublicGameState, Result, Seat } from './types.ts';
-
-const TARGET_RULE = targetScoreRule(10000, [5000, 15000, 20000]);
-export const FARKLE_RULES: HouseRule[] = [TARGET_RULE];
+import { TARGET_RULE } from './options.ts';
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const DICE_COUNT = 6;

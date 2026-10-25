@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import FaqButton from './FaqButton';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
-import type { FaqItem } from '../clientGames.ts';
+import { ClientGameNotice } from '../games/ClientGameGate.tsx';
+import { useClientGame } from '../games/useClientGame.ts';
+import { saveJoinForm } from '../services/settings.ts';
+import { joinLink } from '../services/share.ts';
 
 type JoinDialogProps = {
   game: GameInfo;
-  faq: FaqItem[];
   playerName: string;
   gameId: string;
   error: string | null;
@@ -17,7 +19,6 @@ type JoinDialogProps = {
 
 export default function JoinDialog({
   game,
-  faq,
   playerName,
   gameId,
   error,
@@ -26,6 +27,13 @@ export default function JoinDialog({
   onJoin,
   onCancel,
 }: JoinDialogProps) {
+  // Starts the game's download now, so it is usually ready by the time the player joins
+  const { status, client } = useClientGame(game.id);
+  // The fresh page a retry needs keeps the form, and opens this dialog again through its join link once there is a game ID
+  const retry = () => {
+    saveJoinForm({ playerName, gameId });
+    window.location.assign(gameId.trim() ? joinLink('', game.id, gameId.trim()) : '/');
+  };
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onCancel();
@@ -68,8 +76,9 @@ export default function JoinDialog({
             placeholder="Pick one to create or join a game"
           />
         </label>
+        <ClientGameNotice status={status} name={game.name} onRetry={retry} />
         <div className="lobby-dialog-actions">
-          <FaqButton game={game} items={faq} />
+          {client && <FaqButton game={game} items={client.faq} />}
           <button type="button" className="lobby-button" onClick={onCancel}>Cancel</button>
           <button type="submit" className="lobby-button lobby-button-primary">Join</button>
         </div>

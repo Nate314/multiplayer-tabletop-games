@@ -10,7 +10,6 @@ export const thecrewClient: ClientGame = {
   id: 'thecrew',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🚀',
   HistoryBoard,
   describeMove,
   animateMove

@@ -10,7 +10,6 @@ export const skipboClient: ClientGame = {
   id: 'skipbo',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '🃏',
   HistoryBoard,
   describeMove,
   animateMove

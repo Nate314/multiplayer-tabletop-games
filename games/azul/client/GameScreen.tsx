@@ -8,12 +8,12 @@ import UndoVote from '../../../src/components/UndoVote';
 import { MOVE_DURATION_MS, prefersReducedMotion } from '../../../src/animation/motion.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
-import { azul } from '../index.ts';
+import { azulInfo } from '../info.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Selection } from './selection.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
-const MAX_PLAYERS = azul.info.maxPlayers;
+const MAX_PLAYERS = azulInfo.maxPlayers;
 const SUMMARY_DELAY_MS = MOVE_DURATION_MS + 100;
 
 // True for a moment after a move ends the round, so everyone sees the tiles slide onto the wall

@@ -10,7 +10,6 @@ export const spadesClient: ClientGame = {
   id: 'spades',
   Screen: GameScreen,
   faq: QUESTIONS,
-  icon: '♠️',
   HistoryBoard,
   describeMove,
   animateMove

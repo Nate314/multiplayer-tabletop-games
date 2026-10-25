@@ -1,7 +1,6 @@
 // Dominoes rules shared by the browser (playable tiles) and the server (validation).
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
-import type { ChoiceRule, HouseRule, ToggleRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -11,27 +10,7 @@ import type { Random } from '../../shared/types.ts';
 import { EMPTY_BOARD, SINGLE_LINE, boardOf, endPhrase, lay, openEnd, openEnds, pendingArms } from './board.ts';
 import type { Branching, Layout } from './board.ts';
 import type { GameState, LastMove, Move, PublicGameState, Result, RoundSummary, Seat, SetSize } from './types.ts';
-
-export const SET_RULE: ChoiceRule<SetSize> = {
-  id: 'set', label: 'Set', kind: 'choice', standard: 6,
-  choices: [{ value: 6, label: 'Double-six (28 tiles)' }, { value: 9, label: 'Double-nine (55 tiles)' }]
-};
-export const BRANCHING_RULE: ChoiceRule<Branching> = {
-  id: 'branching', label: 'Doubles open branches', kind: 'choice', standard: 'every',
-  choices: [
-    { value: 'none', label: 'None (a single line)' },
-    { value: 'starter', label: 'Starting double only' },
-    { value: 'every', label: 'Every double' }
-  ]
-};
-export const CHICKENFOOT_RULE: ToggleRule = {
-  id: 'chickenfoot', label: 'Chickenfoot', kind: 'toggle', standard: false,
-  help: 'After a double, every end it opens must get a tile before anyone plays elsewhere'
-};
-export const TRAINS_RULE: ToggleRule = {
-  id: 'trains', label: 'Trains (Mexican Train)', kind: 'toggle', standard: false,
-  help: 'Play only on your own train, the Mexican train or an open train'
-};
+import { BRANCHING_RULE, CHICKENFOOT_RULE, SET_RULE, TARGET_RULE, TRAINS_RULE } from './options.ts';
 
 export function layoutOf(state: Pick<GameState, 'houseRules'>): Layout {
   // No house rules: saved before layouts (or built by hand in a test), so it keeps playing the single line it started as
@@ -44,18 +23,6 @@ export function layoutOf(state: Pick<GameState, 'houseRules'>): Layout {
 }
 
 export const standardTarget = (players: number) => (players === 2 ? 100 : 61);
-
-const TARGET_RULE: ChoiceRule = {
-  id: 'targetScore', label: 'Target score', kind: 'choice', standard: 'standard',
-  choices: [
-    { value: 'standard', label: '100 for 2 players, 61 for 3 or 4' },
-    { value: 61, label: '61' },
-    { value: 100, label: '100' },
-    { value: 150, label: '150' },
-    { value: 200, label: '200' }
-  ]
-};
-export const DOMINOES_RULES: HouseRule[] = [SET_RULE, BRANCHING_RULE, CHICKENFOOT_RULE, TRAINS_RULE, TARGET_RULE];
 
 export const targetScore = (state: Pick<GameState, 'houseRules' | 'activePlayers'>): number => {
   const chosen = houseRule(state, TARGET_RULE);

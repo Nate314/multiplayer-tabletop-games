@@ -10,7 +10,6 @@ export const quoridorClient: ClientGame = {
   id: 'quoridor',
   Screen: GameScreen,
   faq: FAQS,
-  icon: '♟',
   HistoryBoard,
   describeMove,
   animateMove

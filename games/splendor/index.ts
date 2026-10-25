@@ -1,18 +1,11 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffleEach } from '../../shared/shuffle.ts';
-import { SPLENDOR_RULES, applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { splendorInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const splendor: GameDefinition<GameState, PublicGameState> = {
-  info: {
-    id: 'splendor',
-    category: 'strategy',
-    name: 'Splendor',
-    description: 'Collect gems, buy development cards and attract nobles to reach the prestige to win (15 unless the host chose another)',
-    minPlayers: 2,
-    maxPlayers: 4,
-    houseRules: SPLENDOR_RULES
-  },
+  info: splendorInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

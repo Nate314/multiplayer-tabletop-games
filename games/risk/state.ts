@@ -1,11 +1,12 @@
 // Turn order, reinforcement counts, starting a turn, the end of the game and the event log, shared by every part of the rules
 import { plural } from '../../shared/text.ts';
 import { CONTINENTS, TERRITORIES, territoriesOf } from './map.ts';
+import { riskInfo } from './info.ts';
 import type { ContinentId, GameState, Seat } from './types.ts';
 
 export { plural };
 export const LOG_SIZE = 40;
-export const MIN_PLAYERS = 3;
+export const MIN_PLAYERS = riskInfo.minPlayers;
 
 // Starting armies by number of players, from the official rules
 export const STARTING_ARMIES: Record<number, number> = { 3: 35, 4: 30, 5: 25, 6: 20 };
