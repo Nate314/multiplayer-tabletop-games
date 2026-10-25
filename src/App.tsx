@@ -23,6 +23,7 @@ function App() {
   const [initialForm] = useState(loadJoinForm)
   const [playerName, setPlayerName] = useState(initialForm.playerName)
   const [gameId, setGameId] = useState(link?.gameId ?? initialForm.gameId)
+  const [role, setRole] = useState(initialForm.role)
   const { playerNumber, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection(link)
   // So a refresh or Back does not reopen the dialog
   useEffect(() => {
@@ -99,9 +100,11 @@ function App() {
           error={error}
           onPlayerNameChange={setPlayerName}
           onGameIdChange={setGameId}
-          onJoin={() => {
-            saveJoinForm({ playerName, gameId })
-            join(selected.id, gameId, playerName)
+          role={role}
+          onRoleChange={setRole}
+          onJoin={(joinRole = role) => {
+            saveJoinForm({ playerName, gameId, role: joinRole })
+            join(selected.id, gameId, playerName, joinRole)
           }}
           onCancel={closeDialog}
         />

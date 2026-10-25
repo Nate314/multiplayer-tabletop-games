@@ -45,17 +45,25 @@ test('an unknown playback speed falls back to 1x', () => {
 
 test('join form defaults to empty and round-trips', () => {
   installStorage()
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
-  saveJoinForm({ playerName: 'Ann', gameId: 'abc' })
-  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'player' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'player' })
+})
+
+test('join form remembers the role', () => {
+  installStorage()
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'spectator' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'spectator' })
+  installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"nonsense"}' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'player' })
 })
 
 test('junk in storage falls back to defaults', () => {
   installStorage({ historyAnimations: '"yes"', joinForm: '[1]' })
   assert.equal(loadAnimations(), false)
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
   installStorage({ joinForm: '{"playerName":5}' })
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
 })
 
 test('a storage that throws gives defaults and saving does not throw', () => {
@@ -66,13 +74,13 @@ test('a storage that throws gives defaults and saving does not throw', () => {
     configurable: true,
   })
   assert.equal(loadAnimations(), false)
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
   assert.deepEqual(loadLandingFilters(), DEFAULT_FILTERS)
   assert.equal(loadPlaybackSpeed(), 1)
   assert.deepEqual(loadPreferences(), DEFAULT_PREFERENCES)
   saveAnimations(true)
   savePlaybackSpeed(2)
-  saveJoinForm({ playerName: 'Ann', gameId: 'abc' })
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'player' })
   saveLandingFilters(DEFAULT_FILTERS)
   savePreferences(DEFAULT_PREFERENCES)
   saveHistorySounds(true)

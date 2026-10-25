@@ -57,3 +57,34 @@ test('a player cannot ask to see a hand or switch to player', async ({ seat, bro
   ]);
   expect(errors).toEqual(['Only spectators can do that', 'Only spectators can do that']);
 });
+
+test('the switch picks Join or Watch and is remembered', async ({ browser, server }) => {
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto('/');
+  await visitor.locator('.lobby-game', { hasText: 'Connect Four' }).click();
+  const dialog = visitor.getByRole('dialog', { name: 'Join Connect Four' });
+  await expect(dialog.getByRole('button', { name: 'Join', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Spectator' }).click();
+  await expect(dialog.getByRole('button', { name: 'Watch', exact: true })).toBeVisible();
+  await dialog.getByLabel('Game ID').fill('abc');
+  await dialog.getByLabel('Your name').fill('Dana');
+  await dialog.getByRole('button', { name: 'Watch', exact: true }).click(); // saves the form, then is refused: no such game
+  await visitor.reload();
+  await visitor.locator('.lobby-game', { hasText: 'Connect Four' }).click();
+  await expect(visitor.getByRole('dialog').getByRole('button', { name: 'Spectator' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a started game offers to watch instead', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto(`/join/connectfour/${encodeURIComponent(table.gameId)}`);
+  const dialog = visitor.getByRole('dialog', { name: 'Join Connect Four' });
+  await dialog.getByLabel('Your name').fill('Cara');
+  await dialog.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(dialog.getByText('Game already in progress', { exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Watch instead' }).click();
+  // The "Watching: Cara" line on the players' pages is the spectator screen's (Task 8); here the refusal clears
+  await expect(dialog.getByText('Game already in progress', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Spectator' })).toHaveAttribute('aria-pressed', 'true');
+});
