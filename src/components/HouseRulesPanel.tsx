@@ -14,15 +14,15 @@ type HouseRulesPanelProps = {
 // A typed number is kept as a draft and sent once it is a whole number in range, on Enter or leaving the field.
 // The parent remounts it (by key) when the server's value changes, which resets the draft.
 function MostPlayersField({ value, min, max, disabled, onCommit }: {
-  value: number | null; min: number; max: number; disabled: boolean; onCommit: (value: number) => void;
+  value: number; min: number; max: number; disabled: boolean; onCommit: (value: number) => void;
 }) {
-  const [draft, setDraft] = useState(value === null ? '' : String(value));
+  const [draft, setDraft] = useState(String(value));
   const commit = () => {
     const typed = Number(draft);
     if (draft.trim() !== '' && Number.isInteger(typed) && typed >= min && typed <= max) {
       if (typed !== value) onCommit(typed);
     } else {
-      setDraft(value === null ? '' : String(value));
+      setDraft(String(value));
     }
   };
   return (
@@ -42,11 +42,12 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
   const isHost = rules.host === playerNumber;
   const stretched = game.stretchedPlayers;
   const seated = activePlayers.length;
+  const mostPlayers = rules.maxPlayers ?? game.maxPlayers;
 
   // Only the changed rule is sent: the server keeps the others, and drops a rule that the change no longer offers
   // (Chess "Increment per move" once the clock is off), which it would refuse if it were sent back
   const propose = (change: Partial<HouseRulesProposal>) => {
-    gameService.setHouseRules({ values: {}, override: rules.override, maxPlayers: rules.maxPlayers, ...change });
+    gameService.setHouseRules({ values: {}, maxPlayers: rules.maxPlayers, ...change });
   };
   const setValue = (id: string, value: HouseRuleValue) => propose({ values: { [id]: value } });
 
@@ -78,16 +79,12 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
       ))}
       {stretched && (
         <div className="house-rules-rule">
-          <span>
-            <input id="house-rules-override" type="checkbox" checked={rules.override} disabled={!isHost}
-              onChange={(e) => propose({ override: e.target.checked, maxPlayers: e.target.checked ? Math.max(seated, stretched.min, game.maxPlayers) : null })} />
-            <label htmlFor="house-rules-override">I know what I'm doing</label>
-          </span>
-          {rules.override && (
-            <MostPlayersField key={rules.maxPlayers} value={rules.maxPlayers} disabled={!isHost}
-              min={Math.max(seated, stretched.min)} max={stretched.max}
-              onCommit={(maxPlayers) => propose({ maxPlayers })} />
-          )}
+          <MostPlayersField key={mostPlayers} value={mostPlayers} disabled={!isHost}
+            min={Math.max(seated, stretched.min)} max={stretched.max}
+            onCommit={(maxPlayers) => propose({ maxPlayers: maxPlayers === game.maxPlayers ? null : maxPlayers })} />
+          {/* A count outside the normal range is a house rule like any other, so it is marked the same way */}
+          {mostPlayers > game.maxPlayers && <div className="house-rules-help">{`Most players: ${mostPlayers} (house rule)`}</div>}
+          {seated < game.minPlayers && <div className="house-rules-help">{`Players: ${seated} (house rule)`}</div>}
         </div>
       )}
       <ul className="house-rules-list">

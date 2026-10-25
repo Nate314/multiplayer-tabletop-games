@@ -38,7 +38,7 @@ function gameWith(...names: string[]): Manager {
 // The host sets `values` after everyone has joined, then everyone agrees
 function gameWithRules(values: HouseRuleValues, ...names: string[]): Manager {
   const manager = seatAll(names);
-  ok(manager.setHouseRules(ROOM, 1, { values, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -99,7 +99,7 @@ test('the host\'s set reaches everyone and is dealt at once', () => {
     assert.equal(view.boneyardCount, 55 - 18);
   }
   step(manager);
-  assert.deepEqual(manager.setHouseRules(ROOM, 1, { values: { set: 6 }, override: false, maxPlayers: null }),
+  assert.deepEqual(manager.setHouseRules(ROOM, 1, { values: { set: 6 }, maxPlayers: null }),
     { error: 'The house rules are locked once play starts' });
   assert.equal(viewOf(manager, 1).set, 9);
 });

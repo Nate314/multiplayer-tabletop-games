@@ -1,6 +1,6 @@
 # Rook
 
-Bid for the nest, name trump and take counters in tricks with your partner, first team to the target score (500 unless the host chose another), for 4 players, or 4 to 7 when the host ticks "I know what I'm doing". This is the Kentucky Discard version, which Wikipedia calls Tournament Rook.
+Bid for the nest, name trump and take counters in tricks with your partner, first team to the target score (500 unless the host chose another), for 4 players, or 4 to 7 when the host raises Most players as a house rule. This is the Kentucky Discard version, which Wikipedia calls Tournament Rook.
 
 ## Rules
 
@@ -41,7 +41,7 @@ These follow the Official rules (Tournament Rook, also known as Kentucky Discard
 - **No redeal for a pointless hand.** Wikipedia lets a player with no counters call a redeal during bidding. That is not offered here
 - **Everyone passes.** The article does not say what happens if nobody bids. Here the next dealer deals a new hand
 - **Dealing.** The article deals one card at a time with the nest built up between rounds. Here the shuffled deck is split straight into the nest and the hands, which gives the same chances. Who deals first and how the deal moves are not in the article: the last seat deals first and the deal passes to the next seat
-- **More players.** The article is for four players. With "I know what I'm doing" ticked the host can seat up to 7. Six play in fixed teams, two teams of three or three teams of two as the host chooses, and with three teams the host also chooses how the two defending teams score. Five and seven play with called partners, which the article does not cover: the bidder may call a laid-aside card and play alone, and equal top totals share the win. The hand and nest sizes change so the deck deals evenly (see Deal), and the bid winner lays aside as many cards as the nest held
+- **More players.** The article is for four players. The host can set Most players to as many as 7. Six play in fixed teams, two teams of three or three teams of two as the host chooses, and with three teams the host also chooses how the two defending teams score. Five and seven play with called partners, which the article does not cover: the bidder may call a laid-aside card and play alone, and equal top totals share the win. The hand and nest sizes change so the deck deals evenly (see Deal), and the bid winner lays aside as many cards as the nest held
 - **Reneging cannot happen.** The article has a penalty for not following suit when able. Here a card that does not follow suit when it must is refused, so there is no penalty
 - **Reviewing tricks.** The article keeps taken tricks face down. Here the last trick taken stays in the middle until the next card is played, and the number of tricks each team has taken is shown
 - **Leaving.** The rules do not cover a player leaving mid-game. Here the partnership is broken, so the game ends and the highest-scoring team without the dismissed player wins

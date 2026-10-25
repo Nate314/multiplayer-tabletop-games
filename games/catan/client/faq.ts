@@ -84,7 +84,7 @@ export const FAQS: FaqItem[] = [
     question: 'What if a player leaves?',
     answer: 'A dismissed player\'s roads, settlements and cities stay on the board but score and produce nothing. Their ' +
       'cards go back to the bank, and any discard or trade waiting on them is dropped. If it was their turn, the next ' +
-      'player\'s turn begins. With fewer than three players left (two, if the host set the table for two), the game ' +
+      'player\'s turn begins. With fewer than three players left (one, in a game started with two), the game ' +
       'ends and the player with the most points wins.'
   },
   {
@@ -98,8 +98,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose the points to win (8, 10 or 12), switch on the friendly robber (a player with 2 points or fewer cannot be robbed; the robber can still be moved to their hex but steals nothing), switch on the special build phase (with 5 or 6 players), or ' +
-      'tick "I know what I\'m doing" to play with two players. Everyone has to agree before play starts, and the rules cannot change afterwards. ' +
+    answer: 'Before play starts the host can choose the points to win (8, 10 or 12), switch on the friendly robber (a player with 2 points or fewer cannot be robbed; the robber can still be moved to their hex but steals nothing), or switch on the special build phase (with 5 or 6 players). ' +
+      'Two players can play when the host is fine with it: the table shows "Players: 2 (house rule)" and everyone has to agree before play starts. ' +
+      'The rules cannot change once play starts. ' +
       'Settings lists the rules in use all game.'
   }
 ];

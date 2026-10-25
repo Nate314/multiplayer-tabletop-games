@@ -9,6 +9,8 @@ import type { Seat } from './types.ts';
 
 const info = rulesGame.info;
 const [FAST, GOAL] = info.houseRules as [ToggleRule, ChoiceRule<number>];
+const CATAN = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
+const UNO = { minPlayers: 2, maxPlayers: 8, stretchedPlayers: { min: 2, max: 10 } };
 
 function lobby(seats: Seat[], patch: Partial<TestState> = {}): TestState {
   const names = Object.fromEntries(seats.map(seat => [seat, `P${seat}`]));
@@ -17,7 +19,7 @@ function lobby(seats: Seat[], patch: Partial<TestState> = {}): TestState {
 }
 
 function propose(state: TestState, seat: Seat, proposal: Partial<HouseRulesProposal>) {
-  return setHouseRules(info, state, seat, { values: {}, override: false, maxPlayers: null, ...proposal });
+  return setHouseRules(info, state, seat, { values: {}, maxPlayers: null, ...proposal });
 }
 
 function ok<T>(result: { state: T } | { error: string }): T {
@@ -40,7 +42,7 @@ test('houseRule falls back to the standard value for a state saved before house 
 
 test('houseRulesOf builds defaults for a state saved before house rules', () => {
   assert.deepEqual(houseRulesOf(info, { activePlayers: [2, 3, 4] }), {
-    host: 2, values: { fast: false, goal: 3, big: false }, override: false, maxPlayers: null, agreed: [], revision: 0
+    host: 2, values: { fast: false, goal: 3, big: false }, maxPlayers: null, agreed: [], revision: 0
   });
 });
 
@@ -100,13 +102,35 @@ test('setHouseRules allows a rule that depends on another value sent in the same
 
 test('setHouseRules checks the table size', () => {
   const plain = lobby([1, 2]);
-  assert.deepEqual(setHouseRules(testGame.info, plain, 1, { values: {}, override: true, maxPlayers: 4 }), { error: 'This game has no player-count override' });
-  for (const maxPlayers of [7, 4.5, '6', 1e9]) {
-    assert.deepEqual(propose(plain, 1, { override: true, maxPlayers: maxPlayers as number }), { error: 'Most players must be from 2 to 6' });
+  assert.deepEqual(setHouseRules(testGame.info, plain, 1, { values: {}, maxPlayers: 4 }), { error: 'This game has no player-count house rule' });
+  for (const maxPlayers of [7, 4.5, '6', 1e9, 1]) {
+    assert.deepEqual(propose(plain, 1, { maxPlayers: maxPlayers as number }), { error: 'Most players must be from 2 to 6' });
   }
-  assert.deepEqual(propose(lobby([1, 2, 3]), 1, { override: true, maxPlayers: 2 }), { error: '3 players are already seated' });
-  const five = ok(propose(lobby([1, 2, 3, 4, 5]), 1, { override: true, maxPlayers: 6 }));
-  assert.deepEqual(propose(five, 1, { override: false }), { error: '5 players are already seated' });
+  assert.deepEqual(propose(lobby([1, 2, 3]), 1, { maxPlayers: 2 }), { error: '3 players are already seated' });
+  const five = ok(propose(lobby([1, 2, 3, 4, 5]), 1, { maxPlayers: 6 }));
+  assert.equal(five.houseRules?.maxPlayers, 6);
+  assert.deepEqual(propose(five, 1, { maxPlayers: null }), { error: '5 players are already seated' });
+});
+
+test('setHouseRules stores the normal maximum as null and ignores a leftover override', () => {
+  const raised = ok(propose(lobby([1, 2]), 1, { maxPlayers: 6 }));
+  assert.equal(ok(propose(raised, 1, { maxPlayers: 4 })).houseRules?.maxPlayers, null);
+  const old = ok(setHouseRules(info, lobby([1, 2]), 1, { values: {}, maxPlayers: 5 }));
+  assert.deepEqual(old.houseRules, { ...old.houseRules!, maxPlayers: 5 });
+  assert.equal('override' in old.houseRules!, false);
+});
+
+test('houseRulesOf and tableLimit read a room saved with the old override flag', () => {
+  const saved = (override: boolean, maxPlayers: number | null) =>
+    lobby([1, 2], { houseRules: { ...afterSeatChange(info, undefined, [1, 2]), override, maxPlayers } as TestState['houseRules'] });
+  const on = saved(true, 6);
+  assert.equal(tableLimit(info, on), 6);
+  assert.equal(houseRulesOf(info, on).maxPlayers, 6);
+  assert.equal('override' in houseRulesOf(info, on), false);
+  const off = saved(false, 6);
+  assert.equal(tableLimit(info, off), 4);
+  assert.equal(houseRulesOf(info, off).maxPlayers, null);
+  assert.equal(tableLimit(info, saved(false, null)), 4);
 });
 
 test('setHouseRules keeps unsent values, clears agreements and bumps the revision', () => {
@@ -140,23 +164,31 @@ test('agreeToHouseRules is idempotent and everyoneAgreed waits for every seat', 
   assert.equal(everyoneAgreed(info, ok(agreeToHouseRules(info, two, 2, revision))), true);
 });
 
-test('tableLimit and minimumToStart follow the override', () => {
-  const off = lobby([1, 2]);
-  assert.equal(tableLimit(info, off), 4);
-  assert.equal(minimumToStart(info, off), 2);
-  const on = ok(propose(off, 1, { override: true, maxPlayers: 6 }));
-  assert.equal(tableLimit(info, on), 6);
-  assert.equal(minimumToStart(info, on), 2);
+test('tableLimit follows Most players and minimumToStart is the stretched minimum', () => {
+  const plain = lobby([1, 2]);
+  assert.equal(tableLimit(info, plain), 4);
+  assert.equal(tableLimit(info, ok(propose(plain, 1, { maxPlayers: 6 }))), 6);
   assert.equal(tableLimit(info, {}), 4);
+  assert.equal(minimumToStart(CATAN), 2);
+  assert.equal(minimumToStart(testGame.info), testGame.info.minPlayers);
 });
 
-test('describeHouseRules marks non-standard values and lists the table size with the override', () => {
-  const state = ok(propose(lobby([1, 2]), 1, { values: { fast: true }, override: true, maxPlayers: 6 }));
-  assert.deepEqual(describeHouseRules(info, state.houseRules!), [
+test('describeHouseRules marks non-standard values and lists a raised table', () => {
+  const state = ok(propose(lobby([1, 2]), 1, { values: { fast: true }, maxPlayers: 6 }));
+  assert.deepEqual(describeHouseRules(info, state.houseRules!, 2), [
     { label: 'Fast', value: 'On', standard: false },
     { label: 'Goal', value: '3', standard: true },
     { label: 'Most players', value: '6', standard: false }
   ]);
+  assert.deepEqual(describeHouseRules(UNO, { ...state.houseRules!, values: {}, maxPlayers: 10 }, 9),
+    [{ label: 'Most players', value: '10', standard: false }]);
+  assert.equal(tableLimit(UNO, { houseRules: { ...state.houseRules!, maxPlayers: 10 } }), 10);
+});
+
+test('describeHouseRules lists a seat count below the normal minimum', () => {
+  const rules = afterSeatChange(CATAN, undefined, [1, 2]);
+  assert.deepEqual(describeHouseRules(CATAN, rules, 2), [{ label: 'Players', value: '2', standard: false }]);
+  assert.deepEqual(describeHouseRules(CATAN, rules, 3), []);
 });
 
 test('targetScoreRule offers the standard target among the others, sorted', () => {

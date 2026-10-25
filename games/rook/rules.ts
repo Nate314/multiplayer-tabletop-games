@@ -18,7 +18,7 @@
 // - Scoring: a bidding team that takes at least its bid scores what it took, otherwise it loses its bid; the other
 //   team scores what it took. The article plays to 300 and gives the win to the higher total if both pass it.
 //   This game plays to 500 by default (the owner's choice), or the host's target; see the README.
-// - More players (this game's house rules, not the article's): with "I know what I'm doing", 4 to 7 play. The seats
+// - More players (this game's house rules, not the article's): with Most players raised, 4 to 7 play. The seats
 //   go around in seat order and the hand and nest sizes change so the 41 cards deal evenly (dealSizes). At 6 the
 //   teams are two of three or three of two. At 5 and 7 each player scores alone, and after naming trump the bidder
 //   calls one card (two at 7) that they do not hold: whoever holds a called card is their partner for the hand, kept

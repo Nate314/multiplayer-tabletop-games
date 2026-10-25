@@ -33,7 +33,7 @@ function seeded(seed: number): Random {
 function gameWith(seed: number, names = NAMES, values?: HouseRuleValues): Manager {
   const manager = rememberingKeys(createGameManager([catan], seeded(seed)));
   for (const name of names) manager.join('catan', 'g1', name);
-  if (values) ok(manager.setHouseRules(ROOM, 1, { values, override: false, maxPlayers: null }));
+  if (values) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }

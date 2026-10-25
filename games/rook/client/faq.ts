@@ -51,7 +51,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can more than four play?',
-    answer: 'Yes, up to 7, when the host ticks "I know what I\'m doing". With six the host picks two teams of three (seats 1, 3 and 5 against 2, 4 and 6) or three teams of two, partners sitting three apart, and with three teams how the two defending teams score. Teams are fixed for the game, and the hands and nest are sized so the 41 cards deal evenly.'
+    answer: 'Yes, up to 7, when the host sets Most players in the house rules. With six the host picks two teams of three (seats 1, 3 and 5 against 2, 4 and 6) or three teams of two, partners sitting three apart, and with three teams how the two defending teams score. Teams are fixed for the game, and the hands and nest are sized so the 41 cards deal evenly.'
   },
   {
     question: 'How do partners work with five or seven players?',

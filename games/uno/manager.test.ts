@@ -29,7 +29,7 @@ function gameWith(...names: string[]): Manager {
 function gameWithRules(values: Record<string, boolean>, ...names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([uno], seeded(1)));
   for (const name of names) manager.join('uno', 'g1', name);
-  if (Object.keys(values).length > 0) ok(manager.setHouseRules(ROOM, 1, { values, override: false, maxPlayers: null }));
+  if (Object.keys(values).length > 0) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -232,7 +232,7 @@ test('the second of two jump-ins on the same card is refused', () => {
 test('a full game at 10 players', () => {
   const manager = rememberingKeys(createGameManager([uno], seeded(3)));
   manager.join('uno', 'g1', 'P1');
-  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 10 }));
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, maxPlayers: 10 }));
   for (let seat = 2; seat <= 10; seat++) manager.join('uno', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = viewOf(manager, null);

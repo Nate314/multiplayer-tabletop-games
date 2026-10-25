@@ -34,8 +34,8 @@ const allHexes = (state: PublicGameState) => indexes(boardOf(state.layout).hexCo
 function turnMessage(state: PublicGameState, playerNumber: Seat): string {
   const { isGameOver, winners, playerNames, activePlayers, started, currentPlayer } = state;
   if (isGameOver) return winners.length > 0 ? `Game over: ${winners.map(winner => playerNames[winner]).join(' and ')} won` : 'Game over';
-  if (activePlayers.length < minimumToStart(PLAYERS, state)) {
-    return `Waiting for at least ${minimumToStart(PLAYERS, state)} players (up to ${tableLimit(PLAYERS, state)})`;
+  if (activePlayers.length < minimumToStart(PLAYERS)) {
+    return `Waiting for at least ${minimumToStart(PLAYERS)} players (up to ${tableLimit(PLAYERS, state)})`;
   }
   if (currentPlayer === null) return '';
   const name = currentPlayer === playerNumber ? 'You' : playerNames[currentPlayer];
@@ -71,11 +71,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const boardRef = useRef<HTMLDivElement>(null);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, pending, devPlayed, setup, specialBuild } = gameState;
   const noVote = !undoVote && !dismissVote;
-  const ready = activePlayers.length >= minimumToStart(PLAYERS, gameState) && !isGameOver && noVote;
+  const ready = activePlayers.length >= minimumToStart(PLAYERS) && !isGameOver && noVote;
   const canMove = ready && currentPlayer === playerNumber;
   const canBuild = ready && buildChance(gameState, playerNumber);
   const canAct = ready && activePlayers.includes(playerNumber);
-  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= minimumToStart(PLAYERS, gameState);
+  const canUndo = undoAvailable && noVote && activePlayers.includes(playerNumber) && activePlayers.length >= minimumToStart(PLAYERS);
   const canPlay = canMove && !setup && !pending && !devPlayed;
 
   // Only the live board animates; the history dialog's board renders without this hook
