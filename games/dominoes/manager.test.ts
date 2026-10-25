@@ -2,9 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys } from '../../server/testing.ts';
-import { legalPlays, standardTarget } from './rules.ts';
+import { legalPlays, standardTarget, stuckMove } from './rules.ts';
 import { dominoes } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
+import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
@@ -22,9 +23,22 @@ function seeded(seed: number): Random {
   };
 }
 
-function gameWith(...names: string[]): Manager {
+function seatAll(names: string[]): Manager {
   const manager = rememberingKeys(createGameManager([dominoes], seeded(1)));
   for (const name of names) manager.join('dominoes', 'g1', name);
+  return manager;
+}
+
+function gameWith(...names: string[]): Manager {
+  const manager = seatAll(names);
+  agreeAll(manager, ROOM);
+  return manager;
+}
+
+// The host sets `values` after everyone has joined, then everyone agrees
+function gameWithRules(values: HouseRuleValues, ...names: string[]): Manager {
+  const manager = seatAll(names);
+  ok(manager.setHouseRules(ROOM, 1, { values, override: false, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -42,10 +56,10 @@ function viewOf(manager: Manager, viewer: number | null): PublicGameState {
 }
 
 // The first tile that fits, else draw, else pass
-function anyMove(view: PublicGameState): Move {
-  const [first] = legalPlays(view.set, view.hand, view.line, view.leadTile);
+function anyMove(view: PublicGameState, seat: number): Move {
+  const [first] = legalPlays(view, seat, view.hand);
   if (first) return { type: 'play', ...first };
-  return view.boneyardCount > 0 ? { type: 'draw' } : { type: 'pass' };
+  return { type: stuckMove(view, seat, view.hand, view.boneyardCount) ?? 'pass' };
 }
 
 // After a round everyone continues
@@ -57,7 +71,7 @@ function step(manager: Manager): PublicGameState {
   }
   const seat = state.currentPlayer;
   if (seat === null) assert.fail('nobody to move');
-  return ok(manager.move(ROOM, seat, anyMove(viewOf(manager, seat))));
+  return ok(manager.move(ROOM, seat, anyMove(viewOf(manager, seat), seat)));
 }
 
 test('each player sees only their own hand, and the history sees none', () => {
@@ -76,9 +90,8 @@ test('each player sees only their own hand, and the history sees none', () => {
   for (const state of [...history, viewOf(manager, null)]) assert.deepEqual(state.hand, []);
 });
 
-test('the lobby choice reaches everyone and the set is dealt at once', () => {
-  const manager = gameWith('A', 'B');
-  ok(manager.action(ROOM, 2, { type: 'chooseSet', set: 9 }));
+test('the host\'s set reaches everyone and is dealt at once', () => {
+  const manager = gameWithRules({ set: 9 }, 'A', 'B');
   for (const seat of [1, 2]) {
     const view = viewOf(manager, seat);
     assert.equal(view.set, 9);
@@ -86,7 +99,9 @@ test('the lobby choice reaches everyone and the set is dealt at once', () => {
     assert.equal(view.boneyardCount, 55 - 18);
   }
   step(manager);
-  assert.ok('error' in manager.action(ROOM, 1, { type: 'chooseSet', set: 6 }));
+  assert.deepEqual(manager.setHouseRules(ROOM, 1, { values: { set: 6 }, override: false, maxPlayers: null }),
+    { error: 'The house rules are locked once play starts' });
+  assert.equal(viewOf(manager, 1).set, 9);
 });
 
 test('moves are validated', () => {
@@ -98,7 +113,7 @@ test('moves are validated', () => {
   assert.deepEqual(manager.move(ROOM, other, { type: 'draw' }), { error: 'Not your turn' });
   assert.deepEqual(manager.move(ROOM, seat, { type: 'shout' }), { error: 'Invalid move' });
   assert.deepEqual(manager.move(ROOM, seat, { type: 'draw' }), { error: 'You have a tile that fits' });
-  assert.equal(ok(manager.move(ROOM, seat, anyMove(viewOf(manager, seat)))).started, true);
+  assert.equal(ok(manager.move(ROOM, seat, anyMove(viewOf(manager, seat), seat))).started, true);
 });
 
 test('a rejoin mid-turn shows the same line, hand and boneyard count', () => {
@@ -113,7 +128,7 @@ test('a rejoin mid-turn shows the same line, hand and boneyard count', () => {
   const view = rejoined.state as PublicGameState;
   assert.equal(view.currentPlayer, seat);
   assert.deepEqual(view.hand, before.hand);
-  assert.deepEqual(view.line, before.line);
+  assert.deepEqual(view.board, before.board);
   assert.equal(view.boneyardCount, before.boneyardCount);
 });
 
@@ -121,12 +136,12 @@ test('undo restores the hand and line from before the move', () => {
   const manager = gameWith('A', 'B');
   const seat = viewOf(manager, null).currentPlayer ?? assert.fail('nobody to move');
   const before = viewOf(manager, seat);
-  ok(manager.move(ROOM, seat, anyMove(before)));
+  ok(manager.move(ROOM, seat, anyMove(before, seat)));
   ok(manager.requestUndo(ROOM, seat));
   ok(manager.voteUndo(ROOM, seat === 1 ? 2 : 1, true));
   const restored = viewOf(manager, seat);
   assert.deepEqual(restored.hand, before.hand);
-  assert.deepEqual(restored.line, before.line);
+  assert.deepEqual(restored.board, before.board);
   assert.equal(restored.currentPlayer, seat);
 });
 
@@ -149,4 +164,60 @@ test('dismissing a player mid-game skips their seat', () => {
   assert.deepEqual(state.activePlayers, [1, 2]);
   assert.equal('3' in state.handCounts, false);
   assert.notEqual(state.currentPlayer, 3);
+});
+
+test('every combination of layouts plays whole games, and builds its history and game file', () => {
+  for (const branching of ['none', 'starter', 'every']) for (const chickenfoot of [false, true]) for (const trains of [false, true]) {
+    const label = JSON.stringify({ branching, chickenfoot, trains });
+    const manager = gameWithRules({ branching, chickenfoot, trains }, 'A', 'B', 'C');
+    let state = viewOf(manager, null);
+    for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
+    assert.equal(state.isGameOver, true, label);
+    assert.ok(manager.history('dominoes', 'g1')?.length, label);
+    assert.ok('file' in (manager.gameFile('dominoes', 'g1', new Date()) ?? {}), label);
+  }
+});
+
+// Steps a Trains game until the player to move must draw while some train is open
+function trainsGameAtADraw(): { manager: Manager; seat: number } {
+  const manager = gameWithRules({ trains: true }, 'A', 'B', 'C');
+  for (let moves = 0; moves < 5000; moves++) {
+    const state = viewOf(manager, null);
+    if (state.isGameOver) break;
+    const seat = state.currentPlayer;
+    if (seat !== null && !state.roundSummary && state.openTrains.length > 0 && anyMove(viewOf(manager, seat), seat).type === 'draw') {
+      return { manager, seat };
+    }
+    step(manager);
+  }
+  return assert.fail('no draw with an open train');
+}
+
+test('undo restores the board, the open trains and the draw', () => {
+  const { manager, seat } = trainsGameAtADraw();
+  const before = viewOf(manager, seat);
+  const drawn = ok(manager.move(ROOM, seat, { type: 'draw' }));
+  assert.equal(drawn.drewThisTurn, true);
+  ok(manager.requestUndo(ROOM, seat));
+  for (const other of before.activePlayers.filter(s => s !== seat)) ok(manager.voteUndo(ROOM, other, true));
+  const restored = viewOf(manager, seat);
+  assert.equal(restored.drewThisTurn, false);
+  assert.deepEqual(restored.board, before.board);
+  assert.deepEqual(restored.openTrains, before.openTrains);
+  assert.deepEqual(restored.hand, before.hand);
+  assert.equal(restored.currentPlayer, seat);
+});
+
+test('a rejoin shows the same board and open trains', () => {
+  const { manager, seat } = trainsGameAtADraw();
+  ok(manager.move(ROOM, seat, { type: 'draw' }));
+  const before = viewOf(manager, seat);
+  manager.disconnect(ROOM, seat);
+  const rejoined = manager.join('dominoes', 'g1', ['A', 'B', 'C'][seat - 1], true);
+  if ('error' in rejoined) assert.fail(rejoined.error);
+  const view = rejoined.state as PublicGameState;
+  assert.deepEqual(view.board, before.board);
+  assert.deepEqual(view.openTrains, before.openTrains);
+  assert.equal(view.drewThisTurn, true);
+  assert.deepEqual(view.hand, before.hand);
 });

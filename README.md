@@ -137,7 +137,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Checkers](games/checkers/README.md): jump diagonally to capture, and crown a king on the far row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/English_draughts).
 - [Chess](games/chess/README.md): checkmate the enemy king in the classic two-player strategy game. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Rules_of_chess).
 - [Connect Four](games/connectfour/README.md): drop discs into the grid and line up four in a row. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Connect_Four).
-- [Dominoes](games/dominoes/README.md): match tile ends to build a line, draw from the boneyard when stuck, and be first to play out your hand, for 2 to 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Dominoes).
+- [Dominoes](games/dominoes/README.md): match tile ends to build a line or branches, draw from the boneyard when stuck, and be first to play out your hand, for 2 to 4 players, with Chickenfoot and Mexican Train as house rules. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Dominoes).
 - [Euchre](games/euchre/README.md): make trump with your partner and take three of five tricks, with the jacks on top, first team to 10, for exactly 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Euchre).
 - [Farkle](games/farkle/README.md): roll six dice, bank your points or push your luck and risk them all, for 2 to 8 players (2 to 10 with the override). Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Farkle).
 - [Go Fish](games/gofish/README.md): ask for ranks, go fish, and collect the most books of four, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Go_Fish).

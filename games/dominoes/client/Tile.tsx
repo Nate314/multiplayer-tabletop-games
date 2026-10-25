@@ -1,4 +1,5 @@
 import { pipsName } from '../rules.ts';
+import type { DragSourceProps } from './useDrag.ts';
 
 // Which of the nine spots in a half-tile hold a pip, for 0 to 9 pips (rows of three, left to right)
 const SPOTS: number[][] = [
@@ -22,9 +23,10 @@ type TileProps = {
   onClick?: () => void;
   playable?: boolean;
   selected?: boolean;
+  dragProps?: DragSourceProps;
 };
 
-export default function Tile({ pips, animKey, highlighted = false, onClick, playable = false, selected = false }: TileProps) {
+export default function Tile({ pips, animKey, highlighted = false, onClick, playable = false, selected = false, dragProps }: TileProps) {
   const classes = ['tile'];
   if (pips[0] === pips[1]) classes.push('tile-double');
   if (highlighted) classes.push('tile-highlighted');
@@ -50,6 +52,7 @@ export default function Tile({ pips, animKey, highlighted = false, onClick, play
       data-anim-key={animKey}
       disabled={!playable}
       onClick={onClick}
+      {...dragProps}
     >
       {face}
     </button>

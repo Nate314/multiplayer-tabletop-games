@@ -22,6 +22,9 @@
   --tile-pip: #1b1b1b;
   --tile-back: #15563a;
   --tile-w: 46px;
+  --row-bg: rgba(17, 38, 26, 0.05);
+  --open-train: #b3261e;
+  --slot-fits-bg: #fff1d6;
 
   :root[data-theme="dark"] & {
     color-scheme: dark;
@@ -39,6 +42,9 @@
     --error-text: #ffd5d0;
     --highlight: #ffb020;
     --tile-back: #2a9462;
+    --row-bg: rgba(230, 243, 234, 0.05);
+    --open-train: #ff8a80;
+    --slot-fits-bg: #4a3a12;
   }
 }
 
@@ -504,19 +510,99 @@
     font-weight: 700;
   }
 
-  /* The line wraps onto more rows when it is long, still read left to right */
+  /* The board: the hub row (the line through the starter) in the middle, arms above and below it, and each double's
+     branches in rows of their own, indented a step per level up to a cap. Every row wraps, so nothing widens the page */
 
-  .line {
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .board-row {
+    --indent: calc(min(var(--depth, 0), 3) * 14px);
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
     gap: 4px;
-    width: 100%;
-    min-height: calc(var(--tile-w) * 0.5 + 12px);
+    box-sizing: border-box;
+    width: calc(100% - var(--indent));
+    min-width: 0;
+    min-height: calc(var(--tile-w) + 12px);
+    margin-left: var(--indent);
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+  }
+
+  .board-row-above,
+  .board-row-below {
+    background: var(--row-bg);
+    border-color: var(--panel-border);
+  }
+
+  .board-row-label {
+    flex-basis: 100%;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .board-row-open {
+    border: 2px dashed var(--open-train);
+  }
+
+  .board-row-open .board-row-label {
+    color: var(--open-train);
   }
 
   .line-slot {
     display: inline-flex;
+  }
+
+  /* An open end: a tile-sized gap showing the number it takes, outlined when you may play on it and a button when the
+     selected tile fits it */
+
+  .end-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    box-sizing: border-box;
+    width: var(--tile-w);
+    height: var(--tile-w);
+    padding: 0;
+    border: 2px dashed var(--muted);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 700;
+  }
+
+  .end-slot-usable {
+    border: 3px solid var(--highlight);
+    color: var(--highlight);
+  }
+
+  button.end-slot-fits {
+    cursor: pointer;
+    background: var(--slot-fits-bg);
+    box-shadow: 0 0 0 2px var(--highlight);
+  }
+
+  button.end-slot-fits:hover {
+    filter: brightness(1.08);
+  }
+
+  .board-start {
+    width: calc(var(--tile-w) * 2);
   }
 
   /* Tiles: two halves of a three-by-three grid of pips, laid sideways */
@@ -597,18 +683,14 @@
     outline-offset: 2px;
   }
 
-  /* Choosing the lobby set, and an end for a tile that fits both */
+  /* Choosing an end for a tile that fits more than one */
 
-  .set-choice,
   .end-choice {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
     margin-top: 8px;
-  }
-
-  .end-choice {
     box-sizing: border-box;
     width: 100%;
     max-width: 560px;
@@ -618,7 +700,6 @@
     background: var(--panel-bg);
   }
 
-  .set-choice button,
   .end-choice button {
     padding: 8px 18px;
     border: 2px solid transparent;
@@ -628,17 +709,36 @@
     font-weight: 600;
   }
 
-  .set-choice button[aria-pressed="false"] {
-    background: var(--status-bg);
-    color: var(--text);
-    border-color: var(--panel-border);
-  }
-
-  .set-choice button[aria-pressed="true"] {
-    border-color: var(--highlight);
-  }
-
   .end-choice button:hover {
     background: var(--button-hover-bg);
+  }
+}
+
+/* Dragging a tile. These styles go when the shared drag defaults arrive with the drag and drop PR. */
+[data-game="dominoes"] {
+  [data-drag] {
+    touch-action: none;
+  }
+
+  [data-dragging] {
+    opacity: 0.35;
+  }
+
+  .drag-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    margin: 0;
+    pointer-events: none;
+    opacity: 0.9;
+    transform-origin: 0 0;
+    transition: none;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  }
+
+  [data-drag-over] {
+    background: var(--slot-fits-bg);
+    box-shadow: 0 0 0 3px var(--highlight);
   }
 }
