@@ -2,6 +2,8 @@ import type { SvgAsset } from '../../shared/svg/svg.ts';
 import { SYMBOL_ASSETS } from '../../shared/svg/symbols.ts';
 import { ICON_ASSETS } from '../../shared/svg/icons.ts';
 import { CARCASSONNE_ASSETS } from '../../games/carcassonne/svg.ts';
+import { RISK_ASSETS } from '../../games/risk/svg.ts';
+import { TICKETTORIDE_ASSETS } from '../../games/tickettoride/svg.ts';
 
 export type { SvgAsset };
 
@@ -11,6 +13,8 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...SYMBOL_ASSETS,
   ...ICON_ASSETS,
   ...CARCASSONNE_ASSETS,
+  ...RISK_ASSETS,
+  ...TICKETTORIDE_ASSETS,
 ];
 
 export function findSvg(name: string, assets: SvgAsset[] = SVG_ASSETS): SvgAsset | undefined {

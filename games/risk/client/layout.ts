@@ -1,10 +1,9 @@
-// Where things go on the drawn map: continent shapes, labels, short territory names and seat colors
-import { CONTINENTS, TERRITORIES } from '../map.ts';
+// Where things go on the drawn map (the land itself is games/risk/svg.ts): labels, short territory names and seat colors
+import { TERRITORIES } from '../map.ts';
 import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import type { ContinentId, Seat } from '../types.ts';
 
-export const MAP_WIDTH = 1000;
-export const MAP_HEIGHT = 620;
+export { MAP_WIDTH, MAP_HEIGHT } from '../map.ts';
 export const TERRITORY_RADIUS = 17;
 
 // The color-blind symbol for each seat's color; neutral armies have none
@@ -20,27 +19,6 @@ export function territoryKey(id: string): string {
 }
 
 type Point = { x: number; y: number };
-
-// The convex hull of a continent's territories, which the map draws with a wide round stroke as its land
-function hull(points: Point[]): Point[] {
-  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
-  const cross = (o: Point, a: Point, b: Point) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-  const half = (list: Point[]) => {
-    const result: Point[] = [];
-    for (const point of list) {
-      while (result.length >= 2 && cross(result[result.length - 2], result[result.length - 1], point) <= 0) result.pop();
-      result.push(point);
-    }
-    result.pop();
-    return result;
-  };
-  return [...half(sorted), ...half([...sorted].reverse())];
-}
-
-export const CONTINENT_SHAPES: Record<ContinentId, string> = Object.fromEntries(CONTINENTS.map(({ id }) => {
-  const points = hull(TERRITORIES.filter(territory => territory.continent === id));
-  return [id, points.map(({ x, y }) => `${x},${y}`).join(' ')];
-})) as Record<ContinentId, string>;
 
 // Each continent's name and bonus sits in the sea next to it
 export const CONTINENT_LABELS: Record<ContinentId, Point> = {
