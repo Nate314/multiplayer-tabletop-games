@@ -83,10 +83,12 @@ function App() {
       </header>
       <main className="lobby-main">
         {error && !selected && <div className="lobby-error">{error}</div>}
-        {session && !session.inGame && sessionGame && (
-          <RejoinButton gameName={sessionGame.name} gameId={session.gameId} onRejoin={rejoin} />
-        )}
-        <OpenSavedGame games={GAME_INFOS} />
+        <div className="lobby-actions">
+          {session && !session.inGame && sessionGame && (
+            <RejoinButton gameName={sessionGame.name} gameId={session.gameId} onRejoin={rejoin} />
+          )}
+          <OpenSavedGame games={GAME_INFOS} />
+        </div>
         <GameList games={GAME_INFOS} onSelect={openDialog} />
       </main>
       {selected && (

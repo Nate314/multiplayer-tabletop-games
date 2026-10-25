@@ -91,7 +91,7 @@
   border: 1px solid var(--lobby-border);
   border-radius: 50%;
   background: var(--lobby-surface);
-  font-size: 1.2rem;
+  color: var(--lobby-text);
 }
 
 .lobby-header .github-link {
@@ -216,8 +216,10 @@
 }
 
 .lobby-game-icon {
-  font-size: 2rem;
-  line-height: 1;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  color: var(--lobby-accent);
 }
 
 .lobby-game-text {
@@ -254,11 +256,25 @@
   font-size: 0.8rem;
 }
 
-.lobby-rejoin {
-  display: block;
-  max-width: 640px;
-  width: 100%;
+/* Back to a game and Open a saved game span the game list: side by side where two game cards fit, else stacked */
+.lobby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.lobby-actions > button {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.lobby-actions > .lobby-error {
+  flex-basis: 100%;
+  margin-bottom: 0;
+}
+
+.lobby-rejoin {
   padding: 12px 16px;
   font-size: 1rem;
 }
@@ -426,7 +442,7 @@
   border: none;
   border-radius: 50%;
   background: var(--platform-button-bg, var(--lobby-accent));
-  font-size: 1.2rem;
+  color: var(--platform-button-text, var(--lobby-accent-text));
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -754,8 +770,6 @@
   border-radius: 50%;
   background: var(--platform-button-bg, var(--lobby-accent));
   color: var(--platform-button-text, var(--lobby-accent-text));
-  font-size: 1.3rem;
-  line-height: 1;
 }
 
 :where([data-game] .history-settings-button:hover) {
@@ -1253,10 +1267,6 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 :where(.open-saved-game) {
-  display: block;
-  width: 100%;
-  max-width: 640px;
-  margin-bottom: 12px;
   padding: 10px 16px;
   border: 1px solid var(--lobby-border);
   border-radius: 8px;
@@ -1579,7 +1589,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   overflow: hidden;
 }
 
-/* The Share and GitHub icons in the headers */
+/* The header icons: Share, GitHub, Settings, the theme toggle and the playback gear */
 :where(.header-icon) {
   width: 20px;
   height: 20px;
