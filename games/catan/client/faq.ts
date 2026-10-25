@@ -18,7 +18,7 @@ export const FAQS: FaqItem[] = [
     answer: 'A house rule for five or six players, off unless the host turns it on. After each turn, every other player ' +
       'in turn order, starting with the next player, gets a build chance: build or buy a development card, with no ' +
       'trading or playing cards, then click Done building. Players holding fewer than 2 cards, or away, are skipped. A ' +
-      'card bought then is playable from your next turn, and 10 points reached then win when your own turn begins.'
+      'card bought then is playable from your next turn, and the points to win reached then win when your own turn begins.'
   },
   {
     question: 'What is the goal?',
@@ -94,11 +94,12 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, orange hexagon, purple cross. Settlements, cities, the middle of each road and the player list show it.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, orange hexagon, purple cross, white ring, green triangle. Settlements, cities, the middle of each road and the player list show it.'
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose the points to win (8, 10 or 12), switch on the friendly robber (a player with 2 points or fewer cannot be robbed; the robber can still be moved to their hex but steals nothing), or ' +
-      'tick "I know what I\'m doing" to play with two players. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+    answer: 'Before play starts the host can choose the points to win (8, 10 or 12), switch on the friendly robber (a player with 2 points or fewer cannot be robbed; the robber can still be moved to their hex but steals nothing), switch on the special build phase (with 5 or 6 players), or ' +
+      'tick "I know what I\'m doing" to play with two players. Everyone has to agree before play starts, and the rules cannot change afterwards. ' +
+      'Settings lists the rules in use all game.'
   }
 ];

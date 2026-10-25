@@ -42,7 +42,7 @@ Before the first move the host picks the rules and every player must agree. They
 - After six scoreless turns in a row, every player sees an End game button next to Undo. Clicking it ends the game at once
 - The tiles of the last play are outlined, and the board and rack are dimmed when it is not your turn
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
-- With the turn timer on, the time left shows under the turn message
+- With the turn timer on, the time left shows under the turn message. In the last 10 seconds of your turn a tick plays each second (Timer warnings in Settings)
 - Click FAQ at the top of the page for a short guide to the rules and controls
 
 ## Differences from Wikipedia

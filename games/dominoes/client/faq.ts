@@ -63,6 +63,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can choose the target score: 100 points for two players and 61 for three or four (the standard), or 61, 100, 150 or 200 for any number of players. Everyone has to agree before play starts, and the rules cannot change afterwards.'
+    answer: 'Before play starts the host can choose the set (double-six or double-nine), how doubles open branches (every double, the starting double only, or none for a single line), Chickenfoot, Trains, and the target score: 100 points for two players and 61 for three or four (the standard), or 61, 100, 150 or 200 for any number of players. Everyone has to agree before play starts, and the rules, the set included, cannot change afterwards. Settings lists the rules in use all game.'
   }
 ];

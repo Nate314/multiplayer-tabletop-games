@@ -84,7 +84,7 @@ export const FAQS: FaqItem[] = [
       '10 seconds added after each move you make. Both players must agree to the house rules first. The clocks ' +
       'start when both have agreed, with White running first. Your clock runs while it is your turn, even if you ' +
       'disconnect or a vote is open. If your time runs out you lose, even if your opponent could not checkmate. ' +
-      'Undo gives back the time spent on the undone move.'
+      'Undo gives back the time spent on the undone move. In your last 10 seconds a tick plays each second, unless Timer warnings is off in Settings.'
   },
   {
     question: 'What does Undo do?',
