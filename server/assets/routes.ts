@@ -1,10 +1,13 @@
 import type { Express } from 'express';
 import { SVG_ASSETS, findSvg, type SvgAsset } from './registry.ts';
+import { mountSoundRoutes } from './sounds.ts';
 
 const IMMUTABLE = 'public, max-age=31536000, immutable';
 
 // A URL's drawing never changes, so browsers keep it forever; a new drawing gets a new name or parameter
 export function mountAssetRoutes(app: Express, assets: SvgAsset[] = SVG_ASSETS): void {
+  mountSoundRoutes(app);
+
   app.get('/api/svg', (_req, res) => {
     res.json(assets.map(({ name, params, samples }) => ({ name, params, samples })));
   });

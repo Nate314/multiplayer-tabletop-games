@@ -1,4 +1,4 @@
-import type { SoundName } from '../services/settings.ts';
+import type { SoundDef, SoundName, SoundNoise, SoundNote } from '../../shared/sounds.ts';
 import { getPreferences } from '../hooks/usePreferences.ts';
 import { audible } from './sounds.ts';
 
@@ -21,16 +21,21 @@ export function installAudioUnlock(target: Window): void {
   events.forEach(event => target.addEventListener(event, unlockAudio));
 }
 
-type Note = { at: number; length: number; hz: number; type: OscillatorType };
+let sounds = new Map<SoundName, SoundDef>();
 
-const NOTES: Partial<Record<SoundName, Note[]>> = {
-  turn: [{ at: 0, length: 0.25, hz: 660, type: 'sine' }, { at: 0.15, length: 0.35, hz: 880, type: 'sine' }],
-  move: [{ at: 0, length: 0.03, hz: 300, type: 'triangle' }],
-  gameOver: [523, 659, 784, 1047].map((hz, i) => ({ at: i * 0.12, length: 0.2, hz, type: 'triangle' as const })),
-  timer: [{ at: 0, length: 0.02, hz: 1000, type: 'square' }],
-};
+// Fetched once at startup, so the first sound has no delay; until it arrives, or if it fails, every sound is silent
+export async function loadSounds(): Promise<void> {
+  try {
+    const response = await fetch('/api/sound');
+    if (!response.ok) return;
+    const list = (await response.json()) as SoundDef[];
+    sounds = new Map(list.map(sound => [sound.name, sound]));
+  } catch {
+    // Offline or a server error: the game plays on without sound
+  }
+}
 
-function tone(ctx: AudioContext, { at, length, hz, type }: Note, gain: number): void {
+function tone(ctx: AudioContext, { at, length, hz, type }: SoundNote, gain: number): void {
   const start = ctx.currentTime + at;
   const oscillator = ctx.createOscillator();
   const envelope = ctx.createGain();
@@ -43,10 +48,9 @@ function tone(ctx: AudioContext, { at, length, hz, type }: Note, gain: number): 
   oscillator.stop(start + length);
 }
 
-// Six short noise bursts over 250 ms
-function rattle(ctx: AudioContext, gain: number): void {
-  for (let i = 0; i < 6; i++) {
-    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.03), ctx.sampleRate);
+function rattle(ctx: AudioContext, { bursts, spacingSec, lengthSec }: SoundNoise, at: number, gain: number): void {
+  for (let i = 0; i < bursts; i++) {
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * lengthSec), ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let j = 0; j < data.length; j++) data[j] = (Math.random() * 2 - 1) * (1 - j / data.length);
     const source = ctx.createBufferSource();
@@ -54,7 +58,7 @@ function rattle(ctx: AudioContext, gain: number): void {
     envelope.gain.value = gain;
     source.buffer = buffer;
     source.connect(envelope).connect(ctx.destination);
-    source.start(ctx.currentTime + i * 0.044);
+    source.start(ctx.currentTime + at + i * spacingSec);
   }
 }
 
@@ -82,8 +86,9 @@ function play(ctx: AudioContext, heard: SoundName[], volume: number): void {
   let offset = 0;
   try {
     heard.forEach(name => {
-      if (name === 'dice') rattle(ctx, gain);
-      else NOTES[name]?.forEach(note => tone(ctx, { ...note, at: note.at + offset }, gain));
+      const sound = sounds.get(name);
+      sound?.notes.forEach(note => tone(ctx, { ...note, at: note.at + offset }, gain));
+      if (sound?.noise) rattle(ctx, sound.noise, offset, gain);
       offset += 0.04;
     });
   } catch {

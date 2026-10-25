@@ -4,6 +4,7 @@ import express from 'express';
 import type { AddressInfo } from 'net';
 import { mountAssetRoutes } from './routes.ts';
 import type { SvgAsset } from './registry.ts';
+import type { SoundDef } from '../../shared/sounds.ts';
 
 const testDot: SvgAsset = {
   name: 'test-dot',
@@ -40,4 +41,17 @@ test('the listing names every asset with its samples', async () => {
   const response = await fetch(`${base}/api/svg`);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), [{ name: 'test-dot', params: ['color'], samples: [['red'], ['blue']] }]);
+});
+
+test('the sound listing has every sound with its notes', async () => {
+  const sounds = (await (await fetch(`${base}/api/sound`)).json()) as SoundDef[];
+  assert.equal(sounds.length, 5);
+  const turn = sounds.find(sound => sound.name === 'turn');
+  assert.deepEqual(turn?.notes, [{ at: 0, length: 0.25, hz: 660, type: 'sine' }, { at: 0.15, length: 0.35, hz: 880, type: 'sine' }]);
+});
+
+test('one sound by name, or a 404', async () => {
+  const dice = (await (await fetch(`${base}/api/sound/dice`)).json()) as SoundDef;
+  assert.equal(dice.noise?.bursts, 6);
+  assert.equal((await fetch(`${base}/api/sound/nope`)).status, 404);
 });

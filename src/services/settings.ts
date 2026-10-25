@@ -4,10 +4,11 @@ import type { PlaybackSpeed } from '../components/playback.ts'
 import { CATEGORIES } from '../../shared/categories.ts'
 import { DEFAULT_FILTERS, parsePlayers } from '../components/gameFilters.ts'
 import type { LandingFilters } from '../components/gameFilters.ts'
+import type { SoundName } from '../../shared/sounds.ts'
 
 export type JoinForm = { playerName: string; gameId: string }
 
-export type SoundName = 'turn' | 'move' | 'dice' | 'gameOver' | 'timer'
+export type { SoundName }
 export type Preferences = {
   volume: number
   muted: boolean
