@@ -1,5 +1,6 @@
 import PieceGlyph from './PieceGlyph';
 import { useCountdown, formatClock } from '../../../src/hooks/useCountdown.ts';
+import useTimerWarning from '../../../src/sound/useTimerWarning.ts';
 import { colorOf, deadline, isInCheck, opponent } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -28,6 +29,7 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
   const { gameStatus, playerNames, activePlayers, captured, currentPlayer, isGameOver, clock } = gameState;
   const limit = deadline(gameState);
   const timeLeft = useCountdown(limit, gameState.serverTime); // the running player's time; others show what they had
+  useTimerWarning(timeLeft, currentPlayer === playerNumber && !isGameOver);
 
   return (
     <>

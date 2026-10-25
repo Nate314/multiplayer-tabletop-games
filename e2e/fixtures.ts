@@ -237,3 +237,20 @@ export async function setPreference(page: Page, label: string, on: boolean): Pro
   await dialog.getByLabel(label).setChecked(on);
   await dialog.getByRole('button', { name: 'Close' }).click();
 }
+
+// Records each tone the page starts from now on as '<wave>:<hz>', by wrapping the Web Audio oscillator, then clicks the
+// header so audio is unlocked. `tones(page)` reads what has played since
+export async function recordTones(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const played: string[] = [];
+    (window as unknown as { tones: string[] }).tones = played;
+    const start = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (this: OscillatorNode, ...args: Parameters<typeof start>) {
+      played.push(`${this.type}:${this.frequency.value}`);
+      start.apply(this, args);
+    };
+  });
+  await page.locator('.game-header h1').click();
+}
+
+export const tones = (page: Page) => page.evaluate(() => (window as unknown as { tones: string[] }).tones.slice());

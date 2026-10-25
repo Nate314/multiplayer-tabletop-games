@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, recordTones, test, tones, undo, type Seat } from './fixtures.ts';
 import { BLANK, emptyBoard } from '../games/scrabble/rules.ts';
 import type { GameState, Placement } from '../games/scrabble/types.ts';
 
@@ -585,5 +585,18 @@ test.describe('Scrabble turn timer', () => {
     await expect(freeSlots(alice)).toHaveCount(7);
     expect(await rackLetters(alice)).toEqual('CATAAAA'.split(''));
     await expect(points(alice, 'Alice')).toHaveText('0');
+  });
+
+  test('the last 10 seconds tick for the player on turn, and rack tiles still drag while the timer runs', async ({ seat }) => {
+    const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
+    const [alice, bob] = table.pages;
+    await recordTones(alice);
+    await recordTones(bob);
+    const dealt = (await table.state<GameState>()).racks;
+    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnStartedAt: Date.now() - 50_000 });
+    await drag(alice, rackTile(alice, 'C'), square(alice, 7, 7));
+    await expect(square(alice, 7, 7).locator('.tile-pending')).toHaveText('C3');
+    await expect.poll(async () => (await tones(alice)).filter(tone => tone === 'square:1000').length).toBeGreaterThan(1);
+    expect((await tones(bob)).filter(tone => tone === 'square:1000')).toEqual([]);
   });
 });

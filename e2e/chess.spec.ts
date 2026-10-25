@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, test, touchDrag, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, recordTones, test, tones, touchDrag, undo, type Seat, type Table } from './fixtures.ts';
 import { positionKey } from '../games/chess/rules.ts';
 import type { Board, BoardState, CastlingRights, PieceType } from '../games/chess/types.ts';
 
@@ -685,6 +685,18 @@ test.describe('Chess drag and drop', () => {
 
 test.describe('Chess clock', () => {
   const clocks = (page: Page) => page.locator('.chess-clock');
+
+  test('the last 10 seconds tick for the player whose clock runs, and a piece still drags with the clock on', async ({ seat }) => {
+    const table = await seat('chess', ['Alice', 'Bob'], { houseRules: { clockMinutes: 5 } });
+    const [alice, bob] = table.pages;
+    await recordTones(alice);
+    await recordTones(bob);
+    await table.patch({ clock: { remainingMs: { 1: 9_000, 2: 300_000 }, runningSince: Date.now() }, started: true });
+    await expect.poll(async () => (await tones(alice)).filter(tone => tone === 'square:1000').length).toBeGreaterThan(1);
+    expect((await tones(bob)).filter(tone => tone === 'square:1000')).toEqual([]);
+    await drag(alice, piece(alice, 'e2'), square(alice, 'e4'));
+    await expect(piece(bob, 'e4')).toHaveAccessibleName('white pawn');
+  });
 
   test("the clock shows each player's time", async ({ seat }) => {
     const table = await seat('chess', ['Alice', 'Bob'], { houseRules: { clockMinutes: 5, incrementSeconds: 2 } });
