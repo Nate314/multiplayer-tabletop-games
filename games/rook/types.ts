@@ -11,9 +11,8 @@ export type NumberCard = { color: Color; number: number };
 export type RookCard = { color: 'rook' };
 export type Card = NumberCard | RookCard;
 
-// The partnerships: team 0 is seats 1 and 3, team 1 is seats 2 and 4
-export type { Team } from '../../shared/partnerships.ts';
-export type TeamScores = [number, number];
+// One entry per team, in the order of GameState.teams. A game saved before teams has two: seats 1 and 3, then 2 and 4
+export type TeamScores = number[];
 
 export type Phase = 'bidding' | 'discard' | 'trump' | 'play' | 'handOver';
 
@@ -29,11 +28,11 @@ export type Action = { type: 'acknowledgeRound' };
 
 export type Play = { seat: Seat; card: Card };
 
-// `won` is the bid that took the bidding when this pass ended it; `redeal` is set when all four passed
+// `won` is the bid that took the bidding when this pass ended it; `redeal` is set when everyone passed
 export type LastMove =
   | { type: 'bid'; playerNumber: Seat; amount: number; won: boolean }
   | { type: 'pass'; playerNumber: Seat; won: { seat: Seat; amount: number } | null; redeal: boolean }
-  | { type: 'discard'; playerNumber: Seat }
+  | { type: 'discard'; playerNumber: Seat; count?: number } // count is missing in old saves, which laid aside 5
   | { type: 'nameTrump'; playerNumber: Seat; color: Color }
   | { type: 'play'; playerNumber: Seat; card: Card; trickWinner: Seat | null };
 
@@ -57,6 +56,9 @@ export type HandSummary = {
 
 // The full state, which never leaves the server
 export type GameState = BaseGameState & {
+  // The teams, fixed for the game, as seats in seat order. Set by the first deal; missing in a lobby and in games
+  // saved before 6 players, which read as [[1, 3], [2, 4]] (see teamsOf)
+  teams?: Seat[][];
   handNumber: number; // 1 for the first hand
   dealer: Seat | null;
   scores: TeamScores;

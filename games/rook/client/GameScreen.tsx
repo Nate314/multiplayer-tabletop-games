@@ -7,7 +7,7 @@ import RoundSummary from './RoundSummary';
 import Table from './Table';
 import animateMove, { sortedHand } from './animateMove.ts';
 import { handKey } from '../../../src/animation/animKeys.ts';
-import { BID_STEP, COLORS, MAX_BID, MIN_BID, NEST_SIZE, SEATS, canPlayCard, sameCard } from '../rules.ts';
+import { BID_STEP, COLORS, MAX_BID, MIN_BID, MIN_PLAYERS, canPlayCard, nestSize, sameCard } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Card as CardData, PublicGameState } from '../types.ts';
 
@@ -20,7 +20,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable, started,
     hand, phase, bidding, trick, trump, discards, roundSummary, gameStatus
   } = gameState;
-  const full = activePlayers.length === SEATS.length;
+  const full = activePlayers.length >= MIN_PLAYERS;
+  const laying = nestSize(gameState); // how many cards the bid winner lays aside
   const isMyTurn = currentPlayer === playerNumber && full && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && full;
   const lowestBid = bidding.high ? bidding.high.amount + BID_STEP : MIN_BID;
@@ -43,13 +44,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const isChosen = (card: CardData) => chosen.some(other => sameCard(other, card));
   function toggle(card: CardData) {
     setChosen(picked => isChosen(card) ? picked.filter(other => !sameCard(other, card))
-      : picked.length < NEST_SIZE ? [...picked, card] : picked);
+      : picked.length < laying ? [...picked, card] : picked);
   }
 
   const discarding = isMyTurn && phase === 'discard';
   const playing = isMyTurn && phase === 'play';
   const clickable = (card: CardData) =>
-    discarding ? (isChosen(card) || chosen.length < NEST_SIZE) : playing && canPlayCard(hand, card, trick, trump);
+    discarding ? (isChosen(card) || chosen.length < laying) : playing && canPlayCard(hand, card, trick, trump);
   function pick(card: CardData) {
     if (discarding) toggle(card);
     else gameService.makeMove({ type: 'play', card });
@@ -57,10 +58,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   let hint: string | null = null;
   if (isGameOver) hint = null;
-  else if (!full) hint =`Rook needs exactly 4 players (${activePlayers.length} seated)`;
+  else if (!full) hint = `Rook needs at least ${MIN_PLAYERS} players (${activePlayers.length} seated)`;
   else if (isMyTurn) {
     if (phase === 'bidding') hint = bidding.high ? `Bid more than ${bidding.high.amount}, or pass for this hand` : `Open the bidding at ${MIN_BID} or more, or pass`;
-    else if (phase === 'discard') hint = `The nest is in your hand: pick ${NEST_SIZE} cards to lay aside`;
+    else if (phase === 'discard') hint = `The nest is in your hand: pick ${laying} cards to lay aside`;
     else if (phase === 'trump') hint = 'Name trump';
     else if (trick.length === 0) hint = 'Lead any card';
     else hint = 'Follow suit if you can; the Rook may be played at any time';
@@ -99,9 +100,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               </>
             )}
             {discarding && (
-              <button type="button" disabled={chosen.length !== NEST_SIZE}
+              <button type="button" disabled={chosen.length !== laying}
                 onClick={() => gameService.makeMove({ type: 'discard', cards: chosen })}>
-                Lay aside {chosen.length}/{NEST_SIZE}
+                Lay aside {chosen.length}/{laying}
               </button>
             )}
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>

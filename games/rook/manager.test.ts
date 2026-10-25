@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
+import { openGameStore } from '../../server/store.ts';
 import { agreeAll, rememberingKeys } from '../../server/testing.ts';
 import { canPlayCard, MIN_BID } from './rules.ts';
 import { rook } from './index.ts';
-import type { Move, PublicGameState } from './types.ts';
-import type { Random, Result } from '../../shared/types.ts';
+import type { GameState, Move, PublicGameState } from './types.ts';
+import type { BaseGameState, Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
@@ -140,4 +141,36 @@ test('dismissing a player mid-game ends it and their opponents win', () => {
   const state = ok(manager.voteDismiss(ROOM, 4, true));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1, 3]);
+});
+
+test('a game saved before teams existed loads, plays on and builds its history and game file', () => {
+  const keys = new Map<string, string>();
+  const store = openGameStore(':memory:');
+  const manager = rememberingKeys(createGameManager([rook], seeded(1), store), keys);
+  for (const name of NAMES) manager.join('rook', 'g1', name);
+  agreeAll(manager, ROOM);
+  // Bidding, the nest, trump and two tricks
+  for (let i = 0; i < 4 + 2 + 8; i++) step(manager);
+  const room = store.loadAll().get(ROOM) ?? assert.fail('expected the game to be saved');
+
+  // The same game as it was saved before teams and house rules: no `teams`, no `houseRules`
+  const strip = (state: BaseGameState): BaseGameState => {
+    const { teams: _teams, houseRules: _rules, ...rest } = state as GameState;
+    return rest;
+  };
+  const legacy = openGameStore(':memory:');
+  room.history.forEach((before, index) => legacy.save(ROOM, 'rook', strip(room.state),
+    { type: 'push', index, before: strip(before), after: strip(room.timeline[index]) }));
+  const back = rememberingKeys(createGameManager([rook], seeded(2), legacy), keys);
+  for (const name of NAMES) assert.equal('error' in back.join('rook', 'g1', name, true), false);
+  assert.equal(back.history('rook', 'g1')?.length, 15);
+
+  let state = viewOf(back, null);
+  assert.equal('teams' in state, false);
+  for (let moves = 0; !state.isGameOver && moves < 20000; moves++) state = step(back);
+  assert.equal(state.isGameOver, true);
+  assert.equal(state.scores.length, 2);
+  assert.equal(state.winners.length, 2);
+  const file = back.gameFile('rook', 'g1', new Date());
+  assert.ok(file && 'file' in file);
 });

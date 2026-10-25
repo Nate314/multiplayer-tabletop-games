@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import {
+  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type SeatOptions, type Table
+} from './fixtures.ts';
 import type { Card, Color, GameState, TeamScores } from '../games/rook/types.ts';
 
 // One test per rule and control in games/rook/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
@@ -554,5 +556,59 @@ test.describe('Rook differences from Wikipedia', () => {
     await dismiss('Cara', alice, bob, dan);
     await expect(status(bob)).toHaveText('Cara left, so the partnership is broken: Bob and Dan win');
     await expect(team(bob, 1)).toHaveClass(/team-winner/);
+  });
+});
+
+test.describe('Rook at six players', () => {
+  test('a six-player hand of three teams', async ({ seat }) => {
+    const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay'];
+    const table = await seat('rook', names, { maxPlayers: 6, agree: false });
+    const { pages } = table;
+    const [alice, bob, cara, dan] = pages;
+    for (const page of pages) await expect(page.locator('.house-rules-list li')).toHaveCount(6);
+    await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo' });
+    for (const page of pages) await expect(page.getByLabel('Teams at 6 players', { exact: true })).toHaveValue('threeOfTwo');
+    await expect(alice.getByLabel('Defending teams score', { exact: true })).toHaveValue('separate');
+    await agreeToHouseRules(...pages);
+
+    // Three teams of two, partners three seats apart; six cards each and a five-card nest
+    await expect(alice.locator('.scoreboard .team-names')).toHaveText(['Alice and Dan (you)', 'Bob and Eve', 'Cara and Fay']);
+    await expect(alice.locator('.seats .seat')).toHaveCount(6);
+    await expect(seatOf(alice, 'Dan')).toContainText('(partner)');
+    await expect(seatOf(alice, 'Fay').locator('.seat-count')).toHaveText('6 cards, dealer');
+    await expect(hand(alice).getByRole('button')).toHaveCount(6);
+    await expect(alice.locator('.nest-label')).toHaveText('Nest: 5 cards');
+
+    // Alice opens, the other five pass, and she lays aside five
+    await bid(alice, 70);
+    for (const page of pages.slice(1)) await pass(page).click();
+    await expect(hand(alice).getByRole('button')).toHaveCount(11);
+    await layAsideAndName(alice, 'black');
+    await expect(turn(alice)).toHaveText('Your turn');
+
+    // The last trick: Cara's red 14 takes 15 points and the nest's 15. Alice's team took 60 of her bid of 80
+    const cards = [red(5), red(6), red(14), red(7), red(8), red(9)];
+    await table.patch({
+      hands: Object.fromEntries(cards.map((card, index) => [index + 1, [card]])),
+      nest: [black(5), yellow(10), black(6), black(7), black(8)],
+      bidding: { high: { seat: 1, amount: 80 }, passed: [2, 3, 4, 5, 6] },
+      bid: 80,
+      trick: [],
+      currentPlayer: 1,
+      captured: [60, 20, 10],
+      tricksWon: [3, 1, 1]
+    });
+    for (const [index, page] of pages.entries()) await handCard(page, cards[index]).click();
+    await expect(status(bob)).toHaveText('Alice\'s team bid 80 and took 60: they lose 80');
+    const rows = scoring(alice).locator('.summary-team');
+    await expect(rows.locator('.summary-name')).toHaveText(['Alice and Dan (you)', 'Bob and Eve', 'Cara and Fay']);
+    await expect(rows.locator('.summary-reason')).toHaveText(['took 60: -80', 'took 20: +20', 'took 40: +40']);
+    await expect(rows.locator('.summary-points')).toHaveText(['-80 pts', '20 pts', '40 pts']);
+    await expect(cara.locator('.scoreboard .team-score')).toHaveText(['-80', '20', '40']);
+
+    // Continue deals the next hand: the deal passes from Fay to Alice, so Bob bids first
+    for (const page of pages) await scoring(page).getByRole('button', { name: 'Continue' }).click();
+    await expect(seatOf(dan, 'Alice').locator('.seat-count')).toHaveText('6 cards, dealer');
+    await expect(turn(bob)).toHaveText('Your turn');
   });
 });

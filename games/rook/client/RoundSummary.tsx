@@ -1,6 +1,6 @@
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
-import { targetScore, teamNames, teamOf } from '../rules.ts';
-import type { HandSummary, PublicGameState, Seat, Team } from '../types.ts';
+import { namesOf, targetScore, teamOfSeat, teamsOf } from '../rules.ts';
+import type { HandSummary, PublicGameState, Seat } from '../types.ts';
 
 type RoundSummaryProps = {
   summary: HandSummary;
@@ -16,7 +16,7 @@ const signed = (value: number) => (value >= 0 ? `+${value}` : String(value));
 // Until the game is over, everyone connected clicks Continue to deal the next hand.
 export default function RoundSummary({ summary, gameState, playerNumber, onContinue, onClose }: RoundSummaryProps) {
   const { playerNames, isGameOver, scores } = gameState;
-  const bidTeam = teamOf(summary.bidder);
+  const bidTeam = teamOfSeat(gameState, summary.bidder);
 
   return (
     <RoundSummaryDialog
@@ -33,14 +33,14 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
         {' '}{playerNames[summary.lastTrick]} took the last trick and the nest ({summary.nestPoints} points).
       </div>
       <ul className="summary-teams">
-        {([0, 1] as Team[]).map(team => (
-          <li key={team} className={team === bidTeam ? 'summary-team summary-bidders' : 'summary-team'}>
+        {teamsOf(gameState).map((team, index) => (
+          <li key={index} className={index === bidTeam ? 'summary-team summary-bidders' : 'summary-team'}>
             <span className="summary-name">
-              {teamNames(team, playerNames)}
-              {teamOf(playerNumber) === team && ' (you)'}
+              {namesOf(team, playerNames)}
+              {team.includes(playerNumber) && ' (you)'}
             </span>
-            <span className="summary-reason">took {summary.points[team]}: {signed(summary.change[team])}</span>
-            <span className="summary-points">{scores[team]} pts</span>
+            <span className="summary-reason">took {summary.points[index]}: {signed(summary.change[index])}</span>
+            <span className="summary-points">{scores[index]} pts</span>
           </li>
         ))}
       </ul>
