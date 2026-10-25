@@ -79,24 +79,34 @@ export function createGameManager(
     scheduleSimulation(roomId, room);
   }
 
+  // Every change passes through save, so this starts the timer when play begins simulating and stops it when it ends
   function scheduleSimulation(roomId: string, room: Room): void {
-    if (room.simTimer || hooks.manualSimulation || !room.game.simulating?.(room.state)) return;
+    if (hooks.manualSimulation || !room.game.simulating?.(room.state)) {
+      clearInterval(room.simTimer);
+      room.simTimer = undefined;
+      return;
+    }
+    if (room.simTimer) return;
     room.simTimer = setInterval(() => runSimulationTick(roomId, room), SIMULATION_TICK_MS);
     room.simTimer.unref(); // never keeps the process alive on its own
   }
 
   function runSimulationTick(roomId: string, room: Room): void {
     const { game, state } = room;
-    if (rooms.get(roomId) !== room || !game.simulate) return;
-    const next = game.simulate(state);
+    if (rooms.get(roomId) !== room || !game.simulate || !game.simulating?.(state)) return;
+    let next: BaseGameState;
+    try {
+      next = game.simulate(state);
+    } catch (error) { // a broken simulation stops ticking rather than crashing the server
+      console.error(`${game.info.id} simulation failed in ${roomId}:`, error);
+      clearInterval(room.simTimer);
+      room.simTimer = undefined;
+      return;
+    }
     // The game-ending tick is a move, so an open undo vote (for the move before) is canceled
     if (next.isGameOver && !state.isGameOver) record(roomId, room, { ...next, undoVote: null });
     else room.state = next;
-    if (!game.simulating?.(room.state)) {
-      clearInterval(room.simTimer);
-      room.simTimer = undefined;
-      save(roomId, room);
-    }
+    if (!game.simulating(room.state)) save(roomId, room); // saved once, and the timer stops
     hooks.changed?.(roomId);
   }
 

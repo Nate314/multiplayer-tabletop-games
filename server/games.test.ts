@@ -1282,6 +1282,28 @@ test('a room loaded while simulating resumes its simulation', (t: TestContext) =
   assert.equal(ticksOf(manager), 4);
 });
 
+test('a simulation stopped by another change stops ticking', (t: TestContext) => {
+  const endless = { ...simGame(), simulating: (s: SimState) => s.moves === 1 && !s.isGameOver };
+  const { manager, changed } = simTable(t, { game: endless });
+  ok(manager.move(ROOM, 1, tick));
+  t.mock.timers.tick(100);
+  const count = changed.length;
+  assert.ok(manager.replaceState(ROOM, { ...manager.rawState(ROOM)!, isGameOver: true }));
+  t.mock.timers.tick(500);
+  assert.equal(changed.length, count);
+  assert.equal(ticksOf(manager), 2);
+});
+
+test('a simulation that throws is logged and stops ticking', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const broken = { ...simGame(), simulate: () => { throw new Error('boom'); } };
+  const { manager, changed } = simTable(t, { game: broken });
+  ok(manager.move(ROOM, 1, tick));
+  t.mock.timers.tick(500);
+  assert.equal(logged.mock.callCount(), 1);
+  assert.deepEqual(changed, []);
+});
+
 test('with manualSimulation no timer runs and simulateTicks steps the room', (t: TestContext) => {
   const { manager } = simTable(t, { manual: true });
   ok(manager.move(ROOM, 1, tick));
