@@ -27,6 +27,8 @@ npm run start
 
 This type-checks the code, builds the client, and starts the server. Open `http://localhost:3000`. To use another port, set the `PORT` environment variable.
 
+To list the games being played on the landing page, set `SHOW_OPEN_GAMES=true`. It is off by default, and any other value leaves it off. When on, anyone who can reach the server can see each game's type, id, player names and whether it has started, so turn it on only on a network you trust. When off, the server does not serve the list at all.
+
 ## Run with Docker
 
 With Docker installed (no local Node needed), build and start the site with one command:

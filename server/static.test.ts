@@ -52,6 +52,13 @@ test('a missing file is a 404, not the app shell', async () => {
   assert.equal(response.status, 404);
 });
 
+test('an unknown api path is a 404, not the app', async () => {
+  for (const url of ['/api/open-games', '/api/nope']) {
+    assert.equal((await fetch(base + url)).status, 404, url);
+  }
+  assert.equal((await fetch(`${base}/some/page`)).status, 200);
+});
+
 test('a join link gets the app shell', async () => {
   const response = await fetch(`${base}/join/chess/fri%20day`);
   assert.equal(response.status, 200);
