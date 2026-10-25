@@ -2,7 +2,7 @@ import { MESSAGE_TYPES, type ClientMessage, type ServerMessage } from '../../sha
 import type { HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
-type GameJoined = { playerNumber: Seat; seatKey: string; gameState: BasePublicState };
+type GameJoined = Extract<ServerMessage, { type: typeof MESSAGE_TYPES.GAME_JOINED }>['payload'];
 
 class GameService {
   ws: WebSocket | null;

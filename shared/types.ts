@@ -8,6 +8,10 @@ export type Random = () => number;
 export type UndoVote = { requestedBy: Seat; votes: Record<Seat, boolean> };
 export type DismissVote = { target: Seat; requestedBy: Seat; votes: Record<Seat, boolean> };
 
+export type JoinRole = 'player' | 'spectator' | 'passAndPlay' | 'tableScreen';
+export type Spectator = { id: string; name: string; tableScreen: boolean; allowedSeats: Seat[] };
+export type HandRequest = { spectator: string; seat: Seat };
+
 // What every game's state has in common; games extend it with their own fields
 export type BaseGameState = {
   gameId: string;
@@ -23,12 +27,16 @@ export type BaseGameState = {
   dismissVote: DismissVote | null;
   houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
   seatKeys?: Record<Seat, string>; // the secret each seat's rejoin must send; the server strips it from every view
+  spectators?: Spectator[]; // missing in games saved before spectators
+  handRequests?: HandRequest[];
+  spectatorKeys?: Record<string, string>; // the secret each spectator's rejoin must send; stripped from every view, like seatKeys
 };
 
 export type BasePublicState = BaseGameState & {
   undoAvailable: boolean;
   moveCount: number; // moves on the timeline; undo lowers it
   serverTime?: number; // only on live views, so a client countdown can correct for its own clock
+  seatViews?: Record<Seat, unknown>; // only on a spectator's live view: the private view of each seat that allowed it
 };
 
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it

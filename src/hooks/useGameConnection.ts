@@ -81,7 +81,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setGameState(data.gameState);
       setGameType(joiningGameType.current);
       setError(null);
-      rememberIfStarted(data.gameState, data.playerNumber);
+      if (seat !== null) rememberIfStarted(data.gameState, seat);
     };
 
     gameService.onGameState = (newGameState) => {
