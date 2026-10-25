@@ -1,4 +1,5 @@
 import type { HouseRulesState } from './houseRules.ts';
+import type { RecordedReaction } from './reactions.ts';
 
 export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
 
@@ -23,6 +24,7 @@ export type BaseGameState = {
   dismissVote: DismissVote | null;
   houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
   seatKeys?: Record<Seat, string>; // the secret each seat's rejoin must send; the server strips it from every view
+  reactions?: RecordedReaction[]; // the live log, stripped from every view and snapshot
 };
 
 export type BasePublicState = BaseGameState & {

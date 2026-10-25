@@ -1,5 +1,6 @@
 import { MESSAGE_TYPES, type ClientMessage, type ServerMessage } from '../../shared/messages.ts';
 import type { HouseRulesProposal } from '../../shared/houseRules.ts';
+import type { Reaction } from '../../shared/reactions.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
 type GameJoined = { playerNumber: Seat; seatKey: string; gameState: BasePublicState };
@@ -9,6 +10,7 @@ class GameService {
   onGameState: ((state: BasePublicState) => void) | null;
   onGameJoined: ((data: GameJoined) => void) | null;
   onError: ((message: string) => void) | null;
+  onReaction: ((reaction: Reaction) => void) | null;
   onDisconnect: (() => void) | null;
 
   constructor() {
@@ -16,6 +18,7 @@ class GameService {
     this.onGameState = null;
     this.onGameJoined = null;
     this.onError = null;
+    this.onReaction = null;
     this.onDisconnect = null;
   }
 
@@ -58,6 +61,9 @@ class GameService {
       case MESSAGE_TYPES.GAME_ERROR:
         this.onError?.(message.payload.message);
         break;
+      case MESSAGE_TYPES.REACTION:
+        this.onReaction?.(message.payload);
+        break;
     }
   }
 
@@ -99,6 +105,10 @@ class GameService {
 
   voteDismiss(approve: boolean): void {
     this.send({ type: MESSAGE_TYPES.VOTE_DISMISS, payload: { approve } });
+  }
+
+  react(target: Seat, emoji: string): void {
+    this.send({ type: MESSAGE_TYPES.REACT, payload: { target, emoji } });
   }
 
   disconnect(): void {

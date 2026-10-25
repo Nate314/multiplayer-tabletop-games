@@ -11,6 +11,7 @@ import { mountRulesRoute } from './rules.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
+import type { Reaction } from '../shared/reactions.ts';
 import type { BasePublicState, Result, Seat } from '../shared/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -139,6 +140,12 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_DISMISS:
       respond(ws, roomId, manager.voteDismiss(roomId, seat, payload?.approve));
       break;
+    case MESSAGE_TYPES.REACT: {
+      const result = manager.react(roomId, seat, payload?.target, payload?.emoji);
+      if ('error' in result) sendError(ws, result.error);
+      else broadcastReaction(roomId, result.reaction);
+      break;
+    }
   }
 }
 
@@ -182,6 +189,13 @@ function broadcast(roomId: string): void {
     if (connection.roomId !== roomId) continue;
     const state = manager.getState(roomId, connection.seat);
     if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
+  }
+}
+
+// A reaction is the same for every viewer and changes no view, so no GAME_STATE follows it
+function broadcastReaction(roomId: string, reaction: Reaction): void {
+  for (const [ws, connection] of connections) {
+    if (connection.roomId === roomId) send(ws, { type: MESSAGE_TYPES.REACTION, payload: reaction });
   }
 }
 

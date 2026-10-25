@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import { agreeAll, rememberingKeys } from './testing.ts';
 import { openGameStore } from './store.ts';
-import type { GameStore, SavedRoom } from './store.ts';
+import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
@@ -695,13 +695,14 @@ test('a started game is saved after each change and a lobby is not', () => {
   assert.equal(saved(store).state.gameStatus, 'A pinged');
 });
 
+// testGame that never ends, so the game can run long
+const endless = {
+  ...testGame,
+  applyMove: (state: TestState, seat: Seat) =>
+    ({ state: { ...state, moves: state.moves + 1, currentPlayer: nextActivePlayer(state, seat) } })
+};
+
 test('a save late in a long game writes one step, not the whole history', () => {
-  // Never ends, so the game can run long
-  const endless = {
-    ...testGame,
-    applyMove: (state: TestState, seat: Seat) =>
-      ({ state: { ...state, moves: state.moves + 1, currentPlayer: nextActivePlayer(state, seat) } })
-  };
   const store = memoryStore();
   const manager = rememberingKeys(createGameManager([endless], seededRandom, store), keys);
   manager.join('test', 'g1', 'A');
@@ -1202,4 +1203,99 @@ test('a timeout that leaves its deadline already past is not run again', (t: Tes
   advance(5 * TURN_MS);
   assert.equal(current(manager).moveCount, 1);
   assert.equal(logged.mock.callCount(), 1);
+});
+
+// The never-ending game on a clock the test moves, with A and B seated and two moves made
+function reactionTable(store?: GameStore) {
+  const clock = { now: 1000 };
+  const manager = rememberingKeys(createGameManager([endless], seededRandom, store, { now: () => clock.now }), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  return { manager, clock };
+}
+
+test('a reaction is recorded with the move count and changes nothing else', () => {
+  const { manager } = reactionTable();
+  const { serverTime: _before, ...before } = manager.getState(ROOM, 1) ?? {};
+  assert.deepEqual(manager.react(ROOM, 1, 2, '😂'), {
+    reaction: { from: 'A', fromSpectator: false, target: 2, emoji: '😂', at: 1000 }
+  });
+  const { serverTime: _after, ...after } = manager.getState(ROOM, 1) ?? {};
+  assert.deepEqual(after, before);
+  assert.deepEqual(manager.rawState(ROOM)?.reactions, [
+    { from: 'A', fromSpectator: false, target: 2, emoji: '😂', at: 1000, moveCount: 2 }
+  ]);
+});
+
+test('reactions are refused unless one emoji goes to another seated player during play', () => {
+  const { manager } = reactionTable();
+  assert.deepEqual(manager.react(ROOM, 1, 2, 'hi'), { error: 'Send a single emoji' });
+  assert.deepEqual(manager.react(ROOM, 1, 2, '😂😂'), { error: 'Send a single emoji' });
+  assert.deepEqual(manager.react(ROOM, 1, 1, '😂'), { error: 'Pick another player to react to' });
+  assert.deepEqual(manager.react(ROOM, 1, 9, '😂'), { error: 'That player is not in this game' });
+  assert.deepEqual(manager.react(ROOM, 5, 2, '😂'), { error: 'You are not in this game' });
+  assert.deepEqual(gameWith('A', 'B').react(ROOM, 1, 2, '😂'), { error: 'Reactions open once the game starts' });
+  assert.deepEqual(wonGame().react(ROOM, 1, 2, '😂'), { error: 'Reactions open once the game starts' });
+});
+
+test('the cooldown is 15 seconds per sender', () => {
+  const { manager, clock } = reactionTable();
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+  clock.now += 14_999;
+  assert.deepEqual(manager.react(ROOM, 1, 2, '👍'), { error: 'You can react again in 1 s' });
+  assert.ok('reaction' in manager.react(ROOM, 2, 1, '👍'));
+  clock.now += 1;
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '👍'));
+});
+
+test('reactions never reach a view or an undo snapshot', () => {
+  const steps: StepChange[] = [];
+  const store: GameStore = {
+    loadAll: () => new Map(),
+    save: (_roomId, _gameType, _state, step) => { if (step) steps.push(step); },
+    remove: () => {}
+  };
+  const { manager } = reactionTable(store);
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+  ok(manager.move(ROOM, 1, tick));
+  for (const seat of [1, 2, null]) assert.equal('reactions' in (manager.getState(ROOM, seat) ?? {}), false);
+  const pushed = steps.filter(step => step.type === 'push');
+  assert.equal(pushed.length, 3);
+  for (const step of pushed) {
+    assert.equal('reactions' in step.before, false);
+    assert.equal('reactions' in step.after, false);
+  }
+});
+
+test('an undo keeps reactions and moves later ones back to the remaining step', () => {
+  const { manager } = reactionTable();
+  ok(manager.move(ROOM, 1, tick));
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  const reactions = manager.rawState(ROOM)?.reactions;
+  assert.equal(reactions?.length, 1);
+  assert.equal(reactions?.[0].moveCount, 2);
+  assert.equal(current(manager).moveCount, 2);
+});
+
+test('reactions survive a restart', () => {
+  const store = openGameStore(':memory:');
+  const { manager } = reactionTable(store);
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+  const back = rememberingKeys(createGameManager([endless], seededRandom, store), keys);
+  assert.equal(back.rawState(ROOM)?.reactions?.[0].emoji, '😂');
+});
+
+test('the reaction log keeps the last 200', () => {
+  const { manager, clock } = reactionTable();
+  for (let i = 0; i < 201; i++) {
+    assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+    clock.now += 15_000;
+  }
+  const reactions = manager.rawState(ROOM)?.reactions ?? [];
+  assert.equal(reactions.length, 200);
+  assert.equal(reactions[0].at, 1000 + 15_000);
 });
