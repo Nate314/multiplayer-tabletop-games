@@ -44,7 +44,7 @@ export default function ShareButton({ game, gameId }: { game: GameInfo; gameId: 
       {manualUrl && (
         <div className="share-panel">
           Copy this link
-          <input readOnly aria-label="Game link" className="themed-input" value={manualUrl} onFocus={(e) => e.currentTarget.select()} />
+          <input readOnly aria-label="Game link" value={manualUrl} onFocus={(e) => e.currentTarget.select()} />
         </div>
       )}
     </div>

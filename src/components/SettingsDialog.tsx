@@ -45,7 +45,7 @@ export default function SettingsDialog({ onClose, phoneControls, children }: Set
               onChange={(e) => setPreferences({ ...preferences, volume: Number(e.target.value) / 100 })}
             />
           </label>
-          <label className="themed-checkbox">
+          <label>
             <input
               type="checkbox"
               checked={preferences.muted}
@@ -54,7 +54,7 @@ export default function SettingsDialog({ onClose, phoneControls, children }: Set
             Mute all
           </label>
           {SOUND_LABELS.map(([name, label]) => (
-            <label key={name} className="themed-checkbox">
+            <label key={name}>
               <input
                 type="checkbox"
                 checked={preferences.sounds[name]}
@@ -66,7 +66,7 @@ export default function SettingsDialog({ onClose, phoneControls, children }: Set
         </section>
         <section>
           <h3>Display</h3>
-          <label className="themed-checkbox">
+          <label>
             <input
               type="checkbox"
               checked={preferences.colorSymbols}
@@ -74,7 +74,7 @@ export default function SettingsDialog({ onClose, phoneControls, children }: Set
             />
             Color-blind symbols
           </label>
-          <label className="themed-checkbox">
+          <label>
             <input
               type="checkbox"
               checked={preferences.highlightDrawn}

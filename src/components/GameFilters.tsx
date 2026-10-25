@@ -14,13 +14,12 @@ export default function GameFilters({ filters, onChange }: GameFiltersProps) {
     <div className="lobby-filters">
       <input
         type="search"
-        className="themed-input"
         aria-label="Search games"
         placeholder="Search games"
         value={filters.search}
         onChange={event => onChange({ ...filters, search: event.target.value })}
       />
-      <select className="themed-select" aria-label="Sort" value={filters.sort} onChange={event => onChange({ ...filters, sort: event.target.value as GameSort })}>
+      <select aria-label="Sort" value={filters.sort} onChange={event => onChange({ ...filters, sort: event.target.value as GameSort })}>
         <option value="category">By category</option>
         <option value="name">A to Z</option>
       </select>
@@ -33,7 +32,6 @@ export default function GameFilters({ filters, onChange }: GameFiltersProps) {
         Players
         <input
           type="number"
-          className="themed-input"
           min={1}
           max={99}
           inputMode="numeric"
