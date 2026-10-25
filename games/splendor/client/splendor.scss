@@ -330,7 +330,8 @@
     padding: 4px;
     border: 2px solid rgba(0, 0, 0, 0.25);
     border-radius: 8px;
-    background: var(--card-face);
+    /* The face and back are the server's card art (shared/svg/cardArt.ts) */
+    --art-fill: var(--card-face);
     color: var(--card-text);
     text-align: left;
     font: inherit;
@@ -382,15 +383,15 @@
   }
 
   .dev-card-back.dev-card-level-1 {
-    background: var(--card-back-1);
+    --art-fill: var(--card-back-1);
   }
 
   .dev-card-back.dev-card-level-2 {
-    background: var(--card-back-2);
+    --art-fill: var(--card-back-2);
   }
 
   .dev-card-back.dev-card-level-3 {
-    background: var(--card-back-3);
+    --art-fill: var(--card-back-3);
   }
 
   .dev-card-back-label {
@@ -468,35 +469,42 @@
     font-weight: 700;
   }
 
-  /* Colors shared by gems, pips and bonuses. Light gems get dark numbers. */
+  /* Colors shared by gems, pips and bonuses. Light gems get dark numbers. A gem token is the shared disc drawing
+     (shared/svg/disc.ts) in its color */
 
   .gem-white {
     background: var(--gem-white);
+    --disc-fill: var(--gem-white);
     color: #222;
   }
 
   .gem-blue {
     background: var(--gem-blue);
+    --disc-fill: var(--gem-blue);
     color: #fff;
   }
 
   .gem-green {
     background: var(--gem-green);
+    --disc-fill: var(--gem-green);
     color: #fff;
   }
 
   .gem-red {
     background: var(--gem-red);
+    --disc-fill: var(--gem-red);
     color: #fff;
   }
 
   .gem-black {
     background: var(--gem-black);
+    --disc-fill: var(--gem-black);
     color: #fff;
   }
 
   .gem-gold {
     background: var(--gem-gold);
+    --disc-fill: var(--gem-gold);
     color: #222;
   }
 
@@ -512,7 +520,7 @@
     padding: 4px;
     border: 2px solid #8a6d3b;
     border-radius: 6px;
-    background: #f3e6c8;
+    --art-fill: #f3e6c8;
     color: #3a2a10;
     font: inherit;
     text-align: left;
@@ -555,7 +563,9 @@
     justify-content: center;
     flex: none;
     border-radius: 50%;
-    border: 2px solid rgba(0, 0, 0, 0.3);
+    border: none;
+    --disc-edge: rgba(0, 0, 0, 0.3);
+    --disc-edge-width: 8;
     font-weight: 700;
     padding: 0;
   }

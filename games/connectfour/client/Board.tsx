@@ -5,6 +5,8 @@ import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { cellKey } from './animateMove.ts';
 import { COLUMNS, ROWS, SEAT_COLORS, isColumnFull } from '../rules.ts';
 import type { Position, PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 const ROW_INDEXES = Array.from({ length: ROWS }, (_, index) => index);
 const COLUMN_INDEXES = Array.from({ length: COLUMNS }, (_, index) => index);
@@ -41,7 +43,7 @@ export default function Board({ gameState, dimmed, droppable, onDrop, seat }: Bo
           pieces={[{
             id: 'disc',
             label: 'Your disc',
-            icon: <div className={`tray-disc player${seat}`} />,
+            icon: <div className={`tray-disc player${seat}`}><ServerSvg url={DISC_URL} className="piece-art" /></div>,
             blocked: droppable ? undefined : 'Wait for your turn'
           }]}
           selected={null}
@@ -81,6 +83,7 @@ export default function Board({ gameState, dimmed, droppable, onDrop, seat }: Bo
             >
               {seat && (
                 <div className={`disc player${seat}`} aria-label={`${SEAT_COLORS[seat]} disc`}>
+                  <ServerSvg url={DISC_URL} className="piece-art" />
                   <ColorSymbol color={SEAT_SYMBOLS[seat]} className="disc-symbol" />
                 </div>
               )}

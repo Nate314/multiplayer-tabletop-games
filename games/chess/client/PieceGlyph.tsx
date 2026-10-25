@@ -1,15 +1,12 @@
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import usePreloadSvgs from '../../../src/assets/usePreloadSvgs.ts';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 import type { Color, PieceType } from '../types.ts';
 
-// The solid glyphs for both colors, recolored by CSS; U+FE0E keeps them as text rather than emoji on phones
-const GLYPHS: Record<PieceType, string> = {
-  king: '♚︎',
-  queen: '♛︎',
-  rook: '♜︎',
-  bishop: '♝︎',
-  knight: '♞︎',
-  pawn: '♟︎'
-};
+const pieceUrl = (color: Color, type: PieceType) => svgUrl('chess-piece', color, type);
+const TYPES: PieceType[] = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn'];
+const CHESS_PIECES = (['white', 'black'] as Color[]).flatMap(color => TYPES.map(type => pieceUrl(color, type)));
 
 type PieceGlyphProps = {
   color: Color;
@@ -18,10 +15,12 @@ type PieceGlyphProps = {
   dragProps?: DragSourceProps;
 };
 
+// A piece drawn by the server (games/chess/svg.ts), one em square, so the surrounding font size sizes it
 export default function PieceGlyph({ color, type, animKey, dragProps }: PieceGlyphProps) {
+  usePreloadSvgs(CHESS_PIECES);
   return (
     <span className={`piece ${color}`} role="img" aria-label={`${color} ${type}`} data-anim-key={animKey} {...dragProps}>
-      {GLYPHS[type]}
+      <ServerSvg url={pieceUrl(color, type)} className="piece-art" />
     </span>
   );
 }

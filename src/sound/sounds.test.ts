@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { soundsFor, audible } from './sounds.ts';
-import { unlockAudio, playSounds } from './synth.ts';
+import { unlockAudio, playSounds, loadSounds } from './synth.ts';
+import { SOUNDS } from '../../shared/sounds.ts';
 import { DEFAULT_PREFERENCES, type SoundName } from '../services/settings.ts';
 import type { BasePublicState } from '../../shared/types.ts';
 
@@ -92,11 +93,20 @@ test('a suspended or interrupted context is resumed and the sound plays once it 
       return node;
     }
   }
-  const globals = globalThis as unknown as { AudioContext?: unknown };
+  const globals = globalThis as unknown as { AudioContext?: unknown; fetch: unknown };
   const original = globals.AudioContext;
+  const originalFetch = globals.fetch;
   globals.AudioContext = FakeAudioContext;
   try {
     unlockAudio();
+    playSounds(['move']);
+    assert.equal(oscillators, 0, 'nothing plays before the sound data has loaded');
+    globals.fetch = () => Promise.reject(new Error('offline'));
+    await loadSounds();
+    playSounds(['move']);
+    assert.equal(oscillators, 0, 'a failed load stays silent');
+    globals.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(SOUNDS) });
+    await loadSounds();
     playSounds(['move']);
     assert.equal(oscillators, 1);
     // The browser suspends the context (Safari also "interrupts" it): the next sound revives it
@@ -110,5 +120,6 @@ test('a suspended or interrupted context is resumed and the sound plays once it 
     assert.equal(resumes, 2);
   } finally {
     globals.AudioContext = original;
+    globals.fetch = originalFetch;
   }
 });

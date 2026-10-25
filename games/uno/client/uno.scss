@@ -264,18 +264,8 @@
     line-height: 1;
   }
 
-  .card-face::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: 50%;
-    background: #fff;
-    transform: rotate(-20deg);
-  }
-
+  /* The card color and its oval are the server drawing (games/uno/svg.ts) */
   .card-red {
-    background: var(--card-red);
     --face-color: var(--card-red);
   }
 
@@ -284,31 +274,19 @@
   }
 
   .card-yellow {
-    background: var(--card-yellow);
     --face-color: #8a6d00;
   }
 
   .card-green {
-    background: var(--card-green);
     --face-color: var(--card-green);
   }
 
   .card-blue {
-    background: var(--card-blue);
     --face-color: var(--card-blue);
   }
 
-  .card-wild {
-    background: conic-gradient(var(--card-red) 0 25%, var(--card-blue) 0 50%, var(--card-yellow) 0 75%, var(--card-green) 0);
-  }
-
   .card-back {
-    background: var(--card-dark);
     --face-color: var(--card-red);
-  }
-
-  .card-back .card-face::before {
-    background: var(--card-red);
   }
 
   .card-back .card-face {

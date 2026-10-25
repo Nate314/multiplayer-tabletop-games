@@ -2,6 +2,8 @@ import { CardFace } from './pieces';
 import { cardLabel } from './labels.ts';
 import { slotKey } from './animateMove.ts';
 import type { CardSource, PublicGameState } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type MarketProps = {
   gameState: Pick<PublicGameState, 'faceUp' | 'deckCount' | 'discardCount' | 'ticketDeckCount'>;
@@ -39,7 +41,7 @@ export default function Market({ gameState, canDraw, second, canTickets, onDraw,
       </div>
       <div className="decks">
         <button type="button" className="deck-button" disabled={!canDraw || deckLeft === 0} onClick={() => onDraw?.('deck')}>
-          <span className="card card-back"><span className="card-name">Deck</span></span>
+          <span className="card card-back"><ServerSvg url={cardArtUrl('stripes')} className="piece-art" /><span className="card-name">Deck</span></span>
           <span className="deck-count">{deckCount} left{discardCount > 0 ? `, ${discardCount} discarded` : ''}</span>
         </button>
         <button type="button" className="deck-button" disabled={!canTickets || ticketDeckCount === 0} onClick={() => onTickets?.()}>

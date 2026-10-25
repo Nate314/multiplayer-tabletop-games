@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import gameService from '../../../src/services/gameService';
 import ActionButtons from './ActionButtons';
 import Board from './Board';
@@ -13,6 +13,9 @@ import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState } from '../types.ts';
 import type { Action } from './types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { WALL_URL } from './pieces.ts';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [selectedAction, setSelectedAction] = useState<Action>('move');
@@ -88,14 +91,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             label="Your action"
             leading={
               <button type="button" className="piece-tray-piece" aria-pressed={!wallHeld} onClick={() => setSelectedAction('move')}>
-                <span className="tray-pawn" style={{ background: `var(--player${playerNumber}, var(--wall))` }} />
+                <span className="tray-pawn" style={{ '--disc-fill': `var(--player${playerNumber}, var(--wall))` } as CSSProperties}>
+                  <ServerSvg url={DISC_URL} className="piece-art" />
+                </span>
                 Move
               </button>
             }
             pieces={[{
               id: 'wall',
               label: 'Wall',
-              icon: <span className={`tray-wall ${selectedAction === 'wall-v' ? 'vertical' : 'horizontal'}`} />,
+              icon: <ServerSvg url={WALL_URL} className={`tray-wall ${selectedAction === 'wall-v' ? 'vertical' : 'horizontal'}`} />,
               count: wallsLeft,
               blocked: wallBlocked
             }]}

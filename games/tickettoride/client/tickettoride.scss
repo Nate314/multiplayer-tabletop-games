@@ -412,7 +412,8 @@
     height: 36px;
     border: 1px solid rgba(0, 0, 0, 0.45);
     border-radius: 5px;
-    background: var(--card);
+    /* The face and back are the server's card art (shared/svg/cardArt.ts) in the card's color */
+    --art-fill: var(--card);
     color: var(--card-ink-light);
     font-size: 11px;
     font-weight: 700;
@@ -468,11 +469,15 @@
   }
 
   .card-locomotive {
-    background: linear-gradient(135deg, var(--card-red), var(--card-orange), var(--card-yellow), var(--card-green), var(--card-blue), var(--card-pink));
+    --art-fill: var(--card-red);
+    --art-fill-2: var(--card-yellow);
+    --art-fill-3: var(--card-green);
+    --art-fill-4: var(--card-blue);
   }
 
   .card-back {
-    background: repeating-linear-gradient(45deg, #5a3b23, #5a3b23 5px, #7a5232 5px, #7a5232 10px);
+    --art-fill: #5a3b23;
+    --art-stripe: #7a5232;
   }
 
   .card.empty {

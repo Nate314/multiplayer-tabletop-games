@@ -26,6 +26,8 @@ import type { TrayKind } from './tray.ts';
 import animateMove from './animateMove.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 
 const indexes = (count: number) => Array.from({ length: count }, (_, index) => index);
 const allVertices = (state: PublicGameState) => indexes(boardOf(state.layout).vertexCount);
@@ -144,7 +146,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const pieces = (['road', 'settlement', 'city'] as const).map(kind => ({
     id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind],
     // The outline is on a wrapper, as the piece's own clip-path would cut it off; it keeps white (seat 5) readable
-    icon: <span className="tray-icon" aria-hidden="true"><span className={`tray-${kind} ${seatClass(playerNumber)}`} /></span>,
+    icon: (
+      <span className="tray-icon" aria-hidden="true">
+        {kind === 'road'
+          ? <span className={`tray-road ${seatClass(playerNumber)}`} />
+          : <ServerSvg url={svgUrl('catan-piece', kind)} className={`tray-${kind} ${seatClass(playerNumber)}`} />}
+      </span>
+    ),
     blocked: blockedFor(kind) || undefined
   }));
 

@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { Card } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type TileProps = {
   card?: Card; // omitted for a face-down tile
@@ -24,10 +26,11 @@ export default function Tile({ card, small = false, selected = false, label, onC
   if (drawn) classes.push('newly-drawn');
   const style = card === undefined ? undefined : ({ '--hue': Math.round(((card - 1) / 60) * 300) } as CSSProperties);
   const name = label ?? (card === undefined ? 'Face-down card' : `Card ${card}`);
-  if (!onClick && !disabled) return <span className={classes.join(' ')} style={style} aria-label={name} title={name} data-anim-key={animKey}>{card}</span>;
+  const face = <ServerSvg url={cardArtUrl(card === undefined ? 'stripes' : 'solid')} className="piece-art" />;
+  if (!onClick && !disabled) return <span className={classes.join(' ')} style={style} aria-label={name} title={name} data-anim-key={animKey}>{face}{card}</span>;
   return (
     <button type="button" className={classes.join(' ')} style={style} aria-label={name} data-anim-key={animKey} disabled={disabled} onClick={onClick}>
-      {card}
+      {face}{card}
     </button>
   );
 }

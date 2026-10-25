@@ -1,6 +1,8 @@
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
 import { BORDERS, CONTINENTS, TERRITORIES } from '../map.ts';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { CONTINENT_LABELS, CONTINENT_SHAPES, MAP_HEIGHT, MAP_WIDTH, SEAT_SYMBOLS, TERRITORY_RADIUS, seatClass, shortName, territoryKey } from './layout.ts';
+import { CONTINENT_LABELS, MAP_HEIGHT, MAP_WIDTH, SEAT_SYMBOLS, TERRITORY_RADIUS, seatClass, shortName, territoryKey } from './layout.ts';
 import type { PublicGameState } from '../types.ts';
 
 type WorldMapProps = {
@@ -24,12 +26,9 @@ export default function WorldMap({ gameState, source = null, target = null, targ
   const { owners, armies, playerNames } = gameState;
   return (
     <svg className="world-map" viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} role="group" aria-label="World map">
-      <rect className="sea" x={0} y={0} width={MAP_WIDTH} height={MAP_HEIGHT} rx={12} />
+      <ServerSvg url={svgUrl('risk-land')} inSvg svgProps={{ width: MAP_WIDTH, height: MAP_HEIGHT }} />
       {CONTINENTS.map(({ id, name, bonus }) => (
-        <g key={id} className={`continent continent-${id}`}>
-          <polygon className="land" points={CONTINENT_SHAPES[id]} />
-          <text className="continent-label" x={CONTINENT_LABELS[id].x} y={CONTINENT_LABELS[id].y}>{name} +{bonus}</text>
-        </g>
+        <text key={id} className="continent-label" x={CONTINENT_LABELS[id].x} y={CONTINENT_LABELS[id].y}>{name} +{bonus}</text>
       ))}
       {BORDERS.map(({ a, b, sea }) => {
         const from = byId.get(a)!;

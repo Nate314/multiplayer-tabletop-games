@@ -179,16 +179,22 @@
     box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
   }
 
+  /* A disc is the shared disc drawing (shared/svg/disc.ts) in the seat's colors */
+  .disc,
+  .tray-disc {
+    --disc-edge-width: 7;
+  }
+
   .disc.player1,
   .tray-disc.player1 {
-    background: radial-gradient(circle at 35% 35%, #EF5350 0%, var(--player1) 70%);
-    border: 3px solid var(--player1-edge);
+    --disc-fill: var(--player1);
+    --disc-edge: var(--player1-edge);
   }
 
   .disc.player2,
   .tray-disc.player2 {
-    background: radial-gradient(circle at 35% 35%, #FFEE58 0%, var(--player2) 70%);
-    border: 3px solid var(--player2-edge);
+    --disc-fill: var(--player2);
+    --disc-edge: var(--player2-edge);
   }
 
   .disc-symbol {

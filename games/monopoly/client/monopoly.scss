@@ -366,9 +366,11 @@
     width: 2.3cqw;
     height: 2.3cqw;
     flex: none;
-    border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: 50%;
-    background: var(--seat);
+    /* The shared disc drawing (shared/svg/disc.ts) in the seat's color */
+    --disc-fill: var(--seat);
+    --disc-edge: rgba(0, 0, 0, 0.5);
+    --disc-edge-width: 5;
     color: #FFFFFF;
     font-size: 1.3cqw;
     font-weight: 700;
@@ -416,9 +418,6 @@
   }
 
   .die {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
     width: 7cqw;
     height: 7cqw;
     padding: 0.8cqw;
@@ -429,15 +428,8 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
 
-  .die span {
-    place-self: center;
-  }
-
-  .die .dice-pip {
-    width: 1.3cqw;
-    height: 1.3cqw;
-    border-radius: 50%;
-    background: var(--die-pip);
+  .die {
+    --dice-pip: var(--die-pip);
   }
 
   .drawn-card {

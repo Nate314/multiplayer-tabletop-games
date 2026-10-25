@@ -3,6 +3,9 @@ import { squareKey } from './animateMove.ts';
 import { includesPosition } from './selection.ts';
 import { BOARD_SIZE, SEAT_COLORS, isDarkSquare, isSamePosition, pieceAt } from '../rules.ts';
 import type { Position, PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { svgUrl } from '../../../src/assets/svgCache.ts';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 const INDEXES = Array.from({ length: BOARD_SIZE }, (_, index) => index);
 
@@ -61,7 +64,8 @@ export default function Board({ gameState, flipped, dimmed, picked, movable, tar
             >
               {piece && (
                 <div className={pieceClassName(position, piece.seat, piece.king)} aria-label={pieceLabel(piece.seat, piece.king)} {...drag?.source(id)}>
-                  {piece.king && <span className="crown" aria-hidden="true">♔</span>}
+                  <ServerSvg url={DISC_URL} className="piece-art" />
+                  {piece.king && <ServerSvg url={svgUrl('checkers-crown')} className="crown" />}
                 </div>
               )}
             </div>

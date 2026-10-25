@@ -403,7 +403,8 @@
   .pawn {
     width: 34px;
     height: 34px;
-    border-radius: 50%;
+    border-radius: 50%; /* for the shadow; the pawn itself is the shared disc drawing behind the initial */
+    --disc-edge-width: 6;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -426,21 +427,21 @@
     line-height: 1;
   }
 
+  .pawn.player1 {
+    --disc-fill: var(--player1);
+    --disc-edge: #1565C0;
+  }
+
+  .pawn.player2 {
+    --disc-fill: var(--player2);
+    --disc-edge: #C62828;
+  }
+
   .pawn-symbol {
     width: 14px;
     height: 14px;
     flex: none;
     color: #FFFFFF;
-  }
-
-  .pawn.player1 {
-    background: radial-gradient(circle at 35% 35%, #64B5F6 0%, var(--player1) 100%);
-    border: 2px solid #1565C0;
-  }
-
-  .pawn.player2 {
-    background: radial-gradient(circle at 35% 35%, #E57373 0%, var(--player2) 100%);
-    border: 2px solid #C62828;
   }
 
   .wall-overlay {
@@ -450,9 +451,15 @@
     pointer-events: none;
   }
 
+  /* Each wall is the server drawing (games/quoridor/svg.ts), recolored through --qd-wall-fill */
+  .wall-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .wall {
     position: absolute;
-    background: var(--wall);
     pointer-events: all;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   }
@@ -470,7 +477,7 @@
   }
 
   .wall.last-move {
-    background: #FFD54F;
+    --qd-wall-fill: #FFD54F;
     box-shadow: 0 0 8px #FFD54F;
   }
 
@@ -478,7 +485,7 @@
 
   .wall-preview {
     position: absolute;
-    background: var(--wall-preview);
+    --qd-wall-fill: var(--wall-preview);
     pointer-events: none;
     z-index: 1;
     box-shadow: 0 0 10px rgba(62, 39, 35, 0.2);
@@ -564,13 +571,13 @@
   }
 
   .pawn.player3 {
-    background: radial-gradient(circle at 35% 35%, #81C784 0%, var(--player3) 100%);
-    border: 2px solid #2E7D32;
+    --disc-fill: var(--player3);
+    --disc-edge: #2E7D32;
   }
 
   .pawn.player4 {
-    background: radial-gradient(circle at 35% 35%, #BA68C8 0%, var(--player4) 100%);
-    border: 2px solid #6A1B9A;
+    --disc-fill: var(--player4);
+    --disc-edge: #6A1B9A;
   }
 
   .board-area {
@@ -747,7 +754,7 @@
   .tray-wall {
     display: block;
     border-radius: 2px;
-    background: var(--wall);
+    overflow: hidden;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
   }
 

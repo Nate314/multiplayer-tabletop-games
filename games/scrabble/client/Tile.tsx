@@ -1,4 +1,6 @@
 import { BLANK, tileValue } from '../rules.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type TileProps = {
   letter: string; // a letter, or BLANK for an unplayed blank
@@ -13,6 +15,7 @@ export default function Tile({ letter, blank = false, className = '', animKey }:
   const classes = ['tile', blank || letter === BLANK ? 'tile-blank' : '', className].filter(Boolean).join(' ');
   return (
     <span className={classes} data-anim-key={animKey}>
+      <ServerSvg url={cardArtUrl('solid')} className="piece-art" />
       <span className="tile-letter">{letter === BLANK ? '' : letter}</span>
       {value > 0 && <span className="tile-value">{value}</span>}
     </span>

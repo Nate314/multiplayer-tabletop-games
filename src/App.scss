@@ -1297,6 +1297,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
   user-select: none;
 }
 
@@ -1311,35 +1312,12 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   color: var(--playing-card-red, var(--playing-card-red-default));
 }
 
-:where(.playing-card-back) {
-  background:
-    repeating-linear-gradient(45deg, var(--playing-card-stripe, var(--playing-card-stripe-default)) 0 4px, transparent 4px 8px),
-    var(--playing-card-back, var(--playing-card-back-default));
-}
-
-:where(.playing-card-corner) {
+/* The server drawing fills the card; the rounded corners clip the back's stripes */
+:where(.playing-card > .server-svg) {
   position: absolute;
-  top: 6%;
-  left: 8%;
-  font-size: 0.8em;
-}
-
-:where(.playing-card-corner-bottom) {
-  top: auto;
-  left: auto;
-  right: 8%;
-  bottom: 6%;
-  transform: rotate(180deg);
-}
-
-:where(.playing-card-pip) {
-  font-size: 1.9em;
-}
-
-:where(.playing-card-joker .playing-card-pip) {
-  font-size: 0.75em;
-  letter-spacing: 0.05em;
-  writing-mode: vertical-rl;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 :where(button.playing-card) {
@@ -1390,8 +1368,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 :where(.dice-die) {
-  display: grid;
-  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  display: block;
   flex: none;
   width: 48px;
   height: 48px;
@@ -1405,12 +1382,11 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   user-select: none;
 }
 
-:where(.dice-pip) {
-  place-self: center;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--dice-pip, var(--dice-pip-default));
+/* The pips are the server drawing (shared/svg/dice.ts), painted with --dice-pip; the face is this box */
+:where(.dice-die > .server-svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 :where(button.dice-die) { cursor: pointer; }
@@ -1568,4 +1544,54 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   stroke: var(--color-symbol-stroke, rgba(0, 0, 0, 0.6));
   stroke-width: 1px;
   paint-order: stroke;
+}
+
+/* A drawing from /api/svg (ServerSvg): the caller's class sizes the box, and the drawing fills it */
+:where(.server-svg) {
+  display: inline-block;
+}
+
+:where(span.server-svg > svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Inside a board the drawing is a nested <svg>, which would clip strokes on its edge */
+:where(svg.server-svg, svg.server-svg > svg) {
+  overflow: visible;
+}
+
+/* A piece whose look is a server drawing behind its own content (a symbol, an initial, a count). The piece makes its
+   own stacking context, so the drawing sits just behind that content and above whatever the piece stands on */
+:where(:has(> .piece-art)) {
+  position: relative;
+  isolation: isolate;
+}
+
+:where(.piece-art) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* The Share and GitHub icons in the headers */
+:where(.header-icon) {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+/* The piece's name, kept for screen readers when its drawing could not load */
+:where(.server-svg-fallback) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

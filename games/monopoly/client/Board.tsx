@@ -6,6 +6,8 @@ import { freeParkingJackpot } from '../options.ts';
 import { gridPosition, seatClass, shortName, sideOf, tokenKey } from './layout.ts';
 import Dice from './Dice';
 import type { PublicGameState, Seat } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 
 type BoardProps = {
   gameState: PublicGameState;
@@ -33,6 +35,7 @@ function Buildings({ level }: { level: number }) {
 function Token({ seat, name }: { seat: Seat; name: string }) {
   return (
     <span className={`token ${seatClass(seat)}`} data-anim-key={tokenKey(seat)} title={name}>
+      <ServerSvg url={DISC_URL} className="piece-art" />
       <ColorSymbol color={SEAT_SYMBOLS[seat]} className="token-symbol" />
       <span className="token-initial">{name.slice(0, 1).toUpperCase()}</span>
     </span>

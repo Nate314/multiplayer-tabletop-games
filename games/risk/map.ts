@@ -1,6 +1,10 @@
 // The classic Risk world: 6 continents, 42 territories and the 83 borders between them, and the territory cards
 import type { Card, CardSymbol, Continent, ContinentId, Territory } from './types.ts';
 
+// The drawn map's size, in map units
+export const MAP_WIDTH = 1000;
+export const MAP_HEIGHT = 620;
+
 export const CONTINENTS: Continent[] = [
   { id: 'northAmerica', name: 'North America', bonus: 5 },
   { id: 'southAmerica', name: 'South America', bonus: 2 },

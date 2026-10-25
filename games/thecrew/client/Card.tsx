@@ -1,6 +1,8 @@
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { cardName } from '../rules.ts';
 import type { Card as CardData } from '../types.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type CardProps = {
   card: CardData;
@@ -26,6 +28,7 @@ export default function Card({ card, animKey, playable = false, selected = false
   const label = cardName(card);
   const face = (
     <>
+      <ServerSvg url={cardArtUrl(card.suit === 'rocket' ? 'bands' : 'solid')} className="piece-art" />
       <span className="crew-card-corner">{MARK[card.suit]}</span>
       <ColorSymbol color={card.suit === 'rocket' ? null : card.suit} className="crew-symbol" />
       <span className="crew-card-value">{card.value}</span>
