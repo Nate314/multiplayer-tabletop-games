@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import gameService from '../services/gameService';
-import { houseRulesOf, type HouseRuleValue, type HouseRulesProposal } from '../../shared/houseRules.ts';
+import { houseRulesOf, minimumToStart, type HouseRuleValue, type HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
@@ -84,7 +84,7 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
             onCommit={(maxPlayers) => propose({ maxPlayers: maxPlayers === game.maxPlayers ? null : maxPlayers })} />
           {/* A count outside the normal range is a house rule like any other, so it is marked the same way */}
           {mostPlayers > game.maxPlayers && <div className="house-rules-help">{`Most players: ${mostPlayers} (house rule)`}</div>}
-          {seated < game.minPlayers && <div className="house-rules-help">{`Players: ${seated} (house rule)`}</div>}
+          {seated < game.minPlayers && seated >= minimumToStart(game) && <div className="house-rules-help">{`Players: ${seated} (house rule)`}</div>}
         </div>
       )}
       <ul className="house-rules-list">
