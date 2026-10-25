@@ -586,7 +586,7 @@
   }
 
   input[type="number"],
-  select:not(.themed-select) {
+  select:not(.history-settings select) {
     width: 90px;
     padding: 4px 6px;
     border: 1px solid var(--panel-border);
@@ -596,7 +596,7 @@
     font: inherit;
   }
 
-  select:not(.themed-select) {
+  select:not(.history-settings select) {
     width: auto;
   }
 

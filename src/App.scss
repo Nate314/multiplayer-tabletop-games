@@ -130,7 +130,7 @@
   margin-bottom: 16px;
 }
 
-.lobby-filters > .themed-input[type='search'] {
+.lobby-filters > input[type='search'] {
   flex: 1 1 200px;
 }
 
@@ -147,7 +147,7 @@
   color: var(--lobby-muted);
 }
 
-.lobby-players .themed-input {
+.lobby-players input {
   width: 5rem;
 }
 
@@ -432,7 +432,7 @@
   max-width: calc(100vw - 2rem);
 }
 
-:where([data-game] .share-panel .themed-input) {
+:where([data-game] .share-panel input) {
   min-width: 0;
 }
 
@@ -642,10 +642,13 @@
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Shared control looks: .themed-select (select), .themed-checkbox (label wrapping a checkbox),
-   .themed-input (text, search or number input), .themed-chip (button with aria-pressed) and .themed-range (range slider).
-   Platform pieces should use these for any new control. */
-:where(.themed-select, .themed-checkbox, .themed-chip) {
+/* Native controls are themed by default: select, checkbox, and text, search and number inputs.
+   A checkbox inside a label in the Settings dialog or the History gear panel reads as a pill (.checkbox-pill rules below).
+   .themed-chip (button with aria-pressed) and .themed-range (range slider) stay opt-in classes.
+   Everything sits in :where(), so any game's own control rule wins. */
+$text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
+
+:where(select, .themed-chip) {
   border: none;
   border-radius: 6px;
   background: var(--platform-button-bg, var(--lobby-accent));
@@ -655,37 +658,122 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where(.themed-select:hover, .themed-checkbox:hover) {
+:where(select:enabled:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-:where(.themed-select) {
+:where(select) {
   padding: 6px 10px;
+  cursor: pointer;
 }
 
-:where(.themed-select option) {
+:where(select option) {
   background: var(--platform-panel-bg, var(--lobby-surface));
   color: var(--platform-panel-text, var(--lobby-text));
 }
 
-:where(.themed-checkbox) {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-}
-
-:where(.themed-checkbox input) {
-  accent-color: var(--platform-panel-bg, var(--lobby-surface));
-}
-
-:where(.themed-input) {
+:where(input:is(#{$text-inputs})) {
   padding: 8px 10px;
   border: 1px solid var(--platform-button-bg, var(--lobby-accent));
   border-radius: 6px;
   background: var(--platform-panel-bg, var(--lobby-surface));
   color: var(--platform-panel-text, var(--lobby-text));
   font: inherit;
+}
+
+:where(input[type="checkbox"]) {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0;
+  border: 2px solid var(--platform-button-bg, var(--lobby-accent));
+  border-radius: 4px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font: inherit;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* The tick: an L of two borders turned 45 degrees, hidden until checked */
+:where(input[type="checkbox"])::before {
+  content: '';
+  width: 0.28em;
+  height: 0.55em;
+  margin-top: -0.12em;
+  border: solid currentColor;
+  border-width: 0 0.14em 0.14em 0;
+  transform: rotate(45deg) scale(0);
+}
+
+:where(input[type="checkbox"]:checked) {
+  background: var(--platform-button-bg, var(--lobby-accent));
+}
+
+:where(input[type="checkbox"]:checked)::before {
+  transform: rotate(45deg);
+}
+
+:where(select, input[type="checkbox"], input:is(#{$text-inputs})):focus-visible {
+  outline: 2px solid var(--platform-button-bg, var(--lobby-accent));
+  outline-offset: 2px;
+}
+
+/* Disabled (a guest's house rules): the value stays at full strength, and a dashed border says it cannot be changed */
+:where(select:disabled) {
+  appearance: none;
+  padding: 5px 9px;
+  border: 1px dashed var(--platform-button-bg, var(--lobby-accent));
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: none;
+  opacity: 1;
+}
+
+:where(input[type="checkbox"]:disabled, input:is(#{$text-inputs}):disabled) {
+  border-style: dashed;
+  opacity: 1;
+}
+
+:where(select:disabled, input[type="checkbox"]:disabled, input:is(#{$text-inputs}):disabled) {
+  cursor: not-allowed;
+}
+
+/* checkbox-pill: a label wrapping a checkbox in Settings or the History gear panel, colored like a button */
+:where(.modal.settings, .history-settings) :where(label:has(> input[type="checkbox"])) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+:where(.modal.settings, .history-settings) :where(label:has(> input[type="checkbox"]):hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+/* On the pill the box takes the panel color, so it shows against the button color */
+:where(.modal.settings, .history-settings) :where(label > input[type="checkbox"]) {
+  border-color: var(--platform-panel-bg, var(--lobby-surface));
+  background: transparent;
+  color: var(--platform-button-bg, var(--lobby-accent));
+}
+
+:where(.modal.settings, .history-settings) :where(label > input[type="checkbox"]:checked) {
+  background: var(--platform-panel-bg, var(--lobby-surface));
+}
+
+:where(.modal.settings, .history-settings) :where(label > input[type="checkbox"]):focus-visible {
+  outline-color: var(--platform-panel-bg, var(--lobby-surface));
 }
 
 :where(.themed-chip) {
@@ -1306,7 +1394,7 @@
 }
 
 /* Each checkbox is a themed pill as wide as its text */
-:where([data-game] .modal.settings .themed-checkbox, .lobby .modal.settings .themed-checkbox) {
+:where([data-game] .modal.settings label:has(> input[type="checkbox"]), .lobby .modal.settings label:has(> input[type="checkbox"])) {
   align-self: flex-start;
 }
 

@@ -35,21 +35,20 @@ export default function PlaybackSettings({ animations, onAnimationsChange, sound
       </button>
       {open && (
         <div className="history-settings" role="group" aria-label="Playback settings">
-          <label className="themed-checkbox">
+          <label>
             <input type="checkbox" checked={animations} onChange={(e) => onAnimationsChange(e.target.checked)} /> Animations
           </label>
-          <label className="themed-checkbox">
+          <label>
             <input type="checkbox" checked={sounds} onChange={(e) => onSoundsChange(e.target.checked)} /> Sounds
           </label>
           <label>
             Speed{' '}
-            <select className="themed-select" value={speed} onChange={(e) => onSpeedChange(Number(e.target.value) as PlaybackSpeed)}>
+            <select value={speed} onChange={(e) => onSpeedChange(Number(e.target.value) as PlaybackSpeed)}>
               {PLAYBACK_SPEEDS.map(s => <option key={s} value={s}>{s}x</option>)}
             </select>
           </label>
           {viewAs && (
             <select
-              className="themed-select"
               aria-label="View as"
               value={viewAs.value === null ? '' : String(viewAs.value)}
               onChange={(e) => viewAs.onChange(e.target.value === '' ? null : Number(e.target.value))}
