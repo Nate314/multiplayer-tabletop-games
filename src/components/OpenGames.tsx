@@ -14,21 +14,22 @@ export default function OpenGames({ games, onSelect }: OpenGamesProps) {
   const [open, setOpen] = useState<OpenGame[]>([]);
   useEffect(() => {
     let stopped = false;
-    const poll = async () => {
-      if (stopped || document.visibilityState !== 'visible') return;
-      const result = await fetchOpenGames();
-      if (stopped) return;
-      if (result === 'off') stopped = true; // the server does not list games, so never ask again
-      else if (result !== 'failed') setOpen(result); // a failure keeps the last list
-    };
-    void poll();
-    const timer = setInterval(poll, OPEN_GAMES_REFRESH_MS);
-    document.addEventListener('visibilitychange', poll);
-    return () => {
+    const stop = () => {
       stopped = true;
       clearInterval(timer);
       document.removeEventListener('visibilitychange', poll);
     };
+    const poll = async () => {
+      if (stopped || document.visibilityState !== 'visible') return;
+      const result = await fetchOpenGames();
+      if (stopped) return;
+      if (result === 'off') stop(); // the server does not list games, so never ask again
+      else if (result !== 'failed') setOpen(result); // a failure keeps the last list
+    };
+    const timer = setInterval(poll, OPEN_GAMES_REFRESH_MS);
+    document.addEventListener('visibilitychange', poll);
+    void poll();
+    return stop;
   }, []);
 
   const listed = open.flatMap(game => {

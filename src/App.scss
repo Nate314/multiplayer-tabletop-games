@@ -229,10 +229,9 @@
   gap: 2px;
 }
 
-// An open game's name has its own class, so the specs that find a game card by its name skip these entries
+/* Kept apart from .lobby-game-name so game-card lookups by name skip the open game entries */
 .lobby-game-name,
 .open-game-name {
-
   font-weight: 600;
   font-size: 1.1rem;
 }
