@@ -5,11 +5,11 @@ import SettingsButton from './SettingsButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
 import PresenceBar from './PresenceBar';
-import HouseRulesButton from './HouseRulesButton';
 import HouseRulesPanel from './HouseRulesPanel';
+import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
 import gameService from '../services/gameService';
-import { needsAgreement } from '../../shared/houseRules.ts';
+import { everyoneAgreed, needsAgreement } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -28,9 +28,12 @@ type GameViewProps = {
 export default function GameView({ game, client, gameState, playerNumber, error, onBack }: GameViewProps) {
   const { Screen } = client;
   useStateSounds(gameState, playerNumber, true);
+  const choosingRules = !gameState.started && needsAgreement(game);
+  // Nobody can move until everyone agreed, so the game screen is dimmed until then (the server refuses a move anyway)
+  const awaitingAgreement = choosingRules && !everyoneAgreed(game, gameState);
 
   return (
-    <div className="game-root" data-game={game.id}>
+    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
       <header className="game-header">
         <button type="button" className="back-button" onClick={onBack}>Back to games</button>
         <h1>{game.name}</h1>
@@ -42,13 +45,14 @@ export default function GameView({ game, client, gameState, playerNumber, error,
             <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
             <div className="settings-row">Theme <ThemeToggle /></div>
           </>
-        )} />
-        <HouseRulesButton game={game} gameState={gameState} />
+        )}>
+          <HouseRulesSection game={game} gameState={gameState} />
+        </SettingsButton>
         <GitHubLink />
         <ThemeToggle />
       </header>
       <PresenceBar gameState={gameState} onDismiss={(seat) => gameService.requestDismiss(seat)} />
-      {!gameState.started && needsAgreement(game) && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
+      {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
       <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
       <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
     </div>

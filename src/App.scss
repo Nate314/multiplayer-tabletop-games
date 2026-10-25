@@ -348,7 +348,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button, [data-game] .house-rules-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -447,8 +447,20 @@
     order: -1;
   }
 
-  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button, [data-game] .house-rules-button) {
+  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
     padding: 0 0.6rem;
+  }
+}
+
+/* The narrowest phones (320 px): tighter text buttons keep Back to games, History, FAQ and Settings on one row.
+   Outside :where(), so the games with their own header rules (Azul, Quoridor) get it too */
+@media (max-width: 360px) {
+  [data-game].game-root > .game-header {
+    column-gap: 0.25rem;
+  }
+
+  [data-game] .game-header > :is(.back-button, .history-button, .faq-button) {
+    padding: 0 0.45rem;
   }
 }
 
@@ -898,20 +910,32 @@
   gap: 8px;
 }
 
-:where([data-game] .modal.house-rules dl) {
-  margin: 0 0 16px;
+/* Until everyone agreed nobody can move, so the game screen under the panel is dimmed (the server refuses a move).
+   Outside :where(), so a game's own opacity rules do not undo it */
+[data-game][data-awaiting-agreement] > :not(.game-header, .presence-bar, .house-rules-panel, .dismiss-vote) {
+  opacity: 0.5;
 }
 
-:where([data-game] .modal.house-rules dl > div) {
+/* The current game's house rules in the Settings dialog, read only */
+:where([data-game] .settings-house-rules dl) {
+  margin: 0;
+}
+
+:where([data-game] .settings-house-rules dl > div) {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 4px 0;
 }
 
-:where([data-game] .modal.house-rules dd) {
+:where([data-game] .settings-house-rules dd) {
   margin: 0;
   font-weight: 600;
+  text-align: right;
+}
+
+:where([data-game] .settings-house-rules p) {
+  margin: 0;
 }
 
 /* Disconnected players, above the game screen */

@@ -141,7 +141,7 @@ export function agreeToHouseRules<S extends BaseGameState>(info: RulesInfo, stat
   return { state: { ...state, houseRules: { ...current, agreed } } };
 }
 
-export function everyoneAgreed(info: RulesInfo, state: BaseGameState): boolean {
+export function everyoneAgreed(info: RulesInfo, state: Pick<BaseGameState, 'houseRules' | 'activePlayers'>): boolean {
   const { agreed } = houseRulesOf(info, state);
   return state.activePlayers.every(seat => agreed.includes(seat));
 }

@@ -14,9 +14,10 @@ const SOUND_LABELS: [SoundName, string][] = [
 type SettingsDialogProps = {
   onClose: () => void;
   phoneControls?: ReactNode;
+  children?: ReactNode; // after the preferences, such as the current game's house rules
 };
 
-export default function SettingsDialog({ onClose, phoneControls }: SettingsDialogProps) {
+export default function SettingsDialog({ onClose, phoneControls, children }: SettingsDialogProps) {
   useEscapeKey(onClose);
   const preferences = usePreferences();
 
@@ -82,7 +83,7 @@ export default function SettingsDialog({ onClose, phoneControls }: SettingsDialo
             Highlight newly drawn cards
           </label>
         </section>
-        {/* House rules: the current game's house rules go here, read only, once the house rules PR is combined; nothing renders when the game has none */}
+        {children}
         <div className="modal-buttons">
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>

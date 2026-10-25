@@ -8,6 +8,12 @@ const targetField = (page: Page) => page.getByLabel('Target score', { exact: tru
 const row = (page: Page, name: string) => page.locator('.house-rules-list li', { hasText: `${name}:` });
 const rollButton = (page: Page) => page.getByRole('button', { name: 'Roll', exact: true });
 
+// Opens Settings and returns its House rules section
+async function openHouseRules(page: Page) {
+  await page.getByRole('button', { name: 'Settings' }).click();
+  return page.getByRole('dialog', { name: 'Settings' }).getByRole('region', { name: 'House rules' });
+}
+
 test.describe('House rules lobby', () => {
   test('the host edits the form and everyone else sees it read-only, live', async ({ seat }) => {
     const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { agree: false });
@@ -22,6 +28,17 @@ test.describe('House rules lobby', () => {
     await expect(bob.getByLabel("I know what I'm doing")).toBeChecked();
     await expect(bob.getByLabel('Most players')).toHaveValue('9');
     await expect(bob.getByLabel('Most players')).toBeDisabled();
+  });
+
+  test('the game screen is dimmed until every player agreed', async ({ seat }) => {
+    const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { agree: false });
+    const root = (page: Page) => page.locator('.game-root');
+    await expect(root(bob)).toHaveAttribute('data-awaiting-agreement', '');
+    await expect(bob.locator('.house-rules-panel')).toHaveCSS('opacity', '1');
+    await agreeToHouseRules(alice);
+    await expect(root(bob)).toHaveAttribute('data-awaiting-agreement', '');
+    await agreeToHouseRules(bob);
+    for (const page of [alice, bob]) await expect(root(page)).not.toHaveAttribute('data-awaiting-agreement');
   });
 
   test('nobody can roll until every player agreed', async ({ seat }) => {
@@ -83,21 +100,28 @@ test.describe('House rules lobby', () => {
     await expect(field).toHaveValue('10');
   });
 
-  test('the House rules dialog shows the chosen rules all game, the house rule marked', async ({ seat }) => {
+  test('Settings shows the chosen rules all game, the house rule marked, and the header has no House rules button', async ({ seat }) => {
     const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { houseRules: { targetScore: 5000 }, maxPlayers: 6 });
-    const dialog = (page: Page) => page.getByRole('dialog', { name: 'House rules' });
+    await expect(alice.getByRole('button', { name: 'House rules', exact: true })).toHaveCount(0);
     await rollButton(alice).click();
     await expect(panel(bob)).toHaveCount(0);
     for (const page of [alice, bob]) {
-      await page.getByRole('button', { name: 'House rules', exact: true }).click();
-      await expect(dialog(page)).toContainText('Target score5,000 (house rule)');
-      await expect(dialog(page)).toContainText('Most players6 (house rule)');
+      const section = await openHouseRules(page);
+      await expect(section).toContainText('Target score5,000 (house rule)');
+      await expect(section).toContainText('Most players6 (house rule)');
       await page.keyboard.press('Escape');
-      await expect(dialog(page)).toHaveCount(0);
+      await expect(section).toHaveCount(0);
     }
     await bob.reload();
-    await bob.getByRole('button', { name: 'House rules', exact: true }).click();
-    await expect(dialog(bob)).toContainText('Target score5,000 (house rule)');
+    await expect(await openHouseRules(bob)).toContainText('Target score5,000 (house rule)');
+  });
+
+  test('Settings shows nothing about house rules for a game without any', async ({ seat }) => {
+    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    await alice.getByRole('button', { name: 'Settings' }).click();
+    const dialog = alice.getByRole('dialog', { name: 'Settings' });
+    await expect(dialog.getByRole('heading', { name: 'Sounds' })).toBeVisible();
+    await expect(dialog.getByRole('region', { name: 'House rules' })).toHaveCount(0);
   });
 });
 
@@ -115,8 +139,7 @@ test.describe('Changing a rule back', () => {
       await expect(increment(page)).toHaveCount(0);
     }
     await expect(alice.locator('.house-rules-error')).toHaveCount(0);
-    await alice.getByRole('button', { name: 'House rules', exact: true }).click();
-    const dialog = alice.getByRole('dialog', { name: 'House rules' });
+    const dialog = await openHouseRules(alice);
     await expect(dialog).toContainText('ClockOff');
     await expect(dialog).not.toContainText('Increment per move');
     await alice.keyboard.press('Escape');
