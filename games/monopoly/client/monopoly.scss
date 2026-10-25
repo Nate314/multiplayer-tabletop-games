@@ -416,9 +416,6 @@
   }
 
   .die {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
     width: 7cqw;
     height: 7cqw;
     padding: 0.8cqw;
@@ -429,15 +426,8 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
 
-  .die span {
-    place-self: center;
-  }
-
-  .die .dice-pip {
-    width: 1.3cqw;
-    height: 1.3cqw;
-    border-radius: 50%;
-    background: var(--die-pip);
+  .die {
+    --dice-pip: var(--die-pip);
   }
 
   .drawn-card {

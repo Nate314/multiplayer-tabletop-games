@@ -433,9 +433,7 @@
   }
 
   .die {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    --dice-pip: #2B2418;
     width: 30px;
     height: 30px;
     padding: 3px;
@@ -444,19 +442,6 @@
     border-radius: 6px;
     background: #FFFFFF;
     box-shadow: none;
-  }
-
-  .die span {
-    display: block;
-  }
-
-  .die .dice-pip {
-    place-self: stretch;
-    width: auto;
-    height: auto;
-    margin: 1px;
-    border-radius: 50%;
-    background: #2B2418;
   }
 
   .dice-total {

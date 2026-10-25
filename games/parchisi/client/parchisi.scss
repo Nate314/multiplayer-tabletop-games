@@ -384,10 +384,6 @@
   }
 
   .die {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    place-items: center;
     width: 44px;
     height: 44px;
     padding: 5px;
@@ -413,11 +409,8 @@
     box-shadow: none;
   }
 
-  .die .dice-pip {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--die-pip);
+  .die {
+    --dice-pip: var(--die-pip);
   }
 
   .bonus {

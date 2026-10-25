@@ -1,0 +1,18 @@
+import { svgUrl } from '../assets/svgCache.ts';
+import { RANKS, SUITS, isJoker, type DeckCard } from '../../shared/playingCards.ts';
+
+// The server drawings of the shared dice and playing cards (shared/svg/dice.ts and playingCards.ts)
+export const dieUrl = (value: number) => svgUrl('die', value);
+
+export const cardUrl = (card: DeckCard | null) => {
+  if (!card) return svgUrl('playing-card-back');
+  return isJoker(card) ? svgUrl('playing-card-joker') : svgUrl('playing-card', card.rank, card.suit);
+};
+
+// For usePreloadSvgs on a screen that shows dice or cards
+export const DICE_PIECES = [1, 2, 3, 4, 5, 6].map(dieUrl);
+export const DECK_PIECES = [
+  ...SUITS.flatMap(suit => RANKS.map(rank => cardUrl({ rank, suit }))),
+  cardUrl({ joker: 1 }),
+  cardUrl(null),
+];

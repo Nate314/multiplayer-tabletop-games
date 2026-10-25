@@ -131,9 +131,6 @@
   }
 
   .bg-die {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
     box-sizing: border-box;
     width: 40px;
     height: 40px;
@@ -148,12 +145,8 @@
     opacity: 0.3;
   }
 
-  .bg-die .dice-pip {
-    width: 7px;
-    height: 7px;
-    margin: auto;
-    border-radius: 50%;
-    background: var(--die-pip);
+  .bg-die {
+    --dice-pip: var(--die-pip);
   }
 
   .bg-players {
