@@ -28,7 +28,7 @@ Before the first move the host picks the rules and both players must agree. They
 - **Increment per move.** Offered only with the clock on: none (standard), 2, 5 or 10 seconds added to a player's time after each move they make
 - Each move charges the mover the time since their clock started, then adds the increment. A move that arrives after the mover's time has run out is refused as a loss on time
 - Running out of time loses: "<name> ran out of time. <other> wins!" This holds even when the opponent could never checkmate
-- The clock keeps running through disconnects and votes. Undo puts both clocks back to what they showed when the undone move's turn began and restarts the running clock from the moment of the undo, so time spent on an undone move is given back. A server restart does not charge the downtime
+- The clock keeps running through disconnects and votes. Undo puts both clocks back to what they showed when the undone move's turn began and restarts the running clock from the moment of the undo, so time spent on an undone move is given back. A server restart restarts the running clock from the moment the server is back, so neither the downtime nor the time the player to move had already used on that turn is charged
 - The clock stops when the game ends, by resignation, draw or checkmate
 
 ## Controls
