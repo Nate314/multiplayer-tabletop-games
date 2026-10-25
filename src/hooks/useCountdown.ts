@@ -6,20 +6,21 @@ const TICK_MS = 250;
 // was sent). Re-renders every 250 ms while `active`
 export function useServerNow(active: boolean, serverTime: number | undefined): number {
   const [offset, setOffset] = useState(() => (serverTime === undefined ? 0 : serverTime - Date.now()));
-  const [clientNow, setClientNow] = useState(() => Date.now());
+  const [sample, setSample] = useState({ at: Date.now(), active });
 
   useEffect(() => {
     if (serverTime !== undefined) setOffset(serverTime - Date.now());
   }, [serverTime]);
 
   useEffect(() => {
+    setSample({ at: Date.now(), active }); // starting counts from now, not from the last tick
     if (!active) return;
-    setClientNow(Date.now()); // starting counts from now, not from the last tick
-    const timer = setInterval(() => setClientNow(Date.now()), TICK_MS);
+    const timer = setInterval(() => setSample({ at: Date.now(), active }), TICK_MS);
     return () => clearInterval(timer);
   }, [active]);
 
-  return clientNow + offset;
+  // The render where `active` just turned on has only a stale sample, so it reads the clock itself
+  return (sample.active === active ? sample.at : Date.now()) + offset;
 }
 
 // Milliseconds left until `deadline` (server time), or null for no deadline. Re-renders every 250 ms
