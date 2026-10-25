@@ -169,24 +169,25 @@ This site grew out of two earlier projects, [Quoridor](https://github.com/Nate31
 
 ## Adding a game
 
-The platform (server, landing page, join dialog, undo voting, Docker, CI) needs no edits. Add the game's own code and register it in two places.
+The platform (server, landing page, join dialog, undo voting, Docker, CI) needs no edits. Add the game's own code and register it in three places.
 
 1. Create `games/<id>/` with:
    - `types.ts`: the game's state and public state, extending `BaseGameState` and `BasePublicState` from `shared/types.ts`
    - `rules.ts`: pure functions over immutable state
-   - `index.ts`: exports a `GameDefinition` object (see `shared/gameDefinition.ts`). Its properties are `info` (`id`, `name`, `description`, `minPlayers`, `maxPlayers`), `createGameState`, `resetLobby`, `applyMove`, `toPublicState`, and optionally `onPlayerLeft`, `onUndo` and `applyAction`. A game with face-down cards or tiles reshuffles them in `onUndo`, so an undone draw shows nothing about the next one. `applyMove` receives a `random` function for dice and reshuffles. `toPublicState` receives the seat the view is for (`null` for the history), so a game can show each player only their own hand The platform does not block `applyAction` during an undo vote or after the game is over, so refuse actions there yourself if the game needs to
+   - `info.ts`: exports `<id>Info`, the game's `GameInfo` (`id`, `name`, `category`, `description`, `minPlayers`, `maxPlayers`, and optionally `houseRules` and `stretchedPlayers`). The browser loads it with the landing page, so it imports no rules code: declare house rules in `options.ts` and import them from both `info.ts` and `rules.ts`
+   - `index.ts`: exports a `GameDefinition` object (see `shared/gameDefinition.ts`). Its properties are `info` (from `info.ts`), `createGameState`, `resetLobby`, `applyMove`, `toPublicState`, and optionally `onPlayerLeft`, `onUndo` and `applyAction`. A game with face-down cards or tiles reshuffles them in `onUndo`, so an undone draw shows nothing about the next one. `applyMove` receives a `random` function for dice and reshuffles. `toPublicState` receives the seat the view is for (`null` for the history), so a game can show each player only their own hand The platform does not block `applyAction` during an undo vote or after the game is over, so refuse actions there yourself if the game needs to
    - optionally resigning and draws by agreement, for a two-player game: add `DrawOfferState` (`shared/drawOffer.ts`) to the state with `drawOffer: null`, pass actions to `applyEndingAction` from `applyAction` (it refuses them before the first move, after the game is over and during a vote), and wrap each move's new state in `lapseDrawOffer(state, seat)`. Show the controls with `src/components/DrawAndResign.tsx` in the side panel; it takes the game's own buttons, such as Undo, as children. Chess and Checkers do this
    - tests, for example `rules.test.ts` and `manager.test.ts`
    - `README.md`: the game's rules and controls, linked from the Games list above
 2. Create `games/<id>/client/` with:
-   - `index.ts`: exports a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `icon`, `HistoryBoard` and `describeMove`, and optionally `animateMove`
+   - `index.ts`: exports `<id>Client`, a `ClientGame` (see `src/clientGames.ts`) with `id`, `Screen`, `faq`, `HistoryBoard` and `describeMove`, and optionally `animateMove`. It and everything it imports become the game's own chunk, downloaded when the game is first opened
    - a `HistoryBoard` component: a read-only board for one public state from the history, with its `lastMove` highlighted. It receives `viewer` (a seat, or `null` for the table only), so a game with hands shows that player's hand
    - `describeMove.ts`: one line about the move that produced a public state, such as `Alice placed a wall`, shown as "Move 7 of 23: ..." in the history dialog
    - `faq.ts`: the FAQ items shown by the FAQ button
    - optionally an SCSS file (`<id>.scss`) whose rules are all nested in one `[data-game="<id>"] { ... }` block, so the game's colors never leak into other games or the landing page
    - optionally move animations: give the elements to animate a `data-anim-key` and call `useMoveAnimation(rootRef, gameState, animate)` (`src/animation/useMoveAnimation.ts`) in the game's screen, not in its `HistoryBoard`. It calls `animate({ previous, next, root, rectOf })` only when exactly one move was added, so the first render, a rejoin and an undo snap into place. `rectOf(key)` is where that keyed element was before the move. `slideFrom` and `fadeIn` (`src/animation/motion.ts`) last `MOVE_DURATION_MS` (300 ms), `slideFrom` can wait a delay first so pieces follow one another, and do nothing under `prefers-reduced-motion: reduce`. Nothing animates unless the game asks for it
-3. Add one line to `games/registry.ts`: put the game in the `GAMES` array.
-4. Add one line to `src/clientGames.ts`: put the client in `CLIENT_GAMES`.
+3. Put the game in the `GAMES` array of `games/registry.ts`, and its info at the same place in `GAME_INFOS` in `games/infos.ts`.
+4. In `src/clientGames.ts`, add a loader to `CLIENT_LOADERS` (`<id>: () => import('../games/<id>/client/index.ts').then(m => m.<id>Client)`) and the landing page's glyph or emoji to `GAME_ICONS`.
 
 The platform styles its own pieces by default (in `src/App.scss`): the game header with Back to games, History, FAQ and the theme toggle, the FAQ and history dialogs, and the undo vote panel. A game without CSS gets a neutral look in light and dark mode. To theme them, either:
 
