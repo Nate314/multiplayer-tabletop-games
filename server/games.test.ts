@@ -1203,3 +1203,91 @@ test('a timeout that leaves its deadline already past is not run again', (t: Tes
   assert.equal(current(manager).moveCount, 1);
   assert.equal(logged.mock.callCount(), 1);
 });
+
+type SimState = TestState & { ticks: number };
+const simGame = (endsGame = false): GameDefinition<SimState, TestPublicState> => ({
+  ...(testGame as unknown as GameDefinition<SimState, TestPublicState>),
+  createGameState: gameId => ({ ...testGame.createGameState(gameId), ticks: 0 }),
+  simulating: s => s.moves === 1 && s.ticks < 4,
+  simulate: s => ({ ...s, ticks: s.ticks + 1, isGameOver: endsGame && s.ticks === 3 })
+});
+
+// A table with two players; `changed` lists each broadcast
+function simTable(t: TestContext, options: { game?: GameDefinition<SimState, TestPublicState>; store?: GameStore; manual?: boolean } = {}) {
+  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  const changed: string[] = [];
+  const hooks = { changed: (roomId: string) => changed.push(roomId), manualSimulation: options.manual };
+  const manager = rememberingKeys(createGameManager([options.game ?? simGame()], seededRandom, options.store, hooks), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  return { manager, changed };
+}
+
+const ticksOf = (manager: Manager) => (manager.rawState(ROOM) as SimState).ticks;
+
+test('a simulating game ticks every 50 ms and broadcasts each tick without recording it', (t: TestContext) => {
+  const { manager, changed } = simTable(t);
+  ok(manager.move(ROOM, 1, tick));
+  t.mock.timers.tick(50 * 4);
+  assert.equal(ticksOf(manager), 4);
+  assert.equal(changed.length, 4);
+  assert.equal(current(manager).moveCount, 1);
+  t.mock.timers.tick(50 * 4);
+  assert.equal(ticksOf(manager), 4);
+});
+
+test('the store is written once when a simulation stops, not on every tick', (t: TestContext) => {
+  const store = memoryStore();
+  const { manager } = simTable(t, { store });
+  ok(manager.move(ROOM, 1, tick));
+  const before = store.written.length;
+  t.mock.timers.tick(50 * 3);
+  assert.equal(store.written.length, before);
+  t.mock.timers.tick(50);
+  assert.equal(store.written.length, before + 1);
+  assert.equal((saved(store).state as SimState).ticks, 4);
+});
+
+test('a tick that ends the game is recorded as a move and cancels an open undo vote', (t: TestContext) => {
+  const { manager } = simTable(t, { game: simGame(true) });
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  t.mock.timers.tick(50 * 4);
+  assert.equal(current(manager).isGameOver, true);
+  assert.equal(current(manager).moveCount, 2);
+  assert.equal(current(manager).undoVote, null);
+  assert.equal(manager.history('test', 'g1')?.at(-1)?.historyStep, 'move');
+});
+
+test('deleting a room stops its simulation', (t: TestContext) => {
+  const endless = { ...simGame(), simulating: (s: SimState) => s.moves === 1 };
+  const { manager, changed } = simTable(t, { game: endless });
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.equal(manager.getState(ROOM), undefined);
+  const count = changed.length;
+  t.mock.timers.tick(1000);
+  assert.equal(changed.length, count);
+});
+
+test('a room loaded while simulating resumes its simulation', (t: TestContext) => {
+  const store = memoryStore();
+  const game = simGame();
+  store.save(ROOM, 'test', { ...game.createGameState('g1'), started: true, moves: 1, ticks: 1 } as BaseGameState);
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const manager = createGameManager([game], seededRandom, store);
+  t.mock.timers.tick(50 * 5);
+  assert.equal(ticksOf(manager), 4);
+});
+
+test('with manualSimulation no timer runs and simulateTicks steps the room', (t: TestContext) => {
+  const { manager } = simTable(t, { manual: true });
+  ok(manager.move(ROOM, 1, tick));
+  t.mock.timers.tick(1000);
+  assert.equal(ticksOf(manager), 0);
+  assert.equal(manager.simulateTicks(ROOM, 2), true);
+  assert.equal(ticksOf(manager), 2);
+  assert.equal(manager.simulateTicks('test/none', 2), false);
+});

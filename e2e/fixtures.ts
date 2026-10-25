@@ -21,6 +21,8 @@ export type Table = {
   random(...values: number[]): Promise<void>;
   // Queues six-sided die faces, as every game here rolls a die: Math.floor(random * 6) + 1
   dice(...faces: number[]): Promise<void>;
+  // Runs this many live simulation ticks at once, as the server's 50 ms timer would over time
+  simulate(ticks: number): Promise<void>;
   // Seats one more player after the table was made, so a test can first queue the random numbers their join uses
   join(name: string): Promise<Page>;
 };
@@ -217,6 +219,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
         patch: async fields => { await call(`state/${gameType}/${gameId}`, fields); },
         random: async (...values) => { await call('random', { values }); },
         dice: async (...faces) => { await call('random', { values: faces.map(face => (face - 0.5) / 6) }); },
+        simulate: async ticks => { await call(`simulate/${gameType}/${gameId}`, { ticks }); },
         join: async name => {
           const page = await newPlayer(browser, server, motion, touch);
           pages.push(page);

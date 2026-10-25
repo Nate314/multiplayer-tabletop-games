@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { GameDefinition } from '../shared/gameDefinition.ts';
+import { SIMULATION_TICK_MS, type GameDefinition } from '../shared/gameDefinition.ts';
 import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
   resolveDismissVote
@@ -25,10 +25,12 @@ type Room = {
   timeline: BaseGameState[];
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
+  simTimer?: ReturnType<typeof setInterval>; // set while the game is simulating
 };
 
-// `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout
-export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => void };
+// `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout or a tick.
+// `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks
+export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => void; manualSimulation?: boolean };
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
@@ -66,11 +68,36 @@ export function createGameManager(
   // Every change passes through here, so this is also where the room's deadline is rescheduled
   function save(roomId: string, room: Room, step?: StepChange): void {
     const { game, state } = room;
-    writeStore(roomId, target => {
-      if (state.started) target.save(roomId, game.info.id, state, step);
-      else target.remove(roomId);
-    });
+    // A simulating tick is saved once, when the simulation stops
+    if (step || !game.simulating?.(state)) {
+      writeStore(roomId, target => {
+        if (state.started) target.save(roomId, game.info.id, state, step);
+        else target.remove(roomId);
+      });
+    }
     scheduleDeadline(roomId, room);
+    scheduleSimulation(roomId, room);
+  }
+
+  function scheduleSimulation(roomId: string, room: Room): void {
+    if (room.simTimer || hooks.manualSimulation || !room.game.simulating?.(room.state)) return;
+    room.simTimer = setInterval(() => runSimulationTick(roomId, room), SIMULATION_TICK_MS);
+    room.simTimer.unref(); // never keeps the process alive on its own
+  }
+
+  function runSimulationTick(roomId: string, room: Room): void {
+    const { game, state } = room;
+    if (rooms.get(roomId) !== room || !game.simulate) return;
+    const next = game.simulate(state);
+    // The game-ending tick is a move, so an open undo vote (for the move before) is canceled
+    if (next.isGameOver && !state.isGameOver) record(roomId, room, { ...next, undoVote: null });
+    else room.state = next;
+    if (!game.simulating?.(room.state)) {
+      clearInterval(room.simTimer);
+      room.simTimer = undefined;
+      save(roomId, room);
+    }
+    hooks.changed?.(roomId);
   }
 
   // Records `next` as a move after the current state, for undo, history and the store
@@ -124,6 +151,7 @@ export function createGameManager(
 
   function deleteRoom(roomId: string): void {
     clearTimeout(rooms.get(roomId)?.deadlineTimer);
+    clearInterval(rooms.get(roomId)?.simTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
   }
@@ -500,6 +528,14 @@ export function createGameManager(
       if (!room) return false;
       room.state = { ...state, seatKeys: room.state.seatKeys };
       save(roomId, room);
+      return true;
+    },
+
+    // Only for the end-to-end test hooks in e2e.ts: runs `ticks` simulation ticks at once; false when there is no such game
+    simulateTicks(roomId: string, ticks: number): boolean {
+      const room = rooms.get(roomId);
+      if (!room) return false;
+      for (let tick = 0; tick < ticks && room.game.simulating?.(room.state); tick++) runSimulationTick(roomId, room);
       return true;
     }
   };

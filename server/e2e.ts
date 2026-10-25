@@ -53,4 +53,20 @@ export function mountE2eRoutes(app: Express, manager: Manager, e2eRandom: E2eRan
     broadcast(roomId);
     res.json({ ok: true });
   });
+
+  // Runs { ticks } simulation ticks at once, then sends every player their new view
+  app.post('/api/e2e/simulate/:gameType/:gameId', (req, res) => {
+    const ticks: unknown = req.body?.ticks;
+    if (!Number.isInteger(ticks) || (ticks as number) < 1 || (ticks as number) > 2000) {
+      res.status(400).json({ error: 'ticks must be a whole number from 1 to 2000' });
+      return;
+    }
+    const roomId = `${req.params.gameType}/${req.params.gameId}`;
+    if (!manager.simulateTicks(roomId, ticks as number)) {
+      res.status(404).json({ error: 'Game not found' });
+      return;
+    }
+    broadcast(roomId);
+    res.json({ ok: true });
+  });
 }
