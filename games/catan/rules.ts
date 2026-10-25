@@ -290,8 +290,8 @@ function setupWithout(state: GameState, seat: Seat): GameState {
 
 // A dismissed player's pieces stay on the board as dead pieces: they score and produce nothing, but still block and
 // break roads. Their cards go back to the bank, and their development cards out of the game. A discard or trade
-// waiting on them is dropped; on their turn, the next player's turn begins. With fewer than three left, the game ends
-// and the player with the most points wins.
+// waiting on them is dropped; on their turn, the next player's turn begins. With fewer than three left (two at a
+// table set for two), the game ends and the player with the most points wins.
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const working: GameState = { ...state, log: [] };
   const returned: GameState = {

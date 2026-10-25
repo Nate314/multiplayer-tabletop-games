@@ -70,7 +70,8 @@ export const FAQS: FaqItem[] = [
     question: 'What if a player leaves?',
     answer: 'A dismissed player\'s roads, settlements and cities stay on the board but score and produce nothing. Their ' +
       'cards go back to the bank, and any discard or trade waiting on them is dropped. If it was their turn, the next ' +
-      'player\'s turn begins. With fewer than three players left, the game ends and the player with the most points wins.'
+      'player\'s turn begins. With fewer than three players left (two, if the host set the table for two), the game ' +
+      'ends and the player with the most points wins.'
   },
   {
     question: 'Can we undo a move?',
