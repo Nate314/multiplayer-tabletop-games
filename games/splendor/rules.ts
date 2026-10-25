@@ -1,6 +1,6 @@
 // Splendor rules shared by the browser (what can be afforded) and the server (validation).
 // Rules follow https://en.wikipedia.org/wiki/Splendor_(game); token counts per player count follow the published rulebook.
-import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -25,14 +25,13 @@ import type {
   Token,
   Tokens
 } from './types.ts';
+import { PRESTIGE_RULE } from './options.ts';
 
 export const TOKENS: readonly Token[] = [...GEMS, 'gold'];
 export const GOLD_COUNT = 5;
 export const MARKET_SIZE = 4;
 export const MAX_TOKENS = 10;
 export const MAX_RESERVED = 3;
-const PRESTIGE_RULE = targetScoreRule(15, [10, 21], 'Prestige to win');
-export const SPLENDOR_RULES: HouseRule[] = [PRESTIGE_RULE];
 
 export const winningPrestige = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, PRESTIGE_RULE);
 

@@ -1,18 +1,11 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { holdemInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 export const holdem: GameDefinition<GameState, PublicGameState> = {
-  info: {
-    id: 'holdem',
-    category: 'card',
-    name: "Texas Hold'em",
-    description: 'Two private cards, five shared ones, and betting with play chips',
-    minPlayers: 2,
-    maxPlayers: 8,
-    stretchedPlayers: { min: 2, max: 10 }
-  },
+  info: holdemInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

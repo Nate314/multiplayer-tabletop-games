@@ -26,7 +26,7 @@
 //   partners or none. Each member of the bidding side scores what the side took if it made the bid, else loses the
 //   bid; each defender scores what all the defenders took. Equal top totals at the target share the win.
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -38,6 +38,7 @@ import type { Random } from '../../shared/types.ts';
 import type {
   Bidding, Card, Color, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, RookCard, Seat, TeamScores
 } from './types.ts';
+import { DEFENDERS, SIX_TEAMS, TARGET_RULE, type SixTeams } from './options.ts';
 
 // Seats 1 and 3 against 2 and 4, the teams of every four-player game
 export { teamOf };
@@ -52,23 +53,6 @@ const DECK_SIZE = 41;
 export const MIN_BID = 70;
 export const MAX_BID = 120;
 export const BID_STEP = 5;
-const TARGET_RULE = targetScoreRule(500, [300, 1000]);
-
-export type SixTeams = 'twoOfThree' | 'threeOfTwo';
-export const SIX_TEAMS: ChoiceRule<SixTeams> = {
-  id: 'sixTeams', label: 'Teams at 6 players', kind: 'choice', standard: 'twoOfThree',
-  choices: [{ value: 'twoOfThree', label: 'Two teams of three' }, { value: 'threeOfTwo', label: 'Three teams of two' }],
-  offered: seats => seats === 6
-};
-
-// How the teams that did not win the bid score: each the counters it took, or each what all of them took together
-export const DEFENDERS: ChoiceRule<'separate' | 'together'> = {
-  id: 'defenders', label: 'Defending teams score', kind: 'choice', standard: 'separate',
-  choices: [{ value: 'separate', label: 'Each team its own counters' }, { value: 'together', label: 'Together, both teams\' counters' }],
-  offered: (seats, values) => seats === 6 && values.sixTeams === 'threeOfTwo'
-};
-
-export const ROOK_RULES: HouseRule[] = [TARGET_RULE, SIX_TEAMS, DEFENDERS];
 
 // How many cards the bidder calls for partners: one at 5 players, two at 7, none with fixed teams
 export function calledCount(players: number): number {

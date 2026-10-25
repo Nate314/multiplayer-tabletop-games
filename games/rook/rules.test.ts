@@ -2,10 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
 import {
-  BID_STEP, DEFENDERS, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, SIX_TEAMS, targetScore, buildDeck, calledCount, canPlayCard,
+  BID_STEP, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, targetScore, buildDeck, calledCount, canPlayCard,
   cardName, sameCard, cardPoints, createGameState, dealHand, dealSizes, handPoints, rookTeams, teamOf, teamOfSeat, toPublicState,
   trickWinner
 } from './rules.ts';
+import { DEFENDERS, SIX_TEAMS } from './options.ts';
 import { rook } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { houseRulesOf, setHouseRules, type HouseRuleValues } from '../../shared/houseRules.ts';

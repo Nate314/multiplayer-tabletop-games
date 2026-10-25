@@ -1,24 +1,15 @@
 // Mancala rules (Avalanche or Kalah, with or without play from the other side) shared by the browser (board layout,
 // playable pits, move animation) and the server (validation).
-import { houseRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { Board, GameState, LastMove, PublicGameState, Result, Seat, Transfer } from './types.ts';
+import { OTHER_SIDE_RULE, AVALANCHE_RULE } from './options.ts';
 
 export const PITS_PER_SIDE = 6;
 export const STONES_PER_PIT = 4;
 const HOLES = 2 * (PITS_PER_SIDE + 1);
 const SEATS: Seat[] = [1, 2];
-
-const OTHER_SIDE_RULE: ToggleRule = {
-  id: 'otherSide', label: 'When your side is empty, play from the other side', kind: 'toggle', standard: true,
-  help: 'You sow from any non-empty pit on the other side, and the game ends only when every pit is empty'
-};
-const AVALANCHE_RULE: ToggleRule = {
-  id: 'avalanche', label: 'Avalanche (off plays Kalah, with captures)', kind: 'toggle', standard: true,
-  help: 'Off: no relays, and a last stone in an empty pit of yours captures the pit opposite'
-};
-export const MANCALA_RULES: HouseRule[] = [OTHER_SIDE_RULE, AVALANCHE_RULE];
 
 export type Rules = { otherSide: boolean; avalanche: boolean };
 

@@ -4,7 +4,7 @@ import { afterSeatChange } from '../../shared/houseRules.ts';
 import { boardOf } from './board.ts';
 import { catan } from './index.ts';
 import { allowsOutOfTurn, onPlayerDisconnected, onPlayerLeft, toPublicState } from './rules.ts';
-import { SPECIAL_BUILD } from './specialBuild.ts';
+import { SPECIAL_BUILD } from './options.ts';
 import { FIVE_SIX_LAYOUT, act, dice, fiveSixGame, holding, move, played } from './testing.ts';
 import type { GameState, Seat } from './types.ts';
 

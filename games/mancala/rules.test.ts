@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MANCALA_RULES, bankOf, initialBoard, pitsOf, playPit as sow, playablePits } from './rules.ts';
+import { MANCALA_RULES } from './options.ts';
+import { bankOf, initialBoard, pitsOf, playPit as sow, playablePits } from './rules.ts';
 import { withRules } from '../../server/testing.ts';
 import { mancala } from './index.ts';
 import { addPlayer, removePlayer, applyMove } from '../../shared/seating.ts';

@@ -16,7 +16,7 @@
 //   count toward the contract.
 // - The first team to the target score (500 unless the host chose another) wins; a team that falls to -200 loses. On a tie another hand is played.
 import { handCounts, viewHand } from '../../shared/hands.ts';
-import { houseRule, targetScoreRule, type HouseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { RANKS, SUITS, cardName, rankValue, sameCard, standardDeck } from '../../shared/playingCards.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
@@ -27,13 +27,12 @@ import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, describeTrickPlay, trickWinner } from '../../shared/tricks.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, Seat, Team, TeamResult, TeamScores } from './types.ts';
+import { TARGET_RULE } from './options.ts';
 
 export { SEATS, nextSeat, teamNames, teamOf, teamSeats };
 
 export const HAND_SIZE = 13;
 export const MAX_BID = 13;
-const TARGET_RULE = targetScoreRule(500, [250, 300]);
-export const SPADES_RULES: HouseRule[] = [TARGET_RULE];
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
 export const LOSING_SCORE = -200;

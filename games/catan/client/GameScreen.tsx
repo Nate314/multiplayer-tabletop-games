@@ -8,7 +8,7 @@ import { boardOf } from '../board.ts';
 import { cityError, piecesLeft, roadSpots, settlementError, settlementSpotError } from '../building.ts';
 import { robberVictims } from '../dice.ts';
 import { minimumToStart, tableLimit } from '../../../shared/houseRules.ts';
-import { PLAYERS } from '../rules.ts';
+import { PLAYERS } from '../options.ts';
 import { buildChance } from '../specialBuild.ts';
 import Board from './Board';
 import { boardAreaClass, seatClass } from './layout.ts';

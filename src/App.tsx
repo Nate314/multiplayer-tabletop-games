@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { GAMES } from '../games/registry.ts'
+import { GAME_INFOS } from '../games/infos.ts'
 import { CLIENT_GAMES, type PlayableGame } from './clientGames.ts'
 import useGameConnection from './hooks/useGameConnection'
 import GameList from './components/GameList'
@@ -15,7 +15,7 @@ import { parseJoinLink } from './services/share.ts'
 import './App.scss'
 
 // Every game needs a screen as well as rules; a missing one fails at startup instead of hiding the game
-const PLAYABLE_GAMES: PlayableGame[] = GAMES.map(({ info }) => {
+const PLAYABLE_GAMES: PlayableGame[] = GAME_INFOS.map(info => {
   const client = CLIENT_GAMES[info.id]
   if (!client) throw new Error(`Game "${info.id}" has no entry in CLIENT_GAMES`)
   return { info, client }

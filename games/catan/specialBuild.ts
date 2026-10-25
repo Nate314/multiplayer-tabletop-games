@@ -1,22 +1,13 @@
 // The 5-6 player extension's special build phase, a house rule: after each turn every other player, in turn order
 // from the next one, may build or buy a development card, without trading or playing cards
-import { type ToggleRule, houseRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { nextActivePlayer } from '../../shared/seating.ts';
 import { buildCity, buildRoad, buildSettlement } from './building.ts';
 import { buyDevCard } from './devCards.ts';
-import { FIVE_SIX_FROM } from './editions.ts';
 import { noResources, total } from './resources.ts';
 import { nameOf, note } from './state.ts';
 import type { GameState, Move, Result, Seat } from './types.ts';
-
-export const SPECIAL_BUILD: ToggleRule = {
-  id: 'specialBuild',
-  kind: 'toggle',
-  standard: false,
-  label: 'Special build phase',
-  help: 'After each turn, every other player in turn order may build or buy a development card, without trading or playing cards',
-  offered: seats => seats >= FIVE_SIX_FROM
-};
+import { SPECIAL_BUILD } from './options.ts';
 
 const CHEAPEST_PIECE = 2; // a road; a player holding fewer cards cannot pay for anything
 

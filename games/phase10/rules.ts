@@ -1,6 +1,6 @@
 // Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
 import { handCounts, mapSeats, viewHand } from '../../shared/hands.ts';
-import { houseRule, type ToggleRule } from '../../shared/houseRules.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
@@ -23,6 +23,7 @@ import type {
   Seat,
   SeatSummary
 } from './types.ts';
+import { ANY_ORDER_RULE } from './options.ts';
 
 export const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow'];
 export const MAX_VALUE = 12;
@@ -30,12 +31,6 @@ export const WILD_COUNT = 8;
 export const SKIP_COUNT = 4;
 export const HAND_SIZE = 10;
 export const LAST_PHASE = 10;
-
-const ANY_ORDER_RULE: ToggleRule = {
-  id: 'anyOrder', label: 'Phases in any order', kind: 'toggle', standard: false,
-  help: 'Each hand a player lays down any phase they have not completed; completing all ten finishes'
-};
-export const PHASE10_RULES = [ANY_ORDER_RULE];
 
 const set = (size: number): Requirement => ({ kind: 'set', size });
 const run = (size: number): Requirement => ({ kind: 'run', size });

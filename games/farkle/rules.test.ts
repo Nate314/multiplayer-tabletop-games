@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { farkle } from './index.ts';
-import { FARKLE_RULES, targetScore } from './rules.ts';
+import { FARKLE_RULES } from './options.ts';
+import { targetScore } from './rules.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import { score } from './scoring.ts';
