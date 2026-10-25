@@ -5,10 +5,13 @@ import type { BaseGameState, Seat, Standing } from './types.ts';
 export function rankStandings(
   state: Pick<BaseGameState, 'activePlayers' | 'winners'>,
   compare: (a: Seat, b: Seat) => number,
-  score?: (seat: Seat) => string,
+  score?: (seat: Seat) => string | undefined,
 ): Standing[] {
   const rows: Standing[] = [];
-  const add = (seat: Seat, place: number) => rows.push(score ? { seat, place, score: score(seat) } : { seat, place });
+  const add = (seat: Seat, place: number) => {
+    const text = score?.(seat);
+    rows.push(text === undefined ? { seat, place } : { seat, place, score: text });
+  };
   state.winners.forEach((seat) => add(seat, 1));
   const rest = state.activePlayers.filter((seat) => !state.winners.includes(seat)).sort((a, b) => compare(a, b) || a - b);
   let place = state.winners.length ? 1 : 0;

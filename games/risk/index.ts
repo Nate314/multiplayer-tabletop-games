@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import { riskInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -11,5 +11,6 @@ export const risk: GameDefinition<GameState, PublicGameState> = {
   onPlayerLeft,
   applyMove,
   onUndo: (state, random) => ({ ...state, deck: shuffle(state.deck, random) }),
-  toPublicState
+  toPublicState,
+  finalStandings
 };

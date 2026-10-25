@@ -75,13 +75,15 @@ export function finalScores(claimed: Claimed, tickets: Record<Seat, number[]>, s
   }));
 }
 
-// Most points, then most tickets completed, then the longest path; a tie on all three is shared
-export function rankWinners(scores: Record<Seat, FinalScore>): Seat[] {
+// Most points, then most tickets completed, then the longest path; negative when `a` ranks higher
+export function compareFinal(a: FinalScore, b: FinalScore): number {
   const completed = (score: FinalScore) => score.tickets.filter(result => result.completed).length;
-  let leaders = Object.keys(scores).map(Number);
-  for (const measure of [(s: FinalScore) => s.total, completed, (s: FinalScore) => s.longestPath]) {
-    const top = Math.max(...leaders.map(seat => measure(scores[seat])));
-    leaders = leaders.filter(seat => measure(scores[seat]) === top);
-  }
-  return leaders;
+  return b.total - a.total || completed(b) - completed(a) || b.longestPath - a.longestPath;
+}
+
+// A tie on all three is shared
+export function rankWinners(scores: Record<Seat, FinalScore>): Seat[] {
+  const seats = Object.keys(scores).map(Number);
+  const best = seats.reduce<Seat | null>((top, seat) => (top === null || compareFinal(scores[seat], scores[top]) < 0 ? seat : top), null);
+  return seats.filter(seat => best !== null && compareFinal(scores[seat], scores[best]) === 0);
 }

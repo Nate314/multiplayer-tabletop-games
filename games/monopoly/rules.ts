@@ -1,5 +1,7 @@
 // Monopoly rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, cards.ts, movement.ts, buildings.ts, auctions.ts, trades.ts and bankruptcy.ts.
+import { rankStandings } from '../../shared/standings.ts';
+import type { Standing } from '../../shared/types.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -277,4 +279,11 @@ export function onPlayerDisconnected(state: GameState, seat: Seat): GameState {
   if (state.trade?.from === seat || state.trade?.to === seat) next = note(dropTradesOf(next, seat), 'The open trade offer was dropped');
   next = closeAuctionIfDone(next);
   return next.log.length > 0 ? finish(state, next) : state;
+}
+
+// The last player standing wins; each bankrupt player ranks above those who went bankrupt before them
+export function finalStandings(state: GameState): Standing[] {
+  const bankrupt = state.bankrupt ?? [];
+  const survived = (seat: Seat) => (bankrupt.includes(seat) ? bankrupt.indexOf(seat) : bankrupt.length);
+  return rankStandings(state, (a, b) => survived(b) - survived(a), seat => (bankrupt.includes(seat) ? 'Bankrupt' : undefined));
 }

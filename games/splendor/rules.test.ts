@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -399,4 +400,16 @@ test('the game ends at the chosen prestige', () => {
   const reachedFifteen = { ...nearly(21), players: withPlayer(nearly(21), 1, { cards: FIVES.slice(0, 3) }).players };
   assert.equal(take(reachedFifteen).finalRound, false);
   assert.equal(winningPrestige({}), 15);
+});
+
+test('finalStandings ranks by prestige, then fewest cards, then fewest reserved', () => {
+  let state = seatedGame(4);
+  state = withPlayer(state, 1, { nobles: [0, 1] });
+  state = withPlayer(state, 2, { nobles: [2] });
+  state = withPlayer(state, 3, { nobles: [0], reserved: [{ card: 0, fromDeck: false }] });
+  state = withPlayer(state, 4, { nobles: [1], reserved: [{ card: 1, fromDeck: true }] });
+  assert.deepEqual(finalStandings({ ...state, isGameOver: true, winners: [1] }), [
+    { seat: 1, place: 1, score: '6 prestige' }, { seat: 2, place: 2, score: '3 prestige' },
+    { seat: 3, place: 3, score: '3 prestige' }, { seat: 4, place: 3, score: '3 prestige' }
+  ]);
 });

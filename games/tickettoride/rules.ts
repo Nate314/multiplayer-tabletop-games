@@ -1,5 +1,7 @@
 // Ticket to Ride rules shared by the browser (what can be claimed and drawn) and the server (validation).
 // Rules follow https://en.wikipedia.org/wiki/Ticket_to_Ride_(board_game) and, where it is silent, the Days of Wonder USA rules.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
+import type { Standing } from '../../shared/types.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -8,7 +10,7 @@ import {
   MARKET_SIZE, TRAIN_COLORS, addToHand, drawTop, emptyHand, fullDeck, handCards, handSize, refillMarket
 } from './cards.ts';
 import { ROUTES, TICKETS, routeName } from './map.ts';
-import { finalScores, rankWinners } from './scoring.ts';
+import { compareFinal, finalScores, rankWinners } from './scoring.ts';
 import type {
   Card, CardSource, GameState, Hand, LastMove, Move, Payment, PlayerState, PublicGameState, Random, Result, Route, Seat, TrainColor
 } from './types.ts';
@@ -430,4 +432,14 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
     next = { ...next, lastTurns };
   }
   return next;
+}
+
+// The game's own order: points, then tickets completed, then the longest path. No score yet means no order.
+export function finalStandings(state: GameState): Standing[] {
+  const final = (seat: Seat) => state.final?.[seat];
+  const compare = (a: Seat, b: Seat) => {
+    const [first, second] = [final(a), final(b)];
+    return first && second ? compareFinal(first, second) : 0;
+  };
+  return rankStandings(state, compare, seat => pointsText(final(seat)?.total ?? 0));
 }

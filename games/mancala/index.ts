@@ -1,5 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
+import { applyMove, createGameState, finalStandings, resetLobby, toPublicState } from './rules.ts';
 import { mancalaInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -8,5 +8,6 @@ export const mancala: GameDefinition<GameState, PublicGameState> = {
   createGameState,
   resetLobby,
   applyMove,
-  toPublicState
+  toPublicState,
+  finalStandings
 };

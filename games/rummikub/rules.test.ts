@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -440,3 +441,14 @@ test('table view hides hands', () => {
   assert.equal(rackTotal(states[0].racks[1]), 46);
 });
 
+
+test('finalStandings ranks by the points gained or lost', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [2],
+    result: { wentOut: 2, rackTotals: { 1: 7, 2: 0, 3: 7 }, tileCounts: { 1: 1, 2: 0, 3: 1 }, points: { 1: -7, 2: 14, 3: -7 } }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '+14 points' },
+    { seat: 1, place: 2, score: '-7 points' }, { seat: 3, place: 2, score: '-7 points' }
+  ]);
+});

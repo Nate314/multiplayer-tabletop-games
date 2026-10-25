@@ -1,10 +1,11 @@
 // Rummikub rules shared by the browser (group checks and the play preview) and the server (validation).
 // A play is the whole table as it should be at the end of the turn; the server works out which rack tiles it adds.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { GameState, LastMove, Move, PublicGameState, Result, RoundResult, Seat, Table, Tile, TileColor } from './types.ts';
 
 export const COLORS: readonly TileColor[] = ['black', 'blue', 'orange', 'red'];
@@ -350,4 +351,10 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
   const pool = shuffle([...state.pool, ...rack], random);
   const next: GameState = { ...state, racks, pool, emptyPoolPasses: pool.length > 0 ? 0 : state.emptyPoolPasses };
   return pool.length === 0 && next.emptyPoolPasses >= next.activePlayers.length ? endRound(next, null) : next;
+}
+
+// What the round gained or lost; the winners gain the others' rack totals
+export function finalStandings(state: GameState): Standing[] {
+  const change = (seat: Seat) => state.result?.points[seat] ?? 0;
+  return rankStandings(state, (a, b) => change(b) - change(a), seat => `${change(seat) > 0 ? '+' : ''}${pointsText(change(seat))}`);
 }

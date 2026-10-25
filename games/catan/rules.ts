@@ -1,5 +1,8 @@
 // Catan rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, building.ts, dice.ts, trades.ts, devCards.ts, roads.ts and state.ts.
+import { rankStandings } from '../../shared/standings.ts';
+import { plural } from '../../shared/text.ts';
+import type { Standing } from '../../shared/types.ts';
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
@@ -355,4 +358,8 @@ export function onPlayerDisconnected(state: GameState, seat: Seat, random: Rando
   next = discardForAbsent(next, random);
   if (buildChance(next, seat)) next = withoutBuilder(note(next, `${nameOf(state, seat)} is away, so their build chance is skipped`), seat);
   return next.log.length > 0 ? finish(state, next) : state;
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  return rankStandings(state, (a, b) => points(state, b) - points(state, a), seat => plural(points(state, seat), 'victory point'));
 }

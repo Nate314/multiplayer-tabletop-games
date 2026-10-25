@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -595,4 +596,15 @@ test('hidden Victory Point cards do not count', () => {
 test('two players can play, and one cannot', () => {
   assert.notDeepEqual(act(game({ activePlayers: [1, 2] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
   assert.deepEqual(act(game({ activePlayers: [1] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
+});
+
+test('finalStandings ranks by victory points', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [1], longestRoad: 1,
+    devCards: { 1: ['victoryPoint', 'victoryPoint'], 2: ['victoryPoint'], 3: ['victoryPoint'] }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '4 victory points' },
+    { seat: 2, place: 2, score: '1 victory point' }, { seat: 3, place: 2, score: '1 victory point' }
+  ]);
 });

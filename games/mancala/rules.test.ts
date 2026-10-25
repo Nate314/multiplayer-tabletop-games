@@ -1,3 +1,4 @@
+import { createGameState, finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MANCALA_RULES } from './options.ts';
@@ -348,4 +349,12 @@ test('the rules are declared, both on by default', () => {
     'When your side is empty, play from the other side', 'Avalanche (off plays Kalah, with captures)'
   ]);
   assert.equal(mancala.info.houseRules, MANCALA_RULES);
+});
+
+test('finalStandings ranks by the stones in each bank', () => {
+  const board: Board = Array.from({ length: 14 }, () => []);
+  board[bankOf(1)] = Array<number>(20).fill(1);
+  board[bankOf(2)] = Array<number>(28).fill(2);
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2], isGameOver: true, winners: [2], board };
+  assert.deepEqual(finalStandings(state), [{ seat: 2, place: 1, score: '28 stones' }, { seat: 1, place: 2, score: '20 stones' }]);
 });

@@ -1,5 +1,7 @@
 // Mancala rules (Avalanche or Kalah, with or without play from the other side) shared by the browser (board layout,
 // playable pits, move animation) and the server (validation).
+import { rankStandings } from '../../shared/standings.ts';
+import type { Standing } from '../../shared/types.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
@@ -193,4 +195,9 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
       currentPlayer: extraTurn ? seat : nextActivePlayer(state, seat)
     }
   };
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const banked = (seat: Seat) => state.board[bankOf(seat)]?.length ?? 0;
+  return rankStandings(state, (a, b) => banked(b) - banked(a), seat => stoneCount(banked(seat)));
 }

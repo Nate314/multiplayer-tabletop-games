@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -297,4 +298,15 @@ test('a player who leaves loses their pawns, and the next player rolls if it was
   const other = removePlayer(parchisi, state, 3, rolls(5, 1));
   assert.equal(other.currentPlayer, 2);
   assert.deepEqual(other.dice.map(die => die.value), [6, 4]);
+});
+
+test('finalStandings ranks by the pawns at home', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [1],
+    pawns: { 1: [HOME, HOME, HOME, HOME], 2: [HOME, HOME, 5, 5], 3: [HOME, HOME, 9, 0] }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '4 of 4 pawns home' },
+    { seat: 2, place: 2, score: '2 of 4 pawns home' }, { seat: 3, place: 2, score: '2 of 4 pawns home' }
+  ]);
 });
