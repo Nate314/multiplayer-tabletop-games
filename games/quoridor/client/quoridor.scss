@@ -90,7 +90,7 @@
 
   .back-button,
   .history-button,
-  .faq-button,
+  .rules-button,
   .github-link,
   .share-button,
   .settings-button,
@@ -119,7 +119,7 @@
 
   .back-button:hover,
   .history-button:hover:enabled,
-  .faq-button:hover,
+  .rules-button:hover,
   .github-link:hover,
   .share-button:hover,
   .settings-button:hover,
@@ -714,7 +714,7 @@
 
     .back-button,
     .history-button,
-    .faq-button {
+    .rules-button {
       padding: 0 0.6rem;
     }
   }

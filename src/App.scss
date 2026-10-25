@@ -295,7 +295,7 @@
   margin-top: 16px;
 }
 
-.lobby-dialog .faq-button,
+.lobby-dialog .rules-button,
 .lobby-button {
   padding: 8px 16px;
   border: 1px solid var(--lobby-border);
@@ -305,8 +305,8 @@
   font-weight: 600;
 }
 
-/* FAQ sits on the left, Cancel and Join on the right */
-.lobby-dialog .faq-button {
+/* Rules sits on the left, Cancel and Join on the right */
+.lobby-dialog .rules-button {
   margin-right: auto;
 }
 
@@ -327,7 +327,7 @@
 }
 
 /*
- * Default look for the platform pieces a game screen shows: the game header, the FAQ and history dialogs, the undo vote,
+ * Default look for the platform pieces a game screen shows: the game header, the Rules and history dialogs, the undo vote,
  * the disconnected players bar, the dismiss vote, and resign and draw offers.
  * Every selector sits in :where(), so it has no specificity and any rule in a game's own CSS wins.
  * A game can restyle these pieces with its own rules, or just set these variables on [data-game="<id>"]:
@@ -358,7 +358,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -395,7 +395,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .faq-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -436,7 +436,7 @@
   min-width: 0;
 }
 
-/* Phones: the title takes its own row, and Back to games, History, FAQ and Settings fit one row under it.
+/* Phones: the title takes its own row, and Back to games, History, Rules and Settings fit one row under it.
    Share and the theme toggle move into Settings and the GitHub link stays on the landing page only.
    Outside :where(), so no game's header rule can show them again. */
 @media (max-width: 480px) {
@@ -457,19 +457,19 @@
     order: -1;
   }
 
-  :where([data-game] .back-button, [data-game] .history-button, [data-game] .faq-button) {
+  :where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
     padding: 0 0.6rem;
   }
 }
 
-/* The narrowest phones (320 px): tighter text buttons keep Back to games, History, FAQ and Settings on one row.
+/* The narrowest phones (320 px): tighter text buttons keep Back to games, History, Rules and Settings on one row.
    Outside :where(), so the games with their own header rules (Azul, Quoridor) get it too */
 @media (max-width: 360px) {
   [data-game].game-root > .game-header {
     column-gap: 0.25rem;
   }
 
-  [data-game] .game-header > :is(.back-button, .history-button, .faq-button) {
+  [data-game] .game-header > :is(.back-button, .history-button, .rules-button) {
     padding: 0 0.45rem;
   }
 }
@@ -480,7 +480,7 @@
   cursor: not-allowed;
 }
 
-/* FAQ and history dialogs */
+/* Rules and history dialogs */
 
 :where([data-game] .overlay, .lobby .overlay) {
   position: fixed;
@@ -522,6 +522,111 @@
 
 :where([data-game] .faq dd) {
   margin: 4px 0 0;
+}
+
+/* Rules dialog: the README or the FAQ scrolls between the title and Close, so Close stays in view on a phone.
+   Outside :where() on purpose, like .modal.history, so no game's .modal rule lets it grow past the window */
+[data-game] .modal.rules {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+[data-game] .modal.rules .rules-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  text-align: left;
+}
+
+:where([data-game] .rules-switch) {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+:where([data-game] .rules-switch button) {
+  padding: 6px 18px;
+  border: 2px solid var(--platform-button-bg, var(--lobby-accent));
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+}
+
+:where([data-game] .rules-switch button:first-child) {
+  border-radius: 6px 0 0 6px;
+}
+
+:where([data-game] .rules-switch button:last-child) {
+  border-radius: 0 6px 6px 0;
+}
+
+:where([data-game] .rules-switch button[aria-pressed="true"]) {
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+:where([data-game] .rules-failed) {
+  text-align: center;
+}
+
+/* A README rendered by src/markdown/Markdown.tsx */
+:where([data-game] .markdown h2) {
+  margin: 18px 0 6px;
+  font-size: 1.2rem;
+}
+
+:where([data-game] .markdown h3) {
+  margin: 14px 0 6px;
+  font-size: 1.05rem;
+}
+
+:where([data-game] .markdown p) {
+  margin: 8px 0;
+}
+
+:where([data-game] .markdown ul, [data-game] .markdown ol) {
+  margin: 6px 0;
+  padding-left: 1.4em;
+}
+
+:where([data-game] .markdown li) {
+  margin: 4px 0;
+}
+
+:where([data-game] .markdown a) {
+  color: inherit;
+}
+
+:where([data-game] .markdown code) {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(127, 127, 127, 0.18);
+  font-size: 0.9em;
+}
+
+:where([data-game] .markdown pre) {
+  overflow-x: auto;
+}
+
+/* Wide tables scroll sideways instead of widening the dialog */
+:where([data-game] .markdown-table) {
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+:where([data-game] .markdown table) {
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+:where([data-game] .markdown th, [data-game] .markdown td) {
+  padding: 4px 8px;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  text-align: left;
 }
 
 /* Outside :where() on purpose: the platform owns the History dialog's size so it never resizes between steps,

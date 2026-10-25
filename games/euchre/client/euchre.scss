@@ -73,7 +73,7 @@
 
   .back-button,
   .history-button,
-  .faq-button {
+  .rules-button {
     height: 2.5rem;
     padding: 0 1rem;
     border: none;
@@ -98,7 +98,7 @@
 
   .back-button:hover,
   .history-button:hover:enabled,
-  .faq-button:hover,
+  .rules-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);

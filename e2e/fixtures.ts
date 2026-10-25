@@ -159,10 +159,12 @@ export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   }
 }
 
-// Opens the FAQ from the game view and returns the dialog
+// Opens Rules from the game view, switches it to the FAQ and returns the dialog
 export async function openFaq(page: Page) {
-  await page.getByRole('button', { name: 'FAQ' }).click();
-  return page.getByRole('dialog', { name: 'Frequently asked questions' });
+  await page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: / rules$/ });
+  await dialog.getByRole('button', { name: 'FAQ', exact: true }).click();
+  return dialog;
 }
 
 export const test = base.extend<{ seat: Seat }, { server: Server }>({

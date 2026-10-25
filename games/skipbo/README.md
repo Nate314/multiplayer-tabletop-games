@@ -25,7 +25,7 @@ Build piles from 1 to 12 with your hand, your stock and your discard piles, and 
 - Every player is shown with their hand size, stock size and stock top, and their four discard piles. The player whose turn it is is outlined, and the winner is outlined at the end
 - With Highlight newly drawn cards on in Settings (the default), the cards dealt to you are outlined, at the start of your turn and when an emptied hand is refilled, until your discard ends the turn
 - Click Undo to ask everyone to undo the last move
-- Click FAQ at the top of the page for a short guide to the rules and controls
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 
