@@ -545,18 +545,20 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
   return { error: 'Unknown action' };
 }
 
-// A dismissal ends the game: the highest-scoring team without the dismissed player wins, every such team on a tie
+// A dismissal ends the game: the highest-scoring team without the dismissed player wins, every such team on a tie.
+// With called partners (5 and 7 players) each player is their own team, so there is no partnership to break
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const others = teamsOf(state).map((team, index) => ({ team, score: state.scores[index] })).filter(({ team }) => !team.includes(seat));
   const top = Math.max(...others.map(({ score }) => score));
   const winners = others.filter(({ score }) => score === top).flatMap(({ team }) => team).sort((a, b) => a - b);
+  const reason = calledCount(seatsInPlay(state).length) > 0 ? 'the game ends' : 'the partnership is broken';
   return {
     ...state,
     isGameOver: true,
     currentPlayer: null,
     winners,
     undoVote: null,
-    gameStatus: `${state.playerNames[seat]} left, so the partnership is broken: ${namesOf(winners, state.playerNames)} win`
+    gameStatus: `${state.playerNames[seat]} left, so ${reason}: ${namesOf(winners, state.playerNames)} ${winners.length === 1 ? 'wins' : 'win'}`
   };
 }
 

@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What if a player leaves?',
-    answer: 'A disconnected player keeps their seat and the game waits for them on their turn. If they are dismissed, their partnership is broken, so the game ends and the highest-scoring team without them wins.'
+    answer: 'A disconnected player keeps their seat and the game waits for them on their turn. If they are dismissed, their partnership is broken, so the game ends and the highest-scoring team without them wins. At 5 or 7 players, where partners are called each hand, the game ends the same way and the highest-scoring player left wins.'
   },
   {
     question: 'Can I undo?',

@@ -357,6 +357,11 @@ test.describe('Rook rules', () => {
 });
 
 test.describe('Rook controls', () => {
+  test('the lobby scoreboard names only the players seated so far', async ({ seat }) => {
+    const { pages: [alice] } = await seat('rook', ['Alice', 'Bob', 'Cara'], { agree: false });
+    await expect(alice.locator('.scoreboard .team-names')).toHaveText(['Alice and Cara (you)', 'Bob']);
+  });
+
   test('on your bidding turn, choose an amount and click Bid, or click Pass', async ({ seat }) => {
     const { pages: [alice, bob] } = await start(seat);
     await expect(bidButton(bob)).toHaveCount(0);

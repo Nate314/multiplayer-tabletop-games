@@ -64,7 +64,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
       <div className="scoreboard">
         {teams.map((team, index) => (
           <div key={index} className={`team team-${index}${team.some(seat => winners.includes(seat)) ? ' team-winner' : ''}`}>
-            <span className="team-names">{namesOf(team, playerNames)}{viewer !== null && team.includes(viewer) && ' (you)'}</span>
+            <span className="team-names">{namesOf(team.filter(seat => playerNames[seat] !== undefined), playerNames) || 'Open seats'}{viewer !== null && team.includes(viewer) && ' (you)'}</span>
             <span className="team-score">{scores[index]}</span>
             <span className="team-tricks">{tricksWon[index]} {tricksWon[index] === 1 ? 'trick' : 'tricks'}</span>
           </div>

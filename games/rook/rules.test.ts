@@ -727,6 +727,14 @@ test('a dismissal at six ends the game', () => {
   assert.equal(gone.gameStatus, 'Alice left, so the partnership is broken: Bob, Dan and Fay win');
 });
 
+test('a dismissal at five ends the game with no partnership to break', () => {
+  const five = { ...lobbyOf(5), started: true, scores: [100, 300, 200, 50, 0] };
+  const left = removePlayer(rook, five, 2, seeded(1));
+  assert.equal(left.isGameOver, true);
+  assert.deepEqual(left.winners, [3]);
+  assert.equal(left.gameStatus, 'Bob left, so the game ends: Cara wins');
+});
+
 // Rook at 5 and 7: after naming trump the bidder calls cards, and whoever holds one is their partner for the hand
 
 // The last trick at `cards.length` players, red trump: Alice (the bidder) leads red 13 and nobody beats it, the nest
