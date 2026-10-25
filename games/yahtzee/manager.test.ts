@@ -86,7 +86,7 @@ test('dismissing the player to move hands the turn on', () => {
 test('a full game at 10 players', () => {
   const manager = rememberingKeys(createGameManager([yahtzee], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
   manager.join('yahtzee', 'g1', 'P1');
-  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 10 }));
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, maxPlayers: 10 }));
   for (let seat = 2; seat <= 10; seat++) manager.join('yahtzee', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = manager.getState(ROOM, null) as PublicGameState;

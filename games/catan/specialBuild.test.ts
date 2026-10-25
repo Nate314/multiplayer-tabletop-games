@@ -12,7 +12,7 @@ const board = boardOf(FIVE_SIX_LAYOUT);
 
 const withRule = (state: GameState): GameState => ({
   ...state,
-  houseRules: { host: 1, values: { specialBuild: true }, override: false, maxPlayers: null, agreed: [1, 2, 3, 4, 5], revision: 1 }
+  houseRules: { host: 1, values: { specialBuild: true }, maxPlayers: null, agreed: [1, 2, 3, 4, 5], revision: 1 }
 });
 
 // Every seat holds two of each resource

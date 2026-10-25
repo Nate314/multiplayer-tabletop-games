@@ -30,5 +30,5 @@ export function agreeAll(manager: Manager, roomId: string): void {
 
 // House rules with these values, for building a test state directly
 export function withRules(values: HouseRuleValues): HouseRulesState {
-  return { host: 1, values, override: false, maxPlayers: null, agreed: [], revision: 0 };
+  return { host: 1, values, maxPlayers: null, agreed: [], revision: 0 };
 }

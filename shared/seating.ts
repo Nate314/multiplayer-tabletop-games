@@ -168,7 +168,7 @@ export function applyMove<S extends BaseGameState>(
 ): Result<S> {
   if (state.isGameOver) return { error: 'The game is over' };
   // Only the start needs the minimum: a game that loses players to dismissals plays on, or ends itself in onPlayerLeft
-  if (!state.started && state.activePlayers.length < minimumToStart(game.info, state)) return { error: 'Waiting for more players' };
+  if (!state.started && state.activePlayers.length < minimumToStart(game.info)) return { error: 'Waiting for more players' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   if (state.currentPlayer !== seat && !game.allowsOutOfTurn?.(state, seat, move)) return { error: 'Not your turn' };

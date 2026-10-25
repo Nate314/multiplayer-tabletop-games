@@ -127,7 +127,7 @@ test('dismissing the player whose turn it is folds them and play goes on', () =>
 test('a full game at 10 players', () => {
   const manager = rememberingKeys(createGameManager([holdem], seeded(2)));
   manager.join('holdem', 'g1', 'P1');
-  ok(manager.setHouseRules(ROOM, 1, { values: {}, override: true, maxPlayers: 10 }));
+  ok(manager.setHouseRules(ROOM, 1, { values: {}, maxPlayers: 10 }));
   for (let seat = 2; seat <= 10; seat++) manager.join('holdem', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = viewOf(manager, null);

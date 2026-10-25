@@ -30,7 +30,7 @@ const t = (a: number, b: number, set: SetSize = 6) =>
 
 // The host's proposal, as the manager applies it: the rules change and the tiles are dealt again
 function propose(state: GameState, values: HouseRuleValues, random: Random = noShuffle): Result<GameState> {
-  const result = setHouseRules(dominoes.info, state, 1, { values, override: false, maxPlayers: null });
+  const result = setHouseRules(dominoes.info, state, 1, { values, maxPlayers: null });
   return 'error' in result ? result : { state: dominoes.resetLobby(result.state, random) };
 }
 
@@ -72,7 +72,7 @@ function ok(result: Result<GameState>): GameState {
 // House rules as a joined lobby would have them, everyone agreed
 const rules = (values: HouseRuleValues): HouseRulesState => ({
   host: 1, values: { set: 6, branching: 'every', chickenfoot: false, trains: false, ...values },
-  override: false, maxPlayers: null, agreed: [1, 2, 3], revision: 1
+  maxPlayers: null, agreed: [1, 2, 3], revision: 1
 });
 const withBranching = (branching: Branching) => rules({ branching });
 
@@ -301,7 +301,7 @@ test('the set is a house rule: the host\'s choice is dealt and the first move lo
   assert.equal(removePlayer(dominoes, joined.state, 3, seeded(3)).set, 9);
   const first = ok(applyMove(dominoes, state, state.currentPlayer as number,
     { type: 'play', tile: state.leadTile, end: 0 }, noShuffle));
-  assert.deepEqual(setHouseRules(dominoes.info, first, 1, { values: { set: 6 }, override: false, maxPlayers: null }),
+  assert.deepEqual(setHouseRules(dominoes.info, first, 1, { values: { set: 6 }, maxPlayers: null }),
     { error: 'The house rules are locked once play starts' });
   assert.equal(first.set, 9);
 });

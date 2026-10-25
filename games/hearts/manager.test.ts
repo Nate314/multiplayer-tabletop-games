@@ -173,7 +173,7 @@ test('dismissing a player mid-game ends it and the lowest score wins', () => {
 test('a pass before everyone agreed is refused and changes nothing; after agreeing it goes through', () => {
   const manager = rememberingKeys(createGameManager([hearts], seeded(1)));
   for (const name of NAMES) manager.join('hearts', 'g1', name);
-  ok(manager.setHouseRules(ROOM, 1, { values: { jackOfDiamonds: true }, override: false, maxPlayers: null }));
+  ok(manager.setHouseRules(ROOM, 1, { values: { jackOfDiamonds: true }, maxPlayers: null }));
   const before = manager.rawState(ROOM);
   const refused = manager.action(ROOM, 1, { type: 'pass', cards: [0, 1, 2] });
   assert.deepEqual(refused, { error: 'Everyone must agree to the house rules first' });

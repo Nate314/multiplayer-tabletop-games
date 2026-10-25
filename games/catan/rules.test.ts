@@ -474,12 +474,14 @@ test('dismissed player mid-turn', () => {
   assert.equal(bobGone.isGameOver, false);
   ok(move(bobGone, 3, { type: 'roll' }, dice(2, 2)));
 
-  // Down to two players the game ends and the leader wins
+  // Two players play on; down to one the game ends
   const three = game({ buildings: { [corner(9, 0)]: city(2), [corner(4, 0)]: settlement(3) }, disconnected: [1] });
-  const ended = removePlayer(catan, three, 1);
+  const two = removePlayer(catan, three, 1);
+  assert.equal(two.isGameOver, false);
+  const ended = removePlayer(catan, { ...two, disconnected: [3] }, 3);
   assert.equal(ended.isGameOver, true);
   assert.deepEqual(ended.winners, [2]);
-  assert.match(ended.gameStatus, /Bob wins with 2 points/);
+  assert.match(ended.gameStatus, /Bob wins! Everyone else left/);
 });
 
 test('a player dismissed during setup loses their placements and setup goes on', () => {
@@ -561,7 +563,6 @@ test('the game ends at the chosen points', () => {
 });
 
 const friendly = withRules({ friendlyRobber: true });
-const overridden = { ...withRules({}), override: true, maxPlayers: 4 };
 
 test('the friendly robber cannot steal from a player with 2 points', () => {
   const buildings = { [corner(4, 0)]: settlement(2), [corner(4, 3)]: settlement(2) };
@@ -593,16 +594,15 @@ test('hidden Victory Point cards do not count', () => {
   assert.deepEqual(move(hidden, 1, { type: 'moveRobber', hex: 4, victim: 2 }), { error: 'Nobody there can be stolen from' });
 });
 
-test('two players can play with the override', () => {
-  const two = game({ activePlayers: [1, 2], houseRules: overridden });
-  assert.deepEqual(act(game({ activePlayers: [1, 2] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
-  assert.notDeepEqual(act(two, 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
+test('two players can play, and one cannot', () => {
+  assert.notDeepEqual(act(game({ activePlayers: [1, 2] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
+  assert.deepEqual(act(game({ activePlayers: [1] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
 });
 
-test('a three-player game with the override plays on after a dismissal leaves two', () => {
-  const three = game({ disconnected: [3], houseRules: overridden });
+test('a three-player game plays on after a dismissal leaves two, and ends at one', () => {
+  const three = game({ disconnected: [3] });
   const left = removePlayer(catan, three, 3);
   assert.equal(left.isGameOver, false);
   assert.deepEqual(left.activePlayers, [1, 2]);
-  assert.equal(removePlayer(catan, { ...three, houseRules: withRules({}) }, 3).isGameOver, true);
+  assert.equal(removePlayer(catan, { ...left, disconnected: [2] }, 2).isGameOver, true);
 });
