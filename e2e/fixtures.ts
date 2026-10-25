@@ -105,7 +105,7 @@ export async function leave(page: Page): Promise<void> {
 // `voters` start and approve a dismiss vote against `name`, who must have left
 export async function dismiss(name: string, ...voters: Page[]): Promise<void> {
   const [first, ...rest] = voters;
-  await first.locator('.presence-player', { hasText: name }).getByRole('button', { name: 'Dismiss' }).click();
+  await first.locator('.presence-player[data-disconnected]', { hasText: name }).getByRole('button', { name: 'Dismiss' }).click();
   for (const voter of rest) await voter.getByRole('button', { name: 'Approve' }).click();
 }
 

@@ -1,6 +1,6 @@
 // The game sounds as data, served at /api/sound and played by src/sound/synth.ts with the Web Audio API
 
-export type SoundName = 'turn' | 'move' | 'dice' | 'gameOver' | 'timer';
+export type SoundName = 'turn' | 'move' | 'dice' | 'gameOver' | 'timer' | 'reaction';
 
 export type SoundNote = { at: number; length: number; hz: number; type: 'sine' | 'triangle' | 'square' | 'sawtooth' };
 
@@ -19,4 +19,5 @@ export const SOUNDS: SoundDef[] = [
     notes: [523, 659, 784, 1047].map((hz, i) => ({ at: i * 0.12, length: 0.2, hz, type: 'triangle' as const })),
   },
   { name: 'timer', label: 'Timer warnings', notes: [{ at: 0, length: 0.02, hz: 1000, type: 'square' }] },
+  { name: 'reaction', label: 'Reactions to you', notes: [{ at: 0, length: 0.18, hz: 520, type: 'sine' }] },
 ];

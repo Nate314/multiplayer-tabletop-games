@@ -43,7 +43,7 @@ test('a link to another game wins over the automatic rejoin', async ({ seat }) =
   await expect(dialog.getByLabel('Game ID')).toHaveValue('xyz');
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await expect(bob.getByRole('button', { name: `Back to Connect Four (${table.gameId})` })).toBeVisible();
-  await expect(alice.locator('.presence-player', { hasText: 'Bob' })).toBeVisible();
+  await expect(alice.locator('.presence-player[data-disconnected]', { hasText: 'Bob' })).toBeVisible();
 });
 
 test('share copies the join link and says so when there is no share sheet', async ({ seat, server }) => {

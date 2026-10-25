@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { DEFAULT_FILTERS } from '../components/gameFilters.ts'
+import { DEFAULT_RECENT_REACTIONS } from '../components/reactions.ts'
 import {
   DEFAULT_PREFERENCES, loadAnimations, loadHistorySounds, loadJoinForm, loadLandingFilters, loadPlaybackSpeed, loadPreferences,
+  loadRecentReactions,
   saveAnimations, saveHistorySounds, saveJoinForm, saveLandingFilters, savePlaybackSpeed, savePreferences,
 } from './settings.ts'
 
@@ -82,7 +84,7 @@ test('preferences default to every sound on at half volume, symbols off and the 
   installStorage()
   assert.deepEqual(loadPreferences(), {
     volume: 0.5, muted: false,
-    sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true },
+    sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true, reaction: true },
     colorSymbols: false, highlightDrawn: true,
   })
 })
@@ -124,4 +126,13 @@ test('landing filters default to everything shown and round-trip', () => {
 test('junk landing filters fall back field by field', () => {
   installStorage({ landingFilters: '{"search":5,"sort":"x","categories":["dice","nope"],"players":2.5}' })
   assert.deepEqual(loadLandingFilters(), { search: '', sort: 'category', categories: ['dice'], players: null })
+})
+
+test('loadRecentReactions falls back to the defaults and drops anything that is not a single emoji', () => {
+  installStorage()
+  assert.deepEqual(loadRecentReactions(), DEFAULT_RECENT_REACTIONS)
+  installStorage({ recentReactions: JSON.stringify(['hi', 5]) })
+  assert.deepEqual(loadRecentReactions(), DEFAULT_RECENT_REACTIONS)
+  installStorage({ recentReactions: JSON.stringify(['🎉']) })
+  assert.deepEqual(loadRecentReactions(), ['🎉'])
 })

@@ -5,6 +5,8 @@ import { CATEGORIES } from '../../shared/categories.ts'
 import { DEFAULT_FILTERS, parsePlayers } from '../components/gameFilters.ts'
 import type { LandingFilters } from '../components/gameFilters.ts'
 import type { SoundName } from '../../shared/sounds.ts'
+import { isSingleEmoji } from '../../shared/reactions.ts'
+import { DEFAULT_RECENT_REACTIONS } from '../components/reactions.ts'
 
 export type JoinForm = { playerName: string; gameId: string }
 
@@ -20,7 +22,7 @@ export type Preferences = {
 export const DEFAULT_PREFERENCES: Preferences = {
   volume: 0.5,
   muted: false,
-  sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true },
+  sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true, reaction: true },
   colorSymbols: false,
   highlightDrawn: true,
 }
@@ -83,6 +85,18 @@ export function loadLandingFilters(): LandingFilters {
 
 export function saveLandingFilters(filters: LandingFilters): void {
   writeJson(local, LANDING_FILTERS_KEY, filters)
+}
+
+const RECENT_REACTIONS_KEY = 'recentReactions'
+
+export function loadRecentReactions(): string[] {
+  const saved = readJson(local, RECENT_REACTIONS_KEY)
+  const valid = Array.isArray(saved) ? saved.filter(isSingleEmoji) : []
+  return valid.length > 0 ? valid : DEFAULT_RECENT_REACTIONS
+}
+
+export function saveRecentReactions(list: string[]): void {
+  writeJson(local, RECENT_REACTIONS_KEY, list)
 }
 
 export function loadHistorySounds(): boolean {

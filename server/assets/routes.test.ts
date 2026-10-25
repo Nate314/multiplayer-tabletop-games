@@ -46,7 +46,7 @@ test('the listing names every asset with its samples', async () => {
 
 test('the sound listing has every sound with its notes', async () => {
   const sounds = (await (await fetch(`${base}/api/sound`)).json()) as SoundDef[];
-  assert.equal(sounds.length, 5);
+  assert.equal(sounds.length, 6);
   const turn = sounds.find(sound => sound.name === 'turn');
   assert.deepEqual(turn?.notes, [{ at: 0, length: 0.25, hz: 660, type: 'sine' }, { at: 0.15, length: 0.35, hz: 880, type: 'sine' }]);
 });
