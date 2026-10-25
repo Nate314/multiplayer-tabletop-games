@@ -640,9 +640,13 @@
   font-weight: 600;
 }
 
+/* The error colors come as a pair, so the line reads on any game's panel color, in either theme */
 :where([data-game] .house-rules-error) {
+  padding: 4px 8px;
+  border-radius: 6px;
   font-weight: 600;
-  color: #c0392b;
+  background: var(--lobby-error-bg);
+  color: var(--lobby-error-text);
 }
 
 :where([data-game] .house-rules-actions) {
