@@ -43,10 +43,12 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
   const stretched = game.stretchedPlayers;
   const seated = activePlayers.length;
 
+  // Only the changed rule is sent: the server keeps the others, and drops a rule that the change no longer offers
+  // (Chess "Increment per move" once the clock is off), which it would refuse if it were sent back
   const propose = (change: Partial<HouseRulesProposal>) => {
-    gameService.setHouseRules({ values: rules.values, override: rules.override, maxPlayers: rules.maxPlayers, ...change });
+    gameService.setHouseRules({ values: {}, override: rules.override, maxPlayers: rules.maxPlayers, ...change });
   };
-  const setValue = (id: string, value: HouseRuleValue) => propose({ values: { ...rules.values, [id]: value } });
+  const setValue = (id: string, value: HouseRuleValue) => propose({ values: { [id]: value } });
 
   return (
     <div className="house-rules-panel">

@@ -100,3 +100,47 @@ test.describe('House rules lobby', () => {
     await expect(dialog(bob)).toContainText('Target score5,000 (house rule)');
   });
 });
+
+// A rule offered only with another rule's value: turning the parent back must drop the dependent rule, not fail
+test.describe('Changing a rule back', () => {
+  test('the chess clock turns back off, and the increment goes with it', async ({ seat }) => {
+    const { pages: [alice, bob] } = await seat('chess', ['Alice', 'Bob'], { agree: false });
+    const clock = (page: Page) => page.getByLabel('Clock', { exact: true });
+    const increment = (page: Page) => page.getByLabel('Increment per move', { exact: true });
+    await setHouseRules(alice, 'chess', { clockMinutes: 5, incrementSeconds: 2 });
+    await expect(increment(bob)).toHaveValue('2');
+    await setHouseRules(alice, 'chess', { clockMinutes: 'off' });
+    for (const page of [alice, bob]) {
+      await expect(clock(page)).toHaveValue('off');
+      await expect(increment(page)).toHaveCount(0);
+    }
+    await expect(alice.locator('.house-rules-error')).toHaveCount(0);
+    await alice.getByRole('button', { name: 'House rules', exact: true }).click();
+    const dialog = alice.getByRole('dialog', { name: 'House rules' });
+    await expect(dialog).toContainText('ClockOff');
+    await expect(dialog).not.toContainText('Increment per move');
+    await alice.keyboard.press('Escape');
+    await setHouseRules(alice, 'chess', { clockMinutes: 10 });
+    await expect(increment(bob)).toHaveValue('0');
+    await expect(clock(bob)).toHaveValue('10');
+  });
+
+  test('Rook at six goes from three teams of two back to two teams of three', async ({ seat }) => {
+    const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay'];
+    const { pages } = await seat('rook', names, { maxPlayers: 6, agree: false });
+    const [alice, bob] = pages;
+    const teams = (page: Page) => page.getByLabel('Teams at 6 players', { exact: true });
+    const defenders = (page: Page) => page.getByLabel('Defending teams score', { exact: true });
+    for (const page of pages) await expect(page.locator('.house-rules-list li')).toHaveCount(6);
+    await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo', defenders: 'together' });
+    await expect(defenders(bob)).toHaveValue('together');
+    await setHouseRules(alice, 'rook', { sixTeams: 'twoOfThree' });
+    for (const page of [alice, bob]) {
+      await expect(teams(page)).toHaveValue('twoOfThree');
+      await expect(defenders(page)).toHaveCount(0);
+    }
+    await expect(alice.locator('.house-rules-error')).toHaveCount(0);
+    await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo' });
+    await expect(defenders(bob)).toHaveValue('separate');
+  });
+});

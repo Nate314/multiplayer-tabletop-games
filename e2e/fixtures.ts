@@ -78,7 +78,8 @@ function gameOf(gameType: string) {
 }
 
 // A controlled checkbox snaps back until the server's reply arrives, so click it and wait for the new state
-// instead of using check(), and finish each control before the next, since a change sends every value at once
+// instead of using check(), and finish each control before the next, since a dependent rule appears only after its
+// parent's change arrives
 async function setCheckbox(control: Locator, want: boolean): Promise<void> {
   if (await control.isChecked() !== want) await control.click();
   await expect(control).toBeChecked({ checked: want });
