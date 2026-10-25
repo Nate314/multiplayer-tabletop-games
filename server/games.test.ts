@@ -1012,9 +1012,9 @@ test('the move goes through once every seated player agreed', () => {
 // rulesGame with an action that starts play, as a Hearts pass does
 const startingGame: GameDefinition<TestState, TestPublicState> = {
   ...rulesGame,
-  applyAction(state, seat, action, random) {
+  applyAction(state, seat, action, random, now) {
     if ((action as { type?: unknown } | null)?.type === 'start') return { state: { ...state, started: true, gameStatus: 'started' } };
-    return testGame.applyAction!(state, seat, action, random);
+    return testGame.applyAction!(state, seat, action, random, now);
   }
 };
 

@@ -92,7 +92,7 @@ const play = (state: GameState, seat: number, played: Card, color?: Color, uno?:
 const draw = (state: GameState, seat: number) => move(state, seat, { type: 'draw' });
 const pass = (state: GameState, seat: number) => move(state, seat, { type: 'pass' });
 const act = (state: GameState, seat: number, type: string, random: Random = noShuffle) =>
-  uno.applyAction?.(state, seat, { type }, random) ?? assert.fail('UNO has actions');
+  uno.applyAction?.(state, seat, { type }, random, 0) ?? assert.fail('UNO has actions');
 
 test('the deck has the standard 108 cards', () => {
   const deck = buildDeck();

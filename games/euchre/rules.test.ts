@@ -45,7 +45,7 @@ function ok(result: Result<GameState>): GameState {
 const move = (state: GameState, seat: number, m: Move | unknown, random: Random = seeded(3)) =>
   applyMove(euchre, state, seat, m, random);
 const act = (state: GameState, seat: number, action: unknown) =>
-  euchre.applyAction?.(state, seat, action, seeded(1)) ?? assert.fail('no actions');
+  euchre.applyAction?.(state, seat, action, seeded(1), 0) ?? assert.fail('no actions');
 
 // A hand under way: seat 4 dealt, seat 1 ordered up hearts and leads. Two cards each.
 function game(overrides: Partial<GameState> = {}): GameState {

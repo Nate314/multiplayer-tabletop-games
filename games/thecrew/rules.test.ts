@@ -43,7 +43,7 @@ function ok(result: Result<GameState>): GameState {
 // Moves through the platform, which checks the turn first; actions go straight to the game
 const move = (state: GameState, seat: number, m: unknown, random: Random = seeded(3)) => applyMove(thecrew, state, seat, m, random);
 const act = (state: GameState, seat: number, a: unknown, random: Random = seeded(3)) =>
-  thecrew.applyAction?.(state, seat, a, random) ?? assert.fail('no actions');
+  thecrew.applyAction?.(state, seat, a, random, 0) ?? assert.fail('no actions');
 const task = (card: Card, owner: number | null, token: OrderToken | null = null): Task => ({ card, token, owner, done: false });
 
 // A mission under way with four players: Alice is commander and leads. Mission 1's rules unless `mission` says otherwise.

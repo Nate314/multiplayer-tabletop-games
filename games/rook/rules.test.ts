@@ -316,9 +316,9 @@ test('first team to 500 wins after Continue', () => {
   let state = lastTrickOf([80, 40], 80);
   assert.equal(state.isGameOver, false);
   assert.deepEqual(move(state, 1, { type: 'bid', amount: 70 }), { error: 'Not your turn' });
-  for (const seat of [1, 2, 3]) state = ok(rook.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
+  for (const seat of [1, 2, 3]) state = ok(rook.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(state.phase, 'handOver');
-  state = ok(rook.applyAction?.(state, 4, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
+  state = ok(rook.applyAction?.(state, 4, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(state.phase, 'bidding');
   assert.equal(state.handNumber, 2);
   assert.equal(state.dealer, 1);
@@ -331,7 +331,7 @@ test('first team to 500 wins after Continue', () => {
   assert.equal(won.isGameOver, true);
   assert.deepEqual(won.winners, [1, 3]);
   assert.equal(won.gameStatus, 'Alice and Cara win with 510 points!');
-  assert.deepEqual(rook.applyAction?.(won, 1, { type: 'acknowledgeRound' }, seeded(1)), { error: 'The game is over' });
+  assert.deepEqual(rook.applyAction?.(won, 1, { type: 'acknowledgeRound' }, seeded(1), 0), { error: 'The game is over' });
 });
 
 test('when both teams pass 500 the higher total wins, and a tie plays on', () => {
@@ -345,9 +345,9 @@ test('when both teams pass 500 the higher total wins, and a tie plays on', () =>
 
 test('the next hand does not wait for disconnected players', () => {
   let state = lastTrickOf([80, 40], 80);
-  state = ok(rook.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
-  state = ok(rook.applyAction?.(state, 2, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
-  state = ok(rook.applyAction?.(state, 3, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
+  state = ok(rook.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  state = ok(rook.applyAction?.(state, 2, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  state = ok(rook.applyAction?.(state, 3, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   state = disconnectPlayer(rook, state, 4, seeded(1));
   assert.equal(state.phase, 'bidding');
 });
@@ -405,8 +405,8 @@ test('invalid moves', () => {
   assert.deepEqual(move(won, 1, { type: 'discard', cards: 'all' }), { error: 'Invalid move' });
   assert.deepEqual(move(won, 1, { type: 'nameTrump', color: 'rook' }), { error: 'Invalid move' });
 
-  assert.deepEqual(rook.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1)), { error: 'Nothing to continue' });
-  assert.deepEqual(rook.applyAction?.(state, 1, { type: 'other' }, seeded(1)), { error: 'Unknown action' });
+  assert.deepEqual(rook.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1), 0), { error: 'Nothing to continue' });
+  assert.deepEqual(rook.applyAction?.(state, 1, { type: 'other' }, seeded(1), 0), { error: 'Unknown action' });
 });
 
 test('table view hides hands', () => {
@@ -525,7 +525,7 @@ function playGame(start: GameState): GameState {
     state = playHand(state, seeded(hands + 11));
     if (state.isGameOver) break;
     for (const seat of state.activePlayers) {
-      state = ok(rook.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(hands)) ?? assert.fail());
+      state = ok(rook.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(hands), 0) ?? assert.fail());
     }
   }
   assert.equal(state.isGameOver, true);
@@ -703,7 +703,7 @@ test('a game saved before teams existed loads and scores', () => {
   assert.deepEqual(old.roundSummary?.change, [80, 40]);
   assert.equal(teamOfSeat(old, 3), 0);
   let next = old;
-  for (const seat of [1, 2, 3, 4]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
+  for (const seat of [1, 2, 3, 4]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(next.phase, 'bidding');
   assert.deepEqual(next.tricksWon, [0, 0]);
   assert.deepEqual(next.captured, [0, 0]);
@@ -873,7 +873,7 @@ test('each player scores individually', () => {
   assert.equal(done.isGameOver, false);
   // The next hand calls partners afresh
   let next = done;
-  for (const seat of [1, 2, 3, 4, 5]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1)) ?? assert.fail());
+  for (const seat of [1, 2, 3, 4, 5]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(next.called, null);
   assert.deepEqual(next.scores, [170, 70, 100, 90, 100]);
   const again = playHand(next);
