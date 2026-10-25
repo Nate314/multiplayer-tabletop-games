@@ -1,5 +1,6 @@
 import { useCountdown } from '../hooks/useCountdown.ts';
 import ReactionPicker from './ReactionPicker';
+import { keepOnScreen } from './keepOnScreen.ts';
 import { reactionLabel } from './reactions.ts';
 import useReactions from './useReactions.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
@@ -37,7 +38,7 @@ export default function PresenceBar({ gameState, playerNumber, onDismiss }: Pres
                 </button>
               )}
               {bubbles[seat] && (
-                <span key={bubbles[seat].at} className="reaction-bubble" role="status">{reactionLabel(bubbles[seat], playerNames)}</span>
+                <span key={bubbles[seat].at} className="reaction-bubble" ref={keepOnScreen} role="status">{reactionLabel(bubbles[seat], playerNames)}</span>
               )}
             </li>
           );

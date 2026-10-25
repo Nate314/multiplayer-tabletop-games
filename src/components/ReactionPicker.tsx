@@ -4,6 +4,7 @@ import { formatClock } from '../hooks/useCountdown.ts';
 import gameService from '../services/gameService.ts';
 import { loadRecentReactions, saveRecentReactions } from '../services/settings.ts';
 import { isSingleEmoji } from '../../shared/reactions.ts';
+import { keepOnScreen } from './keepOnScreen.ts';
 import { rememberReaction } from './reactions.ts';
 import type { Seat } from '../../shared/types.ts';
 
@@ -22,7 +23,7 @@ export default function ReactionPicker({ target, name, disabled, cooldownMs }: R
   const [recent, setRecent] = useState(loadRecentReactions);
   const [typed, setTyped] = useState('');
   const wrapperRef = useRef<HTMLSpanElement>(null);
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => { setOpen(false); setTyped(''); }, []);
   useDismiss(wrapperRef, open, close);
 
   const cooling = cooldownMs > 0;
@@ -31,18 +32,17 @@ export default function ReactionPicker({ target, name, disabled, cooldownMs }: R
     const next = rememberReaction(recent, emoji);
     setRecent(next);
     saveRecentReactions(next);
-    setTyped('');
-    setOpen(false);
+    close();
   };
 
   return (
     <span className="reaction-anchor" ref={wrapperRef}>
       <button type="button" className="presence-name" aria-haspopup="dialog" aria-expanded={open} disabled={disabled}
-        onClick={() => setOpen(!open)}>
+        onClick={() => (open ? close() : setOpen(true))}>
         {cooling ? `${name} ${formatClock(cooldownMs)}` : name}
       </button>
       {open && !disabled && (
-        <div className="reaction-picker" role="dialog" aria-label={`React to ${name}`}>
+        <div className="reaction-picker" ref={keepOnScreen} role="dialog" aria-label={`React to ${name}`}>
           <h2>{`React to ${name}`}</h2>
           <div className="reaction-recent">
             {recent.map(emoji => (
