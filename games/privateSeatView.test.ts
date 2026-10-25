@@ -45,13 +45,20 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     { ...s, revealed: { to: 2, of: 1, hand: s.hands[1] } }
   ],
   gofish: s => [{ ...s, lastMove: { asker: 1, fished: 'other' }, fishedCard: s.hands[1][0] }],
-  racko: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }]
+  racko: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
+  catan: s => [{
+    ...s,
+    steal: { thief: 1, victim: 2, resource: 'wood' },
+    turnHolder: 1,
+    devCards: { ...s.devCards, 1: ['victoryPoint'] },
+    boughtThisTurn: ['victoryPoint']
+  }],
+  risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
+  splendor: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
+  tickettoride: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }]
 };
 
-// Games whose hooks a later commit adds
-const PENDING: string[] = ['catan', 'risk', 'splendor', 'tickettoride'];
-
-for (const game of GAMES.filter(g => !PENDING.includes(g.info.id))) {
+for (const game of GAMES) {
   const id = game.info.id;
   const seatsOf = () => [dealt(game), ...(CASES[id]?.(dealt(game)) ?? [])]
     .flatMap(s => s.activePlayers.map((seat: number) => [s, seat] as const));

@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import {
   allowsOutOfTurn, applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby,
@@ -17,5 +18,8 @@ export const catan: GameDefinition<GameState, PublicGameState> = {
   allowsOutOfTurn,
   applyAction,
   onUndo: (state, random) => ({ ...state, devDeck: shuffle(state.devDeck, random) }),
-  toPublicState
+  toPublicState,
+  privateSeatView: (state, seat) => seatFields(
+    toPublicState(state, false, seat), ['viewer', 'hand', 'myDevCards', 'myNewDevCards', 'points', 'steal']
+  )
 };
