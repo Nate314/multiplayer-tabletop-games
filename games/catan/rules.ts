@@ -14,7 +14,7 @@ import { afterDiscards, discard, discardForAbsent, moveRobber, roll } from './di
 import { roadLengths } from './roads.ts';
 import { add, isResource, noResources, parseResources, total } from './resources.ts';
 import {
-  LOG_SIZE, checkWin, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
+  LOG_SIZE, checkWin, endGame, nameOf, note, points, settleAwards, startTurn, syncTurn, visiblePoints
 } from './state.ts';
 import { editionFor } from './editions.ts';
 import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
@@ -311,7 +311,8 @@ function setupWithout(state: GameState, seat: Seat): GameState {
 // A dismissed player's pieces stay on the board as dead pieces: they score and produce nothing, but still block and
 // break roads. Their cards go back to the bank, and their development cards out of the game. A discard or trade
 // waiting on them is dropped, and so is their build chance; on their turn, the next player's turn begins (ending any
-// special build phase). Two players play on; the shared seating code ends the game when one is left.
+// special build phase). With fewer than three left, the game ends and the player with the most points wins; a game
+// that started with two ends in the shared seating code once one is left.
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const working: GameState = { ...state, log: [] };
   const returned: GameState = {
@@ -334,6 +335,14 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
     next = note(startTurn({ ...next, specialBuild: null }, following), `${nameOf(state, following)}'s turn`);
   } else {
     next = withoutBuilder(next, seat);
+  }
+  if (next.activePlayers.length < PLAYERS.minPlayers) {
+    const awarded = settleAwards(next);
+    const scores = awarded.activePlayers.map(other => points(awarded, other));
+    const best = Math.max(...scores);
+    const winners = awarded.activePlayers.filter((_, index) => scores[index] === best);
+    const names = winners.map(winner => nameOf(state, winner)).join(' and ');
+    return finish(state, endGame(awarded, winners, `Too few players are left to go on: ${names} ${winners.length > 1 ? 'win' : 'wins'} with ${best} points`));
   }
   return finish(state, next);
 }

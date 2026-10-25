@@ -474,14 +474,12 @@ test('dismissed player mid-turn', () => {
   assert.equal(bobGone.isGameOver, false);
   ok(move(bobGone, 3, { type: 'roll' }, dice(2, 2)));
 
-  // Two players play on; down to one the game ends
+  // Down to two players the game ends and the leader wins
   const three = game({ buildings: { [corner(9, 0)]: city(2), [corner(4, 0)]: settlement(3) }, disconnected: [1] });
-  const two = removePlayer(catan, three, 1);
-  assert.equal(two.isGameOver, false);
-  const ended = removePlayer(catan, { ...two, disconnected: [3] }, 3);
+  const ended = removePlayer(catan, three, 1);
   assert.equal(ended.isGameOver, true);
   assert.deepEqual(ended.winners, [2]);
-  assert.match(ended.gameStatus, /Bob wins! Everyone else left/);
+  assert.match(ended.gameStatus, /Bob wins with 2 points/);
 });
 
 test('a player dismissed during setup loses their placements and setup goes on', () => {
@@ -597,12 +595,4 @@ test('hidden Victory Point cards do not count', () => {
 test('two players can play, and one cannot', () => {
   assert.notDeepEqual(act(game({ activePlayers: [1, 2] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
   assert.deepEqual(act(game({ activePlayers: [1] }), 1, { type: 'cancelTrade' }), { error: 'Waiting for more players' });
-});
-
-test('a three-player game plays on after a dismissal leaves two, and ends at one', () => {
-  const three = game({ disconnected: [3] });
-  const left = removePlayer(catan, three, 3);
-  assert.equal(left.isGameOver, false);
-  assert.deepEqual(left.activePlayers, [1, 2]);
-  assert.equal(removePlayer(catan, { ...left, disconnected: [2] }, 2).isGameOver, true);
 });
