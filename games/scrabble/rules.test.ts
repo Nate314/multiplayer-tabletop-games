@@ -225,7 +225,7 @@ test('after six scoreless turns in a row play goes on until a player ends the ga
   let state = game({ 1: 'QAAAAAA', 2: 'ZEEEEEE' });
   for (let turn = 0; turn < 5; turn++) state = ok(move(state, state.currentPlayer ?? 0, { type: 'pass' }));
   assert.equal(state.gameStatus, 'A passed');
-  assert.deepEqual(scrabble.applyAction?.(state, 1, { type: 'endGame' }, first), {
+  assert.deepEqual(scrabble.applyAction?.(state, 1, { type: 'endGame' }, first, 0), {
     error: 'The game can end only after 6 scoreless turns in a row'
   });
 
@@ -238,20 +238,20 @@ test('after six scoreless turns in a row play goes on until a player ends the ga
   assert.equal(seventh.scorelessTurns, 7);
 
   // Either player may end it, not only the one whose turn it is
-  const ended = ok(scrabble.applyAction?.(seventh, 1, { type: 'endGame' }, first) ?? { error: 'no actions' });
+  const ended = ok(scrabble.applyAction?.(seventh, 1, { type: 'endGame' }, first, 0) ?? { error: 'no actions' });
   assert.equal(ended.isGameOver, true);
   assert.equal(ended.currentPlayer, null);
   assert.deepEqual(ended.scores, { 1: -16, 2: -16 });
   assert.deepEqual(ended.endAdjustments, { 1: -16, 2: -16 });
   assert.deepEqual(ended.winners, [1, 2]);
   assert.equal(ended.gameStatus, 'A ended the game. A and B share the win with -16 points!');
-  assert.deepEqual(scrabble.applyAction?.(ended, 2, { type: 'endGame' }, first), {
+  assert.deepEqual(scrabble.applyAction?.(ended, 2, { type: 'endGame' }, first, 0), {
     error: 'The game can end only after 6 scoreless turns in a row'
   });
-  assert.deepEqual(scrabble.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first), {
+  assert.deepEqual(scrabble.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first, 0), {
     error: 'An undo vote is in progress'
   });
-  assert.deepEqual(scrabble.applyAction?.(seventh, 1, { type: 'resign' }, first), { error: 'Unknown action' });
+  assert.deepEqual(scrabble.applyAction?.(seventh, 1, { type: 'resign' }, first, 0), { error: 'Unknown action' });
 
   // A scoring play starts the count again
   const scored = ok(move({ ...game({ 1: 'CATAAAA', 2: 'AAAAAAA' }), scorelessTurns: 7 }, 1, { type: 'play', tiles: CAT }));

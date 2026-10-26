@@ -87,7 +87,7 @@ function play(state: GameState, seat: number, tile: number, side: ArmName['kind'
 }
 const pipsOfEnds = (state: GameState) => openEnds(boardOf(state)).map(({ pips }) => pips);
 const act = (state: GameState, seat: number, action: unknown, random: Random = noShuffle) =>
-  dominoes.applyAction?.(state, seat, action, random) ?? assert.fail('Dominoes has actions');
+  dominoes.applyAction?.(state, seat, action, random, 0) ?? assert.fail('Dominoes has actions');
 
 test('double-six has 28 tiles and double-nine 55', () => {
   assert.equal(tilesOf(6).length, 28);

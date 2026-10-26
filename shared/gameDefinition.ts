@@ -11,6 +11,7 @@ export type GameInfo = {
   maxPlayers: number;
   houseRules?: HouseRule[];
   ownTurnLimit?: true; // the game enforces its own turn limit, so the platform turn timer is not offered
+  passAndPlay?: boolean; // false when players cannot share one device (a hidden word the others must guess)
   stretchedPlayers?: PlayerRange; // the table the host may set as a house rule; contains minPlayers..maxPlayers
 };
 
@@ -40,9 +41,11 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   // Called only when `seat` is not currentPlayer, after every other turn guard passed. True lets applyMove run for this
   // out-of-turn move, which is recorded for undo like any other. Validates untrusted `move`.
   allowsOutOfTurn?(state: S, seat: Seat, move: unknown): boolean;
-  // Not turn-bound and not recorded for undo. Validates untrusted `action`.
+  // Not turn-bound, and recorded for undo only when recordsAction says so. Validates untrusted `action`.
   // The platform does not block actions during an undo vote or after the game is over; the game must refuse them itself where needed.
-  applyAction?(state: S, seat: Seat, action: unknown, random: Random): Result<S>;
+  applyAction?(state: S, seat: Seat, action: unknown, random: Random, now: number): Result<S>;
+  // Asked before applyAction: true records the action's result as a move (history, timeline, undo), like a move.
+  recordsAction?(state: S, seat: Seat, action: unknown): boolean;
   // Called only once isGameOver. Ranks by what chose `winners`, so place 1 is exactly the winners.
   finalStandings?(state: S): Standing[];
   // The platform adds moveCount; a game never supplies it.
@@ -50,4 +53,6 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   toPublicState(state: S, undoAvailable: boolean, viewer: Seat | null): Omit<P, 'moveCount'>;
   // Everything `toPublicState` shows only to `seat`; a spectator sees it once that seat allows.
   privateSeatView?(state: S, seat: Seat): unknown;
+  // A spectator's table view when it differs from toPublicState(state, undoAvailable, null)
+  spectatorState?(state: S, undoAvailable: boolean, tableScreen: boolean): Omit<P, 'moveCount'>;
 };

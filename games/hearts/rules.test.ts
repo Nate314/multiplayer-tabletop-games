@@ -46,7 +46,7 @@ function ok(result: Result<GameState> | undefined): GameState {
 
 // Moves through the platform, which checks the turn first
 const move = (state: GameState, seat: number, m: unknown) => applyMove(hearts, state, seat, m, seeded(3));
-const act = (state: GameState, seat: number, action: unknown) => hearts.applyAction?.(state, seat, action, seeded(3));
+const act = (state: GameState, seat: number, action: unknown) => hearts.applyAction?.(state, seat, action, seeded(3), 0);
 const pass = (state: GameState, seat: number, cards: unknown = [0, 1, 2]) => act(state, seat, { type: 'pass', cards });
 
 function passAll(state: GameState): GameState {

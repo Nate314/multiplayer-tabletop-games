@@ -14,7 +14,7 @@ export function seatFields<T, K extends keyof T>(view: T, keys: K[]): Pick<T, K>
 export function spectatorView<S extends BaseGameState, P extends BasePublicState>(
   definition: GameDefinition<S, P>, state: S, spectator: Spectator
 ): Omit<P, 'moveCount'> {
-  const view = definition.toPublicState(state, false, null);
+  const view = definition.spectatorState?.(state, false, spectator.tableScreen) ?? definition.toPublicState(state, false, null);
   const { privateSeatView } = definition;
   if (!privateSeatView) return view; // no field at all tells the browser there is nothing to ask for
   const seatViews: Record<Seat, unknown> = {};

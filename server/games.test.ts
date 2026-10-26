@@ -6,6 +6,7 @@ import { openGameStore } from './store.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
+import { asRecord } from '../shared/messages.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
 import type { BaseGameState, GameResult, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
@@ -319,6 +320,54 @@ test('actions are not recorded for undo', () => {
   assert.equal(restored.moves, 0);
   assert.equal(restored.currentPlayer, 1);
   assert.equal(restored.undoAvailable, false);
+});
+
+// testGame with a 'note' action the game records as a move and stamps with the server time
+type NotedState = TestState & { notedAt: number | null };
+const notingGame: GameDefinition<NotedState, TestPublicState> = {
+  ...(testGame as unknown as GameDefinition<NotedState, TestPublicState>),
+  recordsAction: (_state, _seat, action) => asRecord(action)?.type === 'note',
+  applyAction(state, seat, action, random, now): Result<NotedState> {
+    if (asRecord(action)?.type === 'note') return { state: { ...state, notedAt: now, gameStatus: `${state.playerNames[seat]} noted` } };
+    return testGame.applyAction!(state, seat, action, random, now) as Result<NotedState>;
+  }
+};
+
+function notingManager(): Manager {
+  const manager = rememberingKeys(createGameManager([notingGame], seededRandom, undefined, { now: () => 1234 }), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  return manager;
+}
+
+test('an action the game records goes on the timeline and can be undone', () => {
+  const manager = notingManager();
+  assert.equal(ok(manager.action(ROOM, 2, { type: 'note' })).gameStatus, 'B noted');
+  assert.equal(current(manager).moveCount, 1);
+  assert.equal(current(manager).started, true);
+  ok(manager.requestUndo(ROOM, 1));
+  assert.equal(ok(manager.voteUndo(ROOM, 2, true)).moveCount, 0);
+});
+
+test('an unrecorded action stays off the timeline', () => {
+  const manager = notingManager();
+  ok(manager.action(ROOM, 2, { type: 'ping' }));
+  assert.equal(current(manager).moveCount, 0);
+});
+
+test('applyAction gets the server time', () => {
+  const manager = notingManager();
+  ok(manager.action(ROOM, 1, { type: 'note' }));
+  assert.equal((manager.rawState(ROOM) as NotedState).notedAt, 1234);
+});
+
+test('a recorded action clears an open undo vote', () => {
+  const manager = notingManager();
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestUndo(ROOM, 1));
+  assert.ok(current(manager).undoVote);
+  ok(manager.action(ROOM, 2, { type: 'note' }));
+  assert.equal(current(manager).undoVote, null);
 });
 
 test('a game without actions refuses them', () => {
@@ -964,9 +1013,9 @@ test('the move goes through once every seated player agreed', () => {
 // rulesGame with an action that starts play, as a Hearts pass does
 const startingGame: GameDefinition<TestState, TestPublicState> = {
   ...rulesGame,
-  applyAction(state, seat, action, random) {
+  applyAction(state, seat, action, random, now) {
     if ((action as { type?: unknown } | null)?.type === 'start') return { state: { ...state, started: true, gameStatus: 'started' } };
-    return testGame.applyAction!(state, seat, action, random);
+    return testGame.applyAction!(state, seat, action, random, now);
   }
 };
 

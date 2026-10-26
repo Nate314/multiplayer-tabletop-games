@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it, test } from 'node:test';
 import { GAMES } from './registry.ts';
 import { addPlayer } from '../shared/seating.ts';
 import { spectatorView } from '../shared/spectators.ts';
@@ -55,7 +55,18 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   }],
   risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
   splendor: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
-  tickettoride: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }]
+  tickettoride: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
+  pictionary: s => [
+    { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['cat', 'dog', 'owl'] },
+    {
+      ...s, started: true, phase: 'drawing', drawer: 1, word: 'cat', guessed: [2],
+      chat: [
+        { id: 1, kind: 'guessed', seat: 2, text: 'Bob guessed the word', audience: 'all' },
+        { id: 2, kind: 'chat', seat: 2, text: 'easy', audience: 'guessed' },
+        { id: 3, kind: 'close', seat: 1, text: 'So close!', audience: 1 }
+      ]
+    }
+  ]
 };
 
 for (const game of GAMES) {
@@ -84,7 +95,7 @@ for (const game of GAMES) {
     it('a spectator with no permissions sees the history view', () => {
       const s = dealt(game);
       const { seatViews: _seatViews, ...view } = spectatorView(game, s, EVE) as Record<string, unknown>;
-      assert.deepEqual(view, game.toPublicState(s, false, null));
+      assert.deepEqual(view, game.spectatorState?.(s, false, false) ?? game.toPublicState(s, false, null));
     });
 
     it('keeps spectator fields through its own hooks', () => {
@@ -97,3 +108,11 @@ for (const game of GAMES) {
     });
   });
 }
+
+test('a Pictionary spectator sees the word being drawn, and a table screen sees only the blanks', () => {
+  const game = GAMES.find(candidate => candidate.info.id === 'pictionary')!;
+  const s: Loose = { ...dealt(game), started: true, phase: 'drawing', drawer: 1, word: 'cat' };
+  assert.equal((spectatorView(game, s, EVE) as Loose).word, 'cat');
+  assert.equal((spectatorView(game, s, { ...EVE, tableScreen: true }) as Loose).word, null);
+  assert.equal((game.toPublicState(s, false, 2) as Loose).word, null);
+});

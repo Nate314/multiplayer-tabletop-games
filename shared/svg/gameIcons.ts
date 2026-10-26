@@ -29,6 +29,7 @@ const GAME_ICONS: Record<string, () => string> = {
   monopoly: () => lineIcon(el('path', { d: 'M3 18c0 1.5 4 2.5 9 2.5s9-1 9-2.5M6 18.5V6c0-1 2.7-2 6-2s6 1 6 2v12.5M6 14c2 .7 4 1 6 1s4-.3 6-1' })),
   parchisi: () => lineIcon(el('path', { d: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z' }), el('path', { d: 'M12 9l3 3-3 3-3-3z' })),
   phase10: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 18, rx: 2 }), label('10', 12, 15.5, 9)),
+  pictionary: () => lineIcon(el('path', { d: 'M3 21l3.5-1 11-11-2.5-2.5-11 11zM14 5.5l2.5 2.5M3 15c2-3 4 1 6-2' })),
   quoridor: () => lineIcon(el('circle', { cx: 12, cy: 6, r: 3 }), el('path', { d: 'M9.5 11h5l1.5 7H8zM6 21h12v-3H6z' })),
   racko: () => lineIcon(el('path', { d: 'M4 21v-5M9 21v-9M14 21v-13M19 21V3' })),
   risk: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('ellipse', { cx: 12, cy: 12, rx: 4, ry: 9 }), el('path', { d: 'M3 12h18' })),

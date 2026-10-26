@@ -45,7 +45,7 @@ function ok(result: Result<GameState>): GameState {
 const move = (state: GameState, seat: number, m: Move | unknown, random: Random = seeded(3)) =>
   applyMove(spades, state, seat, m, random);
 const act = (state: GameState, seat: number, action: unknown) =>
-  spades.applyAction?.(state, seat, action, seeded(1)) ?? assert.fail('no actions');
+  spades.applyAction?.(state, seat, action, seeded(1), 0) ?? assert.fail('no actions');
 
 const NO_TRICKS = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
