@@ -1116,7 +1116,7 @@ export function createGameManager(
     },
 
     // Only before the first move; the spectator's entry goes and they are seated the usual way
-    switchToPlayer(roomId: string, spectatorId: string): JoinResult {
+    switchToPlayer(roomId: string, spectatorId: string, deviceId?: unknown): JoinResult {
       const room = rooms.get(roomId);
       const spectator = room?.state.spectators?.find(candidate => candidate.id === spectatorId);
       if (!room || !spectator) return { error: 'You are not in this game' };
@@ -1129,7 +1129,7 @@ export function createGameManager(
 
       const key = randomUUID();
       room.watching.delete(spectatorId);
-      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
+      room.state = withDevice({ ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } }, result.seat, deviceId);
       save(roomId, room);
       return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
     },

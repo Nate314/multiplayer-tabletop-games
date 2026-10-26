@@ -131,7 +131,7 @@ class GameService {
   }
 
   switchToPlayer(): void {
-    this.send({ type: MESSAGE_TYPES.SWITCH_TO_PLAYER });
+    this.send({ type: MESSAGE_TYPES.SWITCH_TO_PLAYER, payload: { deviceId: deviceId() } });
   }
 
   react(target: Seat, emoji: string): void {

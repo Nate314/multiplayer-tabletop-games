@@ -54,6 +54,12 @@ test('recording is idempotent and skips abandoned and moveless games', () => {
   assert.equal((store.resultsFor(A) as unknown[]).length, 1);
 });
 
+test('a game with no device on any seat records nothing', () => {
+  const file = tempFile();
+  openStatsStore(file).record(result('hearts/9#1', [undefined, undefined]));
+  assert.equal(new DatabaseSync(file).prepare('SELECT COUNT(*) AS n FROM results').get()?.n, 0);
+});
+
 test('clear turns a device into Former player and blocks later records', () => {
   const store = openStatsStore(':memory:');
   store.record(result('hearts/1#1', [A, B]));

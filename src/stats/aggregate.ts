@@ -75,8 +75,9 @@ export function headToHead(games: StatsGame[], a: string, b: string) {
     const bPlace = placeOf(b);
     if (aPlace === undefined || bPlace === undefined) continue;
     result.games++;
-    if (aPlace === 1) result.aWins++;
-    else if (bPlace === 1) result.bWins++;
+    // A shared first place is a win for neither
+    if (aPlace === 1 && bPlace !== 1) result.aWins++;
+    else if (bPlace === 1 && aPlace !== 1) result.bWins++;
     else result.other++;
   }
   return result;

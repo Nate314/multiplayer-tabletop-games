@@ -90,6 +90,10 @@
   overflow-wrap: anywhere;
 }
 
+.stats-link h2:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .stats-link,
 .stats-clear,
 .stats-link-prompt {

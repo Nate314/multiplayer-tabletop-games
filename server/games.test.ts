@@ -1986,6 +1986,14 @@ test('a spectator or table screen device is never recorded', () => {
   assert.equal(manager.rawState(ROOM)?.seatDevices, undefined);
 });
 
+test('a spectator who switches to player records the device on the new seat', () => {
+  const manager = gameWith('A', 'B');
+  const { spectatorId } = joined(manager.join('test', 'g1', 'Sam', undefined, undefined, 'spectator', 'watching-device-0123456789'));
+  const result = manager.switchToPlayer(ROOM, spectatorId as string, DEVICE);
+  assert.ok('seat' in result);
+  assert.deepEqual(manager.rawState(ROOM)?.seatDevices, { [result.seat as number]: hashDeviceId(DEVICE) });
+});
+
 // A game that ends itself in onPlayerLeft, as Hearts or a broken partnership does
 const endsOnLeave: AnyGame = { ...testGame, onPlayerLeft: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [1] }) };
 

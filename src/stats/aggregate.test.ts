@@ -66,6 +66,11 @@ test('head to head counts only the games both played', () => {
   assert.deepEqual(headToHead(games, 'bo', 'ANN'), { games: 2, aWins: 1, bWins: 1, other: 0 });
 });
 
+test('head to head counts a shared first place for neither player', () => {
+  const tie = [game('hearts', day(1), [['Ann', 1], ['Bo', 1], ['Cy', 3]])];
+  assert.deepEqual(headToHead(tie, 'Ann', 'Bo'), { games: 1, aWins: 0, bWins: 0, other: 1 });
+});
+
 test('filter by game type and this calendar month', () => {
   const lastMonth = game('connectfour', new Date(2026, 8, 30, 23).getTime(), [['Ann', 1], ['Bo', 2]]);
   const all = [...games, lastMonth];

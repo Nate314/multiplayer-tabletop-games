@@ -91,7 +91,7 @@ function HeadToHead({ games, names }: { games: StatsGame[]; names: string[] }) {
       <h2 className="lobby-category-heading">Head to head</h2>
       <div className="stats-controls">{pick(first, second, setA, 'First player')} vs {pick(second, first, setB, 'Second player')}</div>
       <p className="stats-head-to-head">
-        {together === 0 ? 'No games together' : `${first} ${aWins}, ${second} ${bWins}${other ? `, others ${other}` : ''} in ${together} games`}
+        {together === 0 ? 'No games together' : `${first} ${aWins}, ${second} ${bWins}${other ? `, others ${other}` : ''} in ${plural(together, 'game')}`}
       </p>
     </section>
   );

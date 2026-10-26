@@ -306,7 +306,7 @@ function handleSpectatorMessage(
   } else if (type === MESSAGE_TYPES.REACT) {
     react(ws, roomId, { spectatorId }, payload);
   } else if (type === MESSAGE_TYPES.SWITCH_TO_PLAYER) {
-    const result = manager.switchToPlayer(roomId, spectatorId);
+    const result = manager.switchToPlayer(roomId, spectatorId, payload?.deviceId);
     if ('error' in result) {
       sendError(ws, result.error);
       return;
