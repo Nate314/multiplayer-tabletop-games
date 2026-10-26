@@ -41,12 +41,35 @@ export function nameOf(gameType: string): string {
   return game.info.name;
 }
 
-// Opens the site in `page` and joins `gameId` as `name` through the join dialog
-export async function joinGame(page: Page, gameType: string, gameId: string, name: string): Promise<void> {
+// Opens the site in `page` and the join dialog of `gameType`
+export async function openJoinDialog(page: Page, gameType: string): Promise<void> {
   await page.goto('/');
   await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
+}
+
+// Opens the site in `page` and joins `gameId` as `name` through the join dialog
+export async function joinGame(page: Page, gameType: string, gameId: string, name: string): Promise<void> {
+  await openJoinDialog(page, gameType);
   await page.getByLabel('Your name').fill(name);
   await page.getByLabel('Game ID').fill(gameId);
+  await page.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
+}
+
+// Fills the join dialog's Pass and play names on `page`, adding inputs past the first two, without joining
+export async function fillPassAndPlay(page: Page, gameId: string, names: string[]): Promise<void> {
+  await page.getByRole('button', { name: 'Pass and play', exact: true }).click();
+  for (const [index, name] of names.entries()) {
+    if (index >= 2) await page.getByRole('button', { name: 'Add player' }).click();
+    await page.getByLabel(`Player ${index + 1}`, { exact: true }).fill(name);
+  }
+  await page.getByLabel('Game ID').fill(gameId);
+}
+
+// Opens the site in `page` and seats every one of `names` on it through the join dialog's Pass and play
+export async function joinPassAndPlay(page: Page, gameType: string, gameId: string, names: string[]): Promise<void> {
+  await openJoinDialog(page, gameType);
+  await fillPassAndPlay(page, gameId, names);
   await page.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
 }

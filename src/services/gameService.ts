@@ -1,9 +1,12 @@
 import { MESSAGE_TYPES, type ClientMessage, type ServerMessage } from '../../shared/messages.ts';
 import type { HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { Reaction } from '../../shared/reactions.ts';
-import type { BasePublicState, JoinRole, Seat } from '../../shared/types.ts';
+import type { BasePublicState, Seat } from '../../shared/types.ts';
 
 type GameJoined = Extract<ServerMessage, { type: typeof MESSAGE_TYPES.GAME_JOINED }>['payload'];
+type Join = Extract<ClientMessage, { type: typeof MESSAGE_TYPES.JOIN_GAME }>;
+// Distributes over the join variants so each keeps its own fields
+export type JoinRequest = Join extends infer J ? (J extends Join ? Omit<J, 'type'> : never) : never;
 
 class GameService {
   ws: WebSocket | null;
@@ -25,10 +28,7 @@ class GameService {
   }
 
   // `rejoin` only takes back a held seat, so it never starts a new game; taking one back needs its `seatKey`
-  connect(
-    gameType: string, gameId: string, playerName: string, rejoin = false, seatKey?: string, role: JoinRole = 'player',
-    serverUrl = window.location.host
-  ): void {
+  connect(request: JoinRequest, serverUrl = window.location.host): void {
     // Drop any earlier socket, e.g. after a refused join, without reporting a disconnect
     this.disconnect();
 
@@ -38,7 +38,7 @@ class GameService {
     this.ws = ws;
 
     ws.onopen = () => {
-      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName, rejoin, seatKey, role });
+      this.send({ type: MESSAGE_TYPES.JOIN_GAME, ...request });
     };
 
     ws.onmessage = (event) => {
@@ -135,6 +135,10 @@ class GameService {
 
   react(target: Seat, emoji: string): void {
     this.send({ type: MESSAGE_TYPES.REACT, payload: { target, emoji } });
+  }
+
+  showSeat(seat: Seat | null): void {
+    this.send({ type: MESSAGE_TYPES.SHOW_SEAT, payload: { seat } });
   }
 
   disconnect(): void {

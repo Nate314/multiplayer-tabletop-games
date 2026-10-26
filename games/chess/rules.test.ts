@@ -361,6 +361,7 @@ test('a draw offer is accepted, declined, or lapses when the opponent moves', ()
   const offered = actOk(state, 2, { type: 'offerDraw' });
   assert.equal(offered.drawOffer, 2);
   assert.equal(offered.gameStatus, 'B offers a draw');
+  assert.deepEqual(chess.waitingOn?.(offered), [1]);
 
   const agreed = actOk(offered, 1, { type: 'answerDraw', accept: true });
   assert.equal(agreed.isGameOver, true);

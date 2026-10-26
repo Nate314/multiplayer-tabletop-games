@@ -21,7 +21,7 @@
 // - The mission specials (commander's decision and distribution, dead spot, disruption and the rest) are in missions.ts.
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -724,3 +724,9 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
   return endIfVoted(startNextIfReady(state, random));
 }
+
+// The distress pass is made by everyone at once, and a mission summary by each connected player
+export const waitingOn = (state: GameState): Seat[] => [
+  ...(state.phase === 'distress' ? state.activePlayers.filter(seat => !state.distress?.passes[seat]) : []),
+  ...awaiting(state, ROUND)
+];

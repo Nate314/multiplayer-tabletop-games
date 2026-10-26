@@ -7,7 +7,7 @@ import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { JAIL_FINE, START_CASH, isSpace, ownable } from './board.ts';
 import { DECKS } from './cards.ts';
-import { bid, closeAuctionIfDone, nextAuction, passBid, startAuction } from './auctions.ts';
+import { bid, closeAuctionIfDone, nextAuction, passBid, startAuction, stillBidding } from './auctions.ts';
 import { declareBankruptcy, goBankrupt } from './bankruptcy.ts';
 import { build, liftMortgages, mortgage, sellBuilding, unmortgage } from './buildings.ts';
 import { giveCash, settleDebts } from './money.ts';
@@ -286,4 +286,10 @@ export function finalStandings(state: GameState): Standing[] {
   const bankrupt = state.bankrupt ?? [];
   const survived = (seat: Seat) => (bankrupt.includes(seat) ? bankrupt.indexOf(seat) : bankrupt.length);
   return rankStandings(state, (a, b) => survived(b) - survived(a), seat => (bankrupt.includes(seat) ? 'Bankrupt' : undefined));
+}
+
+// Beyond the turn: bidders who could still bid or pass (not the high bidder, who waits on them) and a trade's addressee
+export function seatsWaitedOn(state: GameState): Seat[] {
+  const bidders = state.auction ? stillBidding(state, state.auction).filter(seat => seat !== state.auction?.highBidder) : [];
+  return [...bidders, ...(state.trade ? [state.trade.to] : [])];
 }

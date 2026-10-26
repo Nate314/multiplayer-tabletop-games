@@ -11,6 +11,7 @@ import type { JoinRole } from '../../shared/types.ts';
 const JOIN_ROLES: { role: JoinRole; label: string; button: string }[] = [
   { role: 'player', label: 'Player', button: 'Join' },
   { role: 'spectator', label: 'Spectator', button: 'Watch' },
+  { role: 'passAndPlay', label: 'Pass and play', button: 'Join' },
 ];
 
 type JoinDialogProps = {
@@ -18,10 +19,12 @@ type JoinDialogProps = {
   playerName: string;
   gameId: string;
   role: JoinRole;
+  localNames: string[]; // the Pass and play players, two at least
   error: string | null;
   onPlayerNameChange: (playerName: string) => void;
   onGameIdChange: (gameId: string) => void;
   onRoleChange: (role: JoinRole) => void;
+  onLocalNamesChange: (localNames: string[]) => void;
   onJoin: (role?: JoinRole) => void;
   onCancel: () => void;
 };
@@ -31,10 +34,12 @@ export default function JoinDialog({
   playerName,
   gameId,
   role,
+  localNames,
   error,
   onPlayerNameChange,
   onGameIdChange,
   onRoleChange,
+  onLocalNamesChange,
   onJoin,
   onCancel,
 }: JoinDialogProps) {
@@ -42,9 +47,14 @@ export default function JoinDialog({
   const { status, client } = useClientGame(game.id);
   // The fresh page a retry needs keeps the form, and opens this dialog again through its join link once there is a game ID
   const retry = () => {
-    saveJoinForm({ playerName, gameId, role });
+    saveJoinForm({ playerName, gameId, role, localNames });
     window.location.assign(gameId.trim() ? joinLink('', game.id, gameId.trim()) : '/');
   };
+  // A remembered Pass and play choice does not carry over to a game that cannot be shared
+  const unshareable = role === 'passAndPlay' && game.passAndPlay === false;
+  useEffect(() => {
+    if (unshareable) onRoleChange('player');
+  }, [unshareable, onRoleChange]);
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onCancel();
@@ -67,7 +77,7 @@ export default function JoinDialog({
       >
         <h2 id="join-dialog-title">{`Join ${game.name}`}</h2>
         <div className="join-role-switch" role="group" aria-label="Join as">
-          {JOIN_ROLES.map(option => (
+          {JOIN_ROLES.filter(option => option.role !== 'passAndPlay' || game.passAndPlay !== false).map(option => (
             <button key={option.role} type="button" aria-pressed={role === option.role} onClick={() => onRoleChange(option.role)}>
               {option.label}
             </button>
@@ -86,16 +96,43 @@ export default function JoinDialog({
             Watch instead
           </button>
         )}
-        <label className="lobby-field">
-          Your name
-          <input
-            type="text"
-            value={playerName}
-            onChange={(e) => onPlayerNameChange(e.target.value)}
-            maxLength={20}
-            autoFocus
-          />
-        </label>
+        {role === 'passAndPlay' ? (
+          <div className="join-local-names">
+            {localNames.map((name, index) => (
+              <div key={index} className="join-local-name">
+                <label className="lobby-field">
+                  {`Player ${index + 1}`}
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => onLocalNamesChange(localNames.map((other, at) => at === index ? e.target.value : other))}
+                    maxLength={20}
+                    autoFocus={index === 0}
+                  />
+                </label>
+                {index >= 2 && (
+                  <button type="button" className="lobby-button" aria-label={`Remove player ${index + 1}`} onClick={() => onLocalNamesChange(localNames.filter((_, at) => at !== index))}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+            {localNames.length < game.maxPlayers && (
+              <button type="button" className="lobby-button" onClick={() => onLocalNamesChange([...localNames, ''])}>Add player</button>
+            )}
+          </div>
+        ) : (
+          <label className="lobby-field">
+            Your name
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => onPlayerNameChange(e.target.value)}
+              maxLength={20}
+              autoFocus
+            />
+          </label>
+        )}
         <label className="lobby-field">
           Game ID
           <input

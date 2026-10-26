@@ -10,12 +10,13 @@ type PresenceBarProps = {
   gameState: BasePublicState;
   playerNumber: Seat | null; // null for a spectator
   spectatorId: string | null;
+  canReact: boolean; // false while a shared device hands over, since nobody is playing on it
   onDismiss: ((seat: Seat) => void) | null; // null for a spectator, who cannot start a vote
 };
 
 // Lists every player (tap another's name to react; held seats get a way to start a dismiss vote), the turn timer
 // beside the current player, and who is watching
-export default function PresenceBar({ gameState, playerNumber, spectatorId, onDismiss }: PresenceBarProps) {
+export default function PresenceBar({ gameState, playerNumber, spectatorId, canReact, onDismiss }: PresenceBarProps) {
   const { disconnected, activePlayers, playerNames, currentPlayer, isGameOver, started, undoVote, dismissVote } = gameState;
   const watchers = gameState.spectators ?? [];
   const myName = playerNumber !== null
@@ -37,7 +38,7 @@ export default function PresenceBar({ gameState, playerNumber, spectatorId, onDi
         {activePlayers.map(seat => {
           const held = disconnected.includes(seat);
           const name = held ? <span>{`${playerNames[seat]} (disconnected)`}</span>
-            : seat === playerNumber ? <span>{playerNames[seat]}</span>
+            : seat === playerNumber || !canReact ? <span>{playerNames[seat]}</span>
             : <ReactionPicker target={seat} name={playerNames[seat]} disabled={!started || isGameOver} cooldownMs={cooldownMs} />;
           return (
             <li key={seat} className="presence-player" data-disconnected={held ? '' : undefined}>

@@ -642,6 +642,7 @@ test('the distress signal: everyone passes a card the same way, and the mission 
   assert.deepEqual(move(state, 1, { type: 'play', card: p(9) }), { error: 'Wait for everyone to pass a card' });
   assert.deepEqual(act(state, 1, { type: 'passCard', card: r(4) }), { error: 'Rockets are never passed' });
   state = ok(act(state, 1, { type: 'passCard', card: b(1) }));
+  assert.deepEqual(thecrew.waitingOn?.(state), [2, 3, 4]);
   assert.deepEqual(act(state, 1, { type: 'passCard', card: p(9) }), { error: 'You have already passed a card' });
   // Each sees only their own pass
   assert.deepEqual(toPublicState(state, false, 1).distress, { direction: 'left', passed: [1], mine: b(1) });

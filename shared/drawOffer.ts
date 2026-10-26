@@ -74,3 +74,8 @@ export function applyEndingAction<S extends EndingState>(
 export function lapseDrawOffer<S extends EndingState>(state: S, mover: Seat): S {
   return state.drawOffer !== null && state.drawOffer !== mover ? { ...state, drawOffer: null } : state;
 }
+
+// The opponent of an open offer, for a game's waitingOn
+export function drawOfferAnswerers(state: EndingState): Seat[] {
+  return state.drawOffer === null || state.isGameOver ? [] : [otherSeat(state, state.drawOffer)];
+}

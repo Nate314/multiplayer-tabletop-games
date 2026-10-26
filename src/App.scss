@@ -1866,6 +1866,86 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   white-space: nowrap;
 }
 
+/* Pass and play: the join dialog's names, the handoff banner over the dimmed table, and the bar above a shown hand */
+
+.join-local-name {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.join-local-name .lobby-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.join-local-name .lobby-button,
+.join-local-names > .lobby-button {
+  min-height: 44px;
+  margin-bottom: 12px;
+}
+
+/* The table and the banner share one grid cell, so the banner sits over the table however tall either is */
+:where([data-game] .handoff) {
+  display: grid;
+  justify-items: center;
+}
+
+:where([data-game] .handoff > *) {
+  grid-area: 1 / 1;
+}
+
+:where([data-game] .handoff-table) {
+  width: 100%;
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+
+:where([data-game] .handoff-banner) {
+  position: sticky;
+  top: 16px;
+  z-index: 5;
+  align-self: start;
+  box-sizing: border-box;
+  width: min(480px, calc(100% - 32px));
+  margin-top: 24px;
+  padding: 24px 20px;
+  border-radius: 12px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+:where([data-game] .handoff-banner h2) {
+  margin: 0;
+  font-size: 1.8rem;
+  overflow-wrap: anywhere;
+}
+
+:where([data-game] .handoff-banner button, [data-game] .pass-and-play-bar button) {
+  min-height: 44px;
+}
+
+:where([data-game] .handoff-others) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+:where([data-game] .pass-and-play-bar) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  margin: 8px auto;
+  font-weight: 600;
+}
+
 /* Spectator screen and the hand request a player is asked */
 
 :where([data-game] .spectator-view) {

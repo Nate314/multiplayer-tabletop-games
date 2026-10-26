@@ -13,6 +13,7 @@ type Rejoining = { retriesLeft: number; timer?: ReturnType<typeof setTimeout> };
 
 export default function useGameConnection(joinLink: JoinLink | null = null) {
   const [playerNumber, setPlayerNumber] = useState<Seat | null>(null);
+  const [localSeatNumbers, setLocalSeatNumbers] = useState<Seat[] | null>(null); // a pass-and-play device's seats, null for any other join
   const [spectatorId, setSpectatorId] = useState<string | null>(null);
   const [credential, setCredential] = useState<string | undefined>(undefined); // the seat key, or for a spectator the spectator key; opens the history
   const [gameState, setGameState] = useState<BasePublicState | null>(null);
@@ -25,6 +26,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
   const joiningGameType = useRef<string | null>(null); // the game a pending or current join is for
   const rejoining = useRef<Rejoining | null>(null); // set until a rejoin succeeds or gives up
   const seatKey = useRef<string | undefined>(undefined); // the key of the seat joined last
+  const localKeys = useRef<{ seat: Seat; seatKey: string }[] | null>(null); // the keys of a pass-and-play device's seats
   const joinedAs = useRef<{ name: string; role: JoinRole }>({ name: '', role: 'player' }); // a spectator has no seat to take its name from
 
   const updateSession = useCallback((next: Session | null) => {
@@ -44,13 +46,15 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     const type = joiningGameType.current;
     if (!type || !state.started) return;
     const { name, role } = joinedAs.current;
+    const localSeats = localKeys.current?.map(({ seat: local, seatKey: key }) => ({ playerName: state.playerNames[local], seatKey: key }));
     const next: Session = {
-      gameType: type, gameId: state.gameId, playerName: seat === null ? name : state.playerNames[seat],
-      seatKey: seatKey.current, role: role === 'spectator' ? role : undefined, inGame: true
+      gameType: type, gameId: state.gameId, playerName: localSeats ? localSeats[0].playerName : seat === null ? name : state.playerNames[seat],
+      seatKey: seatKey.current, role: role === 'spectator' || localSeats ? role : undefined, localSeats, inGame: true
     };
     const current = sessionRef.current;
     const unchanged = current?.inGame && current.gameType === next.gameType && current.gameId === next.gameId &&
-      current.playerName === next.playerName && current.seatKey === next.seatKey && current.role === next.role;
+      current.playerName === next.playerName && current.seatKey === next.seatKey && current.role === next.role &&
+      JSON.stringify(current.localSeats) === JSON.stringify(next.localSeats);
     if (!unchanged) updateSession(next);
   }, [updateSession]);
 
@@ -59,14 +63,27 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     rejoining.current = null;
   }, []);
 
-  const connect = useCallback((type: string, gameId: string, playerName: string, rejoin: boolean, role: JoinRole = 'player') => {
+  const connect = useCallback((
+    type: string, gameId: string, playerName: string, rejoin: boolean, role: JoinRole = 'player', localNames?: string[]
+  ) => {
     joiningGameType.current = type;
     joinedAs.current = { name: playerName, role };
     // The remembered game's key, sent with any join to that game so a held seat can be taken back
     const remembered = sessionRef.current;
-    const key = remembered?.gameType === type && remembered.gameId === gameId ? remembered.seatKey : undefined;
-    gameService.connect(type, gameId, playerName, rejoin, key, role);
+    const sameGame = remembered?.gameType === type && remembered.gameId === gameId;
+    if (role === 'passAndPlay') {
+      // The keys follow the names, as remembered
+      const seatKeys = rejoin && sameGame ? remembered.localSeats?.map(local => local.seatKey) : undefined;
+      gameService.connect({ gameType: type, gameId, playerNames: localNames ?? [], rejoin, seatKeys, role });
+      return;
+    }
+    gameService.connect({ gameType: type, gameId, playerName, rejoin, seatKey: sameGame ? remembered.seatKey : undefined, role });
   }, []);
+
+  const connectRemembered = useCallback((remembered: Session) => {
+    const names = remembered.localSeats?.map(local => local.playerName);
+    connect(remembered.gameType, remembered.gameId, remembered.playerName, true, remembered.role, names);
+  }, [connect]);
 
   const rejoin = useCallback(() => {
     const remembered = sessionRef.current;
@@ -74,8 +91,8 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     stopRejoining();
     rejoining.current = { retriesLeft: REJOIN_RETRIES };
     setError(null);
-    connect(remembered.gameType, remembered.gameId, remembered.playerName, true, remembered.role);
-  }, [connect, stopRejoining]);
+    connectRemembered(remembered);
+  }, [connectRemembered, stopRejoining]);
 
   useEffect(() => {
     // Read as each message arrives, since the handlers outlive any render
@@ -87,10 +104,14 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       seat = data.playerNumber;
       joined = true;
       seatKey.current = data.seatKey;
-      setCredential(data.seatKey);
+      // Any of a shared device's seat keys opens the history
+      setCredential(data.seatKey ?? data.localSeats?.[0]?.seatKey);
+      localKeys.current = data.localSeats ?? null;
+      setLocalSeatNumbers(data.localSeats?.map(local => local.seat) ?? null);
       // After switching to a player the same socket is seated, so the role is no longer a spectator's
       if (data.playerNumber !== null) joinedAs.current = { ...joinedAs.current, role: 'player' };
-      setPlayerNumber(data.playerNumber);
+      // A shared device shows whichever seat the server says; no seat until the handoff is passed
+      setPlayerNumber(data.localSeats ? data.gameState.shownSeat ?? null : data.playerNumber);
       setSpectatorId(data.spectatorId ?? null);
       setGameState(data.gameState);
       setGameType(joiningGameType.current);
@@ -104,6 +125,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
 
     gameService.onGameState = (newGameState) => {
       setGameState(newGameState);
+      if (localKeys.current) setPlayerNumber(newGameState.shownSeat ?? null);
       setError(null);
       // The first move turns a lobby into a game worth coming back to
       if (joined) rememberIfStarted(newGameState, seat);
@@ -120,7 +142,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
         attempt.retriesLeft -= 1;
         attempt.timer = setTimeout(() => {
           const remembered = sessionRef.current;
-          if (remembered) connect(remembered.gameType, remembered.gameId, remembered.playerName, true, remembered.role);
+          if (remembered) connectRemembered(remembered);
         }, REJOIN_RETRY_DELAY_MS);
         return;
       }
@@ -145,6 +167,8 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       joined = false;
       setSpectatorId(null);
       setPlayerNumber(null);
+      localKeys.current = null;
+      setLocalSeatNumbers(null);
       setGameState(null);
       updateSession(null);
       setError(message);
@@ -156,6 +180,8 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       joined = false;
       setSpectatorId(null);
       setPlayerNumber(null);
+      localKeys.current = null;
+      setLocalSeatNumbers(null);
       setGameState(null);
       setError('Disconnected from server');
       // The seat is held on the server, so the list offers it again
@@ -175,6 +201,8 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       joined = false;
       setSpectatorId(null);
       setPlayerNumber(null);
+      localKeys.current = null;
+      setLocalSeatNumbers(null);
       setGameState(null);
       if (sessionRef.current?.inGame) rejoin();
     };
@@ -198,22 +226,22 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       stopRejoining();
       gameService.disconnect();
     };
-  }, [connect, joinLink, rejoin, rememberIfStarted, stopRejoining, updateSession]);
+  }, [connectRemembered, joinLink, rejoin, rememberIfStarted, stopRejoining, updateSession]);
 
-  const join = useCallback((type: string, gameId: string, playerName: string, role: JoinRole = 'player') => {
+  const join = useCallback((type: string, gameId: string, playerName: string, role: JoinRole = 'player', localNames?: string[]) => {
     const trimmedGameId = gameId.trim();
     const trimmedName = playerName.trim();
     if (!trimmedGameId) {
       setError('Please enter a game ID');
       return;
     }
-    if (!trimmedName) {
+    if (!trimmedName && role !== 'passAndPlay') { // a shared device names its players in localNames
       setError('Please enter your name');
       return;
     }
     stopRejoining();
     setError(null);
-    connect(type, trimmedGameId, trimmedName, false, role);
+    connect(type, trimmedGameId, trimmedName, false, role, localNames);
   }, [connect, stopRejoining]);
 
   // Leaving on purpose is not a lost connection, so no "Disconnected" message.
@@ -242,5 +270,12 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     updateSession(null);
   }, [leave, updateSession]);
 
-  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, join, leave, backToGames, dropGame, rejoin };
+  const showSeat = useCallback((seat: Seat | null) => gameService.showSeat(seat), []);
+
+  // Only seats still in the game, named as the game state names them
+  const localSeats = localSeatNumbers && gameState
+    ? localSeatNumbers.filter(seat => gameState.activePlayers.includes(seat)).map(seat => ({ seat, name: gameState.playerNames[seat] }))
+    : null;
+
+  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin };
 }

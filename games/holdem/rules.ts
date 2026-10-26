@@ -2,7 +2,7 @@
 import { rankStandings } from '../../shared/standings.ts';
 import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { standardDeck } from '../../shared/playingCards.ts';
@@ -483,3 +483,5 @@ export function finalStandings(state: GameState): Standing[] {
   const stack = (seat: Seat) => state.chips[seat] ?? 0;
   return rankStandings(state, (a, b) => stack(b) - stack(a), seat => `${chipText(stack(seat))} ${stack(seat) === 1 ? 'chip' : 'chips'}`);
 }
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

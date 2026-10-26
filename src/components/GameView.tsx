@@ -14,8 +14,10 @@ import DismissVote from './DismissVote';
 import RematchVote from './RematchVote';
 import SpectatorView from './SpectatorView';
 import HandRequestPrompt from './HandRequestPrompt';
+import HandoffScreen from './HandoffScreen';
+import PassAndPlayBar from './PassAndPlayBar';
 import gameService from '../services/gameService';
-import { agreementPending } from '../../shared/houseRules.ts';
+import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -28,15 +30,17 @@ type GameViewProps = {
   playerNumber: Seat | null;
   spectatorId: string | null;
   credential: string | undefined;
+  localSeats: { seat: Seat; name: string }[] | null; // a pass-and-play device's seats, null for any other join
+  onShowSeat: (seat: Seat | null) => void;
   error: string | null;
   onBack: () => void;
   onDrop: () => void; // leaves and forgets the game
 };
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
-export default function GameView({ game, client, gameState, playerNumber, spectatorId, credential, error, onBack, onDrop }: GameViewProps) {
-  // App only shows a game once the connection has a seat or a spectator id
-  if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
+export default function GameView({ game, client, gameState, playerNumber, spectatorId, credential, localSeats, onShowSeat, error, onBack, onDrop }: GameViewProps) {
+  // App only shows a game once the connection has a seat, a spectator id or local seats
+  if (playerNumber === null && spectatorId === null && localSeats === null) throw new Error('A joined game has a seat, a spectator id or local seats');
   const { Screen } = client;
   useStateSounds(gameState, playerNumber, true);
   const choosingRules = !gameState.started; // every game can set the turn timer
@@ -55,11 +59,17 @@ export default function GameView({ game, client, gameState, playerNumber, specta
       viewer={playerNumber}
       onVote={(join) => {
         gameService.voteRematch(join);
-        if (!join) onDrop();
+        // A shared device keeps its other players; the reset removes the seats that dropped
+        if (!join && !localSeats) onDrop();
       }}
       onRemove={(seat) => gameService.requestDismiss(seat)}
     />
   );
+  // Nothing is private before the first move, so a shared device sets and agrees to the rules during a handoff too (Agree counts for every local seat).
+  // It sets them as its host seat when the host is one of its players, as the server does.
+  const localHost = localSeats?.find(local => local.seat === houseRulesOf(game, gameState).host)?.seat;
+  const rulesSeat = localHost ?? playerNumber ?? localSeats?.[0]?.seat ?? null;
+  const handingOff = localSeats !== null && playerNumber === null;
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
@@ -87,19 +97,25 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         gameState={gameState}
         playerNumber={playerNumber}
         spectatorId={spectatorId}
+        canReact={!handingOff}
         onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
       />
-      {playerNumber === null ? (
+      {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
+      {handingOff ? (
+        <HandoffScreen client={client} gameState={gameState} localSeats={localSeats!} onShow={onShowSeat} />
+      ) : playerNumber === null ? (
         <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
       ) : (
         <>
-          {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
-          <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
+          {localSeats && <PassAndPlayBar name={gameState.playerNames[playerNumber]} onPass={() => onShowSeat(null)} />}
+          {/* Remounted per shown seat, so nothing one player picked (a pass, a rack order) shows to the next */}
+          <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} />
           <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
           <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
         </>
       )}
-      {gameState.isGameOver && !closed && !voting && (
+      {/* A shared device between voters shows the handoff, so the next voter can take it */}
+      {gameState.isGameOver && !closed && !voting && !handingOff && (
         <GameOverDialog
           game={game}
           client={client}
@@ -116,7 +132,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         </GameOverDialog>
       )}
       {/* After See the table the vote shows on its own, with nothing under it to cover */}
-      {gameState.isGameOver && closed && !voting && rematchVote}
+      {gameState.isGameOver && closed && !voting && !handingOff && rematchVote}
       {history.dialog}
     </div>
   );

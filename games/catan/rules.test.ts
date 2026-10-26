@@ -1,4 +1,4 @@
-import { finalStandings } from './rules.ts';
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -607,4 +607,14 @@ test('finalStandings ranks by victory points', () => {
     { seat: 1, place: 1, score: '4 victory points' },
     { seat: 2, place: 2, score: '1 victory point' }, { seat: 3, place: 2, score: '1 victory point' }
   ]);
+});
+
+test('waitingOn names the seats owing a discard and those who may answer an offer', () => {
+  const discarding = game({ pending: { kind: 'discard', counts: { 1: 4, 3: 2 } } });
+  assert.deepEqual(waitingOn(discarding), [1, 3]);
+  const open = { from: 1, to: null, give: resources({ wood: 1 }), get: resources({ ore: 1 }), declined: [3] };
+  assert.deepEqual(waitingOn(game({ trade: open })), [2]);
+  assert.deepEqual(waitingOn(game({ trade: { ...open, to: 3, declined: [] } })), [3]);
+  assert.deepEqual(waitingOn(game({ specialBuild: { builders: [2, 3] } })), [2]);
+  assert.deepEqual(waitingOn(game()), []);
 });

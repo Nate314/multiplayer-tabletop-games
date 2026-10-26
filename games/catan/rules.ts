@@ -21,7 +21,7 @@ import {
 } from './state.ts';
 import { editionFor } from './editions.ts';
 import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
-import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
+import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade, tradeAnswerers } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
 import { PLAYERS } from './options.ts';
 
@@ -362,4 +362,10 @@ export function onPlayerDisconnected(state: GameState, seat: Seat, random: Rando
 
 export function finalStandings(state: GameState): Standing[] {
   return rankStandings(state, (a, b) => points(state, b) - points(state, a), seat => plural(points(state, seat), 'victory point'));
+}
+
+// Beyond the turn: players owing a discard, those who may answer an open offer, and the special builder with the chance
+export function waitingOn(state: GameState): Seat[] {
+  const owing = state.pending?.kind === 'discard' ? Object.keys(state.pending.counts).map(Number) : [];
+  return [...owing, ...tradeAnswerers(state), ...(state.specialBuild?.builders.slice(0, 1) ?? [])];
 }

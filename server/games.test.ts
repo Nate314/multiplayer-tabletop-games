@@ -2251,3 +2251,115 @@ test('the finished game stays in history after the reset', () => {
   assert.ok('steps' in now);
   assert.deepEqual(now.steps.map(step => [step.historyStep, step.started]), [['start', false]]);
 });
+
+test('live views name the seats the table waits on, history steps do not', () => {
+  const manager = gameWith('Ann', 'Bob');
+  assert.deepEqual(manager.getState(ROOM, 1)?.waitingOn, [1]);
+  const steps = manager.history('test', 'g1', seatKeyOf(manager));
+  assert.ok('steps' in steps);
+  assert.equal('waitingOn' in steps.steps[0], false);
+});
+
+function seatedLocally(result: ReturnType<Manager['joinLocal']>) {
+  if ('error' in result) assert.fail(result.error);
+  return result;
+}
+
+test('joinLocal seats every name on one device, each with its own key', () => {
+  const manager = createGameManager([testGame], seededRandom);
+  const result = seatedLocally(manager.joinLocal('test', 'g1', [' Ann ', 'Bo']));
+  assert.equal(result.roomId, ROOM);
+  assert.deepEqual(result.seats.map(({ seat }) => seat), [1, 2]);
+  assert.notEqual(result.seats[0].seatKey, result.seats[1].seatKey);
+  assert.deepEqual(result.state.playerNames, { 1: 'Ann', 2: 'Bo' });
+  assert.equal((result.state as TestPublicState).viewer, null);
+  assert.equal(joined(manager.join('test', 'g1', 'Cy')).seat, 3); // a remote player mixes in
+});
+
+test('joinLocal is all or nothing', () => {
+  const manager = createGameManager([testGame], seededRandom);
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'ann']), { error: 'Each player needs a different name' });
+  assert.equal(manager.getState(ROOM), undefined);
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann']), { error: 'Enter at least two names' });
+  assert.deepEqual(manager.joinLocal('test', 'g1', 'Ann'), { error: 'Enter at least two names' });
+  manager.join('test', 'g1', 'Cy');
+  manager.join('test', 'g1', 'Dee');
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'Bo', 'Eve']), { error: 'Only 2 seats left in this game' });
+  assert.deepEqual(current(manager).activePlayers, [1, 2]);
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'Cy']), { error: 'Cy is already in this game' });
+  assert.deepEqual(current(manager).activePlayers, [1, 2]);
+  manager.join('test', 'g1', 'Fay');
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'Bo']), { error: 'Only 1 seat left in this game' });
+});
+
+test('joinLocal is refused for a game that cannot be shared', () => {
+  const secretive = { ...testGame, info: { ...testGame.info, passAndPlay: false } };
+  const manager = createGameManager([secretive], seededRandom);
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'Bo']), { error: 'Pass and play is not offered for Test' });
+});
+
+test('a pass-and-play rejoin takes back each seat whose key matches', () => {
+  const both = createGameManager([testGame], seededRandom);
+  const [ann, bo] = seatedLocally(both.joinLocal('test', 'g1', ['Ann', 'Bo'])).seats;
+  ok(both.move(ROOM, 1, tick));
+  both.disconnect(ROOM, 1);
+  both.disconnect(ROOM, 2);
+  const back = seatedLocally(both.joinLocal('test', 'g1', ['Ann', 'Bo'], true, [ann.seatKey, bo.seatKey]));
+  assert.deepEqual(back.seats, [ann, bo]);
+  assert.deepEqual(current(both).disconnected, []);
+
+  const one = createGameManager([testGame], seededRandom);
+  const [keyA] = seatedLocally(one.joinLocal('test', 'g1', ['Ann', 'Bo'])).seats;
+  ok(one.move(ROOM, 1, tick));
+  one.disconnect(ROOM, 1);
+  one.disconnect(ROOM, 2);
+  assert.deepEqual(seatedLocally(one.joinLocal('test', 'g1', ['Ann', 'Bo'], true, [keyA.seatKey, 'wrong'])).seats, [keyA]);
+  assert.deepEqual(current(one).disconnected, [2]);
+  assert.deepEqual(one.joinLocal('test', 'g1', ['Ann', 'Bo'], true, ['x', 'y']), { error: 'Ann is already in this game' });
+  assert.deepEqual(one.joinLocal('test', 'nope', ['Ann', 'Bo'], true, []), { error: 'Game not found' });
+});
+
+test('handoffSeat hides a private hand between local turns, and skips the handoff when nothing is private', () => {
+  for (const [game, expected] of [[handGame, null], [testGame, 2]] as const) {
+    const manager = createGameManager([game], seededRandom);
+    seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));
+    assert.equal(manager.handoffSeat(ROOM, 1, [1, 2]), 1);
+    ok(manager.move(ROOM, 1, tick));
+    assert.equal(manager.handoffSeat(ROOM, 1, [1, 2]), expected);
+  }
+});
+
+test('handoffSeat stops showing a local seat that was dismissed', () => {
+  const manager = createGameManager([testGame], seededRandom);
+  seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));
+  manager.join('test', 'g1', 'Cy');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.notEqual(manager.handoffSeat(ROOM, 3, [1, 2, 3]), 3);
+  assert.equal(manager.handoffSeat(ROOM, 3, [3]), null);
+});
+
+test('an unanswered hand request does not keep a local seat shown once the turn moves on', () => {
+  const manager = createGameManager([handGame], seededRandom);
+  seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));
+  ok(manager.move(ROOM, 1, tick));
+  const spectator = manager.join('test', 'g1', 'Dana', false, undefined, 'spectator');
+  assert.ok('spectatorId' in spectator && spectator.spectatorId);
+  ok(manager.requestHand(ROOM, spectator.spectatorId, 2));
+  assert.equal(manager.handoffSeat(ROOM, 2, [1, 2]), 2);
+  ok(manager.move(ROOM, 2, tick));
+  assert.equal(manager.handoffSeat(ROOM, 2, [1, 2]), null);
+});
+
+test('a pass-and-play view holds no local seat\'s hand but the shown one', () => {
+  const manager = createGameManager([handGame], seededRandom);
+  const { state } = seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));
+  for (const view of [state, manager.getState(ROOM, manager.handoffSeat(ROOM, null, [1, 2]))]) {
+    assert.doesNotMatch(JSON.stringify(view), /card1|card2/);
+  }
+  const shown = JSON.stringify(manager.getState(ROOM, manager.handoffSeat(ROOM, 1, [1, 2])));
+  assert.match(shown, /card1/);
+  assert.doesNotMatch(shown, /card2/);
+});
