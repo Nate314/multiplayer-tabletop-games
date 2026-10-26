@@ -56,3 +56,18 @@ test('one sound by name, or a 404', async () => {
   assert.equal(dice.noise?.bursts, 6);
   assert.equal((await fetch(`${base}/api/sound/nope`)).status, 404);
 });
+
+test('the qr asset draws a link and refuses text that does not fit', async () => {
+  const real = express();
+  mountAssetRoutes(real);
+  const realServer = real.listen(0);
+  try {
+    const url = `http://localhost:${(realServer.address() as AddressInfo).port}/api/svg/qr/`;
+    const ok = await fetch(url + encodeURIComponent('https://x.example/join/chess/a%2Eb'));
+    assert.equal(ok.status, 200);
+    assert.match(ok.headers.get('content-type') ?? '', /^image\/svg\+xml/);
+    assert.equal((await fetch(url + 'a'.repeat(300))).status, 400);
+  } finally {
+    realServer.close();
+  }
+});

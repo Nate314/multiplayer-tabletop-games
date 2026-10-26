@@ -3,6 +3,7 @@ import { SYMBOL_ASSETS } from '../../shared/svg/symbols.ts';
 import { ICON_ASSETS } from '../../shared/svg/icons.ts';
 import { GAME_ICON_ASSETS } from '../../shared/svg/gameIcons.ts';
 import { DICE_ASSETS } from '../../shared/svg/dice.ts';
+import { QR_ASSETS } from '../../shared/svg/qr.ts';
 import { PLAYING_CARD_ASSETS } from '../../shared/svg/playingCards.ts';
 import { DISC_ASSETS } from '../../shared/svg/disc.ts';
 import { CARD_ART_ASSETS } from '../../shared/svg/cardArt.ts';
@@ -27,6 +28,7 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...ICON_ASSETS,
   ...GAME_ICON_ASSETS,
   ...DICE_ASSETS,
+  ...QR_ASSETS,
   ...PLAYING_CARD_ASSETS,
   ...DISC_ASSETS,
   ...CARD_ART_ASSETS,
