@@ -105,6 +105,21 @@ async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameter
   return page;
 }
 
+test('a spectator\'s reaction countdown sits in the reaction picker, not beside the turn clock', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  const bar = dana.locator('.presence-bar');
+  const timer = bar.locator('.presence-timer');
+  await expect(timer).toContainText('Bob');
+  await bar.getByRole('button', { name: /^Bob/ }).click();
+  await dana.getByRole('dialog', { name: 'React to Bob' }).getByRole('button', { name: '😂' }).click();
+  await bar.getByRole('button', { name: /^Alice/ }).click();
+  await expect(dana.getByRole('dialog', { name: 'React to Alice' }).locator('.reaction-cooldown')).toHaveText(/0:1\d/);
+  await expect(bar.getByRole('button', { name: /^Alice/ })).toHaveText('Alice');
+  await expect(timer).toHaveText(/^Bob\s*0:(30|29|28|27|26)$/);
+});
+
 const handCards = (page: Awaited<ReturnType<typeof watch>>) => page.locator('.hand .hand-cards > *');
 
 test('a spectator is told when the last player leaves the lobby', async ({ seat, browser, server }) => {

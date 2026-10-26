@@ -1408,6 +1408,11 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   overflow-wrap: anywhere;
 }
 
+:where([data-game] .reaction-cooldown) {
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
 :where([data-game] .reaction-recent) {
   display: flex;
   flex-wrap: wrap;
