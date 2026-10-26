@@ -139,7 +139,9 @@ export function isOut(block: Block) {
   return Math.abs(x) - ex > FOOTPRINT || Math.abs(z) - ez > FOOTPRINT;
 }
 
-export const onGroundOutside = (block: Block) => block.pose.p[1] < BLOCK.height && isOut(block);
+export const topSurface = (block: Block) => block.pose.p[1] + extents(block.pose.q)[1];
+
+export const onGroundOutside =(block: Block) => block.pose.p[1] < BLOCK.height && isOut(block);
 
 export function toppled(start: Block[], now: Block[], exempt: number | null) {
   const before = new Map(start.map(b => [b.id, b.pose]));

@@ -1,13 +1,14 @@
 // Jenga rules shared by the browser (legal pulls, open slots) and the server (validation and the physics tick)
 import { asRecord } from '../../shared/messages.ts';
-import { baseGameState } from '../../shared/seating.ts';
+import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
+import { plural } from '../../shared/text.ts';
 import type { Random } from '../../shared/types.ts';
 import {
-  BLOCK, DEFAULT_GRIP, STEPS_PER_TICK, anchorWorld, clampTarget, isOut, isResting, onGroundOutside, readBlocks, startingTower, stepWorld,
-  toppled,
+  BLOCK, DEFAULT_GRIP, QUARTER_TURN, STEPS_PER_TICK, anchorWorld, buildWorld, clampTarget, isOut, isResting, onGroundOutside, readBlocks,
+  startingTower, stepWorld, topSurface, toppled,
 } from './physics.ts';
 import { forgetWorld, keepWorld, worldFor } from './simulation.ts';
-import type { Block, GameState, PublicGameState, Result, Seat, Sim, Vec3 } from './types.ts';
+import type { Block, GameState, PublicGameState, Quat, Result, Seat, Sim, Vec3 } from './types.ts';
 
 const HALF: Vec3 = [BLOCK.length / 2, BLOCK.height / 2, BLOCK.width / 2];
 const CALM_TICKS = 10;
@@ -17,16 +18,25 @@ const NEW_SIM: Sim = { ticks: 0, calmTicks: 0, sinceRelease: 0 };
 
 export const topLevel = (blocks: Block[]) => Math.max(...blocks.map(b => b.level));
 
+type Slot = 0 | 1 | 2;
+const SLOTS: Slot[] = [0, 1, 2];
 // Even levels run along X, so their slot is across Z; odd levels the other way
-const slotOf = (block: Block) => Math.round(block.pose.p[block.level % 2 === 0 ? 2 : 0] / BLOCK.width) + 1;
+const acrossAxis = (level: number) => level % 2 === 0 ? 2 : 0;
+const slotOffset = (slot: Slot) => (slot - 1) * BLOCK.width;
+// A neighbor that slid less than this into a slot leaves room for a block there
+const SLACK = 0.1;
 
-// A full top means the next block starts a new level, where every slot is open
-export function openSlots(blocks: Block[]): (0 | 1 | 2)[] {
+// The level the next block goes on and its open slots. A slot is open when no top block reaches into it,
+// so a block that slid is never placed into; a top with no room left, even short of 3 blocks, counts as full
+function nextLevel(blocks: Block[]): { level: number; slots: Slot[] } {
   const top = topLevel(blocks);
-  const taken = blocks.filter(b => b.level === top).map(slotOf);
-  if (taken.length === 3) return [0, 1, 2];
-  return ([0, 1, 2] as const).filter(slot => !taken.includes(slot));
+  const onTop = blocks.filter(b => b.level === top);
+  const axis = acrossAxis(top);
+  const slots = SLOTS.filter(slot => onTop.every(b => Math.abs(b.pose.p[axis] - slotOffset(slot)) >= BLOCK.width - SLACK));
+  return onTop.length < 3 && slots.length > 0 ? { level: top, slots } : { level: top + 1, slots: [...SLOTS] };
 }
+
+export const openSlots = (blocks: Block[]) => nextLevel(blocks).slots;
 
 function pullRefusal(blocks: Block[], id: number): string | null {
   const block = blocks.find(b => b.id === id);
@@ -133,9 +143,93 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   if (input?.type === 'drag') return drag(state, input.target);
   if (input?.type === 'release') {
     if (!state.grab) return { error: 'You are not holding a block' };
-    return { state: { ...state, grab: null, sim: { ...(state.sim ?? NEW_SIM), calmTicks: 0, sinceRelease: 0 }, gameStatus: turnStatus(state) } };
+    return { state: { ...released(state), gameStatus: turnStatus(state) } };
   }
   return { error: 'Unknown action type' };
+}
+
+// Letting go starts the settle countdown afresh; the tower keeps moving from where it is
+const released = (state: GameState): GameState => ({ ...state, grab: null, sim: { ...(state.sim ?? NEW_SIM), calmTicks: 0, sinceRelease: 0 } });
+
+const PLACE_TICKS = 60;
+
+// Steps a world of `blocks` until at rest, or at most PLACE_TICKS ticks (180 steps)
+function settled(state: GameState, blocks: Block[]): { blocks: Block[]; rested: boolean } {
+  const tower = buildWorld(blocks, id => state.grip[id] ?? DEFAULT_GRIP);
+  try {
+    let calm = 0;
+    for (let tick = 0; tick < PLACE_TICKS && calm < CALM_TICKS; tick++) {
+      stepWorld(tower, null, STEPS_PER_TICK);
+      blocks = readBlocks(tower, blocks);
+      calm = isResting(blocks) ? calm + 1 : 0;
+    }
+    return { blocks, rested: calm >= CALM_TICKS };
+  } finally {
+    tower.world.free();
+  }
+}
+
+export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
+  const input = asRecord(move);
+  if (input?.type !== 'place') return { error: 'Unknown move type' };
+  const slot = SLOTS.find(s => s === input.slot);
+  if (slot === undefined) return { error: 'Invalid slot' };
+  if (state.toppled) return { error: 'The tower has toppled' };
+  if (state.held === null) return { error: 'You have no block to place' };
+  if (state.sim) return { error: 'Wait for the tower to settle' };
+  const { level, slots } = nextLevel(state.blocks);
+  if (!slots.includes(slot)) return { error: 'That spot is taken' };
+
+  const onTop = state.blocks.filter(b => b.level === level);
+  const y = onTop.length > 0
+    ? onTop.reduce((sum, b) => sum + b.pose.p[1], 0) / onTop.length + 0.01
+    : Math.max(...state.blocks.map(topSurface)) + BLOCK.height / 2 + 0.01;
+  const across: Vec3 = [0, y, 0];
+  across[acrossAxis(level)] = slotOffset(slot);
+  const q: Quat = level % 2 === 0 ? [0, 0, 0, 1] : [...QUARTER_TURN];
+  const id = state.held;
+  const result = settled(state, [...state.blocks, { id, level, pose: { p: across, q } }]);
+  const blocks = result.rested ? still(result.blocks) : result.blocks;
+  const to = blocks.find(b => b.id === id)!.pose;
+  const from = state.turnStart.find(b => b.id === id)!.pose;
+  const placed = { ...state, blocks, held: null, phase: 'pull' as const, grab: null, lastMove: { type: 'place' as const, seat, block: id, level, from, to } };
+
+  // A collapse keeps simulating, even if already still, so its own tick ends the game and is recorded as the topple
+  if (toppled(state.turnStart, blocks, id)) {
+    return { state: { ...placed, sim: NEW_SIM, toppled: true, loser: seat, gameStatus: `${state.playerNames[seat]} toppled the tower!` } };
+  }
+  const next: GameState = {
+    ...placed,
+    turnStart: blocks,
+    pull: null,
+    sim: result.rested ? null : NEW_SIM,
+    placed: { ...state.placed, [seat]: (state.placed[seat] ?? 0) + 1 },
+    currentPlayer: nextActivePlayer(state, seat)
+  };
+  return { state: { ...next, gameStatus: turnStatus(next) } };
+}
+
+// The undone or abandoned turn starts over: the tower as it was, nobody holding anything
+function backToTurnStart(state: GameState): GameState {
+  forgetWorld(state.gameId);
+  return { ...state, blocks: state.turnStart, phase: 'pull', grab: null, held: null, pull: null, sim: null, toppled: false, loser: null };
+}
+
+export const onUndo = (state: GameState) => backToTurnStart(state);
+
+// A dismissed puller's half-done turn is put back; anyone else leaving changes nothing on the table
+export const onPlayerLeft = (state: GameState, seat: Seat) => state.pull?.seat === seat ? backToTurnStart(state) : state;
+
+// The tower settles where it is; a topple during that still counts against them, and a block in hand stays in hand
+export const onPlayerDisconnected = (state: GameState, seat: Seat) => state.grab && state.pull?.seat === seat ? released(state) : state;
+
+// Nobody can be holding a block after a restart or an undo; a saved simulation keeps settling from its poses
+export const resumeClock = (state: GameState) => state.grab ? released(state) : state;
+
+export function jengaStandings(state: GameState): { seat: Seat; place: number; score?: string }[] {
+  return state.activePlayers.map(seat => seat === state.loser
+    ? { seat, place: 2, score: 'Toppled the tower' }
+    : { seat, place: 1, score: plural(state.placed[seat] ?? 0, 'block placed', 'blocks placed') });
 }
 
 export const simulating = (state: GameState) => state.sim !== null;
@@ -150,8 +244,18 @@ function takenOut(state: GameState, blocks: Block[]): number | null {
 
 const still = (blocks: Block[]) => blocks.map(({ id, level, pose }) => ({ id, level, pose }));
 
-// One tick: step the world, then take a block out, catch a topple, and stop once everything is at rest
+// A throw after stepping leaves the kept world ahead of its state, so it is dropped and the manager logs the error
 export function simulate(state: GameState): GameState {
+  try {
+    return tick(state);
+  } catch (error) {
+    forgetWorld(state.gameId);
+    throw error;
+  }
+}
+
+// One tick: step the world, then take a block out, catch a topple, and stop once everything is at rest
+function tick(state: GameState): GameState {
   if (!state.sim) return state;
   const tower = worldFor(state.gameId, state);
   stepWorld(tower, state.grab, STEPS_PER_TICK);
@@ -169,7 +273,8 @@ export function simulate(state: GameState): GameState {
   }
 
   let sim = { ...state.sim, ticks: state.sim.ticks + 1 };
-  if (!next.toppled && toppled(state.turnStart, blocks, state.pull?.block ?? null)) {
+  // A game already over (everyone else left) still settles, but a collapse then cannot pick a new loser
+  if (!next.toppled && !state.isGameOver && toppled(state.turnStart, blocks, state.pull?.block ?? null)) {
     next = { ...next, toppled: true, loser: state.currentPlayer, grab: null, gameStatus: `${name} toppled the tower!` };
     sim = { ...sim, ticks: 0 };
   }

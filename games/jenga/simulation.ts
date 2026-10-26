@@ -2,6 +2,7 @@
 import { DEFAULT_GRIP, buildWorld, type TowerWorld } from './physics.ts';
 import type { GameState } from './types.ts';
 
+// shortcut: a room deleted mid-simulation leaks its world until a game with its id simulates again, add a room-closed hook if rooms often close mid-pull
 const worlds = new Map<string, { state: GameState; tower: TowerWorld }>();
 
 // Keyed on the blocks array, which actions (a drag) carry over untouched; an undo, a restart or an edit rebuilds the world
