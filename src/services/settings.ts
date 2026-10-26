@@ -18,6 +18,7 @@ export type Preferences = {
   sounds: Record<SoundName, boolean>
   colorSymbols: boolean
   highlightDrawn: boolean
+  notifications: boolean
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -26,6 +27,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true, reaction: true },
   colorSymbols: false,
   highlightDrawn: true,
+  notifications: true,
 }
 
 const ANIMATIONS_KEY = 'historyAnimations'
@@ -127,6 +129,7 @@ export function loadPreferences(): Preferences {
     ) as Record<SoundName, boolean>,
     colorSymbols: flagOr(saved?.colorSymbols, d.colorSymbols),
     highlightDrawn: flagOr(saved?.highlightDrawn, d.highlightDrawn),
+    notifications: flagOr(saved?.notifications, d.notifications),
   }
 }
 

@@ -478,6 +478,20 @@ test('an empty started game is deleted after ten minutes', (t: TestContext) => {
   assert.equal(stepsOf(manager, 'test'), null);
 });
 
+test('deleting a room tells the removed hook', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const removed: string[] = [];
+  const manager = createGameManager([testGame], seededRandom, undefined, { removed: roomId => removed.push(roomId) });
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  assert.deepEqual(removed, []);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.deepEqual(removed, [ROOM]);
+});
+
 test('undo counts only connected players', () => {
   const manager = startedWith3();
   manager.disconnect(ROOM, 3);

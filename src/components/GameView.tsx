@@ -27,6 +27,7 @@ import type { ClientGame } from '../clientGames.ts';
 import { loadTableLayout, saveTableLayout } from '../services/settings.ts';
 import type { TableLayout } from '../services/settings.ts';
 import useStateSounds from '../sound/useStateSounds.ts';
+import useTurnAlerts from '../alerts/useTurnAlerts.ts';
 
 type GameViewProps = {
   game: GameInfo;
@@ -76,6 +77,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const rulesSeat = localHost ?? playerNumber ?? localSeats?.[0]?.seat ?? null;
   const handingOff = localSeats !== null && playerNumber === null;
   const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
+  // A table screen is a spectator, so it and other spectators pass no seats: a plain title and no notifications
+  useTurnAlerts(game, gameState, localSeats ? localSeats.map(local => local.seat) : playerNumber === null ? [] : [playerNumber]);
   // Players only receive connected spectators, so this is on only while the TV's page is open
   const tableScreenOn = playerNumber !== null && (gameState.spectators ?? []).some(s => s.tableScreen);
   const [layout, setLayout] = useState<TableLayout>(loadTableLayout);

@@ -104,7 +104,24 @@ The gear button in the landing page header and every game header opens Settings.
 - Your turn chime, Moves, Dice, Game over, Timer warnings and Reactions to you turn each group of sounds on or off. Timer warnings is a tick each second in the last 10 seconds of your Chess clock or Scrabble turn timer (house rules). Reactions to you is a soft sound when another player reacts to you
 - Color-blind symbols adds a symbol next to colors that carry meaning
 - Highlight newly drawn cards marks the cards you just drew
+- Notify me when it is my turn turns notifications on or off (on by default). See Notifications below
 - In a game with house rule options, Settings also lists the house rules in use, read only, with each non-standard value marked "(house rule)". This part is the same for every player
+
+## Notifications
+
+The tab title shows the game and the number of players, for example `Hearts · 2 of 4 players` in the lobby and `Hearts · 4 players` once play starts. It begins with `● Your turn` when it is your turn and with `● Vote` when a vote waits for your answer (a vote wins over your turn). Spectators and table screens get the plain title, and the landing page keeps `Multiplayer Tabletop Games`.
+
+When you are not looking at the game, the site also sends a notification: `Your turn`, `A vote is waiting for you` (an undo, dismiss or rematch vote, or a spectator asking to see your hand) or `Game over`. A notification only names the game, its ID and, for game over, the winners; it never shows a hand or a move. On a shared pass-and-play device it names the player, as in `Your turn, Bo`. Clicking it brings the game's tab to the front. Spectators and table screens never get notifications.
+
+- The browser asks for permission the first time you press Join as a player or for pass and play; the landing page never asks. Settings has a Notify me when it is my turn box to turn them off and on again
+- Notifications need HTTPS, or `localhost` on the server computer itself. Over plain `http://<server-ip>:3000` the setting is off and explains why, and the tab title still changes
+- On iPhone and iPad, add the site to the Home Screen (Share, then Add to Home Screen) and open it from there; Safari in a tab cannot show them
+- With the page closed or the phone locked, a notification comes through the browser's push service. The push carries no content: the service worker asks the server what to show. A game's notifications stop when the next game begins in that room or the room is deleted
+- The server signs its pushes with a key pair it makes on first start and keeps in the database (`DATABASE_PATH`), so subscriptions survive a restart. Push services may contact the server's owner about its pushes at `PUSH_CONTACT`, a `mailto:` or `https:` URL, default `mailto:admin@localhost`. Set it when the server is public:
+
+```bash
+PUSH_CONTACT=mailto:you@example.com npm start
+```
 
 ## Saved games
 

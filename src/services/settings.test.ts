@@ -106,7 +106,7 @@ test('preferences default to every sound on at half volume, symbols off and the 
   assert.deepEqual(loadPreferences(), {
     volume: 0.5, muted: false,
     sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true, reaction: true },
-    colorSymbols: false, highlightDrawn: true,
+    colorSymbols: false, highlightDrawn: true, notifications: true,
   })
 })
 
@@ -127,6 +127,15 @@ test('each bad preference falls back to its own default and the good ones are ke
   }
   installStorage({ preferences: '[1]' })
   assert.deepEqual(loadPreferences(), DEFAULT_PREFERENCES)
+})
+
+test('notifications default on and a bad saved value keeps the default', () => {
+  installStorage()
+  assert.equal(loadPreferences().notifications, true)
+  installStorage({ preferences: '{"notifications":"no"}' })
+  assert.equal(loadPreferences().notifications, true)
+  installStorage({ preferences: '{"notifications":false}' })
+  assert.equal(loadPreferences().notifications, false)
 })
 
 test('history sounds default to off and round-trip', () => {

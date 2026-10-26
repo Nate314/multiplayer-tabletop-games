@@ -1784,6 +1784,13 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   font-size: 1rem;
 }
 
+/* Why notifications are off in this browser */
+:where([data-game] .settings-note, .lobby .settings-note) {
+  margin: 0;
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
 :where([data-game] .settings-volume, .lobby .settings-volume) {
   display: flex;
   align-items: center;
