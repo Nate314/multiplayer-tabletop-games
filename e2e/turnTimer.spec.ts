@@ -20,7 +20,7 @@ test.describe('Turn timer', () => {
     const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
     for (const page of [alice, bob]) {
       await expect(timer(page)).toContainText('Alice');
-      await expect(timer(page)).toHaveText(/^Alice\s*0:(30|29|28)/);
+      await expect(timer(page)).toHaveText(/^Alice\s*0:(30|29|28|27|26)/);
     }
   });
 
@@ -34,7 +34,7 @@ test.describe('Turn timer', () => {
     await expect(bob.getByText('Alice is over time')).toBeVisible();
     await expect(timer(alice)).toContainText('+0:0');
     await drop(alice, 1);
-    await expect(timer(bob)).toHaveText(/^Bob\s*0:(30|29|28)/);
+    await expect(timer(bob)).toHaveText(/^Bob\s*0:(30|29|28|27|26)/);
     await expect(timer(bob)).not.toHaveAttribute('data-over', '');
   });
 

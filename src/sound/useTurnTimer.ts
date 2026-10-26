@@ -18,10 +18,14 @@ export default function useTurnTimer(
   useTimerWarning(msLeft, mine && !paused);
 
   const wasAbove = useRef(false);
+  const chimedFor = useRef<unknown>(null); // a latency shift can bounce msLeft across zero; chime once per turn start
   useEffect(() => {
-    if (mine && !paused && wasAbove.current && msLeft !== null && msLeft <= 0) playSounds(['turn']);
+    if (mine && !paused && wasAbove.current && msLeft !== null && msLeft <= 0 && chimedFor.current !== gameState.turnStartedAt) {
+      chimedFor.current = gameState.turnStartedAt;
+      playSounds(['turn']);
+    }
     wasAbove.current = msLeft !== null && msLeft > 0;
-  }, [msLeft, mine, paused]);
+  }, [msLeft, mine, paused, gameState.turnStartedAt]);
 
   return { msLeft, paused };
 }

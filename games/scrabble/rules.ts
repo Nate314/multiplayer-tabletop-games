@@ -416,7 +416,7 @@ function exchange(state: GameState, seat: Seat, letters: RackTile[], random: Ran
 
 const MINUTE_MS = 60_000;
 
-// The turn timer starts afresh for whoever is to move, and stops when the game is over or the timer is off
+// The turn limit starts afresh for whoever is to move, and stops when the game is over or the limit is off
 function startTurn(state: GameState, now: number): GameState {
   const running = houseRule(state, TURN_MINUTES) !== 'off' && !state.isGameOver;
   return { ...state, turnLimitStartedAt: running ? now : null };

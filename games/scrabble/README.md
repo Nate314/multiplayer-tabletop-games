@@ -23,12 +23,12 @@ Before the first move the host picks the rules and every player must agree. They
 
 - **Turn limit.** Off (standard), 1, 2, 3 or 5 minutes per turn. The limit starts when everyone has agreed, and starts again, with the full time, at every turn
 - When the time runs out the turn passes and counts as a scoreless turn: "<name> ran out of time". It counts toward the six scoreless turns that let a player end the game. A move that arrives after the time ran out is treated the same way
-- **Turn timer.** The platform rule offered in every game (Off, 30 seconds, 1, 2 or 5 minutes) is separate from the Turn limit and can run alongside it. It only warns: the countdown beside the current player's name goes red in the last 10 seconds and then shows Time's up and overtime, and the turn is not passed
 - Tiles placed on the board but not played go back to the rack, since they are only in your browser
-- Undo gives the restored turn a full timer from the moment of the undo. A server restart restarts the current turn's timer, so downtime is not charged
-- The timer keeps running when players are away or disconnected, so a table nobody is playing at times out turn after turn, each a scoreless turn, and after six any player may end the game. This also happens after a server restart if nobody comes back within six turn lengths
+- Undo gives the restored turn a full turn limit from the moment of the undo. A server restart restarts the current turn's limit, so downtime is not charged
+- The turn limit keeps running when players are away or disconnected, so a table nobody is playing at times out turn after turn, each a scoreless turn, and after six any player may end the game. This also happens after a server restart if nobody comes back within six turn lengths
 - When the player to move is dismissed, the next player's turn starts with the full time
-- The timer stops when the game ends
+- The turn limit stops when the game ends
+- **Turn timer.** The platform rule offered in every game (Off, 30 seconds, 1, 2 or 5 minutes) is separate from the Turn limit and can run alongside it. It only warns: the countdown beside the current player's name goes red in the last 10 seconds and then shows Time's up and overtime, and the turn is not passed
 
 ## Controls
 

@@ -5,7 +5,7 @@ import {
   resolveDismissVote
 } from '../shared/seating.ts';
 import {
-  agreeToHouseRules, everyoneAgreed, houseRulesOf, minimumToStart, needsAgreement, setHouseRules
+  agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules
 } from '../shared/houseRules.ts';
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
@@ -78,7 +78,7 @@ export function createGameManager(
     scheduleDeadline(roomId, room);
   }
 
-  // The turn timer only displays: it stamps the live state, never the timeline, and never schedules anything.
+  // The turn timer only displays: it stamps the live state only (history views and exports never carry the stamp), and never schedules anything.
   function stampRoom(room: Room): void {
     const { state } = room;
     const running = turnLimitMs(state) > 0 && !state.isGameOver && clockMayRun(room) && state.currentPlayer !== null;
@@ -95,7 +95,7 @@ export function createGameManager(
 
   // Before the first move, nobody may play until every seated player agreed to the current house rules
   function awaitingAgreement({ game, state }: Room): boolean {
-    return !state.started && needsAgreement(game.info, houseRulesOf(game.info, state).values) && !everyoneAgreed(game.info, state);
+    return !state.started && agreementPending(game.info, state);
   }
 
   // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  afterSeatChange, agreeToHouseRules, describeHouseRules, everyoneAgreed, houseRule, houseRulesOf, minimumToStart,
+  afterSeatChange, agreeToHouseRules, agreementPending, describeHouseRules, everyoneAgreed, houseRule, houseRulesOf, minimumToStart,
   needsAgreement, rulesOf, setHouseRules, tableLimit, targetScoreRule, TURN_TIMER, type ChoiceRule, type HouseRulesProposal, type ToggleRule
 } from './houseRules.ts';
 import { chessInfo } from '../games/chess/info.ts';
@@ -238,4 +238,12 @@ test('the turn timer is listed as a house rule when on', () => {
 test('rules saved before the turn timer read it as off', () => {
   const saved = lobby([1, 2], { houseRules: { ...lobby([1, 2]).houseRules!, values: { targetScore: 500 } } });
   assert.equal(houseRule(saved, TURN_TIMER), 0);
+});
+
+test('agreementPending holds until everyone agreed to a non-standard rule', () => {
+  const changed = ok(propose(lobby([1, 2]), 1, { values: { [FAST.id]: true } }));
+  assert.equal(agreementPending(info, changed), true);
+  const { revision } = changed.houseRules!;
+  const agreed = ok(agreeToHouseRules(info, ok(agreeToHouseRules(info, changed, 1, revision)), 2, revision));
+  assert.equal(agreementPending(info, agreed), false);
 });

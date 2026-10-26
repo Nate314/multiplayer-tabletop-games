@@ -1257,8 +1257,23 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 :where([data-game] .presence-clock) {
-  white-space: nowrap; /* never wraps under the name on a narrow phone */
+  flex: none; /* the clock never shrinks or wraps; the name gives way instead */
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+:where([data-game] .presence-timer-line) {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where([data-game] .presence-name) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :where([data-game] .presence-timer[data-low], [data-game] .presence-timer[data-over]) {

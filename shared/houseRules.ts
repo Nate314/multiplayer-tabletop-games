@@ -160,6 +160,11 @@ export function agreeToHouseRules<S extends BaseGameState>(info: RulesInfo, stat
   return { state: { ...state, houseRules: { ...current, agreed } } };
 }
 
+// True while the table still has to agree to the house rules before it can start
+export function agreementPending(info: RulesInfo, state: Pick<BaseGameState, 'houseRules' | 'activePlayers'>): boolean {
+  return needsAgreement(info, houseRulesOf(info, state).values) && !everyoneAgreed(info, state);
+}
+
 export function everyoneAgreed(info: RulesInfo, state: Pick<BaseGameState, 'houseRules' | 'activePlayers'>): boolean {
   const { agreed } = houseRulesOf(info, state);
   return state.activePlayers.every(seat => agreed.includes(seat));
