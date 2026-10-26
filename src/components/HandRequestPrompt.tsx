@@ -15,8 +15,8 @@ export default function HandRequestPrompt({ gameState, onAnswer }: HandRequestPr
     <div className="hand-request" role="group" aria-label="Hand request">
       <span>{`${spectator.name} (watching) wants to see your hand`}</span>
       <div className="hand-request-actions">
-        <button type="button" onClick={() => onAnswer(spectator.id, true)}>Allow</button>
-        <button type="button" onClick={() => onAnswer(spectator.id, false)}>Don't allow</button>
+        <button type="button" className="themed-chip" onClick={() => onAnswer(spectator.id, true)}>Allow</button>
+        <button type="button" className="themed-chip" onClick={() => onAnswer(spectator.id, false)}>Don't allow</button>
       </div>
     </div>
   );

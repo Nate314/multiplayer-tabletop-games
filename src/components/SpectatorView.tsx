@@ -31,7 +31,7 @@ export default function SpectatorView({ client, gameState, spectatorId, error }:
       {seatViews && (
         <div className="spectator-seats">
           {activePlayers.map(player => (
-            <button key={player} type="button" aria-pressed={seat === player} onClick={() => setPicked(player)}>
+            <button key={player} type="button" className="themed-chip" aria-pressed={seat === player} onClick={() => setPicked(player)}>
               {playerNames[player]}
             </button>
           ))}
@@ -40,11 +40,11 @@ export default function SpectatorView({ client, gameState, spectatorId, error }:
       {seat !== null && !seatView && canAsk && (asked ? (
         <div className="spectator-asking">{`Waiting for ${playerNames[seat]}`}</div>
       ) : (
-        <button type="button" className="spectator-ask" onClick={() => gameService.requestHand(seat)}>
+        <button type="button" className="spectator-ask themed-chip" onClick={() => gameService.requestHand(seat)}>
           {`Ask to see ${playerNames[seat]}'s hand`}
         </button>
       ))}
-      {!started && <button type="button" className="spectator-play" onClick={() => gameService.switchToPlayer()}>Play instead</button>}
+      {!started && <button type="button" className="spectator-play themed-chip" onClick={() => gameService.switchToPlayer()}>Play instead</button>}
     </div>
   );
 }
