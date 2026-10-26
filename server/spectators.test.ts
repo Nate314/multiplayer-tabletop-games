@@ -212,6 +212,13 @@ function started() {
 
 const danaView = (manager: Manager, id: string) => manager.getSpectatorState(ROOM, id) as BasePublicState;
 
+test('a request is refused where spectators already see every seat', () => {
+  const manager = rememberingKeys(createGameManager([{ ...handGame, spectatorsSeeEverySeat: true }], seededRandom, openGameStore(':memory:')), new Map());
+  for (const name of ['Alice', 'Bob']) manager.join('test', 'g1', name);
+  const dana = watcher(manager, 'Dana');
+  assert.deepEqual(manager.requestHand(ROOM, dana.spectatorId, 1), { error: 'You already see every seat' });
+});
+
 test('asking waits for the game to start', () => {
   const manager = gameWith('Alice', 'Bob');
   const dana = watcher(manager, 'Dana');

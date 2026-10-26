@@ -35,6 +35,12 @@ describe('spectatorView', () => {
     assert.deepEqual(view.seatViews, {});
   });
 
+  it('a game whose spectators already see every seat offers no seat to ask for', () => {
+    const open = { ...handGame, spectatorsSeeEverySeat: true };
+    assert.ok(!('seatViews' in spectatorView(open, twoSeats(), dana([]))));
+    assert.ok('seatViews' in spectatorView(handGame, twoSeats(), dana([])));
+  });
+
   it('a game without privateSeatView gives no seat views', () => {
     const view = spectatorView(testGame, testGame.createGameState('g'), dana([1]));
     assert.ok(!('seatViews' in view));

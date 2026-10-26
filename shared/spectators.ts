@@ -16,7 +16,7 @@ export function spectatorView<S extends BaseGameState, P extends BasePublicState
 ): Omit<P, 'moveCount'> {
   const view = definition.spectatorState?.(state, false, spectator.tableScreen) ?? definition.toPublicState(state, false, null);
   const { privateSeatView } = definition;
-  if (!privateSeatView) return view; // no field at all tells the browser there is nothing to ask for
+  if (!privateSeatView || definition.spectatorsSeeEverySeat) return view; // no field at all tells the browser there is nothing to ask for
   const seatViews: Record<Seat, unknown> = {};
   for (const seat of spectator.allowedSeats) {
     if (state.activePlayers.includes(seat)) seatViews[seat] = privateSeatView(state, seat);

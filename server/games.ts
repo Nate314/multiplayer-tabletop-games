@@ -796,6 +796,7 @@ export function createGameManager(
       const { state } = room;
       if (!room.game.privateSeatView) return { error: 'Nothing is hidden in this game' };
       if (spectator.tableScreen) return { error: 'A table screen never asks' };
+      if (room.game.spectatorsSeeEverySeat) return { error: 'You already see every seat' };
       if (!state.started) return { error: 'Wait for the game to start' }; // seats are only fixed from then on
       if (state.isGameOver) return { error: 'The game is over' };
       if (typeof seat !== 'number' || !state.activePlayers.includes(seat)) return { error: 'That player is not in this game' };

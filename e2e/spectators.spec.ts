@@ -135,6 +135,14 @@ test('a spectator sees the table and no hand', async ({ seat, browser, server })
   await expect(dana.getByRole('button', { name: 'Dismiss' })).toHaveCount(0);
 });
 
+test('a Pictionary spectator sees everything, so no seat to pick or ask for', async ({ seat, browser, server }) => {
+  const table = await seat('pictionary', ['Alice', 'Bob']);
+  const dana = await watch(browser, server, 'pictionary', table.gameId, 'Dana');
+  await expect(dana.locator('.spectator-status')).toBeVisible();
+  await expect(dana.locator('.spectator-seats')).toHaveCount(0);
+  await expect(dana.locator('.spectator-ask')).toHaveCount(0);
+});
+
 test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => {
   const table = await heartsTable(seat);
   const [alice, bob] = table.pages;
