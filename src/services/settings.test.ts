@@ -4,7 +4,7 @@ import { DEFAULT_FILTERS } from '../components/gameFilters.ts'
 import { DEFAULT_RECENT_REACTIONS } from '../components/reactions.ts'
 import {
   DEFAULT_PREFERENCES, loadAnimations, loadHistorySounds, loadJoinForm, loadLandingFilters, loadPlaybackSpeed, loadPreferences,
-  loadRecentReactions,
+  loadRecentReactions, loadTableLayout, saveTableLayout,
   saveAnimations, saveHistorySounds, saveJoinForm, saveLandingFilters, savePlaybackSpeed, savePreferences,
 } from './settings.ts'
 
@@ -145,4 +145,13 @@ test('loadRecentReactions falls back to the defaults and drops anything that is 
   assert.deepEqual(loadRecentReactions(), DEFAULT_RECENT_REACTIONS)
   installStorage({ recentReactions: JSON.stringify(['🎉']) })
   assert.deepEqual(loadRecentReactions(), ['🎉'])
+})
+
+test('table layout defaults to hand only and is remembered', () => {
+  installStorage()
+  assert.equal(loadTableLayout(), 'handOnly')
+  saveTableLayout('board')
+  assert.equal(loadTableLayout(), 'board')
+  installStorage({ tableLayout: '"nonsense"' })
+  assert.equal(loadTableLayout(), 'handOnly')
 })

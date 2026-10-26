@@ -53,3 +53,27 @@ test('game over on the table screen has no Rematch', async ({ seat, browser, ser
   await expect(dialog.getByRole('button', { name: 'History', exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Rematch' })).toHaveCount(0);
 });
+
+test('phones get the switch only while a table screen is connected', async ({ seat, browser, server }) => {
+  const table = await seat('hearts', ['Alice']);
+  const phone = table.pages[0];
+  await expect(phone.locator('.layout-switch')).toHaveCount(0);
+  await expect(phone.locator('.game-root[data-hand-only]')).toHaveCount(0);
+  const tv = await showTable(browser, server, 'hearts', table.gameId);
+  await expect(phone.getByRole('button', { name: 'Hand only' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(phone.locator('.game-root[data-hand-only]')).toHaveCount(1);
+  await tv.context().close();
+  await expect(phone.locator('.layout-switch')).toHaveCount(0);
+  await expect(phone.locator('.game-root[data-hand-only]')).toHaveCount(0);
+});
+
+test('the choice is remembered', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const phone = table.pages[0];
+  await phone.getByRole('button', { name: 'Drop in column 1' }).click(); // a refresh rejoins only once the game started
+  await showTable(browser, server, 'connectfour', table.gameId);
+  await phone.getByRole('button', { name: 'Board and hand' }).click();
+  await expect(phone.locator('.game-root[data-hand-only]')).toHaveCount(0);
+  await phone.reload();
+  await expect(phone.getByRole('button', { name: 'Board and hand' })).toHaveAttribute('aria-pressed', 'true');
+});

@@ -13,12 +13,15 @@ import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
 import SpectatorView from './SpectatorView';
 import TableScreenView from './TableScreenView';
+import LayoutSwitch from './LayoutSwitch';
 import HandRequestPrompt from './HandRequestPrompt';
 import gameService from '../services/gameService';
 import { agreementPending } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
+import { loadTableLayout, saveTableLayout } from '../services/settings.ts';
+import type { TableLayout } from '../services/settings.ts';
 import useStateSounds from '../sound/useStateSounds.ts';
 
 type GameViewProps = {
@@ -46,10 +49,15 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
   const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
+  // Players only receive connected spectators, so this is on only while the TV's page is open
+  const tableScreenOn = playerNumber !== null && (gameState.spectators ?? []).some(s => s.tableScreen);
+  const [layout, setLayout] = useState<TableLayout>(loadTableLayout);
+  const chooseLayout = (next: TableLayout) => { setLayout(next); saveTableLayout(next); };
+  const myTurn = playerNumber !== null && gameState.currentPlayer === playerNumber && !gameState.isGameOver;
   const voting = Boolean(gameState.undoVote || gameState.dismissVote);
 
   return (
-    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined}>
+    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
       <header className="game-header">
         <button type="button" className="back-button" onClick={onBack}>Back to games</button>
         <h1>{game.name}</h1>
@@ -76,6 +84,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         spectatorId={spectatorId}
         onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
       />
+      {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
       {tableScreen ? (
         <TableScreenView game={game} client={client} gameState={gameState} />
       ) : playerNumber === null ? (

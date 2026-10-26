@@ -131,3 +131,15 @@ export function loadPreferences(): Preferences {
 export function savePreferences(preferences: Preferences): void {
   writeJson(local, PREFERENCES_KEY, preferences)
 }
+
+export type TableLayout = 'handOnly' | 'board'
+
+const TABLE_LAYOUT_KEY = 'tableLayout'
+
+export function loadTableLayout(): TableLayout {
+  return readJson(local, TABLE_LAYOUT_KEY) === 'board' ? 'board' : 'handOnly'
+}
+
+export function saveTableLayout(layout: TableLayout): void {
+  writeJson(local, TABLE_LAYOUT_KEY, layout)
+}
