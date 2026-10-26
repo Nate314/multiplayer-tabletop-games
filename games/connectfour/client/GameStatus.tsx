@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { SEAT_COLORS } from '../rules.ts';
@@ -34,7 +35,7 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
         {seats.map(seat => (
           <li key={seat} className={`${seat === currentPlayer ? 'current' : ''} ${activePlayers.includes(seat) ? '' : 'player-left'}`}>
             <span className={`player-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat as Seat]} className="dot-symbol" /></span>
-            {playerNames[seat]}{seat === playerNumber && ' (you)'}
+            {playerNames[seat]}<YouTag when={seat === playerNumber} />
             {!activePlayers.includes(seat) && ' (left)'}
             <span className="disc-color">{SEAT_COLORS[seat as Seat]}</span>
           </li>

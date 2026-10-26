@@ -147,6 +147,8 @@ test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => 
   await expect(bob.getByText('wants to see your hand')).toHaveCount(0);
   await alice.getByRole('button', { name: 'Allow', exact: true }).click();
   await expect(handCards(dana)).toHaveCount(13);
+  await expect(dana.locator('.seat-name', { hasText: 'Alice' })).toHaveText('Alice'); // the seat is Alice's, not Dana's
+  await expect(alice.locator('.seat-name', { hasText: 'Alice' })).toHaveText('Alice (you)');
   await passFirstThree(bob);
   await expect(dana.locator('.spectator-status')).toContainText('Bob passed three cards');
   await expect(handCards(dana)).toHaveCount(13);

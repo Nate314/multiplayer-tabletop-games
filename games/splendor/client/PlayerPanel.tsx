@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { CardView, GemToken, NobleView } from './pieces';
 import { bonusKey, nobleKey, reservedKey, tokenKey } from './animateMove.ts';
@@ -36,7 +37,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
   return (
     <section className={classes.join(' ')} aria-label={playerNames[seat]}>
       <header className="player-header">
-        <span className="player-name">{playerNames[seat]}{isMe ? ' (you)' : ''}{status}</span>
+        <span className="player-name">{playerNames[seat]}<YouTag when={isMe} />{status}</span>
         <span className="player-prestige" title="Prestige">{prestige(player)} prestige</span>
       </header>
       <div className="player-row">

@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { plural } from '../../../shared/text.ts';
 import { seatOrder } from './seatOrder.ts';
@@ -22,7 +23,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: Summary; ga
           <li key={seat} className={winners.includes(seat) ? 'summary-seat summary-winner' : 'summary-seat'}>
             <span className="summary-name">
               {playerNames[seat]}
-              {seat === viewer && ' (you)'}
+              <YouTag when={seat === viewer} />
             </span>
             <span className="summary-phase">
               {phase === 0 ? 'No phase laid down' : completed ? `Phase ${phase} done` : `Phase ${phase} not done`}

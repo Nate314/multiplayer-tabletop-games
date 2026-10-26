@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { bookKey, STOCK_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
@@ -52,7 +53,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
           const body = (
             <>
               <span className="player-name">
-                {playerNames[seat]}{seat === viewer && ' (you)'}{winners.includes(seat) && ' ★'}
+                {playerNames[seat]}<YouTag when={seat === viewer} />{winners.includes(seat) && ' ★'}
               </span>
               <span className="player-count">
                 {count === 0 && stockCount === 0 ? 'out of cards' : `${count} ${count === 1 ? 'card' : 'cards'}`}

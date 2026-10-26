@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { WatchingContext } from './WatchingContext.ts';
 import RulesButton from './RulesButton';
 import HistoryButton, { useHistoryDialog } from './HistoryButton';
 import GameOverDialog from './GameOverDialog';
@@ -57,60 +58,62 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const voting = Boolean(gameState.undoVote || gameState.dismissVote);
 
   return (
-    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
-      <header className="game-header">
-        <button type="button" className="back-button" onClick={onBack}>Back to games</button>
-        <h1>{game.name}</h1>
-        <HistoryButton onOpen={history.open} />
-        <ShareButton game={game} gameId={gameState.gameId} />
-        <RulesButton game={game} faq={client.faq} />
-        <SettingsButton phoneControls={(
-          <>
-            <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
-            <div className="settings-row">Theme <ThemeToggle /></div>
-          </>
-        )}>
-          <HouseRulesSection game={game} gameState={gameState} />
-        </SettingsButton>
-        <GitHubLink />
-        <ThemeToggle />
-      </header>
-      {gameState.isGameOver && closed && !voting && (
-        <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
-      )}
-      <PresenceBar
-        gameState={gameState}
-        playerNumber={playerNumber}
-        spectatorId={spectatorId}
-        onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
-      />
-      {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
-      {tableScreen ? (
-        <TableScreenView game={game} client={client} gameState={gameState} />
-      ) : playerNumber === null ? (
-        <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
-      ) : (
-        <>
-          {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
-          <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
-          <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
-          <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
-        </>
-      )}
-      {gameState.isGameOver && !closed && !voting && (
-        <GameOverDialog
-          game={game}
-          client={client}
+    <WatchingContext value={playerNumber === null}>
+      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
+        <header className="game-header">
+          <button type="button" className="back-button" onClick={onBack}>Back to games</button>
+          <h1>{game.name}</h1>
+          <HistoryButton onOpen={history.open} />
+          <ShareButton game={game} gameId={gameState.gameId} />
+          <RulesButton game={game} faq={client.faq} />
+          <SettingsButton phoneControls={(
+            <>
+              <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
+              <div className="settings-row">Theme <ThemeToggle /></div>
+            </>
+          )}>
+            <HouseRulesSection game={game} gameState={gameState} />
+          </SettingsButton>
+          <GitHubLink />
+          <ThemeToggle />
+        </header>
+        {gameState.isGameOver && closed && !voting && (
+          <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
+        )}
+        <PresenceBar
           gameState={gameState}
-          viewer={playerNumber}
-          canRematch={canRematch(gameState, playerNumber)}
-          onHistory={history.open}
-          // Escape in History closes only History
-          onSeeTable={() => { if (!history.dialog) setClosed(true); }}
-          onBack={onBack}
+          playerNumber={playerNumber}
+          spectatorId={spectatorId}
+          onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
         />
-      )}
-      {history.dialog}
-    </div>
+        {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
+        {tableScreen ? (
+          <TableScreenView game={game} client={client} gameState={gameState} />
+        ) : playerNumber === null ? (
+          <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
+        ) : (
+          <>
+            {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
+            <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
+            <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
+            <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
+          </>
+        )}
+        {gameState.isGameOver && !closed && !voting && (
+          <GameOverDialog
+            game={game}
+            client={client}
+            gameState={gameState}
+            viewer={playerNumber}
+            canRematch={canRematch(gameState, playerNumber)}
+            onHistory={history.open}
+            // Escape in History closes only History
+            onSeeTable={() => { if (!history.dialog) setClosed(true); }}
+            onBack={onBack}
+          />
+        )}
+        {history.dialog}
+      </div>
+    </WatchingContext>
   );
 }

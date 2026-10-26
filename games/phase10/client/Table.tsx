@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import CardView from './CardView';
 import { cardKey } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
@@ -64,7 +65,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
             <header className="seat-header">
               <span className="seat-name">
                 {playerNames[seat]}
-                {seat === playerNumber && ' (you)'}
+                <YouTag when={seat === playerNumber} />
                 {!activePlayers.includes(seat) && ' (left)'}
                 {winners.includes(seat) && ' ★'}
               </span>

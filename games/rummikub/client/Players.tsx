@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import { POOL_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -32,7 +33,7 @@ export default function Players({ gameState, playerNumber }: PlayersProps) {
           return (
             <li key={seat} className={classes.filter(Boolean).join(' ')} data-anim-key={seatKey(seat)}>
               <span className="rk-player-name">
-                {playerNames[seat]}{seat === playerNumber && ' (you)'}{hasLeft && ' (left)'}
+                {playerNames[seat]}<YouTag when={seat === playerNumber} />{hasLeft && ' (left)'}
               </span>
               <span className="rk-player-tiles">
                 {hasLeft ? '' : `${rackCounts[seat] ?? 0} tiles`}

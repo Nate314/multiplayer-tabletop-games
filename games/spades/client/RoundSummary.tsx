@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { BAG_LIMIT, LOSING_SCORE, targetScore, teamNames, teamOf } from '../rules.ts';
 import type { HandSummary, PublicGameState, Seat, Team, TeamResult } from '../types.ts';
@@ -34,7 +35,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: HandSummary
           <li key={team} className="summary-team">
             <span className="summary-name">
               {teamNames(team, playerNames)}
-              {viewer !== null && teamOf(viewer) === team && ' (you)'}
+              <YouTag when={viewer !== null && teamOf(viewer) === team} />
             </span>
             <span className="summary-change">{signed(summary.teams[team].change)}</span>
             <span className="summary-points">{scores[team]} pts, {bags[team]} {bags[team] === 1 ? 'bag' : 'bags'}</span>

@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { SEATS, targetScore } from '../rules.ts';
 import type { HandSummary, PublicGameState, Seat } from '../types.ts';
@@ -17,7 +18,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: HandSummary
       <ul className="summary-players">
         {SEATS.filter(seat => playerNames[seat] !== undefined).map(seat => (
           <li key={seat} className={seat === summary.moon ? 'summary-player summary-moon' : 'summary-player'}>
-            <span className="summary-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
+            <span className="summary-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
             <span className="summary-reason">took {summary.taken[seat]}{seat === summary.jack && ' and the Jack of Diamonds'}: {summary.change[seat] < 0 ? '' : '+'}{summary.change[seat]}</span>
             <span className="summary-points">{scores[seat]} pts</span>
           </li>

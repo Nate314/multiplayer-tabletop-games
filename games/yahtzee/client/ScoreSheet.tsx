@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import { cellKey } from './animateMove.ts';
 import { CATEGORY_LABELS, LOWER, UPPER, UPPER_BONUS_AT, allowedCategories, scoreFor, totals } from '../rules.ts';
 import type { Category, PublicGameState, Seat } from '../types.ts';
@@ -63,7 +64,7 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
               if (isGameOver && winners.includes(seat)) classes.push('yz-player-winner');
               return (
                 <th key={seat} scope="col" className={classes.join(' ')}>
-                  {playerNames[seat]}{seat === viewer && ' (you)'}
+                  {playerNames[seat]}<YouTag when={seat === viewer} />
                 </th>
               );
             })}

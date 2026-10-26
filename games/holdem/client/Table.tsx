@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { boardKey } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
@@ -50,7 +51,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
             <li key={seat} className={classes.join(' ')} aria-label={`${playerNames[seat]}'s seat`} data-anim-key={seatKey(seat)}>
               <div className="holdem-seat-header">
                 <span className="holdem-seat-name">
-                  {playerNames[seat]}{seat === viewer && ' (you)'}{winners.includes(seat) && ' ★'}
+                  {playerNames[seat]}<YouTag when={seat === viewer} />{winners.includes(seat) && ' ★'}
                 </span>
                 {seat === button && <span className="holdem-button" title="Dealer button" aria-label="Dealer button">D</span>}
               </div>

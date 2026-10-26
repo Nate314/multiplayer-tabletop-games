@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { BOARD } from '../board.ts';
@@ -48,7 +49,7 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
               </span>
               <span className="player-name">
                 {playerNames[seat]}
-                {seat === viewer && ' (you)'}
+                <YouTag when={seat === viewer} />
               </span>
               {status && <span className="player-status">{status}</span>}
               <span className="player-cash">${cash[seat] ?? 0}</span>

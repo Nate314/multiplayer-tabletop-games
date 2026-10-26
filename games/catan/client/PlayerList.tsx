@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { RESOURCES } from '../board.ts';
 import { RESOURCE_LABELS, SEAT_SYMBOLS, seatClass } from './layout.ts';
@@ -28,7 +29,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
           <div key={seat} className={classNames.join(' ')}>
             <div className="player-line">
               <span className={`player-swatch ${seatClass(seat)}`} aria-hidden="true"><ColorSymbol color={SEAT_SYMBOLS[seat as Seat]} className="swatch-symbol" /></span>
-              <span className="player-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
+              <span className="player-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
               {status && <span className="player-status">{status}</span>}
               <span className="player-points" title={`Points${hiddenNote}`}>{points[seat] ?? 0} pts</span>
             </div>

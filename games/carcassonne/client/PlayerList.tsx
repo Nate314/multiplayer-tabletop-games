@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import { meeplesOnBoard } from '../board.ts';
 import { MEEPLES_PER_PLAYER } from '../tiles.ts';
 import { MeepleIcon } from './Meeple';
@@ -30,7 +31,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
             <li key={seat} className={classNames.join(' ')}>
               <MeepleIcon seat={seat} />
               <span className="cc-player-name">
-                {playerNames[seat]}{seat === viewer && ' (you)'}
+                {playerNames[seat]}<YouTag when={seat === viewer} />
                 {left && <span className="cc-player-status"> left</span>}
                 {winners.includes(seat) && <span className="cc-player-status"> winner</span>}
               </span>

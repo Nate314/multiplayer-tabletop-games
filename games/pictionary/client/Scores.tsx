@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type ScoresProps = {
@@ -27,7 +28,7 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
         return (
           <li key={seat} className={classes.filter(Boolean).join(' ')}>
             <span className="score-name">
-              {playerNames[seat]}{seat === playerNumber && ' (you)'}{hasLeft && ' (left)'}
+              {playerNames[seat]}<YouTag when={seat === playerNumber} />{hasLeft && ' (left)'}
             </span>
             <span className="score-note">{note}</span>
             <span className="score-points">{scores[seat] ?? 0}</span>

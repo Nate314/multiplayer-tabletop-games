@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { battleKey, pileKey, shownBattle } from './animateMove.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -38,7 +39,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
       <section key={seat} className={classes.join(' ')} aria-label={`${playerNames[seat]}'s side`}>
         <header className="war-seat-header">
           <span className="war-seat-name">
-            {playerNames[seat]}{seat === viewer && ' (you)'}{winners.includes(seat) && ' ★'}
+            {playerNames[seat]}<YouTag when={seat === viewer} />{winners.includes(seat) && ' ★'}
           </span>
           <span className="war-seat-count">{count} {count === 1 ? 'card' : 'cards'}</span>
         </header>

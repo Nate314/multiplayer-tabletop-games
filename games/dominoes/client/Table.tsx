@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Board from './Board';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import { Fragment } from 'react';
@@ -49,7 +50,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
             <li key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
               <span className="player-name">
                 {playerNames[seat]}
-                {seat === viewer && ' (you)'}
+                <YouTag when={seat === viewer} />
                 {winners.includes(seat) && ' ★'}
               </span>
               <span className="player-count">{count} {count === 1 ? 'tile' : 'tiles'}</span>

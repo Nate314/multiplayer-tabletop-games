@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { SEATS, targetScore, bidName, nextSeat, teamNames, teamOf, teamSeats } from '../rules.ts';
@@ -40,7 +41,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
           const tricks = seats.reduce((sum, seat) => sum + (tricksTaken[seat] ?? 0), 0);
           return (
             <div key={team} className={`team team-${team}${winners.length > 0 && teamOf(winners[0]) === team ? ' team-winner' : ''}`}>
-              <span className="team-names">{teamNames(team, playerNames)}{team === myTeam && ' (you)'}</span>
+              <span className="team-names">{teamNames(team, playerNames)}<YouTag when={team === myTeam} /></span>
               <span className="team-score">{scores[team]}</span>
               <span className="team-bags">{bags[team]} {bags[team] === 1 ? 'bag' : 'bags'}</span>
               {biddingDone && phase === 'play' && <span className="team-contract">bid {contract}, took {tricks}</span>}
@@ -63,7 +64,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
               <div key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
                 <span className="seat-name">
                   {playerNames[seat]}
-                  {seat === viewer && ' (you)'}
+                  <YouTag when={seat === viewer} />
                   {viewer !== null && seat !== viewer && teamOf(seat) === teamOf(viewer) && ' (partner)'}
                 </span>
                 <span className="seat-count">{handCounts[seat]} cards{seat === dealer && ', dealer'}</span>

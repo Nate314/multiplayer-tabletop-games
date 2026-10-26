@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Card from './Card';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { MIN_PLAYERS, biddingSide, cardName, listOf, namesOf, sameCard, seatsInPlay, targetScore, teamOfSeat, teamsOf } from '../rules.ts';
@@ -64,7 +65,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
       <div className="scoreboard">
         {teams.map((team, index) => (
           <div key={index} className={`team team-${index}${team.some(seat => winners.includes(seat)) ? ' team-winner' : ''}`}>
-            <span className="team-names">{namesOf(team.filter(seat => playerNames[seat] !== undefined), playerNames) || 'Open seats'}{viewer !== null && team.includes(viewer) && ' (you)'}</span>
+            <span className="team-names">{namesOf(team.filter(seat => playerNames[seat] !== undefined), playerNames) || 'Open seats'}<YouTag when={viewer !== null && team.includes(viewer)} /></span>
             <span className="team-score">{scores[index]}</span>
             <span className="team-tricks">{tricksWon[index]} {tricksWon[index] === 1 ? 'trick' : 'tricks'}</span>
           </div>
@@ -92,7 +93,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
               <div key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
                 <span className="seat-name">
                   {playerNames[seat]}
-                  {seat === viewer && <> <span className="seat-tag">(you)</span></>}
+                  <YouTag when={seat === viewer} className="seat-tag" />
                   {isPartner(seat) && <> <span className="seat-tag">(partner)</span></>}
                 </span>
                 <span className="seat-count">{handCounts[seat]} cards{seat === dealer && ', dealer'}</span>
