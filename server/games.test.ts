@@ -590,6 +590,7 @@ test('history starts at the starting board, lists each move, hides secrets, and 
   assert.equal(stepsOf(manager, 'test')?.length, 3);
 
   const key = seatKeyOf(manager);
+  assert.deepEqual(manager.history('test', ' g1 ', key), manager.history('test', 'g1', key)); // the game ID is trimmed
   assert.deepEqual(manager.history(' test ', ' g1 ', key), GONE);
   assert.deepEqual(manager.history('chess', 'g1', key), GONE);
   assert.deepEqual(manager.history('test', 'nope', key), GONE);
@@ -1871,7 +1872,7 @@ test('an undo after game over and a replay archive the final game', (t: TestCont
   t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
   const archived = store.loadArchive('test/g1#1');
   assert.equal(archived?.timeline.length, 3);
-  assert.deepEqual(archived?.state, final);
+  assert.deepEqual(archived?.state, { ...final, rematchVote: null, dismissVote: null });
 });
 
 // Who may open a game's history and file
@@ -1947,6 +1948,35 @@ test('a rejoin records the device too', () => {
   manager.disconnect(ROOM, 1);
   joined(manager.join('test', 'g1', 'A', true, undefined, undefined, DEVICE));
   assert.deepEqual(Object.keys(manager.rawState(ROOM)?.seatDevices ?? {}), ['1']);
+});
+
+test('an undo keeps a device recorded on a rejoin', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  joined(manager.join('test', 'g1', 'A', true, undefined, undefined, DEVICE));
+  ok(manager.requestUndo(ROOM, 1));
+  assert.equal(ok(manager.voteUndo(ROOM, 2, true)).moveCount, 0);
+  assert.deepEqual(Object.keys(manager.rawState(ROOM)?.seatDevices ?? {}), ['1']);
+});
+
+test('an archive past 90 days is not available, even to someone who was in the game', () => {
+  const store = memoryStore();
+  const clock = { now: 1000 };
+  const manager = rememberingKeys(createGameManager([testGame], seededRandom, store, { now: () => clock.now }), keys);
+  manager.join('test', 'g1', 'A', undefined, undefined, undefined, DEVICE);
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  const finishedAt = store.loadArchive('test/g1#1')?.finishedAt as number;
+  clock.now = finishedAt + ARCHIVE_TTL_MS - 1;
+  assert.ok('steps' in manager.history('test', 'g1', DEVICE, 1));
+  clock.now = finishedAt + ARCHIVE_TTL_MS; // finishedAt is now - ARCHIVE_TTL_MS
+  for (const credential of [DEVICE, seatKeyOf(manager)]) {
+    assert.deepEqual(manager.history('test', 'g1', credential, 1), GONE);
+    assert.deepEqual(manager.gameFile('test', 'g1', credential, new Date(), 1), GONE);
+  }
 });
 
 test('a store that cannot number the game does not stop a join', () => {

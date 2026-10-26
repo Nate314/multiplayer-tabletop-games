@@ -132,9 +132,11 @@ export function createGameManager(
 
   const archiveIdOf = (roomId: string, state: BaseGameState) => `${roomId}#${state.gameNumber ?? 1}`;
 
-  // Keeps the room's finished game; archiving again replaces it, so an undo and replay leave the final game
+  // Keeps the room's finished game; archiving again replaces it, so an undo and replay leave the final game.
+  // Open votes are not part of the game as it ended, so every path archives without them.
   function archiveRoom(roomId: string, room: Room): void {
-    const { game, state } = room;
+    const { game } = room;
+    const state: BaseGameState = { ...room.state, rematchVote: null, dismissVote: null };
     writeStore(roomId, target => target.archive({
       id: archiveIdOf(roomId, state), gameType: game.info.id, gameId: state.gameId, n: state.gameNumber ?? 1,
       finishedAt: state.finishedAt ?? now(), state, history: room.history, timeline: room.timeline
@@ -427,6 +429,7 @@ export function createGameManager(
       playerNames: state.playerNames,
       spectators: state.spectators,
       spectatorKeys: state.spectatorKeys,
+      seatDevices: state.seatDevices,
       handRequests: state.handRequests,
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
@@ -483,7 +486,7 @@ export function createGameManager(
       return;
     }
 
-    archiveRoom(roomId, { ...room, state: { ...state, rematchVote: null, dismissVote: null } }); // the game as it ended
+    archiveRoom(roomId, room); // the game as it ended
     const rules = houseRulesOf(game.info, state);
     let next: BaseGameState = {
       ...game.createGameState(state.gameId),
