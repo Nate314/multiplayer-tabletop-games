@@ -161,6 +161,7 @@ test.describe('Rack-O rules', () => {
       await expect(gameOver(page).getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
       await expect(gameOver(page).locator('.game-over-meta')).toContainText('1 round');
       await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('500 pts');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('Rack-O');
       await expect(scoring(page)).toHaveCount(0);
     }
     await gameOver(bob).getByRole('button', { name: 'See the table' }).click();
@@ -190,6 +191,8 @@ test.describe('Rack-O rules', () => {
     for (const page of [alice, bob]) {
       await expect(gameOver(page).getByRole('heading', { level: 2 })).toHaveText('Alice wins');
       await expect(gameOver(page).locator('.summary-target')).toHaveText('First to 250 points wins');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('250 pts');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('Rack-O');
     }
     await expect(bob.locator('.turn-message')).toHaveText('Game over');
   });

@@ -304,6 +304,7 @@ test.describe('Phase 10 rules', () => {
 
     const dialog = gameOver(cara);
     await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Bob wins');
+    await expect(dialog.locator('.summary-seat', { hasText: 'Bob' }).locator('.summary-points')).toHaveText('15 pts');
     await expect(dialog.getByRole('heading', { name: 'Hand 1 scoring' })).toBeVisible();
     await expect(dialog.locator('.game-over-meta')).toContainText('1 hand');
     await expect(gameOver(bob).locator('.summary-winner .summary-name')).toHaveText('Bob (you)');

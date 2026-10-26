@@ -337,6 +337,7 @@ test.describe('Dominoes rules', () => {
     await play(pages[0], 4, 5);
     await expect(gameOver(pages[1]).getByText('First to 61 points wins')).toBeVisible();
     await expect(gameOver(pages[1]).getByRole('heading', { level: 2 })).toHaveText('Dan wins');
+    await expect(gameOver(pages[1]).locator('.summary-seat', { hasText: 'Dan' }).locator('.summary-points')).toHaveText('65 pts');
     await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
   });
 });
