@@ -1,3 +1,4 @@
+import { drawOfferAnswerers } from '../../shared/drawOffer.ts';
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { applyAction, applyMove, createGameState, deadline, onDeadline, resetLobby, resumeClock, toPublicState } from './rules.ts';
 import { chessInfo } from './info.ts';
@@ -9,6 +10,7 @@ export const chess: GameDefinition<GameState, PublicGameState> = {
   resetLobby,
   applyMove,
   applyAction,
+  waitingOn: drawOfferAnswerers,
   deadline,
   onDeadline,
   resumeClock,

@@ -3,7 +3,7 @@ import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -433,3 +433,5 @@ export function finalStandings(state: GameState): Standing[] {
   const points = (seat: Seat) => state.scores[seat] ?? 0;
   return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
 }
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

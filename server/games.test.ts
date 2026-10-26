@@ -1776,3 +1776,9 @@ test('with manualSimulation no timer runs and simulateTicks steps the room', (t:
   assert.equal(ticksOf(manager), 2);
   assert.equal(manager.simulateTicks('test/none', 2), false);
 });
+
+test('live views name the seats the table waits on, history steps do not', () => {
+  const manager = gameWith('Ann', 'Bob');
+  assert.deepEqual(manager.getState(ROOM, 1)?.waitingOn, [1]);
+  assert.equal('waitingOn' in (manager.history('test', 'g1')?.[0] ?? {}), false);
+});

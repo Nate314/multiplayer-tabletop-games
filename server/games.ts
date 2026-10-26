@@ -12,6 +12,7 @@ import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
+import { seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -276,7 +277,8 @@ export function createGameManager(
       ...base,
       spectators: (room.state.spectators ?? []).filter(spectator => room.watching.has(spectator.id)),
       handRequests: openHandRequests(room.state, room.watching).filter(wanted),
-      serverTime: now()
+      serverTime: now(),
+      waitingOn: seatsToAct(room.game, room.state)
     };
   }
 

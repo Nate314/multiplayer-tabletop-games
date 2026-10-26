@@ -19,7 +19,7 @@ import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { cardName, rankValue, sameCard, standardDeck, SUITS } from '../../shared/playingCards.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { FOUR_SEATS as SEATS, nextSeat, partnerOf, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
@@ -372,3 +372,5 @@ export function finalStandings(state: GameState): Standing[] {
   const points = (seat: Seat) => state.scores[teamOf(seat)];
   return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
 }
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

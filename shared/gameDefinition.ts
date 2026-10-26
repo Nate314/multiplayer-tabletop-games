@@ -53,6 +53,8 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   applyAction?(state: S, seat: Seat, action: unknown, random: Random, now: number): Result<S>;
   // Asked before applyAction: true records the action's result as a move (history, timeline, undo), like a move.
   recordsAction?(state: S, seat: Seat, action: unknown): boolean;
+  // Seats the game waits on besides currentPlayer (a pass, a discard, a trade answer, a round summary Continue).
+  waitingOn?(state: S): Seat[];
   // Called only once isGameOver. Ranks by what chose `winners`, so place 1 is exactly the winners.
   finalStandings?(state: S): Standing[];
   // The platform adds moveCount; a game never supplies it.

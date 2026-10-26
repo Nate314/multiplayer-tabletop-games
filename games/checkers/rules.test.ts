@@ -189,6 +189,7 @@ test('a draw is agreed when the opponent accepts the offer; a move by the oppone
   const state = play(lobby('A', 'B'), 1, move(at(5, 0), at(4, 1)));
   const offered = act(state, 1, { type: 'offerDraw' });
   assert.equal(offered.drawOffer, 1);
+  assert.deepEqual(checkers.waitingOn?.(offered), [2]);
   const agreed = act(offered, 2, { type: 'answerDraw', accept: true });
   assert.equal(agreed.isGameOver, true);
   assert.deepEqual(agreed.winners, []);

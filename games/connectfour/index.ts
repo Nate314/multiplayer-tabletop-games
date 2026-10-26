@@ -1,3 +1,4 @@
+import { drawOfferAnswerers } from '../../shared/drawOffer.ts';
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { applyAction, applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
 import { connectfourInfo } from './info.ts';
@@ -9,5 +10,6 @@ export const connectfour: GameDefinition<GameState, PublicGameState> = {
   resetLobby,
   applyMove,
   applyAction,
+  waitingOn: drawOfferAnswerers,
   toPublicState
 };

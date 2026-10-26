@@ -2,7 +2,7 @@
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { mapSeats } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
@@ -418,3 +418,5 @@ export function finalStandings(state: GameState): Standing[] {
   const rows = (seat: Seat) => completeRows(state.boards[seat]?.wall ?? []);
   return rankStandings(state, (a, b) => points(b) - points(a) || rows(b) - rows(a), seat => pointsText(points(seat)));
 }
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

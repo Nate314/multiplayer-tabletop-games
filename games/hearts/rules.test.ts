@@ -1,4 +1,4 @@
-import { finalStandings } from './rules.ts';
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -420,4 +420,9 @@ test('finalStandings ranks by the lowest score', () => {
     { seat: 1, place: 1, score: '30 points' }, { seat: 3, place: 1, score: '30 points' },
     { seat: 2, place: 2, score: '80 points' }, { seat: 4, place: 3, score: '101 points' }
   ]);
+});
+
+test('waitingOn names the seats that have not passed', () => {
+  assert.deepEqual(waitingOn(ok(pass(lobby(), 2))), [1, 3, 4]);
+  assert.deepEqual(waitingOn(passAll(lobby())), []);
 });

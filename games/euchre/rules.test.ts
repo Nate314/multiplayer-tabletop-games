@@ -1,4 +1,4 @@
-import { finalStandings } from './rules.ts';
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -430,4 +430,9 @@ test('finalStandings ranks by the team total', () => {
     { seat: 2, place: 1, score: '1,001 points' }, { seat: 4, place: 1, score: '1,001 points' },
     { seat: 1, place: 2, score: '-50 points' }, { seat: 3, place: 2, score: '-50 points' }
   ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...game(), roundSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

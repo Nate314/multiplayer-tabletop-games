@@ -31,3 +31,10 @@ export function acknowledge<S extends BaseGameState, M extends Acknowledgeable>(
   );
   return { state: everyoneReady(next, round) ? startNext(next) : next };
 }
+
+// Seats the summary still waits on, for a game's waitingOn
+export function awaiting<S extends BaseGameState, M extends Acknowledgeable>(state: S, round: RoundAccess<S, M>): Seat[] {
+  const summary = round.get(state);
+  if (!summary || state.isGameOver) return [];
+  return (round.waitsFor ?? connectedPlayers)(state).filter(seat => !summary.acknowledged.includes(seat));
+}
