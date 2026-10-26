@@ -21,6 +21,7 @@ Draw a word while everyone else races to guess it in the chat, for 2 to 10 playe
 ## Controls
 
 - The drawer clicks one of the offered words to start drawing
+- The drawer draws on the paper with a mouse, a finger or a pen. The toolbar under the drawing has the colors, the brush sizes (Small, Medium and Large), Eraser, which paints white, and Fill, which fills the area you click. Take back removes the last line or fill, and Clear wipes the paper
 - Everyone else types guesses in the chat box and presses Enter
 - Click Undo to ask the other players to undo the last move
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
