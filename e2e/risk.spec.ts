@@ -222,6 +222,7 @@ test.describe('Risk rules', () => {
     const { table, alice } = await start(seat);
     await table.patch(crafted());
     await expect(tray(alice, 3)).toBeEnabled();
+    await alice.evaluate(() => window.scrollTo(0, 0)); // the lobby panel is gone, which leaves the page scrolled past the tray
     await drag(alice, tray(alice, 3), disc(alice, 'alaska'));
     await expect(land(alice, 'alaska').locator('.draft-badge')).toHaveText('+1');
     await expect(tray(alice, 2)).toBeVisible();
