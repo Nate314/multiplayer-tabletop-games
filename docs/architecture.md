@@ -114,7 +114,7 @@ Server code (`server/`, `shared/`, and the non-client files of each game) never 
    - `ThemeToggle.tsx` switches light and dark; the choice is shared across the site
    - `UndoVote.tsx` shows a running undo vote
    - `RejoinButton.tsx` is the "Back to <game> (<game ID>)" button on the landing page, shown when the remembered game was left with Back to games or a lost connection
-   - `PresenceBar.tsx` sits above the game screen while anyone is disconnected: each disconnected player with a Dismiss button, and "Waiting for <name> to reconnect" when it is their turn
+   - `PresenceBar.tsx` sits above the game screen whenever two or more players are seated or anyone is disconnected: it lists every player, each other connected player's name is a `ReactionPicker.tsx` button (disabled until the first move and after game over) that opens a picker under it with the recent emoji (`recentReactions` in `localStorage`, default 👍 😂 😮 👏 🎉, at most 8) and an "Any emoji" box checked by `isSingleEmoji`; each disconnected player has a Dismiss button, and "Waiting for <name> to reconnect" shows when it is their turn. `useReactions.ts` turns the server's `REACTION` messages into a bubble beside the target's name ("<from> → <name> <emoji>", "<from> (watching)" for a spectator) for `REACTION_SHOW_MS` (3 s) and keeps this player's cooldown, shown on the sender's buttons as a countdown; the picker and bubble are kept inside the window by `keepOnScreen.ts`. The target hears the `reaction` sound
    - `DismissVote.tsx` shows a running dismiss vote
    - `VotePanel.tsx` is the panel both votes share; only connected players are listed and can vote
    - `PlayingCard.tsx` draws a standard playing card face up, a joker (a `DeckCard`, class `playing-card-joker`), or its back for `card: null`, in three sizes; with `onClick` it is a button. The marks, joker and back are the server's `playing-card`, `playing-card-joker` and `playing-card-back` drawings (`shared/svg/playingCards.ts`) inside it, and it preloads the whole deck on mount. Its default look is in `App.scss`, and a game can retheme it with `--playing-card-face`, `--playing-card-back`, `--playing-card-stripe`, `--playing-card-red`, `--playing-card-black`, `--playing-card-selected` and `--playing-card-highlight`; `drawn` adds the `newly-drawn` class (Go Fish)
@@ -226,6 +226,7 @@ Every SVG that is not a clickable board, and every sound, comes from the server,
    - Applies moves and actions through the game's `GameDefinition`, after the turn checks
    - Keeps each game's undo history and runs unanimous undo votes. An undo calls the game's `onUndo` on the restored state, where a game reshuffles its face-down piles. When the undone move came before a dismissal, the dismissed player is removed from the restored state again through the game's `onPlayerLeft`, so a turn, roll or pending decision they held moves on as it did when they were dismissed
    - Holds disconnected players' seats, gives them back on a rejoin, and runs unanimous dismiss votes
+   - Handles `REACT { target, emoji }` in `react`: it refuses unless the game is started and not over, the sender is a seated player, the target is another seated player and the emoji is one emoji (`shared/reactions.ts`), with the errors "Send a single emoji", "Pick another player to react to", "That player is not in this game" and "You can react again in <n> s" (15 s per sender, `REACTION_COOLDOWN_MS`, kept in memory), then broadcasts `REACTION` to the room. The reaction is appended with the current `moveCount` to a `reactions` log on the live state (capped at `MAX_REACTIONS` = 200, oldest dropped). The log is outside the undo `history` and `timeline` snapshots and stripped from every view, so a reaction is not a move: it never changes undo, the move count, the turn or votes, an undo keeps it (moved back to the remaining step), and it is saved and restored with the live state. History steps and game files get an optional `reactions` list built from the log
    - Holds each game's full state in memory, written through to SQLite, and sends only the public view
    - Builds a game's history as the starting board, the state after each move and, when the game ended outside a move (resigning, an agreed draw, an end-of-round action, a dismissal), an end step built from the live state
    - Takes a `GameStore` as a parameter, so tests can pass an in-memory one or none, and `ManagerHooks`: `now` (the server clock, default `Date.now`) and `changed(roomId)`, which `server.ts` sets to its per-room `broadcast` so a change no player made reaches every seat
@@ -246,7 +247,7 @@ Every SVG that is not a clickable board, and every sound, comes from the server,
 
 ## Game files
 
-`shared/gameFile.ts` defines the file a finished game is saved as: `format` (`multiplayer-tabletop-games`), `version` (2), `gameType`, `gameId`, `exportedAt` and `steps`. Each step is the table's view (viewer `null`, no hands) plus `views`, the same step as each seat saw it, keyed by seat number. The server builds the file in `GET /api/game-file/<game type>/<game ID>`, which needs no credentials and answers 404 for an unknown game and 409 "The game is not over yet" until game over. `parseGameFile` accepts a file only when it parses as JSON, the format is right, the version is 1 or 2 (version 1 files have no `views`), `views`, when present, holds valid steps, the game ID is 1 to 20 characters, `steps` is a non-empty array of steps with a valid `historyStep`, and the game type is one the site has; otherwise it returns an error message. Steps are not checked field by field; `StepErrorBoundary` covers a hand-edited step.
+`shared/gameFile.ts` defines the file a finished game is saved as: `format` (`multiplayer-tabletop-games`), `version` (2), `gameType`, `gameId`, `exportedAt` and `steps`. Each step is the table's view (viewer `null`, no hands) plus `views`, the same step as each seat saw it, keyed by seat number. The server builds the file in `GET /api/game-file/<game type>/<game ID>`, which needs no credentials and answers 404 for an unknown game and 409 "The game is not over yet" until game over. `parseGameFile` accepts a file only when it parses as JSON, the format is right, the version is 1 or 2 (version 1 files have no `views`), `views`, when present, holds valid steps, the game ID is 1 to 20 characters, `steps` is a non-empty array of steps with a valid `historyStep`, and the game type is one the site has; otherwise it returns an error message. Steps are not checked field by field; `StepErrorBoundary` covers a hand-edited step. A step may also carry an optional `reactions` list (the reactions sent while that step was the latest, with `from`, `fromSpectator`, `target`, `emoji` and `at`); the version stays 2, a file without it loads as before, and the History dialog shows them under the board (`reactionsOf` ignores a missing or malformed list).
 
 Accepted risk: undo is still allowed after game over, so players could download the file, undo the final move and play on knowing every hand. The file is meant for a finished game and the site does not prevent this.
 
@@ -274,6 +275,13 @@ Every state sent to a browser goes through the game's `toPublicState`, which is 
    ```
 
    `moveCount` is sent only for an out-of-turn move: the server refuses it with "Someone else moved first" if the count it names is no longer current.
+
+2b. **Reacting**
+
+   ```
+   Client -> Server: REACT (target, emoji)
+   Server -> All clients in the game: REACTION (from, fromSpectator, target, emoji, at), or GAME_ERROR to the sender
+   ```
 
 3. **Game actions**
 
