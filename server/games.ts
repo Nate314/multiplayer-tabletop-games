@@ -8,6 +8,7 @@ import {
   agreeToHouseRules, everyoneAgreed, houseRulesOf, minimumToStart, needsAgreement, setHouseRules
 } from '../shared/houseRules.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
+import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
 import { standingsOf } from '../shared/standings.ts';
@@ -31,6 +32,7 @@ type Room = {
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
   watching: Set<string>; // ids of the connected spectators; in memory only, like sockets
+  lastReactionAt: Map<string, number>; // by sender key; kept off the state, so a restart clears every cooldown
 };
 
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout;
@@ -115,11 +117,14 @@ export function createGameManager(
   }
 
   // Records `next` as a move after the current state, for undo, history and the store
+  // The reaction log stays on the live state only, so snapshots are pushed without it
   function record(roomId: string, room: Room, next: BaseGameState): void {
-    const index = room.history.push(room.state) - 1;
-    room.timeline.push(next);
+    const { reactions: _before, ...before } = room.state;
+    const { reactions: _after, ...after } = next;
+    const index = room.history.push(before) - 1;
+    room.timeline.push(after);
     room.state = next;
-    save(roomId, room, { type: 'push', index, before: room.history[index], after: next });
+    save(roomId, room, { type: 'push', index, before, after });
   }
 
   // Before the first move, nobody may play until every seated player agreed to the current house rules
@@ -191,7 +196,7 @@ export function createGameManager(
   ): BasePublicState {
     const {
       seatKeys: _seatKeys, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
-      seatViews: _seatViews, ...view
+      seatViews: _seatViews, reactions: _reactions, ...view
     } = raw;
     const { startedAt, finishedAt, gameNumber } = state;
     return {
@@ -237,20 +242,29 @@ export function createGameManager(
     return room ? { game, room } : null;
   }
 
+  function hasEndMoment(room: Room): boolean {
+    return room.state.isGameOver && !room.timeline.at(-1)?.isGameOver;
+  }
+
   // The states a history shows, oldest first: the start, each move, and the live state when the game ended without one
   function historyMoments(room: Room): HistoryMoment[] {
     const moments: HistoryMoment[] = [
       { state: room.history[0] ?? room.state, moveCount: 0, historyStep: 'start' },
       ...room.timeline.map((state, index): HistoryMoment => ({ state, moveCount: index + 1, historyStep: 'move' }))
     ];
-    if (room.state.isGameOver && !room.timeline.at(-1)?.isGameOver) {
+    if (hasEndMoment(room)) {
       moments.push({ state: room.state, moveCount: room.timeline.length, historyStep: 'end' });
     }
     return moments;
   }
 
   function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
-    return { ...publicView(room, state, false, moveCount, viewer), historyStep };
+    // The last moment with a move count owns its reactions, so the end moment takes the count it shares with the last move or the start
+    const shared = historyStep !== 'end' && moveCount === room.timeline.length && hasEndMoment(room);
+    const reactions = shared ? [] : (room.state.reactions ?? [])
+      .filter(reaction => reaction.moveCount === moveCount)
+      .map(({ at, emoji, from, fromSpectator, target }): Reaction => ({ from, fromSpectator, target, emoji, at }));
+    return { ...publicView(room, state, false, moveCount, viewer), historyStep, ...(reactions.length > 0 && { reactions }) };
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
@@ -300,8 +314,11 @@ export function createGameManager(
     // Dismissed seats are removed in seat order, which may differ from the order they were dismissed in.
     // A hook that ends the game again keeps its ending in the status
     const gameStatus = restored.isGameOver ? `Last turn undone. ${restored.gameStatus}` : 'Last turn undone';
-    room.state = { ...restored, gameStatus };
-    return { type: 'pop', index: room.history.length };
+    // The log carries over from the live state; a reaction on the undone move now belongs to the step left
+    const moveCount = room.history.length;
+    const reactions = state.reactions?.map(reaction => ({ ...reaction, moveCount: Math.min(reaction.moveCount, moveCount) }));
+    room.state = { ...restored, gameStatus, ...(reactions && { reactions }) };
+    return { type: 'pop', index: moveCount };
   }
 
   // Settles a dismiss vote. When it passes and the turn moves on from the dismissed player, the next player's clock
@@ -330,7 +347,9 @@ export function createGameManager(
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
     if (state.startedAt === undefined) state = { ...state, startedAt: now() };
     if (state.isGameOver && state.finishedAt === undefined) state = { ...state, finishedAt: now() };
-    const room: Room = { game, state, history: saved.history, timeline: saved.timeline, watching: new Set() };
+    const room: Room = {
+      game, state, history: saved.history, timeline: saved.timeline, watching: new Set(), lastReactionAt: new Map()
+    };
     rooms.set(roomId, room);
     save(roomId, room);
     startEmptyTimer(roomId, room);
@@ -364,7 +383,9 @@ export function createGameManager(
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
       if (!existing && (rejoin === true || role === 'spectator')) return { error: 'Game not found' };
-      const room: Room = existing ?? { game, state: game.createGameState(id), history: [], timeline: [], watching: new Set() };
+      const room: Room = existing ?? {
+        game, state: game.createGameState(id), history: [], timeline: [], watching: new Set(), lastReactionAt: new Map()
+      };
       const { state } = room;
       const spectator = state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
 
@@ -578,6 +599,38 @@ export function createGameManager(
       settleDismissVote(room, approved);
       save(roomId, room);
       return { state: view(room, seat) };
+    },
+
+    // Not a move: only the log on the live state changes, so undo, the move count and the turn are untouched.
+    // The sender is a seat or a spectator; a spectator may react to any player
+    react(
+      roomId: string, sender: Seat | { spectatorId: string }, target: unknown, emoji: unknown
+    ): { reaction: Reaction } | { error: string } {
+      const room = rooms.get(roomId);
+      if (!room) return { error: 'Game not found' };
+      const spectator = typeof sender === 'number'
+        ? undefined
+        : room.state.spectators?.find(candidate => candidate.id === sender.spectatorId);
+      if (typeof sender === 'number' ? !room.state.activePlayers.includes(sender) : !spectator) {
+        return { error: 'You are not in this game' };
+      }
+      const { state } = room;
+      if (!state.started || state.isGameOver) return { error: 'Reactions open once the game starts' };
+      if (typeof emoji !== 'string' || !isSingleEmoji(emoji)) return { error: 'Send a single emoji' };
+      const to = state.activePlayers.find(candidate => candidate === target);
+      if (to === undefined) return { error: 'That player is not in this game' };
+      if (to === sender) return { error: 'Pick another player to react to' };
+      const key = spectator ? `spectator:${spectator.id}` : `seat:${sender as Seat}`;
+      const wait = (room.lastReactionAt.get(key) ?? -Infinity) + REACTION_COOLDOWN_MS - now();
+      if (wait > 0) return { error: `You can react again in ${Math.ceil(wait / 1000)} s` };
+
+      const from = spectator ? spectator.name : state.playerNames[sender as Seat];
+      const reaction: Reaction = { from, fromSpectator: Boolean(spectator), target: to, emoji, at: now() };
+      room.lastReactionAt.set(key, reaction.at);
+      const reactions = [...(state.reactions ?? []), { ...reaction, moveCount: room.timeline.length }].slice(-MAX_REACTIONS);
+      room.state = { ...state, reactions };
+      save(roomId, room);
+      return { reaction };
     },
 
     // The starting board, the state right after each move, and the live state when the game ended without a move

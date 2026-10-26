@@ -1,4 +1,5 @@
 import type { HouseRulesState } from './houseRules.ts';
+import type { Reaction, RecordedReaction } from './reactions.ts';
 
 export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
 
@@ -45,6 +46,7 @@ export type BaseGameState = {
   startedAt?: number; // server ms of the first move
   finishedAt?: number; // server ms when isGameOver first became true
   gameNumber?: number; // the n of archiveId; missing means 1
+  reactions?: RecordedReaction[]; // the live log, stripped from every view and snapshot
 };
 
 export type BasePublicState = BaseGameState & {
@@ -59,4 +61,4 @@ export type BasePublicState = BaseGameState & {
 export type OpenGame = { gameType: string; gameId: string; players: string[]; playing: boolean };
 
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it
-export type HistoryStep = BasePublicState & { historyStep: 'start' | 'move' | 'end' };
+export type HistoryStep = Omit<BasePublicState, 'reactions'> & { historyStep: 'start' | 'move' | 'end'; reactions?: Reaction[] };

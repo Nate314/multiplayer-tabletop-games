@@ -13,6 +13,7 @@ import { mountAssetRoutes } from './assets/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts';
+import type { Reaction } from '../shared/reactions.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -154,6 +155,9 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_DISMISS:
       respond(ws, roomId, manager.voteDismiss(roomId, seat, payload?.approve));
       break;
+    case MESSAGE_TYPES.REACT:
+      react(ws, roomId, seat, payload);
+      break;
   }
 }
 
@@ -187,11 +191,21 @@ function sendJoined(ws: WebSocket, joined: { seat: Seat | null; spectatorId?: st
 }
 
 // A spectator may only ask to see a hand or sit down; everything else is refused
+function react(
+  ws: WebSocket, roomId: string, sender: Seat | { spectatorId: string }, payload: Record<string, unknown> | null
+): void {
+  const result = manager.react(roomId, sender, payload?.target, payload?.emoji);
+  if ('error' in result) sendError(ws, result.error);
+  else broadcastReaction(roomId, result.reaction);
+}
+
 function handleSpectatorMessage(
   ws: WebSocket, roomId: string, spectatorId: string, type: unknown, payload: Record<string, unknown> | null
 ): void {
   if (type === MESSAGE_TYPES.REQUEST_HAND) {
     respond(ws, roomId, manager.requestHand(roomId, spectatorId, payload?.seat));
+  } else if (type === MESSAGE_TYPES.REACT) {
+    react(ws, roomId, { spectatorId }, payload);
   } else if (type === MESSAGE_TYPES.SWITCH_TO_PLAYER) {
     const result = manager.switchToPlayer(roomId, spectatorId);
     if ('error' in result) {
@@ -240,6 +254,13 @@ function broadcast(roomId: string): void {
       ? manager.getState(roomId, connection.seat)
       : manager.getSpectatorState(roomId, connection.spectatorId);
     if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
+  }
+}
+
+// A reaction is the same for every viewer and changes no view, so no GAME_STATE follows it
+function broadcastReaction(roomId: string, reaction: Reaction): void {
+  for (const [ws, connection] of connections) {
+    if (connection.roomId === roomId) send(ws, { type: MESSAGE_TYPES.REACTION, payload: reaction });
   }
 }
 

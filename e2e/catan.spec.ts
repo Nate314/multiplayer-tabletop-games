@@ -117,7 +117,7 @@ async function counter(page: Page, label: string, times: number): Promise<void> 
 
 // Waits until the server has seen `name` drop
 async function dropped(page: Page, name: string): Promise<void> {
-  await expect(page.locator('.presence-player', { hasText: name })).toBeVisible();
+  await expect(page.locator('.presence-player[data-disconnected]', { hasText: name })).toBeVisible();
 }
 
 // The numbers the server's random must return for the next lobby reset to deal a board, a deck in printed order and
@@ -1032,9 +1032,9 @@ test.describe('Catan controls', () => {
     });
     await hex(alice, 4).click();
     await expect(alice.getByText('Steal from')).toBeVisible();
-    await expect(button(alice, 'Bob')).toBeVisible();
+    await expect(alice.locator('.turn-buttons').getByRole('button', { name: 'Bob' })).toBeVisible();
     await table.random(0);
-    await button(alice, 'Cara').click();
+    await alice.locator('.turn-buttons').getByRole('button', { name: 'Cara' }).click();
     await expectHand(alice, { ore: 1 });
   });
 
@@ -1230,7 +1230,7 @@ test.describe('Catan differences from Wikipedia', () => {
     });
     await hex(alice, 4).click();
     await table.random(0.75); // the second of Bob's two cards
-    await button(alice, 'Bob').click();
+    await alice.locator('.turn-buttons').getByRole('button', { name: 'Bob' }).click();
     await expectHand(alice, { ore: 1 });
     await expect(bob.locator('.steal-note')).toHaveText('Alice stole your ore');
     await expect(cara.locator('.steal-note')).toHaveCount(0);

@@ -19,13 +19,13 @@ test('/dev/svgs shows every server SVG with each sample and its URL', async ({ b
   expect(errors).toEqual([]);
 });
 
-test('/dev/sounds plays each of the five sounds without an error', async ({ browser, server }) => {
+test('/dev/sounds plays each of the six sounds without an error', async ({ browser, server }) => {
   const page = await newPlayer(browser, server);
   const errors: Error[] = [];
   page.on('pageerror', error => errors.push(error));
   await page.goto('/dev/sounds');
   const buttons = page.getByRole('button', { name: /^Play / });
-  await expect(buttons).toHaveCount(5);
+  await expect(buttons).toHaveCount(6);
   for (const button of await buttons.all()) await button.click();
   expect(errors).toEqual([]);
 });

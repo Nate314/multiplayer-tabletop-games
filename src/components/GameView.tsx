@@ -68,7 +68,12 @@ export default function GameView({ game, client, gameState, playerNumber, specta
       {gameState.isGameOver && closed && !voting && (
         <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
       )}
-      <PresenceBar gameState={gameState} onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)} />
+      <PresenceBar
+        gameState={gameState}
+        playerNumber={playerNumber}
+        spectatorId={spectatorId}
+        onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
+      />
       {playerNumber === null ? (
         <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
       ) : (

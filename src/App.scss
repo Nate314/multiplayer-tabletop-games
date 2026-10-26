@@ -749,6 +749,16 @@
   font-weight: 600;
 }
 
+/* Two lines kept like the move, and more reactions scroll, so the board never moves between steps */
+:where([data-game] .history-reactions) {
+  flex: none;
+  margin: 0 0 8px;
+  height: 3em;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
 :where([data-game] .history-slider) {
   flex: 1;
   min-width: 0;
@@ -1344,6 +1354,101 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+:where([data-game] .presence-player) {
+  position: relative;
+}
+
+:where([data-game] .presence-name) {
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+:where([data-game] .presence-name:disabled) {
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Out of the flow, so a picker or bubble never makes the bar taller or moves the board */
+:where([data-game] .reaction-picker) {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 32px));
+  margin-top: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--lobby-text);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 25%);
+}
+
+:where([data-game] .reaction-picker h2) {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+:where([data-game] .reaction-recent) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+:where([data-game] .reaction-recent button) {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1.4rem;
+}
+
+:where([data-game] .reaction-custom) {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+:where([data-game] .reaction-custom input) {
+  min-width: 0;
+  flex: 1;
+}
+
+:where([data-game] .reaction-bubble) {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  margin-top: 4px;
+  padding: 4px 12px;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 32px));
+  border-radius: 999px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  animation: reaction-bubble 3s ease-in-out forwards;
+}
+
+@keyframes reaction-bubble {
+  0% { opacity: 0; }
+  10%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-game] .reaction-bubble) {
+    animation: none;
+  }
 }
 
 :where([data-game] .presence-waiting) {

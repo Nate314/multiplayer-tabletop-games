@@ -269,3 +269,17 @@ test('answers and requests check who sends them', () => {
   assert.ok('spectatorId' in eli && eli.spectatorId);
   assert.deepEqual(plain.requestHand(ROOM, eli.spectatorId, 1), { error: 'Nothing is hidden in this game' });
 });
+
+test('a spectator reacts to any player under its own name and cooldown', () => {
+  const manager = gameWith('Alice', 'Bob');
+  const dana = watcher(manager, 'Dana');
+  const sender = { spectatorId: dana.spectatorId };
+  assert.deepEqual(manager.react(ROOM, sender, 1, '😂'), { error: 'Reactions open once the game starts' });
+  ok(manager.move(ROOM, 1, tick));
+  const sent = manager.react(ROOM, sender, 1, '😂');
+  assert.ok('reaction' in sent);
+  assert.deepEqual({ ...sent.reaction, at: 0 }, { from: 'Dana', fromSpectator: true, target: 1, emoji: '😂', at: 0 });
+  assert.match((manager.react(ROOM, sender, 2, '👍') as { error: string }).error, /^You can react again in/);
+  assert.ok('reaction' in manager.react(ROOM, 1, 2, '👍')); // a player's cooldown is separate
+  assert.deepEqual(manager.react(ROOM, { spectatorId: 'nobody' }, 1, '😂'), { error: 'You are not in this game' });
+});

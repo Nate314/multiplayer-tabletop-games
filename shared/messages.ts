@@ -1,5 +1,6 @@
 import type { HouseRulesProposal } from './houseRules.ts';
 import type { BasePublicState, JoinRole, Seat } from './types.ts';
+import type { Reaction } from './reactions.ts';
 
 // WebSocket message types shared by the browser and the server
 export const MESSAGE_TYPES = {
@@ -16,6 +17,8 @@ export const MESSAGE_TYPES = {
   SWITCH_TO_PLAYER: 'SWITCH_TO_PLAYER',
   REQUEST_DISMISS: 'REQUEST_DISMISS',
   VOTE_DISMISS: 'VOTE_DISMISS',
+  REACT: 'REACT',
+  REACTION: 'REACTION',
   GAME_STATE: 'GAME_STATE',
   GAME_ERROR: 'GAME_ERROR'
 } as const;
@@ -32,11 +35,13 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }
   | { type: typeof MESSAGE_TYPES.VOTE_UNDO; payload: { approve: boolean } }
   | { type: typeof MESSAGE_TYPES.REQUEST_DISMISS; payload: { seat: Seat } }
-  | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } };
+  | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } }
+  | { type: typeof MESSAGE_TYPES.REACT; payload: { target: Seat; emoji: string } };
 
 export type ServerMessage =
   | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat | null; spectatorId?: string; seatKey: string; gameState: BasePublicState } }
   | { type: typeof MESSAGE_TYPES.GAME_STATE; payload: BasePublicState }
+  | { type: typeof MESSAGE_TYPES.REACTION; payload: Reaction }
   | { type: typeof MESSAGE_TYPES.GAME_ERROR; payload: { message: string } };
 
 // Reads untrusted data as an object whose fields are all still unchecked, or null if it is not an object
