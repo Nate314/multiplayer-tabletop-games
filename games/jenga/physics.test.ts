@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   DEFAULT_GRIP, MAX_REACH, QUARTER_TURN, anchorWorld, buildWorld, clampTarget, initPhysics, isOut, isResting, onGroundOutside,
-  readBlocks, startingTower, stepWorld, toppled,
+  readBlocks, startingTower, stepWorld, syncWorld, toppled,
 } from './physics.ts';
 import type { Block, Grab, Vec3 } from './types.ts';
 
@@ -133,6 +133,22 @@ test('a flick pulls hard but never moves the block more than its reach in one ti
   stepWorld(tower, { block: MIDDLE, anchor: END, target: [0, 0, -1000] }, 3);
   const moved = distance(readBlocks(tower, start)[MIDDLE].pose.p, start[MIDDLE].pose.p);
   assert.ok(moved < MAX_REACH, `moved ${moved}`);
+});
+
+test('syncing a running world to a server state moves its bodies there and drops blocks taken out', () => {
+  const start = startingTower();
+  const tower = buildWorld(start, () => DEFAULT_GRIP);
+  stepWorld(tower, pullOut(start, MIDDLE), 30);
+  // The server's tower: block 22 gone, block 0 nudged and moving
+  const server = start.filter(b => b.id !== MIDDLE).map(b => (b.id === 0 ? { ...b, pose: { ...b.pose, p: [0.5, 0.75, -2.5] as Vec3 }, v: [1, 0, 0] as Vec3 } : b));
+  assert.equal(syncWorld(tower, server), true);
+  assert.equal(tower.bodies.has(MIDDLE), false);
+  assert.equal(tower.world.bodies.len(), 54);
+  const read = readBlocks(tower, server);
+  for (const block of server) assert.ok(distance(read.find(b => b.id === block.id)!.pose.p, block.pose.p) < 1e-4, `block ${block.id}`);
+  assert.deepEqual(read.find(b => b.id === 0)!.v, [1, 0, 0]);
+  // A block the world has never seen needs a rebuild
+  assert.equal(syncWorld(tower, start), false);
 });
 
 test('toppled ignores the exempt block and catches a drop of more than 0.75 or a tilt over 30 degrees', () => {

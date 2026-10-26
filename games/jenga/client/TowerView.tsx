@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import * as THREE from 'three';
 import { SIMULATION_TICK_MS } from '../../../shared/gameDefinition.ts';
 import { BLOCK, LEVELS } from '../physics.ts';
@@ -13,7 +13,10 @@ type Interactive = {
   onRelease(): void;
 };
 
-type TowerViewProps = { blocks: Block[]; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive };
+// The preview draws its frames through this, without a React render each frame
+export type TowerHandle = { draw(blocks: Block[]): void };
+
+type TowerViewProps = { blocks: Block[]; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive; ref?: Ref<TowerHandle> };
 type Drawn = Pick<TowerViewProps, 'blocks' | 'highlight' | 'ghost'>;
 
 const BLOCK_COUNT = LEVELS * 3;
@@ -42,7 +45,7 @@ const place = (object: THREE.Object3D, pose: Pose) => {
   object.quaternion.set(...pose.q);
 };
 
-export default function TowerView({ blocks, highlight = null, ghost = null, interactive }: TowerViewProps) {
+export default function TowerView({ blocks, highlight = null, ghost = null, interactive, ref }: TowerViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const paintRef = useRef<(() => void) | null>(null);
   const drawnRef = useRef<Drawn>({ blocks, highlight, ghost });
@@ -88,9 +91,17 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
       renderer.render(scene, camera);
     };
 
+    // Read from the CSS only on a theme change, not on every frame
+    let colors = themeColors(canvas);
+    let shades = meshes.map((_, id) => shade(colors.wood, id));
+    const recolor = () => {
+      colors = themeColors(canvas);
+      shades = meshes.map((_, id) => shade(colors.wood, id));
+      paint();
+    };
+
     const paint = () => {
       const { blocks, highlight, ghost } = drawnRef.current;
-      const colors = themeColors(canvas);
       hemisphere.color.copy(colors.sky);
       hemisphere.groundColor.copy(colors.ground);
       const shown = new Map(blocks.map(block => [block.id, block]));
@@ -100,7 +111,7 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
         mesh.visible = !!block;
         if (!block) return;
         place(mesh, block.pose);
-        mesh.material.color.copy(id === highlight ? colors.highlight : shade(colors.wood, id));
+        mesh.material.color.copy(id === highlight ? colors.highlight : shades[id]);
       });
       ghostMesh.visible = !!ghost;
       if (ghost) {
@@ -114,8 +125,8 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
 
     // A light or dark switch changes the CSS colors without any new props
     const dark = window.matchMedia('(prefers-color-scheme: dark)');
-    dark.addEventListener('change', paint);
-    const theme = new MutationObserver(paint);
+    dark.addEventListener('change', recolor);
+    const theme = new MutationObserver(recolor);
     theme.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     const resize = () => {
@@ -231,7 +242,7 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     return () => {
       // Unmounting mid-drag must not leave the server holding the grab
       endPull();
-      dark.removeEventListener('change', paint);
+      dark.removeEventListener('change', recolor);
       theme.disconnect();
       observer.disconnect();
       geometry.dispose();
@@ -248,6 +259,13 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     drawnRef.current = { blocks, highlight, ghost };
     paintRef.current?.();
   }, [blocks, highlight, ghost]);
+
+  useImperativeHandle(ref, () => ({
+    draw(blocks: Block[]) {
+      drawnRef.current = { ...drawnRef.current, blocks };
+      paintRef.current?.();
+    }
+  }), []);
 
   if (failed) return <p className="jenga-no-webgl">This device cannot draw the 3D tower</p>;
   return <div ref={containerRef} />;

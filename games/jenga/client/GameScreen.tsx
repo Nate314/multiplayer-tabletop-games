@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
-import TowerView from './TowerView';
+import TowerView, { type TowerHandle } from './TowerView';
 import { usePreview } from './usePreview.ts';
 import { across, keySteps, keyboardTarget, nextSelection } from './pullInput.ts';
 import { BLOCK, anchorWorld } from '../physics.ts';
@@ -35,22 +35,25 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [localGrab, setLocalGrab] = useState<Grab | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [steps, setSteps] = useState(0);
-  const shown = usePreview(gameState, localGrab);
+  const tower = useRef<TowerHandle>(null);
+  const draw = useCallback((shown: Block[]) => tower.current?.draw(shown), []);
+  usePreview(gameState, localGrab, draw);
   // Pointer callbacks fire between renders, so they read the newest state
-  const latest = useRef(gameState);
+  const latest = useRef({ gameState, pulling });
   useEffect(() => {
-    latest.current = gameState;
-  }, [gameState]);
+    latest.current = { gameState, pulling };
+  }, [gameState, pulling]);
 
   const selectedBlock = blocks.find(b => b.id === selected && canPull(gameState, b.id));
   const holding = pulling && selectedBlock !== undefined && gameState.grab?.block === selectedBlock.id;
   // Once the block is out, toppled or the turn moved on, the server has no grab to steer
-  const steerable = () => latest.current.phase === 'pull' && !latest.current.toppled;
+  const steerable = () => latest.current.gameState.phase === 'pull' && !latest.current.gameState.toppled;
 
-  const interactive = {
-    canGrab: (block: number) => pulling && canPull(gameState, block),
+  // One object for the view's lifetime; it reads everything it needs from the ref
+  const interactive = useMemo(() => ({
+    canGrab: (block: number) => latest.current.pulling && canPull(latest.current.gameState, block),
     onGrab(block: number, anchor: Vec3) {
-      const target = anchorWorld(latest.current.blocks.find(b => b.id === block)!, anchor);
+      const target = anchorWorld(latest.current.gameState.blocks.find(b => b.id === block)!, anchor);
       setLocalGrab({ block, anchor, target });
       setSelected(block);
       gameService.sendAction({ type: 'grab', block, anchor });
@@ -64,7 +67,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       setLocalGrab(null);
       if (steerable()) gameService.sendAction({ type: 'release' });
     }
-  };
+  }), []);
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (!pulling) return;
@@ -98,7 +101,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="board-area">
           <div className="jenga-controls" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}>
             <TowerView
-              blocks={shown}
+              ref={tower}
+              blocks={blocks}
               highlight={gameState.grab?.block ?? localGrab?.block ?? (pulling ? selected : null)}
               interactive={interactive}
             />

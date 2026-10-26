@@ -44,9 +44,6 @@ async function settle(table: Table) {
 }
 
 test.describe('Jenga rules', () => {
-  // Every simulated tick reaches both pages, which rerun the preview physics and draw it in software; slow when workers share the CPU
-  test.describe.configure({ timeout: 90_000 });
-
   test('the tower has 54 blocks and Alice pulls first', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await expect(status(alice)).toHaveText('Your turn: pull a block from the tower');
@@ -67,6 +64,25 @@ test.describe('Jenga rules', () => {
     await expect(status(alice)).toHaveText("Bob's turn to pull a block");
     await alice.getByRole('button', { name: 'History' }).click();
     await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and placed it on top');
+  });
+
+  test('no block grip reaches either player over the socket during a grab, pull and place', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    expect((await state(table)).grip).toHaveLength(54);
+    const frames: string[] = [];
+    // The sockets opened during the join, before page.on('websocket') could see them, so Chrome's own network events are read
+    for (const page of [alice, bob]) {
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Network.enable');
+      cdp.on('Network.webSocketFrameReceived', event => frames.push(event.response.payloadData));
+    }
+    await grabMiddle(table, alice);
+    for (let press = 0; press < 80 && (await state(table)).held === null; press++) await pressAndTick(table, alice, 'ArrowDown', 1);
+    await settle(table);
+    await place(alice, 'middle').click();
+    await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
+    expect(frames.filter(frame => frame.includes('"blocks"')).length).toBeGreaterThan(10);
+    expect(frames.filter(frame => frame.includes('grip'))).toEqual([]);
   });
 
   test('a block can be slid back and another chosen', async ({ seat }) => {

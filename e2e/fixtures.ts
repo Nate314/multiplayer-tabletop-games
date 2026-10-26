@@ -48,8 +48,7 @@ export async function joinGame(page: Page, gameType: string, gameId: string, nam
   await page.getByLabel('Your name').fill(name);
   await page.getByLabel('Game ID').fill(gameId);
   await page.getByRole('button', { name: 'Join', exact: true }).click();
-  // Jenga's chunk carries Rapier's WASM, which can take several seconds to load when workers share the CPU
-  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
 }
 
 export async function newPlayer(browser: Browser, server: Server, motion = false, touch = false): Promise<Page> {

@@ -109,6 +109,28 @@ export function stepWorld(tower: TowerWorld, grab: Grab | null, steps: number) {
   }
 }
 
+// Moves a running world's bodies to `blocks` instead of rebuilding it; false when a block has no body yet and only a rebuild will do
+export function syncWorld(tower: TowerWorld, blocks: Block[]): boolean {
+  if (blocks.some(block => !tower.bodies.has(block.id))) return false;
+  const shown = new Set(blocks.map(block => block.id));
+  for (const [id, body] of tower.bodies) {
+    if (shown.has(id)) continue;
+    tower.world.removeRigidBody(body);
+    tower.bodies.delete(id);
+  }
+  for (const block of blocks) {
+    const body = tower.bodies.get(block.id)!;
+    const [x, y, z, w] = block.pose.q;
+    // Views send velocities only for moving blocks, so a missing one is at rest
+    const moving = !!(block.v || block.w);
+    body.setTranslation(vec(block.pose.p), moving);
+    body.setRotation({ x, y, z, w }, moving);
+    body.setLinvel(vec(block.v ?? [0, 0, 0]), moving);
+    body.setAngvel(vec(block.w ?? [0, 0, 0]), moving);
+  }
+  return true;
+}
+
 export function readBlocks(tower: TowerWorld, previous: Block[]): Block[] {
   return previous.map(block => {
     const body = tower.bodies.get(block.id);
