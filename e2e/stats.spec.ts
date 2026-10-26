@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import { expect, seeTable, test, type Seat } from './fixtures.ts';
 
@@ -49,20 +50,30 @@ test('no stats request or page carries an ID', async ({ seat }) => {
       if (new URL(response.url()).pathname.startsWith('/api/stats')) seen.push({ url: response.url(), body: response.text() });
     });
     page.on('request', request => {
-      if (new URL(request.url()).pathname.startsWith('/link/')) seen.push({ url: request.url(), body: Promise.resolve('') });
+      const { pathname } = new URL(request.url());
+      if (pathname.startsWith('/link/') || pathname.startsWith('/api/history/')) seen.push({ url: request.url(), body: Promise.resolve('') });
     });
   }
   await openStats(alice);
+  await recentGames(alice).getByRole('button', { name: 'History' }).click();
+  const history = alice.getByRole('dialog', { name: 'History' });
+  await expect(history.locator('.history-move')).toContainText('Move 7 of 7');
+  await history.getByRole('button', { name: 'Close' }).click();
   await alice.getByRole('button', { name: 'Link another device' }).click();
   const code = await alice.locator('.stats-link-code').innerText();
+  const pages = [await alice.content()];
   await cara.goto(`/link/${code}`);
   await cara.getByRole('button', { name: 'Link', exact: true }).click();
   await expect(recentGames(cara)).toHaveCount(2);
+  pages.push(await cara.content());
   await alice.getByRole('button', { name: 'Clear my data' }).click();
+  pages.push(await alice.content());
   await alice.locator('.stats-clear').getByRole('button', { name: 'Clear my data' }).click();
   await expect(alice.getByText('No games yet')).toBeVisible();
-  // stats, link-code, the link page, link, stats again, clear
-  expect(seen.length).toBeGreaterThanOrEqual(6);
+  pages.push(await alice.content());
+  // stats, history, link-code, the link page, link, stats again, clear
+  expect(seen.length).toBeGreaterThanOrEqual(7);
+  for (const html of pages) for (const id of ids) expect(html).not.toContain(id);
   for (const { url, body } of seen) {
     for (const id of ids) {
       expect(url).not.toContain(id);
@@ -78,9 +89,11 @@ test('clear replaces the ID and shows Former player to the other player', async 
   await expect(recentGames(alice)).toHaveCount(1);
   await alice.getByRole('button', { name: 'Clear my data' }).click();
   const panel = alice.locator('.stats-clear');
-  await expect(panel).toContainText('This removes you from 1 games on 1 devices. It cannot be undone.');
+  await expect(panel).toContainText('This removes you from 1 game on 1 device. It cannot be undone.');
+  await expect(panel.getByRole('button', { name: 'Cancel' })).toBeFocused();
   await panel.getByRole('button', { name: 'Cancel' }).click();
   await expect(panel).toHaveCount(0);
+  await expect(alice.getByRole('button', { name: 'Clear my data' })).toBeFocused();
   await alice.getByRole('button', { name: 'Clear my data' }).click();
   await panel.getByRole('button', { name: 'Clear my data' }).click();
   await expect(alice.getByText('No games yet')).toBeVisible();
@@ -100,6 +113,7 @@ test('a link code merges a device', async ({ seat }) => {
   await openStats(alice);
   await alice.getByRole('button', { name: 'Link another device' }).click();
   const panel = alice.locator('.stats-link');
+  await expect(panel.getByRole('heading', { name: 'Link another device' })).toBeFocused();
   await expect(panel).toContainText('Open this link or enter the code on the other device. It works once, for 10 minutes.');
   const code = await panel.locator('.stats-link-code').innerText();
   expect(code).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{3}-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/);
@@ -125,6 +139,13 @@ test('the recent game opens its History', async ({ seat }) => {
   await expect(dialog.locator('.history-move')).toHaveText('Move 7 of 7: Alice dropped a disc in column 1');
   await dialog.getByRole('slider', { name: 'Step' }).fill('0');
   await expect(dialog.locator('.history-move')).toHaveText('Start of the game');
+  const download = alice.waitForEvent('download');
+  await dialog.getByRole('button', { name: 'Download game' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/\.json$/);
+  const saved = JSON.parse(await readFile(await file.path(), 'utf8'));
+  expect(saved.gameType).toBe('connectfour');
+  expect(saved.steps.length).toBeGreaterThan(7);
   await dialog.getByRole('button', { name: 'Close' }).click();
   await expect(dialog).toHaveCount(0);
 });

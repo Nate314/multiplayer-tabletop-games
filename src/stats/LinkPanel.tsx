@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ServerSvg from '../assets/ServerSvg';
 import { svgUrl } from '../assets/svgCache.ts';
 import { postStats } from './api.ts';
@@ -15,6 +15,13 @@ export default function LinkPanel() {
   const [issued, setIssued] = useState<Issued | null>(null);
   const [failed, setFailed] = useState(false);
   const [now, setNow] = useState(Date.now);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  // The panel replaces its button, so focus moves into it once per code, not on every tick
+  const code = issued?.code;
+  useEffect(() => {
+    if (code) heading.current?.focus();
+  }, [code]);
 
   useEffect(() => {
     if (!issued) return;
@@ -48,7 +55,7 @@ export default function LinkPanel() {
   const link = `${window.location.origin}/link/${issued.code}`;
   return (
     <section className="stats-section stats-link">
-      <h2 className="lobby-category-heading">Link another device</h2>
+      <h2 className="lobby-category-heading" tabIndex={-1} ref={heading}>Link another device</h2>
       <p>Open this link or enter the code on the other device. It works once, for 10 minutes.</p>
       <p className="stats-link-code">{issued.code}</p>
       <a className="stats-link-url" href={link}>{link}</a>
