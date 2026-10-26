@@ -43,6 +43,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   monopoly: () => import('../games/monopoly/client/index.ts').then(m => m.monopolyClient),
   parchisi: () => import('../games/parchisi/client/index.ts').then(m => m.parchisiClient),
   phase10: () => import('../games/phase10/client/index.ts').then(m => m.phase10Client),
+  pictionary: () => import('../games/pictionary/client/index.ts').then(m => m.pictionaryClient),
   quoridor: () => import('../games/quoridor/client/index.ts').then(m => m.quoridorClient),
   racko: () => import('../games/racko/client/index.ts').then(m => m.rackoClient),
   risk: () => import('../games/risk/client/index.ts').then(m => m.riskClient),

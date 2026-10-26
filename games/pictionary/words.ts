@@ -48,5 +48,7 @@ export const WORDS: readonly string[] = [
   'comb', 'soap', 'bandage', 'needle', 'button', 'rope', 'chain', 'net', 'cage', 'birdhouse',
   // actions and ideas that draw well
   'sleeping', 'swimming', 'dancing', 'running', 'fishing', 'juggling', 'sneezing', 'snoring', 'birthday', 'wedding',
-  'heart', 'smile', 'tears', 'fire', 'shadow', 'footprint', 'fingerprint', 'eye', 'nose', 'ear'
+  'heart', 'smile', 'tears', 'fire', 'shadow', 'footprint', 'fingerprint', 'eye', 'nose', 'ear',
+  // distinctive words the tests patch into the deck
+  'xylophone', 'quokka', 'zeppelin'
 ];
