@@ -24,7 +24,7 @@ Collect sets and runs to complete ten phases first, for 2 to 6 players (up to 8 
 - After your phase is down, select cards and click "Hit here" on any group to add them
 - Select one card and click "Discard selected card" to end your turn. For a Skip, click the player to skip
 - Every player is listed with their phase, score, card count and laid-down groups, and the current player is outlined. Your hand is dimmed when it is not your turn
-- After each hand, read the scoring screen and click Continue; the next hand starts once everyone has
+- After each hand, read the scoring screen and click Continue; the last hand's scoring is on the game-over screen
 - With Color-blind symbols on in Settings, each color also shows its shape: red circle, blue square, green triangle, yellow star. Number cards show it in their top left corner; Wild and Skip cards already carry a letter
 - With Highlight newly drawn cards on in Settings (the default), the card you draw is outlined from your draw until your discard ends the turn; laying down and hitting keep it
 - Moves slide into place: draws, discards, laid-down phases and hits; a skipped player's seat flashes
