@@ -89,7 +89,8 @@ export function buildWorld(blocks: Block[], grip: (id: number) => number): Tower
   return { world, bodies };
 }
 
-// A spring from the anchor to the target, damped by the anchor's speed and capped, so a flick yanks but never teleports
+// A spring from the anchor to the target, damped by the anchor's speed. Clamping the target to MAX_REACH is what bounds
+// a flick (spring at most about 0.4 N); MAX_PULL_FORCE (6 N) is only a backstop and does not bind in normal play
 function pull(body: RAPIER.RigidBody, grab: Grab) {
   const center = arr(body.translation());
   const r = body.rotation();

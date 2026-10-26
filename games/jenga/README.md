@@ -12,7 +12,7 @@ For 2 to 8 players, who take turns in join order. Nobody can join after the firs
 - During your turn you may slide a block, push it back in, let go and try another as often as you like
 - A block is in your hand once it is pulled clear of the tower, or once it lies on the table outside the tower after you let go
 - Place the block on the top level, in the left, middle or right spot. Once the top level has 3 blocks, the next block starts a new level laid across it. You can place only once the tower has stopped moving. Placing ends your turn
-- The tower has toppled when any block other than the one you last grabbed drops more than half a block height, or tips more than 30 degrees, from where it was at the start of your turn. The same check runs after you place
+- The tower has toppled when any block other than the one you last grabbed drops more than half a block height, or tips more than 30 degrees, from where it was at the start of your turn. The same check runs after you place, until the tower is still again: a fall then is yours, and the next player can grab only once it is still
 - Whoever topples the tower loses, and everyone else wins. The game ends once the falling blocks come to rest
 - Each block has its own grip, from slick to sticky, picked at random for every game. Nobody can see it, so you find out by pulling: a block that will not budge may be sticky, or carrying the weight above it
 - If you lose connection mid-pull, you let go of the block and the tower settles where it is; a fall while it settles still counts as your topple. Your turn waits for you to come back, and a block already in your hand stays there
@@ -34,6 +34,8 @@ For 2 to 8 players, who take turns in join order. Nobody can join after the firs
 ## How it works
 
 The server runs the tower's physics (Rapier, deterministic build) 20 times a second while anyone pulls or the tower moves, and is the only judge of what happens. Each browser runs the same physics between the server's updates so the tower moves smoothly, and draws it with three.js. The grips never leave the server: the browser simulates every block with the same middling grip, and the server's next update corrects it.
+
+The physics costs server CPU. Measured on a Windows dev machine, a tick during a pull takes a median of about 18 to 20 ms (90th percentile 34 to 43 ms) of the 50 ms between ticks, a tick during a collapse up to about 50 ms, and each placement settles synchronously in about 210 to 410 ms, so a few Jenga rooms playing at once can slow the server.
 
 ## Differences from Wikipedia
 

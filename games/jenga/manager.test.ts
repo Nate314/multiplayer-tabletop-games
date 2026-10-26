@@ -80,6 +80,45 @@ test('toppling the tower ends the game with a recorded topple step and everyone 
   assert.deepEqual((history.at(-1) as unknown as PublicGameState).lastMove, { type: 'topple', seat: 1 });
 });
 
+test('a placement that topples at once records the place step, then the topple step, and undo restores the placer\'s turn start', () => {
+  const manager = game();
+  pullOut(manager);
+  manager.simulateTicks(ROOM, 400);
+  const state = raw(manager);
+  // Block 0 a level higher at the turn start, so the check after placing sees it fallen
+  const turnStart = state.turnStart.map(b => b.id === 0 ? { ...b, pose: { ...b.pose, p: [b.pose.p[0], b.pose.p[1] + 1.5, b.pose.p[2]] as Vec3 } } : b);
+  manager.replaceState(ROOM, { ...state, turnStart } as GameState);
+  ok(manager.move(ROOM, 1, { type: 'place', slot: 0 }));
+  manager.simulateTicks(ROOM, 400);
+  assert.equal(raw(manager).isGameOver, true);
+  const history = manager.history('jenga', 'g1')!;
+  assert.deepEqual(history.map(step => (step as unknown as PublicGameState).lastMove?.type ?? null), [null, 'place', 'topple']);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  const undone = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(undone.currentPlayer, 1);
+  assert.equal(undone.toppled, false);
+  assert.deepEqual(raw(manager).blocks, turnStart);
+});
+
+test('a collapse whose tick throws still ends and records the game instead of staying stuck', (t) => {
+  t.mock.method(console, 'error', () => {});
+  const manager = game();
+  topple(manager);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  ok(manager.voteUndo(ROOM, 3, true));
+  const state = raw(manager);
+  // A block with no rotation cannot be built into a world, so every tick of this collapse throws
+  const broken = { id: 99, level: 0, pose: { p: [0, 0, 0], q: null } };
+  manager.replaceState(ROOM, { ...state, blocks: [...state.blocks, broken], toppled: true, loser: 1, sim: { ticks: 0, calmTicks: 0, sinceRelease: 0 } } as unknown as GameState);
+  manager.simulateTicks(ROOM, 1);
+  assert.equal(raw(manager).sim, null);
+  assert.equal(raw(manager).isGameOver, true);
+  assert.deepEqual(raw(manager).lastMove, { type: 'topple', seat: 1 });
+  assert.deepEqual(raw(manager).winners, [2, 3]);
+});
+
 test('the table view and the game file never contain grip values', () => {
   const manager = game();
   topple(manager);

@@ -105,6 +105,8 @@ const isVec3 = (value: unknown): value is Vec3 =>
 
 function grab(state: GameState, seat: Seat, input: Record<string, unknown>): Result<GameState> {
   if (state.phase !== 'pull') return { error: 'Place the block you are holding first' };
+  // A placement that did not settle in time keeps moving into the next turn; a fall then is the placer's
+  if (state.sim && !state.pull) return { error: 'Wait for the tower to settle' };
   const { block: id, anchor } = input;
   if (typeof id !== 'number' || !isVec3(anchor) || anchor.some((a, i) => Math.abs(a) > HALF[i])) return { error: 'Invalid block' };
   const refusal = pullRefusal(state.blocks, id);
@@ -135,13 +137,15 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   const input = asRecord(action);
   if (state.isGameOver) return { error: 'The game is over' };
   if (!state.started && state.activePlayers.length < 2) return { error: 'Waiting for more players' };
-  if (state.undoVote) return { error: 'An undo vote is in progress' };
-  if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
+  // Letting go stays allowed during a vote, so a vote opened mid-pull never leaves the spring pulling
+  const release = input?.type === 'release';
+  if (state.undoVote && !release) return { error: 'An undo vote is in progress' };
+  if (state.dismissVote && !release) return { error: 'A dismiss vote is in progress' };
   if (state.toppled) return { error: 'The tower has toppled' };
   if (state.currentPlayer !== seat) return { error: 'Not your turn' };
   if (input?.type === 'grab') return grab(state, seat, input);
   if (input?.type === 'drag') return drag(state, input.target);
-  if (input?.type === 'release') {
+  if (release) {
     if (!state.grab) return { error: 'You are not holding a block' };
     return { state: { ...released(state), gameStatus: turnStatus(state) } };
   }
@@ -245,39 +249,44 @@ function takenOut(state: GameState, blocks: Block[]): number | null {
 
 const still = (blocks: Block[]) => blocks.map(({ id, level, pose }) => ({ id, level, pose }));
 
-// A throw after stepping leaves the kept world ahead of its state, so it is dropped and the manager logs the error
+// A throw after stepping leaves the kept world ahead of its state, so it is dropped. The tower then stops where it
+// stood, ending a collapse, since a toppled game refuses every action and nothing else would ever restart its clock
 export function simulate(state: GameState): GameState {
   try {
     return tick(state);
   } catch (error) {
     forgetWorld(state.gameId);
-    throw error;
+    console.error(`jenga simulation failed in ${state.gameId}:`, error);
+    return atRest({ ...state, grab: null });
   }
 }
 
-// One tick: step the world, then take a block out, catch a topple, and stop once everything is at rest
+// One tick: step the world, then catch a topple, take a block out, and stop once everything is at rest
 function tick(state: GameState): GameState {
   if (!state.sim) return state;
   const tower = worldFor(state.gameId, state);
   stepWorld(tower, state.grab, STEPS_PER_TICK);
   let blocks = readBlocks(tower, state.blocks);
   let next: GameState = { ...state, blocks };
-  const name = state.currentPlayer === null ? '' : state.playerNames[state.currentPlayer];
 
-  const out = takenOut(state, blocks);
+  let sim = { ...state.sim, ticks: state.sim.ticks + 1 };
+  // A game already over (everyone else left) still settles, but a collapse then cannot pick a new loser.
+  // Without a pull the tower is still settling from the last placement, so the placer toppled it
+  if (!next.toppled && !state.isGameOver && toppled(state.turnStart, blocks, state.pull?.block ?? null)) {
+    const loser = (state.pull ? state.currentPlayer : state.lastMove?.seat ?? state.currentPlayer) ?? null;
+    const name = loser === null ? 'Someone' : state.playerNames[loser];
+    next = { ...next, toppled: true, loser, grab: null, gameStatus: `${name} toppled the tower!` };
+    sim = { ...sim, ticks: 0 };
+  }
+
+  // Checked after the topple, which keeps a block pulled clear in that same tick on the table
+  const out = takenOut(next, blocks);
   if (out !== null) {
     const body = tower.bodies.get(out)!;
     tower.world.removeRigidBody(body);
     tower.bodies.delete(out);
     blocks = blocks.filter(b => b.id !== out);
-    next = { ...next, blocks, held: out, phase: 'place', grab: null, gameStatus: `${name} took a block out. Place it on top` };
-  }
-
-  let sim = { ...state.sim, ticks: state.sim.ticks + 1 };
-  // A game already over (everyone else left) still settles, but a collapse then cannot pick a new loser
-  if (!next.toppled && !state.isGameOver && toppled(state.turnStart, blocks, state.pull?.block ?? null)) {
-    next = { ...next, toppled: true, loser: state.currentPlayer, grab: null, gameStatus: `${name} toppled the tower!` };
-    sim = { ...sim, ticks: 0 };
+    next = { ...next, blocks, held: out, phase: 'place', grab: null, gameStatus: `${state.playerNames[state.pull!.seat]} took a block out. Place it on top` };
   }
 
   const calm = !next.grab && isResting(blocks);
@@ -291,8 +300,14 @@ function tick(state: GameState): GameState {
 
   // At rest the world is no longer needed: the next grab rebuilds it from these poses
   forgetWorld(state.gameId);
-  next = { ...next, blocks: still(blocks), sim: null };
-  if (!next.toppled) return next;
+  return atRest(next);
+}
+
+// Velocities dropped and the simulation stopped; a collapse ends the game, and a placement's settling sets the turn start
+function atRest(state: GameState): GameState {
+  const blocks = still(state.blocks);
+  const next = { ...state, blocks, sim: null };
+  if (!next.toppled) return next.pull ? next : { ...next, turnStart: blocks };
   const loser = next.loser!;
   return {
     ...next,

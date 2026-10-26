@@ -1,11 +1,11 @@
-import { test } from 'node:test';
+import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { jenga } from './index.ts';
 import { applyAction, canPull, jengaStandings, openSlots, simulate, simulating, topLevel } from './rules.ts';
 import { forgetWorld } from './simulation.ts';
 import { MAX_REACH, anchorWorld } from './physics.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
-import type { Block, GameState, Seat, Vec3 } from './types.ts';
+import type { Block, GameState, Quat, Seat, Vec3 } from './types.ts';
 
 // Middle of level 7, which runs along Z; local +X is its long axis
 const MIDDLE = 22;
@@ -378,11 +378,16 @@ test('resumeClock clears a grab and keeps settling', () => {
   forgetWorld('g1');
 });
 
-test('a tick that throws after stepping forgets the world, so the next tick rebuilds it', () => {
+test('a tick that throws is logged, forgets the world and stops the simulation where the tower stood', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
   let state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
   state = simulate(act(state, 1, { type: 'drag', target: far(state, MIDDLE) }));
   // A broken turnStart throws in the topple check, after the kept world has stepped
-  assert.throws(() => simulate({ ...state, turnStart: null as unknown as Block[] }));
+  const stopped = simulate({ ...state, turnStart: null as unknown as Block[] });
+  assert.equal(logged.mock.callCount(), 1);
+  assert.equal(stopped.sim, null);
+  assert.equal(stopped.grab, null);
+  assert.deepEqual(stopped.pull, { seat: 1, block: MIDDLE });
   const after = simulate(state);
   const rebuilt = simulate({ ...state, blocks: [...state.blocks] });
   assert.deepEqual(after, rebuilt);
@@ -424,6 +429,70 @@ test('dismissing the toppler during the collapse keeps the loss', () => {
   assert.deepEqual(over.winners, [2, 3]);
   assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
   forgetWorld('g1');
+});
+
+test('a collapse whose tick throws still ends the game against the toppler', (t: TestContext) => {
+  t.mock.method(console, 'error', () => {});
+  const state = collapsing();
+  // A block with no rotation cannot be built into a world
+  const broken = { ...state, blocks: [...state.blocks, { id: 99, level: 0, pose: { p: [0, 0, 0] as Vec3, q: null as unknown as Quat } }] };
+  const over = simulate(broken);
+  assert.equal(over.sim, null);
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [2]);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+});
+
+// Alice's placement at rest and Bob to pull, but the tower still moving, as when settling hit its cap
+function settling(): GameState {
+  return { ...place(holding(MIDDLE), 1, { type: 'place', slot: 1 }), sim: { ticks: 0, calmTicks: 0, sinceRelease: 0 } };
+}
+
+// turnStart with block 0 a level higher, so the next topple check sees it fallen
+const raised = (blocks: Block[]) => blocks.map(b => b.id === 0 ? { ...b, pose: { ...b.pose, p: [b.pose.p[0], b.pose.p[1] + 1.5, b.pose.p[2]] as Vec3 } } : b);
+
+test('a grab is refused while the tower settles after a placement', () => {
+  assert.equal(refusal(settling(), 2, { type: 'grab', block: 19, anchor: END }), 'Wait for the tower to settle');
+});
+
+test('a placement whose collapse finishes in later ticks blames the placer', () => {
+  const state = settling();
+  const fallen = simulate({ ...state, turnStart: raised(state.turnStart) });
+  assert.equal(fallen.toppled, true);
+  assert.equal(fallen.loser, 1);
+  assert.equal(fallen.gameStatus, 'Alice toppled the tower!');
+  const over = settle(fallen);
+  assert.deepEqual(over.winners, [2]);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+  forgetWorld('g1');
+});
+
+test('a placement that settles in later ticks makes the rested tower the turn start', () => {
+  const state = settling();
+  const rested = settle({ ...state, turnStart: state.blocks.map(b => ({ ...b, v: [0, 0, 0] as Vec3 })) });
+  assert.equal(rested.toppled, false);
+  assert.deepEqual(rested.turnStart, rested.blocks);
+  forgetWorld('g1');
+});
+
+test('a tick that topples and pulls the block clear at once keeps every block on the table', () => {
+  const state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
+  const blocks = state.blocks.map(b => b.id === MIDDLE ? { ...b, pose: { ...b.pose, p: [10, b.pose.p[1], 0] as Vec3 } } : b);
+  const next = simulate({ ...state, blocks, turnStart: raised(state.turnStart) });
+  assert.equal(next.toppled, true);
+  assert.equal(next.held, null);
+  assert.equal(next.blocks.length, 54);
+  forgetWorld('g1');
+});
+
+test('the puller may let go during a vote, and nothing else', () => {
+  const grabbed = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
+  for (const vote of [{ undoVote: { requestedBy: 2, votes: { 2: true } } }, { dismissVote: { target: 2, requestedBy: 1, votes: { 1: true } } }]) {
+    const voting = { ...grabbed, ...vote };
+    assert.equal(refusal(voting, 2, { type: 'release' }), 'Not your turn');
+    assert.equal(act(voting, 1, { type: 'release' }).grab, null);
+    assert.notEqual(refusal(voting, 1, { type: 'drag', target: [0, 0, 0] }), 'accepted');
+  }
 });
 
 test('standings put the toppler last and everyone else first with blocks placed', () => {
