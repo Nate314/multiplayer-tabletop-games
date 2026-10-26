@@ -94,8 +94,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 The gear button in the landing page header and every game header opens Settings. Every setting belongs to the player and is kept in this browser only; it is never sent to the server and does not change what other players see or hear.
 
 - Volume and Mute all set how loud the sounds are, and Mute all silences them. Sounds start after your first click or key press on the page, so after a reload, click once
-- Your turn chime, Moves, Dice, Game over, Timer warnings and Reactions to you turn each group of sounds on or off. Timer warnings is a tick each second in the last 10 seconds of your Chess clock or Scrabble turn timer (house rules)
-. Reactions to you is a soft sound when another player reacts to you
+- Your turn chime, Moves, Dice, Game over, Timer warnings and Reactions to you turn each group of sounds on or off. Timer warnings is a tick each second in the last 10 seconds of your Chess clock or Scrabble turn timer (house rules). Reactions to you is a soft sound when another player reacts to you
 - Color-blind symbols adds a symbol next to colors that carry meaning
 - Highlight newly drawn cards marks the cards you just drew
 - In a game with house rule options, Settings also lists the house rules in use, read only, with each non-standard value marked "(house rule)". This part is the same for every player
