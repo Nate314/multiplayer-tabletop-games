@@ -61,8 +61,9 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
   const { step: view, viewer: shownViewer } = viewFor(step, viewer);
-  // The board never reads reactions; a step's list lacks the moveCount the live log's has
-  const boardState = (view.historyStep === 'move' ? view : { ...view, lastMove: null }) as BasePublicState;
+  // The board never reads reactions, and a step's list lacks the moveCount the live log's has
+  const { reactions: _reactions, ...boardView } = view;
+  const boardState = view.historyStep === 'move' ? boardView : { ...boardView, lastMove: null };
   const seatNames = seatOptions(steps[0]);
   const { HistoryBoard } = client;
 

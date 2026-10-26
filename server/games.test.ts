@@ -1321,8 +1321,8 @@ test('history and the game file show each reaction at its step', () => {
   assert.deepEqual(steps.map(step => step.reactions), [[first], undefined, [second], undefined]);
   const file = manager.gameFile('test', 'g1', new Date());
   assert.ok(file && 'file' in file);
-  for (const step of file.file.steps) {
-    assert.deepEqual(step.reactions, steps[file.file.steps.indexOf(step)].reactions);
+  for (const [i, step] of file.file.steps.entries()) {
+    assert.deepEqual(step.reactions, steps[i].reactions);
     for (const view of Object.values(step.views ?? {})) assert.deepEqual(view.reactions, step.reactions);
   }
   const quiet = wonGame().gameFile('test', 'g1', new Date());
@@ -1330,5 +1330,24 @@ test('history and the game file show each reaction at its step', () => {
   for (const step of quiet.file.steps) {
     assert.equal('reactions' in step, false);
     for (const view of Object.values(step.views ?? {})) assert.equal('reactions' in view, false);
+  }
+});
+
+test('the end moment owns the reactions it shares a move count with', () => {
+  for (const moves of [0, 2]) {
+    const manager = gameWith('A', 'B');
+    ok(manager.move(ROOM, 1, tick));
+    if (moves === 0) {
+      ok(manager.requestUndo(ROOM, 1));
+      ok(manager.voteUndo(ROOM, 2, true));
+    } else {
+      ok(manager.move(ROOM, 2, tick));
+    }
+    assert.ok('reaction' in manager.react(ROOM, 1, 2, '😂'));
+    const raw = manager.rawState(ROOM);
+    assert.ok(raw && manager.replaceState(ROOM, { ...raw, isGameOver: true }));
+    const steps = manager.history('test', 'g1') ?? [];
+    assert.deepEqual(steps.map(step => step.historyStep), moves === 0 ? ['start', 'end'] : ['start', 'move', 'move', 'end']);
+    assert.deepEqual(steps.map(step => step.reactions?.length), moves === 0 ? [undefined, 1] : [undefined, undefined, undefined, 1]);
   }
 });

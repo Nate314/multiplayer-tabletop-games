@@ -178,8 +178,8 @@ export function createGameManager(
   }
 
   function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
-    // The end moment shares the last move's count and takes that count's reactions
-    const shared = historyStep === 'move' && moveCount === room.timeline.length && hasEndMoment(room);
+    // The last moment with a move count owns its reactions, so the end moment takes the count it shares with the last move or the start
+    const shared = historyStep !== 'end' && moveCount === room.timeline.length && hasEndMoment(room);
     const reactions = shared ? [] : (room.state.reactions ?? [])
       .filter(reaction => reaction.moveCount === moveCount)
       .map(({ at, emoji, from, fromSpectator, target }): Reaction => ({ from, fromSpectator, target, emoji, at }));
