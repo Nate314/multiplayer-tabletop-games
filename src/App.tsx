@@ -123,7 +123,7 @@ function App() {
           onLocalNamesChange={setLocalNames}
           onJoin={(joinRole = role) => {
             saveJoinForm({ playerName, gameId, role: joinRole, localNames })
-            join(selected.id, gameId, playerName, joinRole, localNames)
+            join(selected.id, gameId, joinRole === 'tableScreen' ? 'Table screen' : playerName, joinRole, localNames)
           }}
           onCancel={closeDialog}
         />

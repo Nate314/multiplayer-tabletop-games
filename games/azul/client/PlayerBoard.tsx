@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Tile from './Tile';
 import { FLOOR_PENALTIES, canPlaceOnLine, wallColor } from '../rules.ts';
 import { floorKey, lineKey, wallKey } from './animateMove.ts';
@@ -33,7 +34,7 @@ export default function PlayerBoard({ board, seat, name, isMe, isCurrent, hasLef
       <header className="board-header">
         <span className="board-name">
           {name}
-          {isMe && ' (you)'}
+          <YouTag when={isMe} />
           {hasLeft && ' (left)'}
           {isWinner && ' ★'}
         </span>

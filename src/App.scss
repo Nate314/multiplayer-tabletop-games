@@ -621,14 +621,14 @@
   text-align: left;
 }
 
-:where([data-game] .rules-switch, .join-role-switch) {
+:where([data-game] .rules-switch, [data-game] .layout-switch, .join-role-switch) {
   display: flex;
   flex-wrap: wrap; /* more roles are coming; they wrap at 320px */
   justify-content: center;
   margin-bottom: 8px;
 }
 
-:where([data-game] .rules-switch button, .join-role-switch button) {
+:where([data-game] .rules-switch button, [data-game] .layout-switch button, .join-role-switch button) {
   padding: 6px 18px;
   border: 2px solid var(--platform-button-bg, var(--lobby-accent));
   background: transparent;
@@ -636,17 +636,26 @@
   font-weight: 600;
 }
 
-:where([data-game] .rules-switch button:first-child, .join-role-switch button:first-child) {
+:where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child, .join-role-switch button:first-child) {
   border-radius: 6px 0 0 6px;
 }
 
-:where([data-game] .rules-switch button:last-child, .join-role-switch button:last-child) {
+:where([data-game] .rules-switch button:last-child, [data-game] .layout-switch button:last-child, .join-role-switch button:last-child) {
   border-radius: 0 6px 6px 0;
 }
 
-:where([data-game] .rules-switch button[aria-pressed="true"], .join-role-switch button[aria-pressed="true"]) {
+:where([data-game] .rules-switch button[aria-pressed="true"], [data-game] .layout-switch button[aria-pressed="true"], .join-role-switch button[aria-pressed="true"]) {
   background: var(--platform-button-bg, var(--lobby-accent));
   color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+/* On a phone beside a table screen, Hand only hides what the TV already shows */
+[data-hand-only] .hand-only-hide:not(.history-board *) { /* History shows the whole table */
+  display: none !important; /* a game's own display rule is as specific and loads later */
+}
+
+[data-hand-only]:not([data-my-turn]) .hand-only-board:not(.history-board *) {
+  display: none !important;
 }
 
 :where([data-game] .rules-failed) {
@@ -1421,6 +1430,11 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   overflow-wrap: anywhere;
 }
 
+:where([data-game] .reaction-cooldown) {
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
 :where([data-game] .reaction-recent) {
   display: flex;
   flex-wrap: wrap;
@@ -1989,4 +2003,59 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 :where([data-game] .hand-request-actions) {
   display: flex;
   gap: 8px;
+}
+
+/* A shared screen is read from across the room: larger type, and the board grows to fill what is left */
+[data-table-screen] {
+  font-size: clamp(18px, 1.6vw, 36px);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+:where([data-table-screen] .table-screen) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75em;
+}
+
+:where([data-table-screen] .table-screen-qr) {
+  width: min(40vh, 60vw);
+  height: min(40vh, 60vw);
+}
+
+:where([data-table-screen] .table-screen-link) {
+  margin: 0;
+  word-break: break-all;
+}
+
+:where([data-table-screen] .table-screen-players) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+:where([data-table-screen] .table-screen-status) {
+  font-size: 1.5em;
+}
+
+:where([data-table-screen] .table-screen-board) {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+:where([data-table-screen] .table-screen-board-content) {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max-content;
+  transform-origin: top center;
+  transform: translateX(-50%) scale(var(--fit-scale, 1));
 }

@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { CardView, GemToken, NobleView } from './pieces';
 import { bonusKey, nobleKey, reservedKey, tokenKey } from './animateMove.ts';
@@ -22,6 +23,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
   const owned = bonuses(player);
   const classes = ['player'];
   if (isMe) classes.push('player-me');
+  else classes.push('hand-only-hide');
   if (currentPlayer === seat) classes.push('player-current');
   if (!activePlayers.includes(seat)) classes.push('player-left');
   if (winners.includes(seat)) classes.push('player-winner');
@@ -35,7 +37,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
   return (
     <section className={classes.join(' ')} aria-label={playerNames[seat]}>
       <header className="player-header">
-        <span className="player-name">{playerNames[seat]}{isMe ? ' (you)' : ''}{status}</span>
+        <span className="player-name">{playerNames[seat]}<YouTag when={isMe} />{status}</span>
         <span className="player-prestige" title="Prestige">{prestige(player)} prestige</span>
       </header>
       <div className="player-row">

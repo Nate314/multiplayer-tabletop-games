@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { plural } from '../../../shared/text.ts';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
@@ -36,7 +37,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
       <ol className="scoreboard" aria-label="Scores">
         {SEATS.filter(seat => playerNames[seat] !== undefined).map(seat => (
           <li key={seat} className={winners.includes(seat) ? 'score score-winner' : 'score'}>
-            <span className="score-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
+            <span className="score-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
             <span className="score-total">{scores[seat]}</span>
             <span className="score-taken">{taken[seat]} this hand</span>
           </li>
@@ -48,14 +49,14 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         <span className="hearts-broken">{heartsBroken ? 'Hearts broken' : 'Hearts not broken'}</span>
       </div>
       {seated && (
-        <div className="seats">
+        <div className="seats hand-only-hide">
           {placed.map(({ position, seat }) => {
             const classes = ['seat', `seat-${position}`];
             if (seat === currentPlayer && phase === 'play') classes.push('seat-current');
             if (winners.includes(seat)) classes.push('seat-winner');
             return (
               <div key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
-                <span className="seat-name">{playerNames[seat]}{seat === viewer && ' (you)'}</span>
+                <span className="seat-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
                 <span className="seat-count">{plural(handCounts[seat], 'card')}, {plural(taken[seat], 'point')}</span>
                 {phase === 'passing' && <span className="seat-note">{passed.includes(seat) ? 'passed' : 'choosing'}</span>}
               </div>

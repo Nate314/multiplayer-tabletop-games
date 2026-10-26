@@ -66,7 +66,7 @@ export default function Board({ board, playerNames, openTrains, lastTile, usable
   }
 
   return (
-    <div className="board">
+    <div className="board hand-only-board">
       {rows.length > 0 ? rows.map(row) : (
         <div className="board-row board-row-hub line" role="list" aria-label="Line of play">
           {startDrop && <span role="listitem" className="line-slot"><span className="end-slot board-start" data-drop="start" /></span>}

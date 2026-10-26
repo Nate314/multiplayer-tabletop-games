@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PieceGlyph from './PieceGlyph';
 import { useCountdown, formatClock } from '../../../src/hooks/useCountdown.ts';
 import useTimerWarning from '../../../src/sound/useTimerWarning.ts';
@@ -51,7 +52,7 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
             <li key={seat} className={classNames.join(' ')}>
               <div className="player-name">
                 <PieceGlyph color={color} type="king" />
-                {playerNames[seat]} ({capitalized(color)}){seat === playerNumber && ' (you)'}
+                {playerNames[seat]} ({capitalized(color)})<YouTag when={seat === playerNumber} />
                 {!activePlayers.includes(seat) && ' (left)'}
                 {clock && (
                   <span className={running ? 'chess-clock chess-clock-running' : 'chess-clock'} aria-label={`${playerNames[seat]}'s time`}>
@@ -59,7 +60,7 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
                   </span>
                 )}
               </div>
-              <div className="captured" aria-label={`Pieces ${playerNames[seat]} captured`}>
+              <div className="captured hand-only-hide" aria-label={`Pieces ${playerNames[seat]} captured`}>
                 {taken.length === 0
                   ? <span className="captured-none">No captures</span>
                   : taken.map((type, index) => <PieceGlyph key={index} color={opponent(color)} type={type} />)}

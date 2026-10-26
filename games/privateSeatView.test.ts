@@ -76,6 +76,21 @@ for (const game of GAMES) {
 
   describe(id, () => {
     if (game.privateSeatView) {
+      if (game.spectatorsSeeEverySeat) {
+        it("an ordinary spectator's view holds everything privateSeatView gives each seat", () => {
+          for (const [s, seat] of seatsOf()) {
+            const { seatViews: _seatViews, ...spectated } = spectatorView(game, s, EVE) as Record<string, unknown>;
+            for (const [key, value] of Object.entries(game.privateSeatView!(s, seat) as Record<string, unknown>)) {
+              if (value === null || (Array.isArray(value) && value.length === 0)) continue; // nothing private in this field for the seat
+              if (Array.isArray(value) && key === 'chat') {
+                const lines = spectated[key] as unknown[];
+                for (const line of value) assert.ok(lines.some(candidate => JSON.stringify(candidate) === JSON.stringify(line)), `${key} line of seat ${seat}`);
+              } else assert.deepEqual(spectated[key], value, `${key} of seat ${seat}`);
+            }
+          }
+        });
+      }
+
       it("the table view plus privateSeatView is the seat's own view", () => {
         for (const [s, seat] of seatsOf()) {
           assert.deepEqual(
@@ -92,11 +107,19 @@ for (const game of GAMES) {
       });
     }
 
-    it('a spectator with no permissions sees the history view', () => {
+    it('a table screen with no permissions sees the history view', () => {
       const s = dealt(game);
-      const { seatViews: _seatViews, ...view } = spectatorView(game, s, EVE) as Record<string, unknown>;
-      assert.deepEqual(view, game.spectatorState?.(s, false, false) ?? game.toPublicState(s, false, null));
+      const { seatViews: _seatViews, ...view } = spectatorView(game, s, { ...EVE, tableScreen: true }) as Record<string, unknown>;
+      assert.deepEqual(view, game.toPublicState(s, false, null));
     });
+    // A game with spectatorState has its own tests that its ordinary spectator view hides nothing a table screen must not see
+    if (!game.spectatorState) {
+      it('a spectator with no permissions sees the history view', () => {
+        const s = dealt(game);
+        const { seatViews: _seatViews, ...view } = spectatorView(game, s, EVE) as Record<string, unknown>;
+        assert.deepEqual(view, game.toPublicState(s, false, null));
+      });
+    }
 
     it('keeps spectator fields through its own hooks', () => {
       const carried = { spectators: [EVE], spectatorKeys: { s1: 'k' }, handRequests: [{ spectator: 's1', seat: 1 }] };

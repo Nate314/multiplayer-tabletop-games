@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { plural } from '../../../shared/text.ts';
 import Tile from './Tile';
@@ -85,7 +86,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: Summary; ga
           <header>
             <span>
               {playerNames[seat]}
-              {seat === viewer && ' (you)'}
+              <YouTag when={seat === viewer} />
               {!activePlayers.includes(seat) && ' (left)'}
             </span>
             <span>

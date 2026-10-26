@@ -20,5 +20,6 @@ export const pictionary: GameDefinition<GameState, PublicGameState> = {
   toPublicState,
   privateSeatView,
   spectatorState,
+  spectatorsSeeEverySeat: true,
   finalStandings
 };

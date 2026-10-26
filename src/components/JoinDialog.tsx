@@ -7,11 +7,11 @@ import { saveJoinForm } from '../services/settings.ts';
 import { joinLink } from '../services/share.ts';
 import type { JoinRole } from '../../shared/types.ts';
 
-// Plans 8 and 9 append the other roles
 const JOIN_ROLES: { role: JoinRole; label: string; button: string }[] = [
   { role: 'player', label: 'Player', button: 'Join' },
   { role: 'spectator', label: 'Spectator', button: 'Watch' },
   { role: 'passAndPlay', label: 'Pass and play', button: 'Join' },
+  { role: 'tableScreen', label: 'Table screen', button: 'Show table' },
 ];
 
 type JoinDialogProps = {
@@ -121,7 +121,7 @@ export default function JoinDialog({
               <button type="button" className="lobby-button" onClick={() => onLocalNamesChange([...localNames, ''])}>Add player</button>
             )}
           </div>
-        ) : (
+        ) : role !== 'tableScreen' && (
           <label className="lobby-field">
             Your name
             <input

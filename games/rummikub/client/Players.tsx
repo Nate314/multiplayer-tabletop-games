@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import { POOL_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -25,13 +26,14 @@ export default function Players({ gameState, playerNumber }: PlayersProps) {
             'rk-player',
             currentPlayer === seat ? 'rk-player-current' : '',
             winners.includes(seat) ? 'rk-player-winner' : '',
-            hasLeft ? 'rk-player-left' : ''
+            hasLeft ? 'rk-player-left' : '',
+            seat !== playerNumber ? 'hand-only-hide' : ''
           ];
           const points = result?.points[seat];
           return (
             <li key={seat} className={classes.filter(Boolean).join(' ')} data-anim-key={seatKey(seat)}>
               <span className="rk-player-name">
-                {playerNames[seat]}{seat === playerNumber && ' (you)'}{hasLeft && ' (left)'}
+                {playerNames[seat]}<YouTag when={seat === playerNumber} />{hasLeft && ' (left)'}
               </span>
               <span className="rk-player-tiles">
                 {hasLeft ? '' : `${rackCounts[seat] ?? 0} tiles`}
@@ -44,7 +46,7 @@ export default function Players({ gameState, playerNumber }: PlayersProps) {
           );
         })}
       </ul>
-      <div className="rk-pool" data-anim-key={POOL_KEY}>Tiles in the pool: {poolCount}</div>
+      <div className="rk-pool hand-only-hide" data-anim-key={POOL_KEY}>Tiles in the pool: {poolCount}</div>
     </div>
   );
 }

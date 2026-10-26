@@ -29,7 +29,7 @@ function read(storage: () => Storage, key: string): SavedGame | null {
   const seatKey = typeof saved.seatKey === 'string' ? saved.seatKey : undefined
   // A pass-and-play entry without usable seats falls back to a normal session
   const localSeats = saved.role === 'passAndPlay' && isLocalSeats(saved.localSeats) ? saved.localSeats : undefined
-  const role = saved.role === 'spectator' ? saved.role : localSeats && 'passAndPlay'
+  const role = saved.role === 'spectator' || saved.role === 'tableScreen' ? saved.role : localSeats && 'passAndPlay'
   return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, seatKey, role, localSeats }
 }
 

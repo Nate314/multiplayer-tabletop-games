@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { TicketFace } from './pieces';
@@ -21,12 +22,12 @@ export default function PlayerList({ gameState, viewer }: PlayerListProps) {
       {Object.keys(players).map(Number).map(seat => {
         const player = players[seat];
         const out = !activePlayers.includes(seat);
-        const classes = ['player-row', `seat${seat}`, seat === currentPlayer ? 'current' : '', out ? 'out' : ''].filter(Boolean).join(' ');
+        const classes = ['player-row', `seat${seat}`, seat === currentPlayer ? 'current' : '', out ? 'out' : '', seat === viewer ? '' : 'hand-only-hide'].filter(Boolean).join(' ');
         return (
           <div key={seat} className={classes}>
             <span className="player-swatch" aria-hidden="true"><ColorSymbol color={SEAT_SYMBOLS[seat]} className="swatch-symbol" /></span>
             <span className="player-name">
-              {playerNames[seat]}{seat === viewer ? ' (you)' : ''}{out ? ' (left)' : ''}
+              {playerNames[seat]}<YouTag when={seat === viewer} />{out ? ' (left)' : ''}
               {lastTurns?.includes(seat) && <span className="last-turn"> last turn to come</span>}
             </span>
             <span className="player-stats">

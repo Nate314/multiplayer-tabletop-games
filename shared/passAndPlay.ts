@@ -6,7 +6,7 @@ import type { BaseGameState, Seat } from './types.ts';
 // left out: answering it is optional, so it must never keep one player's hand on a shared device past their turn.
 // An out-of-turn choice (a Catan discard, a trade answer) comes before the turn, so a shared device hands over one player at a time.
 export function seatsToAct(game: Pick<GameDefinition, 'waitingOn'>, state: BaseGameState): Seat[] {
-  const outOfTurn = game.waitingOn?.(state) ?? [];
+  const outOfTurn = state.isGameOver ? [] : game.waitingOn?.(state) ?? []; // a finished game waits only on votes
   const turn = outOfTurn.length > 0 || state.isGameOver || state.currentPlayer === null ? [] : [state.currentPlayer];
   const seats = new Set<Seat>([...turn, ...outOfTurn]);
   for (const vote of [state.undoVote, state.dismissVote, state.rematchVote]) {

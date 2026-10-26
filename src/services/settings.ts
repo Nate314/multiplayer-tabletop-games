@@ -62,7 +62,7 @@ export function loadJoinForm(): JoinForm {
   return {
     playerName: typeof saved?.playerName === 'string' ? saved.playerName : '',
     gameId: typeof saved?.gameId === 'string' ? saved.gameId : '',
-    role: saved?.role === 'spectator' || saved?.role === 'passAndPlay' ? saved.role : 'player',
+    role: saved?.role === 'spectator' || saved?.role === 'passAndPlay' || saved?.role === 'tableScreen' ? saved.role : 'player',
     ...(Array.isArray(names) && names.every(name => typeof name === 'string') && { localNames: names }),
   }
 }
@@ -132,4 +132,16 @@ export function loadPreferences(): Preferences {
 
 export function savePreferences(preferences: Preferences): void {
   writeJson(local, PREFERENCES_KEY, preferences)
+}
+
+export type TableLayout = 'handOnly' | 'board'
+
+const TABLE_LAYOUT_KEY = 'tableLayout'
+
+export function loadTableLayout(): TableLayout {
+  return readJson(local, TABLE_LAYOUT_KEY) === 'board' ? 'board' : 'handOnly'
+}
+
+export function saveTableLayout(layout: TableLayout): void {
+  writeJson(local, TABLE_LAYOUT_KEY, layout)
 }

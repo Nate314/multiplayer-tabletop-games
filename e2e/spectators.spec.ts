@@ -98,7 +98,7 @@ test('a started game offers to watch instead', async ({ seat, browser, server })
 async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1], gameType: string, gameId: string, name: string) {
   const page = await newPlayer(browser, server);
   await page.goto('/');
-  await page.locator('.lobby-game', { hasText: nameOf(gameType) }).click();
+  await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
   await page.getByRole('button', { name: 'Spectator' }).click();
   await page.getByLabel('Your name').fill(name);
   await page.getByLabel('Game ID').fill(gameId);
@@ -106,6 +106,21 @@ async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameter
   await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
   return page;
 }
+
+test('a spectator\'s reaction countdown sits in the reaction picker, not beside the turn clock', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  const bar = dana.locator('.presence-bar');
+  const timer = bar.locator('.presence-timer');
+  await expect(timer).toContainText('Bob');
+  await bar.getByRole('button', { name: /^Bob/ }).click();
+  await dana.getByRole('dialog', { name: 'React to Bob' }).getByRole('button', { name: '😂' }).click();
+  await bar.getByRole('button', { name: /^Alice/ }).click();
+  await expect(dana.getByRole('dialog', { name: 'React to Alice' }).locator('.reaction-cooldown')).toHaveText(/0:1\d/);
+  await expect(bar.getByRole('button', { name: /^Alice/ })).toHaveText('Alice');
+  await expect(timer).toHaveText(/^Bob\s*0:(30|29|28|27|26)$/);
+});
 
 const handCards = (page: Awaited<ReturnType<typeof watch>>) => page.locator('.hand .hand-cards > *');
 
@@ -137,6 +152,14 @@ test('a spectator sees the table and no hand', async ({ seat, browser, server })
   await expect(dana.getByRole('button', { name: 'Dismiss' })).toHaveCount(0);
 });
 
+test('a Pictionary spectator sees everything, so no seat to pick or ask for', async ({ seat, browser, server }) => {
+  const table = await seat('pictionary', ['Alice', 'Bob']);
+  const dana = await watch(browser, server, 'pictionary', table.gameId, 'Dana');
+  await expect(dana.locator('.spectator-status')).toBeVisible();
+  await expect(dana.locator('.spectator-seats')).toHaveCount(0);
+  await expect(dana.locator('.spectator-ask')).toHaveCount(0);
+});
+
 test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => {
   const table = await heartsTable(seat);
   const [alice, bob] = table.pages;
@@ -149,6 +172,8 @@ test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => 
   await expect(bob.getByText('wants to see your hand')).toHaveCount(0);
   await alice.getByRole('button', { name: 'Allow', exact: true }).click();
   await expect(handCards(dana)).toHaveCount(13);
+  await expect(dana.locator('.seat-name', { hasText: 'Alice' })).toHaveText('Alice'); // the seat is Alice's, not Dana's
+  await expect(alice.locator('.seat-name', { hasText: 'Alice' })).toHaveText('Alice (you)');
   await passFirstThree(bob);
   await expect(dana.locator('.spectator-status')).toContainText('Bob passed three cards');
   await expect(handCards(dana)).toHaveCount(13);
@@ -199,3 +224,29 @@ test('no hand can be asked for before the game starts', async ({ seat, browser, 
   await expect(dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' })).toHaveAttribute('aria-pressed', 'true');
   await expect(dana.getByRole('button', { name: /^Ask to see/ })).toHaveCount(0);
 });
+
+// Mid hand with three cards in the trick: the seats and the trick are all on show
+const play = (seat: number, rank: string) => ({ seat, card: { rank, suit: 'spades' } });
+const midHand = { phase: 'play', currentPlayer: 1, trick: [play(2, 'Q'), play(3, '10'), play(4, 'A')] };
+
+for (const gameType of ['hearts', 'spades']) {
+  test(`a player and a spectator of a started ${gameType} game have no sideways scroll at 320 px`, async ({ seat, browser, server }) => {
+    const table = await seat(gameType, ['Alice', 'Bob', 'Cara', 'Dan']);
+    if (gameType === 'hearts') await passFirstThree(table.pages[2]);
+    await table.patch(gameType === 'hearts' ? { ...midHand, passes: {}, tricksPlayed: 3 } : { ...midHand, started: true, dealer: 4, bids: { 1: 3, 2: 4, 3: 2, 4: 3 }, tricksTaken: { 1: 0, 2: 0, 3: 0, 4: 0 } });
+    const dana = await watch(browser, server, gameType, table.gameId, 'Dana');
+    await dana.setViewportSize({ width: 320, height: 700 });
+    const overflow = () => dana.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(await overflow()).toBeLessThanOrEqual(0);
+    // A player's own board shares the seat grid
+    const alice = table.pages[0];
+    await alice.setViewportSize({ width: 320, height: 700 });
+    expect(await alice.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
+    await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
+    await table.pages[0].getByRole('button', { name: 'Allow', exact: true }).click();
+    await expect(handCards(dana)).toHaveCount(13);
+    expect(await overflow()).toBeLessThanOrEqual(0);
+  });
+}
+

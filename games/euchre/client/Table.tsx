@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { SEATS, SUIT_SYMBOLS, targetScore, cardName, nextSeat, sittingOut, teamNames, teamOf } from '../rules.ts';
@@ -57,7 +58,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
       <div className="scoreboard">
         {([0, 1] as Team[]).map(team => (
           <div key={team} className={`team team-${team}${winners.length > 0 && teamOf(winners[0]) === team ? ' team-winner' : ''}`}>
-            <span className="team-names">{teamNames(team, playerNames)}{team === myTeam && ' (you)'}</span>
+            <span className="team-names">{teamNames(team, playerNames)}<YouTag when={team === myTeam} /></span>
             <span className="team-score">{scores[team]}</span>
             <span className="team-tricks">{tricksWon[team]} {tricksWon[team] === 1 ? 'trick' : 'tricks'}</span>
           </div>
@@ -73,7 +74,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         {maker !== null && <span className="maker-info">Made by {playerNames[maker]}{alone && ', alone'}</span>}
       </div>
       {seated && (
-        <div className="seats">
+        <div className="seats hand-only-hide">
           {placed.map(({ position, seat }) => {
             const classes = ['seat', `seat-${position}`];
             if (seat === currentPlayer && phase !== 'handOver') classes.push('seat-current');
@@ -84,7 +85,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
               <div key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
                 <span className="seat-name">
                   {playerNames[seat]}
-                  {seat === viewer && ' (you)'}
+                  <YouTag when={seat === viewer} />
                   {viewer !== null && seat !== viewer && teamOf(seat) === teamOf(viewer) && ' (partner)'}
                 </span>
                 <span className="seat-count">{handCounts[seat]} cards{seat === dealer && ', dealer'}</span>

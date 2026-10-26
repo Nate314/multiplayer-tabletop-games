@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import YouTag from './YouTag.tsx';
 import useEscapeKey from '../hooks/useEscapeKey';
 import { lengthText, ordinal, winnerLine } from './gameOver.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
@@ -35,7 +36,7 @@ export default function GameOverDialog({
             {(gameState.standings ?? []).map(({ seat, place, score }) => (
               <li key={seat}>
                 <span className="standing-place">{ordinal(place)}</span>{' '}
-                <span className="standing-name">{gameState.playerNames[seat]}{seat === viewer && ' (you)'}</span>
+                <span className="standing-name">{gameState.playerNames[seat]}<YouTag when={seat === viewer} /></span>
                 {score !== undefined && <>{' '}<span className="standing-score">{score}</span></>}
               </li>
             ))}

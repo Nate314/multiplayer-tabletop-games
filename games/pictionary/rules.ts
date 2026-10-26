@@ -314,9 +314,9 @@ export function privateSeatView(state: GameState, seat: Seat): Pick<PublicGameSt
   return { word, wordChoices, chat };
 }
 
-// Spectators send no chat, so they may see the word; a table screen is in view of the players and gets the blanks
+// Spectators send no chat, so they may see the word and every seat's near-miss lines; a table screen is in view of the players and gets the blanks
 export function spectatorState(state: GameState, undoAvailable: boolean, tableScreen: boolean): Omit<PublicGameState, 'moveCount'> {
-  return tableScreen ? toPublicState(state, undoAvailable, null) : view(state, undoAvailable, null, true, true);
+  return tableScreen ? toPublicState(state, undoAvailable, null) : { ...view(state, undoAvailable, null, true, true), chat: state.chat };
 }
 
 export function finalStandings(state: GameState): Standing[] {

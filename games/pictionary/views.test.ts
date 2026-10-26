@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { pictionary } from './index.ts';
 import { applyAction, createGameState, finalStandings, onDeadline, privateSeatView, spectatorState, toPublicState } from './rules.ts';
 import { addPlayer, applyMove } from '../../shared/seating.ts';
+import { spectatorView } from '../../shared/spectators.ts';
 import { withRules } from '../../server/testing.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 import type { GameState } from './types.ts';
@@ -65,13 +66,13 @@ test('a correct guess shows as "<name> guessed the word!" and never as the guess
   assert.equal(state.lastMove?.type, 'guess');
 });
 
-test('a near guess shows "So close!" only to the guesser', () => {
+test('a near guess shows "So close!" to the guesser and spectators, never the table', () => {
   const state = chat(drawing(), 2, 'xylophon');
   const own = toPublicState(state, false, 2).chat;
   assert.equal(own.at(-1)?.kind, 'close');
   assert.ok(own.at(-1)?.text.includes('xylophon'));
   assert.ok(own.at(-1)?.text.includes('So close!'));
-  for (const view of [toPublicState(state, false, 3), toPublicState(state, false, null), spectatorState(state, false, false)]) {
+  for (const view of [toPublicState(state, false, 3), toPublicState(state, false, null), spectatorState(state, false, true)]) {
     assert.equal(view.chat.some(line => line.kind === 'close'), false);
     assert.equal(texts(view).some(text => text.includes('xylophon')), false);
   }
@@ -117,6 +118,24 @@ test('a spectator sees the word and the guessed chat; a table screen sees only t
   assert.deepEqual(screen, toPublicState(state, true, null));
   assert.equal(screen.word, null);
   assert.equal(screen.mask, '_________');
+});
+
+test('a spectator sees a near-miss line addressed to one seat; a table screen never does', () => {
+  const state = chat(drawing(), 2, 'xylophon');
+  assert.ok(texts(privateSeatView(state, 2)).includes('xylophon: So close!'));
+  assert.ok(texts(spectatorState(state, false, false)).includes('xylophon: So close!'));
+  assert.equal(texts(spectatorState(state, false, true)).includes('xylophon: So close!'), false);
+});
+
+test('pictionary: the table screen sees blanks and public chat only', () => {
+  const start = choosing();
+  const apple = ok(applyMove(pictionary, { ...start, wordChoices: ['red apple', 'quokka', 'zeppelin'] }, 1, { type: 'choose', index: 0 }, first, NOW));
+  const state = chat(chat(chat(apple, 3, 'a piano'), 2, 'red apple'), 2, 'guessed line');
+  assert.equal(state.chat.some(line => line.audience === 'guessed' && line.text === 'guessed line'), true);
+  const screen = JSON.stringify(spectatorView(pictionary, state, { id: 't', name: 'Table screen', tableScreen: true, allowedSeats: [] }));
+  assert.equal(screen.includes('red apple') || screen.includes('guessed line'), false);
+  assert.ok(screen.includes('___ _____') && screen.includes('a piano'));
+  assert.ok(JSON.stringify(spectatorView(pictionary, state, { id: 's', name: 'Eve', tableScreen: false, allowedSeats: [] })).includes('red apple'));
 });
 
 // Before any chat; once there is chat, `chat` is the seat's whole chat, so laying it over the null view gives the seat's view

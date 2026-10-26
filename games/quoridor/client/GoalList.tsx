@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { SEATS } from '../rules.ts';
@@ -23,7 +24,7 @@ export default function GoalList({ gameState, playerNumber }: GoalListProps) {
           <div key={seat} className={classNames.join(' ')}>
             <span className={`goal-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat]} className="dot-symbol" /></span>
             {playerNames[seat]}
-            {seat === playerNumber && ' (you)'} → {SEATS[seat].goalLabel}
+            <YouTag when={seat === playerNumber} /> → {SEATS[seat].goalLabel}
           </div>
         );
       })}

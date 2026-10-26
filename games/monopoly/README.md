@@ -36,6 +36,7 @@ Buy, trade and build on properties, charge rent, and bankrupt every other player
 - Declare bankruptcy asks you to confirm first
 - The board shows each space's owner (or price), houses as green squares, a hotel as a red bar, mortgaged property, and every token, with jailed tokens in a dashed box on the Jail space. The middle shows the last roll and the last card drawn. The player list shows everyone's cash, properties and jail cards, and Recent events lists what happened, newest first
 - Click Undo to ask everyone to undo the last move
+- With a table screen connected, on Hand only (the default) the event log and the other players are hidden, and the board shows only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each token shows the shape of its color in place of its initial: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens on the board and in the player list show it; the brown and slate tokens of the seventh and eighth players show their initial as usual
 

@@ -118,7 +118,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">
@@ -134,7 +134,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <Factories gameState={gameState} isMyTurn={isMyTurn} selection={selection} onSelect={setSelection} drag={drag} />
         <div className="boards">
           {renderBoard(playerNumber)}
-          {otherSeats.length > 0 && <div className="other-boards">{otherSeats.map(renderBoard)}</div>}
+          {otherSeats.length > 0 && <div className="other-boards hand-only-hide">{otherSeats.map(renderBoard)}</div>}
         </div>
       </div>
       {showSummary && (

@@ -34,6 +34,8 @@ test('a dismiss vote waits on the seats that have not voted', () => {
 test('a rematch vote waits on the connected seats that have not answered', () => {
   const rematchVote = { requestedBy: 1, votes: { 1: true } };
   assert.deepEqual(seatsToAct(testGame, table({ isGameOver: true, currentPlayer: null, rematchVote, disconnected: [3] })), [2]);
+  const waiting = { ...testGame, waitingOn: () => [1, 3] }; // a game hook left over from the last move counts for nothing now
+  assert.deepEqual(seatsToAct(waiting, table({ isGameOver: true, currentPlayer: null, rematchVote })), [2, 3]);
 });
 
 test('a hand request does not hold the device, since answering it is optional', () => {

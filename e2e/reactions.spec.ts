@@ -18,9 +18,10 @@ test('a reaction shows to everyone and starts the countdown', async ({ seat }) =
   await nameButton(ann, 'Bo').click();
   await picker(ann, 'Bo').getByRole('button', { name: '😂' }).click();
   for (const page of [ann, bo]) await expect(page.locator('.reaction-bubble')).toHaveText('Ann → Bo 😂');
-  await expect(nameButton(ann, 'Bo')).toHaveText(/0:1\d/);
+  await expect(nameButton(ann, 'Bo')).toHaveText('Bo');
   await nameButton(ann, 'Bo').click();
   const open = picker(ann, 'Bo');
+  await expect(open.locator('.reaction-cooldown')).toHaveText(/0:1\d/);
   await expect(open.getByRole('button', { name: '😂' })).toBeDisabled();
   await expect(open.getByRole('button', { name: 'Send' })).toBeDisabled();
   await expect(ann.locator('.reaction-bubble')).toHaveCount(0, { timeout: 4000 });

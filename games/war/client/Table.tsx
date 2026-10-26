@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { battleKey, pileKey, shownBattle } from './animateMove.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -30,6 +31,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
     const count = pileCounts[seat];
     const laid = shown?.cards[seat] ?? [];
     const classes = ['war-seat'];
+    if (seat !== viewer) classes.push('hand-only-hide');
     if (seat === currentPlayer && !isGameOver) classes.push('war-seat-current');
     if (winners.includes(seat) || (!battle && lastBattle?.winner === seat)) classes.push('war-seat-winner');
     const lastUp = showLastMove && lastMove?.playerNumber === seat && lastMove.fresh ? laid.length - 1 : -1;
@@ -37,7 +39,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
       <section key={seat} className={classes.join(' ')} aria-label={`${playerNames[seat]}'s side`}>
         <header className="war-seat-header">
           <span className="war-seat-name">
-            {playerNames[seat]}{seat === viewer && ' (you)'}{winners.includes(seat) && ' ★'}
+            {playerNames[seat]}<YouTag when={seat === viewer} />{winners.includes(seat) && ' ★'}
           </span>
           <span className="war-seat-count">{count} {count === 1 ? 'card' : 'cards'}</span>
         </header>
@@ -49,7 +51,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
                 ? <PlayingCard card={null} size="large" onClick={onFlip} />
                 : <PlayingCard card={null} size="large" />}
           </div>
-          <div className="war-battle" aria-label={`${playerNames[seat]}'s battle cards`}>
+          <div className="war-battle hand-only-hide" aria-label={`${playerNames[seat]}'s battle cards`}>
             {laid.map((card, index) => (
               <PlayingCard key={index} card={card} size={card ? 'large' : 'medium'} animKey={battleKey(seat, index)}
                 highlighted={index === lastUp} />
@@ -64,7 +66,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
   return (
     <div className="war-table">
       {sides[0]}
-      <div className="war-summary" role="status">{battleSummary(gameState)}</div>
+      <div className="war-summary hand-only-hide" role="status">{battleSummary(gameState)}</div>
       {sides.slice(1)}
     </div>
   );

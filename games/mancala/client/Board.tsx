@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { bankOf, isPlayablePit, opponentOf, pitsOf, rulesOf, stoneCount } from '../rules.ts';
 import { holeKey, stoneKey } from './animateMove.ts';
@@ -92,7 +93,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
   }
 
   return (
-    <div className="board-wrap">
+    <div className="board-wrap hand-only-board">
       <div className="board-caption">
         <span className={`bank-label bank-label-left seat-${topSeat}`}><ColorSymbol color={SEAT_SYMBOLS[topSeat]} /> {bankName(topSeat)}</span>
         <span className="row-label">{playerNames[topSeat] ?? 'Waiting for a player'}</span>
@@ -108,7 +109,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
       </div>
       <div className="board-caption">
         <span className="row-label">
-          {playerNames[bottomSeat] ?? 'Waiting for a player'}{bottomSeat === playerNumber && ' (you)'}
+          {playerNames[bottomSeat] ?? 'Waiting for a player'}<YouTag when={bottomSeat === playerNumber} />
         </span>
         <span className={`bank-label bank-label-right seat-${bottomSeat}`}><ColorSymbol color={SEAT_SYMBOLS[bottomSeat]} /> {bankName(bottomSeat)}</span>
       </div>

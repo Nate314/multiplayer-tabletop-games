@@ -606,6 +606,15 @@ export function createGameManager(
     }
   }
 
+  // "Table screen", then "Table screen 2" and so on while the name is taken
+  function freeScreenName(state: BaseGameState): string {
+    const taken = (name: string) => findSeatByName(state, name) !== undefined
+      || (state.spectators ?? []).some(spectator => spectator.name.toLowerCase() === name.toLowerCase());
+    let name = 'Table screen';
+    for (let n = 2; taken(name); n++) name = `Table screen ${n}`;
+    return name;
+  }
+
   return {
     // `rejoin` only takes back a held seat; it never creates a game or takes a new seat.
     // A held seat is taken back only with the `seatKey` its player was given on joining
@@ -616,18 +625,23 @@ export function createGameManager(
       if (!game) return { error: 'Unknown game' };
 
       const id = cleanName(gameId);
-      const name = cleanName(playerName);
+      const typedName = cleanName(playerName);
+      const tableScreen = role === 'tableScreen';
       if (!id) return { error: 'Please enter a game ID' };
-      if (!name) return { error: 'Please enter your name' };
+      if (!typedName && !tableScreen) return { error: 'Please enter your name' };
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
-      if (!existing && (rejoin === true || role === 'spectator')) return { error: 'Game not found' };
+      if (!existing && (rejoin === true || role === 'spectator' || tableScreen)) return { error: 'Game not found' };
       const room = existing ?? newRoom(game, id);
       const { state } = room;
+      // A table screen's typed name is ignored: it is named by the server and found again by its key
+      const spectator = tableScreen
+        ? state.spectators?.find(candidate => candidate.tableScreen && seatKey !== undefined && state.spectatorKeys?.[candidate.id] === seatKey)
+        : spectatorNamed(state, typedName);
+      const name = tableScreen ? spectator?.name ?? freeScreenName(state) : typedName;
 
-      if (role === 'spectator') {
-        const spectator = spectatorNamed(state, name);
+      if (role === 'spectator' || tableScreen) {
         if (findSeatByName(state, name) !== undefined) return { error: 'That name is taken in this game' };
         if (spectator) {
           if (room.watching.has(spectator.id)) return { error: `${spectator.name} is already in this game` };
@@ -640,7 +654,7 @@ export function createGameManager(
         if (rejoin === true) return { error: 'You are not in this game' };
         // shortcut: departed spectators keep their slot so a refresh keeps its permissions; prune them if the cap is ever reached in practice
         if ((state.spectators ?? []).length >= MAX_SPECTATORS) return { error: 'Too many people are watching this game' };
-        const added = { id: randomUUID(), name, tableScreen: false, allowedSeats: [] };
+        const added = { id: randomUUID(), name, tableScreen, allowedSeats: [] };
         const key = randomUUID();
         room.state = {
           ...state,
@@ -1047,6 +1061,7 @@ export function createGameManager(
       const { state } = room;
       if (!room.game.privateSeatView) return { error: 'Nothing is hidden in this game' };
       if (spectator.tableScreen) return { error: 'A table screen never asks' };
+      if (room.game.spectatorsSeeEverySeat) return { error: 'You already see every seat' };
       if (!state.started) return { error: 'Wait for the game to start' }; // seats are only fixed from then on
       if (state.isGameOver) return { error: 'The game is over' };
       if (typeof seat !== 'number' || !state.activePlayers.includes(seat)) return { error: 'That player is not in this game' };

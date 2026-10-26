@@ -17,7 +17,7 @@ type ReactionPickerProps = {
 
 const EMOJI_HINT = /Windows/.test(navigator.userAgent) ? 'Win + .' : 'Emoji keyboard';
 
-// A player's name as a button that opens the emoji picker under it
+// A player's name as a button that opens the emoji picker under it; the cooldown counts down in the picker, so it never crowds the turn clock
 export default function ReactionPicker({ target, name, disabled, cooldownMs }: ReactionPickerProps) {
   const [open, setOpen] = useState(false);
   const [recent, setRecent] = useState(loadRecentReactions);
@@ -39,11 +39,12 @@ export default function ReactionPicker({ target, name, disabled, cooldownMs }: R
     <span className="reaction-anchor" ref={wrapperRef}>
       <button type="button" className="presence-name" aria-haspopup="dialog" aria-expanded={open} disabled={disabled}
         onClick={() => { if (open) close(); else { setRecent(loadRecentReactions()); setOpen(true); } }}>
-        {cooling ? `${name} ${formatClock(cooldownMs)}` : name}
+        {name}
       </button>
       {open && !disabled && (
         <div className="reaction-picker" ref={keepOnScreen} role="dialog" aria-label={`React to ${name}`}>
           <h2>{`React to ${name}`}</h2>
+          {cooling && <div className="reaction-cooldown" role="timer" aria-label={`Next reaction in ${formatClock(cooldownMs)}`}>{formatClock(cooldownMs)}</div>}
           <div className="reaction-recent">
             {recent.map(emoji => (
               <button key={emoji} type="button" aria-label={emoji} disabled={cooling} onClick={() => send(emoji)}>{emoji}</button>

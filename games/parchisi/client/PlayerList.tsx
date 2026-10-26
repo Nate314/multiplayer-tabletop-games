@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { HOME, PAWN_COUNT, inTurnOrder } from '../rules.ts';
@@ -27,7 +28,7 @@ export default function PlayerList({ gameState, playerNumber }: PlayerListProps)
             <span className={`player-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat]} className="dot-symbol" /></span>
             <span className="player-name">
               {playerNames[seat]}
-              {seat === playerNumber && ' (you)'}
+              <YouTag when={seat === playerNumber} />
               {winners.includes(seat) && ' (winner)'}
             </span>
             <span className="player-home">{inGame ? `${home}/${PAWN_COUNT} home` : 'left'}</span>

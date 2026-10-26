@@ -31,6 +31,7 @@ Exactly two players. The first to join plays white and the second plays red. The
 - The cube's value and owner are shown beside the board, and the points won once the game is over
 - The board is dimmed when it is not your turn, and the last checker move is outlined
 - Click Undo to ask your opponent to undo the last move
+- With a table screen connected, on Hand only (the default) the board shows only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

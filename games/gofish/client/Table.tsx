@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import PlayingCard from '../../../src/components/PlayingCard';
 import { bookKey, STOCK_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
@@ -42,6 +43,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
         {activePlayers.map(seat => {
           const count = handCounts[seat] ?? 0;
           const classes = ['player'];
+          if (seat !== viewer && !(onPickTarget && count > 0)) classes.push('hand-only-hide');
           if (seat === currentPlayer) classes.push('player-current');
           if (winners.includes(seat)) classes.push('player-winner');
           if (seat === asker) classes.push('player-last');
@@ -51,7 +53,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
           const body = (
             <>
               <span className="player-name">
-                {playerNames[seat]}{seat === viewer && ' (you)'}{winners.includes(seat) && ' ★'}
+                {playerNames[seat]}<YouTag when={seat === viewer} />{winners.includes(seat) && ' ★'}
               </span>
               <span className="player-count">
                 {count === 0 && stockCount === 0 ? 'out of cards' : `${count} ${count === 1 ? 'card' : 'cards'}`}
@@ -68,7 +70,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
           );
         })}
         {left.map(seat => (
-          <li key={seat} className="player player-left">
+          <li key={seat} className="player player-left hand-only-hide">
             <div className="player-body">
               <span className="player-name">{playerNames[seat]} (left)</span>
               <span className="player-count">no longer playing</span>
@@ -77,7 +79,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onPickT
           </li>
         ))}
       </ol>
-      <div className="table-middle">
+      <div className="table-middle hand-only-hide">
         <div className="stock">
           {stockCount > 0
             ? <PlayingCard card={null} animKey={STOCK_KEY} />

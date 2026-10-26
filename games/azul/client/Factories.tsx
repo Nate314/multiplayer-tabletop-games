@@ -41,7 +41,7 @@ export default function Factories({ gameState, isMyTurn, selection, onSelect, dr
   }
 
   return (
-    <div className={isMyTurn ? 'table' : 'table table-waiting'}>
+    <div className={isMyTurn ? 'table hand-only-board' : 'table table-waiting hand-only-board'}>
       <div className="factories">
         {factories.map((tiles, index) => {
           const source: Source = { type: 'factory', index };

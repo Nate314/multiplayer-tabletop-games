@@ -149,10 +149,25 @@ test.describe('Pass and play', () => {
     await expect(hand(device).getByRole('button')).toHaveCount(13);
   });
 
+  test('a rematch hands the device to each local voter and keeps the seats that joined', async ({ seat, device }) => {
+    const { table, dee } = await sharedTable(seat, device);
+    await table.patch({ isGameOver: true, currentPlayer: null, winners: [4], gameStatus: 'Dee wins!' });
+    await dee.getByRole('dialog', { name: 'Game over' }).getByRole('button', { name: 'Rematch' }).click();
+    for (const [name, answer] of [['Ann', 'Join'], ['Bo', 'Drop'], ['Cy', 'Join']]) {
+      await show(device, name).click();
+      await device.getByRole('dialog', { name: 'Game over' }).getByRole('button', { name: answer, exact: true }).click();
+    }
+    // The device stays in the game with Ann and Cy, back on its handoff screen in the new lobby
+    for (const page of [device, dee]) await expect(page.locator('.presence-player')).toHaveText([/Ann/, /Cy/, /Dee/]);
+    await expect(device.getByRole('button', { name: 'Back to games' })).toBeVisible();
+    await expect(device.getByRole('button', { name: /^I'm Bo/ })).toHaveCount(0);
+    await expect(device.getByRole('button', { name: /^I'm (Ann|Cy)/ }).first()).toBeVisible();
+  });
+
   test('Pictionary offers no pass and play', async ({ device }) => {
     await openJoinDialog(device, 'pictionary');
     const roles = device.getByRole('group', { name: 'Join as' });
-    await expect(roles.getByRole('button')).toHaveText(['Player', 'Spectator']);
+    await expect(roles.getByRole('button')).toHaveText(['Player', 'Spectator', 'Table screen']);
   });
 
   test('the dialog refuses a single name and a duplicate', async ({ device }) => {

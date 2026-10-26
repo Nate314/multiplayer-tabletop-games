@@ -71,7 +71,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedActio
   }
 
   return (
-    <div className={`board-frame ${seats.map(seat => `goal-edge${seat}`).join(' ')}`}>
+    <div className={`board-frame hand-only-board ${seats.map(seat => `goal-edge${seat}`).join(' ')}`}>
       <div className={`board ${isMyTurn ? '' : 'not-your-turn'} ${isGameOver ? 'game-over' : ''}`}>
         {INDEXES.map(row => (
           <div key={row} className="board-row">

@@ -100,7 +100,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onMove }: Boa
   }
 
   return (
-    <div className="board-frame">
+    <div className="board-frame hand-only-board">
       <div className={`board ${isMyTurn ? '' : 'not-your-turn'} ${isGameOver ? 'game-over' : ''}`}>
         {rows.map((row, rowIndex) => cols.map((col, colIndex) => {
           const square = { row, col };

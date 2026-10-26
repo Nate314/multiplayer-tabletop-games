@@ -1,13 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, RefObject } from 'react';
 import gameService from '../../../src/services/gameService';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type ChatProps = { gameState: PublicGameState; playerNumber: Seat };
 
+// The lines the state holds: the viewer's own view, so a table screen gets only the public ones
+export function ChatLines({ gameState: { chat, playerNames }, listRef }: { gameState: PublicGameState; listRef?: RefObject<HTMLUListElement | null> }) {
+  return (
+    <ul className="chat-lines" ref={listRef}>
+      {chat.map(line => (
+        <li key={line.id} className={`chat-line chat-${line.kind}`}>
+          {line.kind === 'chat' && line.seat !== null && <span className="chat-name">{playerNames[line.seat]}: </span>}
+          {line.text}
+          {line.audience === 'guessed' && <span className="chat-audience">Only players who guessed can see this</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // The chat, which doubles as guessing: the server decides whether a message is a guess, a near miss or just chat
 export default function Chat({ gameState, playerNumber }: ChatProps) {
-  const { chat, playerNames, phase, drawer, guessed, activePlayers, isGameOver } = gameState;
+  const { chat, phase, drawer, guessed, activePlayers, isGameOver } = gameState;
   const [text, setText] = useState('');
   const listRef = useRef<HTMLUListElement>(null);
   const drawing = phase === 'drawing' && !isGameOver;
@@ -31,15 +46,7 @@ export default function Chat({ gameState, playerNumber }: ChatProps) {
 
   return (
     <section className="pictionary-chat" aria-label="Chat">
-      <ul className="chat-lines" ref={listRef}>
-        {chat.map(line => (
-          <li key={line.id} className={`chat-line chat-${line.kind}`}>
-            {line.kind === 'chat' && line.seat !== null && <span className="chat-name">{playerNames[line.seat]}: </span>}
-            {line.text}
-            {line.audience === 'guessed' && <span className="chat-audience">Only players who guessed can see this</span>}
-          </li>
-        ))}
-      </ul>
+      <ChatLines gameState={gameState} listRef={listRef} />
       <form className="chat-form" onSubmit={submit}>
         <label className="chat-label" htmlFor="pictionary-chat-input">{label}</label>
         <input

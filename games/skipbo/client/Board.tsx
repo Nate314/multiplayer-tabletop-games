@@ -17,7 +17,7 @@ type BoardProps = {
 export default function Board({ gameState, picked, onPlay, lastPile = null }: BoardProps) {
   const { drawCount, building } = gameState;
   return (
-    <section className="board" aria-label="Building piles">
+    <section className="board hand-only-board" aria-label="Building piles">
       <div className="pile draw-pile">
         <span className="card card-back" aria-hidden="true"><ServerSvg url={cardArtUrl('stripes')} className="piece-art" />Skip-Bo</span>
         <span className="pile-label">Draw pile ({drawCount})</span>

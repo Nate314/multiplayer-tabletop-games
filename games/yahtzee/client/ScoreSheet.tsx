@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import { cellKey } from './animateMove.ts';
 import { CATEGORY_LABELS, LOWER, UPPER, UPPER_BONUS_AT, allowedCategories, scoreFor, totals } from '../rules.ts';
 import type { Category, PublicGameState, Seat } from '../types.ts';
@@ -13,12 +14,13 @@ type ScoreSheetProps = {
 // One table: a row per box, a column per player
 export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = false }: ScoreSheetProps) {
   const { activePlayers, playerNames, sheets, yahtzeeBonuses, currentPlayer, dice, isGameOver, winners, lastMove } = gameState;
+  const away = (seat: Seat) => seat === viewer ? '' : ' hand-only-hide'; // Hand only keeps the viewer's column
   const scored = showLastMove && lastMove?.type === 'score' ? lastMove : null;
 
   const cell = (seat: Seat, category: Category) => {
     const sheet = sheets[seat];
     const animKey = cellKey(seat, category);
-    const className = scored?.playerNumber === seat && scored.category === category ? 'yz-cell yz-cell-last' : 'yz-cell';
+    const className = (scored?.playerNumber === seat && scored.category === category ? 'yz-cell yz-cell-last' : 'yz-cell') + away(seat);
     if (sheet[category] !== undefined) return <td key={seat} className={className} data-anim-key={animKey}>{sheet[category]}</td>;
     if (onScore && seat === viewer) {
       const points = scoreFor(dice, category, sheet);
@@ -44,7 +46,7 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
   const sumRow = (label: string, value: (seat: Seat) => number, className = 'yz-sum') => (
     <tr className={className}>
       <th scope="row">{label}</th>
-      {activePlayers.map(seat => <td key={seat}>{value(seat)}</td>)}
+      {activePlayers.map(seat => <td key={seat} className={away(seat).trim() || undefined}>{value(seat)}</td>)}
     </tr>
   );
 
@@ -57,11 +59,12 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
             <th scope="col"><span className="yz-visually-hidden">Box</span></th>
             {activePlayers.map(seat => {
               const classes = ['yz-player'];
+              if (seat !== viewer) classes.push('hand-only-hide');
               if (seat === currentPlayer) classes.push('yz-player-current');
               if (isGameOver && winners.includes(seat)) classes.push('yz-player-winner');
               return (
                 <th key={seat} scope="col" className={classes.join(' ')}>
-                  {playerNames[seat]}{seat === viewer && ' (you)'}
+                  {playerNames[seat]}<YouTag when={seat === viewer} />
                 </th>
               );
             })}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { WatchingContext } from './WatchingContext.ts';
 import RulesButton from './RulesButton';
 import HistoryButton, { useHistoryDialog } from './HistoryButton';
 import GameOverDialog from './GameOverDialog';
@@ -13,6 +14,8 @@ import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
 import RematchVote from './RematchVote';
 import SpectatorView from './SpectatorView';
+import TableScreenView from './TableScreenView';
+import LayoutSwitch from './LayoutSwitch';
 import HandRequestPrompt from './HandRequestPrompt';
 import HandoffScreen from './HandoffScreen';
 import PassAndPlayBar from './PassAndPlayBar';
@@ -21,6 +24,8 @@ import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
+import { loadTableLayout, saveTableLayout } from '../services/settings.ts';
+import type { TableLayout } from '../services/settings.ts';
 import useStateSounds from '../sound/useStateSounds.ts';
 
 type GameViewProps = {
@@ -70,70 +75,81 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const localHost = localSeats?.find(local => local.seat === houseRulesOf(game, gameState).host)?.seat;
   const rulesSeat = localHost ?? playerNumber ?? localSeats?.[0]?.seat ?? null;
   const handingOff = localSeats !== null && playerNumber === null;
+  const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
+  // Players only receive connected spectators, so this is on only while the TV's page is open
+  const tableScreenOn = playerNumber !== null && (gameState.spectators ?? []).some(s => s.tableScreen);
+  const [layout, setLayout] = useState<TableLayout>(loadTableLayout);
+  const chooseLayout = (next: TableLayout) => { setLayout(next); saveTableLayout(next); };
+  const myTurn = playerNumber !== null && gameState.currentPlayer === playerNumber && !gameState.isGameOver;
 
   return (
-    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
-      <header className="game-header">
-        <button type="button" className="back-button" onClick={onBack}>Back to games</button>
-        <h1>{game.name}</h1>
-        <HistoryButton onOpen={history.open} />
-        <ShareButton game={game} gameId={gameState.gameId} />
-        <RulesButton game={game} faq={client.faq} />
-        <SettingsButton phoneControls={(
-          <>
-            <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
-            <div className="settings-row">Theme <ThemeToggle /></div>
-          </>
-        )}>
-          <HouseRulesSection game={game} gameState={gameState} />
-        </SettingsButton>
-        <GitHubLink />
-        <ThemeToggle />
-      </header>
-      {gameState.isGameOver && closed && !voting && (
-        <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
-      )}
-      <PresenceBar
-        gameState={gameState}
-        playerNumber={playerNumber}
-        spectatorId={spectatorId}
-        canReact={!handingOff}
-        onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
-      />
-      {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
-      {handingOff ? (
-        <HandoffScreen client={client} gameState={gameState} localSeats={localSeats!} onShow={onShowSeat} />
-      ) : playerNumber === null ? (
-        <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
-      ) : (
-        <>
-          {localSeats && <PassAndPlayBar name={gameState.playerNames[playerNumber]} onPass={() => onShowSeat(null)} />}
-          {/* Remounted per shown seat, so nothing one player picked (a pass, a rack order) shows to the next */}
-          <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} />
-          <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
-          <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
-        </>
-      )}
-      {/* A shared device between voters shows the handoff, so the next voter can take it */}
-      {gameState.isGameOver && !closed && !voting && !handingOff && (
-        <GameOverDialog
-          game={game}
-          client={client}
+    <WatchingContext value={playerNumber === null}>
+      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
+        <header className="game-header">
+          <button type="button" className="back-button" onClick={onBack}>Back to games</button>
+          <h1>{game.name}</h1>
+          <HistoryButton onOpen={history.open} />
+          <ShareButton game={game} gameId={gameState.gameId} />
+          <RulesButton game={game} faq={client.faq} />
+          <SettingsButton phoneControls={(
+            <>
+              <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
+              <div className="settings-row">Theme <ThemeToggle /></div>
+            </>
+          )}>
+            <HouseRulesSection game={game} gameState={gameState} />
+          </SettingsButton>
+          <GitHubLink />
+          <ThemeToggle />
+        </header>
+        {gameState.isGameOver && closed && !voting && (
+          <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
+        )}
+        <PresenceBar
           gameState={gameState}
-          viewer={playerNumber}
-          canRematch={canRematch(gameState, playerNumber) && !gameState.rematchVote}
-          onRematch={() => gameService.requestRematch()}
-          onHistory={history.open}
-          // Escape in History closes only History
-          onSeeTable={() => { if (!history.dialog) setClosed(true); }}
-          onBack={onBack}
-        >
-          {rematchVote}
-        </GameOverDialog>
-      )}
-      {/* After See the table the vote shows on its own, with nothing under it to cover */}
-      {gameState.isGameOver && closed && !voting && !handingOff && rematchVote}
-      {history.dialog}
-    </div>
+          playerNumber={playerNumber}
+          spectatorId={spectatorId}
+          canReact={!handingOff}
+          onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
+        />
+        {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
+        {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
+        {tableScreen ? (
+          <TableScreenView game={game} client={client} gameState={gameState} />
+        ) : handingOff ? (
+          <HandoffScreen client={client} gameState={gameState} localSeats={localSeats!} onShow={onShowSeat} />
+        ) : playerNumber === null ? (
+          <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
+        ) : (
+          <>
+            {localSeats && <PassAndPlayBar name={gameState.playerNames[playerNumber]} onPass={() => onShowSeat(null)} />}
+            {/* Remounted per shown seat, so nothing one player picked (a pass, a rack order) shows to the next */}
+            <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} />
+            <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
+            <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
+          </>
+        )}
+        {/* A shared device between voters shows the handoff, so the next voter can take it */}
+        {gameState.isGameOver && !closed && !voting && !handingOff && (
+          <GameOverDialog
+            game={game}
+            client={client}
+            gameState={gameState}
+            viewer={playerNumber}
+            canRematch={canRematch(gameState, playerNumber) && !gameState.rematchVote}
+            onRematch={() => gameService.requestRematch()}
+            onHistory={history.open}
+            // Escape in History closes only History
+            onSeeTable={() => { if (!history.dialog) setClosed(true); }}
+            onBack={onBack}
+          >
+            {rematchVote}
+          </GameOverDialog>
+        )}
+        {/* After See the table the vote shows on its own, with nothing under it to cover */}
+        {gameState.isGameOver && closed && !voting && !handingOff && rematchVote}
+        {history.dialog}
+      </div>
+    </WatchingContext>
   );
 }
