@@ -5,6 +5,7 @@ import { ClientGameNotice } from '../games/ClientGameGate.tsx';
 import { useClientGame } from '../games/useClientGame.ts';
 import { saveJoinForm } from '../services/settings.ts';
 import { joinLink } from '../services/share.ts';
+import { requestAlerts } from '../alerts/support.ts';
 import type { JoinRole } from '../../shared/types.ts';
 
 const JOIN_ROLES: { role: JoinRole; label: string; button: string }[] = [
@@ -72,6 +73,8 @@ export default function JoinDialog({
         aria-labelledby="join-dialog-title"
         onSubmit={(e) => {
           e.preventDefault();
+          // The first join is the click that may show the browser's prompt; the landing page never asks
+          if (role === 'player' || role === 'passAndPlay') requestAlerts();
           onJoin();
         }}
       >

@@ -28,9 +28,9 @@ function App() {
   const [role, setRole] = useState(initialForm.role)
   const [localNames, setLocalNames] = useState(initialForm.localNames ?? ['', ''])
   const { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin } = useGameConnection(link)
-  // So a refresh or Back does not reopen the dialog
+  // So a refresh or Back does not reopen the dialog, and a stale ?game= does not make the service worker think this tab shows that game
   useEffect(() => {
-    if (window.location.pathname.startsWith('/join/')) window.history.replaceState(null, '', '/')
+    if (window.location.pathname.startsWith('/join/') || window.location.search) window.history.replaceState(null, '', '/')
   }, [])
   const joined = gameState !== null && (playerNumber !== null || spectatorId !== null || localSeats !== null)
   // The game on screen however it was joined: dialog, refresh or rejoin button

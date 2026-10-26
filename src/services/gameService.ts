@@ -141,6 +141,18 @@ class GameService {
     this.send({ type: MESSAGE_TYPES.SHOW_SEAT, payload: { seat } });
   }
 
+  pushSubscribe(endpoint: string): void {
+    this.send({ type: MESSAGE_TYPES.PUSH_SUBSCRIBE, payload: { endpoint } });
+  }
+
+  pushUnsubscribe(): void {
+    this.send({ type: MESSAGE_TYPES.PUSH_UNSUBSCRIBE });
+  }
+
+  setVisible(visible: boolean): void {
+    this.send({ type: MESSAGE_TYPES.SET_VISIBLE, payload: { visible } });
+  }
+
   disconnect(): void {
     const ws = this.ws;
     this.ws = null;

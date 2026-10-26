@@ -2,6 +2,32 @@ import type { ReactNode } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import usePreferences, { setPreferences } from '../hooks/usePreferences';
 import { SOUNDS } from '../../shared/sounds.ts';
+import { alertSupport, currentEnv, requestAlerts, SUPPORT_EXPLANATIONS, unsubscribePush } from '../alerts/support.ts';
+
+// Off and explained wherever this browser or address cannot notify; the game itself drops its seats from the server
+function NotificationsSetting() {
+  const preferences = usePreferences();
+  const support = alertSupport(currentEnv());
+  return (
+    <section>
+      <h3>Notifications</h3>
+      <label>
+        <input
+          type="checkbox"
+          disabled={support !== 'ready'}
+          checked={support === 'ready' && preferences.notifications}
+          onChange={(e) => {
+            setPreferences({ ...preferences, notifications: e.target.checked });
+            if (e.target.checked) requestAlerts();
+            else unsubscribePush();
+          }}
+        />
+        Notify me when it is my turn
+      </label>
+      {support !== 'ready' && <p className="settings-note">{SUPPORT_EXPLANATIONS[support]}</p>}
+    </section>
+  );
+}
 
 type SettingsDialogProps = {
   onClose: () => void;
@@ -75,6 +101,7 @@ export default function SettingsDialog({ onClose, phoneControls, children }: Set
             Highlight newly drawn cards
           </label>
         </section>
+        <NotificationsSetting />
         {children}
         <div className="modal-buttons">
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
