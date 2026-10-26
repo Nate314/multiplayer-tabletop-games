@@ -1605,3 +1605,49 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Spectator screen and the hand request a player is asked */
+
+:where([data-game] .spectator-view) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+:where([data-game] .spectator-seats) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+:where([data-game] .spectator-seats button[aria-pressed='true']) {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+:where([data-game] .presence-watching) {
+  font-weight: 600;
+}
+
+:where([data-game] .hand-request) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .hand-request-actions) {
+  display: flex;
+  gap: 8px;
+}

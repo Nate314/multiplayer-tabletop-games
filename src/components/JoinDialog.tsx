@@ -66,7 +66,7 @@ export default function JoinDialog({
         }}
       >
         <h2 id="join-dialog-title">{`Join ${game.name}`}</h2>
-        <div className="join-role-switch">
+        <div className="join-role-switch" role="group" aria-label="Join as">
           {JOIN_ROLES.map(option => (
             <button key={option.role} type="button" aria-pressed={role === option.role} onClick={() => onRoleChange(option.role)}>
               {option.label}

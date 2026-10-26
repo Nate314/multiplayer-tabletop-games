@@ -1,4 +1,4 @@
-import { test, expect, newPlayer } from './fixtures.ts';
+import { test, expect, newPlayer, nameOf, type Seat } from './fixtures.ts';
 import type { Page } from '@playwright/test';
 
 type Received = { type: string; payload: Record<string, unknown> };
@@ -84,7 +84,90 @@ test('a started game offers to watch instead', async ({ seat, browser, server })
   await dialog.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(dialog.getByText('Game already in progress', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'Watch instead' }).click();
-  // The "Watching: Cara" line on the players' pages is the spectator screen's (Task 8); here the refusal clears
-  await expect(dialog.getByText('Game already in progress', { exact: true })).toHaveCount(0);
-  await expect(dialog.getByRole('button', { name: 'Spectator' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(visitor.getByRole('button', { name: 'Back to games' })).toBeVisible();
+  await expect(visitor.locator('.spectator-status')).toBeVisible();
+  for (const page of table.pages) await expect(page.locator('.presence-watching')).toHaveText('Watching: Cara');
+});
+
+// Opens the site in a new context and watches `gameId` as `name` through the join dialog
+async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1], gameType: string, gameId: string, name: string) {
+  const page = await newPlayer(browser, server);
+  await page.goto('/');
+  await page.locator('.lobby-game', { hasText: nameOf(gameType) }).click();
+  await page.getByRole('button', { name: 'Spectator' }).click();
+  await page.getByLabel('Your name').fill(name);
+  await page.getByLabel('Game ID').fill(gameId);
+  await page.getByRole('button', { name: 'Watch', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
+  return page;
+}
+
+const handCards = (page: Awaited<ReturnType<typeof watch>>) => page.locator('.hand .hand-cards > *');
+
+async function heartsTable(seat: Seat) {
+  const table = await seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan']);
+  await table.patch({ started: true }); // a hand can be asked for only once the game has started
+  return table;
+}
+
+test('a spectator sees the table and no hand', async ({ seat, browser, server }) => {
+  const table = await heartsTable(seat);
+  const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
+  for (const page of table.pages) await expect(page.locator('.presence-watching')).toHaveText('Watching: Dana');
+  await expect(dana.locator('.hand')).toHaveCount(0);
+  await expect(dana.locator('.spectator-seats button')).toHaveCount(4);
+  await expect(dana.getByRole('button', { name: 'Dismiss' })).toHaveCount(0);
+});
+
+test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => {
+  const table = await heartsTable(seat);
+  const [alice, bob] = table.pages;
+  const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
+  await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
+  await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
+  await expect(dana.getByText('Waiting for Alice')).toBeVisible();
+  await expect(alice.getByText('Dana (watching) wants to see your hand')).toBeVisible();
+  await expect(bob.getByText('wants to see your hand')).toHaveCount(0);
+  await alice.getByRole('button', { name: 'Allow', exact: true }).click();
+  await expect(handCards(dana)).toHaveCount(13);
+  await table.patch({ gameStatus: 'Bob moved' });
+  await expect(dana.locator('.spectator-status')).toContainText('Bob moved');
+  await expect(handCards(dana)).toHaveCount(13);
+  await dana.reload();
+  await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click(); // the pick is not remembered, the permission is
+  await expect(handCards(dana)).toHaveCount(13);
+});
+
+test('a no can be asked again', async ({ seat, browser, server }) => {
+  const table = await heartsTable(seat);
+  const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
+  await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
+  await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
+  await table.pages[0].getByRole('button', { name: "Don't allow" }).click();
+  await expect(dana.getByRole('button', { name: "Ask to see Alice's hand" })).toBeVisible();
+});
+
+test('nothing to ask in a game with nothing private', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  await expect(dana.locator('.spectator-status')).toBeVisible();
+  await expect(dana.locator('.spectator-seats')).toHaveCount(0);
+});
+
+test('play instead in the lobby', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice']);
+  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  await dana.getByRole('button', { name: 'Play instead' }).click();
+  await expect(dana.getByRole('button', { name: 'Play instead' })).toHaveCount(0);
+  await expect(table.pages[0].locator('.presence-watching')).toHaveCount(0);
+  await expect(table.pages[0].getByText('Dana joined (2/2 players)')).toBeVisible();
+});
+
+test('spectators get no votes', async ({ seat, browser, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  await table.pages[0].getByRole('button', { name: 'Undo' }).click();
+  await expect(table.pages[1].getByRole('button', { name: 'Approve' })).toBeVisible();
+  await expect(dana.getByRole('button', { name: 'Approve' })).toHaveCount(0);
 });
