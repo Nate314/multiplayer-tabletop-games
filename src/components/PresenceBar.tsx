@@ -13,9 +13,10 @@ type PresenceBarProps = {
 
 // Lists every player: tap another's name to react, and held seats get a way to start a dismiss vote
 export default function PresenceBar({ gameState, playerNumber, onDismiss }: PresenceBarProps) {
-  const { disconnected, activePlayers, playerNames, currentPlayer, isGameOver, started, undoVote, dismissVote, serverTime } = gameState;
+  const { disconnected, activePlayers, playerNames, currentPlayer, isGameOver, started, undoVote, dismissVote } = gameState;
   const { bubbles, cooldownUntil } = useReactions(playerNumber, gameState);
-  const cooldownMs = useCountdown(cooldownUntil, serverTime) ?? 0;
+  // cooldownUntil is on this device's clock, so no server offset (a stale one inflated the countdown)
+  const cooldownMs = useCountdown(cooldownUntil, undefined) ?? 0;
   if (activePlayers.length < 2 && disconnected.length === 0) return null;
 
   const voteOpen = undoVote !== null || dismissVote !== null;

@@ -4,8 +4,7 @@ import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
-import { reactionsOf, seatOptions, viewFor } from './historyView.ts';
-import { reactionLabel } from './reactions.ts';
+import { reactionsLine, seatOptions, viewFor } from './historyView.ts';
 import PlaybackSettings from './PlaybackSettings';
 import { nextPlayIndex, stepDelayMs } from './playback.ts';
 import type { PlaybackSpeed } from './playback.ts';
@@ -144,7 +143,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   return (
     <>
       <p className="history-move">{stepLabel(client, step, moveTotal)}</p>
-      <p className="history-reactions">{reactionsOf(step).map(r => reactionLabel(r, step.playerNames)).join('  ·  ')}</p>
+      <p className="history-reactions">{reactionsLine(step)}</p>
       <div className="history-board" ref={boxRef}>
         <div className="history-board-content" ref={boardRef}>
           <StepErrorBoundary key={`${index}-${viewer}`}>

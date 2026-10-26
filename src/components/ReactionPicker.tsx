@@ -38,7 +38,7 @@ export default function ReactionPicker({ target, name, disabled, cooldownMs }: R
   return (
     <span className="reaction-anchor" ref={wrapperRef}>
       <button type="button" className="presence-name" aria-haspopup="dialog" aria-expanded={open} disabled={disabled}
-        onClick={() => (open ? close() : setOpen(true))}>
+        onClick={() => { if (open) close(); else { setRecent(loadRecentReactions()); setOpen(true); } }}>
         {cooling ? `${name} ${formatClock(cooldownMs)}` : name}
       </button>
       {open && !disabled && (

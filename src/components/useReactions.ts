@@ -10,6 +10,7 @@ export default function useReactions(playerNumber: Seat, gameState: BasePublicSt
   const [bubbles, setBubbles] = useState<Record<Seat, Reaction>>({});
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const timers = useRef(new Map<Seat, ReturnType<typeof setTimeout>>());
+  const cooldownTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const myName = gameState.playerNames[playerNumber];
 
   useEffect(() => {
@@ -24,12 +25,18 @@ export default function useReactions(playerNumber: Seat, gameState: BasePublicSt
         });
       }, REACTION_SHOW_MS));
       if (reaction.target === playerNumber) playSounds(['reaction']);
-      if (reaction.from === myName && !reaction.fromSpectator) setCooldownUntil(reaction.at + REACTION_COOLDOWN_MS);
+      if (reaction.from === myName && !reaction.fromSpectator) {
+        // Local clock, so a late-rendered server time cannot stretch the countdown; cleared after so the bar stops ticking
+        setCooldownUntil(Date.now() + REACTION_COOLDOWN_MS);
+        clearTimeout(cooldownTimer.current);
+        cooldownTimer.current = setTimeout(() => setCooldownUntil(null), REACTION_COOLDOWN_MS);
+      }
     };
     return () => {
       gameService.onReaction = null;
       pending.forEach(clearTimeout);
       pending.clear();
+      clearTimeout(cooldownTimer.current);
     };
   }, [playerNumber, myName]);
 

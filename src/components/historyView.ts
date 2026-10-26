@@ -1,6 +1,7 @@
 import type { GameFileStep } from '../../shared/gameFile.ts';
 import { asRecord } from '../../shared/messages.ts';
 import type { Reaction } from '../../shared/reactions.ts';
+import { reactionLabel } from './reactions.ts';
 import type { HistoryStep, Seat } from '../../shared/types.ts';
 
 // The step to draw and the seat to draw it for; a seat the file has no view for falls back to the table with no seat
@@ -26,4 +27,10 @@ export function reactionsOf(step: GameFileStep): Reaction[] {
     return r !== null && typeof r.from === 'string' && typeof r.emoji === 'string' &&
       typeof r.fromSpectator === 'boolean' && typeof r.target === 'number';
   });
+}
+
+// The names come from the file, so a step with reactions but no playerNames must not throw during render
+export function reactionsLine(step: GameFileStep): string {
+  const names = (asRecord(step.playerNames) ?? {}) as Record<Seat, string>;
+  return reactionsOf(step).map(r => reactionLabel(r, names)).join('  ·  ');
 }
