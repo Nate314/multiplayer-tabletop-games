@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, joinGame, leave, newPlayer, openFaq, seeTable, test, undo, type Seat } from './fixtures.ts';
 import { sameCard, standardDeck, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState } from '../games/war/types.ts';
 
@@ -197,6 +197,7 @@ test.describe('War rules', () => {
     await flips(alice, bob); // Alice wins the second war, and Bob is out of cards
     await expect(alice.locator('.turn-message')).toHaveText('Game over: Alice wins');
 
+    await seeTable(alice);
     await alice.getByRole('button', { name: 'History' }).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     const slider = dialog.getByRole('slider', { name: 'Step' });

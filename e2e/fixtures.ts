@@ -102,6 +102,11 @@ export async function leave(page: Page): Promise<void> {
   await page.context().close();
 }
 
+// Closes the game-over screen so the finished board can be read or acted on
+export async function seeTable(page: Page): Promise<void> {
+  await page.getByRole('dialog', { name: 'Game over' }).getByRole('button', { name: 'See the table' }).click();
+}
+
 // `voters` start and approve a dismiss vote against `name`, who must have left
 export async function dismiss(name: string, ...voters: Page[]): Promise<void> {
   const [first, ...rest] = voters;

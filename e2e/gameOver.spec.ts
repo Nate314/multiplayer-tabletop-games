@@ -78,6 +78,17 @@ test('Back to games goes to the game list', async ({ seat }) => {
   await expect(alice.locator('.lobby-game').first()).toBeVisible();
 });
 
+test('a game that ends again shows the screen again, not the Game summary button', async ({ seat }) => {
+  const { table, alice } = await finishedConnectFour(seat, [1]);
+  await gameOver(alice).getByRole('button', { name: 'See the table' }).click();
+  await expect(alice.getByRole('button', { name: 'Game summary' })).toBeVisible();
+  await table.patch({ isGameOver: false, currentPlayer: 1, winners: [], gameStatus: '' });
+  await expect(alice.getByRole('button', { name: 'Game summary' })).toHaveCount(0);
+  await table.patch({ isGameOver: true, currentPlayer: null, winners: [2], gameStatus: 'Bob wins!' });
+  await expect(gameOver(alice)).toBeVisible();
+  await expect(alice.getByRole('button', { name: 'Game summary' })).toHaveCount(0);
+});
+
 test('every player sees it', async ({ seat }) => {
   const { bob } = await finishedConnectFour(seat, [1]);
   await expect(gameOver(bob).getByRole('heading')).toHaveText('Alice wins');

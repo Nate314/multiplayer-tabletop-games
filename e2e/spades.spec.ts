@@ -296,7 +296,7 @@ test.describe('Spades rules', () => {
     await lastTrick(table, { scores: [200, 0] });
     await playLastTrick(pages);
     await expect(status(pages[1])).toHaveText('Alice and Cara win with 252 points!');
-    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins; a team at -200 loses');
+    await expect(gameOver(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins; a team at -200 loses');
     await expect(turn(pages[1])).toHaveText('Game over');
   });
 });

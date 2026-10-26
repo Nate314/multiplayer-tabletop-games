@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -742,6 +742,7 @@ test.describe('Catan rules', () => {
     await expect(turnMessage(bob)).toHaveText('Game over: Alice won');
     await expect(row(bob, 'Alice').locator('.player-points')).toHaveText('10 pts');
 
+    await seeTable(bob);
     await button(bob, 'History').click();
     const downloading = bob.waitForEvent('download');
     await bob.getByRole('dialog', { name: 'History' }).getByRole('button', { name: 'Download game' }).click();

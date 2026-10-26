@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
 import { cardName, sameCard, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState } from '../games/holdem/types.ts';
 
@@ -176,6 +176,7 @@ test.describe("Texas Hold'em rules", () => {
     await expect(board(bob)).toHaveCount(5);
     await expect(result(bob).locator('.holdem-result-pots li')).toHaveText(['Pot of 10: Alice with Flush, king high', 'Alice gets back 15 uncalled']);
     // The hand was dealt by Continue, not a move, so History shows it as the end of the game
+    await seeTable(bob);
     await bob.getByRole('button', { name: 'History' }).click();
     const dialog = bob.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toHaveText(/^End of the game: Hand 2: Bob has the button\. The board is dealt out\./);
@@ -317,6 +318,7 @@ test.describe("Texas Hold'em rules", () => {
     for (const page of [alice, bob, cara]) await button(page, 'Vote to end the game').click();
     await expect(turn(alice)).toHaveText(/^Game over/);
 
+    await seeTable(alice);
     await alice.getByRole('button', { name: 'History' }).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     const slider = dialog.getByRole('slider', { name: 'Step' });
