@@ -31,8 +31,8 @@ test('a dismiss vote waits on the seats that have not voted', () => {
   assert.deepEqual(seatsToAct(testGame, table({ dismissVote, currentPlayer: 1, disconnected: [3] })), [1, 2]);
 });
 
-test('seats a hand request names are waited on', () => {
-  assert.deepEqual(seatsToAct(testGame, table({ handRequests: [{ spectator: 's', seat: 3 }] })), [2, 3]);
+test('a hand request does not hold the device, since answering it is optional', () => {
+  assert.deepEqual(seatsToAct(testGame, table({ handRequests: [{ spectator: 's', seat: 3 }] })), [2]);
 });
 
 test("the game's out-of-turn waits come first, in place of the seat holding the turn", () => {

@@ -1864,6 +1864,18 @@ test('handoffSeat stops showing a local seat that was dismissed', () => {
   assert.equal(manager.handoffSeat(ROOM, 3, [3]), null);
 });
 
+test('an unanswered hand request does not keep a local seat shown once the turn moves on', () => {
+  const manager = createGameManager([handGame], seededRandom);
+  seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));
+  ok(manager.move(ROOM, 1, tick));
+  const spectator = manager.join('test', 'g1', 'Dana', false, undefined, 'spectator');
+  assert.ok('spectatorId' in spectator && spectator.spectatorId);
+  ok(manager.requestHand(ROOM, spectator.spectatorId, 2));
+  assert.equal(manager.handoffSeat(ROOM, 2, [1, 2]), 2);
+  ok(manager.move(ROOM, 2, tick));
+  assert.equal(manager.handoffSeat(ROOM, 2, [1, 2]), null);
+});
+
 test('a pass-and-play view holds no local seat\'s hand but the shown one', () => {
   const manager = createGameManager([handGame], seededRandom);
   const { state } = seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));

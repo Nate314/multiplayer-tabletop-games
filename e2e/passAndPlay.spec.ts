@@ -118,7 +118,24 @@ test.describe('Pass and play', () => {
     await expect(hand(dee).getByRole('button', { name: cardName(club('A')), exact: true })).toBeEnabled();
   });
 
-  test('reload resumes on the handoff screen', async ({ seat, device }) => {
+  test('Someone else? shows that player even while another local player is waited on', async ({ seat, device }) => {
+    const { table } = await sharedTable(seat, device);
+    // Ann and Cy pass, so only Bo is waited on
+    await show(device, 'Ann').click();
+    await passFirstThree(device);
+    await device.getByRole('button', { name: "I'm Cy", exact: true }).click();
+    await passFirstThree(device);
+    await expect(device.getByText('Pass to Bo')).toBeVisible();
+
+    await device.getByRole('button', { name: "I'm Cy", exact: true }).click();
+    await expect(device.getByText('Playing as Cy')).toBeVisible();
+    const { hands } = await table.state<GameState>();
+    await expect(hand(device).getByRole('button')).toHaveCount(10);
+    await expect(hand(device).getByRole('button', { name: cardName(hands[3][0]), exact: true })).toBeVisible();
+    await expectNoCards(device, [...hands[1], ...hands[2]]);
+  });
+
+  test('reload resumes on the handoff screen',async ({ seat, device }) => {
     await sharedTable(seat, device);
     await show(device, 'Ann').click();
     await passFirstThree(device);

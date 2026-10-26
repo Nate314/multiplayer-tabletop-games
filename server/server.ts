@@ -228,7 +228,7 @@ function handleLocalMessage(
       sendError(ws, "Not one of this device's players");
     } else {
       connection.seat = seat;
-      sendState(ws, connection);
+      sendState(ws, connection, false); // an explicit "I'm <name>" is consent, so no handoff overrides it until the state changes
     }
     return true;
   }
@@ -300,10 +300,10 @@ function handleDisconnect(ws: WebSocket): void {
   }
   const seats = connection.localSeats ?? (connection.seat !== null ? [connection.seat] : []);
   const results = seats.map(seat => manager.disconnect(connection.roomId, seat));
-  if (results.some(Boolean)) {
-    broadcast(connection.roomId);
-  } else if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
+  if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
     for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
+  } else if (results.some(Boolean)) {
+    broadcast(connection.roomId);
   }
 }
 
@@ -323,13 +323,13 @@ function broadcast(roomId: string): void {
 
 // Each player gets their own view, so a game can show them their own hand.
 // A shared device first hands over when another local player's hand would show, and is told which seat it sees
-function sendState(ws: WebSocket, connection: Connection): void {
+function sendState(ws: WebSocket, connection: Connection, handoff = true): void {
   const { roomId } = connection;
   let state: BasePublicState | undefined;
   if (connection.spectatorId !== undefined) {
     state = manager.getSpectatorState(roomId, connection.spectatorId);
   } else if (connection.localSeats) {
-    connection.seat = manager.handoffSeat(roomId, connection.seat, connection.localSeats);
+    if (handoff) connection.seat = manager.handoffSeat(roomId, connection.seat, connection.localSeats);
     const view = manager.getState(roomId, connection.seat);
     state = view && { ...view, shownSeat: connection.seat };
   } else {
