@@ -133,6 +133,19 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setError(message);
     };
 
+    // Told after a rematch that the seat is gone: forgotten like a dismissal, back to the list with the message
+    gameService.onLeftGame = (message) => {
+      stopRejoining();
+      gameService.disconnect();
+      seat = null;
+      joined = false;
+      setSpectatorId(null);
+      setPlayerNumber(null);
+      setGameState(null);
+      updateSession(null);
+      setError(message);
+    };
+
     gameService.onDisconnect = () => {
       stopRejoining();
       seat = null;
@@ -219,5 +232,11 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     if (remembered?.inGame) updateSession({ ...remembered, inGame: false });
   }, [leave, updateSession]);
 
-  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, join, leave, backToGames, rejoin };
+  // Dropping out of a rematch gives the seat up, so the list has nothing to rejoin
+  const dropGame = useCallback(() => {
+    leave();
+    updateSession(null);
+  }, [leave, updateSession]);
+
+  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, join, leave, backToGames, dropGame, rejoin };
 }

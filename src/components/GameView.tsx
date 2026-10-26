@@ -11,6 +11,7 @@ import PresenceBar from './PresenceBar';
 import HouseRulesPanel from './HouseRulesPanel';
 import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
+import RematchVote from './RematchVote';
 import SpectatorView from './SpectatorView';
 import HandRequestPrompt from './HandRequestPrompt';
 import gameService from '../services/gameService';
@@ -29,10 +30,11 @@ type GameViewProps = {
   credential: string | undefined;
   error: string | null;
   onBack: () => void;
+  onDrop: () => void; // leaves and forgets the game
 };
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
-export default function GameView({ game, client, gameState, playerNumber, spectatorId, credential, error, onBack }: GameViewProps) {
+export default function GameView({ game, client, gameState, playerNumber, spectatorId, credential, error, onBack, onDrop }: GameViewProps) {
   // App only shows a game once the connection has a seat or a spectator id
   if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
   const { Screen } = client;
@@ -91,11 +93,24 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           client={client}
           gameState={gameState}
           viewer={playerNumber}
-          canRematch={canRematch(gameState, playerNumber)}
+          canRematch={canRematch(gameState, playerNumber) && !gameState.rematchVote}
+          onRematch={() => gameService.requestRematch()}
           onHistory={history.open}
           // Escape in History closes only History
           onSeeTable={() => { if (!history.dialog) setClosed(true); }}
           onBack={onBack}
+        />
+      )}
+      {/* A dismiss vote in the middle of it steps in front, so the others can answer it */}
+      {!gameState.dismissVote && (
+        <RematchVote
+          gameState={gameState}
+          viewer={playerNumber}
+          onVote={(join) => {
+            gameService.voteRematch(join);
+            if (!join) onDrop();
+          }}
+          onRemove={(seat) => gameService.requestDismiss(seat)}
         />
       )}
       {history.dialog}
