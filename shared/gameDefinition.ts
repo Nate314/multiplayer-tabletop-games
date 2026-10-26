@@ -2,6 +2,8 @@ import type { GameCategory } from './categories.ts';
 import type { HouseRule, PlayerRange } from './houseRules.ts';
 import type { BaseGameState, BasePublicState, Random, Result, Seat, Standing } from './types.ts';
 
+export const SIMULATION_TICK_MS = 50;
+
 export type GameInfo = {
   id: string; // lowercase, used in messages and as data-game
   name: string;
@@ -38,6 +40,11 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   deadline?(state: S): number | null;
   onDeadline?(state: S, now: number, random: Random): S;
   resumeClock?(state: S, now: number): S;
+  // Live simulation. While `simulating(state)` is true the platform calls `simulate` every SIMULATION_TICK_MS,
+  // broadcasts the result and neither records it nor writes it to the store, except a tick that ends the game,
+  // which is recorded as a move like a deadline. The state is saved once simulating turns false.
+  simulating?(state: S): boolean;
+  simulate?(state: S): S;
   // Called only when `seat` is not currentPlayer, after every other turn guard passed. True lets applyMove run for this
   // out-of-turn move, which is recorded for undo like any other. Validates untrusted `move`.
   allowsOutOfTurn?(state: S, seat: Seat, move: unknown): boolean;

@@ -1,0 +1,186 @@
+[data-game="jenga"] {
+  color-scheme: light;
+  --page-bg: #F3ECE2;
+  --text: #2B2118;
+  --panel-bg: #FFFFFF;
+  --panel-border: #DCCBB4;
+  --button-bg: #8A5A2B;
+  --button-hover-bg: #6E4520;
+  --button-text: #FFF;
+  --status-bg: #F1E4D3;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --focus: #2F6FD6;
+  /* The tower's colors, read by TowerView from here so a theme switch recolors it */
+  --jenga-wood: #D9B98A;
+  --jenga-highlight: #F2A33A;
+  --jenga-light: #FFFFFF;
+  --jenga-shadow: #6B5A48;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #17130F;
+    --text: #EFE6DA;
+    --panel-bg: #221C16;
+    --panel-border: #4A3C2E;
+    --button-bg: #B07A44;
+    --button-hover-bg: #C68D55;
+    --status-bg: #33291F;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --focus: #7FB0FF;
+    --jenga-wood: #C9A574;
+    --jenga-highlight: #FFB347;
+    --jenga-light: #D8D0C4;
+    --jenga-shadow: #2A2119;
+  }
+
+  .game-header {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-id {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  /* The tower and the side panel side by side, or stacked when the window is narrow */
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .board-area {
+    position: relative;
+    flex: 1 1 480px;
+    min-width: 0;
+    max-width: 720px;
+  }
+
+  .jenga-controls {
+    border-radius: 8px;
+    outline: none;
+  }
+
+  .jenga-controls:focus-visible {
+    box-shadow: 0 0 0 3px var(--focus);
+  }
+
+  .jenga-tower {
+    height: min(70vh, 720px);
+    cursor: grab;
+  }
+
+  .jenga-no-webgl {
+    padding: 24px;
+    border: 1px dashed var(--panel-border);
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .jenga-selection {
+    min-height: 1.4em;
+    margin-top: 6px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 300px;
+    max-width: 100%;
+    padding: 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .jenga-status {
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .hint {
+    font-size: 14px;
+  }
+
+  .jenga-place {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .side-panel button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .side-panel button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The history dialog draws a fixed-size tower, which the dialog scales to fit */
+
+  .jenga-history {
+    width: 360px;
+  }
+
+  .jenga-history .jenga-tower {
+    height: 480px;
+    cursor: default;
+  }
+
+  @media (max-width: 600px) {
+    .board-area {
+      flex-basis: 100%;
+    }
+
+    .jenga-tower {
+      height: 60vh;
+    }
+
+    .jenga-history .jenga-tower {
+      height: 480px;
+    }
+  }
+}

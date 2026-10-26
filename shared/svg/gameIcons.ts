@@ -24,6 +24,8 @@ const GAME_ICONS: Record<string, () => string> = {
   gofish: () => lineIcon(el('path', { d: 'M6 12c2.5-3.5 6-5 9-5s6 2.5 7 5c-1 2.5-4 5-7 5s-6.5-1.5-9-5zM6 12L2 8v8z' }), pip(17, 11, 0.9)),
   hearts: () => lineIcon(solid('path', { d: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z' })),
   holdem: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('circle', { cx: 12, cy: 12, r: 5 }), el('path', { d: 'M12 3v4M12 17v4M3 12h4M17 12h4' })),
+  // Three courses of bricks, the middle one pulled halfway out to the right
+  jenga: () => lineIcon(el('path', { d: 'M3 3h14v6H3zM7.7 3v6M12.3 3v6M7 9h14v6H7zM3 15h14v6H3zM7.7 15v6M12.3 15v6' })),
   mancala: () => lineIcon(el('rect', { x: 2, y: 7, width: 20, height: 10, rx: 5 }),
     ...[8.5, 12, 15.5].flatMap(x => [el('circle', { cx: x, cy: 10.2, r: 1.2 }), el('circle', { cx: x, cy: 13.8, r: 1.2 })])),
   monopoly: () => lineIcon(el('path', { d: 'M3 18c0 1.5 4 2.5 9 2.5s9-1 9-2.5M6 18.5V6c0-1 2.7-2 6-2s6 1 6 2v12.5M6 14c2 .7 4 1 6 1s4-.3 6-1' })),

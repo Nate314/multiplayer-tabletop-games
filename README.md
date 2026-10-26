@@ -1,6 +1,6 @@
 # Multiplayer Tabletop Games
 
-A website for playing board games with friends in the browser. It has thirty-two games: Azul, Dominoes, Parchisi, Quoridor, Rack-O, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Connect Four, Mancala and War (two players), The Crew (three to five players), Euchre, Hearts and Spades (four players), Rook (four players, or up to seven as a house rule), Carcassonne and Ticket to Ride (two to five players), Go Fish, Skip-Bo (two to six players), Phase 10 (two to six players, or up to eight as a house rule), Catan (three to six players, or two as a house rule), Risk (three to six players), Monopoly (two to eight players), Farkle, Texas Hold'em, UNO and Yahtzee (two to eight players, or up to ten as a house rule), and Pictionary (two to ten players). The landing page lists the games in groups (card, dice, tile, classic board, strategy board and party games); the list can be searched, and the Filter button beside the search box sorts it A to Z and filters it by category and player count (a count reached only as a house rule shows the game marked "with a house rule"), and this browser remembers your choice. Pick one, enter your name and a game ID, and join.
+A website for playing board games with friends in the browser. It has thirty-three games: Azul, Dominoes, Parchisi, Quoridor, Rack-O, Rummikub, Scrabble and Splendor (two to four players), Backgammon, Checkers, Chess, Connect Four, Mancala and War (two players), The Crew (three to five players), Euchre, Hearts and Spades (four players), Rook (four players, or up to seven as a house rule), Carcassonne and Ticket to Ride (two to five players), Go Fish, Skip-Bo (two to six players), Phase 10 (two to six players, or up to eight as a house rule), Catan (three to six players, or two as a house rule), Risk (three to six players), Jenga and Monopoly (two to eight players), Farkle, Texas Hold'em, UNO and Yahtzee (two to eight players, or up to ten as a house rule), and Pictionary (two to ten players). The landing page lists the games in groups (card, dice, tile, classic board, strategy board and party games); the list can be searched, and the Filter button beside the search box sorts it A to Z and filters it by category and player count (a count reached only as a house rule shows the game marked "with a house rule"), and this browser remembers your choice. Pick one, enter your name and a game ID, and join.
 
 ## Setup and Running
 
@@ -67,7 +67,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 ## Development
 
 - `npm test` runs the unit tests
-- `npm run test:e2e` runs the end-to-end tests: every rule and control in each game's README, played in real browsers. Run `npx playwright install chromium` once first. It builds the client, then each worker starts its own server with test hooks on (`E2E=1`, see `server/e2e.ts`), so a test can set up a game state and pick the next dice before playing it in the browser. Set `E2E_SKIP_BUILD=1` to reuse the last build. Each run also writes an HTML report to `playwright-report/`; open it with `npx playwright show-report`
+- `npm run test:e2e` runs the end-to-end tests: every rule and control in each game's README, played in real browsers. Run `npx playwright install chromium` once first. It builds the client, then each worker starts its own server with test hooks on (`E2E=1`, see `server/e2e.ts`), so a test can set up a game state, pick the next dice and run Jenga's physics ticks before playing it in the browser. Set `E2E_SKIP_BUILD=1` to reuse the last build. Each run also writes an HTML report to `playwright-report/`; open it with `npx playwright show-report`
 - `npm run typecheck` checks the TypeScript types for the browser and server code
 - `npm run lint` runs ESLint
 - `npm run dev` starts the Vite dev server for the browser code (UI only; play games through `npm start`)
@@ -129,6 +129,7 @@ Installing needs HTTPS, or `localhost` on the server computer itself; over plain
 - The server validates every move with the game's rules code
 - Started games are kept in a SQLite database (Node's built-in `node:sqlite`, which prints an experimental warning), so they survive a server restart. Players rejoin with the same game ID and name, from the browser they joined in. Games not yet started are not saved
 - Drag and drop works with mouse and touch through one shared pointer-events hook (`src/drag/`), with no library
+- Jenga draws its tower with three.js and runs its physics with Rapier (`@dimforge/rapier3d-deterministic-compat`, deterministic, on the server, with the same physics previewed in the browser). They are the only libraries a game uses, and they load only with Jenga
 
 See `docs/architecture.md` for more.
 
@@ -148,6 +149,7 @@ Each game's rules and controls are in its own README. The rules follow the Wikip
 - [Farkle](games/farkle/README.md): roll six dice, bank your points or push your luck and risk them all, for 2 to 8 players (2 to 10 as a house rule). Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Farkle).
 - [Go Fish](games/gofish/README.md): ask for ranks, go fish, and collect the most books of four, for 2 to 6 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Go_Fish).
 - [Hearts](games/hearts/README.md): pass three cards, then dodge the hearts and the queen of spades or shoot the moon, lowest score when someone reaches 100 wins, for exactly 4 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Hearts_(card_game)), Black Lady.
+- [Jenga](games/jenga/README.md): pull blocks from a wobbly tower and stack them on top without knocking it over, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Jenga).
 - [Mancala](games/mancala/README.md): drop stones around the board, play Avalanche or Kalah, and fill your bank. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Mancala).
 - [Monopoly](games/monopoly/README.md): buy, trade and build on properties, and bankrupt every other player, for 2 to 8 players. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Monopoly_(game)).
 - [Parchisi](games/parchisi/README.md): roll two dice and race your four pawns around the cross to home. Rules follow [Wikipedia](https://en.wikipedia.org/wiki/Parcheesi).
