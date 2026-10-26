@@ -48,7 +48,7 @@ function pullRefusal(blocks: Block[], id: number): string | null {
   return null;
 }
 
-export const canPull = (state: GameState, block: number) => pullRefusal(state.blocks, block) === null;
+export const canPull = (state: Pick<GameState, 'blocks'>, block: number) => pullRefusal(state.blocks, block) === null;
 
 const turnStatus = (state: GameState) => state.currentPlayer === null ? state.gameStatus : `${state.playerNames[state.currentPlayer]}'s turn to pull a block`;
 
