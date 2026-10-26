@@ -22,6 +22,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
         else if (!activePlayers.includes(seat)) status = 'left';
         else if (eliminated.includes(seat)) status = 'eliminated';
         const classNames = ['player-row'];
+        if (seat !== viewer) classNames.push('hand-only-hide');
         if (seat === turnHolder) classNames.push('player-current');
         if (status === 'left' || status === 'eliminated') classNames.push('player-out');
         return (
@@ -44,7 +45,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
         );
       })}
       {neutral.length > 0 && (
-        <div className="player-row">
+        <div className="player-row hand-only-hide">
           <div className="player-line">
             <span className="swatch seat-neutral" aria-hidden="true" />
             <span className="player-name">Neutral</span>

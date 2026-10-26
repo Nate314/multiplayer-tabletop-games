@@ -23,6 +23,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
           const left = !activePlayers.includes(seat);
           const meeples = MEEPLES_PER_PLAYER - meeplesOnBoard(board, seat);
           const classNames = ['cc-player'];
+          if (seat !== viewer) classNames.push('hand-only-hide');
           if (seat === currentPlayer) classNames.push('cc-player-current');
           if (left) classNames.push('cc-player-left');
           return (

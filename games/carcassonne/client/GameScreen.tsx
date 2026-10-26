@@ -96,9 +96,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="cc-layout">
-        <div className="cc-board-area" ref={boardRef}>
+        <div className="cc-board-area hand-only-board" ref={boardRef}>
           <Board
             board={board}
             highlight={board.length > 1 ? board.length - 1 : null} // the start tile alone was placed by nobody

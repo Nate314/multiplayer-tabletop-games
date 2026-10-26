@@ -7,7 +7,7 @@ export default function BattleDice({ battle, playerNames }: { battle: Battle | n
   if (!battle) return null;
   const defender = battle.defender === null ? 'Neutral' : playerNames[battle.defender];
   return (
-    <section className="panel battle" aria-label="Last battle">
+    <section className="panel battle hand-only-hide" aria-label="Last battle">
       <div className="panel-title">
         {territoryName(battle.from)} attacked {territoryName(battle.to)}
         {battle.rolls > 1 && <span className="battle-rolls"> (blitz, {battle.rolls} rolls, last roll shown)</span>}

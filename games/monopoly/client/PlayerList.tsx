@@ -31,6 +31,7 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
         const properties = Object.keys(owners).map(Number).filter(space => owners[space] === seat).sort((a, b) => a - b);
         const cards = jailCards[seat]?.length ?? 0;
         const classNames = ['player-row'];
+        if (seat !== viewer) classNames.push('hand-only-hide');
         if (seat === turnHolder) classNames.push('player-current');
         if (out || left) classNames.push('player-out');
         let status = '';

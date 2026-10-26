@@ -21,7 +21,7 @@ export default function Table({ gameState, seat, active, selection, onGem, onCar
   const picked = selection?.kind === 'gems' ? selection.colors : [];
 
   return (
-    <section className={active ? 'table' : 'table table-idle'} aria-label="Table">
+    <section className={active ? 'table hand-only-board' : 'table table-idle hand-only-board'} aria-label="Table">
       <div className="nobles" aria-label="Nobles">
         {nobles.map(noble => <NobleView key={noble} noble={noble} animKey={nobleKey(noble)} />)}
       </div>

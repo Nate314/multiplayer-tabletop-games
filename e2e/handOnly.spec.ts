@@ -117,6 +117,61 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.score-row'), '.bag-count', '.game-id'],
     board: '.board-wrap',
     move: async page => { await button(page, 'Pass').click(); }
+  },
+  catan: {
+    keep: ['.turn-message', '.hand-panel', you('.player-row')],
+    hide: [others('.player-row'), '.bank-line', '.game-id'],
+    board: '.board-area', // setup: the board is there on your turn to place
+    move: async page => { await page.getByRole('button', { name: /^Intersection \d+$/ }).first().click(); }
+  },
+  risk: {
+    keep: ['.turn-message', '.phase-panel', you('.player-row'), '.deck-line'],
+    hide: [others('.player-row'), '.game-id'],
+    board: '.map-area',
+    move: async page => {
+      await button(page, 'All').click();
+      await page.locator('.territory.selectable .disc').first().click();
+      await button(page, 'Place all').click();
+    }
+  },
+  tickettoride: {
+    keep: ['.turn-message', '.hand-panel', '.ticket-choice', you('.player-row')], // the ticket choice is open before your turn
+    hide: [others('.player-row'), '.game-id'],
+    board: '.map-frame',
+    move: async page => { await button(page, /^Keep \d+ tickets?$/).click(); }
+  },
+  splendor: {
+    keep: ['.turn-message', '.player-me', '.player-me .player-tokens'],
+    hide: ['.player:not(.player-me)', '.game-id'],
+    board: 'section.table',
+    move: async page => {
+      for (const gem of ['white', 'blue', 'green']) await page.locator(`.supply .gem-${gem}`).click();
+      await button(page, 'Take gems').click();
+    }
+  },
+  monopoly: {
+    keep: ['.turn-message', '.turn-panel', you('.player-row')],
+    hide: [others('.player-row'), '.game-id'],
+    board: '.board-area',
+    move: async page => { await button(page, 'Roll the dice').click(); }
+  },
+  carcassonne: {
+    keep: ['.cc-turn-message', '.cc-turn', you('.cc-player')],
+    hide: [others('.cc-player'), '.game-id'],
+    board: '.cc-board-area',
+    move: async page => {
+      await page.locator('.cc-cell').first().click();
+      await button(page, 'Place tile').click();
+    }
+  },
+  azul: {
+    keep: ['.turn-message', '.board-mine'],
+    hide: ['.board-other', '.game-id'],
+    board: '.table',
+    move: async page => {
+      await page.locator('.factories .factory').getByRole('button', { name: /^Take / }).first().click();
+      await button(page, 'Floor line').click();
+    }
   }
 };
 
@@ -172,4 +227,30 @@ test('History shows the whole table in Hand only', async ({ seat }) => {
   const history = page.getByRole('dialog', { name: 'History' });
   await expect(history.locator('.board-wrap')).toBeVisible();
   await expect(history.locator('.score-row >> visible=true')).toHaveCount(2);
+});
+
+test('Catan trade offers and Monopoly auctions can be answered out of turn in Hand only', async ({ seat }) => {
+  const catan = await seat('catan', NAMES.slice(0, 3));
+  const noCards = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
+  await catan.patch({
+    started: true, setup: null, rolled: true, turnHolder: 1, currentPlayer: 1,
+    trade: { from: 1, to: null, give: { ...noCards, wood: 1 }, get: { ...noCards, ore: 1 }, declined: [] }
+  });
+  await tableScreen(catan);
+  const bob = catan.pages[1];
+  await expect(bob.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
+  await expect(bob.locator('.board-area >> visible=true')).toHaveCount(0);
+  await expect(button(bob, 'Accept')).toBeVisible();
+  await expect(button(bob, 'Decline')).toBeVisible();
+
+  const monopoly = await seat('monopoly', NAMES.slice(0, 2));
+  await tableScreen(monopoly);
+  await monopoly.dice(1, 2); // Baltic Avenue, which Alice declines
+  await button(monopoly.pages[0], 'Roll the dice').click();
+  await button(monopoly.pages[0], 'Decline and auction').click();
+  const other = monopoly.pages[1];
+  await expect(other.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
+  await expect(other.locator('.board-area >> visible=true')).toHaveCount(0);
+  await expect(other.getByRole('region', { name: 'Auction' })).toBeVisible();
+  await expect(button(other, 'Pass')).toBeVisible();
 });

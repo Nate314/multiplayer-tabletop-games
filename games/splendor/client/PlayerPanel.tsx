@@ -22,6 +22,7 @@ export default function PlayerPanel({ gameState, seat, isMe, selection, onReserv
   const owned = bonuses(player);
   const classes = ['player'];
   if (isMe) classes.push('player-me');
+  else classes.push('hand-only-hide');
   if (currentPlayer === seat) classes.push('player-current');
   if (!activePlayers.includes(seat)) classes.push('player-left');
   if (winners.includes(seat)) classes.push('player-winner');
