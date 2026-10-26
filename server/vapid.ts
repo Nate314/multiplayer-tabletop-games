@@ -13,12 +13,20 @@ export function createVapidKeys(): VapidKeys {
 
 const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
 
+// Importing the key costs more than signing, so it happens once per keys object
+const privateKeys = new WeakMap<VapidKeys, crypto.KeyObject>();
+function privateKeyOf(keys: VapidKeys): crypto.KeyObject {
+  let key = privateKeys.get(keys);
+  if (!key) privateKeys.set(keys, key = crypto.createPrivateKey({ key: keys.privateJwk, format: 'jwk' }));
+  return key;
+}
+
 // The caller adds `Topic`
 export function vapidHeaders(keys: VapidKeys, endpoint: string, subject: string, nowMs: number): Record<string, string> {
+  const key = privateKeyOf(keys);
   const data = `${encode({ typ: 'JWT', alg: 'ES256' })}.${encode({
     aud: new URL(endpoint).origin, exp: Math.floor(nowMs / 1000) + 12 * 3600, sub: subject
   })}`;
-  const key = crypto.createPrivateKey({ key: keys.privateJwk, format: 'jwk' });
   const signature = crypto.sign('sha256', Buffer.from(data), { key, dsaEncoding: 'ieee-p1363' });
   return {
     Authorization: `vapid t=${data}.${signature.toString('base64url')}, k=${keys.publicKey}`,
@@ -44,7 +52,10 @@ export async function sendPush(
   try {
     const response = await fetchImpl(endpoint, { method: 'POST', headers, signal: AbortSignal.timeout(10_000) });
     if (response.status === 404 || response.status === 410) return 'gone';
-    return response.ok ? 'sent' : 'failed';
+    if (response.ok) return 'sent';
+    // A 403 here usually means the browser subscribed with older VAPID keys
+    console.error(`push failed with status ${response.status}`);
+    return 'failed';
   } catch (error) {
     console.error('push failed', error);
     return 'failed';

@@ -44,3 +44,15 @@ test('VAPID keys are made once and come back after a reopen', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a seat keeps only its newest three endpoints', () => {
+  const store = openPushStore(':memory:');
+  for (const endpoint of ['e1', 'e2', 'e3', 'e4']) store.add('hearts/a', 1, endpoint);
+  store.add('hearts/a', 2, 'e9');
+  assert.deepEqual(store.endpoints('hearts/a', 1).sort(), ['e2', 'e3', 'e4']);
+  store.add('hearts/a', 1, 'e2'); // a resubscribe makes it the newest
+  store.add('hearts/a', 1, 'e5');
+  assert.deepEqual(store.endpoints('hearts/a', 1).sort(), ['e2', 'e4', 'e5']);
+  assert.deepEqual(store.endpoints('hearts/a', 2), ['e9']);
+  store.close();
+});

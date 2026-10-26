@@ -327,7 +327,11 @@ export function createGameManager(
     clearInterval(room?.simTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
-    hooks.removed?.(roomId);
+    try {
+      hooks.removed?.(roomId);
+    } catch (error) {
+      console.error(`Could not report removed room ${roomId}:`, error);
+    }
   }
 
   // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS

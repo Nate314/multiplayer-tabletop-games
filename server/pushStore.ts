@@ -27,7 +27,13 @@ export function openPushStore(file: string): PushStore {
   );
   const getSetting = db.prepare('SELECT value FROM settings WHERE key = ?');
   const setSetting = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-  const add = db.prepare('INSERT OR IGNORE INTO push_subscriptions (room_id, seat, endpoint) VALUES (?, ?, ?)');
+  // REPLACE gives a resubscribe a new rowid, so it counts as the newest
+  const add = db.prepare('INSERT OR REPLACE INTO push_subscriptions (room_id, seat, endpoint) VALUES (?, ?, ?)');
+  // Each push costs a signature and a request, so one seat cannot pile up endpoints
+  const trim = db.prepare(
+    'DELETE FROM push_subscriptions WHERE room_id = ?1 AND seat = ?2 AND rowid NOT IN ' +
+    '(SELECT rowid FROM push_subscriptions WHERE room_id = ?1 AND seat = ?2 ORDER BY rowid DESC LIMIT 3)'
+  );
   const endpoints = db.prepare('SELECT endpoint FROM push_subscriptions WHERE room_id = ? AND seat = ?');
   const removeSeat = db.prepare('DELETE FROM push_subscriptions WHERE room_id = ? AND seat = ?');
   const removeRoom = db.prepare('DELETE FROM push_subscriptions WHERE room_id = ?');
@@ -36,7 +42,10 @@ export function openPushStore(file: string): PushStore {
   return {
     getSetting: (key) => (getSetting.get(key) as { value: string } | undefined)?.value ?? null,
     setSetting: (key, value) => void setSetting.run(key, value),
-    add: (roomId, seat, endpoint) => void add.run(roomId, seat, endpoint),
+    add: (roomId, seat, endpoint) => {
+      add.run(roomId, seat, endpoint);
+      trim.run(roomId, seat);
+    },
     endpoints: (roomId, seat) => (endpoints.all(roomId, seat) as { endpoint: string }[]).map((row) => row.endpoint),
     removeSeat: (roomId, seat) => void removeSeat.run(roomId, seat),
     removeRoom: (roomId) => void removeRoom.run(roomId),

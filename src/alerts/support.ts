@@ -53,14 +53,23 @@ export function requestAlerts(): void {
 
 const keyBytes = (base64url: string) => Uint8Array.from(atob(base64url.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))
 
+export function sameKey(existing: ArrayBuffer | null, key: Uint8Array): boolean {
+  if (!existing || existing.byteLength !== key.length) return false
+  const bytes = new Uint8Array(existing)
+  return key.every((byte, i) => byte === bytes[i])
+}
+
 // serviceWorker.ready never settles without a registered worker (as in dev), which simply means no push
 export async function subscribePush(): Promise<string | null> {
   try {
     const registration = await navigator.serviceWorker.ready
-    const existing = await registration.pushManager.getSubscription()
-    if (existing) return existing.endpoint
     const { publicKey } = await (await fetch('/api/push/key')).json() as { publicKey: string }
-    const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) })
+    const serverKey = keyBytes(publicKey)
+    const existing = await registration.pushManager.getSubscription()
+    // A subscription bound to older server keys (after a database reset) only gets 403s
+    if (existing && sameKey(existing.options?.applicationServerKey ?? null, serverKey)) return existing.endpoint
+    await existing?.unsubscribe()
+    const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: serverKey })
     return subscription.endpoint
   } catch {
     return null

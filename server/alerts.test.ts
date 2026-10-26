@@ -136,3 +136,22 @@ test('pushes carry the same Topic for one game and no body', () => {
   assert.ok(sent[0].headers.Authorization.startsWith('vapid t='));
   assert.deepEqual(sent.map(call => call.args), [2, 2]);
 });
+
+test("a rematch's first turn never goes to the device that held the seat last game", () => {
+  const { store, sent, alerts } = setup();
+  alerts.roomChanged(ROOM, views({ currentPlayer: 2 }), none);
+  alerts.roomChanged(ROOM, views({ currentPlayer: null, isGameOver: true, winners: [1] }), none);
+  sent.length = 0;
+  alerts.roomChanged(ROOM, views({ started: false, currentPlayer: 1, gameNumber: 2, playerNames: { 1: 'Bob', 2: 'Ann' } }), none);
+  assert.deepEqual(sent, []);
+  assert.deepEqual(alerts.pending(ANN), []);
+  assert.deepEqual(store.roomIds(), []);
+});
+
+test('a seat that leaves during a game loses its subscriptions', () => {
+  const { store, alerts } = setup();
+  alerts.roomChanged(ROOM, views({ currentPlayer: 2 }), none);
+  alerts.roomChanged(ROOM, new Map([[1, state({ activePlayers: [1], playerNames: { 1: 'Ann' } })]]), none);
+  assert.deepEqual(store.endpoints(ROOM, 2), []);
+  assert.deepEqual(store.endpoints(ROOM, 1), [ANN]);
+});

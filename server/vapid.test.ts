@@ -57,5 +57,7 @@ test('a gone subscription is reported and a network error is not thrown', async 
   assert.equal(await sendPush(endpoint, {}, respond(201)), 'sent');
   const logged = t.mock.method(console, 'error', () => {});
   assert.equal(await sendPush(endpoint, {}, async () => { throw new Error('down'); }), 'failed');
-  assert.equal(logged.mock.callCount(), 1);
+  assert.equal(await sendPush(endpoint, {}, respond(403)), 'failed');
+  assert.equal(logged.mock.callCount(), 2);
+  assert.match(logged.mock.calls[1].arguments.join(' '), /403/);
 });

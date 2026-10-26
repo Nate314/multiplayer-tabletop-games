@@ -53,6 +53,11 @@ export function createAlerts(deps: {
         forget(roomId);
         return;
       }
+      // Each client subscribes again for a new game, so last game's devices go before anything is sent,
+      // and the new game's first call only records
+      const game = state.gameNumber ?? 1;
+      if (lastGame.has(roomId) && lastGame.get(roomId) !== game) forget(roomId);
+      lastGame.set(roomId, game);
       const previous = lastKeys.get(roomId);
       // A freed seat's subscriptions go with it, so whoever takes the seat next never gets them
       const known = previous ? [...previous.keys()] : Array.from({ length: info.stretchedPlayers?.max ?? info.maxPlayers }, (_, i) => i + 1);
@@ -71,10 +76,6 @@ export function createAlerts(deps: {
         }
       }
       lastKeys.set(roomId, current);
-      // Each client subscribes again for the next game, so a reseated player never gets this game's pushes
-      const game = state.gameNumber ?? 1;
-      if (lastGame.has(roomId) && lastGame.get(roomId) !== game) store.removeRoom(roomId);
-      lastGame.set(roomId, game);
     },
 
     // The worker fetches what to show, since pushes carry no payload

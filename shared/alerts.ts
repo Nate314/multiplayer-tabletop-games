@@ -26,7 +26,7 @@ export function alertFor(info: GameInfo, state: BasePublicState, seat: Seat): Al
   // The server only moves a lobby once the table agreed, so an ungated lobby turn is not yet a turn
   const live = state.started || !needsAgreement(info, houseRulesOf(info, state).values) || everyoneAgreed(info, state);
   // Connection is ignored: a held seat's push still reaches the device that comes back
-  const toAct =state.waitingOn ? state.waitingOn.includes(seat) : state.currentPlayer === seat;
+  const toAct = state.waitingOn ? state.waitingOn.includes(seat) : state.currentPlayer === seat;
   return live && toAct && state.activePlayers.includes(seat) && state.activePlayers.length >= 2 ? { kind: 'turn', key: 'turn' } : null;
 }
 
