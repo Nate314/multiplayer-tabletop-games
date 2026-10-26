@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -396,4 +397,14 @@ test('each turn gets the full time', () => {
   const loaded = scrabble.resumeClock?.(next, T0 + 9_999_999) as GameState;
   assert.equal(scrabble.deadline?.(loaded), T0 + 9_999_999 + 2 * MINUTE); // downtime is not charged
   assert.equal(scrabble.deadline?.(scrabble.resetLobby(loaded, first)), null);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [1], scores: { 1: 310, 2: 188, 3: 188 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '310 points' },
+    { seat: 2, place: 2, score: '188 points' }, { seat: 3, place: 2, score: '188 points' }
+  ]);
 });

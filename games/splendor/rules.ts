@@ -1,10 +1,11 @@
 // Splendor rules shared by the browser (what can be afforded) and the server (validation).
 // Rules follow https://en.wikipedia.org/wiki/Splendor_(game); token counts per player count follow the published rulebook.
+import { rankStandings } from '../../shared/standings.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import { CARDS, GEMS, LEVELS, NOBLES } from './cards.ts';
 import type {
   BuySource,
@@ -485,4 +486,17 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   next = { ...next, pending: null, turnHolder: next.currentPlayer };
   const wrapped = next.currentPlayer === null || next.currentPlayer < seat;
   return next.finalRound && wrapped ? endGame(next) : next;
+}
+
+// The game's own order: most prestige, then fewest development cards, then fewest reserved cards
+export function finalStandings(state: GameState): Standing[] {
+  const player = (seat: Seat) => state.players[seat];
+  const points = (seat: Seat) => (player(seat) ? prestige(player(seat)) : 0);
+  const cards = (seat: Seat) => player(seat)?.cards.length ?? 0;
+  const reserved = (seat: Seat) => player(seat)?.reserved.length ?? 0;
+  return rankStandings(
+    state,
+    (a, b) => points(b) - points(a) || cards(a) - cards(b) || reserved(a) - reserved(b),
+    seat => `${points(seat)} prestige`
+  );
 }

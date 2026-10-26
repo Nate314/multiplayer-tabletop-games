@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import RulesButton from './RulesButton';
-import HistoryButton from './HistoryButton';
+import HistoryButton, { useHistoryDialog } from './HistoryButton';
+import GameOverDialog from './GameOverDialog';
+import { canRematch } from './gameOver.ts';
 import ShareButton from './ShareButton';
 import SettingsButton from './SettingsButton';
 import GitHubLink from './GitHubLink';
@@ -36,13 +39,19 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const choosingRules = !gameState.started && needsAgreement(game);
   // Nobody can move until everyone agreed, so the game screen is dimmed until then (the server refuses a move anyway)
   const awaitingAgreement = choosingRules && !everyoneAgreed(game, gameState);
+  const history = useHistoryDialog(game.id, gameState, client);
+  // Closed with See the table; an undo past the end reopens it on the next ending
+  const [closed, setClosed] = useState(false);
+  if (closed && !gameState.isGameOver) setClosed(false);
+  // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
+  const voting = Boolean(gameState.undoVote || gameState.dismissVote);
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
       <header className="game-header">
         <button type="button" className="back-button" onClick={onBack}>Back to games</button>
         <h1>{game.name}</h1>
-        <HistoryButton gameType={game.id} gameState={gameState} client={client} />
+        <HistoryButton onOpen={history.open} />
         <ShareButton game={game} gameId={gameState.gameId} />
         <RulesButton game={game} faq={client.faq} />
         <SettingsButton phoneControls={(
@@ -56,6 +65,9 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         <GitHubLink />
         <ThemeToggle />
       </header>
+      {gameState.isGameOver && closed && !voting && (
+        <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
+      )}
       <PresenceBar gameState={gameState} onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)} />
       {playerNumber === null ? (
         <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
@@ -67,6 +79,20 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
         </>
       )}
+      {gameState.isGameOver && !closed && !voting && (
+        <GameOverDialog
+          game={game}
+          client={client}
+          gameState={gameState}
+          viewer={playerNumber}
+          canRematch={canRematch(gameState, playerNumber)}
+          onHistory={history.open}
+          // Escape in History closes only History
+          onSeeTable={() => { if (!history.dialog) setClosed(true); }}
+          onBack={onBack}
+        />
+      )}
+      {history.dialog}
     </div>
   );
 }

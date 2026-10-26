@@ -7,7 +7,7 @@ import type { GameStore, SavedRoom } from './store.ts';
 import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
-import type { BaseGameState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
+import type { BaseGameState, GameResult, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
@@ -1202,4 +1202,139 @@ test('a timeout that leaves its deadline already past is not run again', (t: Tes
   advance(5 * TURN_MS);
   assert.equal(current(manager).moveCount, 1);
   assert.equal(logged.mock.callCount(), 1);
+});
+
+type AnyGame = Parameters<typeof createGameManager>[0][number];
+
+// A manager whose clock the test sets, listing each game it reported finished
+function reporting(store?: GameStore, game: AnyGame = testGame) {
+  const clock = { now: 1000 };
+  const results: GameResult[] = [];
+  const manager = rememberingKeys(
+    createGameManager([game], seededRandom, store, { now: () => clock.now, onGameFinished: result => results.push(result) }),
+    keys
+  );
+  return { manager, clock, results };
+}
+
+function reportingTable(store?: GameStore, game?: AnyGame) {
+  const table = reporting(store, game);
+  table.manager.join('test', 'g1', 'A');
+  table.manager.join('test', 'g1', 'B');
+  return table;
+}
+
+// wonGame's three ticks, one second apart, the first at 2000
+function playToWin({ manager, clock }: ReturnType<typeof reporting>): void {
+  for (const seat of [1, 2, 1]) {
+    clock.now += 1000;
+    ok(manager.move(ROOM, seat, tick));
+  }
+}
+
+test('onGameFinished reports a game that ends on a move', () => {
+  const table = reportingTable();
+  playToWin(table);
+  assert.deepEqual(table.results, [{
+    archiveId: 'test/g1#1', gameType: 'test', gameId: 'g1', startedAt: 2000, finishedAt: 4000, moveCount: 3,
+    standings: [{ seat: 1, place: 1 }, { seat: 2, place: 2 }],
+    players: [{ seat: 1, name: 'A' }, { seat: 2, name: 'B' }]
+  }]);
+});
+
+test('onGameFinished reports a game that ends outside a move', (t: TestContext) => {
+  const conceded = reportingTable();
+  ok(conceded.manager.move(ROOM, 1, tick));
+  ok(conceded.manager.action(ROOM, 2, { type: 'concede' }));
+  assert.equal(conceded.results.length, 1);
+  assert.deepEqual(conceded.results[0].standings, [{ seat: 1, place: 1 }, { seat: 2, place: 2 }]);
+  assert.equal('abandoned' in conceded.results[0], false);
+
+  // A dismissal leaving one player is the platform ending the game, so it is abandoned
+  const dismissed = reportingTable();
+  ok(dismissed.manager.move(ROOM, 1, tick));
+  dismissed.manager.disconnect(ROOM, 2);
+  ok(dismissed.manager.requestDismiss(ROOM, 1, 2));
+  assert.equal(dismissed.results.length, 1);
+  assert.equal(dismissed.results[0].abandoned, true);
+  assert.deepEqual(dismissed.results[0].players, [{ seat: 1, name: 'A' }]);
+
+  // timedGame never ends on a timeout, so this one does
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const fatal: GameDefinition<TimedState, TestPublicState> = {
+    ...timedGame, onDeadline: state => ({ ...state, isGameOver: true, currentPlayer: null, winners: [2], turnEndsAt: null })
+  };
+  const timed = reportingTable(undefined, fatal);
+  agreeAll(timed.manager, ROOM);
+  timed.clock.now += TURN_MS;
+  t.mock.timers.tick(TURN_MS);
+  assert.equal(timed.results.length, 1);
+  assert.equal(timed.results[0].moveCount, 1);
+  assert.deepEqual(timed.results[0].standings, [{ seat: 2, place: 1 }, { seat: 1, place: 2 }]);
+});
+
+test('later changes to a finished game do not report it again', () => {
+  const table = reportingTable();
+  playToWin(table);
+  ok(table.manager.requestUndo(ROOM, 1));
+  ok(table.manager.voteUndo(ROOM, 2, false));
+  table.manager.disconnect(ROOM, 2);
+  joined(table.manager.join('test', 'g1', 'B'));
+  assert.equal(table.results.length, 1);
+});
+
+test('an undo after game over and a second ending report once', () => {
+  const table = reportingTable();
+  playToWin(table);
+  ok(table.manager.requestUndo(ROOM, 1));
+  ok(table.manager.voteUndo(ROOM, 2, true));
+  table.clock.now += 1000;
+  assert.equal(ok(table.manager.move(ROOM, 1, tick)).isGameOver, true);
+  assert.equal(table.results.length, 1);
+  assert.equal(table.manager.rawState(ROOM)?.finishedAt, 4000);
+});
+
+test('a throwing onGameFinished is logged and the game goes on', (t: TestContext) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const manager = createGameManager([testGame], seededRandom, undefined, { onGameFinished: () => { throw new Error('down'); } });
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  assert.equal(ok(manager.move(ROOM, 1, tick)).isGameOver, true);
+  assert.equal(logged.mock.callCount(), 1);
+});
+
+test('a finished game saved before this change loads without reporting', () => {
+  const store = memoryStore();
+  const { manager } = reportingTable(store);
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  const { startedAt: _startedAt, finishedAt: _finishedAt, ...legacy } = saved(store).state;
+  store.save(ROOM, 'test', legacy);
+
+  const back = reporting(store);
+  assert.deepEqual(back.results, []);
+  const state = back.manager.getState(ROOM);
+  assert.equal(state?.finishedAt, 1000);
+  assert.deepEqual(state?.standings, [{ seat: 1, place: 1 }, { seat: 2, place: 2 }]);
+});
+
+test('startedAt survives a restart', () => {
+  const store = memoryStore();
+  const table = reportingTable(store);
+  table.clock.now = 5000;
+  ok(table.manager.move(ROOM, 1, tick));
+  assert.equal(table.manager.getState(ROOM)?.startedAt, 5000);
+  assert.equal(reporting(store).manager.getState(ROOM)?.startedAt, 5000);
+});
+
+test("only a finished game's view carries standings", () => {
+  const table = reportingTable();
+  ok(table.manager.move(ROOM, 1, tick));
+  assert.equal('standings' in current(table.manager), false);
+  ok(table.manager.move(ROOM, 2, tick));
+  ok(table.manager.move(ROOM, 1, tick));
+  assert.deepEqual(current(table.manager).standings, table.results[0].standings);
 });

@@ -29,7 +29,7 @@ Bid for the nest, name trump and take counters in tricks with your partner, firs
 - The table shows each team's score and tricks, the hand number, the bid and trump, and the seats around the middle with you at the bottom (with four players, your partner across). Each seat shows its card count, the dealer and its bid or pass. The middle shows the nest until trump is named, then the trick being played, or the last trick taken with who took it
 - The bidder sees the cards they laid aside below their hand
 - With 5 or 7 players the table shows the called cards. If you hold one, it says you are the bidder's partner; once a called card is played, its holder's seat is marked partner
-- After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
+- After each hand, read the scoring screen and click Continue; the last hand's scoring is on the game-over screen
 - Click Undo to ask everyone to undo the last move
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 

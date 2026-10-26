@@ -1,3 +1,4 @@
+import { createGameState, finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -311,4 +312,9 @@ test('rejects malformed and illegal moves', () => {
   assert.deepEqual(applyMove(backgammon, state, 1, null), { error: 'Unknown move type' });
   assert.deepEqual(applyMove(backgammon, state, 1, 'move'), { error: 'Unknown move type' });
   assert.deepEqual(applyMove(backgammon, state, 1, { type: 'resign' }), { error: 'Unknown move type' });
+});
+
+test('finalStandings gives the winner the points won', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2], isGameOver: true, winners: [2], pointsWon: 2 };
+  assert.deepEqual(finalStandings(state), [{ seat: 2, place: 1, score: '2 points' }, { seat: 1, place: 2 }]);
 });

@@ -1,8 +1,9 @@
 // Yahtzee rules shared by the browser (score hints) and the server (validation).
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { Category, GameState, LastMove, PublicGameState, Result, Seat, Sheet } from './types.ts';
 
 export const DICE_COUNT = 5;
@@ -84,6 +85,9 @@ export function totals(sheet: Sheet, bonuses = 0) {
   return { upper, upperBonus, lower, yahtzeeBonus, total: upper + upperBonus + lower + yahtzeeBonus };
 }
 
+// A player with no sheet yet has no points
+const grandTotal = (state: GameState, seat: Seat) => (state.sheets[seat] ? totals(state.sheets[seat], state.yahtzeeBonuses[seat]).total : 0);
+
 const isFilled = (sheet: Sheet) => CATEGORIES.every(category => sheet[category] !== undefined);
 
 // 1 to 13: the round the player is in, by how many boxes they have filled
@@ -125,7 +129,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean): Omit<Pu
 // The game is over when every player still seated has filled all 13 boxes; the highest total wins and ties share
 function finishIfDone(state: GameState): GameState {
   if (!state.activePlayers.every(seat => isFilled(state.sheets[seat]))) return state;
-  const grand = (seat: Seat) => totals(state.sheets[seat], state.yahtzeeBonuses[seat]).total;
+  const grand = (seat: Seat) => grandTotal(state, seat);
   const best = Math.max(...state.activePlayers.map(grand));
   const winners = state.activePlayers.filter(seat => grand(seat) === best);
   const names = winners.map(seat => state.playerNames[seat]).join(' and ');
@@ -185,4 +189,8 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
     case 'score': return score(state, seat, input);
     default: return { error: 'Invalid move' };
   }
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  return rankStandings(state, (a, b) => grandTotal(state, b) - grandTotal(state, a), seat => pointsText(grandTotal(state, seat)));
 }

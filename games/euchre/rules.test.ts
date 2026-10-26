@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -419,4 +420,14 @@ test('the game ends at the chosen target', () => {
   assert.deepEqual(won.winners, [1, 3]);
   const standard = lastTrick([4, 0], rules(10));
   assert.equal(standard.isGameOver, false);
+});
+
+test('finalStandings ranks by the team total', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [2, 4], scores: [-50, 1001]
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '1,001 points' }, { seat: 4, place: 1, score: '1,001 points' },
+    { seat: 1, place: 2, score: '-50 points' }, { seat: 3, place: 2, score: '-50 points' }
+  ]);
 });

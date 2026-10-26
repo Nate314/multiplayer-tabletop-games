@@ -10,9 +10,10 @@ import {
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
+import { standingsOf } from '../shared/standings.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
-import type { BaseGameState, BasePublicState, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
+import type { BaseGameState, BasePublicState, GameResult, HistoryStep, Random, Result, Seat } from '../shared/types.ts';
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
 
@@ -30,8 +31,13 @@ type Room = {
   watching: Set<string>; // ids of the connected spectators; in memory only, like sockets
 };
 
-// `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout
-export type ManagerHooks = { now?: () => number; changed?: (roomId: string) => void };
+// `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout;
+// `onGameFinished` hears of each game once, when it first ends
+export type ManagerHooks = {
+  now?: () => number;
+  changed?: (roomId: string) => void;
+  onGameFinished?: (result: GameResult) => void;
+};
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
@@ -66,10 +72,38 @@ export function createGameManager(
     }
   }
 
+  // Stamps the first start and the first end; a game already stamped finished never reports again, even after an undo
+  function stamp(roomId: string, room: Room): void {
+    if (room.state.started && room.state.startedAt === undefined) room.state = { ...room.state, startedAt: now() };
+    if (!room.state.isGameOver || room.state.finishedAt !== undefined) return;
+    const finishedAt = now();
+    const state: BaseGameState = { ...room.state, finishedAt };
+    room.state = state;
+    const { game } = room;
+    const result: GameResult = {
+      archiveId: `${roomId}#${state.gameNumber ?? 1}`,
+      gameType: game.info.id,
+      gameId: state.gameId,
+      startedAt: state.startedAt ?? finishedAt,
+      finishedAt,
+      moveCount: room.timeline.length,
+      standings: standingsOf(game, state),
+      players: state.activePlayers.map(seat => ({ seat, name: state.playerNames[seat] }))
+    };
+    // Fewer than two left means the platform ended it after leaves or dismissals, not the game's own rules
+    if (state.activePlayers.length < 2) result.abandoned = true;
+    try {
+      hooks.onGameFinished?.(result);
+    } catch (error) {
+      console.error(`Could not report finished game ${roomId}:`, error);
+    }
+  }
+
   // Only a started game is kept: a lobby lost in a restart is just joined again.
   // `step` is how this change moved `history` and `timeline`, so only that step is written
   // Every change passes through here, so this is also where the room's deadline is rescheduled
   function save(roomId: string, room: Room, step?: StepChange): void {
+    stamp(roomId, room);
     const { game, state } = room;
     writeStore(roomId, target => {
       if (state.started) target.save(roomId, game.info.id, state, step);
@@ -146,16 +180,27 @@ export function createGameManager(
   function publicView(
     room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
   ): BasePublicState {
-    return stamp(room, state, room.game.toPublicState(state, undoAvailable, viewer), moveCount);
+    return platformView(room, state, room.game.toPublicState(state, undoAvailable, viewer), moveCount);
   }
 
   // Secrets and per-viewer lists are never part of a stored or shared view; the live view adds back what its viewer may see
-  function stamp(room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number): BasePublicState {
+  function platformView(
+    room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number
+  ): BasePublicState {
     const {
       seatKeys: _seatKeys, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
       seatViews: _seatViews, ...view
     } = raw;
-    return { ...view, moveCount, houseRules: houseRulesOf(room.game.info, state) };
+    const { startedAt, finishedAt, gameNumber } = state;
+    return {
+      ...view,
+      moveCount,
+      houseRules: houseRulesOf(room.game.info, state),
+      startedAt,
+      finishedAt,
+      gameNumber,
+      ...(state.isGameOver && { standings: standingsOf(room.game, state) })
+    };
   }
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
@@ -179,7 +224,7 @@ export function createGameManager(
     const spectator = room.state.spectators?.find(candidate => candidate.id === spectatorId);
     if (!spectator) return undefined;
     const raw = spectatorView(room.game, room.state, spectator);
-    const base = stamp(room, room.state, raw, room.timeline.length);
+    const base = platformView(room, room.state, raw, room.timeline.length);
     const { seatViews } = raw as Partial<BasePublicState>;
     return live(room, { ...base, ...(seatViews && { seatViews }) }, request => request.spectator === spectatorId);
   }
@@ -239,6 +284,8 @@ export function createGameManager(
       spectators: state.spectators,
       spectatorKeys: state.spectatorKeys,
       handRequests: state.handRequests,
+      startedAt: state.startedAt,
+      finishedAt: state.finishedAt,
       undoVote: null,
       disconnected: state.disconnected,
       dismissVote: null
@@ -278,6 +325,9 @@ export function createGameManager(
     // Nobody is watching either, so no hand request is still open
     let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected, handRequests: [] };
     if (game.resumeClock) state = game.resumeClock(state, now());
+    // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
+    if (state.startedAt === undefined) state = { ...state, startedAt: now() };
+    if (state.isGameOver && state.finishedAt === undefined) state = { ...state, finishedAt: now() };
     const room: Room = { game, state, history: saved.history, timeline: saved.timeline, watching: new Set() };
     rooms.set(roomId, room);
     save(roomId, room);

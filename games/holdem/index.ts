@@ -1,7 +1,7 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyAction, applyMove, createGameState, finalStandings, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import { holdemInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -15,5 +15,6 @@ export const holdem: GameDefinition<GameState, PublicGameState> = {
   applyAction,
   onUndo: (state, random) => ({ ...state, deck: shuffle(state.deck, random) }),
   toPublicState,
-  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['myCards'])
+  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['myCards']),
+  finalStandings
 };

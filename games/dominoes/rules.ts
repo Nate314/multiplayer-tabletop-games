@@ -1,4 +1,5 @@
 // Dominoes rules shared by the browser (playable tiles) and the server (validation).
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -6,7 +7,7 @@ import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import { EMPTY_BOARD, SINGLE_LINE, boardOf, endPhrase, lay, openEnd, openEnds, pendingArms } from './board.ts';
 import type { Branching, Layout } from './board.ts';
 import type { GameState, LastMove, Move, PublicGameState, Result, RoundSummary, Seat, SetSize } from './types.ts';
@@ -426,4 +427,9 @@ export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Rand
 // Reshuffles the boneyard, so an undone draw cannot show which tile comes next
 export function onUndo(state: GameState, random: Random): GameState {
   return { ...state, boneyard: shuffle(state.boneyard, random) };
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.scores[seat] ?? 0;
+  return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
 }

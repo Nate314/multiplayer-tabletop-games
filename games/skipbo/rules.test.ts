@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HAND_SIZE, createDeck, createGameState, nextValue, resetLobby, stockSize, toPublicState } from './rules.ts';
@@ -449,4 +450,15 @@ test('the lobby deals afresh when players join or leave', () => {
   assert.equal(left.stocks[1].length, 30);
   assert.equal(left.started, false);
   assert.equal(resetLobby(left, seeded(2)).drawPile.length, 162 - 60 - 5);
+});
+
+test('finalStandings ranks by the fewest stock cards left', () => {
+  const stock = (count: number): GameState['stocks'][number] => Array.from({ length: count }, (_, id) => ({ id, kind: 'skipbo' as const }));
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [2], stocks: { 1: stock(5), 2: stock(0), 3: stock(5) }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '0 left in stock' },
+    { seat: 1, place: 2, score: '5 left in stock' }, { seat: 3, place: 2, score: '5 left in stock' }
+  ]);
 });

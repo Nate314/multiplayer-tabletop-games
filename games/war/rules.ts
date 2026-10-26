@@ -1,11 +1,13 @@
 // War rules, from https://en.wikipedia.org/wiki/War_(card_game), for two players.
 // Each player turns up their own card as a move; the battle settles on the second flip.
+import { rankStandings } from '../../shared/standings.ts';
+import { plural } from '../../shared/text.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { cardName, rankValue, standardDeck } from '../../shared/playingCards.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { PlayingCard } from '../../shared/playingCards.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { Battle, GameState, Laid, LastMove, Outcome, PublicCard, PublicGameState, Result, Seat } from './types.ts';
 
 export const DECK_SIZE = 52;
@@ -145,4 +147,9 @@ export function toPublicState(state: GameState, undoAvailable: boolean): Omit<Pu
     lastBattle: lastBattle && { ...lastBattle, cards: hideAll(lastBattle.cards) },
     undoAvailable
   };
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const cards = (seat: Seat) => state.piles[seat]?.length ?? 0;
+  return rankStandings(state, (a, b) => cards(b) - cards(a), seat => plural(cards(seat), 'card'));
 }

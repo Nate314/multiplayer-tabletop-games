@@ -1016,6 +1016,93 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
+/* Game-over screen (GameOverDialog): the standings and the last round scroll together between the title and the buttons, so the buttons stay in view */
+
+:where([data-game] .modal.game-over) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+:where([data-game] .game-over-meta) {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+:where([data-game] .game-over-body) {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+:where([data-game] .game-over-standings) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+:where([data-game] .game-over-round h3) {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+  text-align: left;
+}
+
+:where([data-game] .game-over-standings li) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  padding: 6px 4px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+:where([data-game] .standing-place) {
+  min-width: 2.5em;
+  font-weight: 600;
+}
+
+:where([data-game] .standing-name) {
+  /* The score wraps below a name that would get narrower than this. */
+  flex: 1 1 8em;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+:where([data-game] .standing-score) {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+:where([data-game] .game-over-actions) {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Brings the game-over screen back after See the table */
+:where([data-game] .game-over-reopen) {
+  display: block;
+  margin: 0 auto 12px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where([data-game] .game-over-reopen:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
 /* Round scoring dialog (RoundSummaryDialog); a game sets --muted for the waiting line */
 
 :where([data-game] .summary-result) {

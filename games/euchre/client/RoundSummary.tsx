@@ -7,25 +7,14 @@ type RoundSummaryProps = {
   gameState: PublicGameState;
   playerNumber: Seat;
   onContinue: () => void;
-  onClose: () => void;
 };
 
 // The scoring after a hand: who made trump, the tricks each team took and the totals.
-// Until the game is over, everyone connected clicks Continue to deal the next hand.
-export default function RoundSummary({ summary, gameState, playerNumber, onContinue, onClose }: RoundSummaryProps) {
-  const { playerNames, isGameOver, scores } = gameState;
+export function RoundRows({ summary, gameState, viewer }: { summary: HandSummary; gameState: PublicGameState; viewer: Seat | null }) {
+  const { playerNames, scores } = gameState;
   const makers = teamOf(summary.maker);
-
   return (
-    <RoundSummaryDialog
-      label="Hand scoring"
-      title={isGameOver ? 'Final scoring' : `Hand ${summary.handNumber} scoring`}
-      gameState={gameState}
-      acknowledged={summary.acknowledged}
-      playerNumber={playerNumber}
-      onContinue={onContinue}
-      onClose={onClose}
-    >
+    <>
       <div className="summary-detail">
         {playerNames[summary.maker]} made trump{summary.alone && ' and went alone'}.
       </div>
@@ -34,7 +23,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
           <li key={team} className={team === makers ? 'summary-team summary-makers' : 'summary-team'}>
             <span className="summary-name">
               {teamNames(team, playerNames)}
-              {teamOf(playerNumber) === team && ' (you)'}
+              {viewer !== null && teamOf(viewer) === team && ' (you)'}
             </span>
             <span className="summary-reason">
               {summary.tricks[team]} {summary.tricks[team] === 1 ? 'trick' : 'tricks'}: +{summary.change[team]}
@@ -44,6 +33,32 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
         ))}
       </ul>
       <div className="summary-target">First to {targetScore(gameState).toLocaleString('en-US')} points wins</div>
+    </>
+  );
+}
+
+// Between rounds; the last round's rows are on the game-over screen
+export default function RoundSummary({ summary, gameState, playerNumber, onContinue }: RoundSummaryProps) {
+  return (
+    <RoundSummaryDialog
+      label="Hand scoring"
+      title={`Hand ${summary.handNumber} scoring`}
+      gameState={gameState}
+      acknowledged={summary.acknowledged}
+      playerNumber={playerNumber}
+      onContinue={onContinue}
+    >
+      <RoundRows summary={summary} gameState={gameState} viewer={playerNumber} />
     </RoundSummaryDialog>
   );
+}
+
+export function FinalRound({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
+  const { roundSummary } = gameState;
+  return roundSummary ? (
+    <section className="game-over-round">
+      <h3>Hand {roundSummary.handNumber} scoring</h3>
+      <RoundRows summary={roundSummary} gameState={gameState} viewer={viewer} />
+    </section>
+  ) : null;
 }

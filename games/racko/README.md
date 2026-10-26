@@ -22,7 +22,7 @@ Draw and swap cards to put the ten cards of your rack in ascending order, first 
 - The table shows each player's score, with the player whose turn it is outlined, and the slot just changed is highlighted
 - With Highlight newly drawn cards on in Settings (the default), the card in hand is outlined while you hold it, until you swap it into the rack or discard it
 - Cards slide from the pile to the card in hand, into the rack slot, and from the slot to the discard pile
-- After each round, read the scoring screen and click Continue; after the last round click Close, and Show Scoring opens it again
+- After each round, read the scoring screen and click Continue; the last round's scoring is on the game-over screen
 - Click Undo to ask everyone to undo the last move
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 

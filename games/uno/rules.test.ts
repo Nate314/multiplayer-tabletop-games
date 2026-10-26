@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -822,4 +823,14 @@ test('a jump-in during a Draw stack is refused', () => {
   assert.equal(jumps(summary, 2, red('5')), false);
   const starting = jumpGame(hands, { currentColor: null, discardPile: [WILD] });
   assert.equal(jumps(starting, 2, red('5')), false);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [3], scores: { 1: 120, 2: 120, 3: 520 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 3, place: 1, score: '520 points' },
+    { seat: 1, place: 2, score: '120 points' }, { seat: 2, place: 2, score: '120 points' }
+  ]);
 });

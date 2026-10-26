@@ -1,10 +1,11 @@
 // Scrabble rules shared by the browser (score preview) and the server (validation).
 // There is no dictionary: any placement that follows the rules below is accepted, and players dispute a word with Undo.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type {
   Board,
   BoardTile,
@@ -466,4 +467,9 @@ function playMove(state: GameState, seat: Seat, move: unknown, random: Random): 
     gameStatus: `${state.playerNames[seat]} passed`
   };
   return { state: finishTurn(passed, seat, false) };
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.scores[seat] ?? 0;
+  return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
 }

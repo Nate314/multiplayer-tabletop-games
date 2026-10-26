@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameState, dealFrom, handSize, toPublicState } from './rules.ts';
@@ -285,4 +286,16 @@ test('table view hides hands', () => {
     assert.ok(!JSON.stringify(view).includes('"suit"') || view.fishedCard !== null);
     for (const seat of step.activePlayers) assert.deepEqual(toPublicState(step, false, seat).hand, step.hands[seat]);
   }
+});
+
+test('finalStandings ranks by books', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [3],
+    books: { 1: ['2'], 2: ['5'], 3: ['7', '8', '9'], 4: [] }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 3, place: 1, score: '3 books' },
+    { seat: 1, place: 2, score: '1 book' }, { seat: 2, place: 2, score: '1 book' },
+    { seat: 4, place: 3, score: '0 books' }
+  ]);
 });

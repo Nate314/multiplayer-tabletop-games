@@ -14,6 +14,7 @@
 // - Each heart taken is 1 point and the queen of spades 13. A player who takes all 26 shoots the moon: each other
 //   player takes 26 instead.
 // - The game ends when a player reaches the target score (100 unless the host chose another); the lowest score wins, and equal lowest scores share the win.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -24,7 +25,7 @@ import { FOUR_SEATS as SEATS, nextSeat } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, describeTrickPlay, trickWinner } from '../../shared/tricks.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { GameState, HandSummary, LastMove, PassDirection, Play, PlayingCard, PublicGameState, Result, Seat } from './types.ts';
 import { TARGET_RULE, JACK_RULE } from './options.ts';
 
@@ -300,4 +301,8 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 // The next hand may have been waiting only for the player who disconnected
 export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
   return startNextHandIfReady(state, random);
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  return rankStandings(state, (a, b) => state.scores[a] - state.scores[b], seat => pointsText(state.scores[seat]));
 }

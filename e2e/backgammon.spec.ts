@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
 import { POINT_COUNT, diceToPlay, pointIndex } from '../games/backgammon/rules.ts';
 import type { PointStack, Position, Seat as SeatNumber } from '../games/backgammon/types.ts';
 
@@ -321,6 +321,8 @@ test.describe('Backgammon rules', () => {
     // A drop
     await button(bob, 'Drop').click();
     await expect(turn(bob)).toHaveText('Game Over');
+    await seeTable(alice);
+    await seeTable(bob);
     await undo(bob, alice);
     await expect(button(bob, 'Drop')).toBeVisible();
     await expect(turn(bob)).toHaveText('Take or drop the double');

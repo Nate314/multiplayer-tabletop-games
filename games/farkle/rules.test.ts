@@ -1,3 +1,4 @@
+import { createGameState, finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { farkle } from './index.ts';
@@ -207,4 +208,14 @@ test('ten players can play a full game', () => {
   }
   assert.equal(state.isGameOver, true);
   assert.ok(state.winners.length >= 1);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [2], scores: { 1: 4500, 2: 10050, 3: 4500 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '10,050 points' },
+    { seat: 1, place: 2, score: '4,500 points' }, { seat: 3, place: 2, score: '4,500 points' }
+  ]);
 });

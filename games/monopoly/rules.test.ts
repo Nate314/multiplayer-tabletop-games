@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BOARD, ownable } from './board.ts';
@@ -585,4 +586,11 @@ test('with auctions off a bankrupt player\'s properties return to the bank unown
   assert.deepEqual([1, 3].map(space => toBank.owners[space]), [undefined, undefined]);
   assert.equal(toBank.auction, null);
   assert.deepEqual(toBank.auctionQueue, []);
+});
+
+test('finalStandings ranks the bankrupt players by when they went bankrupt', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [1], bankrupt: [4, 3] };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1 }, { seat: 2, place: 2 }, { seat: 3, place: 3, score: 'Bankrupt' }, { seat: 4, place: 4, score: 'Bankrupt' }
+  ]);
 });

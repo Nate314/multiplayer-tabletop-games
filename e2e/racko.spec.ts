@@ -20,6 +20,7 @@ const slot = (page: Page, number: number) => page.getByRole('button', { name: ne
 const discardButton = (page: Page) => page.getByRole('button', { name: 'Discard', exact: true });
 const status = (page: Page) => page.locator('.game-status');
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const myRack = (page: Page) => page.getByRole('region', { name: 'Your rack' });
 
 test.describe('Rack-O rules', () => {
@@ -151,27 +152,29 @@ test.describe('Rack-O rules', () => {
     await expect(alice.getByLabel('Your card 5')).toBeVisible();
   });
 
-  test('the game ends at 500 points, and Close and Show Scoring work', async ({ seat }) => {
+  test('the game ends at 500 points, and the game-over screen shows the last round', async ({ seat }) => {
     const { alice, bob } = await start(seat, ['Alice', 'Bob'], { ...NEARLY, scores: { 1: 425, 2: 100 } });
     await discardPile(alice).click();
     await slot(alice, 5).click();
     for (const page of [alice, bob]) {
-      await expect(scoring(page)).toContainText('Final scoring');
-      await expect(scoring(page)).toContainText('Alice called Rack-O! Alice wins with 500 points');
-      await expect(scoring(page).getByRole('button', { name: 'Continue' })).toHaveCount(0);
+      await expect(gameOver(page).getByRole('heading', { level: 2 })).toHaveText('Alice wins');
+      await expect(gameOver(page).getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
+      await expect(gameOver(page).locator('.game-over-meta')).toContainText('1 round');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('500 pts');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('Rack-O');
+      await expect(scoring(page)).toHaveCount(0);
     }
-    await scoring(bob).getByRole('button', { name: 'Close' }).click();
-    await expect(scoring(bob)).toHaveCount(0);
+    await gameOver(bob).getByRole('button', { name: 'See the table' }).click();
+    await expect(gameOver(bob)).toHaveCount(0);
     await expect(bob.locator('.turn-message')).toHaveText('Game over');
-    await bob.getByRole('button', { name: 'Show Scoring' }).click();
-    await expect(scoring(bob)).toBeVisible();
   });
 
   test('when several players pass 500 in one round the higher total wins', async ({ seat }) => {
     const { alice } = await start(seat, ['Alice', 'Bob'], { ...NEARLY, scores: { 1: 100, 2: 460 } });
     await discardPile(alice).click();
     await slot(alice, 5).click();
-    await expect(scoring(alice)).toContainText('Bob wins with 510 points');
+    await expect(gameOver(alice).getByRole('heading', { level: 2 })).toHaveText('Bob wins');
+    await expect(gameOver(alice).locator('.summary-seat', { hasText: 'Bob' }).locator('.summary-points')).toHaveText('510 pts');
   });
 
   test('only the player whose turn it is can pick up a card', async ({ seat }) => {
@@ -186,8 +189,10 @@ test.describe('Rack-O rules', () => {
     await discardPile(alice).click();
     await slot(alice, 5).click();
     for (const page of [alice, bob]) {
-      await expect(scoring(page)).toContainText('Alice called Rack-O! Alice wins with 250 points');
-      await expect(scoring(page).locator('.summary-target')).toHaveText('First to 250 points wins');
+      await expect(gameOver(page).getByRole('heading', { level: 2 })).toHaveText('Alice wins');
+      await expect(gameOver(page).locator('.summary-target')).toHaveText('First to 250 points wins');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('250 pts');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('Rack-O');
     }
     await expect(bob.locator('.turn-message')).toHaveText('Game over');
   });

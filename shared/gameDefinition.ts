@@ -1,6 +1,6 @@
 import type { GameCategory } from './categories.ts';
 import type { HouseRule, PlayerRange } from './houseRules.ts';
-import type { BaseGameState, BasePublicState, Random, Result, Seat } from './types.ts';
+import type { BaseGameState, BasePublicState, Random, Result, Seat, Standing } from './types.ts';
 
 export type GameInfo = {
   id: string; // lowercase, used in messages and as data-game
@@ -42,6 +42,8 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   // Not turn-bound and not recorded for undo. Validates untrusted `action`.
   // The platform does not block actions during an undo vote or after the game is over; the game must refuse them itself where needed.
   applyAction?(state: S, seat: Seat, action: unknown, random: Random): Result<S>;
+  // Called only once isGameOver. Ranks by what chose `winners`, so place 1 is exactly the winners.
+  finalStandings?(state: S): Standing[];
   // The platform adds moveCount; a game never supplies it.
   // `viewer` is the seat the view is sent to, so a game can show a player their own hand; null (the history) sees no hand.
   toPublicState(state: S, undoAvailable: boolean, viewer: Seat | null): Omit<P, 'moveCount'>;

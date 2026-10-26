@@ -73,6 +73,7 @@ const status = (page: Page) => page.locator('.game-status');
 const turn = (page: Page) => page.locator('.turn-message');
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const boneyard = (page: Page) => page.locator('.boneyard-label');
 const row = (page: Page, name: string) => page.getByRole('list', { name, exact: true });
 const usable = (page: Page) => page.locator('.end-slot-usable');
@@ -237,11 +238,14 @@ test.describe('Dominoes rules', () => {
     const final = await start(seat, ['Dan', 'Eve']);
     await deal(final.table, { hands: { 1: [[4, 5]], 2: [[3, 6], [2, 2]] }, boneyard: [[6, 6]], scores: { 1: 90, 2: 20 } });
     await play(final.pages[0], 4, 5);
-    await expect(scoring(final.pages[1]).locator('h2')).toHaveText('Final scoring');
-    await expect(scoring(final.pages[1]).locator('.summary-result')).toHaveText('Dan wins with 115 points!');
+    const over = gameOver(final.pages[1]);
+    await expect(over.getByRole('heading', { level: 2 })).toHaveText('Dan wins');
+    await expect(over.getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
+    await expect(over.locator('.game-over-meta')).toContainText('1 round');
+    await expect(over.locator('.summary-seat', { hasText: 'Dan' }).locator('.summary-points')).toHaveText('115 pts');
     await expect(turn(final.pages[1])).toHaveText('Game over: Dan wins');
-    await scoring(final.pages[0]).getByRole('button', { name: 'Close' }).click();
-    await expect(button(final.pages[0], 'Show Scoring')).toBeVisible();
+    await gameOver(final.pages[0]).getByRole('button', { name: 'See the table' }).click();
+    await expect(gameOver(final.pages[0])).toHaveCount(0);
   });
 
   test('a blocked round goes to the lowest pip total, and a tie scores nothing', async ({ seat }) => {
@@ -331,8 +335,9 @@ test.describe('Dominoes rules', () => {
     await expect(pages[0].locator('.round')).toHaveText('Round 1: first to 61 points wins (double-six)');
     await deal(table, { hands: { 1: [[4, 5]], 2: [[3, 6], [2, 2]] }, boneyard: [[6, 6]], scores: { 1: 40, 2: 20 } });
     await play(pages[0], 4, 5);
-    await expect(scoring(pages[1]).getByText('First to 61 points wins')).toBeVisible();
-    await expect(scoring(pages[1]).locator('.summary-result')).toHaveText('Dan wins with 65 points!');
+    await expect(gameOver(pages[1]).getByText('First to 61 points wins')).toBeVisible();
+    await expect(gameOver(pages[1]).getByRole('heading', { level: 2 })).toHaveText('Dan wins');
+    await expect(gameOver(pages[1]).locator('.summary-seat', { hasText: 'Dan' }).locator('.summary-points')).toHaveText('65 pts');
     await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
   });
 });

@@ -1,3 +1,4 @@
+import { createGameState, finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { handSize, refillMarket } from './cards.ts';
@@ -7,7 +8,7 @@ import { finalScores, longestPath, rankWinners, routePoints, ticketDone } from '
 import { anyMove, game, hand, move, played, routeBetween, seatedGame, seeded } from './testing.ts';
 import { removePlayer } from '../../shared/seating.ts';
 import { tickettoride } from './index.ts';
-import type { Card, GameState, PublicGameState, Seat } from './types.ts';
+import type { Card, FinalScore, GameState, PublicGameState, Seat } from './types.ts';
 
 const total = (state: GameState) =>
   state.deck.length + state.discards.length + state.faceUp.filter(card => card !== null).length +
@@ -390,4 +391,24 @@ test('the table view hides every hand, ticket and deck over every step of a shor
   assert.ok(blindDraws.every(card => card === null), 'a blind draw was named');
   assert.ok(ROUTES.filter(route => state.claimed[route.id] !== undefined).length > 10);
   assert.ok(Object.values(state.players).some(player => player.trains <= 2));
+});
+
+test('finalStandings ranks by points, then tickets completed, then the longest path', () => {
+  const score = (total: number, completed: number, longestPath: number): FinalScore => ({
+    routes: 0, tickets: Array.from({ length: completed }, (_, ticket) => ({ ticket, completed: true })), ticketPoints: 0, longestPath,
+    longestBonus: false, total
+  });
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4, 5], isGameOver: true, winners: [1],
+    final: { 1: score(80, 3, 9), 2: score(50, 2, 4), 3: score(50, 1, 8), 4: score(50, 1, 8), 5: score(50, 1, 5) }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '80 points' }, { seat: 2, place: 2, score: '50 points' },
+    { seat: 3, place: 3, score: '50 points' }, { seat: 4, place: 3, score: '50 points' }, { seat: 5, place: 4, score: '50 points' }
+  ]);
+});
+
+test('finalStandings leaves the scores blank when the game ended before final scoring', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2], isGameOver: true, winners: [1] };
+  assert.deepEqual(finalStandings(state), [{ seat: 1, place: 1 }, { seat: 2, place: 2 }]);
 });

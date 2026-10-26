@@ -15,7 +15,6 @@ import type { Card as CardData, PublicGameState } from '../types.ts';
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [chosen, setChosen] = useState<CardData[]>([]); // cards picked to lay aside
   const [amount, setAmount] = useState(MIN_BID);
-  const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
   const {
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable, started,
@@ -28,7 +27,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const lowestBid = bidding.high ? bidding.high.amount + BID_STEP : MIN_BID;
   const bids: number[] = [];
   for (let value = lowestBid; value <= MAX_BID; value += BID_STEP) bids.push(value);
-  const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+  const showSummary = roundSummary !== null && !isGameOver;
 
   useMoveAnimation(screenRef, gameState, animateMove);
 
@@ -37,10 +36,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     setChosen([]);
     setAmount(lowestBid);
   }, [currentPlayer, phase, lowestBid]);
-
-  useEffect(() => {
-    if (!isGameOver) setFinalScoringClosed(false);
-  }, [isGameOver]);
 
   const isChosen = (card: CardData) => chosen.some(other => sameCard(other, card));
   function toggle(card: CardData) {
@@ -113,9 +108,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               </button>
             )}
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
-            {isGameOver && roundSummary && finalScoringClosed && (
-              <button type="button" onClick={() => setFinalScoringClosed(false)}>Show Scoring</button>
-            )}
           </div>
           {isMyTurn && phase === 'trump' && (
             <div className="color-picker" role="group" aria-label="Name trump">
@@ -157,7 +149,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           gameState={gameState}
           playerNumber={playerNumber}
           onContinue={() => gameService.sendAction({ type: 'acknowledgeRound' })}
-          onClose={() => setFinalScoringClosed(true)}
         />
       )}
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={approve => gameService.voteUndo(approve)} />
