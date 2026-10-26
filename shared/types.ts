@@ -55,5 +55,8 @@ export type BasePublicState = BaseGameState & {
   seatViews?: Record<Seat, unknown>; // only on a spectator's live view: the private view of each seat that allowed it
 };
 
+// A room anyone can see in the open games list: names only, never a seat key
+export type OpenGame = { gameType: string; gameId: string; players: string[]; playing: boolean };
+
 // One step of a game's history: the starting board, the board after each move, and the end if no move ended it
 export type HistoryStep = BasePublicState & { historyStep: 'start' | 'move' | 'end' };

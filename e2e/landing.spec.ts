@@ -150,3 +150,11 @@ test('wide windows show cards side by side and phones keep one column', async ({
   }
   expect(ys.size).toBe(await cards.count());
 });
+
+test('games happening now is absent without SHOW_OPEN_GAMES', async ({ browser, server, seat }) => {
+  await seat('connectfour', ['Alice']);
+  const page = await newPlayer(browser, server);
+  await page.goto('/');
+  await expect(page.locator('.lobby-game').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Games happening now' })).toHaveCount(0);
+});

@@ -16,7 +16,8 @@ export function serveClient(app: Express, distDir: string): void {
 
   // Any other path without an extension gets the app; a missing file such as /missing.js is a 404, never index.html
   app.use((req, res) => {
-    if (path.extname(req.path)) {
+    // An API route that is off or misspelled must not look served by answering with the app
+    if (path.extname(req.path) || req.path.startsWith('/api/')) {
       res.sendStatus(404);
       return;
     }

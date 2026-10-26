@@ -8,6 +8,7 @@ import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
 import { mountRulesRoute } from './rules.ts';
+import { mountOpenGamesRoute } from './openGames.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
@@ -16,6 +17,7 @@ import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
+const SHOW_OPEN_GAMES = process.env.SHOW_OPEN_GAMES === 'true'; // lists every game on the landing page, so it is off unless asked for
 const HEARTBEAT_MS = 15_000; // a socket that misses one ping is dead within about 30 s
 const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data/games.sqlite');
 const E2E = process.env.E2E === '1'; // test hooks for the Playwright suite; never set on a real server
@@ -57,6 +59,8 @@ mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.in
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
 
 mountAssetRoutes(app);
+
+if (SHOW_OPEN_GAMES) mountOpenGamesRoute(app, manager.openGames);
 
 serveClient(app, path.join(__dirname, '../dist'));
 
@@ -253,5 +257,6 @@ server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`WebSocket server active on ws://localhost:${PORT}`);
   console.log(`Saving started games to ${DATABASE_PATH}`);
+  if (SHOW_OPEN_GAMES) console.log('Listing open games on the landing page');
   console.log('Use Ctrl+C to stop the server');
 });
