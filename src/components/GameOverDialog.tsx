@@ -28,16 +28,18 @@ export default function GameOverDialog({
       <div className="modal game-over" role="dialog" aria-label="Game over">
         <h2>{winnerLine(gameState)}</h2>
         <div className="game-over-meta">{`${game.name} · Game ${gameState.gameId} · ${lengthText(gameState, client)}`}</div>
-        <ol className="game-over-standings">
-          {(gameState.standings ?? []).map(({ seat, place, score }) => (
-            <li key={seat}>
-              <span className="standing-place">{ordinal(place)}</span>{' '}
-              <span className="standing-name">{gameState.playerNames[seat]}{seat === viewer && ' (you)'}</span>
-              {score !== undefined && <>{' '}<span className="standing-score">{score}</span></>}
-            </li>
-          ))}
-        </ol>
-        {FinalRound && <FinalRound gameState={gameState} viewer={viewer} />}
+        <div className="game-over-body">
+          <ol className="game-over-standings">
+            {(gameState.standings ?? []).map(({ seat, place, score }) => (
+              <li key={seat}>
+                <span className="standing-place">{ordinal(place)}</span>{' '}
+                <span className="standing-name">{gameState.playerNames[seat]}{seat === viewer && ' (you)'}</span>
+                {score !== undefined && <>{' '}<span className="standing-score">{score}</span></>}
+              </li>
+            ))}
+          </ol>
+          {FinalRound && <FinalRound gameState={gameState} viewer={viewer} />}
+        </div>
         <div className="game-over-actions">
           {canRematch && onRematch && <button type="button" className="primary-button" onClick={onRematch}>Rematch</button>}
           <button type="button" className="primary-button" onClick={onHistory}>History</button>

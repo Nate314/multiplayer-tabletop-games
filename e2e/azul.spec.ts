@@ -37,6 +37,7 @@ const floorLine = (board: Locator) => board.getByRole('button', { name: 'Floor l
 const wallTiles = (board: Locator) => board.locator('.wall .tile:not(.tile-faded)');
 const turnMessage = (page: Page) => page.locator('.turn-message');
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 
 test.describe('Azul rules', () => {
   test('picking takes every tile of one color from a factory or the center, and the first from the center takes the marker', async ({ seat }) => {
@@ -150,15 +151,16 @@ test.describe('Azul rules', () => {
     await take(factory(alice, 0), 'blue');
     await line(mine(alice), 1).click();
 
-    const dialog = scoring(bob);
-    await expect(dialog.getByRole('heading')).toHaveText('Final scoring');
-    await expect(dialog.locator('.summary-result')).toHaveText('Alice wins with 29 points!'); // 10 for the tile, 2 + 7 + 10 bonus
+    const dialog = gameOver(bob);
+    await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Alice wins');
+    await expect(dialog.getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
+    await expect(dialog.locator('.game-over-meta')).toContainText('1 round');
     const summary = dialog.locator('.summary-seat', { hasText: 'Alice' });
     await expect(summary.locator('li', { hasText: '1 complete row' })).toContainText('+2');
     await expect(summary.locator('li', { hasText: '1 complete column' })).toContainText('+7');
     await expect(summary.locator('li', { hasText: '1 complete color' })).toContainText('+10');
     await expect(turnMessage(bob)).toHaveText('Game over');
-    await dialog.getByRole('button', { name: 'Close' }).click();
+    await dialog.getByRole('button', { name: 'See the table' }).click();
     await expect(dialog).toHaveCount(0);
     await expect(boardOfPlayer(bob, 'Alice').locator('.board-name')).toContainText('★');
   });
@@ -170,15 +172,15 @@ test.describe('Azul rules', () => {
     await higher.table.patch({ factories: factoriesOf(5, ['blue']), centerHasMarker: false, boards: { 1: boardOf({ wall: row }), 2: boardOf({ score: 20 }) } });
     await take(factory(higher.alice, 0), 'blue');
     await line(mine(higher.alice), 1).click();
-    await expect(scoring(higher.alice).locator('.summary-result')).toHaveText('Bob wins with 20 points!');
+    await expect(gameOver(higher.alice).getByRole('heading', { level: 2 })).toHaveText('Bob wins');
 
     const tie = await start(seat);
     await tie.table.patch({ factories: factoriesOf(5, ['blue']), centerHasMarker: false, boards: { 1: boardOf({ wall: row }), 2: boardOf({ score: 7 }) } });
     await take(factory(tie.alice, 0), 'blue');
     await line(mine(tie.alice), 1).click();
-    const dialog = scoring(tie.bob);
+    const dialog = gameOver(tie.bob);
     await expect(dialog.locator('.summary-seat', { hasText: 'Bob' }).locator('header')).toContainText('7 → 7 pts');
-    await expect(dialog.locator('.summary-result')).toHaveText('Alice wins with 7 points!');
+    await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Alice wins');
   });
 
   test('a player who leaves keeps their board and has their turns skipped; the last player left wins', async ({ seat }) => {

@@ -1015,7 +1015,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
-/* Game-over screen (GameOverDialog): the standings scroll between the title and the buttons, so the buttons stay in view */
+/* Game-over screen (GameOverDialog): the standings and the last round scroll together between the title and the buttons, so the buttons stay in view */
 
 :where([data-game] .modal.game-over) {
   display: flex;
@@ -1031,13 +1031,23 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   opacity: 0.8;
 }
 
-:where([data-game] .game-over-standings) {
+:where([data-game] .game-over-body) {
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+:where([data-game] .game-over-standings) {
   margin: 0;
   padding: 0;
   list-style: none;
+  text-align: left;
+}
+
+:where([data-game] .game-over-round h3) {
+  margin: 16px 0 8px;
+  font-size: 1rem;
   text-align: left;
 }
 

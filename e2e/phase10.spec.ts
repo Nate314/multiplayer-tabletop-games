@@ -43,6 +43,7 @@ const seatOf = (page: Page, name: string) => page.locator('.table .seat').filter
 const group = (page: Page, label: string) => page.locator('.table .group').filter({ has: page.locator('.group-label', { hasText: label }) });
 const turnMessage = (page: Page) => page.locator('.turn-message');
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Hand scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const button = (page: Page, name: string | RegExp) => page.getByRole('button', { name, exact: typeof name === 'string' });
 const summaryOf = (page: Page, name: string) => scoring(page).locator('.summary-seat', { has: page.locator('.summary-name', { hasText: name }) });
 
@@ -301,12 +302,13 @@ test.describe('Phase 10 rules', () => {
     await group(alice, 'Set of 5s').getByRole('button', { name: 'Hit here' }).click();
     await discard(alice, 'red 6');
 
-    const dialog = scoring(cara);
-    await expect(dialog.getByRole('heading')).toHaveText('Final scoring');
-    await expect(dialog.locator('.summary-result')).toHaveText('Bob wins with 15 points!');
-    await expect(scoring(bob).locator('.summary-winner .summary-name')).toHaveText('Bob (you)');
+    const dialog = gameOver(cara);
+    await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Bob wins');
+    await expect(dialog.getByRole('heading', { name: 'Hand 1 scoring' })).toBeVisible();
+    await expect(dialog.locator('.game-over-meta')).toContainText('1 hand');
+    await expect(gameOver(bob).locator('.summary-winner .summary-name')).toHaveText('Bob (you)');
     await expect(turnMessage(cara)).toHaveText('Game over');
-    await dialog.getByRole('button', { name: 'Close' }).click();
+    await dialog.getByRole('button', { name: 'See the table' }).click();
     await expect(seatOf(cara, 'Bob')).toHaveClass(/seat-winner/);
     await expect(seatOf(cara, 'Bob').locator('.seat-name')).toContainText('★');
     await expect(seatOf(cara, 'Alice')).toContainText('All phases done');

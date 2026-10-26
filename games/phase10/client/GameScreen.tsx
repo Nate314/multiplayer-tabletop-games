@@ -52,7 +52,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [staged, setStaged] = useState<number[][]>([]);
   const [chosenPhase, setChosenPhase] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(DEFAULT_SORT_ORDER);
-  const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const {
     currentPlayer, activePlayers, playerNames, phases, isGameOver, handNumber, handSummary,
     undoVote, dismissVote, undoAvailable, drawnBy, myHand, moveCount
@@ -64,7 +63,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const choices = layablePhases(gameState, playerNumber);
   const layPhase = chosenPhase !== null && choices.includes(chosenPhase) ? chosenPhase : choices[0];
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
-  const showSummary = handSummary !== null && !(isGameOver && finalScoringClosed);
+  const showSummary = handSummary !== null && !isGameOver;
 
   useMoveAnimation(screenRef, gameState, animateMove);
 
@@ -74,11 +73,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     setStaged([]);
     setChosenPhase(null);
   }, [moveCount, handNumber]);
-
-  useEffect(() => {
-    // An undo can reopen a finished game; its next ending shows the scoring again
-    if (!isGameOver) setFinalScoringClosed(false);
-  }, [isGameOver]);
 
   const cardById = (id: number) => myHand.find(card => card.id === id);
   const stagedCards = staged.map(ids => ids.map(cardById).filter(card => card !== undefined));
@@ -133,11 +127,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
               Undo
             </button>
-            {isGameOver && handSummary && finalScoringClosed && (
-              <button type="button" onClick={() => setFinalScoringClosed(false)}>
-                Show Scoring
-              </button>
-            )}
           </div>
         </div>
 
@@ -212,9 +201,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           summary={handSummary}
           gameState={gameState}
           playerNumber={playerNumber}
-          seats={seats}
           onContinue={() => gameService.sendAction({ type: 'acknowledgeHand' })}
-          onClose={() => setFinalScoringClosed(true)}
         />
       )}
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />

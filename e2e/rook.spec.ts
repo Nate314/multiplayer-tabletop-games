@@ -61,6 +61,7 @@ const seatOf = (page: Page, name: string) => page.locator('.seats .seat').filter
 const turn = (page: Page) => page.locator('.turn-message');
 const status = (page: Page) => page.locator('.game-status');
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Hand scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const team = (page: Page, which: 0 | 1) => page.locator(`.scoreboard .team-${which}`);
 const bidButton = (page: Page) => page.getByRole('button', { name: /^Bid \d+$/ });
 const pass = (page: Page) => page.getByRole('button', { name: 'Pass' });
@@ -351,7 +352,7 @@ test.describe('Rook rules', () => {
     await lastTrick(table, [230, 0]);
     await playLastTrick(pages);
     await expect(status(pages[1])).toHaveText('Alice and Cara win with 320 points!');
-    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 300 points wins');
+    await expect(gameOver(pages[1]).locator('.summary-target')).toHaveText('First to 300 points wins');
     await expect(turn(pages[1])).toHaveText('Game over');
   });
 });
@@ -450,7 +451,7 @@ test.describe('Rook controls', () => {
     await expect(bob.locator('.discards')).toHaveCount(0);
   });
 
-  test('after a hand click Continue on the scoring screen; after the last hand click Close, and Show Scoring opens it again', async ({ seat }) => {
+  test('after a hand click Continue on the scoring screen; after the last hand the game-over screen shows its scoring', async ({ seat }) => {
     const { table, pages } = await start(seat);
     await lastTrick(table);
     await playLastTrick(pages);
@@ -462,12 +463,14 @@ test.describe('Rook controls', () => {
     const alice = final.pages[0];
     await lastTrick(final.table, [450, 0]);
     await playLastTrick(final.pages);
-    await expect(scoring(alice).locator('h2')).toHaveText('Final scoring');
-    await expect(scoring(alice).getByRole('button', { name: 'Continue' })).toHaveCount(0);
-    await scoring(alice).getByRole('button', { name: 'Close' }).click();
+    const dialog = gameOver(alice);
+    await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Alice and Cara win');
+    await expect(dialog.getByRole('heading', { name: 'Hand 1 scoring' })).toBeVisible();
+    await expect(dialog.locator('.game-over-meta')).toContainText('1 hand');
+    await expect(dialog.locator('.summary-team', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('540 pts');
     await expect(scoring(alice)).toHaveCount(0);
-    await alice.getByRole('button', { name: 'Show Scoring' }).click();
-    await expect(scoring(alice)).toContainText('Alice and Cara win with 540 points!');
+    await dialog.getByRole('button', { name: 'See the table' }).click();
+    await expect(dialog).toHaveCount(0);
   });
 
   test('clicking Undo asks everyone to undo the last move', async ({ seat }) => {
