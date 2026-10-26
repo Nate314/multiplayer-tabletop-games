@@ -11,7 +11,7 @@ import { mountRulesRoute } from './rules.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
-import type { BasePublicState, Result, Seat } from '../shared/types.ts';
+import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +24,7 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real messages are well under 1 KB
 
-type Connection = { roomId: string; seat: Seat };
+type Connection = { roomId: string; seat: Seat; spectatorId?: undefined } | { roomId: string; seat: null; spectatorId: string }; // a spectator has no seat
 
 const e2eRandom = E2E ? createE2eRandom() : null;
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), { changed: broadcast });
@@ -114,7 +114,18 @@ function handleMessage(ws: WebSocket, data: unknown): void {
 
   const { roomId, seat } = connection;
   const payload = asRecord(message?.payload);
+  if (seat === null) {
+    handleSpectatorMessage(ws, roomId, connection.spectatorId, message?.type, payload);
+    return;
+  }
   switch (message?.type) {
+    case MESSAGE_TYPES.ANSWER_HAND:
+      respond(ws, roomId, manager.answerHand(roomId, seat, payload?.spectator, payload?.allow));
+      break;
+    case MESSAGE_TYPES.REQUEST_HAND:
+    case MESSAGE_TYPES.SWITCH_TO_PLAYER:
+      sendError(ws, 'Only spectators can do that');
+      break;
     case MESSAGE_TYPES.MAKE_MOVE:
       respond(ws, roomId, manager.move(roomId, seat, payload?.move, payload?.moveCount));
       break;
@@ -148,15 +159,47 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey);
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, message.role as JoinRole | undefined);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
   }
 
-  connections.set(ws, { roomId: result.roomId, seat: result.seat });
-  send(ws, { type: MESSAGE_TYPES.GAME_JOINED, payload: { playerNumber: result.seat, seatKey: result.seatKey, gameState: result.state } });
+  connections.set(ws, connectionFor(result.roomId, result.seat, result.spectatorId));
+  sendJoined(ws, result);
   broadcast(result.roomId);
+}
+
+// A joined spectator has an id and no seat; a player has a seat
+function connectionFor(roomId: string, seat: Seat | null, spectatorId?: string): Connection {
+  return spectatorId !== undefined ? { roomId, seat: null, spectatorId } : { roomId, seat: seat as Seat };
+}
+
+function sendJoined(ws: WebSocket, joined: { seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }): void {
+  send(ws, {
+    type: MESSAGE_TYPES.GAME_JOINED,
+    payload: { playerNumber: joined.seat, spectatorId: joined.spectatorId, seatKey: joined.seatKey, gameState: joined.state }
+  });
+}
+
+// A spectator may only ask to see a hand or sit down; everything else is refused
+function handleSpectatorMessage(
+  ws: WebSocket, roomId: string, spectatorId: string, type: unknown, payload: Record<string, unknown> | null
+): void {
+  if (type === MESSAGE_TYPES.REQUEST_HAND) {
+    respond(ws, roomId, manager.requestHand(roomId, spectatorId, payload?.seat));
+  } else if (type === MESSAGE_TYPES.SWITCH_TO_PLAYER) {
+    const result = manager.switchToPlayer(roomId, spectatorId);
+    if ('error' in result) {
+      sendError(ws, result.error);
+      return;
+    }
+    connections.set(ws, connectionFor(roomId, result.seat));
+    sendJoined(ws, result);
+    broadcast(roomId);
+  } else if (typeof type === 'string' && type in MESSAGE_TYPES) {
+    sendError(ws, 'Spectators cannot do that');
+  }
 }
 
 function handleDisconnect(ws: WebSocket): void {
@@ -164,8 +207,17 @@ function handleDisconnect(ws: WebSocket): void {
   if (!connection) return;
 
   connections.delete(ws);
-  const result = manager.disconnect(connection.roomId, connection.seat);
-  if (result) broadcast(connection.roomId);
+  if (connection.spectatorId !== undefined) {
+    manager.disconnectSpectator(connection.roomId, connection.spectatorId);
+    broadcast(connection.roomId);
+    return;
+  }
+  const result = connection.seat !== null && manager.disconnect(connection.roomId, connection.seat);
+  if (result) {
+    broadcast(connection.roomId);
+  } else if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
+    for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
+  }
 }
 
 function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>): void {
@@ -180,7 +232,9 @@ function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>)
 function broadcast(roomId: string): void {
   for (const [ws, connection] of connections) {
     if (connection.roomId !== roomId) continue;
-    const state = manager.getState(roomId, connection.seat);
+    const state = connection.spectatorId === undefined
+      ? manager.getState(roomId, connection.seat)
+      : manager.getSpectatorState(roomId, connection.spectatorId);
     if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
   }
 }

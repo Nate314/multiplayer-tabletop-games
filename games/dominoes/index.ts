@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import {
   applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, toPublicState
 } from './rules.ts';
@@ -14,5 +15,6 @@ export const dominoes: GameDefinition<GameState, PublicGameState> = {
   applyMove,
   applyAction,
   onUndo,
-  toPublicState
+  toPublicState,
+  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand'])
 };

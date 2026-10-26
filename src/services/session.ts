@@ -1,8 +1,10 @@
 import { readJson, removeKey, writeJson } from './storage.ts'
+import type { JoinRole } from '../../shared/types.ts'
 
 // The most recent game this tab joined, so a refresh can rejoin it and the list can offer it again
 // `seatKey` is the secret the server gave the seat, which taking it back needs
-export type Session = { gameType: string; gameId: string; playerName: string; seatKey?: string; inGame: boolean };
+// `role` is only kept for a spectator, so a refresh rejoins as one; missing means a player
+export type Session = { gameType: string; gameId: string; playerName: string; seatKey?: string; role?: JoinRole; inGame: boolean };
 
 type SavedGame = Omit<Session, 'inGame'>;
 
@@ -18,7 +20,8 @@ function read(storage: () => Storage, key: string): SavedGame | null {
     return null
   }
   const seatKey = typeof saved.seatKey === 'string' ? saved.seatKey : undefined
-  return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, seatKey }
+  const role = saved.role === 'spectator' ? saved.role : undefined
+  return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, seatKey, role }
 }
 
 const local = () => localStorage;

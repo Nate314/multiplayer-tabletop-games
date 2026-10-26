@@ -8,6 +8,8 @@ import PresenceBar from './PresenceBar';
 import HouseRulesPanel from './HouseRulesPanel';
 import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
+import SpectatorView from './SpectatorView';
+import HandRequestPrompt from './HandRequestPrompt';
 import gameService from '../services/gameService';
 import { everyoneAgreed, needsAgreement } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
@@ -19,13 +21,16 @@ type GameViewProps = {
   game: GameInfo;
   client: ClientGame;
   gameState: BasePublicState;
-  playerNumber: Seat;
+  playerNumber: Seat | null;
+  spectatorId: string | null;
   error: string | null;
   onBack: () => void;
 };
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
-export default function GameView({ game, client, gameState, playerNumber, error, onBack }: GameViewProps) {
+export default function GameView({ game, client, gameState, playerNumber, spectatorId, error, onBack }: GameViewProps) {
+  // App only shows a game once the connection has a seat or a spectator id
+  if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
   const { Screen } = client;
   useStateSounds(gameState, playerNumber, true);
   const choosingRules = !gameState.started && needsAgreement(game);
@@ -51,10 +56,17 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <GitHubLink />
         <ThemeToggle />
       </header>
-      <PresenceBar gameState={gameState} onDismiss={(seat) => gameService.requestDismiss(seat)} />
-      {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
-      <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
-      <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
+      <PresenceBar gameState={gameState} onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)} />
+      {playerNumber === null ? (
+        <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
+      ) : (
+        <>
+          {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
+          <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
+          <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
+          <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
+        </>
+      )}
     </div>
   );
 }

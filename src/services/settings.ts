@@ -5,8 +5,9 @@ import { CATEGORIES } from '../../shared/categories.ts'
 import { DEFAULT_FILTERS, parsePlayers } from '../components/gameFilters.ts'
 import type { LandingFilters } from '../components/gameFilters.ts'
 import type { SoundName } from '../../shared/sounds.ts'
+import type { JoinRole } from '../../shared/types.ts'
 
-export type JoinForm = { playerName: string; gameId: string }
+export type JoinForm = { playerName: string; gameId: string; role: JoinRole }
 
 export type { SoundName }
 export type Preferences = {
@@ -58,6 +59,7 @@ export function loadJoinForm(): JoinForm {
   return {
     playerName: typeof saved?.playerName === 'string' ? saved.playerName : '',
     gameId: typeof saved?.gameId === 'string' ? saved.gameId : '',
+    role: saved?.role === 'spectator' ? 'spectator' : 'player',
   }
 }
 

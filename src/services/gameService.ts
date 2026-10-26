@@ -1,8 +1,8 @@
 import { MESSAGE_TYPES, type ClientMessage, type ServerMessage } from '../../shared/messages.ts';
 import type { HouseRulesProposal } from '../../shared/houseRules.ts';
-import type { BasePublicState, Seat } from '../../shared/types.ts';
+import type { BasePublicState, JoinRole, Seat } from '../../shared/types.ts';
 
-type GameJoined = { playerNumber: Seat; seatKey: string; gameState: BasePublicState };
+type GameJoined = Extract<ServerMessage, { type: typeof MESSAGE_TYPES.GAME_JOINED }>['payload'];
 
 class GameService {
   ws: WebSocket | null;
@@ -21,7 +21,8 @@ class GameService {
 
   // `rejoin` only takes back a held seat, so it never starts a new game; taking one back needs its `seatKey`
   connect(
-    gameType: string, gameId: string, playerName: string, rejoin = false, seatKey?: string, serverUrl = window.location.host
+    gameType: string, gameId: string, playerName: string, rejoin = false, seatKey?: string, role: JoinRole = 'player',
+    serverUrl = window.location.host
   ): void {
     // Drop any earlier socket, e.g. after a refused join, without reporting a disconnect
     this.disconnect();
@@ -32,7 +33,7 @@ class GameService {
     this.ws = ws;
 
     ws.onopen = () => {
-      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName, rejoin, seatKey });
+      this.send({ type: MESSAGE_TYPES.JOIN_GAME, gameType, gameId, playerName, rejoin, seatKey, role });
     };
 
     ws.onmessage = (event) => {
@@ -99,6 +100,18 @@ class GameService {
 
   voteDismiss(approve: boolean): void {
     this.send({ type: MESSAGE_TYPES.VOTE_DISMISS, payload: { approve } });
+  }
+
+  requestHand(seat: Seat): void {
+    this.send({ type: MESSAGE_TYPES.REQUEST_HAND, payload: { seat } });
+  }
+
+  answerHand(spectator: string, allow: boolean): void {
+    this.send({ type: MESSAGE_TYPES.ANSWER_HAND, payload: { spectator, allow } });
+  }
+
+  switchToPlayer(): void {
+    this.send({ type: MESSAGE_TYPES.SWITCH_TO_PLAYER });
   }
 
   disconnect(): void {

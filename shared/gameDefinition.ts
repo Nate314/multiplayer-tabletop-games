@@ -45,4 +45,6 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   // The platform adds moveCount; a game never supplies it.
   // `viewer` is the seat the view is sent to, so a game can show a player their own hand; null (the history) sees no hand.
   toPublicState(state: S, undoAvailable: boolean, viewer: Seat | null): Omit<P, 'moveCount'>;
+  // Everything `toPublicState` shows only to `seat`; a spectator sees it once that seat allows.
+  privateSeatView?(state: S, seat: Seat): unknown;
 };
