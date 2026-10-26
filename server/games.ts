@@ -46,12 +46,14 @@ type Room = {
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout or a tick;
 // `onGameFinished` hears of each game once, when it first ends.
 // `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks;
-// `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns
+// `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns;
+// `removed` hears of each room deleted, so nothing kept for it outlives it
 export type ManagerHooks = {
   now?: () => number;
   changed?: (roomId: string) => void;
   onGameFinished?: (result: GameResult) => void;
   reseated?: (roomId: string, moves: Reseat[]) => void;
+  removed?: (roomId: string) => void;
   manualSimulation?: boolean;
 };
 
@@ -325,6 +327,7 @@ export function createGameManager(
     clearInterval(room?.simTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
+    hooks.removed?.(roomId);
   }
 
   // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS

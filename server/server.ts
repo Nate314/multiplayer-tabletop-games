@@ -10,6 +10,9 @@ import { serveClient } from './static.ts';
 import { mountRulesRoute } from './rules.ts';
 import { mountOpenGamesRoute } from './openGames.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
+import { createAlerts, mountPushRoutes } from './alerts.ts';
+import { loadVapidKeys, openPushStore } from './pushStore.ts';
+import { isPushEndpoint } from './vapid.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts';
@@ -18,6 +21,7 @@ import type { Reaction } from '../shared/reactions.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
+const PUSH_CONTACT = process.env.PUSH_CONTACT || 'mailto:admin@localhost'; // push services may contact this about our pushes
 const SHOW_OPEN_GAMES = process.env.SHOW_OPEN_GAMES === 'true'; // lists every game on the landing page, so it is off unless asked for
 const HEARTBEAT_MS = 15_000; // a socket that misses one ping is dead within about 30 s
 const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data/games.sqlite');
@@ -36,15 +40,21 @@ type LocalConnection = Extract<Connection, { localSeats: Seat[] }>;
 
 const JOIN_ROLES: readonly JoinRole[] = ['player', 'spectator', 'passAndPlay', 'tableScreen'];
 
+const pushStore = openPushStore(DATABASE_PATH);
+const alerts = createAlerts({ store: pushStore, keys: loadVapidKeys(pushStore), subject: PUSH_CONTACT, games: GAMES.map(game => game.info) });
 const e2eRandom = E2E ? createE2eRandom() : null;
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), {
   changed: broadcast,
   onGameFinished: result => console.log(`Game finished: ${result.archiveId}`),
   reseated: reseat,
+  removed: roomId => alerts.roomChanged(roomId, null, new Set()),
   manualSimulation: E2E
 });
+// Rooms that ended while the server was down
+for (const roomId of pushStore.roomIds()) if (!manager.getState(roomId)) pushStore.removeRoom(roomId);
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
+const hidden = new WeakSet<WebSocket>(); // players whose page is not in view; absent means looking
 
 // Configure Express routes
 // The same answer for a missing game, a refused credential and a bad number, so none can be told apart
@@ -74,6 +84,8 @@ if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomI
 mountAssetRoutes(app);
 
 if (SHOW_OPEN_GAMES) mountOpenGamesRoute(app, manager.openGames);
+
+mountPushRoutes(app, alerts);
 
 serveClient(app, path.join(__dirname, '../dist'));
 
@@ -131,6 +143,7 @@ function handleMessage(ws: WebSocket, data: unknown): void {
 
   const { roomId, seat } = connection;
   const payload = asRecord(message?.payload);
+  if (handlePushMessage(ws, connection, message?.type, payload)) return;
   if (connection.spectatorId !== undefined) {
     handleSpectatorMessage(ws, roomId, connection.spectatorId, message?.type, payload);
     return;
@@ -257,6 +270,29 @@ function handleLocalMessage(
   return false;
 }
 
+// Seats come from the connection, so a shared device covers all its players, even during a handoff.
+// False when the message is not about alerts
+function handlePushMessage(ws: WebSocket, connection: Connection, type: unknown, payload: Record<string, unknown> | null): boolean {
+  if (type !== MESSAGE_TYPES.PUSH_SUBSCRIBE && type !== MESSAGE_TYPES.PUSH_UNSUBSCRIBE && type !== MESSAGE_TYPES.SET_VISIBLE) return false;
+  if (connection.spectatorId !== undefined) {
+    sendError(ws, 'Only players get notifications');
+    return true;
+  }
+  const { roomId } = connection;
+  const seats = connection.localSeats ?? [connection.seat];
+  if (type === MESSAGE_TYPES.SET_VISIBLE) {
+    if (payload?.visible === true) hidden.delete(ws);
+    else if (payload?.visible === false) hidden.add(ws);
+  } else if (type === MESSAGE_TYPES.PUSH_UNSUBSCRIBE) {
+    for (const seat of seats) pushStore.removeSeat(roomId, seat);
+  } else if (!isPushEndpoint(payload?.endpoint)) {
+    sendError(ws, 'That is not a push service this server sends to');
+  } else {
+    for (const seat of seats) pushStore.add(roomId, seat, payload.endpoint);
+  }
+  return true;
+}
+
 // A joined spectator has an id and no seat; a player has a seat
 function connectionFor(roomId: string, seat: Seat | null, spectatorId?: string): Connection {
   return spectatorId !== undefined ? { roomId, seat: null, spectatorId } : { roomId, seat: seat as Seat };
@@ -356,6 +392,19 @@ function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>)
 function broadcast(roomId: string): void {
   for (const [ws, connection] of connections) {
     if (connection.roomId === roomId) sendState(ws, connection);
+  }
+  // Alerts never hold up or break play
+  try {
+    const state = manager.getState(roomId);
+    const views = state && new Map(state.activePlayers.map(seat => [seat, manager.getState(roomId, seat)!]));
+    const visible = new Set<Seat>();
+    for (const [ws, connection] of connections) {
+      if (connection.roomId !== roomId || connection.spectatorId !== undefined || hidden.has(ws)) continue;
+      for (const seat of connection.localSeats ?? [connection.seat]) visible.add(seat);
+    }
+    alerts.roomChanged(roomId, views ?? null, visible);
+  } catch (error) {
+    console.error('Alerts failed:', error);
   }
 }
 

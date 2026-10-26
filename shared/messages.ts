@@ -22,6 +22,9 @@ export const MESSAGE_TYPES = {
   LEFT_GAME: 'LEFT_GAME',
   REACT: 'REACT',
   SHOW_SEAT: 'SHOW_SEAT',
+  PUSH_SUBSCRIBE: 'PUSH_SUBSCRIBE',
+  PUSH_UNSUBSCRIBE: 'PUSH_UNSUBSCRIBE',
+  SET_VISIBLE: 'SET_VISIBLE',
   REACTION: 'REACTION',
   GAME_STATE: 'GAME_STATE',
   GAME_ERROR: 'GAME_ERROR'
@@ -45,7 +48,11 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } }
   | { type: typeof MESSAGE_TYPES.REQUEST_REMATCH }
   | { type: typeof MESSAGE_TYPES.VOTE_REMATCH; payload: { join: boolean } }
-  | { type: typeof MESSAGE_TYPES.REACT; payload: { target: Seat; emoji: string } };
+  | { type: typeof MESSAGE_TYPES.REACT; payload: { target: Seat; emoji: string } }
+  // Push and visibility apply to every seat this connection holds; spectators are refused
+  | { type: typeof MESSAGE_TYPES.PUSH_SUBSCRIBE; payload: { endpoint: string } }
+  | { type: typeof MESSAGE_TYPES.PUSH_UNSUBSCRIBE }
+  | { type: typeof MESSAGE_TYPES.SET_VISIBLE; payload: { visible: boolean } };
 
 export type ServerMessage =
   | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat | null; spectatorId?: string; seatKey: string; localSeats?: undefined; gameState: BasePublicState } }
