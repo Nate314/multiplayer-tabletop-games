@@ -35,9 +35,16 @@ test('seats a hand request names are waited on', () => {
   assert.deepEqual(seatsToAct(testGame, table({ handRequests: [{ spectator: 's', seat: 3 }] })), [2, 3]);
 });
 
-test('the game adds its out-of-turn waits', () => {
-  const game = { ...testGame, waitingOn: () => [3, 1, 2] };
-  assert.deepEqual(seatsToAct(game, table()), [1, 2, 3]);
+test("the game's out-of-turn waits come first, in place of the seat holding the turn", () => {
+  const game = { ...testGame, waitingOn: () => [3, 1] };
+  assert.deepEqual(seatsToAct(game, table()), [1, 3]);
+});
+
+test("a vote still adds its voters to the game's out-of-turn waits", () => {
+  const game = { ...testGame, waitingOn: () => [3] };
+  const undoVote = { requestedBy: 3, votes: { 3: true } };
+  assert.deepEqual(seatsToAct(game, table({ undoVote })), [1, 2, 3]);
+  assert.deepEqual(seatsToAct({ ...testGame, waitingOn: () => [] }, table()), [2]);
 });
 
 test('a private hand is hidden while another local seat is waited on', () => {

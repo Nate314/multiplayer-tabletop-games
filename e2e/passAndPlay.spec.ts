@@ -63,6 +63,8 @@ test.describe('Pass and play', () => {
 
     await expect(device.getByText('Pass to Ann')).toBeVisible();
     await expect(hand(device)).toHaveCount(0);
+    // Nobody is playing on the device during a handoff, so it offers no reactions
+    await expect(device.locator('.presence-bar').getByRole('button')).toHaveCount(0);
     await expectNoCards(device, [...hands[1], ...others]);
     await show(device, 'Ann').click();
     await expect(hand(device).getByRole('button')).toHaveCount(13);

@@ -16,7 +16,7 @@ import HandRequestPrompt from './HandRequestPrompt';
 import HandoffScreen from './HandoffScreen';
 import PassAndPlayBar from './PassAndPlayBar';
 import gameService from '../services/gameService';
-import { agreementPending } from '../../shared/houseRules.ts';
+import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -49,8 +49,11 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
   const voting = Boolean(gameState.undoVote || gameState.dismissVote);
-  // Nothing is private before the first move, so a shared device sets and agrees to the rules during a handoff too (Agree counts for every local seat)
-  const rulesSeat = playerNumber ?? localSeats?.[0]?.seat ?? null;
+  // Nothing is private before the first move, so a shared device sets and agrees to the rules during a handoff too (Agree counts for every local seat).
+  // It sets them as its host seat when the host is one of its players, as the server does.
+  const localHost = localSeats?.find(local => local.seat === houseRulesOf(game, gameState).host)?.seat;
+  const rulesSeat = localHost ?? playerNumber ?? localSeats?.[0]?.seat ?? null;
+  const handingOff = localSeats !== null && playerNumber === null;
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
@@ -78,11 +81,12 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         gameState={gameState}
         playerNumber={playerNumber}
         spectatorId={spectatorId}
+        canReact={!handingOff}
         onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
       />
       {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
-      {localSeats && playerNumber === null ? (
-        <HandoffScreen client={client} gameState={gameState} localSeats={localSeats} onShow={onShowSeat} />
+      {handingOff ? (
+        <HandoffScreen client={client} gameState={gameState} localSeats={localSeats!} onShow={onShowSeat} />
       ) : playerNumber === null ? (
         <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
       ) : (
