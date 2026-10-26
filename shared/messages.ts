@@ -43,7 +43,7 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.REACT; payload: { target: Seat; emoji: string } };
 
 export type ServerMessage =
-  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat | null; spectatorId?: string; seatKey: string; gameState: BasePublicState } }
+  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat | null; spectatorId?: string; seatKey: string; localSeats?: undefined; gameState: BasePublicState } }
   | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: null; localSeats: { seat: Seat; seatKey: string }[]; gameState: BasePublicState; spectatorId?: undefined; seatKey?: undefined } }
   | { type: typeof MESSAGE_TYPES.GAME_STATE; payload: BasePublicState }
   | { type: typeof MESSAGE_TYPES.REACTION; payload: Reaction }

@@ -9,7 +9,7 @@ import type { JoinRole } from '../../shared/types.ts'
 import { isSingleEmoji } from '../../shared/reactions.ts'
 import { DEFAULT_RECENT_REACTIONS } from '../components/reactions.ts'
 
-export type JoinForm = { playerName: string; gameId: string; role: JoinRole }
+export type JoinForm = { playerName: string; gameId: string; role: JoinRole; localNames?: string[] }
 
 export type { SoundName }
 export type Preferences = {
@@ -58,10 +58,12 @@ export function savePlaybackSpeed(speed: PlaybackSpeed): void {
 // One remembered pair, shared by every game
 export function loadJoinForm(): JoinForm {
   const saved = readJson(local, JOIN_FORM_KEY) as Partial<JoinForm> | null
+  const names = saved?.localNames
   return {
     playerName: typeof saved?.playerName === 'string' ? saved.playerName : '',
     gameId: typeof saved?.gameId === 'string' ? saved.gameId : '',
-    role: saved?.role === 'spectator' ? 'spectator' : 'player',
+    role: saved?.role === 'spectator' || saved?.role === 'passAndPlay' ? saved.role : 'player',
+    ...(Array.isArray(names) && names.every(name => typeof name === 'string') && { localNames: names }),
   }
 }
 

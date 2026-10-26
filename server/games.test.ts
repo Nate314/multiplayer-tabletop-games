@@ -1850,6 +1850,18 @@ test('handoffSeat hides a private hand between local turns, and skips the handof
   }
 });
 
+test('handoffSeat stops showing a local seat that was dismissed', () => {
+  const manager = createGameManager([testGame], seededRandom);
+  seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));
+  manager.join('test', 'g1', 'Cy');
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.notEqual(manager.handoffSeat(ROOM, 3, [1, 2, 3]), 3);
+  assert.equal(manager.handoffSeat(ROOM, 3, [3]), null);
+});
+
 test('a pass-and-play view holds no local seat\'s hand but the shown one', () => {
   const manager = createGameManager([handGame], seededRandom);
   const { state } = seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo']));

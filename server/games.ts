@@ -567,7 +567,11 @@ export function createGameManager(
     handoffSeat(roomId: string, shown: Seat | null, localSeats: Seat[]): Seat | null {
       const room = rooms.get(roomId);
       if (!room) return null;
-      return nextShownSeat(shown, localSeats, seatsToAct(room.game, room.state), room.game.privateSeatView !== undefined);
+      // A dismissed local seat is no longer seated, so it is neither shown nor handed the device
+      const { activePlayers } = room.state;
+      const seated = localSeats.filter(seat => activePlayers.includes(seat));
+      const stillShown = shown !== null && activePlayers.includes(shown) ? shown : null;
+      return nextShownSeat(stillShown, seated, seatsToAct(room.game, room.state), room.game.privateSeatView !== undefined);
     },
 
     // Before the first move this frees the seat; after it the seat is held for a rejoin

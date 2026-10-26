@@ -60,6 +60,17 @@ test('join form remembers the role', () => {
   assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'player' })
 })
 
+test('join form keeps pass-and-play names only as an array of strings', () => {
+  installStorage()
+  const form = { playerName: 'Ann', gameId: 'abc', role: 'passAndPlay' as const, localNames: ['Ann', 'Bo'] }
+  saveJoinForm(form)
+  assert.deepEqual(loadJoinForm(), form)
+  installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"passAndPlay","localNames":"Ann"}' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'passAndPlay' })
+  installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"passAndPlay","localNames":["Ann",2]}' })
+  assert.equal(loadJoinForm().localNames, undefined)
+})
+
 test('junk in storage falls back to defaults', () => {
   installStorage({ historyAnimations: '"yes"', joinForm: '[1]' })
   assert.equal(loadAnimations(), false)
