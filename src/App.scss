@@ -1253,6 +1253,8 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
+  min-width: 0; // lets a long name ellipsize instead of pushing the bar wider than a 320 px phone
+  max-width: 100%;
   font-weight: 600;
 }
 
