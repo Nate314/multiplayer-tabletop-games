@@ -39,6 +39,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   gofish: () => import('../games/gofish/client/index.ts').then(m => m.gofishClient),
   hearts: () => import('../games/hearts/client/index.ts').then(m => m.heartsClient),
   holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),
+  jenga: () => import('../games/jenga/client/index.ts').then(m => m.loadJengaClient()),
   mancala: () => import('../games/mancala/client/index.ts').then(m => m.mancalaClient),
   monopoly: () => import('../games/monopoly/client/index.ts').then(m => m.monopolyClient),
   parchisi: () => import('../games/parchisi/client/index.ts').then(m => m.parchisiClient),

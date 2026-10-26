@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keyboardTarget, nextSelection, throttleDrag } from './pullInput.ts';
+import { keySteps, keyboardTarget, nextSelection, throttleDrag } from './pullInput.ts';
 import { QUARTER_TURN, anchorWorld, startingTower } from '../physics.ts';
 import type { Block, Vec3 } from '../types.ts';
 
@@ -26,6 +26,17 @@ test('the keyboard target moves 0.5 along the block, outward or back in', () => 
   const odd: Block = { id: 3, level: 1, pose: { p: [0, 2.25, 0], q: QUARTER_TURN } };
   const oddAt = anchorWorld(odd, end);
   assert.ok(close(keyboardTarget(odd, end, 1), [oddAt[0], oddAt[1], oddAt[2] - 0.5]));
+  // Several steps reach further, so the spring pulls harder
+  assert.ok(close(keyboardTarget(even, end, 3), [at[0] + 1.5, at[1], at[2]]));
+});
+
+test('repeated presses add up to the full reach, and a press the other way starts over', () => {
+  assert.equal(keySteps(0, 1), 1);
+  assert.equal(keySteps(1, 1), 2);
+  assert.equal(keySteps(6, 1), 6);
+  assert.equal(keySteps(4, -1), -1);
+  assert.equal(keySteps(-2, -1), -3);
+  assert.equal(keySteps(-6, -1), -6);
 });
 
 test('arrow keys move the selection only over blocks that may be pulled', () => {

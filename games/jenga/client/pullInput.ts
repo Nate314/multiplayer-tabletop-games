@@ -1,6 +1,6 @@
 // Pointer and keyboard pull input, kept free of three so it runs under node:test
 import { SIMULATION_TICK_MS } from '../../../shared/gameDefinition.ts';
-import { anchorWorld } from '../physics.ts';
+import { MAX_REACH, anchorWorld } from '../physics.ts';
 import { canPull } from '../rules.ts';
 import type { Block, Vec3 } from '../types.ts';
 
@@ -9,14 +9,20 @@ const KEY_STEP = 0.5;
 // The server reads one drag per tick, so sending more only costs bandwidth
 export const throttleDrag = (lastSentMs: number, nowMs: number) => nowMs - lastSentMs >= SIMULATION_TICK_MS;
 
-// Outward is along the block's long axis toward the end the anchor is on
-export function keyboardTarget(block: Block, anchor: Vec3, direction: 1 | -1): Vec3 {
+// Outward is along the block's long axis toward the end the anchor is on; negative steps push back in
+export function keyboardTarget(block: Block, anchor: Vec3, steps: number): Vec3 {
   const sign = anchor[0] < 0 ? -1 : 1;
-  return anchorWorld(block, [anchor[0] + sign * direction * KEY_STEP, anchor[1], anchor[2]]);
+  return anchorWorld(block, [anchor[0] + sign * steps * KEY_STEP, anchor[1], anchor[2]]);
 }
 
+const MAX_KEY_STEPS = MAX_REACH / KEY_STEP;
+
+// One step barely moves a loaded block, so presses the same way add up to the reach a mouse drag gets
+export const keySteps = (steps: number, direction: 1 | -1) =>
+  Math.sign(steps) === direction ? direction * Math.min(Math.abs(steps) + 1, MAX_KEY_STEPS) : direction;
+
 // Even levels run along X, so their blocks sit side by side across Z; odd levels the other way
-const across = (block: Block) => block.pose.p[block.level % 2 === 0 ? 2 : 0];
+export const across = (block: Block) => block.pose.p[block.level % 2 === 0 ? 2 : 0];
 
 export function nextSelection(blocks: Block[], selected: number | null, key: string): number | null {
   const legal = blocks.filter(b => canPull({ blocks }, b.id));
