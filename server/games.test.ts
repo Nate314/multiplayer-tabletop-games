@@ -1522,3 +1522,98 @@ test('the end moment owns the reactions it shares a move count with', () => {
     assert.deepEqual(steps.map(step => step.reactions?.length), moves === 0 ? [undefined, 1] : [undefined, undefined, undefined, 1]);
   }
 });
+
+// A two-player test game with the turn timer set and a clock the test moves
+function timerTable(store?: GameStore, timer = 30) {
+  const clock = { now: 100_000 };
+  const manager = rememberingKeys(createGameManager([testGame], seededRandom, store, { now: () => clock.now }), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  if (timer) ok(manager.setHouseRules(ROOM, 1, { values: { turnTimer: timer }, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  return { manager, clock };
+}
+
+test('the turn timer starts when everyone agreed and restarts for each new player', () => {
+  const { manager, clock } = timerTable();
+  assert.equal(current(manager).turnStartedAt, 100_000);
+  clock.now += 5000;
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal(current(manager).turnStartedAt, 105_000);
+});
+
+test('running out of turn time records nothing', () => {
+  const { manager, clock } = timerTable();
+  const before = current(manager);
+  const steps = manager.history('test', 'g1')!.length;
+  clock.now += 10 * 60 * 1000;
+  const after = current(manager);
+  assert.equal(after.moveCount, before.moveCount);
+  assert.equal(after.gameStatus, before.gameStatus);
+  assert.equal(after.currentPlayer, before.currentPlayer);
+  assert.equal(manager.history('test', 'g1')!.length, steps);
+  assert.equal(ok(manager.move(ROOM, 1, tick)).moveCount, 1);
+});
+
+test('an undo vote pauses the turn timer and the timeline is untouched', () => {
+  const { manager, clock } = timerTable();
+  ok(manager.move(ROOM, 1, tick));
+  const started = current(manager).turnStartedAt as number;
+  const steps = manager.history('test', 'g1')!.length;
+  ok(manager.requestUndo(ROOM, 1));
+  assert.equal(current(manager).turnPausedAt, clock.now);
+  clock.now += 20_000;
+  ok(manager.voteUndo(ROOM, 2, false));
+  assert.equal(current(manager).turnStartedAt, started + 20_000);
+  assert.equal(current(manager).turnPausedAt, null);
+  assert.equal(manager.history('test', 'g1')!.length, steps);
+});
+
+test('an undo and a restart each give a fresh full turn', () => {
+  const store = openGameStore(':memory:');
+  const { manager, clock } = timerTable(store);
+  ok(manager.move(ROOM, 1, tick));
+  clock.now += 7000;
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.equal(current(manager).turnStartedAt, clock.now);
+  const restartedAt = clock.now + 60_000;
+  const back = rememberingKeys(createGameManager([testGame], seededRandom, store, { now: () => restartedAt }), keys);
+  assert.equal(current(back).turnStartedAt, restartedAt);
+});
+
+test('with the timer off views carry no turn stamp', () => {
+  const { manager } = timerTable(undefined, 0);
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal('turnStartedAt' in current(manager), false);
+  assert.equal('turnPausedAt' in current(manager), false);
+});
+
+test('the timer stops when the game is over', () => {
+  const { manager } = timerTable();
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal(current(manager).turnStartedAt, null);
+});
+
+test('switching the timer off in the lobby leaves no stamp in views, history or the store', () => {
+  const store = openGameStore(':memory:');
+  const { manager } = timerTable(store);
+  ok(manager.setHouseRules(ROOM, 1, { values: { turnTimer: 0 }, maxPlayers: null }));
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal('turnStartedAt' in current(manager), false);
+  assert.equal('turnPausedAt' in current(manager), false);
+  assert.equal('turnStartedAt' in (store.loadAll().get(ROOM)?.state ?? {}), false);
+});
+
+test('history views never carry the turn stamp', () => {
+  const { manager } = timerTable();
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal('turnStartedAt' in current(manager), true);
+  for (const step of manager.history('test', 'g1')!) {
+    assert.equal('turnStartedAt' in step, false);
+    assert.equal('turnPausedAt' in step, false);
+  }
+});

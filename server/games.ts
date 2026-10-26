@@ -5,8 +5,9 @@ import {
   resolveDismissVote
 } from '../shared/seating.ts';
 import {
-  agreeToHouseRules, everyoneAgreed, houseRulesOf, minimumToStart, needsAgreement, setHouseRules
+  agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules
 } from '../shared/houseRules.ts';
+import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
@@ -29,6 +30,7 @@ type Room = {
   state: BaseGameState;
   history: BaseGameState[];
   timeline: BaseGameState[];
+  clockSeat?: Seat | null; // whose turn the turn timer was stamped for; memory only
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
   watching: Set<string>; // ids of the connected spectators; in memory only, like sockets
@@ -42,6 +44,8 @@ export type ManagerHooks = {
   changed?: (roomId: string) => void;
   onGameFinished?: (result: GameResult) => void;
 };
+
+const STAMP_KEYS = ['turnStartedAt', 'turnPausedAt'] as const;
 
 type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
@@ -108,12 +112,20 @@ export function createGameManager(
   // Every change passes through here, so this is also where the room's deadline is rescheduled
   function save(roomId: string, room: Room, step?: StepChange): void {
     stamp(roomId, room);
+    stampRoom(room);
     const { game, state } = room;
     writeStore(roomId, target => {
       if (state.started) target.save(roomId, game.info.id, state, step);
       else target.remove(roomId);
     });
     scheduleDeadline(roomId, room);
+  }
+
+  // The turn timer only displays: it stamps the live state only (history views and exports never carry the stamp), and never schedules anything.
+  function stampRoom(room: Room): void {
+    const { state } = room;
+    const running = turnLimitMs(state) > 0 && !state.isGameOver && clockMayRun(room) && state.currentPlayer !== null;
+    ({ state: room.state, clockSeat: room.clockSeat } = stampTurn(state, room.clockSeat, running, now()));
   }
 
   // Records `next` as a move after the current state, for undo, history and the store
@@ -129,7 +141,7 @@ export function createGameManager(
 
   // Before the first move, nobody may play until every seated player agreed to the current house rules
   function awaitingAgreement({ game, state }: Room): boolean {
-    return !state.started && needsAgreement(game.info) && !everyoneAgreed(game.info, state);
+    return !state.started && agreementPending(game.info, state);
   }
 
   // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.
@@ -139,7 +151,8 @@ export function createGameManager(
     return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info));
   }
 
-  // Open votes and disconnects do not pause a clock; only the game's own deadline does
+  // Open votes and disconnects do not pause a clock; only the game's own deadline does.
+  // The turn timer is display only and never schedules
   function scheduleDeadline(roomId: string, room: Room): void {
     clearTimeout(room.deadlineTimer);
     room.deadlineTimer = undefined;
@@ -199,8 +212,10 @@ export function createGameManager(
       seatViews: _seatViews, reactions: _reactions, ...view
     } = raw;
     const { startedAt, finishedAt, gameNumber } = state;
+    const stamp = Object.fromEntries(STAMP_KEYS.filter(key => key in state).map(key => [key, state[key]]));
     return {
       ...view,
+      ...stamp,
       moveCount,
       houseRules: houseRulesOf(room.game.info, state),
       startedAt,
@@ -264,7 +279,8 @@ export function createGameManager(
     const reactions = shared ? [] : (room.state.reactions ?? [])
       .filter(reaction => reaction.moveCount === moveCount)
       .map(({ at, emoji, from, fromSpectator, target }): Reaction => ({ from, fromSpectator, target, emoji, at }));
-    return { ...publicView(room, state, false, moveCount, viewer), historyStep, ...(reactions.length > 0 && { reactions }) };
+    const { turnStartedAt: _started, turnPausedAt: _paused, ...past } = state; // a past turn has no live clock
+    return { ...publicView(room, past, false, moveCount, viewer), historyStep, ...(reactions.length > 0 && { reactions }) };
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
@@ -303,6 +319,7 @@ export function createGameManager(
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
       undoVote: null,
+      turnStartedAt: null, // the next save starts a fresh full turn
       disconnected: state.disconnected,
       dismissVote: null
     };
@@ -341,8 +358,10 @@ export function createGameManager(
     const game = findGame(saved.gameType);
     if (!game) throw new Error(`this site has no ${saved.gameType} game`);
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
-    // Nobody is watching either, so no hand request is still open
-    let state: BaseGameState = { ...saved.state, undoVote: null, dismissVote: null, disconnected, handRequests: [] };
+    // Nobody is watching either, so no hand request is still open; downtime is never charged to the turn timer
+    let state: BaseGameState = {
+      ...saved.state, undoVote: null, dismissVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
+    };
     if (game.resumeClock) state = game.resumeClock(state, now());
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
     if (state.startedAt === undefined) state = { ...state, startedAt: now() };

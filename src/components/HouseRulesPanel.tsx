@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import gameService from '../services/gameService';
-import { houseRulesOf, minimumToStart, type HouseRuleValue, type HouseRulesProposal } from '../../shared/houseRules.ts';
+import { houseRulesOf, minimumToStart, needsAgreement, rulesOf, type HouseRuleValue, type HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
@@ -42,6 +42,7 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
   const isHost = rules.host === playerNumber;
   const stretched = game.stretchedPlayers;
   const seated = activePlayers.length;
+  const agreeing = needsAgreement(game, rules.values);
   const mostPlayers = rules.maxPlayers ?? game.maxPlayers;
 
   // Only the changed rule is sent: the server keeps the others, and drops a rule that the change no longer offers
@@ -59,7 +60,7 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
           {isHost ? 'You set the house rules' : `${playerNames[rules.host]} sets the house rules`}
         </div>
       )}
-      {(game.houseRules ?? []).filter(rule => rule.id in rules.values).map(rule => (
+      {rulesOf(game).filter(rule => rule.id in rules.values).map(rule => (
         <div key={rule.id} className="house-rules-rule">
           {/* The label sits beside its control, so the control's own text never becomes part of the label */}
           <span>
@@ -87,16 +88,16 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
           {seated < game.minPlayers && seated >= minimumToStart(game) && <div className="house-rules-help">{`Players: ${seated} (house rule)`}</div>}
         </div>
       )}
-      <ul className="house-rules-list">
+      {agreeing && <ul className="house-rules-list">
         {activePlayers.map(seat => (
           <li key={seat} className={rules.agreed.includes(seat) ? 'house-rules-agreed' : undefined}
             aria-current={seat === playerNumber ? 'true' : undefined}>
             {`${playerNames[seat]}: ${rules.agreed.includes(seat) ? 'agreed' : 'waiting'}`}
           </li>
         ))}
-      </ul>
+      </ul>}
       {error && <div className="house-rules-error" role="alert">{error}</div>}
-      {!rules.agreed.includes(playerNumber) && (
+      {agreeing && !rules.agreed.includes(playerNumber) && (
         <div className="house-rules-actions">
           <button type="button" className="primary-button" onClick={() => gameService.agreeHouseRules(rules.revision)}>Agree</button>
         </div>

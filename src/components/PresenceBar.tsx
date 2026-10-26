@@ -1,4 +1,5 @@
-import { useCountdown } from '../hooks/useCountdown.ts';
+import { formatTurnClock, useCountdown } from '../hooks/useCountdown.ts';
+import useTurnTimer from '../sound/useTurnTimer.ts';
 import ReactionPicker from './ReactionPicker';
 import { keepOnScreen } from './keepOnScreen.ts';
 import { reactionLabel } from './reactions.ts';
@@ -12,7 +13,8 @@ type PresenceBarProps = {
   onDismiss: ((seat: Seat) => void) | null; // null for a spectator, who cannot start a vote
 };
 
-// Lists every player (tap another's name to react; held seats get a way to start a dismiss vote) and who is watching
+// Lists every player (tap another's name to react; held seats get a way to start a dismiss vote), the turn timer
+// beside the current player, and who is watching
 export default function PresenceBar({ gameState, playerNumber, spectatorId, onDismiss }: PresenceBarProps) {
   const { disconnected, activePlayers, playerNames, currentPlayer, isGameOver, started, undoVote, dismissVote } = gameState;
   const watchers = gameState.spectators ?? [];
@@ -22,7 +24,9 @@ export default function PresenceBar({ gameState, playerNumber, spectatorId, onDi
   const { bubbles, cooldownUntil } = useReactions(playerNumber, myName, playerNumber === null);
   // cooldownUntil is on this device's clock, so no server offset (a stale one inflated the countdown)
   const cooldownMs = useCountdown(cooldownUntil, undefined) ?? 0;
-  if (activePlayers.length < 2 && disconnected.length === 0 && watchers.length === 0) return null;
+  const { msLeft, paused } = useTurnTimer(gameState, playerNumber);
+  const timed = msLeft !== null && currentPlayer !== null && !isGameOver;
+  if (activePlayers.length < 2 && disconnected.length === 0 && watchers.length === 0 && !timed) return null;
 
   const voteOpen = undoVote !== null || dismissVote !== null;
   const waitingFor = !isGameOver && currentPlayer !== null && disconnected.includes(currentPlayer) ? currentPlayer : null;
@@ -32,11 +36,17 @@ export default function PresenceBar({ gameState, playerNumber, spectatorId, onDi
       <ul className="presence-list">
         {activePlayers.map(seat => {
           const held = disconnected.includes(seat);
+          const name = held ? <span>{`${playerNames[seat]} (disconnected)`}</span>
+            : seat === playerNumber ? <span>{playerNames[seat]}</span>
+            : <ReactionPicker target={seat} name={playerNames[seat]} disabled={!started || isGameOver} cooldownMs={cooldownMs} />;
           return (
             <li key={seat} className="presence-player" data-disconnected={held ? '' : undefined}>
-              {held ? <span>{`${playerNames[seat]} (disconnected)`}</span>
-                : seat === playerNumber ? <span>{playerNames[seat]}</span>
-                : <ReactionPicker target={seat} name={playerNames[seat]} disabled={!started || isGameOver} cooldownMs={cooldownMs} />}
+              {timed && seat === currentPlayer ? (
+                <span className="presence-timer" data-low={msLeft > 0 && msLeft <= 10_000 ? '' : undefined} data-over={msLeft <= 0 ? '' : undefined}>
+                  {name}
+                  <span className="presence-clock">{formatTurnClock(msLeft) + (paused ? ' (paused)' : '')}</span>
+                </span>
+              ) : name}
               {/* After the game is over nothing waits on them, so there is nothing to dismiss */}
               {held && !isGameOver && onDismiss && (
                 <button type="button" className="dismiss-button" disabled={voteOpen} onClick={() => onDismiss(seat)}>
@@ -50,6 +60,9 @@ export default function PresenceBar({ gameState, playerNumber, spectatorId, onDi
           );
         })}
       </ul>
+      {timed && msLeft <= 0 && (currentPlayer === playerNumber
+        ? <div className="presence-overtime" role="status">Time's up</div>
+        : <div className="presence-overtime">{`${playerNames[currentPlayer]} is over time`}</div>)}
       {watchers.length > 0 && <div className="presence-watching">{`Watching: ${watchers.map(({ name }) => name).join(', ')}`}</div>}
       {waitingFor !== null && (
         <div className="presence-waiting">{`Waiting for ${playerNames[waitingFor]} to reconnect`}</div>

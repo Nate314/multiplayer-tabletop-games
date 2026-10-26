@@ -10,6 +10,7 @@ export type GameInfo = {
   minPlayers: number;
   maxPlayers: number;
   houseRules?: HouseRule[];
+  ownTurnLimit?: true; // the game enforces its own turn limit, so the platform turn timer is not offered
   stretchedPlayers?: PlayerRange; // the table the host may set as a house rule; contains minPlayers..maxPlayers
 };
 

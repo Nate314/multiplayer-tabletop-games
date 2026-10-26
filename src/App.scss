@@ -1455,6 +1455,37 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   font-weight: 600;
 }
 
+:where([data-game] .presence-timer) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; // lets a long name ellipsize instead of pushing the bar wider than a 320 px phone
+  max-width: 100%;
+  font-weight: 600;
+}
+
+:where([data-game] .presence-clock) {
+  flex: none; /* the clock never shrinks or wraps; the name gives way instead */
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+:where([data-game] .presence-name) {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where([data-game] .presence-timer[data-low], [data-game] .presence-timer[data-over], [data-game] .presence-overtime) {
+  color: var(--lobby-error-text);
+}
+
+:where([data-game] .presence-overtime) {
+  font-weight: 600;
+}
+
 :where([data-game] .dismiss-button) {
   padding: 4px 12px;
   border: none;

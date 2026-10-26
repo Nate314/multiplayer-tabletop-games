@@ -541,7 +541,7 @@ test('four players play exactly as before', () => {
   assert.deepEqual(state.teams, [[1, 3], [2, 4]]);
   assert.deepEqual(state.scores, [0, 0]);
   assert.deepEqual([1, 2, 3, 4].map(seat => teamOfSeat(state, seat)), [0, 1, 0, 1]);
-  assert.deepEqual(houseRulesOf(rook.info, state).values, { targetScore: 500 });
+  assert.deepEqual(houseRulesOf(rook.info, state).values, { targetScore: 500, turnTimer: 0 });
   assert.deepEqual(rook.info.stretchedPlayers, { min: 4, max: 7 });
   assert.equal(rook.info.minPlayers, 4);
   assert.equal(rook.info.maxPlayers, 4);
@@ -601,13 +601,13 @@ test('the defenders option is offered only for three teams of two', () => {
   assert.equal(DEFENDERS.offered?.(4, { sixTeams: 'threeOfTwo' }), false);
 
   const six = lobbyOf(6);
-  assert.deepEqual(houseRulesOf(rook.info, six).values, { targetScore: 500, sixTeams: 'twoOfThree' });
+  assert.deepEqual(houseRulesOf(rook.info, six).values, { targetScore: 500, sixTeams: 'twoOfThree', turnTimer: 0 });
   assert.deepEqual(setHouseRules(rook.info, six, 1, { values: { defenders: 'together' }, maxPlayers: 6 }),
     { error: 'That is not a house rule of this game' });
   const three = ok(setHouseRules(rook.info, six, 1, { values: { sixTeams: 'threeOfTwo', defenders: 'together' }, maxPlayers: 6 }));
-  assert.deepEqual(three.houseRules?.values, { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'together' });
+  assert.deepEqual(three.houseRules?.values, { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'together', turnTimer: 0 });
   assert.deepEqual(houseRulesOf(rook.info, lobbyOf(6, { sixTeams: 'threeOfTwo' })).values,
-    { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'separate' });
+    { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'separate', turnTimer: 0 });
   assert.deepEqual(setHouseRules(rook.info, lobby(), 1, { values: { sixTeams: 'threeOfTwo' }, maxPlayers: null }),
     { error: 'That is not a house rule of this game' });
 });
