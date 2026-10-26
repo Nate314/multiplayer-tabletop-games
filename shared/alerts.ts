@@ -13,18 +13,20 @@ export function votesWaitingOn(state: BaseGameState, seat: Seat): string[] {
   const { undoVote, dismissVote, rematchVote } = state;
   if (undoVote && asked && !(seat in undoVote.votes)) keys.push(`vote:undo:${undoVote.requestedBy}`);
   if (dismissVote && asked && seat !== dismissVote.target && !(seat in dismissVote.votes)) keys.push(`vote:dismiss:${dismissVote.target}`);
+  // A disconnected seat can still rejoin the rematch, so every active seat is asked
   if (rematchVote && state.activePlayers.includes(seat) && !(seat in rematchVote.votes)) keys.push(`vote:rematch:${rematchVote.requestedBy}`);
   for (const request of state.handRequests ?? []) if (request.seat === seat) keys.push(`vote:hand:${request.spectator}`);
   return keys;
 }
 
 export function alertFor(info: GameInfo, state: BasePublicState, seat: Seat): Alert | null {
-  if (state.isGameOver) return { kind: 'gameOver', key: 'gameOver' };
   const [vote] = votesWaitingOn(state, seat);
   if (vote) return { kind: 'vote', key: vote };
+  if (state.isGameOver) return { kind: 'gameOver', key: 'gameOver' };
   // The server only moves a lobby once the table agreed, so an ungated lobby turn is not yet a turn
   const live = state.started || !needsAgreement(info, houseRulesOf(info, state).values) || everyoneAgreed(info, state);
-  const toAct = state.waitingOn ? state.waitingOn.includes(seat) : state.currentPlayer === seat;
+  // Connection is ignored: a held seat's push still reaches the device that comes back
+  const toAct =state.waitingOn ? state.waitingOn.includes(seat) : state.currentPlayer === seat;
   return live && toAct && state.activePlayers.includes(seat) && state.activePlayers.length >= 2 ? { kind: 'turn', key: 'turn' } : null;
 }
 

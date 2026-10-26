@@ -84,7 +84,8 @@ test('no turn alert alone at a table, outside the table, or before a lobby is ag
   assert.equal(alertFor(rules, agreed, 1)?.kind, 'turn');
 });
 
-test('game over alerts every seat and beats a waiting vote', () => {
-  const over = running({ isGameOver: true, undoVote: { requestedBy: 1, votes: { 1: true } } });
-  assert.deepEqual(alertFor(info, over, 2), { kind: 'gameOver', key: 'gameOver' });
+test('a rematch vote waits on the seat that has not answered, and the rest get game over', () => {
+  const over = running({ isGameOver: true, rematchVote: { requestedBy: 1, votes: { 1: true } } });
+  assert.deepEqual(alertFor(info, over, 2), { kind: 'vote', key: 'vote:rematch:1' });
+  assert.deepEqual(alertFor(info, over, 1), { kind: 'gameOver', key: 'gameOver' });
 });
