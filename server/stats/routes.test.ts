@@ -107,6 +107,18 @@ test('a cleared device is not linked', async () => {
   });
 });
 
+test('a malformed or oversized body is a quiet 400 that echoes nothing', async (t) => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const written = t.mock.method(process.stderr, 'write', () => true);
+  for (const body of [`{"deviceId":"${A}",`, JSON.stringify({ deviceId: A, pad: 'x'.repeat(2000) })]) {
+    const response = await fetch(`${base}/api/stats`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error: 'Missing device' });
+  }
+  assert.equal(logged.mock.callCount(), 0);
+  assert.equal(written.mock.callCount(), 0);
+});
+
 test('no response carries a raw device ID, a hash or a person', () => {
   const text = bodies.join('\n');
   assert.ok(bodies.length > 20);

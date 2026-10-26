@@ -52,7 +52,14 @@ const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openG
   },
   reseated: reseat,
   manualSimulation: E2E,
-  samePerson: (hash, hashes) => stats.samePerson(hash, hashes)
+  samePerson: (hash, hashes) => {
+    try {
+      return stats.samePerson(hash, hashes);
+    } catch (error) { // a stats failure only refuses the linked device; the log names no hash
+      console.error('Could not check linked devices:', error instanceof Error ? error.message : 'unknown error');
+      return false;
+    }
+  }
 });
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping

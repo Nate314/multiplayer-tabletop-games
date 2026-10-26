@@ -1,21 +1,27 @@
-import express, { type Express, type Request, type Response } from 'express';
+import express, { type Express, type Request, type RequestHandler, type Response } from 'express';
 import { hashDeviceId } from '../devices.ts';
 import { ARCHIVE_TTL_MS } from '../games.ts';
 import { createLinkCodes, type LinkCodes } from './linkCodes.ts';
 import type { StatsStore } from './store.ts';
 
+const MISSING_DEVICE = { error: 'Missing device' };
 const USED_CODE = 'That code has expired or was already used';
 
 // Every route is a POST whose body carries the device ID, so the ID never shows in a URL or a log.
 // Answers carry names, places, scores, counts and codes only: never a hash or a person
 export function mountStatsRoutes(app: Express, stats: StatsStore, codes: LinkCodes = createLinkCodes()): void {
-  const json = express.json({ limit: '1kb' });
+  const parse = express.json({ limit: '1kb' });
+  // A body that does not parse is answered here, so Express never logs it or echoes the device ID in it
+  const json: RequestHandler = (req, res, next) => parse(req, res, error => {
+    if (error) res.status(400).json(MISSING_DEVICE);
+    else next();
+  });
   const cleared = (hash: string) => stats.resultsFor(hash) === 'cleared';
 
   // The requesting device's hash, or null once a 400 has answered
   function deviceOf(req: Request, res: Response): string | null {
     const hash = hashDeviceId(req.body?.deviceId);
-    if (!hash) res.status(400).json({ error: 'Missing device' });
+    if (!hash) res.status(400).json(MISSING_DEVICE);
     return hash;
   }
 

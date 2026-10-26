@@ -2000,10 +2000,52 @@ test('a dismissal that ends the game is abandoned even with two players left', (
   assert.equal(table.results[0].abandoned, true);
   assert.equal(table.results[0].players.length, 2);
 
-  // The next game of the room is not marked by the last one's dismissal
-  const won = reportingTable();
-  playToWin(won);
-  assert.equal('abandoned' in won.results[0], false);
+  // The room's next game, won by its own rules, is not marked by the last one's dismissal
+  ok(table.manager.requestRematch(ROOM, 1));
+  ok(table.manager.voteRematch(ROOM, 2, true));
+  agreeAll(table.manager, ROOM);
+  for (const seat of [1, 2, 1]) ok(table.manager.move(ROOM, seat, tick));
+  assert.equal(table.results.length, 2);
+  assert.equal(table.results[1].archiveId, 'test/g1#2');
+  assert.equal('abandoned' in table.results[1], false);
+});
+
+test('a disconnect that settles a dismissal ending the game is abandoned', () => {
+  const table = reporting(undefined, endsOnLeave);
+  for (const name of ['A', 'B', 'C']) table.manager.join('test', 'g1', name);
+  ok(table.manager.move(ROOM, 1, tick));
+  table.manager.disconnect(ROOM, 3);
+  ok(table.manager.requestDismiss(ROOM, 1, 3));
+  assert.equal(table.results.length, 0); // B has not voted yet
+  table.manager.disconnect(ROOM, 2); // A is now the only voter, and approved
+  assert.equal(table.results.length, 1);
+  assert.equal(table.results[0].abandoned, true);
+});
+
+test('a dismissal that leaves the game playing, then a win by its rules, is not abandoned', () => {
+  const table = reporting();
+  for (const name of ['A', 'B', 'C']) table.manager.join('test', 'g1', name);
+  ok(table.manager.move(ROOM, 1, tick));
+  table.manager.disconnect(ROOM, 3);
+  ok(table.manager.requestDismiss(ROOM, 1, 3));
+  ok(table.manager.voteDismiss(ROOM, 2, true));
+  assert.equal(table.results.length, 0);
+  ok(table.manager.move(ROOM, 2, tick));
+  ok(table.manager.move(ROOM, 1, tick));
+  assert.equal(table.results.length, 1);
+  assert.equal('abandoned' in table.results[0], false);
+});
+
+test('a game that ends itself on a plain disconnect is not abandoned', () => {
+  const endsOnDisconnect: AnyGame = {
+    ...testGame, onPlayerDisconnected: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [1] })
+  };
+  const table = reporting(undefined, endsOnDisconnect);
+  for (const name of ['A', 'B']) table.manager.join('test', 'g1', name);
+  ok(table.manager.move(ROOM, 1, tick));
+  table.manager.disconnect(ROOM, 2);
+  assert.equal(table.results.length, 1);
+  assert.equal('abandoned' in table.results[0], false);
 });
 
 test('with a samePerson hook, a linked device opens the archived game', () => {

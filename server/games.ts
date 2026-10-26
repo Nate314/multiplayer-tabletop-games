@@ -503,9 +503,11 @@ export function createGameManager(
     room.state = resumeIfTurnMoved(room, voted, dismissed(room, voted, resolveDismissVote(room.game, voted, random)));
   }
 
-  // `next` is `before` after a dismissal may have removed a seat; notes when that ended the game
+  // `next` is `before` after a dismissal may have removed a seat; notes when a removed seat ended the game.
+  // A game that ends itself on a plain disconnect removes no seat, so it is not marked
   function dismissed(room: Room, before: BaseGameState, next: BaseGameState): BaseGameState {
-    if (next.isGameOver && !before.isGameOver) room.dismissalEnded = true;
+    const removed = next.activePlayers.length < before.activePlayers.length;
+    if (removed && next.isGameOver && !before.isGameOver) room.dismissalEnded = true;
     return next;
   }
 
