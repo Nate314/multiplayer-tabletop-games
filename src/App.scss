@@ -1014,7 +1014,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
-:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button) {
+:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button, [data-game] .rematch-vote-list button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -1036,7 +1036,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   justify-content: center;
 }
 
-:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover) {
+:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover, [data-game] .rematch-vote-list button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -1172,6 +1172,12 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* The Remove button beside a seat still waiting, smaller than the vote buttons */
+:where([data-game] .rematch-vote-list button) {
+  margin-left: 10px;
+  padding: 4px 12px;
 }
 
 /* Resign and draw offers (DrawAndResign), in a two-player game's side panel */
