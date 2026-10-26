@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { SIMULATION_TICK_MS } from '../../../shared/gameDefinition.ts';
 import { BLOCK, LEVELS } from '../physics.ts';
 import type { Block, Pose, Vec3 } from '../types.ts';
 import { DEFAULT_ORBIT, cameraPosition, orbitBy, zoomBy, type Orbit } from './orbit.ts';
@@ -13,19 +14,13 @@ type Interactive = {
 };
 
 type TowerViewProps = { blocks: Block[]; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive };
+type Drawn = Pick<TowerViewProps, 'blocks' | 'highlight' | 'ghost'>;
 
 const BLOCK_COUNT = LEVELS * 3;
 const LOOK_Y = BLOCK.height * LEVELS / 2;
 const HALF: Vec3 = [BLOCK.length / 2, BLOCK.height / 2, BLOCK.width / 2];
 const WHEEL_ZOOM = 0.001;
 const GHOST_OPACITY = 0.35;
-
-type Scene = {
-  meshes: THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>[];
-  ghost: THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>;
-  hemisphere: THREE.HemisphereLight;
-  render(): void;
-};
 
 // Colors come from the game's CSS so dark mode recolors the tower; the fallbacks keep it drawable without the stylesheet
 function themeColors(canvas: HTMLCanvasElement) {
@@ -48,8 +43,9 @@ const place = (object: THREE.Object3D, pose: Pose) => {
 };
 
 export default function TowerView({ blocks, highlight = null, ghost = null, interactive }: TowerViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<Scene | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const paintRef = useRef<(() => void) | null>(null);
+  const drawnRef = useRef<Drawn>({ blocks, highlight, ghost });
   const interactiveRef = useRef(interactive);
   const [failed, setFailed] = useState(false);
 
@@ -58,11 +54,18 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
   }, [interactive]);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
+    // A fresh canvas per mount: StrictMode remounts, and a canvas whose context was force-lost cannot get a new one
+    const canvas = document.createElement('canvas');
+    canvas.className = 'jenga-tower';
+    canvas.style.touchAction = 'none';
+    canvas.style.display = 'block';
+    canvas.style.width = '100%';
+    containerRef.current!.append(canvas);
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     } catch {
+      canvas.remove();
       setFailed(true);
       return;
     }
@@ -84,7 +87,36 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
       camera.lookAt(0, LOOK_Y, 0);
       renderer.render(scene, camera);
     };
-    sceneRef.current = { meshes, ghost: ghostMesh, hemisphere, render };
+
+    const paint = () => {
+      const { blocks, highlight, ghost } = drawnRef.current;
+      const colors = themeColors(canvas);
+      hemisphere.color.copy(colors.sky);
+      hemisphere.groundColor.copy(colors.ground);
+      const shown = new Map(blocks.map(block => [block.id, block]));
+      meshes.forEach((mesh, id) => {
+        const block = shown.get(id);
+        // Blocks taken out of the tower are simply not drawn
+        mesh.visible = !!block;
+        if (!block) return;
+        place(mesh, block.pose);
+        mesh.material.color.copy(id === highlight ? colors.highlight : shade(colors.wood, id));
+      });
+      ghostMesh.visible = !!ghost;
+      if (ghost) {
+        place(ghostMesh, ghost);
+        ghostMesh.material.color.copy(colors.wood);
+      }
+      render();
+    };
+    paintRef.current = paint;
+    paint();
+
+    // A light or dark switch changes the CSS colors without any new props
+    const dark = window.matchMedia('(prefers-color-scheme: dark)');
+    dark.addEventListener('change', paint);
+    const theme = new MutationObserver(paint);
+    theme.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     const resize = () => {
       const width = canvas.clientWidth;
@@ -107,14 +139,34 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
 
     // A press on a block that may be pulled grabs it; any other press orbits, and two pointers pinch to zoom
     const pointers = new Map<number, { x: number; y: number }>();
-    let pulling: { pointer: number; plane: THREE.Plane; lastSent: number } | null = null;
+    let pulling: { pointer: number; plane: THREE.Plane; lastSent: number; pending: Vec3 | null; timer: number | null } | null = null;
     const spread = () => {
       const [a, b] = [...pointers.values()];
       return Math.hypot(a.x - b.x, a.y - b.y);
     };
 
+    const sendDrag = (target: Vec3, now: number) => {
+      if (!pulling) return;
+      pulling.lastSent = now;
+      pulling.pending = null;
+      interactiveRef.current?.onDrag(target);
+    };
+    // The last position skipped by the throttle still goes out once the window ends, so the block ends where the pointer stopped
+    const flushDrag = () => {
+      if (!pulling) return;
+      if (pulling.timer !== null) clearTimeout(pulling.timer);
+      pulling.timer = null;
+      if (pulling.pending) sendDrag(pulling.pending, performance.now());
+    };
+    const endPull = () => {
+      if (!pulling) return;
+      flushDrag();
+      pulling = null;
+      interactiveRef.current?.onRelease();
+    };
+
     const onDown = (event: PointerEvent) => {
-      if (pulling) return;
+      if (pulling || (event.pointerType === 'mouse' && event.button !== 0)) return;
       castFrom(event);
       const hit = raycaster.intersectObjects(meshes.filter(mesh => mesh.visible), false)[0];
       const id = hit ? meshes.indexOf(hit.object as (typeof meshes)[number]) : -1;
@@ -123,7 +175,8 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
       if (hit && controls?.canGrab(id) && pointers.size === 0) {
         const local = hit.object.worldToLocal(hit.point.clone());
         const anchor = local.toArray().map((n, i) => Math.max(-HALF[i], Math.min(HALF[i], n))) as Vec3;
-        pulling = { pointer: event.pointerId, plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -hit.point.y), lastSent: event.timeStamp };
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -hit.point.y);
+        pulling = { pointer: event.pointerId, plane, lastSent: event.timeStamp, pending: null, timer: null };
         controls.onGrab(id, anchor);
         return;
       }
@@ -132,12 +185,13 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
 
     const onMove = (event: PointerEvent) => {
       if (pulling?.pointer === event.pointerId) {
-        if (!throttleDrag(pulling.lastSent, event.timeStamp)) return;
         castFrom(event);
-        const target = raycaster.ray.intersectPlane(pulling.plane, new THREE.Vector3());
-        if (!target) return;
-        pulling.lastSent = event.timeStamp;
-        interactiveRef.current?.onDrag(target.toArray());
+        const hit = raycaster.ray.intersectPlane(pulling.plane, new THREE.Vector3());
+        if (!hit) return;
+        const target = hit.toArray();
+        if (throttleDrag(pulling.lastSent, event.timeStamp)) return sendDrag(target, event.timeStamp);
+        pulling.pending = target;
+        pulling.timer ??= window.setTimeout(flushDrag, SIMULATION_TICK_MS - (event.timeStamp - pulling.lastSent));
         return;
       }
       const last = pointers.get(event.pointerId);
@@ -155,10 +209,7 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     };
 
     const onUp = (event: PointerEvent) => {
-      if (pulling?.pointer === event.pointerId) {
-        pulling = null;
-        interactiveRef.current?.onRelease();
-      }
+      if (pulling?.pointer === event.pointerId) endPull();
       pointers.delete(event.pointerId);
     };
 
@@ -172,48 +223,32 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointercancel', onUp);
+    // Capture can end without a pointerup (the pointer leaves the window, the OS takes it)
+    canvas.addEventListener('lostpointercapture', onUp);
     // Not passive, so the wheel zooms the tower instead of scrolling the page
     canvas.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
-      canvas.removeEventListener('pointerdown', onDown);
-      canvas.removeEventListener('pointermove', onMove);
-      canvas.removeEventListener('pointerup', onUp);
-      canvas.removeEventListener('pointercancel', onUp);
-      canvas.removeEventListener('wheel', onWheel);
+      // Unmounting mid-drag must not leave the server holding the grab
+      endPull();
+      dark.removeEventListener('change', paint);
+      theme.disconnect();
       observer.disconnect();
       geometry.dispose();
       for (const mesh of [...meshes, ghostMesh]) mesh.material.dispose();
       renderer.dispose();
       // History mounts one view per step, and browsers cap live WebGL contexts
       renderer.forceContextLoss();
-      sceneRef.current = null;
+      canvas.remove();
+      paintRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    const view = sceneRef.current;
-    if (!view) return;
-    const colors = themeColors(canvasRef.current!);
-    view.hemisphere.color.copy(colors.sky);
-    view.hemisphere.groundColor.copy(colors.ground);
-    const shown = new Map(blocks.map(block => [block.id, block]));
-    view.meshes.forEach((mesh, id) => {
-      const block = shown.get(id);
-      // Blocks taken out of the tower are simply not drawn
-      mesh.visible = !!block;
-      if (!block) return;
-      place(mesh, block.pose);
-      mesh.material.color.copy(id === highlight ? colors.highlight : shade(colors.wood, id));
-    });
-    view.ghost.visible = !!ghost;
-    if (ghost) {
-      place(view.ghost, ghost);
-      view.ghost.material.color.copy(colors.wood);
-    }
-    view.render();
+    drawnRef.current = { blocks, highlight, ghost };
+    paintRef.current?.();
   }, [blocks, highlight, ghost]);
 
   if (failed) return <p className="jenga-no-webgl">This device cannot draw the 3D tower</p>;
-  return <canvas ref={canvasRef} className="jenga-tower" style={{ touchAction: 'none', display: 'block', width: '100%' }} />;
+  return <div ref={containerRef} />;
 }
