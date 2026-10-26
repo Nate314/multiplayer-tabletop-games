@@ -6,6 +6,7 @@ type TableProps = {
   gameState: PublicGameState;
   selected?: boolean[]; // which dice of the roll the viewer has picked to set aside
   onToggle?: (index: number) => void; // given only when the viewer may pick dice
+  viewer?: Seat; // Hand only keeps just this player's score
 };
 
 // The roll to show: the current one, or the one that just farkled, which ended the turn
@@ -23,7 +24,7 @@ function standing(state: PublicGameState, seat: Seat): string {
 }
 
 // The dice in front of the player to move, what they have set aside and the turn total, then every score
-export default function Table({ gameState, selected, onToggle }: TableProps) {
+export default function Table({ gameState, selected, onToggle, viewer }: TableProps) {
   const { currentPlayer, playerNames, activePlayers, scores, setAside, turnTotal, isGameOver, winners } = gameState;
   const roll = shownRoll(gameState);
   const farkled = gameState.dice.length === 0 && roll.length > 0;
@@ -53,6 +54,7 @@ export default function Table({ gameState, selected, onToggle }: TableProps) {
           const classes = ['farkle-score'];
           if (seat === currentPlayer && !isGameOver) classes.push('farkle-score-current');
           if (winners.includes(seat)) classes.push('farkle-score-winner');
+          if (viewer !== undefined && seat !== viewer) classes.push('hand-only-hide');
           return (
             <li key={seat} className={classes.join(' ')}>
               <span className="farkle-score-name">{playerNames[seat]}</span>

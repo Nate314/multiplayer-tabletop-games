@@ -172,6 +172,92 @@ const HAND_ONLY: Record<string, Row> = {
       await page.locator('.factories .factory').getByRole('button', { name: /^Take / }).first().click();
       await button(page, 'Floor line').click();
     }
+  },
+  chess: {
+    keep: ['.side-panel .player-list', you('.player-row'), 'button:has-text("Undo")', 'button:has-text("Offer draw")', 'button:has-text("Resign")'],
+    hide: ['.captured', '.game-id'],
+    board: '.board-frame',
+    move: async page => {
+      await page.locator('[data-anim-key="square-6-4"]').click();
+      await page.locator('[data-anim-key="square-4-4"]').click();
+    }
+  },
+  checkers: {
+    keep: ['.turn-message', '.player-list', 'button:has-text("Undo")', 'button:has-text("Resign")'],
+    hide: ['.game-id'],
+    board: '.board-frame',
+    move: async page => {
+      await page.locator('[data-anim-key^="square-5-"] .piece.player1').first().click();
+      await page.locator('.square.target').first().click();
+    }
+  },
+  connectfour: {
+    keep: ['.turn-message', '.player-list', 'button:has-text("Undo")', 'button:has-text("Resign")'],
+    hide: ['.game-id'],
+    board: '.board-frame',
+    move: async page => { await button(page, 'Drop in column 1').click(); }
+  },
+  backgammon: {
+    keep: ['.bg-turn', '.bg-players', '.bg-undo'],
+    hide: ['.game-id'],
+    board: '.bg-board',
+    setup: async table => { // the opening roll is made for Alice, so start from the turn that begins with a roll
+      await table.patch({ dice: [], remaining: [], currentPlayer: 1, started: true, cube: 1, cubeOwner: null, doubleOffer: null, lastMove: null });
+    },
+    move: async page => { await button(page, 'Roll').click(); }
+  },
+  mancala: {
+    keep: ['.turn-message', '.undo-button'],
+    hide: ['.game-id'],
+    board: '.board-wrap',
+    move: async page => { await page.locator('.pit-bottom').first().click(); }
+  },
+  parchisi: {
+    keep: ['.turn-message', '.dice-tray', '.undo-button', '.player-list'],
+    hide: ['.game-id'],
+    board: '.board-area .board',
+    setup: async table => {
+      await table.patch({
+        pawns: { 1: [0, -1, -1, -1], 2: [-1, -1, -1, -1] }, dice: [{ value: 2, used: false }, { value: 4, used: false }], bonuses: [],
+        roller: 1, currentPlayer: 1, doublesRolled: 0, splitBlockades: [], lastMove: null, started: true
+      });
+    },
+    move: async page => {
+      await page.locator('[data-anim-key="pawn-1-0"]').click();
+      await page.locator('.board > .square', { has: page.locator('.destination-badge') }).first().click();
+    }
+  },
+  quoridor: {
+    keep: ['.game-info', '.action-buttons', '.piece-tray'],
+    hide: ['.game-id'],
+    board: '.board-frame',
+    move: async page => { await page.locator('.board-area .board .board-row').nth(7).locator('.square').nth(4).click(); }
+  },
+  farkle: {
+    keep: ['.turn-message', '.action-buttons', '.farkle-dice', '.farkle-score:not(.hand-only-hide)'],
+    hide: ['.farkle-score.hand-only-hide', '.game-id'],
+    move: async page => { await button(page, 'Roll').click(); }
+  },
+  yahtzee: {
+    keep: ['.turn-message', '.yz-turn', '.yz-sheet', '.yz-total td:not(.hand-only-hide)'],
+    hide: ['.yz-player.hand-only-hide', '.game-id'],
+    move: async page => { await button(page, /^Roll/).click(); }
+  },
+  pictionary: {
+    keep: ['.turn-message', '.pictionary-chat', '#pictionary-chat-input', you('.score-row')],
+    hide: [others('.score-row'), '.game-id'],
+    board: '.pictionary-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
+    move: async page => { await page.getByRole('group', { name: 'Choose a word' }).getByRole('button').first().click(); }
+  },
+  jenga: {
+    keep: ['.jenga-status', '.jenga-undo'],
+    hide: ['.game-id'],
+    board: '.jenga-controls',
+    setup: async table => { // Alice has pulled block 49 out, so the move is placing it, which needs no physics from the test
+      const { blocks } = await table.state<{ blocks: { id: number }[] }>();
+      await table.patch({ started: true, blocks: blocks.filter(block => block.id !== 49), held: 49, phase: 'place', pull: { seat: 1, block: 49 } });
+    },
+    move: async page => { await button(page, /^Place on top/).first().click(); }
   }
 };
 

@@ -20,7 +20,8 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
           drawer === seat && !isGameOver ? 'score-current' : '',
           turnOn && guessed.includes(seat) ? 'score-guessed' : '',
           winners.includes(seat) ? 'score-winner' : '',
-          hasLeft ? 'score-left' : ''
+          hasLeft ? 'score-left' : '',
+          seat !== playerNumber ? 'hand-only-hide' : ''
         ];
         const note = drawer === seat && !isGameOver ? 'drawing' : turnOn && guessed.includes(seat) ? 'guessed' : '';
         return (

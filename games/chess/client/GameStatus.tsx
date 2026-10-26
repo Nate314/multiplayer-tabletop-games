@@ -59,7 +59,7 @@ export default function GameStatus({ gameState, playerNumber, error }: GameStatu
                   </span>
                 )}
               </div>
-              <div className="captured" aria-label={`Pieces ${playerNames[seat]} captured`}>
+              <div className="captured hand-only-hide" aria-label={`Pieces ${playerNames[seat]} captured`}>
                 {taken.length === 0
                   ? <span className="captured-none">No captures</span>
                   : taken.map((type, index) => <PieceGlyph key={index} color={opponent(color)} type={type} />)}

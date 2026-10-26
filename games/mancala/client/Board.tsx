@@ -92,7 +92,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onPlay }: Boa
   }
 
   return (
-    <div className="board-wrap">
+    <div className="board-wrap hand-only-board">
       <div className="board-caption">
         <span className={`bank-label bank-label-left seat-${topSeat}`}><ColorSymbol color={SEAT_SYMBOLS[topSeat]} /> {bankName(topSeat)}</span>
         <span className="row-label">{playerNames[topSeat] ?? 'Waiting for a player'}</span>

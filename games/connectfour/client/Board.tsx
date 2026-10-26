@@ -36,7 +36,7 @@ export default function Board({ gameState, dimmed, droppable, onDrop, seat }: Bo
   const overColumn = drag.over?.startsWith(COLUMN_PREFIX) ? Number(drag.over.slice(COLUMN_PREFIX.length)) : null;
 
   return (
-    <div className="board-frame">
+    <div className="board-frame hand-only-board">
       {seat && (
         <PieceTray
           label="Your disc"

@@ -96,10 +96,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-layout">
         <div className="board-area">
-          <div className="jenga-controls" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}>
+          <div className="jenga-controls hand-only-board" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}>
             <TowerView
               ref={tower}
               blocks={blocks}

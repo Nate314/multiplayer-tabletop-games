@@ -48,7 +48,7 @@ export default function Board({ gameState, flipped, dimmed, picked, movable, tar
   }
 
   return (
-    <div className="board-frame">
+    <div className="board-frame hand-only-board">
       <div className={`board ${dimmed ? 'dimmed' : ''}`}>
         {INDEXES.map(screenRow => INDEXES.map(screenCol => {
           const position = { row: toBoard(screenRow), col: toBoard(screenCol) };

@@ -21,7 +21,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="pictionary-layout">
         <div className="game-info">
           <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
@@ -41,7 +41,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           </div>
         )}
         <div className="pictionary-main">
-          <div className="pictionary-paper">
+          <div className="pictionary-paper hand-only-board">
             <Canvas strokes={strokes} pen={drawing ? pen : undefined} nextStrokeId={gameState.nextStrokeId} error={error} />
             {drawing && <Toolbar pen={pen} onChange={setPen} canUndo={strokes.length > 0} />}
           </div>
