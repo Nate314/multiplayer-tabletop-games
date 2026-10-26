@@ -17,7 +17,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [pen, setPen] = useState<Pen>({ tool: 'pen', color: 0, size: 1 });
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const isDrawer = drawer === playerNumber && !isGameOver && activePlayers.length >= 2;
-  const drawing = isDrawer && phase === 'drawing' && !undoVote && !dismissVote;
+  const drawing = isDrawer && phase === 'drawing' && !undoVote;
 
   return (
     <>

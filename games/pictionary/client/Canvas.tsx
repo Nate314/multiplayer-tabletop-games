@@ -35,6 +35,7 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
   // The drawer's last stroke sent, kept until a state has caught up with it; a line in progress is painted at once
   const local = useRef<Stroke | null>(null);
   const batcher = useRef<ReturnType<typeof createBatcher> | null>(null);
+  const activePointer = useRef<number | null>(null); // the pointer drawing the stroke in progress
   // The id the server will give the next stroke
   const nextId = useRef(nextStrokeId);
 
@@ -47,7 +48,7 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
 
   useEffect(() => {
     penRef.current = pen;
-    if (!pen && local.current) { batcher.current = null; local.current = null; repaint(); }
+    if (!pen && local.current) { batcher.current = null; activePointer.current = null; local.current = null; repaint(); }
   }, [pen, repaint]);
 
   useEffect(() => {
@@ -71,7 +72,8 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
-    if (!pen || event.button !== 0) return;
+    // A second finger or a palm must not replace the stroke in progress
+    if (!pen || event.button !== 0 || activePointer.current !== null) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     // A refusal still showing (a state clears it) means what was sent since the last state was not taken,
@@ -80,6 +82,7 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
     nextId.current = countedStrokeId(nextId.current, nextStrokeId, local.current !== null);
     const id = nextId.current++;
     const [x, y] = canvasPoint(event.currentTarget, event.nativeEvent);
+    if (pen.tool !== 'fill') activePointer.current = event.pointerId;
     if (pen.tool === 'fill') {
       // A fill starts on a pixel, so the far edge is the last pixel, not the edge's coordinate
       const fill = { color: pen.color, x: Math.min(x, CANVAS_W - 1), y: Math.min(y, CANVAS_H - 1) };
@@ -106,7 +109,7 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
   // Only the new points are drawn, on top of what is painted; a full repaint waits for the next state
   function onPointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
     const line = local.current;
-    if (!batcher.current || line?.kind !== 'line') return;
+    if (event.pointerId !== activePointer.current || !batcher.current || line?.kind !== 'line') return;
     const canvas = event.currentTarget;
     const before = line.points.length;
     const events = event.nativeEvent.getCoalescedEvents?.() ?? [];
@@ -115,7 +118,9 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
     if (ctx && line.points.length > before) drawLine(ctx, line, before);
   }
 
-  function onPointerUp() {
+  function onPointerUp(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (event.pointerId !== activePointer.current) return;
+    activePointer.current = null;
     batcher.current?.flush();
     batcher.current = null;
   }

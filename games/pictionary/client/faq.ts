@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'How does a turn go?',
-    answer: 'Players draw in seat order. The drawer is offered 3 words (4 or 5 as a house rule) and clicks one; only the drawer sees them. If 20 seconds pass without a choice, one is picked at random. The drawer then has 90 seconds (or the time per turn the host set) to draw it while everyone else guesses. Then the word is shown to everyone for 5 seconds and the next player chooses.'
+    answer: 'Players draw in seat order. The drawer is offered 3 words (4 or 5 as a house rule) and clicks one; only the drawer sees them. From the second turn on, if 20 seconds pass without a choice, one is picked at random. The drawer then has 90 seconds (or the time per turn the host set) to draw it while everyone else guesses. Then the word is shown to everyone for 5 seconds and the next player chooses.'
   },
   {
     question: 'How do I draw?',

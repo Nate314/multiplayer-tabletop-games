@@ -92,3 +92,14 @@ test('dismissing the drawer reveals the word, with the full reveal pause', (t: T
   assert.equal(raw().phase, 'choosing');
   assert.equal(raw().drawer, 2);
 });
+
+test('the history the server shows never carries the word or a guessed-only line during a drawing turn', (t: TestContext) => {
+  const { manager, raw } = table(t);
+  const word = raw().word ?? '';
+  ok(manager.action(ROOM, 2, { type: 'chat', text: word }));
+  ok(manager.action(ROOM, 2, { type: 'chat', text: 'secret banter' }));
+  assert.equal(raw().chat.some(line => line.text === 'secret banter'), true);
+  const shown = JSON.stringify(manager.history('pictionary', 'g1'));
+  assert.equal(shown.includes('secret banter'), false);
+  assert.equal(shown.includes(word), false);
+});
