@@ -483,12 +483,12 @@ export function createGameManager(
       return;
     }
 
-    archiveRoom(roomId, room);
+    archiveRoom(roomId, { ...room, state: { ...state, rematchVote: null, dismissVote: null } }); // the game as it ended
     const rules = houseRulesOf(game.info, state);
     let next: BaseGameState = {
       ...game.createGameState(state.gameId),
       gameNumber: (state.gameNumber ?? 1) + 1,
-      houseRules: { ...rules, host: null }, // each seat added clears the agreements and moves the revision on
+      houseRules: { ...rules, host: null },
       spectators: state.spectators?.map(spectator => ({ ...spectator, allowedSeats: [] })),
       spectatorKeys: state.spectatorKeys,
       handRequests: []
@@ -507,6 +507,8 @@ export function createGameManager(
         ...(device && { seatDevices: { ...result.state.seatDevices, [result.seat]: device } })
       };
     }
+    // Each seat added cleared the agreements and moved the revision on; the new lobby is one revision past the last game
+    next = { ...next, houseRules: { ...next.houseRules!, revision: rules.revision + 1 } };
     const leftOut = joiners.filter(seat => !seated.includes(seat)).map(seat => state.playerNames[seat]);
     if (leftOut.length > 0) {
       const were = leftOut.length === 1 ? 'was' : 'were';
@@ -523,7 +525,11 @@ export function createGameManager(
     room.history = [];
     room.timeline = [];
     save(roomId, room);
-    hooks.reseated?.(roomId, moves);
+    try {
+      hooks.reseated?.(roomId, moves);
+    } catch (error) {
+      console.error(`Could not report reseated players in ${roomId}:`, error);
+    }
   }
 
   // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
@@ -793,6 +799,7 @@ export function createGameManager(
       const vote = state.dismissVote;
 
       if (!vote) return { error: 'No dismiss vote in progress' };
+      if (seat === vote.target) return { error: 'You cannot vote on your own dismissal' }; // else a silent player could hold a rematch vote open
       if (vote.votes[seat]) return { error: 'You already voted' };
 
       if (approve !== true) {

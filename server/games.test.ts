@@ -2063,7 +2063,7 @@ test("last game's house rules are the proposal and need agreeing again", () => {
   assert.deepEqual(rules?.values, before?.values);
   assert.equal(rules?.maxPlayers, 3);
   assert.deepEqual(rules?.agreed, []);
-  assert.ok((rules?.revision ?? 0) > (before?.revision ?? 0));
+  assert.equal(rules?.revision, (before?.revision as number) + 1);
   assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
 });
 
@@ -2097,10 +2097,14 @@ test('a non-responder can be dismissed and counts as Drop', () => {
   assert.deepEqual(manager.requestDismiss(ROOM, 1, 2), { error: 'That player already answered' });
   ok(manager.requestDismiss(ROOM, 1, 3));
   assert.deepEqual(manager.rawState(ROOM)?.activePlayers, [1, 2, 3]); // C is connected and not yet dismissed
+  assert.deepEqual(manager.voteDismiss(ROOM, 3, false), { error: 'You cannot vote on your own dismissal' });
   ok(manager.voteDismiss(ROOM, 2, true));
   const state = manager.rawState(ROOM) as BaseGameState;
   assert.deepEqual(seatsAndNames(state), [[1, 'A'], [2, 'B']]);
-  assert.deepEqual(store.loadArchive('test/g1#1')?.state.activePlayers, [1, 2, 3]);
+  const archived = store.loadArchive('test/g1#1')?.state;
+  assert.deepEqual(archived?.activePlayers, [1, 2, 3]);
+  assert.equal(archived?.rematchVote, null); // the game as it ended, without the votes that followed
+  assert.equal(archived?.dismissVote, null);
   const old = manager.history('test', 'g1', state.seatKeys?.[1], 1);
   assert.ok('steps' in old);
   assert.deepEqual(old.steps.at(-1)?.standings?.map(standing => standing.seat).sort(), [1, 2, 3]);
@@ -2116,6 +2120,17 @@ test('a dismiss of a disconnected non-responder during a rematch vote removes no
   assert.deepEqual(state.rematchVote?.votes, { 1: true, 3: false });
   assert.deepEqual(state.activePlayers, [1, 2, 3]);
   assert.equal(state.isGameOver, true);
+});
+
+test('a reseated hook that throws does not stop the reset', (t: TestContext) => {
+  t.mock.method(console, 'error', () => {});
+  const manager = rememberingKeys(createGameManager([testGame], seededRandom, undefined, { reseated: () => { throw new Error('socket'); } }), keys);
+  joined(manager.join('test', 'g1', 'A'));
+  joined(manager.join('test', 'g1', 'B'));
+  playOut(manager);
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  assert.equal(manager.rawState(ROOM)?.gameNumber, 2);
 });
 
 test('answering ends the dismiss vote against you', () => {
