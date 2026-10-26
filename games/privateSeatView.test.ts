@@ -92,11 +92,19 @@ for (const game of GAMES) {
       });
     }
 
-    it('a spectator with no permissions sees the history view', () => {
+    it('a table screen with no permissions sees the history view', () => {
       const s = dealt(game);
-      const { seatViews: _seatViews, ...view } = spectatorView(game, s, EVE) as Record<string, unknown>;
-      assert.deepEqual(view, game.spectatorState?.(s, false, false) ?? game.toPublicState(s, false, null));
+      const { seatViews: _seatViews, ...view } = spectatorView(game, s, { ...EVE, tableScreen: true }) as Record<string, unknown>;
+      assert.deepEqual(view, game.toPublicState(s, false, null));
     });
+    // A game with spectatorState has its own tests that its ordinary spectator view hides nothing a table screen must not see
+    if (!game.spectatorState) {
+      it('a spectator with no permissions sees the history view', () => {
+        const s = dealt(game);
+        const { seatViews: _seatViews, ...view } = spectatorView(game, s, EVE) as Record<string, unknown>;
+        assert.deepEqual(view, game.toPublicState(s, false, null));
+      });
+    }
 
     it('keeps spectator fields through its own hooks', () => {
       const carried = { spectators: [EVE], spectatorKeys: { s1: 'k' }, handRequests: [{ spectator: 's1', seat: 1 }] };

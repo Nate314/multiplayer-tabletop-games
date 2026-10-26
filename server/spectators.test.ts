@@ -53,6 +53,38 @@ test('a spectator joins with no seat and sees no hand', () => {
   }
 });
 
+function screen(manager: Manager, name = 'ignored', rejoin?: boolean, key?: string) {
+  return manager.join('test', 'g1', name, rejoin, key, 'tableScreen');
+}
+
+test('a table screen joins as a spectator that never asks', () => {
+  const manager = gameWith('Alice', 'Bob');
+  const first = screen(manager);
+  assert.ok(!('error' in first) && first.spectatorId);
+  assert.equal(first.seat, null);
+  const second = screen(manager, 'typed name'); // ignored; the harness remembers keys by name
+  assert.ok(!('error' in second));
+  const view = manager.getState(ROOM, 1) as BasePublicState;
+  assert.deepEqual(view.spectators?.map(s => [s.name, s.tableScreen]), [['Table screen', true], ['Table screen 2', true]]);
+  assert.deepEqual(manager.requestHand(ROOM, first.spectatorId!, 1), { error: 'A table screen never asks' });
+});
+
+test('a table screen takes its entry back with the key', () => {
+  const manager = gameWith('Alice', 'Bob');
+  const first = screen(manager);
+  assert.ok(!('error' in first));
+  ok(manager.move(ROOM, 1, tick)); // a lobby spectator is dropped on leaving; a started game keeps the entry
+  manager.disconnectSpectator(ROOM, first.spectatorId!);
+  const again = screen(manager, 'whatever', true, first.seatKey);
+  assert.ok(!('error' in again));
+  assert.equal(again.spectatorId, first.spectatorId);
+  assert.deepEqual(screen(manager, 'x', true, 'wrong'), { error: 'You are not in this game' });
+});
+
+test('a table screen needs an existing game', () => {
+  assert.deepEqual(newManager().join('test', 'none', 'x', false, undefined, 'tableScreen'), { error: 'Game not found' });
+});
+
 test('spectator and player names are unique together', () => {
   const manager = gameWith('Alice');
   watcher(manager, 'Dana');

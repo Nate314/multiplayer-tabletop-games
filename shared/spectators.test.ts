@@ -17,6 +17,13 @@ describe('spectatorView', () => {
     assert.ok(!JSON.stringify(view).includes('card1') && !JSON.stringify(view).includes('card2'));
   });
 
+  it('spectatorState is used when a game has it', () => {
+    const game = { ...testGame, spectatorState: (_state: unknown, _undo: boolean, tableScreen: boolean) => ({ extra: tableScreen ? null : 'x' }) };
+    const state = game.createGameState('g');
+    assert.equal((spectatorView(game as never, state, dana([])) as Record<string, unknown>).extra, 'x');
+    assert.equal((spectatorView(game as never, state, { ...dana([]), tableScreen: true }) as Record<string, unknown>).extra, null);
+  });
+
   it("an allowed seat adds only that seat's hand", () => {
     const view = spectatorView(handGame, twoSeats(), dana([2]));
     assert.deepEqual(view.seatViews, { 2: { hand: 'card2' } });

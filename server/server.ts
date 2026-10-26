@@ -161,13 +161,22 @@ function handleMessage(ws: WebSocket, data: unknown): void {
   }
 }
 
+// passAndPlay is a local mode with no server join
+const JOIN_ROLES: JoinRole[] = ['player', 'spectator', 'tableScreen'];
+
 function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
   if (connections.has(ws)) {
     sendError(ws, 'Already in a game');
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, message.role as JoinRole | undefined);
+  const { role } = message;
+  if (role !== undefined && !JOIN_ROLES.includes(role as JoinRole)) {
+    sendError(ws, 'Unknown role');
+    return;
+  }
+
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, role as JoinRole | undefined);
   if ('error' in result) {
     sendError(ws, result.error);
     return;

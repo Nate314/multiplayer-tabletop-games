@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { pictionary } from './index.ts';
 import { applyAction, createGameState, finalStandings, onDeadline, privateSeatView, spectatorState, toPublicState } from './rules.ts';
 import { addPlayer, applyMove } from '../../shared/seating.ts';
+import { spectatorView } from '../../shared/spectators.ts';
 import { withRules } from '../../server/testing.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 import type { GameState } from './types.ts';
@@ -117,6 +118,17 @@ test('a spectator sees the word and the guessed chat; a table screen sees only t
   assert.deepEqual(screen, toPublicState(state, true, null));
   assert.equal(screen.word, null);
   assert.equal(screen.mask, '_________');
+});
+
+test('pictionary: the table screen sees blanks and public chat only', () => {
+  const start = choosing();
+  const apple = ok(applyMove(pictionary, { ...start, wordChoices: ['red apple', 'quokka', 'zeppelin'] }, 1, { type: 'choose', index: 0 }, first, NOW));
+  const state = chat(chat(chat(apple, 3, 'a piano'), 2, 'red apple'), 2, 'guessed line');
+  assert.equal(state.chat.some(line => line.audience === 'guessed' && line.text === 'guessed line'), true);
+  const screen = JSON.stringify(spectatorView(pictionary, state, { id: 't', name: 'Table screen', tableScreen: true, allowedSeats: [] }));
+  assert.equal(screen.includes('red apple') || screen.includes('guessed line'), false);
+  assert.ok(screen.includes('___ _____') && screen.includes('a piano'));
+  assert.ok(JSON.stringify(spectatorView(pictionary, state, { id: 's', name: 'Eve', tableScreen: false, allowedSeats: [] })).includes('red apple'));
 });
 
 // Before any chat; once there is chat, `chat` is the seat's whole chat, so laying it over the null view gives the seat's view
