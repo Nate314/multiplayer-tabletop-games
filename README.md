@@ -106,6 +106,14 @@ The gear button in the landing page header and every game header opens Settings.
 - Highlight newly drawn cards marks the cards you just drew
 - In a game with house rule options, Settings also lists the house rules in use, read only, with each non-standard value marked "(house rule)". This part is the same for every player
 
+## Stats
+
+Stats on the landing page opens your stats: People (games, wins, win rate, favorite game and current win streak for everyone you played with), Games (how often each was played, its usual length and, where the winner always has the top score, the high score), Head to head between any two people, and your 20 most recent games, each with a History button for 90 days. Filter by game and by This month or All time.
+
+- **What is recorded.** Every finished game a player joined from this browser: the game, when it started and ended, the number of moves, and each player's name, place and score. A game that ended because players were dismissed, or that had no moves, is not recorded. Spectators and table screens are never recorded. Each browser has a private ID that is sent only when it joins a game or asks for its stats; the server keeps only a one-way hash of it, and no page or address ever shows it.
+- **Clearing.** Clear my data asks first, then removes you from every game on every linked device; other players see "Former player" in your place. The browser then gets a new ID and starts with no games.
+- **Linking.** Link another device shows a code, a link and a QR code. Open the link or scan the code on your other device and press Link, and both devices share one set of stats. A code works once, for 10 minutes.
+
 ## Saved games
 
 The database is `data/games.sqlite` in the repo, created on first start and git-ignored. Set `DATABASE_PATH` to put it elsewhere. With Docker, the `game-data` volume holds it, so it survives `docker compose restart` and rebuilds; `docker compose down -v` deletes it. After a restart every player is shown as disconnected until they rejoin, and a game with nobody back within 10 minutes is deleted.
