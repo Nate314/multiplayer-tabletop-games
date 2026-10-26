@@ -38,6 +38,8 @@ export default function GameView({ game, client, gameState, playerNumber, error,
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
+  // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
+  const voting = Boolean(gameState.undoVote || gameState.dismissVote);
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
@@ -58,14 +60,14 @@ export default function GameView({ game, client, gameState, playerNumber, error,
         <GitHubLink />
         <ThemeToggle />
       </header>
-      {gameState.isGameOver && closed && (
+      {gameState.isGameOver && closed && !voting && (
         <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
       )}
       <PresenceBar gameState={gameState} onDismiss={(seat) => gameService.requestDismiss(seat)} />
       {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
       <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
       <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
-      {gameState.isGameOver && !closed && (
+      {gameState.isGameOver && !closed && !voting && (
         <GameOverDialog
           game={game}
           client={client}

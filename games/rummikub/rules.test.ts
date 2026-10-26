@@ -452,3 +452,8 @@ test('finalStandings ranks by the points gained or lost', () => {
     { seat: 1, place: 2, score: '-7 points' }, { seat: 3, place: 2, score: '-7 points' }
   ]);
 });
+
+test('finalStandings leaves the scores blank when the game ended without a result', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2], isGameOver: true, winners: [1] };
+  assert.deepEqual(finalStandings(state), [{ seat: 1, place: 1 }, { seat: 2, place: 2 }]);
+});

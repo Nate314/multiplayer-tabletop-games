@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test, type Seat } from './fixtures.ts';
+import { expect, seeTable, test, type Seat } from './fixtures.ts';
 
 // The platform's game-over screen, the same in every game. Games are ended by crafting the finished state.
 
@@ -93,4 +93,15 @@ test('every player sees it', async ({ seat }) => {
   const { bob } = await finishedConnectFour(seat, [1]);
   await expect(gameOver(bob).getByRole('heading')).toHaveText('Alice wins');
   await expect(rows(bob)).toHaveText(['1st Alice', '2nd Bob (you)']);
+});
+
+test('it steps aside while an undo vote runs, so the other player can answer, and returns after a decline', async ({ seat }) => {
+  const { alice, bob } = await finishedConnectFour(seat, [1]);
+  await seeTable(alice);
+  await alice.getByRole('button', { name: 'Undo' }).click();
+  await expect(bob.locator('.undo-vote')).toBeVisible();
+  await expect(gameOver(bob)).toHaveCount(0);
+  await expect(bob.getByRole('button', { name: 'Game summary' })).toHaveCount(0);
+  await bob.getByRole('button', { name: 'Decline' }).click();
+  await expect(gameOver(bob)).toBeVisible();
 });

@@ -356,5 +356,5 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
 // What the round gained or lost; the winners gain the others' rack totals
 export function finalStandings(state: GameState): Standing[] {
   const change = (seat: Seat) => state.result?.points[seat] ?? 0;
-  return rankStandings(state, (a, b) => change(b) - change(a), seat => `${change(seat) > 0 ? '+' : ''}${pointsText(change(seat))}`);
+  return rankStandings(state, (a, b) => change(b) - change(a), seat => state.result ? `${change(seat) > 0 ? '+' : ''}${pointsText(change(seat))}` : undefined);
 }

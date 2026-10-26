@@ -441,5 +441,5 @@ export function finalStandings(state: GameState): Standing[] {
     const [first, second] = [final(a), final(b)];
     return first && second ? compareFinal(first, second) : 0;
   };
-  return rankStandings(state, compare, seat => pointsText(final(seat)?.total ?? 0));
+  return rankStandings(state, compare, seat => { const done = final(seat); return done ? pointsText(done.total) : undefined; });
 }

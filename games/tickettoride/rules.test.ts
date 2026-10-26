@@ -407,3 +407,8 @@ test('finalStandings ranks by points, then tickets completed, then the longest p
     { seat: 3, place: 3, score: '50 points' }, { seat: 4, place: 3, score: '50 points' }, { seat: 5, place: 4, score: '50 points' }
   ]);
 });
+
+test('finalStandings leaves the scores blank when the game ended before final scoring', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2], isGameOver: true, winners: [1] };
+  assert.deepEqual(finalStandings(state), [{ seat: 1, place: 1 }, { seat: 2, place: 2 }]);
+});
