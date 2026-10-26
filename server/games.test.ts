@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { ARCHIVE_TTL_MS, createGameManager, EMPTY_ROOM_TIMEOUT_MS, type Reseat } from './games.ts';
 import { agreeAll, fileOf, rememberingKeys, stepsOf } from './testing.ts';
 import { openGameStore } from './store.ts';
+import { hashDeviceId } from './devices.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
 import { handGame, rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
@@ -1958,6 +1959,64 @@ test('an undo keeps a device recorded on a rejoin', () => {
   ok(manager.requestUndo(ROOM, 1));
   assert.equal(ok(manager.voteUndo(ROOM, 2, true)).moveCount, 0);
   assert.deepEqual(Object.keys(manager.rawState(ROOM)?.seatDevices ?? {}), ['1']);
+});
+
+test('a pass-and-play device records its one hash on every local seat, also on a rejoin', () => {
+  const manager = createGameManager([testGame], seededRandom);
+  const first = seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo'], undefined, undefined, DEVICE));
+  const devices = manager.rawState(ROOM)?.seatDevices ?? {};
+  assert.deepEqual(Object.keys(devices), ['1', '2']);
+  assert.equal(devices[1], devices[2]);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  manager.join('test', 'g1', 'Cy'); // refused once started, so nobody new is recorded
+  const keys = first.seats.map(({ seatKey }) => seatKey);
+  seatedLocally(manager.joinLocal('test', 'g1', ['Ann', 'Bo'], true, keys, 'other-device-0123456789'));
+  const back = manager.rawState(ROOM)?.seatDevices ?? {};
+  assert.deepEqual(Object.keys(back), ['1', '2']);
+  assert.notEqual(back[1], devices[1]);
+  assert.equal(back[1], back[2]);
+});
+
+test('a spectator or table screen device is never recorded', () => {
+  const manager = gameWith('A', 'B');
+  joined(manager.join('test', 'g1', 'Sam', undefined, undefined, 'spectator', DEVICE));
+  joined(manager.join('test', 'g1', '', undefined, undefined, 'tableScreen', 'other-device-0123456789'));
+  assert.equal(manager.rawState(ROOM)?.seatDevices, undefined);
+});
+
+// A game that ends itself in onPlayerLeft, as Hearts or a broken partnership does
+const endsOnLeave: AnyGame = { ...testGame, onPlayerLeft: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [1] }) };
+
+test('a dismissal that ends the game is abandoned even with two players left', () => {
+  const table = reporting(undefined, endsOnLeave);
+  for (const name of ['A', 'B', 'C']) table.manager.join('test', 'g1', name);
+  ok(table.manager.move(ROOM, 1, tick));
+  table.manager.disconnect(ROOM, 3);
+  ok(table.manager.requestDismiss(ROOM, 1, 3));
+  assert.equal(ok(table.manager.voteDismiss(ROOM, 2, true)).isGameOver, true);
+  assert.equal(table.results.length, 1);
+  assert.equal(table.results[0].abandoned, true);
+  assert.equal(table.results[0].players.length, 2);
+
+  // The next game of the room is not marked by the last one's dismissal
+  const won = reportingTable();
+  playToWin(won);
+  assert.equal('abandoned' in won.results[0], false);
+});
+
+test('with a samePerson hook, a linked device opens the archived game', () => {
+  const store = memoryStore();
+  finishedWith(store, DEVICE);
+  store.remove(ROOM);
+  const linked = 'linked-device-0123456789';
+  const back = rememberingKeys(createGameManager([testGame], seededRandom, store, {
+    samePerson: (hash, hashes) => hashes.length > 0 && hash === hashDeviceId(linked)
+  }), keys);
+  assert.ok('steps' in back.history('test', 'g1', linked, 1));
+  assert.ok('file' in back.gameFile('test', 'g1', linked, new Date(), 1));
+  assert.deepEqual(back.history('test', 'g1', 'stranger-device-0123456789', 1), GONE);
 });
 
 test('an archive past 90 days is not available, even to someone who was in the game', () => {

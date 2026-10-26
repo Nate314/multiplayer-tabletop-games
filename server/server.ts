@@ -10,6 +10,8 @@ import { serveClient } from './static.ts';
 import { mountRulesRoute } from './rules.ts';
 import { mountOpenGamesRoute } from './openGames.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
+import { openStatsStore } from './stats/store.ts';
+import { mountStatsRoutes } from './stats/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts';
@@ -37,11 +39,20 @@ type LocalConnection = Extract<Connection, { localSeats: Seat[] }>;
 const JOIN_ROLES: readonly JoinRole[] = ['player', 'spectator', 'passAndPlay', 'tableScreen'];
 
 const e2eRandom = E2E ? createE2eRandom() : null;
+const stats = openStatsStore(DATABASE_PATH);
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), {
   changed: broadcast,
-  onGameFinished: result => console.log(`Game finished: ${result.archiveId}`),
+  onGameFinished: result => {
+    console.log(`Game finished: ${result.archiveId}`);
+    try {
+      stats.record(result);
+    } catch (error) { // a stats failure never touches play
+      console.error(`Could not record stats for ${result.archiveId}:`, error);
+    }
+  },
   reseated: reseat,
-  manualSimulation: E2E
+  manualSimulation: E2E,
+  samePerson: (hash, hashes) => stats.samePerson(hash, hashes)
 });
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
@@ -72,6 +83,8 @@ mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.in
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
 
 mountAssetRoutes(app);
+
+mountStatsRoutes(app, stats);
 
 if (SHOW_OPEN_GAMES) mountOpenGamesRoute(app, manager.openGames);
 
@@ -213,7 +226,7 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
 
 // A reload starts on the handoff screen (no seat shown), so no hand shows before its player has the device
 function joinLocal(ws: WebSocket, message: Record<string, unknown>): void {
-  const result = manager.joinLocal(message.gameType, message.gameId, message.playerNames, message.rejoin, message.seatKeys);
+  const result = manager.joinLocal(message.gameType, message.gameId, message.playerNames, message.rejoin, message.seatKeys, message.deviceId);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
