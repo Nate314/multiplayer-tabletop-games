@@ -158,3 +158,18 @@ for (const [id, row] of Object.entries(HAND_ONLY)) {
     await checkLayout(false);
   });
 }
+
+test('History shows the whole table in Hand only', async ({ seat }) => {
+  const table = await seat('scrabble', NAMES.slice(0, 2));
+  await tableScreen(table);
+  const current = (await table.state<{ currentPlayer: number }>()).currentPlayer;
+  const page = table.pages[current - 1];
+  await button(page, 'Pass').click();
+  // This phone is now off turn, so both hiding rules apply outside History
+  await expect(page.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
+  await expect(page.locator('.score-row >> visible=true')).toHaveCount(1);
+  await button(page, 'History').click();
+  const history = page.getByRole('dialog', { name: 'History' });
+  await expect(history.locator('.board-wrap')).toBeVisible();
+  await expect(history.locator('.score-row >> visible=true')).toHaveCount(2);
+});

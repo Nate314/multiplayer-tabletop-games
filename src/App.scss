@@ -650,11 +650,11 @@
 }
 
 /* On a phone beside a table screen, Hand only hides what the TV already shows */
-[data-hand-only] .hand-only-hide {
+[data-hand-only] .hand-only-hide:not(.history-board *) { /* History shows the whole table */
   display: none !important; /* a game's own display rule is as specific and loads later */
 }
 
-[data-hand-only]:not([data-my-turn]) .hand-only-board {
+[data-hand-only]:not([data-my-turn]) .hand-only-board:not(.history-board *) {
   display: none !important;
 }
 
