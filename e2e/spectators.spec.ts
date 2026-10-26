@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 type Received = { type: string; payload: Record<string, unknown> };
 type Sent = { type: string; payload?: Record<string, unknown> };
 
-// A bare socket, since the spectator screen comes later: joins, then sends each message and waits for its GAME_ERROR.
+// A bare socket: joins, then sends each message and waits for its GAME_ERROR.
 // Returns the GAME_JOINED payload and the error text each message got.
 async function protocol(page: Page, gameId: string, join: Record<string, unknown>, messages: Sent[]) {
   return page.evaluate(({ gameId, join, messages }) => new Promise<{ joined: Received; errors: string[] }>(resolve => {
@@ -105,9 +105,15 @@ async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameter
 const handCards = (page: Awaited<ReturnType<typeof watch>>) => page.locator('.hand .hand-cards > *');
 
 async function heartsTable(seat: Seat) {
-  const table = await seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan']);
-  await table.patch({ started: true }); // a hand can be asked for only once the game has started
-  return table;
+  return seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan']);
+}
+
+// A real move: the player picks the first three cards of their hand and passes them (the first pass starts the game)
+async function passFirstThree(page: Page) {
+  const cards = page.getByRole('region', { name: 'Your hand' }).locator('.playing-card');
+  for (let slot = 0; slot < 3; slot++) await cards.nth(slot).click();
+  await page.getByRole('button', { name: /^Pass \d\/3$/ }).click();
+  await expect(page.locator('.my-pass')).toBeVisible();
 }
 
 test('a spectator sees the table and no hand', async ({ seat, browser, server }) => {
@@ -122,6 +128,7 @@ test('a spectator sees the table and no hand', async ({ seat, browser, server })
 test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => {
   const table = await heartsTable(seat);
   const [alice, bob] = table.pages;
+  await passFirstThree(table.pages[2]);
   const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
   await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
   await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
@@ -130,8 +137,8 @@ test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => 
   await expect(bob.getByText('wants to see your hand')).toHaveCount(0);
   await alice.getByRole('button', { name: 'Allow', exact: true }).click();
   await expect(handCards(dana)).toHaveCount(13);
-  await table.patch({ gameStatus: 'Bob moved' });
-  await expect(dana.locator('.spectator-status')).toContainText('Bob moved');
+  await passFirstThree(bob);
+  await expect(dana.locator('.spectator-status')).toContainText('Bob passed three cards');
   await expect(handCards(dana)).toHaveCount(13);
   await dana.reload();
   await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click(); // the pick is not remembered, the permission is
@@ -140,6 +147,7 @@ test('asking, allowing and seeing a hand', async ({ seat, browser, server }) => 
 
 test('a no can be asked again', async ({ seat, browser, server }) => {
   const table = await heartsTable(seat);
+  await passFirstThree(table.pages[2]);
   const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
   await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
   await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
@@ -170,4 +178,12 @@ test('spectators get no votes', async ({ seat, browser, server }) => {
   await table.pages[0].getByRole('button', { name: 'Undo' }).click();
   await expect(table.pages[1].getByRole('button', { name: 'Approve' })).toBeVisible();
   await expect(dana.getByRole('button', { name: 'Approve' })).toHaveCount(0);
+});
+
+test('no hand can be asked for before the game starts', async ({ seat, browser, server }) => {
+  const table = await heartsTable(seat);
+  const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
+  await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
+  await expect(dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(dana.getByRole('button', { name: /^Ask to see/ })).toHaveCount(0);
 });

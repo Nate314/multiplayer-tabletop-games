@@ -29,6 +29,8 @@ type GameViewProps = {
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
 export default function GameView({ game, client, gameState, playerNumber, spectatorId, error, onBack }: GameViewProps) {
+  // App only shows a game once the connection has a seat or a spectator id
+  if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
   const { Screen } = client;
   useStateSounds(gameState, playerNumber, true);
   const choosingRules = !gameState.started && needsAgreement(game);
@@ -56,7 +58,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
       </header>
       <PresenceBar gameState={gameState} onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)} />
       {playerNumber === null ? (
-        <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId ?? ''} />
+        <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
       ) : (
         <>
           {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
