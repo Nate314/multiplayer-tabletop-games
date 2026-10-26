@@ -64,7 +64,10 @@ test('the switch picks Join or Watch and is remembered', async ({ browser, serve
   await visitor.locator('.lobby-game', { hasText: 'Connect Four' }).click();
   const dialog = visitor.getByRole('dialog', { name: 'Join Connect Four' });
   await expect(dialog.getByRole('button', { name: 'Join', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Player' })).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)'); // the pressed one is filled
   await dialog.getByRole('button', { name: 'Spectator' }).click();
+  await expect(dialog.getByRole('button', { name: 'Spectator' })).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(dialog.getByRole('button', { name: 'Player' })).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(dialog.getByRole('button', { name: 'Watch', exact: true })).toBeVisible();
   await dialog.getByLabel('Game ID').fill('abc');
   await dialog.getByLabel('Your name').fill('Dana');
@@ -103,6 +106,13 @@ async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameter
 }
 
 const handCards = (page: Awaited<ReturnType<typeof watch>>) => page.locator('.hand .hand-cards > *');
+
+test('a spectator is told when the last player leaves the lobby', async ({ seat, browser, server }) => {
+  const table = await seat('hearts', ['Alice']);
+  const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
+  await table.pages[0].close();
+  await expect(dana.getByText('Game not found')).toBeVisible();
+});
 
 async function heartsTable(seat: Seat) {
   return seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan']);

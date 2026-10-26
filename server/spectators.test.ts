@@ -64,11 +64,23 @@ test('spectator and player names are unique together', () => {
 test('a spectator takes their entry back with the key', () => {
   const manager = gameWith('Alice', 'Bob');
   const dana = watcher(manager, 'Dana');
+  ok(manager.move(ROOM, 1, tick)); // a lobby spectator is dropped on leaving; a started game keeps the entry
   assert.deepEqual(manager.join('test', 'g1', 'Dana', true, undefined, 'spectator'), { error: 'Dana is already in this game' });
   manager.disconnectSpectator(ROOM, dana.spectatorId);
   assert.deepEqual(manager.join('test', 'g1', 'Dana', false, 'wrong', 'spectator'), { error: 'That name is taken in this game' });
   assert.equal(watcher(manager, 'Dana', true).spectatorId, dana.spectatorId);
   assert.deepEqual(manager.join('test', 'g1', 'Eli', true, undefined, 'spectator'), { error: 'You are not in this game' });
+});
+
+test('a spectator who leaves a lobby frees the name', () => {
+  const manager = gameWith('Alice');
+  const dana = watcher(manager, 'Dana');
+  manager.disconnectSpectator(ROOM, dana.spectatorId);
+  assert.deepEqual((manager.rawState(ROOM) as HandState).spectators, []);
+  assert.equal(manager.getSpectatorState(ROOM, dana.spectatorId), undefined);
+  assert.ok(watcher(manager, 'Dana').spectatorId);
+  manager.disconnectSpectator(ROOM, watcher(manager, 'Eli').spectatorId);
+  assert.ok(!('error' in manager.join('test', 'g1', 'Eli')));
 });
 
 test('twenty spectators at most', () => {
@@ -176,11 +188,13 @@ test('asking waits for the game to start', () => {
 
 test('a player sees only requests for their own seat', () => {
   const { manager, dana } = started();
+  const eli = watcher(manager, 'Eli').spectatorId;
   const status = (manager.getState(ROOM, 1) as BasePublicState).gameStatus;
   ok(manager.requestHand(ROOM, dana, 1));
   const request = { spectator: dana, seat: 1 };
   assert.deepEqual((manager.getState(ROOM, 1) as BasePublicState).handRequests, [request]);
   assert.deepEqual((manager.getState(ROOM, 2) as BasePublicState).handRequests, []);
+  assert.deepEqual(danaView(manager, eli).handRequests, []);
   assert.deepEqual(danaView(manager, dana).handRequests, [request]);
   assert.equal((manager.getState(ROOM, 1) as BasePublicState).gameStatus, status);
 });

@@ -213,7 +213,11 @@ function handleDisconnect(ws: WebSocket): void {
     return;
   }
   const result = connection.seat !== null && manager.disconnect(connection.roomId, connection.seat);
-  if (result) broadcast(connection.roomId);
+  if (result) {
+    broadcast(connection.roomId);
+  } else if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
+    for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
+  }
 }
 
 function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>): void {

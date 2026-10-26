@@ -607,13 +607,14 @@
   text-align: left;
 }
 
-:where([data-game] :is(.rules-switch, .join-role-switch)) {
+:where([data-game] .rules-switch, .join-role-switch) {
   display: flex;
+  flex-wrap: wrap; /* more roles are coming; they wrap at 320px */
   justify-content: center;
   margin-bottom: 8px;
 }
 
-:where([data-game] :is(.rules-switch, .join-role-switch) button) {
+:where([data-game] .rules-switch button, .join-role-switch button) {
   padding: 6px 18px;
   border: 2px solid var(--platform-button-bg, var(--lobby-accent));
   background: transparent;
@@ -621,15 +622,15 @@
   font-weight: 600;
 }
 
-:where([data-game] :is(.rules-switch, .join-role-switch) button:first-child) {
+:where([data-game] .rules-switch button:first-child, .join-role-switch button:first-child) {
   border-radius: 6px 0 0 6px;
 }
 
-:where([data-game] :is(.rules-switch, .join-role-switch) button:last-child) {
+:where([data-game] .rules-switch button:last-child, .join-role-switch button:last-child) {
   border-radius: 0 6px 6px 0;
 }
 
-:where([data-game] :is(.rules-switch, .join-role-switch) button[aria-pressed="true"]) {
+:where([data-game] .rules-switch button[aria-pressed="true"], .join-role-switch button[aria-pressed="true"]) {
   background: var(--platform-button-bg, var(--lobby-accent));
   color: var(--platform-button-text, var(--lobby-accent-text));
 }

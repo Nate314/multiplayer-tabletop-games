@@ -573,6 +573,12 @@ export function createGameManager(
     disconnectSpectator(roomId: string, spectatorId: string): void {
       const room = rooms.get(roomId);
       if (!room?.watching.delete(spectatorId)) return;
+      if (!room.state.started) { // nothing to keep before the start, and the browser drops its key, so free the name
+        const { [spectatorId]: _key, ...spectatorKeys } = room.state.spectatorKeys ?? {};
+        room.state = { ...room.state, spectators: (room.state.spectators ?? []).filter(s => s.id !== spectatorId), spectatorKeys };
+        save(roomId, room);
+        return;
+      }
       room.state = { ...room.state, handRequests: (room.state.handRequests ?? []).filter(r => r.spectator !== spectatorId) };
       save(roomId, room);
     },
