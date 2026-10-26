@@ -48,7 +48,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         <span className="hearts-broken">{heartsBroken ? 'Hearts broken' : 'Hearts not broken'}</span>
       </div>
       {seated && (
-        <div className="seats">
+        <div className="seats hand-only-hide">
           {placed.map(({ position, seat }) => {
             const classes = ['seat', `seat-${position}`];
             if (seat === currentPlayer && phase === 'play') classes.push('seat-current');

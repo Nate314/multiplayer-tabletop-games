@@ -35,6 +35,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
       <ol className="holdem-seats">
         {activePlayers.map(seat => {
           const classes = ['holdem-seat'];
+          if (seat !== viewer) classes.push('hand-only-hide');
           if (seat === currentPlayer && !isGameOver) classes.push('holdem-seat-current');
           if (folded.includes(seat) || !dealtIn.includes(seat)) classes.push('holdem-seat-out');
           if ((handResult?.won[seat] ?? 0) > 0 || winners.includes(seat)) classes.push('holdem-seat-winner');
@@ -69,7 +70,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
       </ol>
       <section className="holdem-middle" aria-label="Board">
         <div className="holdem-hand-number">{handNumber > 0 ? `Hand ${handNumber}` : 'Waiting for players'}</div>
-        <div className="holdem-board">
+        <div className="holdem-board hand-only-hide">
           {[0, 1, 2, 3, 4].map(index => board[index]
             ? <PlayingCard key={index} card={board[index]} size="medium" animKey={boardKey(index)} />
             : <span key={index} className="holdem-board-empty" />)}

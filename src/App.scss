@@ -651,11 +651,11 @@
 
 /* On a phone beside a table screen, Hand only hides what the TV already shows */
 [data-hand-only] .hand-only-hide {
-  display: none;
+  display: none !important; /* a game's own display rule is as specific and loads later */
 }
 
 [data-hand-only]:not([data-my-turn]) .hand-only-board {
-  display: none;
+  display: none !important;
 }
 
 :where([data-game] .rules-failed) {

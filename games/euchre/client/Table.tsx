@@ -73,7 +73,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         {maker !== null && <span className="maker-info">Made by {playerNames[maker]}{alone && ', alone'}</span>}
       </div>
       {seated && (
-        <div className="seats">
+        <div className="seats hand-only-hide">
           {placed.map(({ position, seat }) => {
             const classes = ['seat', `seat-${position}`];
             if (seat === currentPlayer && phase !== 'handOver') classes.push('seat-current');

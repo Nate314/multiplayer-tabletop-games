@@ -53,7 +53,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         <span className="spades-broken">{spadesBroken ? 'Spades are broken' : 'Spades not broken yet'}</span>
       </div>
       {seated && (
-        <div className="seats">
+        <div className="seats hand-only-hide">
           {placed.map(({ position, seat }) => {
             const classes = ['seat', `seat-${position}`];
             if (seat === currentPlayer && phase !== 'handOver') classes.push('seat-current');

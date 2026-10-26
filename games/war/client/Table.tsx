@@ -30,6 +30,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
     const count = pileCounts[seat];
     const laid = shown?.cards[seat] ?? [];
     const classes = ['war-seat'];
+    if (seat !== viewer) classes.push('hand-only-hide');
     if (seat === currentPlayer && !isGameOver) classes.push('war-seat-current');
     if (winners.includes(seat) || (!battle && lastBattle?.winner === seat)) classes.push('war-seat-winner');
     const lastUp = showLastMove && lastMove?.playerNumber === seat && lastMove.fresh ? laid.length - 1 : -1;
@@ -49,7 +50,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
                 ? <PlayingCard card={null} size="large" onClick={onFlip} />
                 : <PlayingCard card={null} size="large" />}
           </div>
-          <div className="war-battle" aria-label={`${playerNames[seat]}'s battle cards`}>
+          <div className="war-battle hand-only-hide" aria-label={`${playerNames[seat]}'s battle cards`}>
             {laid.map((card, index) => (
               <PlayingCard key={index} card={card} size={card ? 'large' : 'medium'} animKey={battleKey(seat, index)}
                 highlighted={index === lastUp} />
@@ -64,7 +65,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onFlip 
   return (
     <div className="war-table">
       {sides[0]}
-      <div className="war-summary" role="status">{battleSummary(gameState)}</div>
+      <div className="war-summary hand-only-hide" role="status">{battleSummary(gameState)}</div>
       {sides.slice(1)}
     </div>
   );

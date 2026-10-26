@@ -82,7 +82,7 @@ export default function Table({ gameState, viewer, showLastMove = false }: Table
         )}
       </div>
       {seated && (
-        <div className={ring.length > 4 ? 'seats seats-ring' : 'seats'}>
+        <div className={ring.length > 4 ? 'seats seats-ring hand-only-hide' : 'seats hand-only-hide'}>
           {placed.map(({ position, seat }) => {
             const classes = ['seat', `seat-${position}`];
             if (seat === currentPlayer && phase !== 'handOver') classes.push('seat-current');

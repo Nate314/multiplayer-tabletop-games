@@ -244,6 +244,22 @@ export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Rec
 
 export { expect };
 
+// Joins `table`'s game on a new page as a table screen
+export async function tableScreen(table: Table): Promise<Page> {
+  const [first] = table.pages;
+  const browser = first.context().browser();
+  if (!browser) throw new Error('The table has no browser');
+  const tv = await newPlayer(browser, { url: new URL(first.url()).origin });
+  await tv.goto('/');
+  await tv.locator('.lobby-game').filter({ has: tv.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(table.gameType)}$`) }) }).click();
+  await tv.getByRole('button', { name: 'Table screen' }).click();
+  await expect(tv.getByLabel('Your name')).toHaveCount(0);
+  await tv.getByLabel('Game ID').fill(table.gameId);
+  await tv.getByRole('button', { name: 'Show table', exact: true }).click();
+  await expect(tv.getByRole('button', { name: 'Back to games' })).toBeVisible();
+  return tv;
+}
+
 // Opens Settings, sets the checkbox `label` and closes the dialog
 export async function setPreference(page: Page, label: string, on: boolean): Promise<void> {
   await page.getByRole('button', { name: 'Settings' }).click();

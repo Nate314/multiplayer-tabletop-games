@@ -93,6 +93,7 @@ export default function Table({ gameState, viewer, showLastMove = false, taskPic
         <div className="seats">
           {order.map(seat => {
             const classes = ['seat'];
+            if (seat !== viewer) classes.push('hand-only-hide');
             if (seat === currentPlayer && phase !== 'missionOver') classes.push('seat-current');
             if (winners.includes(seat)) classes.push('seat-winner');
             const said = communications[seat];
@@ -125,7 +126,7 @@ export default function Table({ gameState, viewer, showLastMove = false, taskPic
         </div>
       )}
       {seated && (
-        <div className="trick" aria-label="The trick">
+        <div className="trick hand-only-hide" aria-label="The trick">
           {order.map(seat => {
             const play = shown.find(p => p.seat === seat);
             return (
