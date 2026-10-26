@@ -2,6 +2,7 @@ import { MESSAGE_TYPES, type ClientMessage, type ServerMessage } from '../../sha
 import type { HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { Reaction } from '../../shared/reactions.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
+import { deviceId } from './device.ts';
 
 type GameJoined = Extract<ServerMessage, { type: typeof MESSAGE_TYPES.GAME_JOINED }>['payload'];
 type Join = Extract<ClientMessage, { type: typeof MESSAGE_TYPES.JOIN_GAME }>;
@@ -38,7 +39,7 @@ class GameService {
     this.ws = ws;
 
     ws.onopen = () => {
-      this.send({ type: MESSAGE_TYPES.JOIN_GAME, ...request });
+      this.send({ type: MESSAGE_TYPES.JOIN_GAME, ...request, deviceId: deviceId() });
     };
 
     ws.onmessage = (event) => {
