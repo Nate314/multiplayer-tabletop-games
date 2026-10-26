@@ -91,16 +91,17 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 
 ## Playing with a TV
 
-Open the site on a TV or laptop, pick the game, choose Table screen in the join dialog (the button reads Show table), enter the game's ID and press Show table; it needs no name, and the game must already exist (create it from a player's device first). Until the game starts it shows a QR code and the join link, with the players seated so far. Players scan the code with their phones. Once play starts it shows the status line and the whole board, scaled up to fill the screen, and never a hand. In Pictionary it shows only the blanks and the public chat, never the word. Games with hidden hands (cards, tiles, racks) show hand sizes only.
+Open the site on a TV or laptop, pick the game, choose Table screen in the join dialog (the button reads Show table), enter the game's ID and press Show table; it needs no name, and the game must already exist (create it from a player's device first). Until the game starts it shows a QR code and the join link, with the players seated so far. Players scan the code with their phones. Once play starts it shows the status line and the whole board, scaled up to fill the screen, and never a hand. In Pictionary it shows only the blanks and the public chat, never the word before the reveal (the reveal shows it to everyone). Games with hidden hands (cards, tiles, racks) show hand sizes only.
 
-While a table screen is connected, each player's phone shows a Board and hand / Hand only switch above the game. Hand only is the default and is remembered in that browser: it keeps your hand, your controls (including ones you can use out of turn) and the status line, and hides what the TV already shows, such as the other players, and the board except on your turn. Board and hand shows the full screen as usual. A table screen cannot move, vote or ask to see a hand; refreshing the page returns to the same screen, and a second one is named "Table screen 2".
+While a table screen is connected, each player's phone shows a Board and hand / Hand only switch above the game. Hand only is the default and is remembered in that browser: it keeps your hand, your controls (including ones you can use out of turn) and the status line, and hides what the TV already shows, such as the other players, and the board except on your turn. Board and hand shows the full screen as usual. A table screen cannot move, vote or ask to see a hand; once play has started, refreshing the page returns to the same screen, and a second one is named "Table screen 2".
 
 ## Settings
 
 The gear button in the landing page header and every game header opens Settings. Every setting belongs to the player and is kept in this browser only; it is never sent to the server and does not change what other players see or hear.
 
 - Volume and Mute all set how loud the sounds are, and Mute all silences them. Sounds start after your first click or key press on the page, so after a reload, click once
-- Your turn chime, Moves, Dice, Game over, Timer warnings and Reactions to you turn each group of sounds on or off. Timer warnings is a tick each second in the last 10 seconds of your Chess clock or Scrabble turn timer (house rules). Reactions to you is a soft sound when another player reacts to you
+- Your turn chime, Moves, Dice, Game over, Timer warnings and Reactions to you turn each group of sounds on or off. Timer warnings is a tick each second in the last 10 seconds of your Chess clock or Scrabble turn timer (house rules)
+. Reactions to you is a soft sound when another player reacts to you
 - Color-blind symbols adds a symbol next to colors that carry meaning
 - Highlight newly drawn cards marks the cards you just drew
 - In a game with house rule options, Settings also lists the house rules in use, read only, with each non-standard value marked "(house rule)". This part is the same for every player

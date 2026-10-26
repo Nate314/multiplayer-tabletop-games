@@ -228,7 +228,7 @@ const play = (seat: number, rank: string) => ({ seat, card: { rank, suit: 'spade
 const midHand = { phase: 'play', currentPlayer: 1, trick: [play(2, 'Q'), play(3, '10'), play(4, 'A')] };
 
 for (const gameType of ['hearts', 'spades']) {
-  test(`a spectator of a started ${gameType} game has no sideways scroll at 320 px`, async ({ seat, browser, server }) => {
+  test(`a player and a spectator of a started ${gameType} game have no sideways scroll at 320 px`, async ({ seat, browser, server }) => {
     const table = await seat(gameType, ['Alice', 'Bob', 'Cara', 'Dan']);
     if (gameType === 'hearts') await passFirstThree(table.pages[2]);
     await table.patch(gameType === 'hearts' ? { ...midHand, passes: {}, tricksPlayed: 3 } : { ...midHand, started: true, dealer: 4, bids: { 1: 3, 2: 4, 3: 2, 4: 3 }, tricksTaken: { 1: 0, 2: 0, 3: 0, 4: 0 } });
@@ -236,6 +236,10 @@ for (const gameType of ['hearts', 'spades']) {
     await dana.setViewportSize({ width: 320, height: 700 });
     const overflow = () => dana.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(await overflow()).toBeLessThanOrEqual(0);
+    // A player's own board shares the seat grid
+    const alice = table.pages[0];
+    await alice.setViewportSize({ width: 320, height: 700 });
+    expect(await alice.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
     await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
     await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
     await table.pages[0].getByRole('button', { name: 'Allow', exact: true }).click();

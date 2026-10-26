@@ -44,7 +44,7 @@ export default function ReactionPicker({ target, name, disabled, cooldownMs }: R
       {open && !disabled && (
         <div className="reaction-picker" ref={keepOnScreen} role="dialog" aria-label={`React to ${name}`}>
           <h2>{`React to ${name}`}</h2>
-          {cooling && <div className="reaction-cooldown">{formatClock(cooldownMs)}</div>}
+          {cooling && <div className="reaction-cooldown" aria-label={`Next reaction in ${formatClock(cooldownMs)}`}>{formatClock(cooldownMs)}</div>}
           <div className="reaction-recent">
             {recent.map(emoji => (
               <button key={emoji} type="button" aria-label={emoji} disabled={cooling} onClick={() => send(emoji)}>{emoji}</button>

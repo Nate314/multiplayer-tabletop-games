@@ -6,7 +6,7 @@ import type { PublicGameState } from '../types.ts';
 import type { Seat } from '../../../shared/types.ts';
 
 // The drawing at one step, read only, with the blanks (the word from the reveal on, or for a seat that knew it),
-// who has guessed and the scores. The chat shows only with no seat picked (the table screen), and then holds just the public lines
+// who has guessed and the scores. The chat shows only with no seat picked (the table screen, History's Table only, or a plain spectator), and then holds just the public lines
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   return (
     <div className="history-layout">
