@@ -7,7 +7,7 @@ import { saveJoinForm } from '../services/settings.ts';
 import { joinLink } from '../services/share.ts';
 import type { JoinRole } from '../../shared/types.ts';
 
-// Plans 8 and 9 append the other roles
+// Plan 8 appends the other roles
 const JOIN_ROLES: { role: JoinRole; label: string; button: string }[] = [
   { role: 'player', label: 'Player', button: 'Join' },
   { role: 'spectator', label: 'Spectator', button: 'Watch' },
@@ -87,16 +87,18 @@ export default function JoinDialog({
             Watch instead
           </button>
         )}
-        {role !== 'tableScreen' && <label className="lobby-field">
-          Your name
-          <input
-            type="text"
-            value={playerName}
-            onChange={(e) => onPlayerNameChange(e.target.value)}
-            maxLength={20}
-            autoFocus
-          />
-        </label>}
+        {role !== 'tableScreen' && (
+          <label className="lobby-field">
+            Your name
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => onPlayerNameChange(e.target.value)}
+              maxLength={20}
+              autoFocus
+            />
+          </label>
+        )}
         <label className="lobby-field">
           Game ID
           <input

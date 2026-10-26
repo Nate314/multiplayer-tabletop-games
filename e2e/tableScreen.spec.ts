@@ -19,6 +19,7 @@ test('a table screen shows the QR code and link in the lobby', async ({ seat, br
   const table = await seat('hearts', ['Alice']);
   const tv = await showTable(browser, server, 'hearts', table.gameId);
   await expect(tv.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(tv.locator('.table-screen-players li')).toHaveText(['Alice']);
   await expect(tv.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${table.gameId}$`));
   await expect(table.pages[0].locator('.presence-watching')).toHaveText('Watching: Table screen');
 });

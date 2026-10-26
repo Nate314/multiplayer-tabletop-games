@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useRef } from 'react';
 import ServerSvg from '../assets/ServerSvg';
 import { svgUrl } from '../assets/svgCache.ts';
 import { joinLink } from '../services/share.ts';
-import { fitScale } from './fitScale.ts';
+import useFitScale from './useFitScale.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -13,27 +13,24 @@ type TableScreenViewProps = {
   gameState: BasePublicState;
 };
 
-// A shared screen: the join code in the lobby, then the board alone, grown to fill the screen. It never shows a hand.
-export default function TableScreenView({ game, client, gameState }: TableScreenViewProps) {
+// The board grows up to 4 times to fill the screen
+function TableBoard({ client, gameState }: Omit<TableScreenViewProps, 'game'>) {
   const boxRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const { HistoryBoard } = client;
-  const { started, gameId, activePlayers, playerNames, gameStatus } = gameState;
+  useFitScale(boxRef, boardRef, 4);
+  return (
+    <div className="table-screen-board" ref={boxRef}>
+      <div className="table-screen-board-content" ref={boardRef}>
+        <HistoryBoard gameState={gameState} viewer={null} />
+      </div>
+    </div>
+  );
+}
 
-  // offsetWidth and offsetHeight ignore the scale transform, so growing the board never feeds back into the measure
-  useLayoutEffect(() => {
-    const box = boxRef.current;
-    const content = boardRef.current;
-    if (!box || !content) return undefined;
-    const observer = new ResizeObserver(() => {
-      const scale = fitScale({ width: content.offsetWidth, height: content.offsetHeight }, { width: box.clientWidth, height: box.clientHeight }, 4);
-      content.style.setProperty('--fit-scale', String(scale));
-      content.dataset.fitScale = String(scale);
-    });
-    observer.observe(box);
-    observer.observe(content);
-    return () => observer.disconnect();
-  }, [started]);
+// A shared screen: the join code in the lobby, then the board alone. It never shows a hand.
+export default function TableScreenView({ game, client, gameState }: TableScreenViewProps) {
+  const { started, gameId, activePlayers, playerNames, gameStatus } = gameState;
 
   if (!started) {
     const link = joinLink(window.location.origin, game.id, gameId);
@@ -51,11 +48,7 @@ export default function TableScreenView({ game, client, gameState }: TableScreen
   return (
     <div className="table-screen">
       <div className="table-screen-status">{gameStatus}</div>
-      <div className="table-screen-board" ref={boxRef}>
-        <div className="table-screen-board-content" ref={boardRef}>
-          <HistoryBoard gameState={gameState} viewer={null} />
-        </div>
-      </div>
+      <TableBoard client={client} gameState={gameState} />
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
   const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
-  const voting =Boolean(gameState.undoVote || gameState.dismissVote);
+  const voting = Boolean(gameState.undoVote || gameState.dismissVote);
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined}>
