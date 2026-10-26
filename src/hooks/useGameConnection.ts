@@ -95,6 +95,10 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setGameState(data.gameState);
       setGameType(joiningGameType.current);
       setError(null);
+      // A rematch reseats into a lobby at the same ID; like any lobby it is not offered for rejoining, so the old game is forgotten
+      const remembered = sessionRef.current;
+      if (!data.gameState.started && remembered?.inGame && remembered.gameType === joiningGameType.current &&
+        remembered.gameId === data.gameState.gameId) updateSession(null);
       rememberIfStarted(data.gameState, seat);
     };
 

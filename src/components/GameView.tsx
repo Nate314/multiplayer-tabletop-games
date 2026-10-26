@@ -46,8 +46,20 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
-  // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
-  const voting = Boolean(gameState.undoVote || gameState.dismissVote);
+  // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back).
+  // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss.
+  const voting = Boolean(gameState.undoVote || (gameState.dismissVote && gameState.dismissVote.target !== playerNumber));
+  const rematchVote = (
+    <RematchVote
+      gameState={gameState}
+      viewer={playerNumber}
+      onVote={(join) => {
+        gameService.voteRematch(join);
+        if (!join) onDrop();
+      }}
+      onRemove={(seat) => gameService.requestDismiss(seat)}
+    />
+  );
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
@@ -99,20 +111,12 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           // Escape in History closes only History
           onSeeTable={() => { if (!history.dialog) setClosed(true); }}
           onBack={onBack}
-        />
+        >
+          {rematchVote}
+        </GameOverDialog>
       )}
-      {/* A dismiss vote in the middle of it steps in front, so the others can answer it */}
-      {!gameState.dismissVote && (
-        <RematchVote
-          gameState={gameState}
-          viewer={playerNumber}
-          onVote={(join) => {
-            gameService.voteRematch(join);
-            if (!join) onDrop();
-          }}
-          onRemove={(seat) => gameService.requestDismiss(seat)}
-        />
-      )}
+      {/* After See the table the vote shows on its own, with nothing under it to cover */}
+      {gameState.isGameOver && closed && !voting && rematchVote}
       {history.dialog}
     </div>
   );

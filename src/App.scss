@@ -1174,6 +1174,22 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   justify-content: center;
 }
 
+/* On the game-over screen the rematch vote is a section below the standings, not an overlay */
+:where([data-game] .game-over .rematch-vote) {
+  position: static;
+  display: block;
+  margin-top: 12px;
+  background: none;
+}
+
+:where([data-game] .game-over .rematch-vote-panel) {
+  padding: 12px 0 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
 /* The Remove button beside a seat still waiting, smaller than the vote buttons */
 :where([data-game] .rematch-vote-list button) {
   margin-left: 10px;

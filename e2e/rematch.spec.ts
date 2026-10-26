@@ -19,8 +19,15 @@ test('Rematch opens a vote and everyone joining starts a new lobby at the same l
   const table = await finished(seat, 'connectfour', ['Alice', 'Bob']);
   const [alice, bob] = table.pages;
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
-  await expect(vote(bob)).toContainText('Alice wants a rematch');
+  await expect(gameOver(bob).locator('.rematch-vote')).toContainText('Alice wants a rematch');
   await expect(gameOver(bob).getByRole('button', { name: 'Rematch' })).toHaveCount(0);
+  // The vote sits inside the dialog, so nothing covers its buttons (a trial click fails on a covered target)
+  for (const width of [1280, 390, 320]) {
+    await bob.setViewportSize({ width, height: 700 });
+    for (const name of ['History', 'See the table', 'Back to games', 'Join']) {
+      await gameOver(bob).getByRole('button', { name, exact: true }).click({ trial: true });
+    }
+  }
   await bob.getByRole('button', { name: 'Join', exact: true }).click();
   for (const page of [alice, bob]) {
     await expect(gameOver(page)).toHaveCount(0);
@@ -28,6 +35,11 @@ test('Rematch opens a vote and everyone joining starts a new lobby at the same l
     await expect(lobbyNames(page)).toContainText(['Alice', 'Bob']);
   }
   expect((await table.state<{ gameId: string; started: boolean }>())).toMatchObject({ gameId: table.gameId, started: false });
+  // Like any lobby, the new one is not remembered for a rejoin, so a refresh goes quietly to the list
+  await expect.poll(() => alice.evaluate(() => sessionStorage.getItem('inGame'))).toBeNull();
+  await alice.reload();
+  await expect(alice.locator('.lobby-game').first()).toBeVisible();
+  await expect(alice.locator('.lobby-error')).toHaveCount(0);
 });
 
 test('a player who drops goes back to the game list', async ({ seat }) => {
@@ -46,6 +58,12 @@ test('a player who does not answer can be removed', async ({ seat }) => {
   const [alice, bob, cara] = table.pages;
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
   await alice.locator('.rematch-vote li', { hasText: 'Cara' }).getByRole('button', { name: 'Remove' }).click();
+  // The target answers the rematch instead of voting on their own dismissal, and is not listed as a voter
+  await expect(gameOver(cara).getByRole('button', { name: 'Join', exact: true })).toBeVisible();
+  await expect(gameOver(cara).getByRole('button', { name: 'Drop' })).toBeVisible();
+  await expect(cara.locator('.dismiss-vote')).toHaveCount(0);
+  await expect(bob.locator('.dismiss-vote li')).toHaveCount(2);
+  await expect(bob.locator('.dismiss-vote li', { hasText: 'Cara' })).toHaveCount(0);
   await bob.locator('.dismiss-vote').getByRole('button', { name: 'Approve' }).click();
   await bob.getByRole('button', { name: 'Join', exact: true }).click(); // the lobby opens once the last seat answered
   await expect(cara.getByText('You left after the game')).toBeVisible();

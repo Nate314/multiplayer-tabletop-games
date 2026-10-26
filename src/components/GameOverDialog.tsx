@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import { lengthText, ordinal, winnerLine } from './gameOver.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
@@ -14,11 +15,12 @@ type GameOverDialogProps = {
   onHistory: () => void;
   onSeeTable: () => void;
   onBack: () => void;
+  children?: ReactNode; // the open rematch vote, below the standings
 };
 
 // The same end screen in every game: who won, the final standings, the game's own last round if it has one, and what next
 export default function GameOverDialog({
-  game, client, gameState, viewer, canRematch, onRematch, onHistory, onSeeTable, onBack
+  game, client, gameState, viewer, canRematch, onRematch, onHistory, onSeeTable, onBack, children
 }: GameOverDialogProps) {
   useEscapeKey(onSeeTable);
   const { FinalRound } = client;
@@ -38,6 +40,7 @@ export default function GameOverDialog({
               </li>
             ))}
           </ol>
+          {children}
           {FinalRound && <FinalRound gameState={gameState} viewer={viewer} />}
         </div>
         <div className="game-over-actions">
