@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { anyMove, seeded } from './testing.ts';
 import { tickettoride } from './index.ts';
 import type { PublicGameState } from './types.ts';
@@ -45,7 +45,7 @@ test('a seeded game plays from the first tickets to the final scoring, and no st
   const best = Math.max(...Object.values(state.final).map(score => score.total));
   assert.ok(state.winners.every(seat => state.final?.[seat].total === best));
 
-  const steps = manager.history('tickettoride', 'g1') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'tickettoride') ?? assert.fail('no history');
   assert.ok(steps.length > 20);
   for (const past of steps as unknown as PublicGameState[]) {
     assert.equal('deck' in past, false);
@@ -56,7 +56,7 @@ test('a seeded game plays from the first tickets to the final scoring, and no st
       if (!past.isGameOver) assert.equal(player.tickets, null);
     }
   }
-  const file = manager.gameFile('tickettoride', 'g1', new Date());
+  const file = fileOf(manager, 'tickettoride', new Date());
   assert.ok(file && 'file' in file);
 });
 

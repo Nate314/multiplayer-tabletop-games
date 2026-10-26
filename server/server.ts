@@ -3,7 +3,7 @@ import express from 'express';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createGameManager } from './games.ts';
+import { createGameManager, NOT_AVAILABLE } from './games.ts';
 import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
@@ -35,24 +35,24 @@ const connections = new Map<WebSocket, Connection>(); // Filled once the socket 
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
 
 // Configure Express routes
-app.get('/api/history/:gameType/:gameId', (req, res) => {
-  const steps = manager.history(req.params.gameType, req.params.gameId);
-  if (!steps) {
-    res.status(404).json({ error: 'Game not found' });
-    return;
-  }
-  res.json({ steps });
+// The same answer for a missing game, a refused credential and a bad number, so none can be told apart
+const NOT_AVAILABLE_BODY = { error: 'This game is not available' };
+
+// The archive number from the optional `:n`: undefined for the live game, NaN for anything but a positive integer
+const archiveNumber = (n: unknown) => (n === undefined ? undefined : /^[1-9]\d{0,8}$/.test(String(n)) ? Number(n) : NaN);
+const bearer = (req: express.Request) => req.header('Authorization')?.match(/^Bearer (.+)$/)?.[1];
+
+app.get('/api/history/:gameType/:gameId{/:n}', (req, res) => {
+  const result = manager.history(req.params.gameType, req.params.gameId, bearer(req), archiveNumber(req.params.n));
+  if ('error' in result) res.status(404).json(NOT_AVAILABLE_BODY);
+  else res.json(result);
 });
 
-app.get('/api/game-file/:gameType/:gameId', (req, res) => {
-  const result = manager.gameFile(req.params.gameType, req.params.gameId, new Date());
-  if (!result) {
-    res.status(404).json({ error: 'Game not found' });
-  } else if ('error' in result) {
-    res.status(409).json({ error: result.error });
-  } else {
-    res.json(result.file);
-  }
+app.get('/api/game-file/:gameType/:gameId{/:n}', (req, res) => {
+  const result = manager.gameFile(req.params.gameType, req.params.gameId, bearer(req), new Date(), archiveNumber(req.params.n));
+  if (!('error' in result)) res.json(result.file);
+  else if (result.error === NOT_AVAILABLE) res.status(404).json(NOT_AVAILABLE_BODY);
+  else res.status(409).json({ error: result.error });
 });
 
 mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
@@ -167,7 +167,7 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, message.role as JoinRole | undefined);
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, message.role as JoinRole | undefined, message.deviceId);
   if ('error' in result) {
     sendError(ws, result.error);
     return;

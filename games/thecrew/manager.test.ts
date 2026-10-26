@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { canPlayCard, trueTokens } from './rules.ts';
 import { thecrew } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -78,7 +78,7 @@ test('a short game: each player sees only their own hand, the table sees none', 
   views.forEach((view, index) => assert.equal(view.hand.length, view.handCounts[index + 1]));
   assert.notDeepEqual(views[0].hand, views[1].hand);
 
-  const history = manager.history('thecrew', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'thecrew') as unknown as PublicGameState[];
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
     for (const key of ['hands', 'tricks']) assert.equal(key in state, false);
@@ -134,7 +134,7 @@ test('missions follow one another, and the end vote ends the game with a game fi
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1, 2, 3, 4]);
   assert.equal(state.gameStatus, 'The crew ended the game. Last mission completed: 2');
-  const file = manager.gameFile('thecrew', 'g1', new Date());
+  const file = fileOf(manager, 'thecrew', new Date());
   assert.ok(file && 'file' in file);
 });
 

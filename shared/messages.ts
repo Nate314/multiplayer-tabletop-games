@@ -24,7 +24,7 @@ export const MESSAGE_TYPES = {
 } as const;
 
 export type ClientMessage =
-  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string; role?: JoinRole }
+  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string; role?: JoinRole; deviceId?: string }
   | { type: typeof MESSAGE_TYPES.REQUEST_HAND; payload: { seat: Seat } }
   | { type: typeof MESSAGE_TYPES.ANSWER_HAND; payload: { spectator: string; allow: boolean } }
   | { type: typeof MESSAGE_TYPES.SWITCH_TO_PLAYER }

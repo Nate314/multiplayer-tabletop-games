@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { SIMULATION_TICK_MS, type GameDefinition } from '../shared/gameDefinition.ts';
 import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
@@ -10,7 +10,8 @@ import {
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
-import type { GameStore, SavedRoom, StepChange } from './store.ts';
+import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
+import { hashDeviceId } from './devices.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
@@ -62,6 +63,27 @@ function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
 }
 
+export const NOT_AVAILABLE = 'not-available'; // one answer for a missing game and a refused credential, so neither can be told apart
+
+function sameSecret(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+// Who `credential` is in this game: a seat key or a remembered device is a player, a spectator key that spectator
+export function access(
+  state: BaseGameState, credential: string | undefined
+): { kind: 'player' } | { kind: 'spectator'; allowedSeats: Seat[] } | null {
+  if (typeof credential !== 'string' || credential === '') return null;
+  const device = hashDeviceId(credential);
+  if (Object.values(state.seatKeys ?? {}).some(key => sameSecret(key, credential))) return { kind: 'player' };
+  if (device && Object.values(state.seatDevices ?? {}).some(hash => sameSecret(hash, device))) return { kind: 'player' };
+  const spectatorId = Object.entries(state.spectatorKeys ?? {}).find(([, key]) => sameSecret(key, credential))?.[0];
+  const spectator = state.spectators?.find(candidate => candidate.id === spectatorId);
+  return spectator ? { kind: 'spectator', allowedSeats: spectator.allowedSeats } : null;
+}
+
 // Holds every game in memory, keyed by game type and game ID. Only the public view of a game ever leaves this module.
 // With a `store`, started games are saved after every change and come back on creation with every seat held.
 export function createGameManager(
@@ -89,6 +111,19 @@ export function createGameManager(
     } catch (error) {
       console.error(`Could not update saved game ${roomId}:`, error);
     }
+  }
+
+  // The number for a new game of this ID; a store that fails leaves it at 1
+  function nextGameNumber(gameType: string, gameId: string): number {
+    let number = 1;
+    writeStore(`${gameType}/${gameId}`, target => { number = target.nextGameNumber(gameType, gameId); });
+    return number;
+  }
+
+  // Records the seat's device by its hash; an invalid ID leaves the state as it is
+  function withDevice(state: BaseGameState, seat: Seat, deviceId: unknown): BaseGameState {
+    const hash = hashDeviceId(deviceId);
+    return hash ? { ...state, seatDevices: { ...state.seatDevices, [seat]: hash } } : state;
   }
 
   const archiveIdOf = (roomId: string, state: BaseGameState) => `${roomId}#${state.gameNumber ?? 1}`;
@@ -119,7 +154,9 @@ export function createGameManager(
       finishedAt,
       moveCount: room.timeline.length,
       standings: standingsOf(game, state),
-      players: state.activePlayers.map(seat => ({ seat, name: state.playerNames[seat] }))
+      players: state.activePlayers.map(seat => ({
+        seat, name: state.playerNames[seat], ...(state.seatDevices?.[seat] && { deviceId: state.seatDevices[seat] })
+      }))
     };
     // Fewer than two left means the platform ended it after leaves or dismissals, not the game's own rules
     if (state.activePlayers.length < 2) result.abandoned = true;
@@ -269,7 +306,7 @@ export function createGameManager(
     room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number
   ): BasePublicState {
     const {
-      seatKeys: _seatKeys, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
+      seatKeys: _seatKeys, seatDevices: _seatDevices, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
       seatViews: _seatViews, reactions: _reactions, ...view
     } = raw;
     const { startedAt, finishedAt, gameNumber } = state;
@@ -312,10 +349,20 @@ export function createGameManager(
     return live(room, { ...base, ...(seatViews && { seatViews }) }, request => request.spectator === spectatorId);
   }
 
-  function findHistoryRoom(gameType: unknown, gameId: unknown) {
+  // The live room, or with `n` the archived game of that number laid out as a room; null unless `credential` was in the game
+  function findHistoryRoom(gameType: unknown, gameId: unknown, credential: unknown, n?: number) {
     const game = findGame(gameType);
-    const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
-    return room ? { game, room } : null;
+    if (!game) return null;
+    const roomId = `${game.info.id}/${cleanName(gameId)}`;
+    let room = rooms.get(roomId);
+    if (n !== undefined) {
+      let archived = undefined as ArchivedGame | undefined;
+      if (Number.isSafeInteger(n) && n > 0) writeStore(roomId, target => { archived = target.loadArchive(`${roomId}#${n}`); });
+      const expired = !archived || archived.finishedAt <= now() - ARCHIVE_TTL_MS;
+      room = expired ? undefined : { game, state: archived!.state, history: archived!.history, timeline: archived!.timeline, watching: new Set(), lastReactionAt: new Map() };
+    }
+    const who = room && access(room.state, typeof credential === 'string' ? credential : undefined);
+    return room && who ? { game, room, who } : null;
   }
 
   function hasEndMoment(room: Room): boolean {
@@ -453,7 +500,7 @@ export function createGameManager(
     // `rejoin` only takes back a held seat; it never creates a game or takes a new seat.
     // A held seat is taken back only with the `seatKey` its player was given on joining
     join(
-      gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown, role?: JoinRole
+      gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown, role?: JoinRole, deviceId?: unknown
     ): JoinResult {
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
@@ -469,7 +516,7 @@ export function createGameManager(
       const room: Room = existing ?? {
         game, state: game.createGameState(id), history: [], timeline: [], watching: new Set(), lastReactionAt: new Map()
       };
-      if (!existing) room.state = { ...room.state, gameNumber: store?.nextGameNumber(game.info.id, id) ?? 1 };
+      if (!existing) room.state = { ...room.state, gameNumber: nextGameNumber(game.info.id, id) };
       const { state } = room;
       const spectator = state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
 
@@ -506,7 +553,7 @@ export function createGameManager(
         const expected = state.seatKeys?.[known];
         if (expected !== undefined && seatKey !== expected) return { error: 'That name is taken in this game' };
         const key = expected ?? randomUUID();
-        room.state = { ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } };
+        room.state = withDevice({ ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } }, known, deviceId);
         clearEmptyTimer(room);
         save(roomId, room);
         return { roomId, seat: known, seatKey: key, state: view(room, known) };
@@ -518,7 +565,7 @@ export function createGameManager(
       if ('error' in result) return result;
 
       const key = randomUUID();
-      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
+      room.state = withDevice({ ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } }, result.seat, deviceId);
       rooms.set(roomId, room);
       save(roomId, room);
       return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
@@ -726,21 +773,26 @@ export function createGameManager(
 
     // The starting board, the state right after each move, and the live state when the game ended without a move
     // (everyone else left, a resignation); oldest first. Null when the game does not exist
-    history(gameType: unknown, gameId: unknown): HistoryStep[] | null {
-      const found = findHistoryRoom(gameType, gameId);
-      return found && historyMoments(found.room).map(moment => historyStep(found.room, moment, null));
+    // Every caller sees the table, whatever they were
+    history(gameType: unknown, gameId: unknown, credential: unknown, n?: number): { steps: HistoryStep[] } | { error: typeof NOT_AVAILABLE } {
+      const found = findHistoryRoom(gameType, gameId, credential, n);
+      if (!found) return { error: NOT_AVAILABLE };
+      return { steps: historyMoments(found.room).map(moment => historyStep(found.room, moment, null)) };
     },
 
     // The finished game as a version 2 file: each step as the table sees it plus one view per seat
-    gameFile(gameType: unknown, gameId: unknown, now: Date): { file: GameFile } | { error: string } | null {
-      const found = findHistoryRoom(gameType, gameId);
-      if (!found) return null;
-      const { game, room } = found;
+    // A spectator's file has only the seats that allowed them
+    gameFile(gameType: unknown, gameId: unknown, credential: unknown, now: Date, n?: number): { file: GameFile } | { error: string } {
+      const found = findHistoryRoom(gameType, gameId, credential, n);
+      if (!found) return { error: NOT_AVAILABLE };
+      const { game, room, who } = found;
       if (!room.state.isGameOver) return { error: 'The game is not over yet' };
       const steps = historyMoments(room).map(moment => ({
         ...historyStep(room, moment, null),
         views: Object.fromEntries(
-          Object.keys(moment.state.playerNames).map(seat => [seat, historyStep(room, moment, Number(seat))])
+          Object.keys(moment.state.playerNames)
+            .filter(seat => who.kind === 'player' || who.allowedSeats.includes(Number(seat)))
+            .map(seat => [seat, historyStep(room, moment, Number(seat))])
         )
       }));
       return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };

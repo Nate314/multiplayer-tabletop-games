@@ -14,6 +14,7 @@ type Rejoining = { retriesLeft: number; timer?: ReturnType<typeof setTimeout> };
 export default function useGameConnection(joinLink: JoinLink | null = null) {
   const [playerNumber, setPlayerNumber] = useState<Seat | null>(null);
   const [spectatorId, setSpectatorId] = useState<string | null>(null);
+  const [credential, setCredential] = useState<string | undefined>(undefined); // the seat key, or for a spectator the spectator key; opens the history
   const [gameState, setGameState] = useState<BasePublicState | null>(null);
   const [gameType, setGameType] = useState<string | null>(null); // the game being played, remembered or not
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +87,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       seat = data.playerNumber;
       joined = true;
       seatKey.current = data.seatKey;
+      setCredential(data.seatKey);
       // After switching to a player the same socket is seated, so the role is no longer a spectator's
       if (data.playerNumber !== null) joinedAs.current = { ...joinedAs.current, role: 'player' };
       setPlayerNumber(data.playerNumber);
@@ -217,5 +219,5 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     if (remembered?.inGame) updateSession({ ...remembered, inGame: false });
   }, [leave, updateSession]);
 
-  return { playerNumber, spectatorId, gameState, gameType, error, session, join, leave, backToGames, rejoin };
+  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, join, leave, backToGames, rejoin };
 }

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { scrabble } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
@@ -56,7 +56,7 @@ test('the history shows no rack', () => {
   const manager = gameWith('A', 'B');
   ok(manager.move(ROOM, 1, FIRST_WORD));
   ok(manager.move(ROOM, 2, SECOND_WORD));
-  const steps = manager.history('scrabble', 'g1') as unknown as PublicGameState[] | null;
+  const steps = stepsOf(manager, 'scrabble') as unknown as PublicGameState[] | null;
   assert.equal(steps?.length, 3);
   for (const step of steps ?? []) {
     assert.deepEqual(step.rack, []);

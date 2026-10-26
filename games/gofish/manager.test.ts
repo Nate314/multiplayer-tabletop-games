@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { gofish } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -62,14 +62,14 @@ test('a whole game ends with all 13 books, and the history and the game file hid
   const most = Math.max(...state.activePlayers.map(seat => state.books[seat].length));
   assert.deepEqual(state.winners, state.activePlayers.filter(seat => state.books[seat].length === most));
 
-  const history = manager.history('gofish', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'gofish') as unknown as PublicGameState[];
   assert.equal(history.length, state.moveCount + 1);
   for (const past of history) {
     assert.deepEqual(past.hand, []);
     if (past.lastMove?.fished !== 'asked') assert.equal(past.fishedCard, null);
   }
 
-  const file = manager.gameFile('gofish', 'g1', new Date(0));
+  const file = fileOf(manager, 'gofish', new Date(0));
   if (!file || 'error' in file) assert.fail('expected a game file');
   const start = file.file.steps[0] as unknown as PublicGameState & { views: Record<string, PublicGameState> };
   assert.deepEqual(start.hand, []);

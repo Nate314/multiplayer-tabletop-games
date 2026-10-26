@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { pictionary } from './index.ts';
 import type { GameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -99,7 +99,7 @@ test('the history the server shows never carries the word or a guessed-only line
   ok(manager.action(ROOM, 2, { type: 'chat', text: word }));
   ok(manager.action(ROOM, 2, { type: 'chat', text: 'secret banter' }));
   assert.equal(raw().chat.some(line => line.text === 'secret banter'), true);
-  const shown = JSON.stringify(manager.history('pictionary', 'g1'));
+  const shown = JSON.stringify(stepsOf(manager, 'pictionary'));
   assert.equal(shown.includes('secret banter'), false);
   assert.equal(shown.includes(word), false);
 });

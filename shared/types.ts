@@ -42,6 +42,7 @@ export type BaseGameState = {
   turnStartedAt?: number | null; // server time the turn began, shifted later by paused time; absent with the turn timer off
   turnPausedAt?: number | null; // server time a pausing vote opened; null while the clock runs
   seatKeys?: Record<Seat, string>; // the secret each seat's rejoin must send; the server strips it from every view
+  seatDevices?: Record<Seat, string>; // the SHA-256 of the device ID each seat joined with; stripped from every view, like seatKeys
   spectators?: Spectator[]; // missing in games saved before spectators
   handRequests?: HandRequest[];
   spectatorKeys?: Record<string, string>; // the secret each spectator's rejoin must send; stripped from every view, like seatKeys

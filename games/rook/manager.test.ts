@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { openGameStore } from '../../server/store.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { canPlayCard, MIN_BID } from './rules.ts';
 import { rook } from './index.ts';
 import type { GameState, Move, PublicGameState } from './types.ts';
@@ -81,7 +81,7 @@ test('a short game: each player sees only their own hand, the table sees none', 
   const bidder = views[0].bidder ?? assert.fail('no bidder');
   assert.equal(viewOf(manager, bidder).discards.length, 5);
 
-  const history = manager.history('rook', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'rook') as unknown as PublicGameState[];
   assert.equal(history.length, 15);
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
@@ -128,7 +128,7 @@ test('a whole game played with legal moves ends when a team reaches 500', () => 
   assert.equal(state.winners.length, 2);
   assert.ok(Math.max(...state.scores) >= 500);
   assert.ok(state.handNumber > 1);
-  const file = manager.gameFile('rook', 'g1', new Date());
+  const file = fileOf(manager, 'rook', new Date());
   assert.ok(file && 'file' in file);
 });
 
@@ -163,7 +163,7 @@ test('a game saved before teams existed loads, plays on and builds its history a
     { type: 'push', index, before: strip(before), after: strip(room.timeline[index]) }));
   const back = rememberingKeys(createGameManager([rook], seeded(2), legacy), keys);
   for (const name of NAMES) assert.equal('error' in back.join('rook', 'g1', name, true), false);
-  assert.equal(back.history('rook', 'g1')?.length, 15);
+  assert.equal(stepsOf(back, 'rook')?.length, 15);
 
   let state = viewOf(back, null);
   assert.equal('teams' in state, false);
@@ -171,6 +171,6 @@ test('a game saved before teams existed loads, plays on and builds its history a
   assert.equal(state.isGameOver, true);
   assert.equal(state.scores.length, 2);
   assert.equal(state.winners.length, 2);
-  const file = back.gameFile('rook', 'g1', new Date());
+  const file = fileOf(back, 'rook', new Date());
   assert.ok(file && 'file' in file);
 });

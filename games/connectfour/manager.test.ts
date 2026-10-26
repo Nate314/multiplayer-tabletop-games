@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { connectfour } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
@@ -80,7 +80,7 @@ test('the history keeps the board of every step', () => {
   const manager = gameWith('A', 'B');
   ok(manager.move(ROOM, 1, drop(0)));
   ok(manager.move(ROOM, 2, drop(1)));
-  const steps = manager.history('connectfour', 'g1') as unknown as PublicGameState[];
+  const steps = stepsOf(manager, 'connectfour') as unknown as PublicGameState[];
   assert.equal(steps.length, 3);
   assert.equal(steps[1].board[5][0], 1);
   assert.equal(steps[1].board[5][1], null);

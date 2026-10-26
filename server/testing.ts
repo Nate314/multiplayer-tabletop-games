@@ -1,3 +1,4 @@
+import type { HistoryStep } from '../shared/types.ts';
 import type { HouseRuleValues, HouseRulesState } from '../shared/houseRules.ts';
 import type { createGameManager } from './games.ts';
 
@@ -8,9 +9,9 @@ type Manager = ReturnType<typeof createGameManager>;
 export function rememberingKeys(manager: Manager, keys = new Map<string, string>()): Manager {
   return {
     ...manager,
-    join(gameType, gameId, playerName, rejoin, seatKey, role) {
+    join(gameType, gameId, playerName, rejoin, seatKey, role, deviceId) {
       const seat = `${role ?? 'player'}/${String(gameType)}/${String(gameId).trim()}/${String(playerName).trim().toLowerCase()}`;
-      const result = manager.join(gameType, gameId, playerName, rejoin, seatKey ?? keys.get(seat), role);
+      const result = manager.join(gameType, gameId, playerName, rejoin, seatKey ?? keys.get(seat), role, deviceId);
       if ('seatKey' in result) keys.set(seat, result.seatKey);
       return result;
     }
@@ -31,4 +32,15 @@ export function agreeAll(manager: Manager, roomId: string): void {
 // House rules with these values, for building a test state directly
 export function withRules(values: HouseRuleValues): HouseRulesState {
   return { host: 1, values, maxPlayers: null, agreed: [], revision: 0 };
+}
+
+// The live history as seat 1 opens it; null when it is not available
+export function stepsOf(manager: Manager, gameType: string, gameId = 'g1'): HistoryStep[] | null {
+  const result = manager.history(gameType, gameId, manager.rawState(`${gameType}/${gameId}`)?.seatKeys?.[1]);
+  return 'steps' in result ? result.steps : null;
+}
+
+// The live game file as seat 1 opens it
+export function fileOf(manager: Manager, gameType: string, now: Date, gameId = 'g1') {
+  return manager.gameFile(gameType, gameId, manager.rawState(`${gameType}/${gameId}`)?.seatKeys?.[1], now);
 }

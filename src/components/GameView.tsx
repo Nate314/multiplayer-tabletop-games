@@ -26,12 +26,13 @@ type GameViewProps = {
   gameState: BasePublicState;
   playerNumber: Seat | null;
   spectatorId: string | null;
+  credential: string | undefined;
   error: string | null;
   onBack: () => void;
 };
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
-export default function GameView({ game, client, gameState, playerNumber, spectatorId, error, onBack }: GameViewProps) {
+export default function GameView({ game, client, gameState, playerNumber, spectatorId, credential, error, onBack }: GameViewProps) {
   // App only shows a game once the connection has a seat or a spectator id
   if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
   const { Screen } = client;
@@ -39,7 +40,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const choosingRules = !gameState.started; // every game can set the turn timer
   // Nobody can move until everyone agreed, so the game screen is dimmed until then (the server refuses a move anyway)
   const awaitingAgreement = choosingRules && agreementPending(game, gameState);
-  const history = useHistoryDialog(game.id, gameState, client);
+  const history = useHistoryDialog(game.id, gameState, client, credential);
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);

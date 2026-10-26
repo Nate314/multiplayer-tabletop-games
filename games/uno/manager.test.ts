@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { canPlay } from './rules.ts';
 import { uno } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -88,7 +88,7 @@ test('each player sees only their own hand, and the history sees none', () => {
   });
   assert.notDeepEqual(views[0].hand, views[1].hand);
 
-  const history = (manager.history('uno', 'g1') as unknown as PublicGameState[]);
+  const history = (stepsOf(manager, 'uno') as unknown as PublicGameState[]);
   assert.equal(history.length, 7);
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
@@ -159,7 +159,7 @@ test('a challenged hand reaches the challenger\'s view only, never the others or
   assert.deepEqual(viewOf(manager, pending.target).revealed, { of: pending.by, hand: held });
   for (const seat of [1, 2, 3].filter(other => other !== pending.target)) assert.equal(viewOf(manager, seat).revealed, null);
   assert.equal(viewOf(manager, null).revealed, null);
-  for (const past of (manager.history('uno', 'g1') as unknown as PublicGameState[])) assert.equal(past.revealed, null);
+  for (const past of (stepsOf(manager, 'uno') as unknown as PublicGameState[])) assert.equal(past.revealed, null);
 });
 
 test('dismissing a player mid-game skips their seat', () => {

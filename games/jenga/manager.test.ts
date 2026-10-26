@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { jenga } from './index.ts';
 import { anchorWorld } from './physics.ts';
 import type { GameState, PublicGameState, Vec3 } from './types.ts';
@@ -54,7 +54,7 @@ test('a whole turn is one move: grabs and drags are not on the timeline', () => 
   const placed = ok(manager.move(ROOM, 1, { type: 'place', slot: 0 }));
   assert.equal(placed.moveCount, 1);
   assert.equal(placed.currentPlayer, 2);
-  const history = manager.history('jenga', 'g1')!;
+  const history = stepsOf(manager, 'jenga')!;
   assert.equal(history.length, 2);
   assert.deepEqual(history.map(step => step.historyStep), ['start', 'move']);
   assert.equal((history[1] as unknown as PublicGameState).lastMove?.type, 'place');
@@ -75,7 +75,7 @@ test('toppling the tower ends the game with a recorded topple step and everyone 
   const state = raw(manager);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [2, 3]);
-  const history = manager.history('jenga', 'g1')!;
+  const history = stepsOf(manager, 'jenga')!;
   assert.equal(history.length, 2);
   assert.deepEqual((history.at(-1) as unknown as PublicGameState).lastMove, { type: 'topple', seat: 1 });
 });
@@ -91,7 +91,7 @@ test('a placement that topples at once records the place step, then the topple s
   ok(manager.move(ROOM, 1, { type: 'place', slot: 0 }));
   manager.simulateTicks(ROOM, 400);
   assert.equal(raw(manager).isGameOver, true);
-  const history = manager.history('jenga', 'g1')!;
+  const history = stepsOf(manager, 'jenga')!;
   assert.deepEqual(history.map(step => (step as unknown as PublicGameState).lastMove?.type ?? null), [null, 'place', 'topple']);
   ok(manager.requestUndo(ROOM, 2));
   ok(manager.voteUndo(ROOM, 1, true));
@@ -122,8 +122,8 @@ test('a collapse whose tick throws still ends and records the game instead of st
 test('the table view and the game file never contain grip values', () => {
   const manager = game();
   topple(manager);
-  assert.equal(JSON.stringify(manager.history('jenga', 'g1')).includes('"grip"'), false);
-  const file = manager.gameFile('jenga', 'g1', new Date(0));
+  assert.equal(JSON.stringify(stepsOf(manager, 'jenga')).includes('"grip"'), false);
+  const file = fileOf(manager, 'jenga', new Date(0));
   assert.ok(file && 'file' in file);
   assert.equal(JSON.stringify(file).includes('"grip"'), false);
   assert.equal(JSON.stringify(file).includes('"turnStart"'), false);

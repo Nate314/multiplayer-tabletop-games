@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { rummikub } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
@@ -127,7 +127,7 @@ test('a dismissed player puts their tiles back, and the history and game file hi
   const ended = ok(manager.requestDismiss(ROOM, stay, leave));
   assert.equal(ended.isGameOver, true);
 
-  const steps = manager.history('rummikub', 'g1') as unknown as PublicGameState[] | null;
+  const steps = stepsOf(manager, 'rummikub') as unknown as PublicGameState[] | null;
   assert.ok(steps && steps.length >= 5);
   for (const step of steps) {
     assert.deepEqual(step.rack, []);
@@ -135,7 +135,7 @@ test('a dismissed player puts their tiles back, and the history and game file hi
     assert.equal('pool' in step, false);
   }
 
-  const file = manager.gameFile('rummikub', 'g1', new Date(0));
+  const file = fileOf(manager, 'rummikub', new Date(0));
   assert.ok(file && 'file' in file);
   const views = file.file.steps[1].views as unknown as Record<Seat, PublicGameState> | undefined;
   assert.ok(views);
