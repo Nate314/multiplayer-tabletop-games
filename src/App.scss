@@ -1863,8 +1863,10 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 /* The spectator gutter leaves the card games' seat grid (side columns of at least 70px) wider than a 320px screen */
-[data-game] .spectator-view .seats {
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+@media (max-width: 560px) {
+  [data-game] .spectator-view .seats {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
 }
 
 :where([data-game] .spectator-seats) {

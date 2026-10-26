@@ -96,7 +96,7 @@ test('a started game offers to watch instead', async ({ seat, browser, server })
 async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1], gameType: string, gameId: string, name: string) {
   const page = await newPlayer(browser, server);
   await page.goto('/');
-  await page.locator('.lobby-game', { hasText: nameOf(gameType) }).click();
+  await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
   await page.getByRole('button', { name: 'Spectator' }).click();
   await page.getByLabel('Your name').fill(name);
   await page.getByLabel('Game ID').fill(gameId);
@@ -200,20 +200,24 @@ test('no hand can be asked for before the game starts', async ({ seat, browser, 
   await expect(dana.getByRole('button', { name: /^Ask to see/ })).toHaveCount(0);
 });
 
-test('a spectator of a started Hearts game has no sideways scroll at 320 px', async ({ seat, browser, server }) => {
-  const table = await heartsTable(seat);
-  await passFirstThree(table.pages[2]);
-  // Mid hand with three cards in the trick: the seats and the trick are all on show
-  const play = (seat: number, rank: string) => ({ seat, card: { rank, suit: 'spades' } });
-  await table.patch({ phase: 'play', currentPlayer: 1, passes: {}, tricksPlayed: 3, trick: [play(2, 'Q'), play(3, '10'), play(4, 'A')] });
-  const dana = await watch(browser, server, 'hearts', table.gameId, 'Dana');
-  await dana.setViewportSize({ width: 320, height: 700 });
-  const overflow = () => dana.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(await overflow()).toBeLessThanOrEqual(0);
-  await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
-  await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
-  await table.pages[0].getByRole('button', { name: 'Allow', exact: true }).click();
-  await expect(handCards(dana)).toHaveCount(13);
-  expect(await overflow()).toBeLessThanOrEqual(0);
-});
+// Mid hand with three cards in the trick: the seats and the trick are all on show
+const play = (seat: number, rank: string) => ({ seat, card: { rank, suit: 'spades' } });
+const midHand = { phase: 'play', currentPlayer: 1, trick: [play(2, 'Q'), play(3, '10'), play(4, 'A')] };
+
+for (const gameType of ['hearts', 'spades']) {
+  test(`a spectator of a started ${gameType} game has no sideways scroll at 320 px`, async ({ seat, browser, server }) => {
+    const table = await seat(gameType, ['Alice', 'Bob', 'Cara', 'Dan']);
+    if (gameType === 'hearts') await passFirstThree(table.pages[2]);
+    await table.patch(gameType === 'hearts' ? { ...midHand, passes: {}, tricksPlayed: 3 } : { ...midHand, started: true, dealer: 4, bids: { 1: 3, 2: 4, 3: 2, 4: 3 }, tricksTaken: { 1: 0, 2: 0, 3: 0, 4: 0 } });
+    const dana = await watch(browser, server, gameType, table.gameId, 'Dana');
+    await dana.setViewportSize({ width: 320, height: 700 });
+    const overflow = () => dana.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(await overflow()).toBeLessThanOrEqual(0);
+    await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
+    await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
+    await table.pages[0].getByRole('button', { name: 'Allow', exact: true }).click();
+    await expect(handCards(dana)).toHaveCount(13);
+    expect(await overflow()).toBeLessThanOrEqual(0);
+  });
+}
 
