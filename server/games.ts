@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { SIMULATION_TICK_MS, type GameDefinition } from '../shared/gameDefinition.ts';
 import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
@@ -10,7 +10,8 @@ import {
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
-import type { GameStore, SavedRoom, StepChange } from './store.ts';
+import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
+import { hashDeviceId } from './devices.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
@@ -20,6 +21,8 @@ import type {
 } from '../shared/types.ts';
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
+export const ARCHIVE_TTL_MS = 90 * 24 * 60 * 60 * 1000; // how long a finished game stays in the archive
+const ARCHIVE_PRUNE_MS = 24 * 60 * 60 * 1000;
 
 // `history` holds the state before each move, for undo; `timeline` holds the state right after each move.
 // Neither leaves this module except through the game's public view.
@@ -40,13 +43,17 @@ type Room = {
 
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout or a tick;
 // `onGameFinished` hears of each game once, when it first ends.
-// `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks
+// `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks;
+// `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns
 export type ManagerHooks = {
   now?: () => number;
   changed?: (roomId: string) => void;
   onGameFinished?: (result: GameResult) => void;
+  reseated?: (roomId: string, moves: Reseat[]) => void;
   manualSimulation?: boolean;
 };
+
+export type Reseat = { from: Seat; to: Seat | null; seatKey: string }; // `to` is null for a seat that left
 
 const STAMP_KEYS = ['turnStartedAt', 'turnPausedAt'] as const;
 
@@ -60,6 +67,27 @@ function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
 }
 
+export const NOT_AVAILABLE = 'not-available'; // one answer for a missing game and a refused credential, so neither can be told apart
+
+function sameSecret(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+// Who `credential` is in this game: a seat key or a remembered device is a player, a spectator key that spectator
+export function access(
+  state: BaseGameState, credential: string | undefined
+): { kind: 'player' } | { kind: 'spectator'; allowedSeats: Seat[] } | null {
+  if (typeof credential !== 'string' || credential === '') return null;
+  const device = hashDeviceId(credential);
+  if (Object.values(state.seatKeys ?? {}).some(key => sameSecret(key, credential))) return { kind: 'player' };
+  if (device && Object.values(state.seatDevices ?? {}).some(hash => sameSecret(hash, device))) return { kind: 'player' };
+  const spectatorId = Object.entries(state.spectatorKeys ?? {}).find(([, key]) => sameSecret(key, credential))?.[0];
+  const spectator = state.spectators?.find(candidate => candidate.id === spectatorId);
+  return spectator ? { kind: 'spectator', allowedSeats: spectator.allowedSeats } : null;
+}
+
 // Holds every game in memory, keyed by game type and game ID. Only the public view of a game ever leaves this module.
 // With a `store`, started games are saved after every change and come back on creation with every seat held.
 export function createGameManager(
@@ -68,6 +96,12 @@ export function createGameManager(
 ) {
   const rooms = new Map<string, Room>();
   const now = hooks.now ?? Date.now;
+
+  function pruneArchive(): void {
+    writeStore('archive', target => { target.pruneArchive(now() - ARCHIVE_TTL_MS); });
+  }
+  pruneArchive();
+  setInterval(pruneArchive, ARCHIVE_PRUNE_MS).unref();
 
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
@@ -83,6 +117,32 @@ export function createGameManager(
     }
   }
 
+  // The number for a new game of this ID; a store that fails leaves it at 1
+  function nextGameNumber(gameType: string, gameId: string): number {
+    let number = 1;
+    writeStore(`${gameType}/${gameId}`, target => { number = target.nextGameNumber(gameType, gameId); });
+    return number;
+  }
+
+  // Records the seat's device by its hash; an invalid ID leaves the state as it is
+  function withDevice(state: BaseGameState, seat: Seat, deviceId: unknown): BaseGameState {
+    const hash = hashDeviceId(deviceId);
+    return hash ? { ...state, seatDevices: { ...state.seatDevices, [seat]: hash } } : state;
+  }
+
+  const archiveIdOf = (roomId: string, state: BaseGameState) => `${roomId}#${state.gameNumber ?? 1}`;
+
+  // Keeps the room's finished game; archiving again replaces it, so an undo and replay leave the final game.
+  // Open votes are not part of the game as it ended, so every path archives without them.
+  function archiveRoom(roomId: string, room: Room): void {
+    const { game } = room;
+    const state: BaseGameState = { ...room.state, rematchVote: null, dismissVote: null };
+    writeStore(roomId, target => target.archive({
+      id: archiveIdOf(roomId, state), gameType: game.info.id, gameId: state.gameId, n: state.gameNumber ?? 1,
+      finishedAt: state.finishedAt ?? now(), state, history: room.history, timeline: room.timeline
+    }));
+  }
+
   // Stamps the first start and the first end; a game already stamped finished never reports again, even after an undo
   function stamp(roomId: string, room: Room): void {
     if (room.state.started && room.state.startedAt === undefined) room.state = { ...room.state, startedAt: now() };
@@ -91,15 +151,18 @@ export function createGameManager(
     const state: BaseGameState = { ...room.state, finishedAt };
     room.state = state;
     const { game } = room;
+    archiveRoom(roomId, room);
     const result: GameResult = {
-      archiveId: `${roomId}#${state.gameNumber ?? 1}`,
+      archiveId: archiveIdOf(roomId, state),
       gameType: game.info.id,
       gameId: state.gameId,
       startedAt: state.startedAt ?? finishedAt,
       finishedAt,
       moveCount: room.timeline.length,
       standings: standingsOf(game, state),
-      players: state.activePlayers.map(seat => ({ seat, name: state.playerNames[seat] }))
+      players: state.activePlayers.map(seat => ({
+        seat, name: state.playerNames[seat], ...(state.seatDevices?.[seat] && { deviceId: state.seatDevices[seat] })
+      }))
     };
     // Fewer than two left means the platform ended it after leaves or dismissals, not the game's own rules
     if (state.activePlayers.length < 2) result.abandoned = true;
@@ -220,8 +283,10 @@ export function createGameManager(
   }
 
   function deleteRoom(roomId: string): void {
-    clearTimeout(rooms.get(roomId)?.deadlineTimer);
-    clearInterval(rooms.get(roomId)?.simTimer);
+    const room = rooms.get(roomId);
+    if (room?.state.isGameOver) archiveRoom(roomId, room);
+    clearTimeout(room?.deadlineTimer);
+    clearInterval(room?.simTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
   }
@@ -247,7 +312,7 @@ export function createGameManager(
     room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number
   ): BasePublicState {
     const {
-      seatKeys: _seatKeys, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
+      seatKeys: _seatKeys, seatDevices: _seatDevices, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
       seatViews: _seatViews, reactions: _reactions, ...view
     } = raw;
     const { startedAt, finishedAt, gameNumber } = state;
@@ -290,10 +355,20 @@ export function createGameManager(
     return live(room, { ...base, ...(seatViews && { seatViews }) }, request => request.spectator === spectatorId);
   }
 
-  function findHistoryRoom(gameType: unknown, gameId: unknown) {
+  // The live room, or with `n` the archived game of that number laid out as a room; null unless `credential` was in the game
+  function findHistoryRoom(gameType: unknown, gameId: unknown, credential: unknown, n?: number) {
     const game = findGame(gameType);
-    const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
-    return room ? { game, room } : null;
+    if (!game) return null;
+    const roomId = `${game.info.id}/${cleanName(gameId)}`;
+    let room = rooms.get(roomId);
+    if (n !== undefined) {
+      let archived = undefined as ArchivedGame | undefined;
+      if (Number.isSafeInteger(n) && n > 0) writeStore(roomId, target => { archived = target.loadArchive(`${roomId}#${n}`); });
+      const expired = !archived || archived.finishedAt <= now() - ARCHIVE_TTL_MS;
+      room = expired ? undefined : { game, state: archived!.state, history: archived!.history, timeline: archived!.timeline, watching: new Set(), lastReactionAt: new Map() };
+    }
+    const who = room && access(room.state, typeof credential === 'string' ? credential : undefined);
+    return room && who ? { game, room, who } : null;
   }
 
   function hasEndMoment(room: Room): boolean {
@@ -354,6 +429,7 @@ export function createGameManager(
       playerNames: state.playerNames,
       spectators: state.spectators,
       spectatorKeys: state.spectatorKeys,
+      seatDevices: state.seatDevices,
       handRequests: state.handRequests,
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
@@ -393,6 +469,72 @@ export function createGameManager(
     room.emptyTimer = undefined;
   }
 
+  // Saves the room, first settling an open rematch vote once every seat has answered: with no connected joiner the
+  // vote just closes; otherwise the finished game is archived and the connected joiners sit down in a fresh lobby
+  function settleRematch(roomId: string, room: Room, step?: StepChange): void {
+    const { game, state } = room;
+    const vote = state.rematchVote;
+    if (!vote || state.activePlayers.some(seat => vote.votes[seat] === undefined)) {
+      save(roomId, room, step);
+      return;
+    }
+    const joiners = state.activePlayers.filter(seat => vote.votes[seat]);
+    const seated = joiners.filter(seat => !state.disconnected.includes(seat));
+    if (seated.length === 0) {
+      room.state = { ...state, rematchVote: null, gameStatus: 'Nobody joined the rematch' };
+      save(roomId, room, step);
+      return;
+    }
+
+    archiveRoom(roomId, room); // the game as it ended
+    const rules = houseRulesOf(game.info, state);
+    let next: BaseGameState = {
+      ...game.createGameState(state.gameId),
+      gameNumber: (state.gameNumber ?? 1) + 1,
+      houseRules: { ...rules, host: null },
+      spectators: state.spectators?.map(spectator => ({ ...spectator, allowedSeats: [] })),
+      spectatorKeys: state.spectatorKeys,
+      handRequests: []
+    };
+    const moves: Reseat[] = state.activePlayers.map(from => ({ from, to: null, seatKey: state.seatKeys?.[from] ?? '' }));
+    for (const move of moves.filter(candidate => seated.includes(candidate.from))) {
+      // Last game's values each time, so a rule offered only at the full table survives the smaller tables on the way
+      const proposal = { ...next, houseRules: { ...next.houseRules!, values: rules.values } };
+      const result = addPlayer(game, proposal, state.playerNames[move.from], random);
+      if ('error' in result) break; // unreachable: the same table limit held them all last game
+      move.to = result.seat;
+      const device = state.seatDevices?.[move.from];
+      next = {
+        ...result.state,
+        seatKeys: { ...result.state.seatKeys, [result.seat]: move.seatKey },
+        ...(device && { seatDevices: { ...result.state.seatDevices, [result.seat]: device } })
+      };
+    }
+    // Each seat added cleared the agreements and moved the revision on; the new lobby is one revision past the last game
+    next = { ...next, houseRules: { ...next.houseRules!, revision: rules.revision + 1 } };
+    const leftOut = joiners.filter(seat => !seated.includes(seat)).map(seat => state.playerNames[seat]);
+    if (leftOut.length > 0) {
+      const were = leftOut.length === 1 ? 'was' : 'were';
+      next = { ...next, gameStatus: `${leftOut.join(', ')} ${were} not connected and ${were} left out` };
+    }
+
+    clearEmptyTimer(room);
+    clearTimeout(room.deadlineTimer);
+    clearInterval(room.simTimer);
+    room.deadlineTimer = undefined;
+    room.simTimer = undefined;
+    room.clockSeat = null;
+    room.state = next;
+    room.history = [];
+    room.timeline = [];
+    save(roomId, room);
+    try {
+      hooks.reseated?.(roomId, moves);
+    } catch (error) {
+      console.error(`Could not report reseated players in ${roomId}:`, error);
+    }
+  }
+
   // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
   // No game hook runs but `resumeClock`: a game's disconnect hook may deal the next round once nobody is waiting,
   // and a clock restarts from now, so the time the server was down is never charged
@@ -402,7 +544,7 @@ export function createGameManager(
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     // Nobody is watching either, so no hand request is still open; downtime is never charged to the turn timer
     let state: BaseGameState = {
-      ...saved.state, undoVote: null, dismissVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
+      ...saved.state, undoVote: null, dismissVote: null, rematchVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
     };
     if (game.resumeClock) state = game.resumeClock(state, now());
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
@@ -431,7 +573,7 @@ export function createGameManager(
     // `rejoin` only takes back a held seat; it never creates a game or takes a new seat.
     // A held seat is taken back only with the `seatKey` its player was given on joining
     join(
-      gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown, role?: JoinRole
+      gameType: unknown, gameId: unknown, playerName: unknown, rejoin?: unknown, seatKey?: unknown, role?: JoinRole, deviceId?: unknown
     ): JoinResult {
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
@@ -447,6 +589,7 @@ export function createGameManager(
       const room: Room = existing ?? {
         game, state: game.createGameState(id), history: [], timeline: [], watching: new Set(), lastReactionAt: new Map()
       };
+      if (!existing) room.state = { ...room.state, gameNumber: nextGameNumber(game.info.id, id) };
       const { state } = room;
       const spectator = state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
 
@@ -483,7 +626,7 @@ export function createGameManager(
         const expected = state.seatKeys?.[known];
         if (expected !== undefined && seatKey !== expected) return { error: 'That name is taken in this game' };
         const key = expected ?? randomUUID();
-        room.state = { ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } };
+        room.state = withDevice({ ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } }, known, deviceId);
         clearEmptyTimer(room);
         save(roomId, room);
         return { roomId, seat: known, seatKey: key, state: view(room, known) };
@@ -495,7 +638,7 @@ export function createGameManager(
       if ('error' in result) return result;
 
       const key = randomUUID();
-      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
+      room.state = withDevice({ ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } }, result.seat, deviceId);
       rooms.set(roomId, room);
       save(roomId, room);
       return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
@@ -513,8 +656,8 @@ export function createGameManager(
         deleteRoom(roomId);
         return null;
       }
-      const step = resolveUndoVote(room);
-      save(roomId, room, step);
+      // A disconnect can pass a rematch dismiss, the last answer the rematch was waiting for
+      settleRematch(roomId, room, resolveUndoVote(room));
       startEmptyTimer(roomId, room);
       return { state: view(room, seat) };
     },
@@ -591,6 +734,7 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.rematchVote) return { error: 'A rematch vote is in progress' };
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
@@ -632,8 +776,12 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
-      const held = state.disconnected.find(candidate => candidate === target);
-      if (held === undefined) return { error: 'That player is not disconnected' };
+      // During a rematch vote any seat that has not answered may be dismissed, connected or not
+      const rematch = state.rematchVote;
+      const held = rematch
+        ? state.activePlayers.find(candidate => candidate === target && candidate !== seat && rematch.votes[candidate] === undefined)
+        : state.disconnected.find(candidate => candidate === target);
+      if (held === undefined) return { error: rematch ? 'That player already answered' : 'That player is not disconnected' };
       if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
 
       const opened = {
@@ -642,7 +790,7 @@ export function createGameManager(
         gameStatus: `${state.playerNames[seat]} wants to dismiss ${state.playerNames[held]}`
       };
       settleDismissVote(room, opened); // a lone connected player passes it at once
-      save(roomId, room);
+      settleRematch(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -654,6 +802,7 @@ export function createGameManager(
       const vote = state.dismissVote;
 
       if (!vote) return { error: 'No dismiss vote in progress' };
+      if (seat === vote.target) return { error: 'You cannot vote on your own dismissal' }; // else a silent player could hold a rematch vote open
       if (vote.votes[seat]) return { error: 'You already voted' };
 
       if (approve !== true) {
@@ -665,7 +814,44 @@ export function createGameManager(
 
       const approved = { ...state, dismissVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
       settleDismissVote(room, approved);
-      save(roomId, room);
+      settleRematch(roomId, room);
+      return { state: view(room, seat) };
+    },
+
+    requestRematch(roomId: string, seat: Seat): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { state } = room;
+
+      if (!state.isGameOver) return { error: 'The game is not over yet' };
+      if (state.rematchVote) return { error: 'A rematch vote is already in progress' };
+      if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
+
+      room.state = {
+        ...state,
+        rematchVote: { requestedBy: seat, votes: { [seat]: true } },
+        gameStatus: `${state.playerNames[seat]} wants a rematch`
+      };
+      settleRematch(roomId, room); // a player left alone at the table starts the lobby at once
+      return { state: view(room, seat) };
+    },
+
+    voteRematch(roomId: string, seat: Seat, join: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { state } = room;
+      const vote = state.rematchVote;
+
+      if (typeof join !== 'boolean') return { error: 'Invalid vote' };
+      if (!vote) return { error: 'No rematch vote in progress' };
+      if (vote.votes[seat] !== undefined) return { error: 'You already voted' };
+
+      // An answer settles a dismiss vote against this player, which would otherwise overwrite it
+      const dismissVote = state.dismissVote?.target === seat ? null : state.dismissVote;
+      room.state = { ...state, dismissVote, rematchVote: { ...vote, votes: { ...vote.votes, [seat]: join } } };
+      settleRematch(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -703,21 +889,26 @@ export function createGameManager(
 
     // The starting board, the state right after each move, and the live state when the game ended without a move
     // (everyone else left, a resignation); oldest first. Null when the game does not exist
-    history(gameType: unknown, gameId: unknown): HistoryStep[] | null {
-      const found = findHistoryRoom(gameType, gameId);
-      return found && historyMoments(found.room).map(moment => historyStep(found.room, moment, null));
+    // Every caller sees the table, whatever they were
+    history(gameType: unknown, gameId: unknown, credential: unknown, n?: number): { steps: HistoryStep[] } | { error: typeof NOT_AVAILABLE } {
+      const found = findHistoryRoom(gameType, gameId, credential, n);
+      if (!found) return { error: NOT_AVAILABLE };
+      return { steps: historyMoments(found.room).map(moment => historyStep(found.room, moment, null)) };
     },
 
     // The finished game as a version 2 file: each step as the table sees it plus one view per seat
-    gameFile(gameType: unknown, gameId: unknown, now: Date): { file: GameFile } | { error: string } | null {
-      const found = findHistoryRoom(gameType, gameId);
-      if (!found) return null;
-      const { game, room } = found;
+    // A spectator's file has only the seats that allowed them
+    gameFile(gameType: unknown, gameId: unknown, credential: unknown, now: Date, n?: number): { file: GameFile } | { error: string } {
+      const found = findHistoryRoom(gameType, gameId, credential, n);
+      if (!found) return { error: NOT_AVAILABLE };
+      const { game, room, who } = found;
       if (!room.state.isGameOver) return { error: 'The game is not over yet' };
       const steps = historyMoments(room).map(moment => ({
         ...historyStep(room, moment, null),
         views: Object.fromEntries(
-          Object.keys(moment.state.playerNames).map(seat => [seat, historyStep(room, moment, Number(seat))])
+          Object.keys(moment.state.playerNames)
+            .filter(seat => who.kind === 'player' || who.allowedSeats.includes(Number(seat)))
+            .map(seat => [seat, historyStep(room, moment, Number(seat))])
         )
       }));
       return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };

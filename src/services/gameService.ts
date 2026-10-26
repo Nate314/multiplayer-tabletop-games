@@ -11,6 +11,7 @@ class GameService {
   onGameJoined: ((data: GameJoined) => void) | null;
   onError: ((message: string) => void) | null;
   onReaction: ((reaction: Reaction) => void) | null;
+  onLeftGame: ((message: string) => void) | null;
   onDisconnect: (() => void) | null;
 
   constructor() {
@@ -19,6 +20,7 @@ class GameService {
     this.onGameJoined = null;
     this.onError = null;
     this.onReaction = null;
+    this.onLeftGame = null;
     this.onDisconnect = null;
   }
 
@@ -61,6 +63,9 @@ class GameService {
         break;
       case MESSAGE_TYPES.GAME_ERROR:
         this.onError?.(message.payload.message);
+        break;
+      case MESSAGE_TYPES.LEFT_GAME:
+        this.onLeftGame?.(message.payload.message);
         break;
       case MESSAGE_TYPES.REACTION:
         this.onReaction?.(message.payload);
@@ -106,6 +111,14 @@ class GameService {
 
   voteDismiss(approve: boolean): void {
     this.send({ type: MESSAGE_TYPES.VOTE_DISMISS, payload: { approve } });
+  }
+
+  requestRematch(): void {
+    this.send({ type: MESSAGE_TYPES.REQUEST_REMATCH });
+  }
+
+  voteRematch(join: boolean): void {
+    this.send({ type: MESSAGE_TYPES.VOTE_REMATCH, payload: { join } });
   }
 
   requestHand(seat: Seat): void {

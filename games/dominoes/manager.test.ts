@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { legalPlays, standardTarget, stuckMove } from './rules.ts';
 import { dominoes } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -85,7 +85,7 @@ test('each player sees only their own hand, and the history sees none', () => {
   });
   assert.notDeepEqual(views[0].hand, views[1].hand);
 
-  const history = manager.history('dominoes', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'dominoes') as unknown as PublicGameState[];
   assert.equal(history.length, 7);
   for (const state of [...history, viewOf(manager, null)]) assert.deepEqual(state.hand, []);
 });
@@ -173,8 +173,8 @@ test('every combination of layouts plays whole games, and builds its history and
     let state = viewOf(manager, null);
     for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
     assert.equal(state.isGameOver, true, label);
-    assert.ok(manager.history('dominoes', 'g1')?.length, label);
-    assert.ok('file' in (manager.gameFile('dominoes', 'g1', new Date()) ?? {}), label);
+    assert.ok(stepsOf(manager, 'dominoes')?.length, label);
+    assert.ok('file' in (fileOf(manager, 'dominoes', new Date()) ?? {}), label);
   }
 });
 

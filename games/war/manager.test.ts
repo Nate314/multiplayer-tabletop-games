@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { war } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
@@ -53,11 +53,11 @@ test('a seeded game plays to the end and its file has a view per seat', () => {
   assert.equal(state.isGameOver, true);
   assert.equal(state.pileCounts[state.winners[0]], 52);
 
-  const file = manager.gameFile('war', 'g1', new Date(0));
+  const file = fileOf(manager, 'war', new Date(0));
   if (!file || 'error' in file) assert.fail('expected a game file');
   const views = file.file.steps[1].views ?? assert.fail('expected views');
   assert.deepEqual(Object.keys(views), ['1', '2']);
-  for (const past of manager.history('war', 'g1') as unknown as PublicGameState[]) assert.equal('piles' in past, false);
+  for (const past of stepsOf(manager, 'war') as unknown as PublicGameState[]) assert.equal('piles' in past, false);
 });
 
 test('a rejoin mid-battle shows the card already turned up', () => {

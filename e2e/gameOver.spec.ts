@@ -28,7 +28,7 @@ test('the game-over screen names the winner, the game, its ID and length, and th
   for (const name of ['History', 'See the table', 'Back to games']) {
     await expect(dialog.getByRole('button', { name, exact: true })).toBeVisible();
   }
-  await expect(dialog.getByRole('button', { name: 'Rematch' })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Rematch' })).toBeVisible();
 });
 
 test('a draw says Draw', async ({ seat }) => {

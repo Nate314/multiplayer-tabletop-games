@@ -14,6 +14,7 @@ type Rejoining = { retriesLeft: number; timer?: ReturnType<typeof setTimeout> };
 export default function useGameConnection(joinLink: JoinLink | null = null) {
   const [playerNumber, setPlayerNumber] = useState<Seat | null>(null);
   const [spectatorId, setSpectatorId] = useState<string | null>(null);
+  const [credential, setCredential] = useState<string | undefined>(undefined); // the seat key, or for a spectator the spectator key; opens the history
   const [gameState, setGameState] = useState<BasePublicState | null>(null);
   const [gameType, setGameType] = useState<string | null>(null); // the game being played, remembered or not
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +87,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       seat = data.playerNumber;
       joined = true;
       seatKey.current = data.seatKey;
+      setCredential(data.seatKey);
       // After switching to a player the same socket is seated, so the role is no longer a spectator's
       if (data.playerNumber !== null) joinedAs.current = { ...joinedAs.current, role: 'player' };
       setPlayerNumber(data.playerNumber);
@@ -93,6 +95,10 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setGameState(data.gameState);
       setGameType(joiningGameType.current);
       setError(null);
+      // A rematch reseats into a lobby at the same ID; like any lobby it is not offered for rejoining, so the old game is forgotten
+      const remembered = sessionRef.current;
+      if (!data.gameState.started && remembered?.inGame && remembered.gameType === joiningGameType.current &&
+        remembered.gameId === data.gameState.gameId) updateSession(null);
       rememberIfStarted(data.gameState, seat);
     };
 
@@ -128,6 +134,19 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
         // The game is gone or the player was dismissed: forget it
         updateSession(null);
       }
+      setError(message);
+    };
+
+    // Told after a rematch that the seat is gone: forgotten like a dismissal, back to the list with the message
+    gameService.onLeftGame = (message) => {
+      stopRejoining();
+      gameService.disconnect();
+      seat = null;
+      joined = false;
+      setSpectatorId(null);
+      setPlayerNumber(null);
+      setGameState(null);
+      updateSession(null);
       setError(message);
     };
 
@@ -217,5 +236,11 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     if (remembered?.inGame) updateSession({ ...remembered, inGame: false });
   }, [leave, updateSession]);
 
-  return { playerNumber, spectatorId, gameState, gameType, error, session, join, leave, backToGames, rejoin };
+  // Dropping out of a rematch gives the seat up, so the list has nothing to rejoin
+  const dropGame = useCallback(() => {
+    leave();
+    updateSession(null);
+  }, [leave, updateSession]);
+
+  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, join, leave, backToGames, dropGame, rejoin };
 }

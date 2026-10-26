@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { racko } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
@@ -57,7 +57,7 @@ test('each player sees only their own rack, and the history sees none', () => {
   }
 
   for (let turns = 0; turns < 6; turns++) playTurn(manager);
-  const history = manager.history('racko', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'racko') as unknown as PublicGameState[];
   assert.equal(history.length, 13);
   for (const past of history) assert.deepEqual(past.myRack, []);
 });

@@ -26,7 +26,7 @@ function App() {
   const [playerName, setPlayerName] = useState(initialForm.playerName)
   const [gameId, setGameId] = useState(link?.gameId ?? initialForm.gameId)
   const [role, setRole] = useState(initialForm.role)
-  const { playerNumber, spectatorId, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection(link)
+  const { playerNumber, spectatorId, credential, gameState, gameType, error, session, join, leave, backToGames, dropGame, rejoin } = useGameConnection(link)
   // So a refresh or Back does not reopen the dialog
   useEffect(() => {
     if (window.location.pathname.startsWith('/join/')) window.history.replaceState(null, '', '/')
@@ -69,8 +69,10 @@ function App() {
             gameState={gameState}
             playerNumber={playerNumber}
             spectatorId={spectatorId}
+            credential={credential}
             error={error}
             onBack={backToGames}
+            onDrop={dropGame}
           />
         )}
       </ClientGameGate>

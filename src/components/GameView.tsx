@@ -11,6 +11,7 @@ import PresenceBar from './PresenceBar';
 import HouseRulesPanel from './HouseRulesPanel';
 import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
+import RematchVote from './RematchVote';
 import SpectatorView from './SpectatorView';
 import HandRequestPrompt from './HandRequestPrompt';
 import gameService from '../services/gameService';
@@ -26,12 +27,14 @@ type GameViewProps = {
   gameState: BasePublicState;
   playerNumber: Seat | null;
   spectatorId: string | null;
+  credential: string | undefined;
   error: string | null;
   onBack: () => void;
+  onDrop: () => void; // leaves and forgets the game
 };
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
-export default function GameView({ game, client, gameState, playerNumber, spectatorId, error, onBack }: GameViewProps) {
+export default function GameView({ game, client, gameState, playerNumber, spectatorId, credential, error, onBack, onDrop }: GameViewProps) {
   // App only shows a game once the connection has a seat or a spectator id
   if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
   const { Screen } = client;
@@ -39,12 +42,24 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const choosingRules = !gameState.started; // every game can set the turn timer
   // Nobody can move until everyone agreed, so the game screen is dimmed until then (the server refuses a move anyway)
   const awaitingAgreement = choosingRules && agreementPending(game, gameState);
-  const history = useHistoryDialog(game.id, gameState, client);
+  const history = useHistoryDialog(game.id, gameState, client, credential);
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
-  // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
-  const voting = Boolean(gameState.undoVote || gameState.dismissVote);
+  // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back).
+  // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss.
+  const voting = Boolean(gameState.undoVote || (gameState.dismissVote && gameState.dismissVote.target !== playerNumber));
+  const rematchVote = (
+    <RematchVote
+      gameState={gameState}
+      viewer={playerNumber}
+      onVote={(join) => {
+        gameService.voteRematch(join);
+        if (!join) onDrop();
+      }}
+      onRemove={(seat) => gameService.requestDismiss(seat)}
+    />
+  );
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
@@ -90,13 +105,18 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           client={client}
           gameState={gameState}
           viewer={playerNumber}
-          canRematch={canRematch(gameState, playerNumber)}
+          canRematch={canRematch(gameState, playerNumber) && !gameState.rematchVote}
+          onRematch={() => gameService.requestRematch()}
           onHistory={history.open}
           // Escape in History closes only History
           onSeeTable={() => { if (!history.dialog) setClosed(true); }}
           onBack={onBack}
-        />
+        >
+          {rematchVote}
+        </GameOverDialog>
       )}
+      {/* After See the table the vote shows on its own, with nothing under it to cover */}
+      {gameState.isGameOver && closed && !voting && rematchVote}
       {history.dialog}
     </div>
   );

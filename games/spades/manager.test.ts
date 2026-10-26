@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { canPlayCard, LOSING_SCORE, targetScore } from './rules.ts';
 import { spades } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -76,7 +76,7 @@ test('a short game: each player sees only their own hand, the table sees none', 
   assert.notDeepEqual(views[0].hand, views[1].hand);
   assert.deepEqual(views[0].bids, { 1: 3, 2: 0, 3: 3, 4: 3 });
 
-  const history = manager.history('spades', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'spades') as unknown as PublicGameState[];
   assert.equal(history.length, 13);
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
@@ -123,7 +123,7 @@ test('a whole game played with legal moves ends at 500 or -200', () => {
   assert.equal(state.winners.length, 2);
   assert.ok(Math.max(...state.scores) >= targetScore(state) || Math.min(...state.scores) <= LOSING_SCORE);
   assert.ok(state.handNumber > 1);
-  const file = manager.gameFile('spades', 'g1', new Date());
+  const file = fileOf(manager, 'spades', new Date());
   assert.ok(file && 'file' in file);
 });
 

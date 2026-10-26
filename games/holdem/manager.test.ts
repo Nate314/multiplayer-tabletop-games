@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { options } from './rules.ts';
 import { holdem } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
@@ -69,7 +69,7 @@ test('a whole game of all-ins ends when one player has every chip, and the histo
   assert.equal(state.winners.length, 1);
   assert.equal(state.chips[state.winners[0]], 3000);
 
-  const history = manager.history('holdem', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'holdem') as unknown as PublicGameState[];
   assert.ok(history.length > 2);
   for (const past of history) {
     assert.deepEqual(past.myCards, []);

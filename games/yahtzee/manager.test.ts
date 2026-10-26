@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, fileOf } from '../../server/testing.ts';
 import { yahtzee } from './index.ts';
 import { allowedCategories } from './rules.ts';
 import type { PublicGameState } from './types.ts';
@@ -42,7 +42,7 @@ test('a game of two plays all 13 rounds to a winner', () => {
   assert.equal(state.isGameOver, true);
   assert.ok(state.winners.length >= 1);
   assert.equal(Object.keys(state.sheets[1]).length, 13);
-  const file = manager.gameFile('yahtzee', 'g1', new Date(0));
+  const file = fileOf(manager, 'yahtzee', new Date(0));
   if (!file || 'error' in file) assert.fail('expected a game file');
 });
 

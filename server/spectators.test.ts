@@ -121,7 +121,8 @@ test('history and the game file carry no spectator data', () => {
   ok(manager.move(ROOM, 1, tick));
   ok(manager.move(ROOM, 2, tick));
   ok(manager.move(ROOM, 1, tick));
-  const text = JSON.stringify([manager.history('test', 'g1'), manager.gameFile('test', 'g1', new Date(0))]);
+  const key = manager.rawState(ROOM)?.seatKeys?.[1] as string;
+  const text = JSON.stringify([manager.history('test', 'g1', key), manager.gameFile('test', 'g1', key, new Date(0))]);
   for (const leak of [dana.seatKey, 'spectatorKeys', 'handRequests', 'spectators', 'seatViews']) {
     assert.ok(!text.includes(leak), leak);
   }
@@ -282,4 +283,26 @@ test('a spectator reacts to any player under its own name and cooldown', () => {
   assert.match((manager.react(ROOM, sender, 2, '👍') as { error: string }).error, /^You can react again in/);
   assert.ok('reaction' in manager.react(ROOM, 1, 2, '👍')); // a player's cooldown is separate
   assert.deepEqual(manager.react(ROOM, { spectatorId: 'nobody' }, 1, '😂'), { error: 'You are not in this game' });
+});
+
+test("a spectator's file shows only the seats they were allowed, and their history is a player's", () => {
+  const manager = gameWith('Alice', 'Bob');
+  const dana = watcher(manager, 'Dana');
+  const erin = watcher(manager, 'Erin');
+  ok(manager.move(ROOM, 1, tick));
+  ok(manager.requestHand(ROOM, dana.spectatorId, 2));
+  ok(manager.answerHand(ROOM, 2, dana.spectatorId, true));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  const player = manager.rawState(ROOM)?.seatKeys?.[1] as string;
+  const fileFor = (key: string) => {
+    const result = manager.gameFile('test', 'g1', key, new Date(0));
+    if (!('file' in result)) assert.fail(result.error);
+    return result.file;
+  };
+  for (const step of fileFor(dana.seatKey).steps) assert.deepEqual(Object.keys(step.views ?? {}), ['2']);
+  for (const step of fileFor(erin.seatKey).steps) assert.deepEqual(step.views, {});
+  assert.deepEqual(manager.history('test', 'g1', dana.seatKey), manager.history('test', 'g1', player));
+  const text = JSON.stringify([manager.history('test', 'g1', dana.seatKey), fileFor(dana.seatKey), fileFor(player)]);
+  for (const secret of [player, dana.seatKey, erin.seatKey, 'seatDevices']) assert.ok(!text.includes(secret), secret);
 });

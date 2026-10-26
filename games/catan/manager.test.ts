@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { RESOURCES, boardOf } from './board.ts';
 import { cityError, roadSpots, settlementError, settlementSpotError } from './building.ts';
 import { robberVictims } from './dice.ts';
@@ -161,7 +161,7 @@ test('a seeded game plays to 10 points, and no table step shows a hand', () => {
   assert.equal(state.winners.length, 1);
   assert.ok(state.points[state.winners[0]] >= 10);
 
-  const steps = manager.history('catan', 'g1') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'catan') ?? assert.fail('no history');
   assert.ok(steps.length > 50);
   for (const past of steps) {
     const view = past as unknown as PublicGameState;
@@ -170,7 +170,7 @@ test('a seeded game plays to 10 points, and no table step shows a hand', () => {
     assert.deepEqual(view.myDevCards, []);
     assert.equal(view.steal?.resource ?? null, null);
   }
-  const file = manager.gameFile('catan', 'g1', new Date());
+  const file = fileOf(manager, 'catan', new Date());
   assert.ok(file && 'file' in file);
   const seatView = file.file.steps.at(-1)?.views?.[1] as unknown as PublicGameState;
   assert.ok(seatView.hand !== null);
@@ -206,7 +206,7 @@ test('a seeded six-player game plays to 10 points, and no table step shows a han
   assert.equal(state.layout.hexes.length, 30);
   assert.equal(state.winners.length, 1);
   assert.ok(state.points[state.winners[0]] >= 10);
-  const steps = manager.history('catan', 'g1') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'catan') ?? assert.fail('no history');
   assert.ok(steps.length > 50);
   for (const past of steps) {
     const view = past as unknown as PublicGameState;
@@ -222,7 +222,7 @@ test('a seeded six-player game with the special build phase plays to 10 points',
   const state = playUntil(manager, view => view.isGameOver, 12000);
   assert.equal(state.winners.length, 1);
   assert.ok(state.points[state.winners[0]] >= 10);
-  const steps = (manager.history('catan', 'g1') ?? assert.fail('no history')) as unknown as PublicGameState[];
+  const steps = (stepsOf(manager, 'catan') ?? assert.fail('no history')) as unknown as PublicGameState[];
   assert.ok(steps.some(past => past.lastMove?.type === 'passBuild'));
   assert.ok(steps.some(past => past.lastMove !== null && past.lastMove.type.startsWith('build') && past.lastMove.playerNumber !== past.currentPlayer));
 });

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { skipbo } from './index.ts';
 import { fits } from './rules.ts';
 import type { PublicGameState } from './types.ts';
@@ -67,7 +67,7 @@ test('each player sees only their own hand, and the history sees no hand', () =>
   }
 
   for (let moves = 0; moves < 12; moves++) step(manager);
-  const history = manager.history('skipbo', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'skipbo') as unknown as PublicGameState[];
   assert.equal(history.length, 13);
   for (const past of history) assert.deepEqual(past.myHand, []);
 });
