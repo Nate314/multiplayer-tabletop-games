@@ -11,6 +11,7 @@ import type { JoinRole } from '../../shared/types.ts';
 const JOIN_ROLES: { role: JoinRole; label: string; button: string }[] = [
   { role: 'player', label: 'Player', button: 'Join' },
   { role: 'spectator', label: 'Spectator', button: 'Watch' },
+  { role: 'tableScreen', label: 'Table screen', button: 'Show table' },
 ];
 
 type JoinDialogProps = {
@@ -86,7 +87,7 @@ export default function JoinDialog({
             Watch instead
           </button>
         )}
-        <label className="lobby-field">
+        {role !== 'tableScreen' && <label className="lobby-field">
           Your name
           <input
             type="text"
@@ -95,7 +96,7 @@ export default function JoinDialog({
             maxLength={20}
             autoFocus
           />
-        </label>
+        </label>}
         <label className="lobby-field">
           Game ID
           <input

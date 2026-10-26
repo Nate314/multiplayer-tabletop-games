@@ -56,6 +56,8 @@ test('join form remembers the role', () => {
   installStorage()
   saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'spectator' })
   assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'spectator' })
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'tableScreen' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'tableScreen' })
   installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"nonsense"}' })
   assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'player' })
 })

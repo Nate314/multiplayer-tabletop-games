@@ -20,7 +20,7 @@ function read(storage: () => Storage, key: string): SavedGame | null {
     return null
   }
   const seatKey = typeof saved.seatKey === 'string' ? saved.seatKey : undefined
-  const role = saved.role === 'spectator' ? saved.role : undefined
+  const role = saved.role === 'spectator' || saved.role === 'tableScreen' ? saved.role : undefined
   return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, seatKey, role }
 }
 

@@ -45,7 +45,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     const { name, role } = joinedAs.current;
     const next: Session = {
       gameType: type, gameId: state.gameId, playerName: seat === null ? name : state.playerNames[seat],
-      seatKey: seatKey.current, role: role === 'spectator' ? role : undefined, inGame: true
+      seatKey: seatKey.current, role: role === 'spectator' || role === 'tableScreen' ? role : undefined, inGame: true
     };
     const current = sessionRef.current;
     const unchanged = current?.inGame && current.gameType === next.gameType && current.gameId === next.gameId &&

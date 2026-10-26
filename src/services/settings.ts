@@ -61,7 +61,7 @@ export function loadJoinForm(): JoinForm {
   return {
     playerName: typeof saved?.playerName === 'string' ? saved.playerName : '',
     gameId: typeof saved?.gameId === 'string' ? saved.gameId : '',
-    role: saved?.role === 'spectator' ? 'spectator' : 'player',
+    role: saved?.role === 'spectator' || saved?.role === 'tableScreen' ? saved.role : 'player',
   }
 }
 

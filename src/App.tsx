@@ -116,7 +116,7 @@ function App() {
           onRoleChange={setRole}
           onJoin={(joinRole = role) => {
             saveJoinForm({ playerName, gameId, role: joinRole })
-            join(selected.id, gameId, playerName, joinRole)
+            join(selected.id, gameId, joinRole === 'tableScreen' ? 'Table screen' : playerName, joinRole)
           }}
           onCancel={closeDialog}
         />

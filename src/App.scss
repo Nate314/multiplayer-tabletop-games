@@ -1888,3 +1888,58 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   display: flex;
   gap: 8px;
 }
+
+/* A shared screen is read from across the room: larger type, and the board grows to fill what is left */
+[data-table-screen] {
+  font-size: clamp(18px, 1.6vw, 36px);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+:where([data-table-screen] .table-screen) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75em;
+}
+
+:where([data-table-screen] .table-screen-qr) {
+  width: min(40vh, 60vw);
+  height: min(40vh, 60vw);
+}
+
+:where([data-table-screen] .table-screen-link) {
+  margin: 0;
+  word-break: break-all;
+}
+
+:where([data-table-screen] .table-screen-players) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+:where([data-table-screen] .table-screen-status) {
+  font-size: 1.5em;
+}
+
+:where([data-table-screen] .table-screen-board) {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+:where([data-table-screen] .table-screen-board-content) {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max-content;
+  transform-origin: top center;
+  transform: translateX(-50%) scale(var(--fit-scale, 1));
+}

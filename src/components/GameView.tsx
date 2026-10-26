@@ -12,6 +12,7 @@ import HouseRulesPanel from './HouseRulesPanel';
 import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
 import SpectatorView from './SpectatorView';
+import TableScreenView from './TableScreenView';
 import HandRequestPrompt from './HandRequestPrompt';
 import gameService from '../services/gameService';
 import { agreementPending } from '../../shared/houseRules.ts';
@@ -44,10 +45,11 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const [closed, setClosed] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
-  const voting = Boolean(gameState.undoVote || gameState.dismissVote);
+  const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
+  const voting =Boolean(gameState.undoVote || gameState.dismissVote);
 
   return (
-    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
+    <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined}>
       <header className="game-header">
         <button type="button" className="back-button" onClick={onBack}>Back to games</button>
         <h1>{game.name}</h1>
@@ -74,7 +76,9 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         spectatorId={spectatorId}
         onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
       />
-      {playerNumber === null ? (
+      {tableScreen ? (
+        <TableScreenView game={game} client={client} gameState={gameState} />
+      ) : playerNumber === null ? (
         <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
       ) : (
         <>
