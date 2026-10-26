@@ -331,10 +331,12 @@ test('Catan trade offers and Monopoly auctions can be answered out of turn in Ha
 
   const monopoly = await seat('monopoly', NAMES.slice(0, 2));
   await tableScreen(monopoly);
-  await monopoly.dice(1, 2); // Baltic Avenue, which Alice declines
-  await button(monopoly.pages[0], 'Roll the dice').click();
-  await button(monopoly.pages[0], 'Decline and auction').click();
-  const other = monopoly.pages[1];
+  const first = (await monopoly.state<{ currentPlayer: number }>()).currentPlayer; // the roll-off picks who starts
+  const roller = monopoly.pages[first - 1];
+  await monopoly.dice(1, 2); // Baltic Avenue, which the roller declines
+  await button(roller, 'Roll the dice').click();
+  await button(roller, 'Decline and auction').click();
+  const other = monopoly.pages[2 - first];
   await expect(other.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(other.locator('.board-area >> visible=true')).toHaveCount(0);
   await expect(other.getByRole('region', { name: 'Auction' })).toBeVisible();

@@ -76,9 +76,11 @@ test('pictionary: the table screen never shows the word', async ({ seat }) => {
     await bob.locator('#pictionary-chat-input').fill(text);
     await bob.locator('#pictionary-chat-input').press('Enter');
   };
+  await say('blue pear'); // a public, wrong guess
   await say('red apple');
   await say('only for guessers');
   await expect(alice.locator('.chat-line', { hasText: 'only for guessers' })).toHaveCount(1); // delivered to those allowed
+  await expect(tv.locator('.chat-line', { hasText: 'Bob: blue pear' })).toHaveCount(1);
   await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: 8 letters');
   await expect(tv.locator('.table-screen-status')).toContainText('Bob guessed the word');
   const shown = () => tv.locator('body').innerText();
