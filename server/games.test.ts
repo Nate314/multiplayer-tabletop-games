@@ -1811,6 +1811,8 @@ test('joinLocal is all or nothing', () => {
   assert.deepEqual(current(manager).activePlayers, [1, 2]);
   assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'Cy']), { error: 'Cy is already in this game' });
   assert.deepEqual(current(manager).activePlayers, [1, 2]);
+  manager.join('test', 'g1', 'Fay');
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Ann', 'Bo']), { error: 'Only 1 seat left in this game' });
 });
 
 test('joinLocal is refused for a game that cannot be shared', () => {

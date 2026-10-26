@@ -13,6 +13,8 @@ import HouseRulesSection from './HouseRulesSection';
 import DismissVote from './DismissVote';
 import SpectatorView from './SpectatorView';
 import HandRequestPrompt from './HandRequestPrompt';
+import HandoffScreen from './HandoffScreen';
+import PassAndPlayBar from './PassAndPlayBar';
 import gameService from '../services/gameService';
 import { agreementPending } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
@@ -26,14 +28,16 @@ type GameViewProps = {
   gameState: BasePublicState;
   playerNumber: Seat | null;
   spectatorId: string | null;
+  localSeats: { seat: Seat; name: string }[] | null; // a pass-and-play device's seats, null for any other join
+  onShowSeat: (seat: Seat | null) => void;
   error: string | null;
   onBack: () => void;
 };
 
 // The game's styles are scoped to data-game, so only this game's look applies while it is on screen
-export default function GameView({ game, client, gameState, playerNumber, spectatorId, error, onBack }: GameViewProps) {
-  // App only shows a game once the connection has a seat or a spectator id
-  if (playerNumber === null && spectatorId === null) throw new Error('A joined game has a seat or a spectator id');
+export default function GameView({ game, client, gameState, playerNumber, spectatorId, localSeats, onShowSeat, error, onBack }: GameViewProps) {
+  // App only shows a game once the connection has a seat, a spectator id or local seats
+  if (playerNumber === null && spectatorId === null && localSeats === null) throw new Error('A joined game has a seat, a spectator id or local seats');
   const { Screen } = client;
   useStateSounds(gameState, playerNumber, true);
   const choosingRules = !gameState.started; // every game can set the turn timer
@@ -45,6 +49,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back)
   const voting = Boolean(gameState.undoVote || gameState.dismissVote);
+  // Nothing is private before the first move, so a shared device sets and agrees to the rules during a handoff too (Agree counts for every local seat)
+  const rulesSeat = playerNumber ?? localSeats?.[0]?.seat ?? null;
 
   return (
     <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined}>
@@ -74,12 +80,16 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         spectatorId={spectatorId}
         onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
       />
-      {playerNumber === null ? (
+      {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
+      {localSeats && playerNumber === null ? (
+        <HandoffScreen client={client} gameState={gameState} localSeats={localSeats} onShow={onShowSeat} />
+      ) : playerNumber === null ? (
         <SpectatorView client={client} gameState={gameState} spectatorId={spectatorId!} error={error} />
       ) : (
         <>
-          {choosingRules && <HouseRulesPanel game={game} gameState={gameState} playerNumber={playerNumber} error={error} />}
-          <Screen gameState={gameState} playerNumber={playerNumber} error={error} />
+          {localSeats && <PassAndPlayBar name={gameState.playerNames[playerNumber]} onPass={() => onShowSeat(null)} />}
+          {/* Remounted per shown seat, so nothing one player picked (a pass, a rack order) shows to the next */}
+          <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} />
           <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
           <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
         </>

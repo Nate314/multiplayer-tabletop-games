@@ -26,12 +26,13 @@ function App() {
   const [playerName, setPlayerName] = useState(initialForm.playerName)
   const [gameId, setGameId] = useState(link?.gameId ?? initialForm.gameId)
   const [role, setRole] = useState(initialForm.role)
-  const { playerNumber, spectatorId, gameState, gameType, error, session, join, leave, backToGames, rejoin } = useGameConnection(link)
+  const [localNames, setLocalNames] = useState(initialForm.localNames ?? ['', ''])
+  const { playerNumber, spectatorId, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, rejoin } = useGameConnection(link)
   // So a refresh or Back does not reopen the dialog
   useEffect(() => {
     if (window.location.pathname.startsWith('/join/')) window.history.replaceState(null, '', '/')
   }, [])
-  const joined = gameState !== null && (playerNumber !== null || spectatorId !== null)
+  const joined = gameState !== null && (playerNumber !== null || spectatorId !== null || localSeats !== null)
   // The game on screen however it was joined: dialog, refresh or rejoin button
   const joinedGame = GAME_INFOS.find(({ id }) => id === gameType)
   // The remembered game the list offers to rejoin, which may differ from a lobby just left
@@ -69,6 +70,8 @@ function App() {
             gameState={gameState}
             playerNumber={playerNumber}
             spectatorId={spectatorId}
+            localSeats={localSeats}
+            onShowSeat={showSeat}
             error={error}
             onBack={backToGames}
           />
@@ -114,9 +117,11 @@ function App() {
           onGameIdChange={setGameId}
           role={role}
           onRoleChange={setRole}
+          localNames={localNames}
+          onLocalNamesChange={setLocalNames}
           onJoin={(joinRole = role) => {
-            saveJoinForm({ playerName, gameId, role: joinRole })
-            join(selected.id, gameId, playerName, joinRole)
+            saveJoinForm({ playerName, gameId, role: joinRole, localNames })
+            join(selected.id, gameId, playerName, joinRole, localNames)
           }}
           onCancel={closeDialog}
         />

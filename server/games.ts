@@ -14,6 +14,7 @@ import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
 import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
+import { plural } from '../shared/text.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
@@ -537,7 +538,7 @@ export function createGameManager(
       const room = existing ?? newRoom(game, id);
       const free = tableLimit(game.info, room.state) - room.state.activePlayers.length;
       if (rejoin !== true && !room.state.started && free > 0 && cleaned.length > free) {
-        return { error: `Only ${free} seats left in this game` };
+        return { error: `Only ${plural(free, 'seat')} left in this game` };
       }
 
       const keys = Array.isArray(seatKeys) ? seatKeys : [];
