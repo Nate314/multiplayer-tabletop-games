@@ -162,6 +162,31 @@ test('a challenged hand reaches the challenger\'s view only, never the others or
   for (const past of (stepsOf(manager, 'uno') as unknown as PublicGameState[])) assert.equal(past.revealed, null);
 });
 
+test('a spectator allowed on the challenger never gets the challenged hand, live or in the game file', () => {
+  const manager = gameWith('A', 'B', 'C');
+  const dana = manager.join('uno', 'g1', 'Dana', false, undefined, 'spectator');
+  if ('error' in dana || !dana.spectatorId) assert.fail('Dana could not watch');
+  let state = viewOf(manager, null);
+  for (let moves = 0; !state.pendingFour && moves < 5000; moves++) state = step(manager);
+  const pending = state.pendingFour ?? assert.fail('no Wild Draw Four was played');
+  ok(manager.requestHand(ROOM, dana.spectatorId, pending.target));
+  ok(manager.answerHand(ROOM, pending.target, dana.spectatorId, true));
+
+  ok(manager.move(ROOM, pending.target, { type: 'challenge' }));
+  assert.notEqual(viewOf(manager, pending.target).revealed, null); // the challenger still sees it
+  const seen = manager.getSpectatorState(ROOM, dana.spectatorId) as PublicGameState & { seatViews: Record<number, object> };
+  assert.ok('hand' in seen.seatViews[pending.target]);
+  assert.equal('revealed' in seen.seatViews[pending.target], false);
+
+  for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
+  const file = manager.gameFile('uno', 'g1', dana.seatKey, new Date(0));
+  if (!('file' in file)) assert.fail(file.error);
+  for (const { views } of file.file.steps) {
+    assert.deepEqual(Object.keys(views ?? {}), [String(pending.target)]);
+    assert.ok(!(views?.[pending.target] as Partial<PublicGameState>).revealed);
+  }
+});
+
 test('dismissing a player mid-game skips their seat', () => {
   const manager = gameWith('A', 'B', 'C');
   step(manager);

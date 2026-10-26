@@ -1,11 +1,13 @@
+import { randomInt } from 'node:crypto';
 import type { Random } from '../../shared/types.ts';
 
 export const LINK_CODE_TTL_MS = 10 * 60 * 1000;
 const LETTERS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // no 0, O, 1, I or L, which read alike
 
-// One-use codes that let another device join this device's person.
+// One-use codes that let another device join this device's person. A code is a credential, so the default random
+// source is crypto; tests pass their own.
 // shortcut: kept in memory, so a restart voids open codes; fine for a 10 minute code
-export function createLinkCodes(now: () => number = Date.now, random: Random = Math.random) {
+export function createLinkCodes(now: () => number = Date.now, random: Random = () => randomInt(2 ** 32) / 2 ** 32) {
   const open = new Map<string, { hash: string; expiresAt: number }>(); // by the code without its dash
 
   return {

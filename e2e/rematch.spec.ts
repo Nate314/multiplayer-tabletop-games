@@ -57,6 +57,7 @@ test('a player who does not answer can be removed', async ({ seat }) => {
   const table = await finished(seat, 'yahtzee', ['Alice', 'Bob', 'Cara']);
   const [alice, bob, cara] = table.pages;
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
+  await gameOver(bob).getByRole('button', { name: 'Join', exact: true }).click();
   await alice.locator('.rematch-vote li', { hasText: 'Cara' }).getByRole('button', { name: 'Remove' }).click();
   // The target answers the rematch instead of voting on their own dismissal, and is not listed as a voter
   await expect(gameOver(cara).getByRole('button', { name: 'Join', exact: true })).toBeVisible();
@@ -64,14 +65,28 @@ test('a player who does not answer can be removed', async ({ seat }) => {
   await expect(cara.locator('.dismiss-vote')).toHaveCount(0);
   await expect(bob.locator('.dismiss-vote li')).toHaveCount(2);
   await expect(bob.locator('.dismiss-vote li', { hasText: 'Cara' })).toHaveCount(0);
-  await bob.locator('.dismiss-vote').getByRole('button', { name: 'Approve' }).click();
-  await bob.getByRole('button', { name: 'Join', exact: true }).click(); // the lobby opens once the last seat answered
+  await bob.locator('.dismiss-vote').getByRole('button', { name: 'Approve' }).click(); // the lobby opens once the last seat answered
   await expect(cara.getByText('You left after the game')).toBeVisible();
   await expect(cara.getByRole('button', { name: /Rejoin/ })).toHaveCount(0);
   for (const page of [alice, bob]) {
     await expect(lobbyNames(page)).toHaveCount(2);
     await expect(lobbyNames(page).filter({ hasText: 'Cara' })).toHaveCount(0);
   }
+});
+
+test('a silent player cannot hold up a Remove, and can be removed too', async ({ seat }) => {
+  const table = await finished(seat, 'yahtzee', ['Alice', 'Bob', 'Cara']);
+  const [alice, bob, cara] = table.pages;
+  await gameOver(cara).getByRole('button', { name: 'Rematch' }).click();
+  // Bob is connected but has not answered, so Cara's Remove decides it at once
+  await cara.locator('.rematch-vote li', { hasText: 'Alice' }).getByRole('button', { name: 'Remove' }).click();
+  await expect(cara.locator('.rematch-vote li', { hasText: 'Alice' }).getByRole('button', { name: 'Remove' })).toHaveCount(0);
+  await expect(bob.locator('.dismiss-vote')).toHaveCount(0);
+  await cara.locator('.rematch-vote li', { hasText: 'Bob' }).getByRole('button', { name: 'Remove' }).click();
+  for (const page of [alice, bob]) await expect(page.getByText('You left after the game')).toBeVisible();
+  // Cara alone is seated in the fresh lobby, where the house rules panel waits for players
+  await expect(gameOver(cara)).toHaveCount(0);
+  await expect(cara.locator('.house-rules-panel')).toBeVisible();
 });
 
 test('a spectator keeps watching and cannot vote', async ({ seat, browser, server }) => {

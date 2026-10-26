@@ -17,6 +17,7 @@ export const uno: GameDefinition<GameState, PublicGameState> = {
   allowsOutOfTurn,
   onUndo: (state, random) => ({ ...state, drawPile: shuffle(state.drawPile, random) }),
   toPublicState,
-  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'drawnCard', 'revealed']),
+  // Not `revealed`: that is another seat's hand, which the challenger alone may see
+  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'drawnCard']),
   finalStandings
 };

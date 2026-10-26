@@ -21,6 +21,7 @@ import HandoffScreen from './HandoffScreen';
 import PassAndPlayBar from './PassAndPlayBar';
 import gameService from '../services/gameService';
 import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
+import { dismissVoters } from '../../shared/seating.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
@@ -57,8 +58,10 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const [closed, setClosed] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back).
-  // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss.
-  const voting = Boolean(gameState.undoVote || (gameState.dismissVote && gameState.dismissVote.target !== playerNumber));
+  // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss,
+  // and only the seats that joined the rematch have a say.
+  const dismissVoting = gameState.dismissVote && (playerNumber === null || dismissVoters(gameState).includes(playerNumber));
+  const voting = Boolean(gameState.undoVote || dismissVoting);
   const rematchVote = (
     <RematchVote
       gameState={gameState}

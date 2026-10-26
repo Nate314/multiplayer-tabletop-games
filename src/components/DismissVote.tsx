@@ -1,5 +1,5 @@
 import VotePanel from './VotePanel';
-import { connectedPlayers } from '../../shared/seating.ts';
+import { dismissVoters } from '../../shared/seating.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
 type DismissVoteProps = {
@@ -11,8 +11,10 @@ type DismissVoteProps = {
 // Shows the open dismiss vote, if any
 export default function DismissVote({ gameState, playerNumber, onVote }: DismissVoteProps) {
   const vote = gameState.dismissVote;
-  // The target never votes on their own dismissal; in a rematch they answer the rematch instead
-  if (!vote || vote.target === playerNumber) return null;
+  // The target never votes on their own dismissal; in a rematch they answer the rematch instead,
+  // and only the seats that joined it have a say
+  const voters = dismissVoters(gameState);
+  if (!vote || !voters.includes(playerNumber)) return null;
 
   const { playerNames } = gameState;
   return (
@@ -23,7 +25,7 @@ export default function DismissVote({ gameState, playerNumber, onVote }: Dismiss
       gameState={gameState}
       playerNumber={playerNumber}
       onVote={onVote}
-      voters={connectedPlayers(gameState).filter(seat => seat !== vote.target)}
+      voters={voters}
     />
   );
 }

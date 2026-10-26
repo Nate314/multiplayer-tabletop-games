@@ -2,7 +2,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { SIMULATION_TICK_MS, type GameDefinition } from '../shared/gameDefinition.ts';
 import {
   addPlayer, applyMove, connectedPlayers, disconnectPlayer, findSeatByName, reconnectPlayer, removePlayer,
-  resolveDismissVote
+  dismissVoters, resolveDismissVote
 } from '../shared/seating.ts';
 import {
   agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules, tableLimit
@@ -914,6 +914,7 @@ export function createGameManager(
       if (!vote) return { error: 'No dismiss vote in progress' };
       if (seat === vote.target) return { error: 'You cannot vote on your own dismissal' }; // else a silent player could hold a rematch vote open
       if (vote.votes[seat]) return { error: 'You already voted' };
+      if (!dismissVoters(state).includes(seat)) return { error: 'Only players who joined the rematch vote on this' };
 
       if (approve !== true) {
         const gameStatus = `${state.playerNames[seat]} declined to dismiss ${state.playerNames[vote.target]}`;
@@ -1007,20 +1008,28 @@ export function createGameManager(
     },
 
     // The finished game as a version 2 file: each step as the table sees it plus one view per seat
-    // A spectator's file has only the seats that allowed them
+    // A spectator's file has only the seats that allowed them, each as the table plus that seat's private fields,
+    // the same as their live view, so nothing a seat saw of another seat (an UNO challenge) reaches them
     gameFile(gameType: unknown, gameId: unknown, credential: unknown, now: Date, n?: number): { file: GameFile } | { error: string } {
       const found = findHistoryRoom(gameType, gameId, credential, n);
       if (!found) return { error: NOT_AVAILABLE };
       const { game, room, who } = found;
       if (!room.state.isGameOver) return { error: 'The game is not over yet' };
-      const steps = historyMoments(room).map(moment => ({
-        ...historyStep(room, moment, null),
-        views: Object.fromEntries(
-          Object.keys(moment.state.playerNames)
-            .filter(seat => who.kind === 'player' || who.allowedSeats.includes(Number(seat)))
-            .map(seat => [seat, historyStep(room, moment, Number(seat))])
-        )
-      }));
+      const { privateSeatView } = room.game;
+      const steps = historyMoments(room).map(moment => {
+        const table = historyStep(room, moment, null);
+        const seatView = (seat: Seat): HistoryStep => who.kind === 'player' || !privateSeatView
+          ? historyStep(room, moment, seat)
+          : { ...table, ...(privateSeatView(moment.state, seat) as object) };
+        return {
+          ...table,
+          views: Object.fromEntries(
+            Object.keys(moment.state.playerNames)
+              .filter(seat => who.kind === 'player' || who.allowedSeats.includes(Number(seat)))
+              .map(seat => [seat, seatView(Number(seat))])
+          )
+        };
+      });
       return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };
     },
 

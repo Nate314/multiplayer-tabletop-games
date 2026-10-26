@@ -69,6 +69,10 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   ]
 };
 
+// Fields of a seat's view that show another seat's secrets (UNO's challenged hand): privateSeatView leaves them out,
+// so a spectator allowed on one seat never learns another's, and the table view's value stands
+const OTHER_SEATS_SECRETS: Record<string, string[]> = { uno: ['revealed'] };
+
 for (const game of GAMES) {
   const id = game.info.id;
   const seatsOf = () => [dealt(game), ...(CASES[id]?.(dealt(game)) ?? [])]
@@ -93,10 +97,10 @@ for (const game of GAMES) {
 
       it("the table view plus privateSeatView is the seat's own view", () => {
         for (const [s, seat] of seatsOf()) {
-          assert.deepEqual(
-            { ...game.toPublicState(s, false, null), ...(game.privateSeatView!(s, seat) as object) },
-            game.toPublicState(s, false, seat)
-          );
+          const table = game.toPublicState(s, false, null) as Record<string, unknown>;
+          const own = { ...game.toPublicState(s, false, seat) } as Record<string, unknown>;
+          for (const key of OTHER_SEATS_SECRETS[id] ?? []) own[key] = table[key];
+          assert.deepEqual({ ...table, ...(game.privateSeatView!(s, seat) as object) }, own);
         }
       });
     } else {

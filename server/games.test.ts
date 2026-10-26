@@ -121,7 +121,9 @@ test('browsers never receive hidden fields', () => {
 });
 
 test('moves are validated and recorded for undo', () => {
-  const manager = gameWith('A', 'B');
+  // A fixed clock, so the two views below cannot straddle a millisecond in their serverTime
+  const manager = rememberingKeys(createGameManager([testGame], seededRandom, undefined, { now: () => 1234 }), keys);
+  for (const name of ['A', 'B']) manager.join('test', 'g1', name);
   assert.equal(current(manager).undoAvailable, false);
   assert.deepEqual(manager.move('test/nope', 1, tick), { error: 'Game not found' });
   assert.deepEqual(manager.move(ROOM, 3, tick), { error: 'You are not in this game' });
@@ -2267,8 +2269,7 @@ test('a dismiss of a disconnected non-responder during a rematch vote removes no
   const { manager } = finishedRematch();
   ok(manager.requestRematch(ROOM, 1));
   manager.disconnect(ROOM, 3);
-  ok(manager.requestDismiss(ROOM, 1, 3));
-  ok(manager.voteDismiss(ROOM, 2, true));
+  ok(manager.requestDismiss(ROOM, 1, 3)); // B has not answered the rematch, so A's vote decides it
   const state = manager.rawState(ROOM) as BaseGameState;
   assert.deepEqual(state.rematchVote?.votes, { 1: true, 3: false });
   assert.deepEqual(state.activePlayers, [1, 2, 3]);
@@ -2289,11 +2290,51 @@ test('a reseated hook that throws does not stop the reset', (t: TestContext) => 
 test('answering ends the dismiss vote against you', () => {
   const { manager } = finishedRematch();
   ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
   ok(manager.requestDismiss(ROOM, 1, 3));
   ok(manager.voteRematch(ROOM, 3, true));
   const state = manager.rawState(ROOM) as BaseGameState;
   assert.equal(state.dismissVote, null);
-  assert.deepEqual(state.rematchVote?.votes, { 1: true, 3: true });
+  assert.deepEqual(seatsAndNames(state), [[1, 'A'], [2, 'B'], [3, 'C']]); // C joined, so the rematch went ahead with C
+});
+
+test('a silent connected player never blocks a Remove during a rematch vote', () => {
+  const { manager } = finishedRematch(['X', 'Y', 'Z']);
+  ok(manager.requestRematch(ROOM, 3));
+  ok(manager.requestDismiss(ROOM, 3, 1)); // Y is connected but has not answered, so Z's vote decides it
+  let state = manager.rawState(ROOM) as BaseGameState;
+  assert.equal(state.dismissVote, null);
+  assert.deepEqual(state.rematchVote?.votes, { 3: true, 1: false });
+  ok(manager.requestDismiss(ROOM, 3, 2));
+  state = manager.rawState(ROOM) as BaseGameState;
+  assert.equal(state.started, false);
+  assert.equal(state.gameNumber, 2);
+  assert.deepEqual(seatsAndNames(state), [[1, 'Z']]);
+});
+
+test('during a rematch vote only seats that joined vote on a Remove', () => {
+  const { manager } = finishedRematch(['A', 'B', 'C', 'D']);
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.deepEqual(manager.voteDismiss(ROOM, 4, false), { error: 'Only players who joined the rematch vote on this' });
+  ok(manager.voteRematch(ROOM, 4, false));
+  assert.deepEqual(manager.voteDismiss(ROOM, 4, false), { error: 'Only players who joined the rematch vote on this' });
+  assert.notEqual(manager.rawState(ROOM)?.dismissVote, null); // waits for B, who answered
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(seatsAndNames(manager.rawState(ROOM) as BaseGameState), [[1, 'A'], [2, 'B']]); // C counted as Drop, so the lobby opened
+});
+
+test('a dismiss outside a rematch vote still needs every connected player but the target', () => {
+  const manager = rememberingKeys(createGameManager([testGame], seededRandom), keys);
+  for (const name of ['A', 'B', 'C']) joined(manager.join('test', 'g1', name));
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.deepEqual(manager.rawState(ROOM)?.activePlayers, [1, 2, 3]);
+  ok(manager.voteDismiss(ROOM, 2, true));
+  assert.deepEqual(manager.rawState(ROOM)?.activePlayers, [1, 2]);
 });
 
 test('a disconnected joiner is left out', () => {
