@@ -35,6 +35,13 @@ test('fills across antialiased pixels within the tolerance', () => {
   assert.deepEqual(at(4, 0), [120, 120, 120, 255]);
 });
 
+test('a fill outside the image does nothing', () => {
+  const { pixels } = image(4, 4);
+  const before = [...pixels];
+  for (const [x, y] of [[4, 0], [0, 4], [-1, 0], [4, 4]]) floodFill(pixels, 4, 4, x, y, RED);
+  assert.deepEqual([...pixels], before);
+});
+
 test('a fill on the same color does nothing', () => {
   const { pixels } = image(4, 4, RED);
   const before = [...pixels];

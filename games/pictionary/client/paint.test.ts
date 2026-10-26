@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { paint } from './paint.ts';
+import { drawLine, paint } from './paint.ts';
 import { BRUSH_SIZES, CANVAS_H, CANVAS_W, PALETTE } from '../clock.ts';
 import type { Stroke } from '../types.ts';
 
@@ -31,9 +31,14 @@ test('paint draws strokes in order and erases in white', () => {
   paint(ctx, strokes);
   assert.deepEqual(calls, [
     'fillStyle=#ffffff', `fillRect 0 0 ${CANVAS_W} ${CANVAS_H}`,
-    'lineCap=round', 'lineJoin=round',
-    `strokeStyle=${PALETTE[2]}`, `lineWidth=${BRUSH_SIZES[0]}`, 'beginPath', 'moveTo 1 2', 'lineTo 3 4', 'stroke',
-    `strokeStyle=${PALETTE[1]}`, `lineWidth=${BRUSH_SIZES[2]}`, 'beginPath', 'moveTo 5 6', 'lineTo 5 6', 'stroke',
+    'lineCap=round', 'lineJoin=round', `strokeStyle=${PALETTE[2]}`, `lineWidth=${BRUSH_SIZES[0]}`, 'beginPath', 'moveTo 1 2', 'lineTo 3 4', 'stroke',
+    'lineCap=round', 'lineJoin=round', `strokeStyle=${PALETTE[1]}`, `lineWidth=${BRUSH_SIZES[2]}`, 'beginPath', 'moveTo 5 6', 'lineTo 5 6', 'stroke',
     `getImageData 0 0 ${CANVAS_W} ${CANVAS_H}`, 'putImageData'
   ]);
+});
+
+test('drawLine from a point draws only the new points, joined to the one before', () => {
+  const { ctx, calls } = recorder();
+  drawLine(ctx, { id: 1, kind: 'line', tool: 'pen', color: 0, size: 1, points: [1, 2, 3, 4, 5, 6, 7, 8] }, 4);
+  assert.deepEqual(calls.slice(-5), ['beginPath', 'moveTo 3 4', 'lineTo 5 6', 'lineTo 7 8', 'stroke']);
 });

@@ -4,12 +4,16 @@ export function floodFill(
   pixels: Uint8ClampedArray, width: number, height: number, x: number, y: number,
   rgba: [number, number, number, number], tolerance = 32
 ): void {
+  if (x < 0 || y < 0 || x >= width || y >= height) return;
   const start = (y * width + x) * 4;
-  const target = [pixels[start], pixels[start + 1], pixels[start + 2], pixels[start + 3]];
-  if (target.every((value, i) => value === rgba[i])) return;
+  const [r, g, b, a] = [pixels[start], pixels[start + 1], pixels[start + 2], pixels[start + 3]];
+  if (r === rgba[0] && g === rgba[1] && b === rgba[2] && a === rgba[3]) return;
   const seen = new Uint8Array(width * height);
-  const matches = (pixel: number) => !seen[pixel]
-    && target.every((value, i) => Math.abs(pixels[pixel * 4 + i] - value) <= tolerance);
+  const matches = (pixel: number) => {
+    const i = pixel * 4;
+    return !seen[pixel] && Math.abs(pixels[i] - r) <= tolerance && Math.abs(pixels[i + 1] - g) <= tolerance
+      && Math.abs(pixels[i + 2] - b) <= tolerance && Math.abs(pixels[i + 3] - a) <= tolerance;
+  };
   const stack = [y * width + x];
   while (stack.length > 0) {
     const pixel = stack.pop() as number;

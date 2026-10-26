@@ -23,7 +23,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Why can some players not see my messages?',
-    answer: 'Once you have guessed the word, what you type until the turn ends is seen only by the drawer and the others who have guessed, so nobody can give the word away. Those lines are marked "Only players who guessed can see this". Everyone sees them when the word is shown.'
+    answer: 'Once you have guessed the word, what you type until the turn ends is seen only by the drawer and the others who have guessed, so nobody can give the word away. Those lines are marked "Only players who guessed can see this". Everyone sees them when the word is shown. The drawer cannot chat while drawing.'
   },
   {
     question: 'How is a guess scored?',
