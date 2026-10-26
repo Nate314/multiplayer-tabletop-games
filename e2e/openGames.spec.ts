@@ -48,3 +48,16 @@ test('a long name wraps instead of scrolling sideways at 320 px', async ({ brows
   await expect(page.locator('.open-game').first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
+
+test('tapping a game in progress opens the dialog with Spectator picked', async ({ browser, server, seat }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const page = await newPlayer(browser, server);
+  await page.goto('/');
+  await page.locator('.open-game', { hasText: `ID ${table.gameId}` }).click();
+  const dialog = page.getByRole('dialog', { name: 'Join Connect Four' });
+  await expect(dialog.getByRole('button', { name: 'Spectator' })).toHaveAttribute('aria-pressed', 'true');
+  await dialog.getByLabel('Your name').fill('Cara');
+  await dialog.getByRole('button', { name: 'Watch', exact: true }).click();
+  await expect(page.getByText('Watching: Cara')).toBeVisible();
+});

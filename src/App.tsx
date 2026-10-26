@@ -12,6 +12,7 @@ import GitHubLink from './components/GitHubLink'
 import SettingsButton from './components/SettingsButton'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJoinForm, saveJoinForm } from './services/settings.ts'
+import { joinRoleFor } from './services/openGames.ts'
 import { parseJoinLink } from './services/share.ts'
 import './App.scss'
 
@@ -96,6 +97,8 @@ function App() {
           games={GAME_INFOS}
           onSelect={game => {
             setGameId(game.gameId)
+            const info = GAME_INFOS.find(({ id }) => id === game.gameType)
+            if (info) setRole(joinRoleFor(game, info.maxPlayers))
             openDialog(game.gameType)
           }}
         />

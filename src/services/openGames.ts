@@ -23,5 +23,6 @@ export const fetchOpenGames = async (): Promise<OpenGame[] | 'off' | 'failed'> =
 export const describeOpenGame = (game: OpenGame, gameName: string): string =>
   `${game.players.join(', ')} ${game.playing ? `currently playing ${gameName}` : 'in the lobby'}`;
 
-// A game in progress can only be watched
-export const joinRoleFor = (game: OpenGame): 'player' | 'spectator' => (game.playing ? 'spectator' : 'player');
+// A game in progress, or a lobby already at its standard table size, can only be watched (a host-stretched table may still have room)
+export const joinRoleFor = (game: OpenGame, maxPlayers: number): 'player' | 'spectator' =>
+  (game.playing || game.players.length >= maxPlayers ? 'spectator' : 'player');

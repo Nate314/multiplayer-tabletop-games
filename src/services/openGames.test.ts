@@ -10,9 +10,10 @@ test('a game is described by its players and state', () => {
   assert.equal(describeOpenGame(lobby, 'Chess'), 'Alice in the lobby');
   assert.equal(describeOpenGame({ ...lobby, players: ['Alice', 'Bob'], playing: true }, 'Chess'), 'Alice, Bob currently playing Chess');
 });
-test('a game in progress is joined as a spectator', () => {
-  assert.equal(joinRoleFor(lobby), 'player');
-  assert.equal(joinRoleFor({ ...lobby, playing: true }), 'spectator');
+test('a game in progress or a full lobby is joined as a spectator', () => {
+  assert.equal(joinRoleFor(lobby, 2), 'player');
+  assert.equal(joinRoleFor({ ...lobby, players: ['Alice', 'Bob'] }, 2), 'spectator');
+  assert.equal(joinRoleFor({ ...lobby, playing: true }, 2), 'spectator');
 });
 test('a 404 means the server does not list games', async () => {
   stubFetch(respond(404));
