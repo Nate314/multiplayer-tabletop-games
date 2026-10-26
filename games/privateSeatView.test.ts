@@ -76,6 +76,21 @@ for (const game of GAMES) {
 
   describe(id, () => {
     if (game.privateSeatView) {
+      if (game.spectatorsSeeEverySeat) {
+        it("an ordinary spectator's view holds everything privateSeatView gives each seat", () => {
+          for (const [s, seat] of seatsOf()) {
+            const { seatViews: _seatViews, ...spectated } = spectatorView(game, s, EVE) as Record<string, unknown>;
+            for (const [key, value] of Object.entries(game.privateSeatView!(s, seat) as Record<string, unknown>)) {
+              if (value === null || (Array.isArray(value) && value.length === 0)) continue; // nothing private in this field for the seat
+              if (Array.isArray(value) && key === 'chat') {
+                const lines = spectated[key] as unknown[];
+                for (const line of value) assert.ok(lines.some(candidate => JSON.stringify(candidate) === JSON.stringify(line)), `${key} line of seat ${seat}`);
+              } else assert.deepEqual(spectated[key], value, `${key} of seat ${seat}`);
+            }
+          }
+        });
+      }
+
       it("the table view plus privateSeatView is the seat's own view", () => {
         for (const [s, seat] of seatsOf()) {
           assert.deepEqual(

@@ -66,13 +66,13 @@ test('a correct guess shows as "<name> guessed the word!" and never as the guess
   assert.equal(state.lastMove?.type, 'guess');
 });
 
-test('a near guess shows "So close!" only to the guesser', () => {
+test('a near guess shows "So close!" to the guesser and spectators, never the table', () => {
   const state = chat(drawing(), 2, 'xylophon');
   const own = toPublicState(state, false, 2).chat;
   assert.equal(own.at(-1)?.kind, 'close');
   assert.ok(own.at(-1)?.text.includes('xylophon'));
   assert.ok(own.at(-1)?.text.includes('So close!'));
-  for (const view of [toPublicState(state, false, 3), toPublicState(state, false, null), spectatorState(state, false, false)]) {
+  for (const view of [toPublicState(state, false, 3), toPublicState(state, false, null), spectatorState(state, false, true)]) {
     assert.equal(view.chat.some(line => line.kind === 'close'), false);
     assert.equal(texts(view).some(text => text.includes('xylophon')), false);
   }
@@ -118,6 +118,13 @@ test('a spectator sees the word and the guessed chat; a table screen sees only t
   assert.deepEqual(screen, toPublicState(state, true, null));
   assert.equal(screen.word, null);
   assert.equal(screen.mask, '_________');
+});
+
+test('a spectator sees a near-miss line addressed to one seat; a table screen never does', () => {
+  const state = chat(drawing(), 2, 'xylophon');
+  assert.ok(texts(privateSeatView(state, 2)).includes('xylophon: So close!'));
+  assert.ok(texts(spectatorState(state, false, false)).includes('xylophon: So close!'));
+  assert.equal(texts(spectatorState(state, false, true)).includes('xylophon: So close!'), false);
 });
 
 test('pictionary: the table screen sees blanks and public chat only', () => {
