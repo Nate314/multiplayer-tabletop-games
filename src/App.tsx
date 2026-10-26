@@ -97,6 +97,7 @@ function App() {
             <RejoinButton gameName={sessionGame.name} gameId={session.gameId} onRejoin={rejoin} />
           )}
           <OpenSavedGame games={GAME_INFOS} />
+          <a className="open-saved-game lobby-stats-link" href="/stats">Stats</a>
         </div>
         <OpenGames
           games={GAME_INFOS}

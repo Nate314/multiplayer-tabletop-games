@@ -1,0 +1,135 @@
+/* The Stats page (/stats and /link/<code>), on the lobby palette; sections stack in one column */
+
+.stats-page .lobby-header h1 {
+  margin-right: auto;
+}
+
+.stats-back {
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.stats-section {
+  margin-bottom: 24px;
+}
+
+.stats-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stats-empty {
+  color: var(--lobby-muted);
+}
+
+/* A wide table scrolls inside its own box, never the page */
+.stats-table {
+  overflow-x: auto;
+  background: var(--lobby-surface);
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+}
+
+.stats-table table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-table :is(th, td) {
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.stats-table th {
+  color: var(--lobby-muted);
+  font-weight: 600;
+}
+
+.stats-table tbody tr {
+  border-top: 1px solid var(--lobby-border);
+}
+
+.stats-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Game, date and History on one line, the players under them on a narrow window */
+.stats-recent li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 12px;
+  background: var(--lobby-surface);
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+}
+
+.stats-recent-game {
+  font-weight: 600;
+}
+
+.stats-recent-date {
+  color: var(--lobby-muted);
+}
+
+/* Names are free text, so they break anywhere rather than push the card wider than a phone */
+.stats-recent-players {
+  flex: 1 1 200px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.stats-link h2:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.stats-link,
+.stats-clear,
+.stats-link-prompt {
+  padding: 12px 16px;
+  background: var(--lobby-surface);
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+}
+
+.stats-link-code {
+  margin: 8px 0;
+  font-family: ui-monospace, monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.stats-link-url {
+  display: block;
+  color: var(--lobby-accent);
+  overflow-wrap: anywhere;
+}
+
+.stats-link-qr {
+  display: block;
+  width: 180px;
+  height: 180px;
+  margin: 12px 0;
+}
+
+.stats-link-countdown {
+  margin: 0;
+  color: var(--lobby-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-clear .stats-controls {
+  margin-bottom: 0;
+}

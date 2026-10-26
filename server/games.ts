@@ -41,6 +41,7 @@ type Room = {
   simTimer?: ReturnType<typeof setInterval>; // set while the game is simulating
   watching: Set<string>; // ids of the connected spectators; in memory only, like sockets
   lastReactionAt: Map<string, number>; // by sender key; kept off the state, so a restart clears every cooldown
+  dismissalEnded?: boolean; // a dismissal just ended the game; read by the save that follows it in the same call
 };
 
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout or a tick;
@@ -48,6 +49,7 @@ type Room = {
 // `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks;
 // `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns;
 // `removed` hears of each room deleted, so nothing kept for it outlives it
+// `samePerson` says whether a device hash belongs to the person of any of `hashes` (linked devices)
 export type ManagerHooks = {
   now?: () => number;
   changed?: (roomId: string) => void;
@@ -55,6 +57,7 @@ export type ManagerHooks = {
   reseated?: (roomId: string, moves: Reseat[]) => void;
   removed?: (roomId: string) => void;
   manualSimulation?: boolean;
+  samePerson?: (hash: string, hashes: string[]) => boolean;
 };
 
 export type Reseat = { from: Seat; to: Seat | null; seatKey: string }; // `to` is null for a seat that left
@@ -83,12 +86,14 @@ function sameSecret(a: string, b: string): boolean {
 
 // Who `credential` is in this game: a seat key or a remembered device is a player, a spectator key that spectator
 export function access(
-  state: BaseGameState, credential: string | undefined
+  state: BaseGameState, credential: string | undefined, samePerson?: ManagerHooks['samePerson']
 ): { kind: 'player' } | { kind: 'spectator'; allowedSeats: Seat[] } | null {
   if (typeof credential !== 'string' || credential === '') return null;
   const device = hashDeviceId(credential);
+  const devices = Object.values(state.seatDevices ?? {});
   if (Object.values(state.seatKeys ?? {}).some(key => sameSecret(key, credential))) return { kind: 'player' };
-  if (device && Object.values(state.seatDevices ?? {}).some(hash => sameSecret(hash, device))) return { kind: 'player' };
+  if (device && devices.some(hash => sameSecret(hash, device))) return { kind: 'player' };
+  if (device && devices.length > 0 && samePerson?.(device, devices)) return { kind: 'player' };
   const spectatorId = Object.entries(state.spectatorKeys ?? {}).find(([, key]) => sameSecret(key, credential))?.[0];
   const spectator = state.spectators?.find(candidate => candidate.id === spectatorId);
   return spectator ? { kind: 'spectator', allowedSeats: spectator.allowedSeats } : null;
@@ -183,6 +188,8 @@ export function createGameManager(
 
   // Stamps the first start and the first end; a game already stamped finished never reports again, even after an undo
   function stamp(roomId: string, room: Room): void {
+    const abandoned = room.dismissalEnded;
+    room.dismissalEnded = undefined;
     if (room.state.started && room.state.startedAt === undefined) room.state = { ...room.state, startedAt: now() };
     if (!room.state.isGameOver || room.state.finishedAt !== undefined) return;
     const finishedAt = now();
@@ -202,8 +209,8 @@ export function createGameManager(
         seat, name: state.playerNames[seat], ...(state.seatDevices?.[seat] && { deviceId: state.seatDevices[seat] })
       }))
     };
-    // Fewer than two left means the platform ended it after leaves or dismissals, not the game's own rules
-    if (state.activePlayers.length < 2) result.abandoned = true;
+    // A dismissal ending it is the platform ending it, not the game's own rules
+    if (abandoned) result.abandoned = true;
     try {
       hooks.onGameFinished?.(result);
     } catch (error) {
@@ -411,7 +418,7 @@ export function createGameManager(
       const expired = !archived || archived.finishedAt <= now() - ARCHIVE_TTL_MS;
       room = expired ? undefined : { game, state: archived!.state, history: archived!.history, timeline: archived!.timeline, watching: new Set(), lastReactionAt: new Map() };
     }
-    const who = room && access(room.state, typeof credential === 'string' ? credential : undefined);
+    const who = room && access(room.state, typeof credential === 'string' ? credential : undefined, hooks.samePerson);
     return room && who ? { game, room, who } : null;
   }
 
@@ -485,7 +492,7 @@ export function createGameManager(
     if (room.game.onUndo) restored = room.game.onUndo(restored, random);
     if (room.game.resumeClock) restored = room.game.resumeClock(restored, now());
     for (const seat of previous.activePlayers.filter(s => !state.activePlayers.includes(s))) {
-      restored = removePlayer(room.game, restored, seat, random);
+      restored = dismissed(room, restored, removePlayer(room.game, restored, seat, random));
     }
     // Dismissed seats are removed in seat order, which may differ from the order they were dismissed in.
     // A hook that ends the game again keeps its ending in the status
@@ -500,7 +507,15 @@ export function createGameManager(
   // Settles a dismiss vote. When it passes and the turn moves on from the dismissed player, the next player's clock
   // restarts from now, so they never inherit what was left of the leaver's turn
   function settleDismissVote(room: Room, voted: BaseGameState): void {
-    room.state = resumeIfTurnMoved(room, voted, resolveDismissVote(room.game, voted, random));
+    room.state = resumeIfTurnMoved(room, voted, dismissed(room, voted, resolveDismissVote(room.game, voted, random)));
+  }
+
+  // `next` is `before` after a dismissal may have removed a seat; notes when a removed seat ended the game.
+  // A game that ends itself on a plain disconnect removes no seat, so it is not marked
+  function dismissed(room: Room, before: BaseGameState, next: BaseGameState): BaseGameState {
+    const removed = next.activePlayers.length < before.activePlayers.length;
+    if (removed && next.isGameOver && !before.isGameOver) room.dismissalEnded = true;
+    return next;
   }
 
   function resumeIfTurnMoved(room: Room, before: BaseGameState, next: BaseGameState): BaseGameState {
@@ -685,7 +700,7 @@ export function createGameManager(
     // Seats several players on one device, all or none; a rejoin takes back each seat whose key still matches.
     // The view returned is the public one, so no local player's hidden information reaches the device before its turn
     joinLocal(
-      gameType: unknown, gameId: unknown, names: unknown, rejoin?: unknown, seatKeys?: unknown
+      gameType: unknown, gameId: unknown, names: unknown, rejoin?: unknown, seatKeys?: unknown, deviceId?: unknown
     ): { roomId: string; seats: LocalSeat[]; state: BasePublicState } | { error: string } {
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
@@ -715,7 +730,7 @@ export function createGameManager(
           refused ??= seated;
           continue;
         }
-        state = seated.state;
+        state = withDevice(seated.state, seated.seat, deviceId);
         seats.push({ seat: seated.seat, seatKey: seated.seatKey });
       }
       // A fresh join needs every name; a rejoin keeps whoever came back, since a dismissed seat is gone for good
@@ -746,7 +761,7 @@ export function createGameManager(
       const { room } = found;
 
       // A disconnect can settle a dismiss vote, which may move the turn on like any other dismissal
-      room.state = resumeIfTurnMoved(room, room.state, disconnectPlayer(room.game, room.state, seat, random));
+      room.state = resumeIfTurnMoved(room, room.state, dismissed(room, room.state, disconnectPlayer(room.game, room.state, seat, random)));
       if (room.state.activePlayers.length === 0) {
         deleteRoom(roomId);
         return null;
@@ -1108,7 +1123,7 @@ export function createGameManager(
     },
 
     // Only before the first move; the spectator's entry goes and they are seated the usual way
-    switchToPlayer(roomId: string, spectatorId: string): JoinResult {
+    switchToPlayer(roomId: string, spectatorId: string, deviceId?: unknown): JoinResult {
       const room = rooms.get(roomId);
       const spectator = room?.state.spectators?.find(candidate => candidate.id === spectatorId);
       if (!room || !spectator) return { error: 'You are not in this game' };
@@ -1121,7 +1136,7 @@ export function createGameManager(
 
       const key = randomUUID();
       room.watching.delete(spectatorId);
-      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
+      room.state = withDevice({ ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } }, result.seat, deviceId);
       save(roomId, room);
       return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
     },

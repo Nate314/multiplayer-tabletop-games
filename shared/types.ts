@@ -16,7 +16,7 @@ export type GameResult = {
   moveCount: number;
   standings: Standing[];
   players: { seat: Seat; name: string; deviceId?: string }[];
-  abandoned?: boolean; // the platform ended the game because fewer than two players remained
+  abandoned?: boolean; // the platform ended the game: a dismissal removed a seat mid-game and that ended it
 };
 export type UndoVote = { requestedBy: Seat; votes: Record<Seat, boolean> };
 export type DismissVote = { target: Seat; requestedBy: Seat; votes: Record<Seat, boolean> };

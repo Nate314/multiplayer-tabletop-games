@@ -270,7 +270,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Back to a game and Open a saved game span the game list: side by side where two game cards fit, else stacked */
+/* Back to a game, Open a saved game and Stats span the game list: side by side where they fit, else stacked */
 .lobby-actions {
   display: flex;
   flex-wrap: wrap;
@@ -278,9 +278,15 @@
   margin-bottom: 12px;
 }
 
-.lobby-actions > button {
+.lobby-actions > :is(button, a) {
   flex: 1 1 280px;
   min-width: 0;
+}
+
+.lobby-stats-link {
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
 }
 
 .lobby-actions > .lobby-error {

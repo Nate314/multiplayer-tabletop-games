@@ -13,6 +13,8 @@ import { mountAssetRoutes } from './assets/routes.ts';
 import { createAlerts, mountPushRoutes } from './alerts.ts';
 import { loadVapidKeys, openPushStore } from './pushStore.ts';
 import { isPushEndpoint } from './vapid.ts';
+import { openStatsStore } from './stats/store.ts';
+import { mountStatsRoutes } from './stats/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
 import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts';
@@ -43,12 +45,28 @@ const JOIN_ROLES: readonly JoinRole[] = ['player', 'spectator', 'passAndPlay', '
 const pushStore = openPushStore(DATABASE_PATH);
 const alerts = createAlerts({ store: pushStore, keys: loadVapidKeys(pushStore), subject: PUSH_CONTACT, games: GAMES.map(game => game.info) });
 const e2eRandom = E2E ? createE2eRandom() : null;
+const stats = openStatsStore(DATABASE_PATH);
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), {
   changed: broadcast,
-  onGameFinished: result => console.log(`Game finished: ${result.archiveId}`),
+  onGameFinished: result => {
+    console.log(`Game finished: ${result.archiveId}`);
+    try {
+      stats.record(result);
+    } catch (error) { // a stats failure never touches play
+      console.error(`Could not record stats for ${result.archiveId}:`, error);
+    }
+  },
   reseated: reseat,
   removed: roomId => alerts.roomChanged(roomId, null, new Set()),
-  manualSimulation: E2E
+  manualSimulation: E2E,
+  samePerson: (hash, hashes) => {
+    try {
+      return stats.samePerson(hash, hashes);
+    } catch (error) { // a stats failure only refuses the linked device; the log names no hash
+      console.error('Could not check linked devices:', error instanceof Error ? error.message : 'unknown error');
+      return false;
+    }
+  }
 });
 // Rooms that ended while the server was down
 for (const roomId of pushStore.roomIds()) if (!manager.getState(roomId)) pushStore.removeRoom(roomId);
@@ -82,6 +100,8 @@ mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.in
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
 
 mountAssetRoutes(app);
+
+mountStatsRoutes(app, stats);
 
 if (SHOW_OPEN_GAMES) mountOpenGamesRoute(app, manager.openGames);
 
@@ -226,7 +246,7 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
 
 // A reload starts on the handoff screen (no seat shown), so no hand shows before its player has the device
 function joinLocal(ws: WebSocket, message: Record<string, unknown>): void {
-  const result = manager.joinLocal(message.gameType, message.gameId, message.playerNames, message.rejoin, message.seatKeys);
+  const result = manager.joinLocal(message.gameType, message.gameId, message.playerNames, message.rejoin, message.seatKeys, message.deviceId);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
@@ -322,7 +342,7 @@ function handleSpectatorMessage(
   } else if (type === MESSAGE_TYPES.REACT) {
     react(ws, roomId, { spectatorId }, payload);
   } else if (type === MESSAGE_TYPES.SWITCH_TO_PLAYER) {
-    const result = manager.switchToPlayer(roomId, spectatorId);
+    const result = manager.switchToPlayer(roomId, spectatorId, payload?.deviceId);
     if ('error' in result) {
       sendError(ws, result.error);
       return;
