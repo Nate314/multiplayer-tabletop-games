@@ -399,6 +399,33 @@ test('a collapse after everyone else left does not change the winner', () => {
   forgetWorld('g1');
 });
 
+// Alice's last pulled block already lies on the ground outside the footprint while her tower collapses
+function collapsing(names = ['Alice', 'Bob']): GameState {
+  const state = act(lobby(() => 0.5, names), 1, { type: 'grab', block: MIDDLE, anchor: END });
+  const blocks = state.blocks.map(b => b.id === MIDDLE ? { ...b, pose: { p: [10, 0.75, 0] as Vec3, q: [0, 0, 0, 1] as Block['pose']['q'] } } : b);
+  return { ...state, blocks, grab: null, toppled: true, loser: 1, sim: { ticks: 0, calmTicks: 0, sinceRelease: 0 } };
+}
+
+test('a block lying outside during a collapse stays on the table and nobody holds it', () => {
+  const over = settle(collapsing());
+  assert.equal(over.isGameOver, true);
+  assert.equal(over.blocks.length, 54);
+  assert.equal(over.held, null);
+  assert.equal(over.phase, 'pull');
+  forgetWorld('g1');
+});
+
+test('dismissing the toppler during the collapse keeps the loss', () => {
+  const left = removePlayer(jenga, disconnectPlayer(jenga, collapsing(['Alice', 'Bob', 'Cat']), 1), 1);
+  assert.equal(left.toppled, true);
+  assert.equal(left.loser, 1);
+  const over = settle(left);
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [2, 3]);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+  forgetWorld('g1');
+});
+
 test('standings put the toppler last and everyone else first with blocks placed', () => {
   const over: GameState = { ...lobby(() => 0.5, ['Alice', 'Bob', 'Cat']), isGameOver: true, toppled: true, loser: 1, placed: { 1: 2, 2: 1, 3: 0 } };
   assert.deepEqual(jengaStandings(over), [

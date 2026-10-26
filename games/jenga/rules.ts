@@ -217,8 +217,8 @@ function backToTurnStart(state: GameState): GameState {
 
 export const onUndo = (state: GameState) => backToTurnStart(state);
 
-// A dismissed puller's half-done turn is put back; anyone else leaving changes nothing on the table
-export const onPlayerLeft = (state: GameState, seat: Seat) => state.pull?.seat === seat ? backToTurnStart(state) : state;
+// A dismissed puller's half-done turn is put back, unless they already toppled it: that collapse and loss stand
+export const onPlayerLeft = (state: GameState, seat: Seat) => state.pull?.seat === seat && !state.toppled ? backToTurnStart(state) : state;
 
 // The tower settles where it is; a topple during that still counts against them, and a block in hand stays in hand
 export const onPlayerDisconnected = (state: GameState, seat: Seat) => state.grab && state.pull?.seat === seat ? released(state) : state;
@@ -236,7 +236,8 @@ export const simulating = (state: GameState) => state.sim !== null;
 
 // The last pulled block counts as taken out once it is clear of the tower while held, or lying on the ground out there
 function takenOut(state: GameState, blocks: Block[]): number | null {
-  if (state.phase !== 'pull' || !state.pull) return null;
+  // In a collapse every block stays on the table, so the final step shows them all and nobody holds one
+  if (state.toppled || state.phase !== 'pull' || !state.pull) return null;
   const block = blocks.find(b => b.id === state.pull!.block);
   if (!block) return null;
   return (state.grab?.block === block.id ? isOut(block) : !state.grab && onGroundOutside(block)) ? block.id : null;
