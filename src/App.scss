@@ -1053,6 +1053,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 
 :where([data-game] .game-over-standings li) {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: baseline;
   padding: 6px 4px;
@@ -1065,12 +1066,14 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 :where([data-game] .standing-name) {
-  flex: 1;
+  /* The score wraps below a name that would get narrower than this. */
+  flex: 1 1 8em;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 :where([data-game] .standing-score) {
+  margin-left: auto;
   white-space: nowrap;
 }
 
