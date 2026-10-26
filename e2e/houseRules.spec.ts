@@ -123,12 +123,14 @@ test.describe('House rules lobby', () => {
     await expect(await openHouseRules(bob)).toContainText('Target score5,000 (house rule)');
   });
 
-  test('Settings shows nothing about house rules for a game without any', async ({ seat }) => {
+  test('Settings lists only the Turn timer for a game without rules of its own', async ({ seat }) => {
     const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
     await alice.getByRole('button', { name: 'Settings' }).click();
     const dialog = alice.getByRole('dialog', { name: 'Settings' });
     await expect(dialog.getByRole('heading', { name: 'Sounds' })).toBeVisible();
-    await expect(dialog.getByRole('region', { name: 'House rules' })).toHaveCount(0);
+    const rules = dialog.getByRole('region', { name: 'House rules' });
+    await expect(rules).toContainText('Turn timer');
+    await expect(rules).not.toContainText('(house rule)');
   });
 });
 
