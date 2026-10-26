@@ -28,6 +28,7 @@ A game saved before house rules existed has none set, so it plays with both rule
 
 ## Controls
 
+- With a table screen connected, on Hand only (the default) the board shows only on your turn
 - Your row is always along the bottom, with your bank on the right; your opponent's row and bank are at the top and on the left
 - Arrows around the board show the counter-clockwise direction the stones travel
 - Each bank is tinted in its owner's color and labeled with their name, or Your bank for your own

@@ -29,6 +29,7 @@ For 2 to 8 players, who take turns in join order. Nobody can join after the firs
 - Click Undo to ask everyone else to undo the last turn
 - History shows the tower after every placement, with the placed block highlighted and a faint ghost where it was pulled from, and the fallen tower at the end
 - A device that cannot draw 3D shows "This device cannot draw the 3D tower" instead; the keyboard controls, the status line and the Place buttons still work
+- With a table screen connected, on Hand only (the default) the tower shows only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## How it works

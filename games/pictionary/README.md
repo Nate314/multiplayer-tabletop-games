@@ -16,6 +16,8 @@ Draw a word while everyone else races to guess it in the chat, for 2 to 10 playe
 - **Winning.** After every player has drawn their turns, the highest score wins. Players with equal scores share the win
 - **House rules.** The host can set the time per turn (30 seconds, 1 minute, 90 seconds, 2 minutes or 3 minutes), the word choices offered (3, 4 or 5) and the draws per player (1 to 5). Everyone must agree to them before play starts
 - **Leaving.** A player who leaves keeps their seat and can rejoin. Dismissing the drawer ends their turn and shows the word. Dismissing a guesser ends the turn when everyone left has guessed. If only one player is left, that player wins
+- **Spectators.** A spectator sees everything: the word, the word choices and every chat line, including the guessed-only chat and each player's "So close!" lines. There is nothing to ask for, so a spectator never sees Ask to see a hand
+- **Table screen.** A table screen (a TV or tablet joined as Table screen) is in view of the players, so it gets only the blanks, the drawing, the scores and the public chat. It never shows the word, the word choices, the guessed-only chat or anyone's "So close!" lines until the reveal
 - Any player can ask to undo. Undo takes back the last scored guess or turn change; drawing since then is lost, and the chat goes back to that point. It is undone only if everyone else approves
 
 ## Controls
@@ -24,6 +26,7 @@ Draw a word while everyone else races to guess it in the chat, for 2 to 10 playe
 - The drawer draws on the paper with a mouse, a finger or a pen. The toolbar under the drawing has the colors, the brush sizes (Small, Medium and Large), Eraser, which paints white, and Fill, which fills the area you click. Take back removes the last line or fill, and Clear wipes the paper
 - Everyone else types guesses in the chat box and presses Enter
 - Click Undo to ask the other players to undo the last move
+- With a table screen connected, on Hand only (the default) the other players' scores are hidden, and the paper shows only on your turn (when you draw)
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from the board game

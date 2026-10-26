@@ -22,6 +22,7 @@ Raise armies, roll for battles and conquer the world, for 3 to 6 players.
 ## Controls
 
 - The map shows each territory as a disc in its owner's color with its army count, every border as a line and every sea lane as a dashed line. Alaska and Kamchatka's lane runs off the left and right edges of the map. On a narrow window the map scrolls sideways in its own box
+- With a table screen connected, on Hand only (the default) the battle, the event log and the other players are hidden, and the map shows only on your turn
 - The side panel shows what you can do now. While placing armies, click your territories: each click adds 1, 5 or all that are left, as chosen with the buttons, and -1 takes one back. Click Place (or Place all in the setup). You can also drag from the Your armies tray at the top of the side panel onto one of your territories: a drop adds the same number a click would, and Place still sends it. Tapping the tray piece does nothing more, as your territories are already lit
 - Attacking, click one of your territories (outlined ones can attack), then a highlighted enemy territory next to it. Choose 1 to 3 dice and click Roll, or Blitz. The source and target stay chosen between rolls. The last battle's dice are shown below the panel for everyone
 - After a capture, choose how many armies move in with the slider and click Move

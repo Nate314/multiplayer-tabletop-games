@@ -44,6 +44,7 @@ Before the first move the host picks the rules and every player must agree. They
 - The tiles of the last play are outlined, and the board and rack are dimmed when it is not your turn
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
 - With the turn limit on, the time left shows under the turn message. In the last 10 seconds of your turn a tick plays each second (Timer warnings in Settings)
+- With a table screen connected, on Hand only (the default) the other players' scores and the bag count are hidden, and the board shows only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

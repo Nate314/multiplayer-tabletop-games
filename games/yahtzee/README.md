@@ -22,6 +22,7 @@ Roll five dice up to three times a turn and fill every scoring box on your sheet
 - After your first roll, each empty box in your column shows the points the dice would score there. Click one to write it in. Under the Joker rule only the boxes you may use can be clicked
 - The score sheet has a column per player, with the player on the move marked, an upper section subtotal and bonus, the Yahtzee bonus and each player's total
 - Click Undo to ask the other players to undo the last move
+- With a table screen connected, on Hand only (the default) the other players' columns are hidden
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

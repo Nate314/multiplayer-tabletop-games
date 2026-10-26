@@ -46,6 +46,7 @@ Before the first move the host picks the rules and both players must agree. They
 - On your turn, Claim draw appears when the position allows a claim by threefold repetition or the 50-move rule. When the move you pick would produce such a position, a box over the board offers Move and claim draw, Just move, or Cancel
 - Click Undo to ask your opponent to undo the last move
 - With the clock on, each player's time shows beside their name in the side panel, and the running one is highlighted. In your last 10 seconds a tick plays each second (Timer warnings in Settings)
+- With a table screen connected, on Hand only (the default) the captured pieces are hidden and the board shows only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
