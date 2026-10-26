@@ -1,10 +1,10 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { ARCHIVE_TTL_MS, createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
+import { ARCHIVE_TTL_MS, createGameManager, EMPTY_ROOM_TIMEOUT_MS, type Reseat } from './games.ts';
 import { agreeAll, fileOf, rememberingKeys, stepsOf } from './testing.ts';
 import { openGameStore } from './store.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
-import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
+import { handGame, rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { asRecord } from '../shared/messages.ts';
 import { nextActivePlayer } from '../shared/seating.ts';
@@ -1953,4 +1953,256 @@ test('a store that cannot number the game does not stop a join', () => {
   const store = { ...memoryStore(), nextGameNumber: () => { throw new Error('disk'); } };
   const manager = rememberingKeys(createGameManager([testGame], seededRandom, store), keys);
   assert.equal(joined(manager.join('test', 'g1', 'A')).state.gameNumber, 1);
+});
+
+// Rematch: a manager that remembers every reseat it reported, and a table that has finished a game
+function rematchManager(store: GameStore = memoryStore(), game: AnyGame = rulesGame) {
+  const reseats: Reseat[][] = [];
+  const manager = rememberingKeys(
+    createGameManager([game], seededRandom, store, { reseated: (_roomId, moves) => reseats.push(moves) }), keys
+  );
+  return { manager, reseats };
+}
+
+function playOut(manager: Manager): void {
+  agreeAll(manager, ROOM);
+  while (!manager.rawState(ROOM)?.isGameOver) ok(manager.move(ROOM, manager.rawState(ROOM)?.currentPlayer as Seat, tick));
+}
+
+function finishedRematch(names = ['A', 'B', 'C'], store?: GameStore) {
+  const table = rematchManager(store);
+  for (const name of names) joined(table.manager.join('test', 'g1', name));
+  playOut(table.manager);
+  return table;
+}
+
+const seatsAndNames = (state: BaseGameState) => state.activePlayers.map(seat => [seat, state.playerNames[seat]]);
+
+test('Rematch needs a finished game and no other vote', () => {
+  const running = rematchManager().manager;
+  joined(running.join('test', 'g1', 'A'));
+  joined(running.join('test', 'g1', 'B'));
+  assert.deepEqual(running.requestRematch(ROOM, 1), { error: 'The game is not over yet' });
+
+  const { manager } = finishedRematch();
+  ok(manager.requestUndo(ROOM, 1));
+  assert.deepEqual(manager.requestRematch(ROOM, 2), { error: 'A vote is already in progress' });
+  ok(manager.voteUndo(ROOM, 2, false));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.deepEqual(manager.requestRematch(ROOM, 2), { error: 'A vote is already in progress' });
+  ok(manager.voteDismiss(ROOM, 2, false));
+  ok(manager.requestRematch(ROOM, 1));
+  assert.deepEqual(manager.requestRematch(ROOM, 2), { error: 'A rematch vote is already in progress' });
+  assert.deepEqual(manager.voteRematch(ROOM, 2, 'yes'), { error: 'Invalid vote' });
+  assert.deepEqual(manager.voteRematch(ROOM, 1, true), { error: 'You already voted' });
+  assert.deepEqual(finishedRematch().manager.voteRematch(ROOM, 2, true), { error: 'No rematch vote in progress' });
+});
+
+test('the requester counts as Join', () => {
+  const { manager } = finishedRematch();
+  const state = ok(manager.requestRematch(ROOM, 2));
+  assert.deepEqual(state.rematchVote, { requestedBy: 2, votes: { 2: true } });
+  assert.equal(state.gameStatus, 'B wants a rematch');
+});
+
+test('everyone joining resets the room into a lobby at the same ID', () => {
+  const { manager, reseats } = finishedRematch();
+  const before = manager.rawState(ROOM) as BaseGameState;
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  assert.equal(reseats.length, 0);
+  ok(manager.voteRematch(ROOM, 3, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.equal(state.started, false);
+  assert.equal(state.isGameOver, false);
+  assert.equal(state.gameNumber, 2);
+  assert.equal(state.rematchVote ?? null, null);
+  assert.deepEqual(seatsAndNames(state), [[1, 'A'], [2, 'B'], [3, 'C']]);
+  assert.deepEqual(state.seatKeys, before.seatKeys);
+  assert.deepEqual(reseats, [[1, 2, 3].map(seat => ({ from: seat, to: seat, seatKey: before.seatKeys?.[seat] }))]);
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnect(ROOM, 2);
+  assert.equal(joined(manager.join('test', 'g1', 'B', true, before.seatKeys?.[2])).seat, 2);
+});
+
+test('drops leave and the joiners are seated from 1', () => {
+  const { manager, reseats } = finishedRematch();
+  const keysBefore = manager.rawState(ROOM)?.seatKeys as Record<Seat, string>;
+  ok(manager.requestRematch(ROOM, 2));
+  ok(manager.voteRematch(ROOM, 1, false));
+  ok(manager.voteRematch(ROOM, 3, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.deepEqual(seatsAndNames(state), [[1, 'B'], [2, 'C']]);
+  assert.deepEqual(state.seatKeys, { 1: keysBefore[2], 2: keysBefore[3] });
+  assert.deepEqual(reseats[0], [
+    { from: 1, to: null, seatKey: keysBefore[1] }, { from: 2, to: 1, seatKey: keysBefore[2] }, { from: 3, to: 2, seatKey: keysBefore[3] }
+  ]);
+});
+
+test('fewer joiners than the game needs still open the lobby', () => {
+  const { manager } = finishedRematch(['A', 'B']);
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, false));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.deepEqual(seatsAndNames(state), [[1, 'A']]);
+  assert.equal(state.started, false);
+});
+
+test("last game's house rules are the proposal and need agreeing again", () => {
+  const { manager } = rematchManager();
+  for (const name of ['A', 'B', 'C']) joined(manager.join('test', 'g1', name));
+  ok(manager.setHouseRules(ROOM, 1, { values: { fast: true, goal: 5, big: true, bigger: false }, maxPlayers: 3 }));
+  playOut(manager);
+  const before = manager.rawState(ROOM)?.houseRules;
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  ok(manager.voteRematch(ROOM, 3, true));
+  const rules = manager.rawState(ROOM)?.houseRules;
+  assert.deepEqual(rules?.values, before?.values);
+  assert.equal(rules?.maxPlayers, 3);
+  assert.deepEqual(rules?.agreed, []);
+  assert.ok((rules?.revision ?? 0) > (before?.revision ?? 0));
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
+});
+
+test('spectators stay and their permissions start fresh', () => {
+  const { manager } = rematchManager(memoryStore(), handGame);
+  joined(manager.join('test', 'g1', 'A'));
+  joined(manager.join('test', 'g1', 'B'));
+  ok(manager.move(ROOM, 1, tick));
+  const dana = joined(manager.join('test', 'g1', 'Dana', false, undefined, 'spectator')).spectatorId as string;
+  ok(manager.requestHand(ROOM, dana, 2));
+  ok(manager.answerHand(ROOM, 2, dana, true));
+  ok(manager.requestHand(ROOM, dana, 1));
+  ok(manager.move(ROOM, 2, tick));
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnectSpectator(ROOM, dana); // a started game keeps the entry, so Dana can come back with the key
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.equal(state.started, false);
+  assert.deepEqual(state.spectators?.map(s => [s.id, s.allowedSeats]), [[dana, []]]);
+  assert.deepEqual(state.handRequests, []);
+  assert.equal(joined(manager.join('test', 'g1', 'Dana', true, undefined, 'spectator')).spectatorId, dana);
+});
+
+test('a non-responder can be dismissed and counts as Drop', () => {
+  const store = memoryStore();
+  const { manager } = finishedRematch(['A', 'B', 'C'], store);
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  assert.deepEqual(manager.requestDismiss(ROOM, 1, 1), { error: 'That player already answered' });
+  assert.deepEqual(manager.requestDismiss(ROOM, 1, 2), { error: 'That player already answered' });
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  assert.deepEqual(manager.rawState(ROOM)?.activePlayers, [1, 2, 3]); // C is connected and not yet dismissed
+  ok(manager.voteDismiss(ROOM, 2, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.deepEqual(seatsAndNames(state), [[1, 'A'], [2, 'B']]);
+  assert.deepEqual(store.loadArchive('test/g1#1')?.state.activePlayers, [1, 2, 3]);
+  const old = manager.history('test', 'g1', state.seatKeys?.[1], 1);
+  assert.ok('steps' in old);
+  assert.deepEqual(old.steps.at(-1)?.standings?.map(standing => standing.seat).sort(), [1, 2, 3]);
+});
+
+test('a dismiss of a disconnected non-responder during a rematch vote removes no seat', () => {
+  const { manager } = finishedRematch();
+  ok(manager.requestRematch(ROOM, 1));
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteDismiss(ROOM, 2, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.deepEqual(state.rematchVote?.votes, { 1: true, 3: false });
+  assert.deepEqual(state.activePlayers, [1, 2, 3]);
+  assert.equal(state.isGameOver, true);
+});
+
+test('answering ends the dismiss vote against you', () => {
+  const { manager } = finishedRematch();
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.requestDismiss(ROOM, 1, 3));
+  ok(manager.voteRematch(ROOM, 3, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.equal(state.dismissVote, null);
+  assert.deepEqual(state.rematchVote?.votes, { 1: true, 3: true });
+});
+
+test('a disconnected joiner is left out', () => {
+  const { manager, reseats } = finishedRematch();
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  manager.disconnect(ROOM, 2);
+  ok(manager.voteRematch(ROOM, 3, true));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.deepEqual(seatsAndNames(state), [[1, 'A'], [2, 'C']]);
+  assert.equal(state.gameStatus, 'B was not connected and was left out');
+  assert.equal(reseats[0][1].to, null);
+});
+
+test('everyone dropping lets Rematch be pressed again', () => {
+  const { manager, reseats } = finishedRematch();
+  ok(manager.requestRematch(ROOM, 1));
+  manager.disconnect(ROOM, 1);
+  ok(manager.voteRematch(ROOM, 2, false));
+  ok(manager.voteRematch(ROOM, 3, false));
+  const state = manager.rawState(ROOM) as BaseGameState;
+  assert.equal(state.rematchVote, null);
+  assert.equal(state.gameStatus, 'Nobody joined the rematch');
+  assert.equal(state.isGameOver, true);
+  assert.equal(reseats.length, 0);
+  ok(manager.requestRematch(ROOM, 2));
+});
+
+test('the last joiner disconnecting with every seat answered settles as Nobody joined', () => {
+  const { manager } = finishedRematch();
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, false));
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 3);
+  ok(manager.requestDismiss(ROOM, 2, 3)); // B is the only voter, so the dismiss passes at once
+  assert.equal(manager.rawState(ROOM)?.gameStatus, 'Nobody joined the rematch');
+});
+
+test('undo is refused during a rematch vote', () => {
+  const { manager } = finishedRematch();
+  ok(manager.requestRematch(ROOM, 1));
+  assert.deepEqual(manager.requestUndo(ROOM, 2), { error: 'A rematch vote is in progress' });
+});
+
+test('a restart mid-vote clears the vote and keeps the archive', () => {
+  const store = memoryStore();
+  const { manager } = finishedRematch(['A', 'B', 'C'], store);
+  ok(manager.requestRematch(ROOM, 1));
+  const back = rematchManager(store).manager;
+  assert.equal(back.rawState(ROOM)?.rematchVote, null);
+  assert.ok(store.loadArchive('test/g1#1'));
+  ok(back.requestRematch(ROOM, 1));
+});
+
+test('a room saved before this change, with no gameNumber or rematchVote, loads and can rematch', () => {
+  const store = memoryStore();
+  finishedRematch(['A', 'B'], store);
+  const { gameNumber: _n, rematchVote: _v, ...old } = saved(store).state;
+  store.save(ROOM, 'test', old as BaseGameState);
+  const { manager } = rematchManager(store);
+  joined(manager.join('test', 'g1', 'A', true));
+  joined(manager.join('test', 'g1', 'B', true));
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  assert.equal(manager.rawState(ROOM)?.gameNumber, 2);
+});
+
+test('the finished game stays in history after the reset', () => {
+  const { manager } = finishedRematch(['A', 'B']);
+  const key = seatKeyOf(manager);
+  ok(manager.requestRematch(ROOM, 1));
+  ok(manager.voteRematch(ROOM, 2, true));
+  const old = manager.history('test', 'g1', key, 1);
+  assert.ok('steps' in old);
+  assert.equal(old.steps.length, 4);
+  assert.equal(old.steps.at(-1)?.isGameOver, true);
+  const now = manager.history('test', 'g1', key);
+  assert.ok('steps' in now);
+  assert.deepEqual(now.steps.map(step => [step.historyStep, step.started]), [['start', false]]);
 });

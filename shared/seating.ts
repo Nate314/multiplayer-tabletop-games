@@ -145,7 +145,8 @@ export function reconnectPlayer<S extends BaseGameState>(state: S, seat: Seat): 
   };
 }
 
-// Dismisses the target once every connected player has approved
+// Dismisses the target once every connected player but the target has approved.
+// During a rematch vote the finished game stays as it is: the target only counts as Drop
 export function resolveDismissVote<S extends BaseGameState>(
   game: GameDefinition<S, BasePublicState>,
   state: S,
@@ -153,8 +154,13 @@ export function resolveDismissVote<S extends BaseGameState>(
 ): S {
   const vote = state.dismissVote;
   if (!vote) return state;
-  const voters = connectedPlayers(state);
+  const voters = connectedPlayers(state).filter(seat => seat !== vote.target);
   if (voters.length === 0 || !voters.every(seat => vote.votes[seat] === true)) return state;
+  const rematch = state.rematchVote;
+  if (rematch) {
+    const votes = { ...rematch.votes, [vote.target]: false };
+    return { ...state, dismissVote: null, rematchVote: { ...rematch, votes }, gameStatus: `${state.playerNames[vote.target]} was dismissed` };
+  }
   return removePlayer(game, { ...state, dismissVote: null }, vote.target, random);
 }
 

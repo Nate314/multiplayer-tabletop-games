@@ -20,6 +20,7 @@ export type GameResult = {
 };
 export type UndoVote = { requestedBy: Seat; votes: Record<Seat, boolean> };
 export type DismissVote = { target: Seat; requestedBy: Seat; votes: Record<Seat, boolean> };
+export type RematchVote = { requestedBy: Seat; votes: Record<Seat, boolean> }; // true Join, false Drop
 
 export type JoinRole = 'player' | 'spectator' | 'passAndPlay' | 'tableScreen';
 export type Spectator = { id: string; name: string; tableScreen: boolean; allowedSeats: Seat[] };
@@ -38,6 +39,7 @@ export type BaseGameState = {
   undoVote: UndoVote | null;
   disconnected: Seat[]; // held seats, sorted ascending; always a subset of activePlayers
   dismissVote: DismissVote | null;
+  rematchVote?: RematchVote | null; // only once the game is over; missing in rooms saved before rematches
   houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
   turnStartedAt?: number | null; // server time the turn began, shifted later by paused time; absent with the turn timer off
   turnPausedAt?: number | null; // server time a pausing vote opened; null while the clock runs

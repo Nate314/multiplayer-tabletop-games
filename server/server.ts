@@ -3,7 +3,7 @@ import express from 'express';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createGameManager, NOT_AVAILABLE } from './games.ts';
+import { createGameManager, NOT_AVAILABLE, type Reseat } from './games.ts';
 import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
@@ -30,7 +30,12 @@ const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real mess
 type Connection = { roomId: string; seat: Seat; spectatorId?: undefined } | { roomId: string; seat: null; spectatorId: string }; // a spectator has no seat
 
 const e2eRandom = E2E ? createE2eRandom() : null;
-const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), { changed: broadcast, manualSimulation: E2E });
+const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), {
+  changed: broadcast,
+  onGameFinished: result => console.log(`Game finished: ${result.archiveId}`),
+  reseated: reseat,
+  manualSimulation: E2E
+});
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
 
@@ -155,6 +160,12 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_DISMISS:
       respond(ws, roomId, manager.voteDismiss(roomId, seat, payload?.approve));
       break;
+    case MESSAGE_TYPES.REQUEST_REMATCH:
+      respond(ws, roomId, manager.requestRematch(roomId, seat));
+      break;
+    case MESSAGE_TYPES.VOTE_REMATCH:
+      respond(ws, roomId, manager.voteRematch(roomId, seat, payload?.join));
+      break;
     case MESSAGE_TYPES.REACT:
       react(ws, roomId, seat, payload);
       break;
@@ -217,6 +228,24 @@ function handleSpectatorMessage(
     broadcast(roomId);
   } else if (typeof type === 'string' && type in MESSAGE_TYPES) {
     sendError(ws, 'Spectators cannot do that');
+  }
+}
+
+// A rematch reset the room: each player's socket follows its seat into the lobby, and one whose seat went is told and
+// forgotten. Read from a snapshot of the old seats, so seat 2 moving to 1 never meets seat 1 leaving
+function reseat(roomId: string, moves: Reseat[]): void {
+  const players = [...connections].filter(([, connection]) => connection.roomId === roomId && connection.seat !== null);
+  for (const [ws, { seat }] of players) {
+    const move = moves.find(candidate => candidate.from === seat);
+    if (!move) continue;
+    if (move.to === null) {
+      send(ws, { type: MESSAGE_TYPES.LEFT_GAME, payload: { message: 'You left after the game' } });
+      connections.delete(ws);
+      continue;
+    }
+    connections.set(ws, connectionFor(roomId, move.to));
+    const state = manager.getState(roomId, move.to);
+    if (state) sendJoined(ws, { seat: move.to, seatKey: move.seatKey, state });
   }
 }
 

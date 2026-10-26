@@ -43,13 +43,17 @@ type Room = {
 
 // `now` is the server clock (tests set their own); `changed` hears of a change no player made, a timeout or a tick;
 // `onGameFinished` hears of each game once, when it first ends.
-// `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks
+// `manualSimulation` runs no timer: the end-to-end tests step the simulation with simulateTicks;
+// `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns
 export type ManagerHooks = {
   now?: () => number;
   changed?: (roomId: string) => void;
   onGameFinished?: (result: GameResult) => void;
+  reseated?: (roomId: string, moves: Reseat[]) => void;
   manualSimulation?: boolean;
 };
+
+export type Reseat = { from: Seat; to: Seat | null; seatKey: string }; // `to` is null for a seat that left
 
 const STAMP_KEYS = ['turnStartedAt', 'turnPausedAt'] as const;
 
@@ -462,6 +466,66 @@ export function createGameManager(
     room.emptyTimer = undefined;
   }
 
+  // Saves the room, first settling an open rematch vote once every seat has answered: with no connected joiner the
+  // vote just closes; otherwise the finished game is archived and the connected joiners sit down in a fresh lobby
+  function settleRematch(roomId: string, room: Room, step?: StepChange): void {
+    const { game, state } = room;
+    const vote = state.rematchVote;
+    if (!vote || state.activePlayers.some(seat => vote.votes[seat] === undefined)) {
+      save(roomId, room, step);
+      return;
+    }
+    const joiners = state.activePlayers.filter(seat => vote.votes[seat]);
+    const seated = joiners.filter(seat => !state.disconnected.includes(seat));
+    if (seated.length === 0) {
+      room.state = { ...state, rematchVote: null, gameStatus: 'Nobody joined the rematch' };
+      save(roomId, room, step);
+      return;
+    }
+
+    archiveRoom(roomId, room);
+    const rules = houseRulesOf(game.info, state);
+    let next: BaseGameState = {
+      ...game.createGameState(state.gameId),
+      gameNumber: (state.gameNumber ?? 1) + 1,
+      houseRules: { ...rules, host: null }, // each seat added clears the agreements and moves the revision on
+      spectators: state.spectators?.map(spectator => ({ ...spectator, allowedSeats: [] })),
+      spectatorKeys: state.spectatorKeys,
+      handRequests: []
+    };
+    const moves: Reseat[] = state.activePlayers.map(from => ({ from, to: null, seatKey: state.seatKeys?.[from] ?? '' }));
+    for (const move of moves.filter(candidate => seated.includes(candidate.from))) {
+      // Last game's values each time, so a rule offered only at the full table survives the smaller tables on the way
+      const proposal = { ...next, houseRules: { ...next.houseRules!, values: rules.values } };
+      const result = addPlayer(game, proposal, state.playerNames[move.from], random);
+      if ('error' in result) break; // unreachable: the same table limit held them all last game
+      move.to = result.seat;
+      const device = state.seatDevices?.[move.from];
+      next = {
+        ...result.state,
+        seatKeys: { ...result.state.seatKeys, [result.seat]: move.seatKey },
+        ...(device && { seatDevices: { ...result.state.seatDevices, [result.seat]: device } })
+      };
+    }
+    const leftOut = joiners.filter(seat => !seated.includes(seat)).map(seat => state.playerNames[seat]);
+    if (leftOut.length > 0) {
+      const were = leftOut.length === 1 ? 'was' : 'were';
+      next = { ...next, gameStatus: `${leftOut.join(', ')} ${were} not connected and ${were} left out` };
+    }
+
+    clearEmptyTimer(room);
+    clearTimeout(room.deadlineTimer);
+    clearInterval(room.simTimer);
+    room.deadlineTimer = undefined;
+    room.simTimer = undefined;
+    room.clockSeat = null;
+    room.state = next;
+    room.history = [];
+    room.timeline = [];
+    save(roomId, room);
+    hooks.reseated?.(roomId, moves);
+  }
+
   // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
   // No game hook runs but `resumeClock`: a game's disconnect hook may deal the next round once nobody is waiting,
   // and a clock restarts from now, so the time the server was down is never charged
@@ -471,7 +535,7 @@ export function createGameManager(
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     // Nobody is watching either, so no hand request is still open; downtime is never charged to the turn timer
     let state: BaseGameState = {
-      ...saved.state, undoVote: null, dismissVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
+      ...saved.state, undoVote: null, dismissVote: null, rematchVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
     };
     if (game.resumeClock) state = game.resumeClock(state, now());
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
@@ -583,8 +647,8 @@ export function createGameManager(
         deleteRoom(roomId);
         return null;
       }
-      const step = resolveUndoVote(room);
-      save(roomId, room, step);
+      // A disconnect can pass a rematch dismiss, the last answer the rematch was waiting for
+      settleRematch(roomId, room, resolveUndoVote(room));
       startEmptyTimer(roomId, room);
       return { state: view(room, seat) };
     },
@@ -661,6 +725,7 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.rematchVote) return { error: 'A rematch vote is in progress' };
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
@@ -702,8 +767,12 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
-      const held = state.disconnected.find(candidate => candidate === target);
-      if (held === undefined) return { error: 'That player is not disconnected' };
+      // During a rematch vote any seat that has not answered may be dismissed, connected or not
+      const rematch = state.rematchVote;
+      const held = rematch
+        ? state.activePlayers.find(candidate => candidate === target && candidate !== seat && rematch.votes[candidate] === undefined)
+        : state.disconnected.find(candidate => candidate === target);
+      if (held === undefined) return { error: rematch ? 'That player already answered' : 'That player is not disconnected' };
       if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
 
       const opened = {
@@ -712,7 +781,7 @@ export function createGameManager(
         gameStatus: `${state.playerNames[seat]} wants to dismiss ${state.playerNames[held]}`
       };
       settleDismissVote(room, opened); // a lone connected player passes it at once
-      save(roomId, room);
+      settleRematch(roomId, room);
       return { state: view(room, seat) };
     },
 
@@ -735,7 +804,44 @@ export function createGameManager(
 
       const approved = { ...state, dismissVote: { ...vote, votes: { ...vote.votes, [seat]: true } } };
       settleDismissVote(room, approved);
-      save(roomId, room);
+      settleRematch(roomId, room);
+      return { state: view(room, seat) };
+    },
+
+    requestRematch(roomId: string, seat: Seat): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { state } = room;
+
+      if (!state.isGameOver) return { error: 'The game is not over yet' };
+      if (state.rematchVote) return { error: 'A rematch vote is already in progress' };
+      if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
+
+      room.state = {
+        ...state,
+        rematchVote: { requestedBy: seat, votes: { [seat]: true } },
+        gameStatus: `${state.playerNames[seat]} wants a rematch`
+      };
+      settleRematch(roomId, room); // a player left alone at the table starts the lobby at once
+      return { state: view(room, seat) };
+    },
+
+    voteRematch(roomId: string, seat: Seat, join: unknown): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { state } = room;
+      const vote = state.rematchVote;
+
+      if (typeof join !== 'boolean') return { error: 'Invalid vote' };
+      if (!vote) return { error: 'No rematch vote in progress' };
+      if (vote.votes[seat] !== undefined) return { error: 'You already voted' };
+
+      // An answer settles a dismiss vote against this player, which would otherwise overwrite it
+      const dismissVote = state.dismissVote?.target === seat ? null : state.dismissVote;
+      room.state = { ...state, dismissVote, rematchVote: { ...vote, votes: { ...vote.votes, [seat]: join } } };
+      settleRematch(roomId, room);
       return { state: view(room, seat) };
     },
 

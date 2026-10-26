@@ -39,6 +39,8 @@ test('a spectator cannot move or act', async ({ seat, browser, server }) => {
     { type: 'VOTE_UNDO', payload: { approve: true } },
     { type: 'REQUEST_DISMISS', payload: { seat: 1 } },
     { type: 'VOTE_DISMISS', payload: { approve: true } },
+    { type: 'REQUEST_REMATCH' },
+    { type: 'VOTE_REMATCH', payload: { join: true } },
     { type: 'ANSWER_HAND', payload: { spectator: 'x', allow: true } }
   ];
   const { joined, errors } = await protocol(visitor, table.gameId, { playerName: 'Dana', role: 'spectator' }, refused);
