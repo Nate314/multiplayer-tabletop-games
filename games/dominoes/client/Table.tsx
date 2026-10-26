@@ -41,6 +41,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
         {seats.map(seat => {
           const count = handCounts[seat];
           const classes = ['player'];
+          if (seat !== viewer) classes.push('hand-only-hide');
           if (seat === currentPlayer) classes.push('player-current');
           if (winners.includes(seat)) classes.push('player-winner');
           if (seat === lastMover) classes.push('player-last');
@@ -57,7 +58,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
           );
         })}
       </ol>
-      <div className="boneyard">
+      <div className="boneyard hand-only-hide">
         {onDraw ? (
           <button type="button" className="tile tile-back tile-playable" onClick={onDraw} aria-label="Draw a tile" />
         ) : (
@@ -65,7 +66,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
         )}
         <span className="boneyard-label">Boneyard: {boneyardCount}</span>
       </div>
-      <div className="line-ends">
+      <div className="line-ends hand-only-hide">
         {!begun ? 'No tiles played yet' : (
           <>Open ends: {ends.map((pips, i) => (
             <Fragment key={i}>{separator(i, ends.length)}<span className="end-pips">{pips}</span></Fragment>

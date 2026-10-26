@@ -25,7 +25,8 @@ export default function Players({ gameState, playerNumber }: PlayersProps) {
             'rk-player',
             currentPlayer === seat ? 'rk-player-current' : '',
             winners.includes(seat) ? 'rk-player-winner' : '',
-            hasLeft ? 'rk-player-left' : ''
+            hasLeft ? 'rk-player-left' : '',
+            seat !== playerNumber ? 'hand-only-hide' : ''
           ];
           const points = result?.points[seat];
           return (
@@ -44,7 +45,7 @@ export default function Players({ gameState, playerNumber }: PlayersProps) {
           );
         })}
       </ul>
-      <div className="rk-pool" data-anim-key={POOL_KEY}>Tiles in the pool: {poolCount}</div>
+      <div className="rk-pool hand-only-hide" data-anim-key={POOL_KEY}>Tiles in the pool: {poolCount}</div>
     </div>
   );
 }

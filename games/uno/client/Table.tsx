@@ -40,6 +40,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
         {seats.map(seat => {
           const count = handCounts[seat];
           const classes = ['player'];
+          if (seat !== viewer) classes.push('hand-only-hide');
           if (seat === currentPlayer) classes.push('player-current');
           if (winners.includes(seat)) classes.push('player-winner');
           if (seat === lastMover) classes.push('player-last');

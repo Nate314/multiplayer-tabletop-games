@@ -69,6 +69,54 @@ const HAND_ONLY: Record<string, Row> = {
     keep: ['.turn-message', you('.holdem-seat') + ' .playing-card', you('.holdem-seat') + ' .holdem-seat-chips', '.holdem-pots li', '.action-buttons >> text=Fold'],
     hide: [others('.holdem-seat'), '.holdem-board', '.game-id'],
     move: async page => { await button(page, /^(Check|Call)/).click(); }
+  },
+  uno: {
+    keep: ['.hand', '.turn-message', '.uno-button', '.piles', you('.player')], // UNO! is open to everyone; the catch button shows only while a call is owed
+    hide: [others('.player'), '.game-id'],
+    move: async page => { await button(page, 'Draw').click(); }
+  },
+  phase10: {
+    keep: ['.my-hand', '.turn-message', '.piles', you('.seat')],
+    hide: [others('.seat') + ' .seat-details', '.game-id'],
+    board: '.table .groups', // Bob's laid set, which Alice can hit
+    setup: async table => {
+      const cards = [4, 16, 28].map(id => ({ id, kind: 'number', value: 5, color: 'red' }));
+      await table.patch({ currentPlayer: 1, drawnBy: null, groups: [{ owner: 2, kind: 'set', value: 5, cards }] });
+    },
+    move: async page => { await page.locator('.piles .pile').first().click(); }
+  },
+  skipbo: {
+    keep: ['.my-hand', '.turn-message', '.my-area .stock', '.my-area .discard-piles'],
+    hide: ['.other-seats', '.game-id'],
+    board: '.board',
+    move: async page => {
+      await page.locator('.my-hand .hand-cards button').first().click();
+      await button(page, 'Choose discard pile 1').click();
+      await button(page, 'Discard here on pile 1 and end your turn').click();
+    }
+  },
+  racko: {
+    keep: ['.my-rack', '.turn-message', '.piles .pile'],
+    hide: ['.other-racks', '.game-id'],
+    move: async page => { await button(page, /^Draw pile/).click(); }
+  },
+  rummikub: {
+    keep: ['.rk-rack-area', '.rk-turn-message', '.rk-turn-buttons', you('.rk-player')],
+    hide: [others('.rk-player'), '.rk-pool', '.game-id'],
+    board: '.rk-table',
+    move: async page => { await button(page, 'Draw a tile').click(); }
+  },
+  dominoes: {
+    keep: ['.hand', '.turn-message', '.action-buttons', you('.player')],
+    hide: [others('.player'), '.boneyard', '.line-ends', '.game-id'],
+    board: '.board',
+    move: async page => { await page.locator('.hand-tiles .tile-playable').first().click(); }
+  },
+  scrabble: {
+    keep: ['.rack', '.turn-message', '.turn-buttons', you('.score-row')],
+    hide: [others('.score-row'), '.bag-count', '.game-id'],
+    board: '.board-wrap',
+    move: async page => { await button(page, 'Pass').click(); }
   }
 };
 

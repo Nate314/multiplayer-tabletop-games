@@ -71,7 +71,7 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
         </section>
       )}
 
-      <div className="other-racks">
+      <div className="other-racks hand-only-hide">
         {others.map(seat => (
           <section
             key={seat}

@@ -38,7 +38,7 @@ function shown(visible: boolean): string {
 export default function TableArea({ table, highlighted, edit }: TableAreaProps) {
   const holding = edit?.held != null;
   return (
-    <section className="rk-table" aria-label="Table">
+    <section className="rk-table hand-only-board" aria-label="Table">
       {table.length === 0 && !edit && <div className="rk-table-empty">No tiles on the table yet</div>}
       {table.map((ids, index) => {
         const group = analyzeGroup(ids);
