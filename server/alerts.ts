@@ -16,6 +16,7 @@ export function createAlerts(deps: {
 }) {
   const { store, keys, subject, games, send = sendPush, now = Date.now } = deps;
   const lastKeys = new Map<string, Map<Seat, string | null>>(); // by room: each seat's alert key at the last change
+  const lastGame = new Map<string, number>(); // by room: the gameNumber at the last change
   // shortcut: an endpoint whose worker never fetches keeps one entry per room until the room goes; cap it if that grows
   const waiting = new Map<string, Map<string, PendingAlert>>(); // by endpoint, then room: the alert its worker will fetch
 
@@ -37,6 +38,7 @@ export function createAlerts(deps: {
   function forget(roomId: string): void {
     store.removeRoom(roomId);
     lastKeys.delete(roomId);
+    lastGame.delete(roomId);
     for (const rooms of waiting.values()) rooms.delete(roomId);
   }
 
@@ -70,7 +72,9 @@ export function createAlerts(deps: {
       }
       lastKeys.set(roomId, current);
       // Each client subscribes again for the next game, so a reseated player never gets this game's pushes
-      if (state.isGameOver) store.removeRoom(roomId);
+      const game = state.gameNumber ?? 1;
+      if (lastGame.has(roomId) && lastGame.get(roomId) !== game) store.removeRoom(roomId);
+      lastGame.set(roomId, game);
     },
 
     // The worker fetches what to show, since pushes carry no payload
@@ -82,13 +86,19 @@ export function createAlerts(deps: {
   };
 }
 
+// An oversized or malformed body is the caller's fault, so it gets its status without a logged stack
+const quietBodyError: express.ErrorRequestHandler = (error: { status?: number }, _req, res, next) => {
+  if (res.headersSent) next(error);
+  else res.status(error.status ?? 400).end();
+};
+
 export function mountPushRoutes(app: Express, alerts: Alerts): void {
   app.get('/api/push/key', (_req, res) => {
     res.json({ publicKey: alerts.publicKey });
   });
-  app.post('/api/push/alerts', express.json({ limit: '2kb' }), (req, res) => {
+  app.post('/api/push/alerts', express.json({ limit: '2kb' }), (req: express.Request, res: express.Response) => {
     const endpoint = asRecord(req.body)?.endpoint;
     res.setHeader('Cache-Control', 'no-store');
     res.json({ alerts: typeof endpoint === 'string' ? alerts.pending(endpoint) : [] });
-  });
+  }, quietBodyError);
 }

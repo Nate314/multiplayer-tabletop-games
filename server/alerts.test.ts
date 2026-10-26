@@ -84,13 +84,17 @@ test('a device holding two seats of a game is told whose turn it is', () => {
   assert.deepEqual(alerts.pending(ANN).map(alert => alert.title), ['Your turn, Bob']);
 });
 
-test('game over pushes everyone not looking and then forgets the room', () => {
+test('game over pushes everyone not looking, a rematch vote still pushes, and the next game forgets the room', () => {
   const { store, sent, alerts } = setup();
+  const over = { currentPlayer: null, isGameOver: true, winners: [1] };
   alerts.roomChanged(ROOM, views({ currentPlayer: 1 }), none);
-  alerts.roomChanged(ROOM, views({ currentPlayer: null, isGameOver: true, winners: [1] }), new Set([1]));
+  alerts.roomChanged(ROOM, views(over), new Set([1]));
   assert.deepEqual(sent.map(call => call.endpoint), [BOB]);
   assert.deepEqual(alerts.pending(BOB), [{ title: 'Game over', body: 'Ann won Test', tag: 'test/g1', url: '/join/test/g1' }]);
-  assert.deepEqual(store.endpoints(ROOM, 2), []);
+  alerts.roomChanged(ROOM, views({ ...over, rematchVote: { requestedBy: 1, votes: { 1: true } } }), none);
+  assert.deepEqual(sent.map(call => call.endpoint), [BOB, BOB]);
+  assert.deepEqual(alerts.pending(BOB).map(alert => alert.title), ['A vote is waiting for you']);
+  alerts.roomChanged(ROOM, views({ started: false, currentPlayer: 1, gameNumber: 2 }), none);
   assert.deepEqual(store.roomIds(), []);
 });
 
