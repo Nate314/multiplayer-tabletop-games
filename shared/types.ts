@@ -57,6 +57,7 @@ export type BasePublicState = BaseGameState & {
   standings?: Standing[]; // only once isGameOver
   serverTime?: number; // only on live views, so a client countdown can correct for its own clock
   waitingOn?: Seat[]; // only on live views: every seat the table waits on, so a shared device can hand over
+  shownSeat?: Seat | null; // only on a shared device's live view: the seat it was built for, null during a handoff
   seatViews?: Record<Seat, unknown>; // only on a spectator's live view: the private view of each seat that allowed it
 };
 

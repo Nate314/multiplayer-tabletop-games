@@ -5,14 +5,14 @@ import {
   resolveDismissVote
 } from '../shared/seating.ts';
 import {
-  agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules
+  agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules, tableLimit
 } from '../shared/houseRules.ts';
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { GameStore, SavedRoom, StepChange } from './store.ts';
 import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spectators.ts';
-import { seatsToAct } from '../shared/passAndPlay.ts';
+import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -57,6 +57,8 @@ export type JoinResult =
   | { roomId: string; seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }
   | { error: string };
 
+export type LocalSeat = { seat: Seat; seatKey: string };
+
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
 }
@@ -72,6 +74,37 @@ export function createGameManager(
 
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
+  }
+
+  function newRoom(game: Room['game'], id: string): Room {
+    return { game, state: game.createGameState(id), history: [], timeline: [], watching: new Set(), lastReactionAt: new Map() };
+  }
+
+  function spectatorNamed(state: BaseGameState, name: string) {
+    return state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
+  }
+
+  // Seats `name` on `state` without touching the room: a held seat comes back only with its key, and `rejoin` never adds one
+  function seatPlayer(
+    game: Room['game'], state: BaseGameState, name: string, rejoin: unknown, seatKey: unknown
+  ): { state: BaseGameState } & LocalSeat | { error: string } {
+    const known = findSeatByName(state, name);
+    if (known !== undefined) {
+      if (!state.activePlayers.includes(known)) return { error: 'You were removed from this game' };
+      if (!state.disconnected.includes(known)) return { error: `${state.playerNames[known]} is already in this game` };
+      // A game saved before seat keys existed has none, so its first rejoin by name is given one
+      const expected = state.seatKeys?.[known];
+      if (expected !== undefined && seatKey !== expected) return { error: 'That name is taken in this game' };
+      const key = expected ?? randomUUID();
+      return { state: { ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } }, seat: known, seatKey: key };
+    }
+    if (rejoin === true) return { error: 'You are not in this game' };
+    if (spectatorNamed(state, name)) return { error: 'That name is taken in this game' };
+
+    const result = addPlayer(game, state, name, random);
+    if ('error' in result) return result;
+    const key = randomUUID();
+    return { state: { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } }, seat: result.seat, seatKey: key };
   }
 
   // A store failure is logged, never thrown: the game in memory stays playable
@@ -446,13 +479,11 @@ export function createGameManager(
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
       if (!existing && (rejoin === true || role === 'spectator')) return { error: 'Game not found' };
-      const room: Room = existing ?? {
-        game, state: game.createGameState(id), history: [], timeline: [], watching: new Set(), lastReactionAt: new Map()
-      };
+      const room = existing ?? newRoom(game, id);
       const { state } = room;
-      const spectator = state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
 
       if (role === 'spectator') {
+        const spectator = spectatorNamed(state, name);
         if (findSeatByName(state, name) !== undefined) return { error: 'That name is taken in this game' };
         if (spectator) {
           if (room.watching.has(spectator.id)) return { error: `${spectator.name} is already in this game` };
@@ -477,30 +508,66 @@ export function createGameManager(
         return { roomId, seat: null, spectatorId: added.id, seatKey: key, state: spectatorViewOf(room, added.id)! };
       }
 
-      const known = findSeatByName(state, name);
-      if (known !== undefined) {
-        if (!state.activePlayers.includes(known)) return { error: 'You were removed from this game' };
-        if (!state.disconnected.includes(known)) return { error: `${state.playerNames[known]} is already in this game` };
-        // A game saved before seat keys existed has none, so its first rejoin by name is given one
-        const expected = state.seatKeys?.[known];
-        if (expected !== undefined && seatKey !== expected) return { error: 'That name is taken in this game' };
-        const key = expected ?? randomUUID();
-        room.state = { ...reconnectPlayer(state, known), seatKeys: { ...state.seatKeys, [known]: key } };
-        clearEmptyTimer(room);
-        save(roomId, room);
-        return { roomId, seat: known, seatKey: key, state: view(room, known) };
-      }
-      if (rejoin === true) return { error: 'You are not in this game' };
-      if (spectator) return { error: 'That name is taken in this game' };
-
-      const result = addPlayer(game, state, name, random);
-      if ('error' in result) return result;
-
-      const key = randomUUID();
-      room.state = { ...result.state, seatKeys: { ...result.state.seatKeys, [result.seat]: key } };
+      const seated = seatPlayer(room.game, state, name, rejoin, seatKey);
+      if ('error' in seated) return seated;
+      room.state = seated.state;
+      clearEmptyTimer(room);
       rooms.set(roomId, room);
       save(roomId, room);
-      return { roomId, seat: result.seat, seatKey: key, state: view(room, result.seat) };
+      return { roomId, seat: seated.seat, seatKey: seated.seatKey, state: view(room, seated.seat) };
+    },
+
+    // Seats several players on one device, all or none; a rejoin takes back each seat whose key still matches.
+    // The view returned is the public one, so no local player's hidden information reaches the device before its turn
+    joinLocal(
+      gameType: unknown, gameId: unknown, names: unknown, rejoin?: unknown, seatKeys?: unknown
+    ): { roomId: string; seats: LocalSeat[]; state: BasePublicState } | { error: string } {
+      const game = findGame(gameType);
+      if (!game) return { error: 'Unknown game' };
+      if (game.info.passAndPlay === false) return { error: `Pass and play is not offered for ${game.info.name}` };
+      const id = cleanName(gameId);
+      if (!id) return { error: 'Please enter a game ID' };
+      const cleaned = Array.isArray(names) ? names.map(cleanName).filter(Boolean) : [];
+      if (cleaned.length < 2) return { error: 'Enter at least two names' };
+      if (new Set(cleaned.map(name => name.toLowerCase())).size < cleaned.length) return { error: 'Each player needs a different name' };
+
+      const roomId = `${game.info.id}/${id}`;
+      const existing = rooms.get(roomId);
+      if (!existing && rejoin === true) return { error: 'Game not found' };
+      const room = existing ?? newRoom(game, id);
+      const free = tableLimit(game.info, room.state) - room.state.activePlayers.length;
+      if (rejoin !== true && !room.state.started && free > 0 && cleaned.length > free) {
+        return { error: `Only ${free} seats left in this game` };
+      }
+
+      const keys = Array.isArray(seatKeys) ? seatKeys : [];
+      let { state } = room;
+      const seats: LocalSeat[] = [];
+      let refused: { error: string } | undefined;
+      for (const [index, name] of cleaned.entries()) {
+        const seated = seatPlayer(room.game, state, name, rejoin, keys[index]);
+        if ('error' in seated) {
+          refused ??= seated;
+          continue;
+        }
+        state = seated.state;
+        seats.push({ seat: seated.seat, seatKey: seated.seatKey });
+      }
+      // A fresh join needs every name; a rejoin keeps whoever came back, since a dismissed seat is gone for good
+      if (refused && (rejoin !== true || seats.length === 0)) return refused;
+
+      room.state = state;
+      clearEmptyTimer(room);
+      rooms.set(roomId, room);
+      save(roomId, room);
+      return { roomId, seats, state: view(room, null) };
+    },
+
+    // The seat a shared device shows after this change: null hands over before a private hand would show
+    handoffSeat(roomId: string, shown: Seat | null, localSeats: Seat[]): Seat | null {
+      const room = rooms.get(roomId);
+      if (!room) return null;
+      return nextShownSeat(shown, localSeats, seatsToAct(room.game, room.state), room.game.privateSeatView !== undefined);
     },
 
     // Before the first move this frees the seat; after it the seat is held for a rejoin

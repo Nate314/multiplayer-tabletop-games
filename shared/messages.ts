@@ -18,6 +18,7 @@ export const MESSAGE_TYPES = {
   REQUEST_DISMISS: 'REQUEST_DISMISS',
   VOTE_DISMISS: 'VOTE_DISMISS',
   REACT: 'REACT',
+  SHOW_SEAT: 'SHOW_SEAT',
   REACTION: 'REACTION',
   GAME_STATE: 'GAME_STATE',
   GAME_ERROR: 'GAME_ERROR'
@@ -25,6 +26,9 @@ export const MESSAGE_TYPES = {
 
 export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string; role?: JoinRole }
+  // role 'passAndPlay': seats every name on this device; seatKeys follow the order of playerNames
+  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerNames: string[]; rejoin?: boolean; seatKeys?: string[]; role: 'passAndPlay' }
+  | { type: typeof MESSAGE_TYPES.SHOW_SEAT; payload: { seat: Seat | null } }
   | { type: typeof MESSAGE_TYPES.REQUEST_HAND; payload: { seat: Seat } }
   | { type: typeof MESSAGE_TYPES.ANSWER_HAND; payload: { spectator: string; allow: boolean } }
   | { type: typeof MESSAGE_TYPES.SWITCH_TO_PLAYER }
@@ -40,6 +44,7 @@ export type ClientMessage =
 
 export type ServerMessage =
   | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat | null; spectatorId?: string; seatKey: string; gameState: BasePublicState } }
+  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: null; localSeats: { seat: Seat; seatKey: string }[]; gameState: BasePublicState; spectatorId?: undefined; seatKey?: undefined } }
   | { type: typeof MESSAGE_TYPES.GAME_STATE; payload: BasePublicState }
   | { type: typeof MESSAGE_TYPES.REACTION; payload: Reaction }
   | { type: typeof MESSAGE_TYPES.GAME_ERROR; payload: { message: string } };

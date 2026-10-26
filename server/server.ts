@@ -27,7 +27,14 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real messages are well under 1 KB
 
-type Connection = { roomId: string; seat: Seat; spectatorId?: undefined } | { roomId: string; seat: null; spectatorId: string }; // a spectator has no seat
+// A spectator has no seat; a shared device holds several and shows one at a time, none (null) during a handoff
+type Connection =
+  | { roomId: string; seat: Seat; spectatorId?: undefined; localSeats?: undefined }
+  | { roomId: string; seat: Seat | null; spectatorId?: undefined; localSeats: Seat[] }
+  | { roomId: string; seat: null; spectatorId: string; localSeats?: undefined };
+type LocalConnection = Extract<Connection, { localSeats: Seat[] }>;
+
+const JOIN_ROLES: readonly JoinRole[] = ['player', 'spectator', 'passAndPlay', 'tableScreen'];
 
 const e2eRandom = E2E ? createE2eRandom() : null;
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), { changed: broadcast, manualSimulation: E2E });
@@ -119,8 +126,13 @@ function handleMessage(ws: WebSocket, data: unknown): void {
 
   const { roomId, seat } = connection;
   const payload = asRecord(message?.payload);
-  if (seat === null) {
+  if (connection.spectatorId !== undefined) {
     handleSpectatorMessage(ws, roomId, connection.spectatorId, message?.type, payload);
+    return;
+  }
+  if (connection.localSeats && handleLocalMessage(ws, connection, message?.type, payload)) return;
+  if (seat === null) {
+    if (typeof message?.type === 'string' && message.type in MESSAGE_TYPES) sendError(ws, 'Pass the device first');
     return;
   }
   switch (message?.type) {
@@ -167,7 +179,17 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, message.role as JoinRole | undefined);
+  const { role } = message;
+  if (role !== undefined && !JOIN_ROLES.some(known => known === role)) {
+    sendError(ws, 'Unknown role');
+    return;
+  }
+  if (role === 'passAndPlay') {
+    joinLocal(ws, message);
+    return;
+  }
+
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, role as JoinRole | undefined);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
@@ -176,6 +198,52 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
   connections.set(ws, connectionFor(result.roomId, result.seat, result.spectatorId));
   sendJoined(ws, result);
   broadcast(result.roomId);
+}
+
+// A reload starts on the handoff screen (no seat shown), so no hand shows before its player has the device
+function joinLocal(ws: WebSocket, message: Record<string, unknown>): void {
+  const result = manager.joinLocal(message.gameType, message.gameId, message.playerNames, message.rejoin, message.seatKeys);
+  if ('error' in result) {
+    sendError(ws, result.error);
+    return;
+  }
+
+  connections.set(ws, { roomId: result.roomId, seat: null, localSeats: result.seats.map(({ seat }) => seat) });
+  send(ws, {
+    type: MESSAGE_TYPES.GAME_JOINED,
+    payload: { playerNumber: null, localSeats: result.seats, gameState: { ...result.state, shownSeat: null } }
+  });
+  broadcast(result.roomId);
+}
+
+// A shared device picks the seat it shows, and settles the lobby for its players at once (nothing in a lobby is private).
+// False when the message is an ordinary one for the shown seat
+function handleLocalMessage(
+  ws: WebSocket, connection: LocalConnection, type: unknown, payload: Record<string, unknown> | null
+): boolean {
+  const { roomId, localSeats } = connection;
+  if (type === MESSAGE_TYPES.SHOW_SEAT) {
+    const seat = payload?.seat === null ? null : localSeats.find(local => local === payload?.seat);
+    if (seat === undefined) {
+      sendError(ws, "Not one of this device's players");
+    } else {
+      connection.seat = seat;
+      sendState(ws, connection);
+    }
+    return true;
+  }
+  if (type === MESSAGE_TYPES.SET_HOUSE_RULES) {
+    const host = localSeats.find(local => local === manager.getState(roomId)?.houseRules?.host);
+    if (host === undefined) return false;
+    respond(ws, roomId, manager.setHouseRules(roomId, host, payload?.proposal));
+    return true;
+  }
+  if (type === MESSAGE_TYPES.AGREE_HOUSE_RULES) {
+    const results = localSeats.map(seat => manager.agreeHouseRules(roomId, seat, payload?.revision));
+    respond(ws, roomId, results.find(result => !('error' in result)) ?? results[0]);
+    return true;
+  }
+  return false;
 }
 
 // A joined spectator has an id and no seat; a player has a seat
@@ -230,8 +298,9 @@ function handleDisconnect(ws: WebSocket): void {
     broadcast(connection.roomId);
     return;
   }
-  const result = connection.seat !== null && manager.disconnect(connection.roomId, connection.seat);
-  if (result) {
+  const seats = connection.localSeats ?? (connection.seat !== null ? [connection.seat] : []);
+  const results = seats.map(seat => manager.disconnect(connection.roomId, seat));
+  if (results.some(Boolean)) {
     broadcast(connection.roomId);
   } else if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
     for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
@@ -246,15 +315,27 @@ function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>)
   }
 }
 
-// Each player gets their own view, so a game can show them their own hand
 function broadcast(roomId: string): void {
   for (const [ws, connection] of connections) {
-    if (connection.roomId !== roomId) continue;
-    const state = connection.spectatorId === undefined
-      ? manager.getState(roomId, connection.seat)
-      : manager.getSpectatorState(roomId, connection.spectatorId);
-    if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
+    if (connection.roomId === roomId) sendState(ws, connection);
   }
+}
+
+// Each player gets their own view, so a game can show them their own hand.
+// A shared device first hands over when another local player's hand would show, and is told which seat it sees
+function sendState(ws: WebSocket, connection: Connection): void {
+  const { roomId } = connection;
+  let state: BasePublicState | undefined;
+  if (connection.spectatorId !== undefined) {
+    state = manager.getSpectatorState(roomId, connection.spectatorId);
+  } else if (connection.localSeats) {
+    connection.seat = manager.handoffSeat(roomId, connection.seat, connection.localSeats);
+    const view = manager.getState(roomId, connection.seat);
+    state = view && { ...view, shownSeat: connection.seat };
+  } else {
+    state = manager.getState(roomId, connection.seat);
+  }
+  if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
 }
 
 // A reaction is the same for every viewer and changes no view, so no GAME_STATE follows it
