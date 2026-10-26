@@ -1,9 +1,9 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
+import { ARCHIVE_TTL_MS, createGameManager, EMPTY_ROOM_TIMEOUT_MS } from './games.ts';
 import { agreeAll, rememberingKeys } from './testing.ts';
 import { openGameStore } from './store.ts';
-import type { GameStore, SavedRoom, StepChange } from './store.ts';
+import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
 import { rulesGame, testGame, timedGame, TURN_MS, type TestPublicState, type TestState, type TimedState } from '../shared/testGame.ts';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { asRecord } from '../shared/messages.ts';
@@ -700,8 +700,18 @@ function memoryStore(): MemoryStore {
   const rooms = new Map<string, { gameType: string; state: BaseGameState }>();
   const steps = new Map<string, { before: BaseGameState; after: BaseGameState }[]>();
   const written: number[] = [];
+  const archived = new Map<string, ArchivedGame>();
   return {
     written,
+    archive: game => { archived.set(game.id, structuredClone(game)); },
+    loadArchive: id => structuredClone(archived.get(id)),
+    nextGameNumber: (gameType, gameId) =>
+      Math.max(0, ...[...archived.values()].filter(g => g.gameType === gameType && g.gameId === gameId).map(g => g.n)) + 1,
+    pruneArchive: before => {
+      const old = [...archived.values()].filter(g => g.finishedAt < before);
+      for (const game of old) archived.delete(game.id);
+      return old.length;
+    },
     loadAll: () => new Map([...rooms].map(([roomId, { gameType, state }]) => {
       const roomSteps = steps.get(roomId) ?? [];
       const history = roomSteps.map(step => step.before);
@@ -1473,6 +1483,7 @@ test('the cooldown is 15 seconds per sender', () => {
 test('reactions never reach a view or an undo snapshot', () => {
   const steps: StepChange[] = [];
   const store: GameStore = {
+    ...memoryStore(),
     loadAll: () => new Map(),
     save: (_roomId, _gameType, _state, step) => { if (step) steps.push(step); },
     remove: () => {}
@@ -1775,4 +1786,84 @@ test('with manualSimulation no timer runs and simulateTicks steps the room', (t:
   assert.equal(manager.simulateTicks(ROOM, 2), true);
   assert.equal(ticksOf(manager), 2);
   assert.equal(manager.simulateTicks('test/none', 2), false);
+});
+
+// A game won by its third move, played on a store
+function wonOn(store: GameStore, t: TestContext) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const table = reportingTable(store);
+  playToWin(table);
+  return table;
+}
+
+// Everyone leaves, so the empty-room timer deletes the room
+function deleteEmptyRoom(manager: Manager, t: TestContext): void {
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  assert.equal(manager.getState(ROOM), undefined);
+}
+
+test('a finished game is archived under its archive id', (t: TestContext) => {
+  const store = memoryStore();
+  const { results } = wonOn(store, t);
+  const archived = store.loadArchive('test/g1#1');
+  assert.equal(archived?.timeline.length, 3);
+  assert.equal(archived?.state.isGameOver, true);
+  assert.equal(archived?.finishedAt, 4000);
+  assert.equal(results[0].archiveId, archived?.id);
+});
+
+test('a game ID used again after its room was deleted continues the numbering', (t: TestContext) => {
+  const store = memoryStore();
+  const { manager } = wonOn(store, t);
+  deleteEmptyRoom(manager, t);
+  const before = store.loadArchive('test/g1#1');
+  manager.join('test', 'g1', 'A');
+  assert.equal(manager.rawState(ROOM)?.gameNumber, 2);
+  manager.join('test', 'g1', 'B');
+  assert.deepEqual(store.loadArchive('test/g1#1'), before);
+});
+
+test('archives older than 90 days are pruned when the manager starts', () => {
+  const store = memoryStore();
+  const game = (n: number, finishedAt: number) => ({
+    id: `test/old#${n}`, gameType: 'test', gameId: 'old', n, finishedAt, state: {}, history: [], timeline: []
+  }) as unknown as ArchivedGame;
+  const at = 10 * ARCHIVE_TTL_MS;
+  store.archive(game(1, at - ARCHIVE_TTL_MS - 1));
+  store.archive(game(2, at - ARCHIVE_TTL_MS + 1));
+  createGameManager([testGame], seededRandom, store, { now: () => at });
+  assert.equal(store.loadArchive('test/old#1'), undefined);
+  assert.ok(store.loadArchive('test/old#2'));
+});
+
+test('archives are pruned again every 24 hours', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const store = memoryStore();
+  const clock = { now: 0 };
+  createGameManager([testGame], seededRandom, store, { now: () => clock.now });
+  store.archive({ id: 'test/old#1', gameType: 'test', gameId: 'old', n: 1, finishedAt: 0 } as ArchivedGame);
+  clock.now = ARCHIVE_TTL_MS + 1;
+  t.mock.timers.tick(24 * 60 * 60 * 1000);
+  assert.equal(store.loadArchive('test/old#1'), undefined);
+});
+
+test('an undo after game over and a replay archive the final game', (t: TestContext) => {
+  const store = memoryStore();
+  const table = wonOn(store, t);
+  const { manager } = table;
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  table.clock.now += 1000;
+  ok(manager.move(ROOM, 1, tick));
+  assert.equal(table.results.length, 1); // the first report stays final
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  const final = manager.rawState(ROOM);
+  assert.notDeepEqual(store.loadArchive('test/g1#1')?.state, final); // still the game as first finished
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS);
+  const archived = store.loadArchive('test/g1#1');
+  assert.equal(archived?.timeline.length, 3);
+  assert.deepEqual(archived?.state, final);
 });

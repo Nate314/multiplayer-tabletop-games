@@ -49,7 +49,7 @@ export function openGameStore(file: string): GameStore {
   );
   db.exec('CREATE INDEX IF NOT EXISTS archived_games_game ON archived_games (game_type, game_id)');
 
-  const selectAll =db.prepare('SELECT id, game_type, data FROM rooms');
+  const selectAll = db.prepare('SELECT id, game_type, data FROM rooms');
   const selectSteps = db.prepare('SELECT idx, before, after FROM room_steps WHERE room_id = ? ORDER BY idx');
   const upsert = db.prepare(
     'INSERT INTO rooms (id, game_type, data) VALUES (?, ?, ?) ' +

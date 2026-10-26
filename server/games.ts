@@ -20,6 +20,8 @@ import type {
 } from '../shared/types.ts';
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
+export const ARCHIVE_TTL_MS = 90 * 24 * 60 * 60 * 1000; // how long a finished game stays in the archive
+const ARCHIVE_PRUNE_MS = 24 * 60 * 60 * 1000;
 
 // `history` holds the state before each move, for undo; `timeline` holds the state right after each move.
 // Neither leaves this module except through the game's public view.
@@ -69,6 +71,12 @@ export function createGameManager(
   const rooms = new Map<string, Room>();
   const now = hooks.now ?? Date.now;
 
+  function pruneArchive(): void {
+    writeStore('archive', target => { target.pruneArchive(now() - ARCHIVE_TTL_MS); });
+  }
+  pruneArchive();
+  setInterval(pruneArchive, ARCHIVE_PRUNE_MS).unref();
+
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
   }
@@ -83,6 +91,17 @@ export function createGameManager(
     }
   }
 
+  const archiveIdOf = (roomId: string, state: BaseGameState) => `${roomId}#${state.gameNumber ?? 1}`;
+
+  // Keeps the room's finished game; archiving again replaces it, so an undo and replay leave the final game
+  function archiveRoom(roomId: string, room: Room): void {
+    const { game, state } = room;
+    writeStore(roomId, target => target.archive({
+      id: archiveIdOf(roomId, state), gameType: game.info.id, gameId: state.gameId, n: state.gameNumber ?? 1,
+      finishedAt: state.finishedAt ?? now(), state, history: room.history, timeline: room.timeline
+    }));
+  }
+
   // Stamps the first start and the first end; a game already stamped finished never reports again, even after an undo
   function stamp(roomId: string, room: Room): void {
     if (room.state.started && room.state.startedAt === undefined) room.state = { ...room.state, startedAt: now() };
@@ -91,8 +110,9 @@ export function createGameManager(
     const state: BaseGameState = { ...room.state, finishedAt };
     room.state = state;
     const { game } = room;
+    archiveRoom(roomId, room);
     const result: GameResult = {
-      archiveId: `${roomId}#${state.gameNumber ?? 1}`,
+      archiveId: archiveIdOf(roomId, state),
       gameType: game.info.id,
       gameId: state.gameId,
       startedAt: state.startedAt ?? finishedAt,
@@ -220,8 +240,10 @@ export function createGameManager(
   }
 
   function deleteRoom(roomId: string): void {
-    clearTimeout(rooms.get(roomId)?.deadlineTimer);
-    clearInterval(rooms.get(roomId)?.simTimer);
+    const room = rooms.get(roomId);
+    if (room?.state.isGameOver) archiveRoom(roomId, room);
+    clearTimeout(room?.deadlineTimer);
+    clearInterval(room?.simTimer);
     rooms.delete(roomId);
     writeStore(roomId, target => target.remove(roomId));
   }
@@ -447,6 +469,7 @@ export function createGameManager(
       const room: Room = existing ?? {
         game, state: game.createGameState(id), history: [], timeline: [], watching: new Set(), lastReactionAt: new Map()
       };
+      if (!existing) room.state = { ...room.state, gameNumber: store?.nextGameNumber(game.info.id, id) ?? 1 };
       const { state } = room;
       const spectator = state.spectators?.find(candidate => candidate.name.toLowerCase() === name.toLowerCase());
 
