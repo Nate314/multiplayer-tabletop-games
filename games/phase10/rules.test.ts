@@ -1,3 +1,4 @@
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -673,4 +674,21 @@ test('with the rule off a tiebreaker layDown needs no phase, and a stray phase f
   assert.deepEqual(laid.laidPhase, { 1: 10 });
   ok(move(state, 1, { type: 'layDown', phase: null, groups: [ids(five), ids(three)] }));
   assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five), ids(three)] }), { error: 'The tiebreaker hand is phase 10' });
+});
+
+test('finalStandings ranks by phase, then by the lowest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [3],
+    phases: { 1: 7, 2: 7, 3: 11, 4: 4 }, scores: { 1: 120, 2: 120, 3: 40, 4: 60 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 3, place: 1, score: 'All phases, 40 points' },
+    { seat: 1, place: 2, score: 'Phase 7, 120 points' }, { seat: 2, place: 2, score: 'Phase 7, 120 points' },
+    { seat: 4, place: 3, score: 'Phase 4, 60 points' }
+  ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...game(), handSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

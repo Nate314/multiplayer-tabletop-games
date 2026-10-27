@@ -45,7 +45,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">You are {gameState.playerNames[playerNumber]} (Player {playerNumber})</div>
@@ -68,7 +68,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
           </div>
         </div>
-        <Table gameState={gameState} selected={picked} onToggle={isMyTurn && !rolling ? toggle : undefined} />
+        <Table gameState={gameState} selected={picked} onToggle={isMyTurn && !rolling ? toggle : undefined} viewer={playerNumber} />
       </div>
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
     </>

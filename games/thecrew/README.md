@@ -95,6 +95,7 @@ Sources for the missions, mechanics only: the task counts and special rules are 
 - After each mission, read the result and click Continue. Vote to end and Vote to play on call or answer the end vote. After the game, Close hides the result and Show the mission opens it again
 - With Color-blind symbols on in Settings, each color also shows its shape: pink heart, blue square, green triangle, yellow star. Each suit card shows it in its top right corner; the rocket already carries a symbol
 - Click Undo to ask everyone to undo the last move
+- With a table screen connected, on Hand only (the default) the other seats and the trick are hidden
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { playError } from './rules.ts';
 import { hearts } from './index.ts';
 import type { PublicGameState } from './types.ts';
@@ -77,7 +77,7 @@ test('a short game: each player sees only their own hand, the table sees none', 
   const views = [1, 2, 3, 4].map(seat => viewOf(manager, seat));
   views.forEach((view, index) => assert.equal(view.hand.length, view.handCounts[index + 1]));
   assert.notDeepEqual(views[0].hand, views[1].hand);
-  const history = manager.history('hearts', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'hearts') as unknown as PublicGameState[];
   assert.equal(history.length, 9);
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
@@ -128,7 +128,7 @@ test('a rejoin after passing in the first hand keeps the seat and the pass', () 
   assert.deepEqual(after.hand, before.hand);
   assert.deepEqual(after.passed, [1]);
   // A started game with no moves yet has a one-step history with no cards in it
-  const history = manager.history('hearts', 'g1') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'hearts') as unknown as PublicGameState[];
   assert.equal(history.length, 1);
   assert.deepEqual(history[0].hand, []);
   assert.deepEqual(history[0].myPass, []);
@@ -155,7 +155,7 @@ test('a whole game played with legal moves ends when someone reaches 100', () =>
   const low = Math.min(...Object.values(state.scores));
   assert.deepEqual(state.winners, [1, 2, 3, 4].filter(seat => state.scores[seat] === low));
   assert.ok(state.handNumber > 1);
-  const file = manager.gameFile('hearts', 'g1', new Date());
+  const file = fileOf(manager, 'hearts', new Date());
   assert.ok(file && 'file' in file);
 });
 

@@ -17,7 +17,7 @@ test('a join link opens the join dialog with the game ID and the last used name 
 test('a join link with an unknown game opens the landing page with no dialog', async ({ browser, server }) => {
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/join/nope/abc');
-  await expect(visitor.locator('.lobby-game')).toHaveCount(31);
+  await expect(visitor.locator('.lobby-game')).toHaveCount(33);
   await expect(visitor.getByRole('dialog')).toHaveCount(0);
   await expect(visitor).toHaveURL(`${server.url}/`);
 });
@@ -43,7 +43,7 @@ test('a link to another game wins over the automatic rejoin', async ({ seat }) =
   await expect(dialog.getByLabel('Game ID')).toHaveValue('xyz');
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await expect(bob.getByRole('button', { name: `Back to Connect Four (${table.gameId})` })).toBeVisible();
-  await expect(alice.locator('.presence-player', { hasText: 'Bob' })).toBeVisible();
+  await expect(alice.locator('.presence-player[data-disconnected]', { hasText: 'Bob' })).toBeVisible();
 });
 
 test('share copies the join link and says so when there is no share sheet', async ({ seat, server }) => {

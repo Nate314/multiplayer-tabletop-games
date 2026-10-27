@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, newPlayer, openFaq, setPreference, test as base, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/risk/map.ts';
 import { game, ownership } from '../games/risk/testing.ts';
 import type { ContinentId, GameState } from '../games/risk/types.ts';
@@ -222,6 +222,7 @@ test.describe('Risk rules', () => {
     const { table, alice } = await start(seat);
     await table.patch(crafted());
     await expect(tray(alice, 3)).toBeEnabled();
+    await alice.evaluate(() => window.scrollTo(0, 0)); // the lobby panel is gone, which leaves the page scrolled past the tray
     await drag(alice, tray(alice, 3), disc(alice, 'alaska'));
     await expect(land(alice, 'alaska').locator('.draft-badge')).toHaveText('+1');
     await expect(tray(alice, 2)).toBeVisible();
@@ -506,6 +507,7 @@ test.describe('Risk rules', () => {
     await expect(turn(alice)).toHaveText('Game over: Alice wins');
     await expect(cards(alice)).toHaveCount(3); // Bob's card came with his last territory
 
+    await seeTable(alice);
     await button(alice, 'History').click();
     const [download] = await Promise.all([alice.waitForEvent('download'), button(alice, 'Download game').click()]);
     const file = test.info().outputPath('risk-game.json');

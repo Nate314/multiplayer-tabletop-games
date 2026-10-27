@@ -1,3 +1,4 @@
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -92,7 +93,7 @@ const play = (state: GameState, seat: number, played: Card, color?: Color, uno?:
 const draw = (state: GameState, seat: number) => move(state, seat, { type: 'draw' });
 const pass = (state: GameState, seat: number) => move(state, seat, { type: 'pass' });
 const act = (state: GameState, seat: number, type: string, random: Random = noShuffle) =>
-  uno.applyAction?.(state, seat, { type }, random) ?? assert.fail('UNO has actions');
+  uno.applyAction?.(state, seat, { type }, random, 0) ?? assert.fail('UNO has actions');
 
 test('the deck has the standard 108 cards', () => {
   const deck = buildDeck();
@@ -822,4 +823,19 @@ test('a jump-in during a Draw stack is refused', () => {
   assert.equal(jumps(summary, 2, red('5')), false);
   const starting = jumpGame(hands, { currentColor: null, discardPile: [WILD] });
   assert.equal(jumps(starting, 2, red('5')), false);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [3], scores: { 1: 120, 2: 120, 3: 520 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 3, place: 1, score: '520 points' },
+    { seat: 1, place: 2, score: '120 points' }, { seat: 2, place: 2, score: '120 points' }
+  ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...game(), roundSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

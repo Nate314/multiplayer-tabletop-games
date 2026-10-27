@@ -26,8 +26,9 @@ Make trump with your partner and take at least three of the five tricks, with th
 - In a trick, the cards you may play are raised and outlined; click one to play it. Your hand is sorted by suit with trump, the left bower included, at the right
 - The table shows both teams' scores and tricks, the hand number, trump and who made it, and the four seats with you at the bottom and your partner across. Each seat shows its card count, the dealer, a pass this round, the maker and a partner who sits out. The middle shows the turned card while trump is made, then the trick being played, or the last trick taken with who took it
 - The dealer sees the card they discarded below their hand
-- After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
+- After each hand, read the scoring screen and click Continue; the last hand's scoring is on the game-over screen
 - Click Undo to ask everyone to undo the last move
+- With a table screen connected, on Hand only (the default) the seats and the trick are hidden
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

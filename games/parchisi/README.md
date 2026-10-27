@@ -27,6 +27,7 @@ Players are seated in join order: Player 1 (blue) at the bottom, Player 2 (red) 
 - The dice beside the board show the current roll; doubles with all pawns out also show the two faces underneath, with dashed edges. Used dice are faded and bonus moves appear next to them
 - The board is dimmed when it is not your turn, and the last move's squares are outlined
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
+- With a table screen connected, on Hand only (the default) the board shows only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each player color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns, nests, home columns and the player list show it
 

@@ -1,3 +1,4 @@
+import { finalStandings, seatsWaitedOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BOARD, ownable } from './board.ts';
@@ -585,4 +586,20 @@ test('with auctions off a bankrupt player\'s properties return to the bank unown
   assert.deepEqual([1, 3].map(space => toBank.owners[space]), [undefined, undefined]);
   assert.equal(toBank.auction, null);
   assert.deepEqual(toBank.auctionQueue, []);
+});
+
+test('finalStandings ranks the bankrupt players by when they went bankrupt', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [1], bankrupt: [4, 3] };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1 }, { seat: 2, place: 2 }, { seat: 3, place: 3, score: 'Bankrupt' }, { seat: 4, place: 4, score: 'Bankrupt' }
+  ]);
+});
+
+test('the table waits on auction bidders other than the high bidder, and on a trade\'s addressee', () => {
+  let state = played(played(game(), 1, { type: 'roll' }, dice(1, 2)), 1, { type: 'decline' });
+  assert.deepEqual(seatsWaitedOn(state), [1, 2, 3]);
+  state = acted(state, 2, { type: 'bid', amount: 10 });
+  assert.deepEqual(seatsWaitedOn(state), [1, 3]);
+  const offer = { type: 'offerTrade', to: 3, give: { properties: [], cash: 10, jailCards: 0 }, get: { properties: [], cash: 0, jailCards: 0 } };
+  assert.deepEqual(seatsWaitedOn(acted(game(), 1, offer)), [3]);
 });

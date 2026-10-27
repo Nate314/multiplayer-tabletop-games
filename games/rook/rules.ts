@@ -25,16 +25,17 @@
 //   secret until the card is played. A called card may be among the cards laid aside, leaving the bidder fewer
 //   partners or none. Each member of the bidding side scores what the side took if it made the bid, else loses the
 //   bid; each defender scores what all the defenders took. Equal top totals at the target share the win.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { teamOf } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { canFollow, describeTrickPlay, trickWinner as sharedTrickWinner } from '../../shared/tricks.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type {
   Bidding, Card, Color, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, RookCard, Seat, TeamScores
 } from './types.ts';
@@ -550,3 +551,11 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
   return startNextHandIfReady(state, random);
 }
+
+// Every member of a team takes the team's place, ranked by the team's total
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.scores[teamOfSeat(state, seat)] ?? 0;
+  return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
+}
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

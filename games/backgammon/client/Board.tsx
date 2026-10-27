@@ -172,7 +172,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, onMove }: Boa
 
   return (
     <>
-      <div className={`bg-board${isMyTurn ? '' : ' not-your-turn'}${isGameOver ? ' game-over' : ''}`}>
+      <div className={`bg-board hand-only-board${isMyTurn ? '' : ' not-your-turn'}${isGameOver ? ' game-over' : ''}`}>
         <div className="bg-half bg-half-top">
           {TOP_LEFT.map(number => renderPoint(number, 'top'))}
           {renderBar(otherSeat(viewer))}

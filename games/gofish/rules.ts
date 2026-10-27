@@ -1,11 +1,13 @@
 // Go Fish rules shared by the browser (rank names) and the server (validation).
 // Rules: https://en.wikipedia.org/wiki/Go_Fish, played until all 13 books are down.
+import { rankStandings } from '../../shared/standings.ts';
+import { plural } from '../../shared/text.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { RANKS, standardDeck } from '../../shared/playingCards.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { Ask, Fished, GameState, Move, PlayingCard, PublicGameState, Rank, Result, Seat } from './types.ts';
 
 export const BOOK_SIZE = 4;
@@ -209,4 +211,9 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
   const first = state.currentPlayer ?? state.activePlayers[0];
   const next = refill(stocked, first);
   return { ...next, currentPlayer: turnFrom(next, first) };
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const books = (seat: Seat) => state.books[seat]?.length ?? 0;
+  return rankStandings(state, (a, b) => books(b) - books(a), seat => plural(books(seat), 'book'));
 }

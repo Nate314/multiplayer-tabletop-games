@@ -14,16 +14,19 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 installAudioUnlock(window)
 void loadSounds()
 
-// Hidden pages nothing links to, loaded only when opened so they add nothing to the main bundle
-const DEV_PAGES: Record<string, ReturnType<typeof lazy>> = {
+// Pages outside the app, loaded only when opened so they add nothing to the main bundle; the dev pages are hidden
+const StatsPage = lazy(() => import('./stats/StatsPage.tsx'))
+const PAGES: Record<string, ReturnType<typeof lazy>> = {
   '/dev/svgs': lazy(() => import('./dev/SvgGallery.tsx')),
   '/dev/sounds': lazy(() => import('./dev/SoundGallery.tsx')),
+  '/stats': StatsPage,
 }
-const DevPage = DEV_PAGES[window.location.pathname]
+const { pathname } = window.location
+const Page = PAGES[pathname] ?? (pathname.startsWith('/link/') ? StatsPage : undefined)
 
 // index.html always contains the #root element
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {DevPage ? <Suspense fallback={null}><DevPage /></Suspense> : <App />}
+    {Page ? <Suspense fallback={null}><Page /></Suspense> : <App />}
   </StrictMode>,
 )

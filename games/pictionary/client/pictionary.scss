@@ -1,0 +1,427 @@
+[data-game="pictionary"] {
+  /* Pictionary's sketchbook theme. Every rule is scoped to data-game="pictionary", so none of it reaches the landing page or other games.
+   The drawing paper is white in both themes, since the drawing's colors are fixed. */
+
+  color-scheme: light;
+  --page-bg: #e9eef5;
+  --text: #1f2633;
+  --muted: #5d6778;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(31, 38, 51, 0.15);
+  --button-bg: #3b5bdb;
+  --button-hover-bg: #2f4ac0;
+  --button-text: #fff;
+  --status-bg: #e6ebfa;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #e8a200;
+  --guessed-bg: #d3f9d8;
+  --guessed-text: #1f6b32;
+  --close-text: #b35c00;
+  --pressed: #f08c00;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #141821;
+    --text: #e4e8f0;
+    --muted: #9aa3b5;
+    --panel-bg: #1f2430;
+    --panel-border: rgba(228, 232, 240, 0.14);
+    --button-bg: #4c6ef5;
+    --button-hover-bg: #5f7ff7;
+    --status-bg: #283150;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --highlight: #ffc029;
+    --guessed-bg: #1f3d27;
+    --guessed-text: #a8e6b4;
+    --close-text: #ffb366;
+    --pressed: #ffa94d;
+  }
+
+  .game-header {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-id {
+    width: fit-content;
+    margin: 0 auto 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    font-size: 0.9rem;
+  }
+
+  .pictionary-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-info,
+  .pictionary-side > *,
+  .pictionary-paper {
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+  }
+
+  .game-info {
+    padding: 10px 16px;
+    text-align: center;
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  .turn-timer {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .pictionary-layout button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .pictionary-layout button:not(:disabled):hover {
+    background: var(--button-hover-bg);
+  }
+
+  .pictionary-layout button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  /* The blanks: one box per letter, each word kept whole so a phrase wraps at its spaces */
+
+  .pictionary-blanks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 22px;
+  }
+
+  .blank-word {
+    display: flex;
+    gap: 4px;
+  }
+
+  .blank-letter,
+  .blank-hyphen {
+    display: inline-flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 1.4em;
+    height: 1.7em;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .blank-letter {
+    border-bottom: 3px solid var(--text);
+  }
+
+  .blank-hyphen {
+    width: 0.8em;
+    align-items: center;
+  }
+
+  .word-choices {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.1rem;
+    }
+  }
+
+  /* The paper and toolbar beside the scores and chat; on phones the chat goes below */
+
+  .pictionary-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 300px);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .pictionary-paper {
+    padding: 8px;
+  }
+
+  .pictionary-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    background: #fff;
+    border-radius: 4px;
+  }
+
+  // A finger draws instead of scrolling the page
+  .pictionary-canvas-drawing {
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .pictionary-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 8px;
+  }
+
+  .tool-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    button[aria-pressed="true"] {
+      outline: 3px solid var(--pressed);
+      outline-offset: 1px;
+    }
+  }
+
+  .pictionary-toolbar .tool-swatch {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 50%;
+  }
+
+  .pictionary-toolbar .tool-size {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .tool-size-dot {
+    display: block;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .pictionary-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .score-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+  }
+
+  .score-current {
+    border-color: var(--button-bg);
+  }
+
+  .score-guessed {
+    background: var(--guessed-bg);
+  }
+
+  .score-winner {
+    border-color: var(--highlight);
+  }
+
+  .score-left {
+    opacity: 0.55;
+  }
+
+  .score-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+
+  .score-note {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .score-points {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pictionary-chat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-lines {
+    list-style: none;
+    margin: 0;
+    padding: 8px 10px;
+    height: 320px;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+  }
+
+  .chat-line {
+    padding: 2px 0;
+  }
+
+  .chat-name {
+    font-weight: 600;
+  }
+
+  .chat-guessed {
+    margin: 2px 0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--guessed-bg);
+    color: var(--guessed-text);
+    font-weight: 600;
+  }
+
+  .chat-close {
+    color: var(--close-text);
+    font-style: italic;
+  }
+
+  .chat-system {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .chat-audience {
+    display: block;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  .chat-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .chat-label {
+    font-weight: 600;
+  }
+
+  .chat-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 8px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--page-bg);
+    color: var(--text);
+    font: inherit;
+  }
+
+  /* A fixed width, so the History dialog keeps its size from step to step */
+  .history-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 560px;
+    max-width: 100%;
+  }
+
+  .faq dd {
+    color: var(--muted);
+  }
+
+  .undo-vote {
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    .pictionary-main {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .chat-lines {
+      height: 200px;
+    }
+
+    .pictionary-toolbar .tool-swatch {
+      width: 26px;
+      height: 26px;
+    }
+  }
+}
+
+.game-root[data-game="pictionary"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 24px;
+  background: var(--page-bg);
+}

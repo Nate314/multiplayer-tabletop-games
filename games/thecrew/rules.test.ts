@@ -43,7 +43,7 @@ function ok(result: Result<GameState>): GameState {
 // Moves through the platform, which checks the turn first; actions go straight to the game
 const move = (state: GameState, seat: number, m: unknown, random: Random = seeded(3)) => applyMove(thecrew, state, seat, m, random);
 const act = (state: GameState, seat: number, a: unknown, random: Random = seeded(3)) =>
-  thecrew.applyAction?.(state, seat, a, random) ?? assert.fail('no actions');
+  thecrew.applyAction?.(state, seat, a, random, 0) ?? assert.fail('no actions');
 const task = (card: Card, owner: number | null, token: OrderToken | null = null): Task => ({ card, token, owner, done: false });
 
 // A mission under way with four players: Alice is commander and leads. Mission 1's rules unless `mission` says otherwise.
@@ -642,6 +642,7 @@ test('the distress signal: everyone passes a card the same way, and the mission 
   assert.deepEqual(move(state, 1, { type: 'play', card: p(9) }), { error: 'Wait for everyone to pass a card' });
   assert.deepEqual(act(state, 1, { type: 'passCard', card: r(4) }), { error: 'Rockets are never passed' });
   state = ok(act(state, 1, { type: 'passCard', card: b(1) }));
+  assert.deepEqual(thecrew.waitingOn?.(state), [2, 3, 4]);
   assert.deepEqual(act(state, 1, { type: 'passCard', card: p(9) }), { error: 'You have already passed a card' });
   // Each sees only their own pass
   assert.deepEqual(toPublicState(state, false, 1).distress, { direction: 'left', passed: [1], mine: b(1) });

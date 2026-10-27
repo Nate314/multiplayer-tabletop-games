@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useEscapeKey from '../hooks/useEscapeKey';
 import type { GameFileStep } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 import StepErrorBoundary from './StepErrorBoundary';
-import { seatOptions, viewFor } from './historyView.ts';
+import { reactionsLine, seatOptions, viewFor } from './historyView.ts';
 import PlaybackSettings from './PlaybackSettings';
 import { nextPlayIndex, stepDelayMs } from './playback.ts';
 import type { PlaybackSpeed } from './playback.ts';
 import { useMoveAnimation } from '../animation/useMoveAnimation.ts';
 import type { MoveChange } from '../animation/useMoveAnimation.ts';
 import { loadAnimations, loadHistorySounds, loadPlaybackSpeed, saveAnimations, saveHistorySounds, savePlaybackSpeed } from '../services/settings.ts';
-import { fitScale, nextScale } from './fitScale.ts';
+import useFitScale from './useFitScale.ts';
 import useStateSounds from '../sound/useStateSounds.ts';
 
 export type History =
@@ -60,7 +60,9 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   const step = steps[index];
   const moveTotal = steps.filter(s => s.historyStep === 'move').length;
   const { step: view, viewer: shownViewer } = viewFor(step, viewer);
-  const boardState = view.historyStep === 'move' ? view : { ...view, lastMove: null };
+  // The board never reads reactions, and a step's list lacks the moveCount the live log's has
+  const { reactions: _reactions, ...boardView } = view;
+  const boardState = view.historyStep === 'move' ? boardView : { ...boardView, lastMove: null };
   const seatNames = seatOptions(steps[0]);
   const { HistoryBoard } = client;
 
@@ -81,27 +83,8 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   }, [index]);
   useStateSounds(boardState, null, sounds && advancedByOne);
 
-  // The board shrinks to fit the box. A step that changes the board's size can only lower the scale, so the board never bounces;
-  // only the box changing size (a window resize) starts over. offsetWidth and offsetHeight ignore the scale transform.
-  // Written straight to the element, before the browser paints, so the board never shows a frame at the wrong size.
-  useLayoutEffect(() => {
-    const box = boxRef.current!;
-    const content = boardRef.current!;
-    let boxSize = '';
-    let scale: number | null = null;
-    const observer = new ResizeObserver(() => {
-      const size = `${box.clientWidth}x${box.clientHeight}`;
-      const boxResized = size !== boxSize;
-      boxSize = size;
-      const fit = fitScale({ width: content.offsetWidth, height: content.offsetHeight }, { width: box.clientWidth, height: box.clientHeight });
-      scale = nextScale(scale, fit, boxResized);
-      content.style.setProperty('--fit-scale', String(scale));
-      content.dataset.fitScale = String(scale);
-    });
-    observer.observe(box);
-    observer.observe(content);
-    return () => observer.disconnect();
-  }, []);
+  // The board shrinks to fit the box and, once shrunk, never grows back within the dialog
+  useFitScale(boxRef, boardRef, 1, true);
 
   // Each shown step waits stepDelayMs(speed) before the next, a new speed restarts the current step's wait; moving the slider or the picker keeps playing from there
   useEffect(() => {
@@ -141,6 +124,7 @@ function HistorySteps({ client, steps }: HistoryStepsProps) {
   return (
     <>
       <p className="history-move">{stepLabel(client, step, moveTotal)}</p>
+      <p className="history-reactions">{reactionsLine(step)}</p>
       <div className="history-board" ref={boxRef}>
         <div className="history-board-content" ref={boardRef}>
           <StepErrorBoundary key={`${index}-${viewer}`}>

@@ -22,8 +22,9 @@ Each round, players take turns picking tiles and placing them on their own board
 - Boards are shown in turn order starting with yours, so play always passes to the board on the right
 - In the center, each color stays together on one row
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
-- After each round, read the scoring screen and click Continue; the next round starts once everyone has
+- After each round, read the scoring screen and click Continue; the last round's scoring is on the game-over screen
 - With Color-blind symbols on in Settings, each tile shows the shape of its color in place of its mark: red circle, blue square, yellow star, black diamond, cyan pentagon. Tiles in factories, the center, pattern lines, the wall and the floor show it; the first player marker does not
+- With a table screen connected, on Hand only (the default) the other players' boards are hidden and the factories show only on your turn
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

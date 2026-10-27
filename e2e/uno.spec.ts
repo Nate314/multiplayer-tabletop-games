@@ -89,6 +89,7 @@ const turn = (page: Page) => page.locator('.turn-message');
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const catchButton = (page: Page) => page.getByRole('button', { name: /^Catch / });
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 
 // Plays a Wild from the hand and names `color`
 async function playWild(page: Page, name: string, color: Color) {
@@ -383,9 +384,14 @@ test.describe('UNO rules', () => {
     const final = await start(seat, ['Dan', 'Eve']);
     await deal(final.table, { hands: { 1: [c('red', '7')], 2: [WILD] }, discard: [c('red', '5')], scores: { 1: 450, 2: 300 } });
     await play(final.pages[0], 'red 7');
-    await expect(scoring(final.pages[1]).locator('h2')).toHaveText('Final scoring');
-    await expect(scoring(final.pages[1]).locator('.summary-result')).toHaveText('Dan went out and wins with 500 points!');
+    const over = gameOver(final.pages[1]);
+    await expect(over.getByRole('heading', { level: 2 })).toHaveText('Dan wins');
+    await expect(over.getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
+    await expect(over.locator('.game-over-meta')).toContainText('1 round');
+    await expect(over.locator('.summary-seat', { hasText: 'Dan' }).locator('.summary-points')).toHaveText('500 pts');
     await expect(turn(final.pages[1])).toHaveText('Game over: Dan wins');
+    await over.getByRole('button', { name: 'See the table' }).click();
+    await expect(over).toHaveCount(0);
   });
 
   test('when the draw pile runs out, the discards but the top card are shuffled into a new draw pile', async ({ seat }) => {
@@ -479,9 +485,10 @@ test.describe('UNO rules', () => {
     await expect(pages[0].locator('.round')).toHaveText('Round 1: first to 250 points wins');
     await deal(table, { hands: { 1: [c('red', '7')], 2: [WILD] }, discard: [c('red', '5')], scores: { 1: 200, 2: 100 } });
     await play(pages[0], 'red 7');
-    await expect(scoring(pages[1]).locator('h2')).toHaveText('Final scoring');
-    await expect(scoring(pages[1]).locator('.summary-target')).toHaveText('First to 250 points wins');
-    await expect(scoring(pages[1]).locator('.summary-result')).toHaveText('Dan went out and wins with 250 points!');
+    const dialog = gameOver(pages[1]);
+    await expect(dialog.getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
+    await expect(dialog.locator('.summary-target')).toHaveText('First to 250 points wins');
+    await expect(dialog.locator('.summary-seat', { hasText: 'Dan' }).locator('.summary-points')).toHaveText('250 pts');
     await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
   });
 
@@ -721,7 +728,7 @@ test.describe('UNO controls', () => {
     await expect(cara.locator('.direction')).toHaveText('Direction: → in seat order');
   });
 
-  test('after a round read the scoring and click Continue; after the last round click Close, and Show Scoring opens it again', async ({ seat }) => {
+  test('after a round read the scoring and click Continue; after the last round the game-over screen shows its scoring', async ({ seat }) => {
     const round = await start(seat, ['Alice', 'Bob']);
     await deal(round.table, { hands: { 1: [c('red', '7')], 2: [c('blue', '1')] }, discard: [c('red', '5')] });
     await play(round.pages[0], 'red 7');
@@ -733,11 +740,12 @@ test.describe('UNO controls', () => {
     const final = await start(seat, ['Dan', 'Eve']);
     await deal(final.table, { hands: { 1: [c('red', '7')], 2: [WILD] }, discard: [c('red', '5')], scores: { 1: 480, 2: 0 } });
     await play(final.pages[0], 'red 7');
-    const dialog = scoring(final.pages[1]);
-    await dialog.getByRole('button', { name: 'Close' }).click();
+    const dialog = gameOver(final.pages[1]);
+    await expect(dialog.getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'See the table' }).click();
     await expect(dialog).toHaveCount(0);
-    await button(final.pages[1], 'Show Scoring').click();
-    await expect(dialog.locator('h2')).toHaveText('Final scoring');
+    await final.pages[1].getByRole('button', { name: 'Game summary' }).click();
+    await expect(dialog.getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
   });
 
   test('the cards a round-ending Draw Two made you take are not outlined again in the next round', async ({ seat }) => {

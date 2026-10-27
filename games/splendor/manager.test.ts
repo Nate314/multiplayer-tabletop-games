@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { CARDS, GEMS, LEVELS } from './cards.ts';
 import { TOKENS, payment, prestige, takeThreeCount, tokenTotal } from './rules.ts';
 import { splendor } from './index.ts';
@@ -138,7 +138,7 @@ test('the history and every other seat never see a card reserved from a deck', (
   const mine = viewOf(manager, 1).players[1].reserved[0];
   assert.notEqual(mine.card, null);
   assert.deepEqual(viewOf(manager, 2).players[1].reserved, [{ level: 3, card: null }]);
-  for (const past of manager.history('splendor', 'g1') as unknown as PublicGameState[]) {
+  for (const past of stepsOf(manager, 'splendor') as unknown as PublicGameState[]) {
     assert.equal('decks' in past, false);
     for (const player of Object.values(past.players)) assert.ok(player.reserved.every(held => held.card === null));
   }

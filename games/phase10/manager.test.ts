@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { phase10 } from './index.ts';
 import { buildGroup, hasLaidDown, layablePhases, phaseRequirements } from './rules.ts';
 import type { Card, PublicGameState } from './types.ts';
@@ -65,7 +65,7 @@ test('each player sees only their own hand, and the history sees no hand', () =>
   }
 
   playTurn(manager, 1);
-  const history = manager.history('phase10', 'g1');
+  const history = stepsOf(manager, 'phase10');
   assert.ok(history);
   assert.equal(history.length, 3);
   for (const step of history as unknown as PublicGameState[]) {

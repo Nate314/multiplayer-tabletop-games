@@ -5,8 +5,11 @@ import { CATEGORIES } from '../../shared/categories.ts'
 import { DEFAULT_FILTERS, parsePlayers } from '../components/gameFilters.ts'
 import type { LandingFilters } from '../components/gameFilters.ts'
 import type { SoundName } from '../../shared/sounds.ts'
+import type { JoinRole } from '../../shared/types.ts'
+import { isSingleEmoji } from '../../shared/reactions.ts'
+import { DEFAULT_RECENT_REACTIONS } from '../components/reactions.ts'
 
-export type JoinForm = { playerName: string; gameId: string }
+export type JoinForm = { playerName: string; gameId: string; role: JoinRole; localNames?: string[] }
 
 export type { SoundName }
 export type Preferences = {
@@ -15,14 +18,16 @@ export type Preferences = {
   sounds: Record<SoundName, boolean>
   colorSymbols: boolean
   highlightDrawn: boolean
+  notifications: boolean
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   volume: 0.5,
   muted: false,
-  sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true },
+  sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true, reaction: true },
   colorSymbols: false,
   highlightDrawn: true,
+  notifications: true,
 }
 
 const ANIMATIONS_KEY = 'historyAnimations'
@@ -55,9 +60,12 @@ export function savePlaybackSpeed(speed: PlaybackSpeed): void {
 // One remembered pair, shared by every game
 export function loadJoinForm(): JoinForm {
   const saved = readJson(local, JOIN_FORM_KEY) as Partial<JoinForm> | null
+  const names = saved?.localNames
   return {
     playerName: typeof saved?.playerName === 'string' ? saved.playerName : '',
     gameId: typeof saved?.gameId === 'string' ? saved.gameId : '',
+    role: saved?.role === 'spectator' || saved?.role === 'passAndPlay' || saved?.role === 'tableScreen' ? saved.role : 'player',
+    ...(Array.isArray(names) && names.every(name => typeof name === 'string') && { localNames: names }),
   }
 }
 
@@ -85,6 +93,18 @@ export function saveLandingFilters(filters: LandingFilters): void {
   writeJson(local, LANDING_FILTERS_KEY, filters)
 }
 
+const RECENT_REACTIONS_KEY = 'recentReactions'
+
+export function loadRecentReactions(): string[] {
+  const saved = readJson(local, RECENT_REACTIONS_KEY)
+  const valid = Array.isArray(saved) ? saved.filter(isSingleEmoji) : []
+  return valid.length > 0 ? valid : DEFAULT_RECENT_REACTIONS
+}
+
+export function saveRecentReactions(list: string[]): void {
+  writeJson(local, RECENT_REACTIONS_KEY, list)
+}
+
 export function loadHistorySounds(): boolean {
   return readFlag(HISTORY_SOUNDS_KEY)
 }
@@ -109,9 +129,22 @@ export function loadPreferences(): Preferences {
     ) as Record<SoundName, boolean>,
     colorSymbols: flagOr(saved?.colorSymbols, d.colorSymbols),
     highlightDrawn: flagOr(saved?.highlightDrawn, d.highlightDrawn),
+    notifications: flagOr(saved?.notifications, d.notifications),
   }
 }
 
 export function savePreferences(preferences: Preferences): void {
   writeJson(local, PREFERENCES_KEY, preferences)
+}
+
+export type TableLayout = 'handOnly' | 'board'
+
+const TABLE_LAYOUT_KEY = 'tableLayout'
+
+export function loadTableLayout(): TableLayout {
+  return readJson(local, TABLE_LAYOUT_KEY) === 'board' ? 'board' : 'handOnly'
+}
+
+export function saveTableLayout(layout: TableLayout): void {
+  writeJson(local, TABLE_LAYOUT_KEY, layout)
 }

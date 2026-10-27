@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addPlayer, removePlayer } from '../../shared/seating.ts';
@@ -436,4 +437,11 @@ test('table view hides hands: no hand, deck order or discard in any step of a sh
   assert.deepEqual(toPublicState(state, false, 1).hand, [card]);
   assert.deepEqual(toPublicState(state, false, 2).hand, []);
   assert.deepEqual(toPublicState(state, false, 2).handCounts, { 1: 1, 2: 0, 3: 0 });
+});
+
+test('finalStandings ranks the eliminated players by when they fell', () => {
+  const state: GameState = { ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [1], eliminated: [4, 3] };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1 }, { seat: 2, place: 2 }, { seat: 3, place: 3, score: 'Eliminated' }, { seat: 4, place: 4, score: 'Eliminated' }
+  ]);
 });

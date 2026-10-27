@@ -22,8 +22,9 @@ Pass three cards, then dodge the hearts and the queen of spades in tricks, or ta
 - To pass, click three cards in your hand to pick them (click again to put one back), then click Pass 3/3. The cards you passed are shown below your hand until everyone has passed
 - In a trick, the cards you may play are raised and outlined; click one to play it
 - The table shows each player's score and points taken this hand, the hand number, this hand's pass and whether hearts are broken, and the four seats with you at the bottom and play going to your left. Each seat shows its card count and points this hand, and while passing whether it has passed. The middle shows the trick being played, or the last trick taken with who took it
-- After each hand, read the scoring screen and click Continue; after the last hand click Close, and Show Scoring opens it again
+- After each hand, read the scoring screen and click Continue; the last hand's scoring is on the game-over screen
 - Click Undo to ask everyone to undo the last card played
+- With a table screen connected, on Hand only (the default) the seats and the trick are hidden
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

@@ -1,3 +1,4 @@
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -44,7 +45,7 @@ function ok(result: Result<GameState>): GameState {
 const move = (state: GameState, seat: number, m: Move | unknown, random: Random = seeded(3)) =>
   applyMove(spades, state, seat, m, random);
 const act = (state: GameState, seat: number, action: unknown) =>
-  spades.applyAction?.(state, seat, action, seeded(1)) ?? assert.fail('no actions');
+  spades.applyAction?.(state, seat, action, seeded(1), 0) ?? assert.fail('no actions');
 
 const NO_TRICKS = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
@@ -377,4 +378,19 @@ test('a team still loses at -200 whatever the target', () => {
   const fell = lastTrickOf(bids, taken, [0, -150], [0, 0], 1, { houseRules: withRules({ targetScore: 250 }) });
   assert.equal(fell.isGameOver, true);
   assert.deepEqual(fell.winners, [1, 3]);
+});
+
+test('finalStandings ranks by the team total', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [2, 4], scores: [-50, 1001]
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '1,001 points' }, { seat: 4, place: 1, score: '1,001 points' },
+    { seat: 1, place: 2, score: '-50 points' }, { seat: 3, place: 2, score: '-50 points' }
+  ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...game(), roundSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

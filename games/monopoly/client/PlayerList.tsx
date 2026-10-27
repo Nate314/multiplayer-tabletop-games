@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { SEAT_SYMBOLS } from './seatSymbols.ts';
 import { BOARD } from '../board.ts';
@@ -31,6 +32,7 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
         const properties = Object.keys(owners).map(Number).filter(space => owners[space] === seat).sort((a, b) => a - b);
         const cards = jailCards[seat]?.length ?? 0;
         const classNames = ['player-row'];
+        if (seat !== viewer) classNames.push('hand-only-hide');
         if (seat === turnHolder) classNames.push('player-current');
         if (out || left) classNames.push('player-out');
         let status = '';
@@ -47,7 +49,7 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
               </span>
               <span className="player-name">
                 {playerNames[seat]}
-                {seat === viewer && ' (you)'}
+                <YouTag when={seat === viewer} />
               </span>
               {status && <span className="player-status">{status}</span>}
               <span className="player-cash">${cash[seat] ?? 0}</span>

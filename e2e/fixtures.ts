@@ -1,7 +1,7 @@
 import { test as base, devices, expect, type Browser, type Locator, type Page } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { GAMES } from '../games/registry.ts';
-import { needsAgreement, type HouseRuleValues } from '../shared/houseRules.ts';
+import { needsAgreement, rulesOf, type HouseRuleValues } from '../shared/houseRules.ts';
 
 // The shared harness for the end-to-end rule tests.
 // Each Playwright worker runs its own server with the test hooks on (server/e2e.ts), so a test's queued random numbers
@@ -21,6 +21,8 @@ export type Table = {
   random(...values: number[]): Promise<void>;
   // Queues six-sided die faces, as every game here rolls a die: Math.floor(random * 6) + 1
   dice(...faces: number[]): Promise<void>;
+  // Runs this many live simulation ticks at once, as the server's 50 ms timer would over time
+  simulate(ticks: number): Promise<void>;
   // Seats one more player after the table was made, so a test can first queue the random numbers their join uses
   join(name: string): Promise<Page>;
 };
@@ -39,12 +41,35 @@ export function nameOf(gameType: string): string {
   return game.info.name;
 }
 
-// Opens the site in `page` and joins `gameId` as `name` through the join dialog
-export async function joinGame(page: Page, gameType: string, gameId: string, name: string): Promise<void> {
+// Opens the site in `page` and the join dialog of `gameType`
+export async function openJoinDialog(page: Page, gameType: string): Promise<void> {
   await page.goto('/');
   await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
+}
+
+// Opens the site in `page` and joins `gameId` as `name` through the join dialog
+export async function joinGame(page: Page, gameType: string, gameId: string, name: string): Promise<void> {
+  await openJoinDialog(page, gameType);
   await page.getByLabel('Your name').fill(name);
   await page.getByLabel('Game ID').fill(gameId);
+  await page.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
+}
+
+// Fills the join dialog's Pass and play names on `page`, adding inputs past the first two, without joining
+export async function fillPassAndPlay(page: Page, gameId: string, names: string[]): Promise<void> {
+  await page.getByRole('button', { name: 'Pass and play', exact: true }).click();
+  for (const [index, name] of names.entries()) {
+    if (index >= 2) await page.getByRole('button', { name: 'Add player' }).click();
+    await page.getByLabel(`Player ${index + 1}`, { exact: true }).fill(name);
+  }
+  await page.getByLabel('Game ID').fill(gameId);
+}
+
+// Opens the site in `page` and seats every one of `names` on it through the join dialog's Pass and play
+export async function joinPassAndPlay(page: Page, gameType: string, gameId: string, names: string[]): Promise<void> {
+  await openJoinDialog(page, gameType);
+  await fillPassAndPlay(page, gameId, names);
   await page.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
 }
@@ -102,10 +127,15 @@ export async function leave(page: Page): Promise<void> {
   await page.context().close();
 }
 
+// Closes the game-over screen so the finished board can be read or acted on
+export async function seeTable(page: Page): Promise<void> {
+  await page.getByRole('dialog', { name: 'Game over' }).getByRole('button', { name: 'See the table' }).click();
+}
+
 // `voters` start and approve a dismiss vote against `name`, who must have left
 export async function dismiss(name: string, ...voters: Page[]): Promise<void> {
   const [first, ...rest] = voters;
-  await first.locator('.presence-player', { hasText: name }).getByRole('button', { name: 'Dismiss' }).click();
+  await first.locator('.presence-player[data-disconnected]', { hasText: name }).getByRole('button', { name: 'Dismiss' }).click();
   for (const voter of rest) await voter.getByRole('button', { name: 'Approve' }).click();
 }
 
@@ -131,7 +161,7 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
 
 // The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
 export async function setHouseRules(page: Page, gameType: string, values: HouseRuleValues, maxPlayers?: number): Promise<void> {
-  for (const rule of gameOf(gameType).houseRules ?? []) {
+  for (const rule of rulesOf(gameOf(gameType))) {
     if (!(rule.id in values)) continue;
     const control = page.getByLabel(rule.label, { exact: true });
     if (rule.kind === 'toggle') await setCheckbox(control, values[rule.id] === true);
@@ -166,11 +196,14 @@ export async function openFaq(page: Page) {
   return dialog;
 }
 
-export const test = base.extend<{ seat: Seat }, { server: Server }>({
-  server: [async ({}, use, workerInfo) => {
+export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Record<string, string> }>({
+  // Extra environment for the worker's server, set per file with test.use
+  serverEnv: [{}, { scope: 'worker', option: true }],
+
+  server: [async ({ serverEnv }, use, workerInfo) => {
     const port = Number(process.env.E2E_PORT_BASE ?? 4300) + workerInfo.workerIndex;
     const child = spawn(process.execPath, ['server/server.ts'], {
-      env: { ...process.env, E2E: '1', PORT: String(port), DATABASE_PATH: ':memory:' },
+      env: { ...process.env, ...serverEnv, E2E: '1', PORT: String(port), DATABASE_PATH: ':memory:' },
       stdio: ['ignore', 'pipe', 'pipe']
     });
     await new Promise<void>((resolve, reject) => {
@@ -195,7 +228,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
       const seated: Page[] = [];
       const everyone: Page[] = []; // seated plus anyone added by join
       const agreeAll = async () => {
-        if (!agree || !needsAgreement(gameOf(gameType))) return;
+        if (!agree || !needsAgreement(gameOf(gameType), houseRules ?? {})) return;
         // Every page must list every player first, so no Agree names a revision from before the last join
         for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(everyone.length);
         await agreeToHouseRules(...everyone);
@@ -217,6 +250,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
         patch: async fields => { await call(`state/${gameType}/${gameId}`, fields); },
         random: async (...values) => { await call('random', { values }); },
         dice: async (...faces) => { await call('random', { values: faces.map(face => (face - 0.5) / 6) }); },
+        simulate: async ticks => { await call(`simulate/${gameType}/${gameId}`, { ticks }); },
         join: async name => {
           const page = await newPlayer(browser, server, motion, touch);
           pages.push(page);
@@ -232,6 +266,22 @@ export const test = base.extend<{ seat: Seat }, { server: Server }>({
 });
 
 export { expect };
+
+// Joins `table`'s game on a new page as a table screen
+export async function tableScreen(table: Table): Promise<Page> {
+  const [first] = table.pages;
+  const browser = first.context().browser();
+  if (!browser) throw new Error('The table has no browser');
+  const tv = await newPlayer(browser, { url: new URL(first.url()).origin });
+  await tv.goto('/');
+  await tv.locator('.lobby-game').filter({ has: tv.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(table.gameType)}$`) }) }).click();
+  await tv.getByRole('button', { name: 'Table screen' }).click();
+  await expect(tv.getByLabel('Your name')).toHaveCount(0);
+  await tv.getByLabel('Game ID').fill(table.gameId);
+  await tv.getByRole('button', { name: 'Show table', exact: true }).click();
+  await expect(tv.getByRole('button', { name: 'Back to games' })).toBeVisible();
+  return tv;
+}
 
 // Opens Settings, sets the checkbox `label` and closes the dialog
 export async function setPreference(page: Page, label: string, on: boolean): Promise<void> {

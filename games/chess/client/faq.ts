@@ -87,6 +87,10 @@ export const FAQS: FaqItem[] = [
       'Undo gives back the time spent on the undone move. In your last 10 seconds a tick plays each second, unless Timer warnings is off in Settings.'
   },
   {
+    question: 'Can I use the turn timer with the clock?',
+    answer: 'Yes. The Turn timer house rule is separate from the clock, and both can run together. It only warns: the countdown beside the current player\'s name goes red in the last 10 seconds, then shows Time\'s up and overtime, and nobody loses or skips a turn because of it.'
+  },
+  {
     question: 'What does Undo do?',
     answer: 'Undo asks your opponent to take back the last move; it happens only if they approve.'
   },

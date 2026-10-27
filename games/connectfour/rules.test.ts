@@ -158,6 +158,7 @@ test('resign and draw by agreement end the game', () => {
 
   const offered = act(state, 1, { type: 'offerDraw' });
   assert.equal(offered.drawOffer, 1);
+  assert.deepEqual(connectfour.waitingOn?.(offered), [2]);
   const agreed = act(offered, 2, { type: 'answerDraw', accept: true });
   assert.equal(agreed.isGameOver, true);
   assert.deepEqual(agreed.winners, []);

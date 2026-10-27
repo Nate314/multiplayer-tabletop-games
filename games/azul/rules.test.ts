@@ -1,3 +1,4 @@
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -694,4 +695,22 @@ test('a whole game keeps all 100 tiles and reaches an end', () => {
 
   assert.ok(state.winners.length >= 1);
   assert.ok(Object.values(state.boards).some(b => completeRows(b.wall) > 0));
+});
+
+test('finalStandings ranks by score, then complete rows', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [1],
+    boards: {
+      1: board({ score: 50, wall: wallOf(...fullRow(0)) }), 2: board({ score: 50 }), 3: board({ score: 30 }), 4: board({ score: 30 })
+    }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '50 points' }, { seat: 2, place: 2, score: '50 points' },
+    { seat: 3, place: 3, score: '30 points' }, { seat: 4, place: 3, score: '30 points' }
+  ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...game(), roundSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

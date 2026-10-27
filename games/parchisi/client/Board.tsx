@@ -128,7 +128,7 @@ export default function Board({ gameState, playerNumber, isMyTurn, selectedPawn,
   const entrySeats = new Map(SEATS.map(seat => [entryIndex(seat), seat]));
 
   return (
-    <div className={`board ${isMyTurn ? '' : 'not-your-turn'} ${isGameOver ? 'game-over' : ''}`}>
+    <div className={`board hand-only-board ${isMyTurn ? '' : 'not-your-turn'} ${isGameOver ? 'game-over' : ''}`}>
       {SEATS.map(seat => {
         const nestPawns = (pawns[seat] ?? []).flatMap((progress, pawn) => progress === NEST ? [{ seat, pawn }] : []);
         const classNames = ['nest', `player${seat}`];

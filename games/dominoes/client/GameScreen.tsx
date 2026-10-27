@@ -16,7 +16,6 @@ import type { PublicGameState } from '../types.ts';
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   // A tile that fits more than one end, waiting for the end to play it on: clicked, then an end clicked
   const [choosing, setChoosing] = useState<number | null>(null);
-  const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
   const {
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable,
@@ -34,7 +33,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const canPass = isMyTurn && stuck === 'pass';
   const usable = isMyTurn ? usableEnds(gameState, playerNumber) : [];
   const pending = pendingArms(board, layout);
-  const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+  const showSummary = roundSummary !== null && !isGameOver;
 
   // Only the live table animates; the history dialog renders it without this hook
   useMoveAnimation(screenRef, gameState, animateMove);
@@ -43,11 +42,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     // A tile picked up but not placed is put back when the turn or the board changes
     setChoosing(null);
   }, [currentPlayer, tilesLaid, hand.length]);
-
-  useEffect(() => {
-    // An undo can reopen a finished game; its next ending shows the scoring again
-    if (!isGameOver) setFinalScoringClosed(false);
-  }, [isGameOver]);
 
   const endsFor = (tile: number) => plays.filter(option => option.tile === tile).map(option => option.end);
 
@@ -101,7 +95,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">
@@ -112,9 +106,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button type="button" onClick={() => gameService.makeMove({ type: 'draw' })} disabled={!canDraw}>Draw</button>
             <button type="button" onClick={() => gameService.makeMove({ type: 'pass' })} disabled={!canPass}>Pass</button>
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
-            {isGameOver && roundSummary && finalScoringClosed && (
-              <button type="button" onClick={() => setFinalScoringClosed(false)}>Show Scoring</button>
-            )}
           </div>
         </div>
         <Table
@@ -159,7 +150,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           gameState={gameState}
           playerNumber={playerNumber}
           onContinue={() => gameService.sendAction({ type: 'acknowledgeRound' })}
-          onClose={() => setFinalScoringClosed(true)}
         />
       )}
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />

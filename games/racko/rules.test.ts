@@ -1,3 +1,4 @@
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -294,4 +295,19 @@ test('the game ends at the chosen target', () => {
   assert.deepEqual(over.winners, [1]);
   assert.equal(finish(174, 250).isGameOver, false);
   assert.equal(finish(175, 500).isGameOver, false);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [2], scores: { 1: 200, 2: 410, 3: 200 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '410 points' },
+    { seat: 1, place: 2, score: '200 points' }, { seat: 3, place: 2, score: '200 points' }
+  ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...lobby(3), roundSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

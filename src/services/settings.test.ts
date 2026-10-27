@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { DEFAULT_FILTERS } from '../components/gameFilters.ts'
+import { DEFAULT_RECENT_REACTIONS } from '../components/reactions.ts'
 import {
   DEFAULT_PREFERENCES, loadAnimations, loadHistorySounds, loadJoinForm, loadLandingFilters, loadPlaybackSpeed, loadPreferences,
+  loadRecentReactions, loadTableLayout, saveTableLayout,
   saveAnimations, saveHistorySounds, saveJoinForm, saveLandingFilters, savePlaybackSpeed, savePreferences,
 } from './settings.ts'
 
@@ -45,17 +47,38 @@ test('an unknown playback speed falls back to 1x', () => {
 
 test('join form defaults to empty and round-trips', () => {
   installStorage()
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
-  saveJoinForm({ playerName: 'Ann', gameId: 'abc' })
-  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'player' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'player' })
+})
+
+test('join form remembers the role', () => {
+  installStorage()
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'spectator' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'spectator' })
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'tableScreen' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'tableScreen' })
+  installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"nonsense"}' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'player' })
+})
+
+test('join form keeps pass-and-play names only as an array of strings', () => {
+  installStorage()
+  const form = { playerName: 'Ann', gameId: 'abc', role: 'passAndPlay' as const, localNames: ['Ann', 'Bo'] }
+  saveJoinForm(form)
+  assert.deepEqual(loadJoinForm(), form)
+  installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"passAndPlay","localNames":"Ann"}' })
+  assert.deepEqual(loadJoinForm(), { playerName: 'Ann', gameId: 'abc', role: 'passAndPlay' })
+  installStorage({ joinForm: '{"playerName":"Ann","gameId":"abc","role":"passAndPlay","localNames":["Ann",2]}' })
+  assert.equal(loadJoinForm().localNames, undefined)
 })
 
 test('junk in storage falls back to defaults', () => {
   installStorage({ historyAnimations: '"yes"', joinForm: '[1]' })
   assert.equal(loadAnimations(), false)
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
   installStorage({ joinForm: '{"playerName":5}' })
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
 })
 
 test('a storage that throws gives defaults and saving does not throw', () => {
@@ -66,13 +89,13 @@ test('a storage that throws gives defaults and saving does not throw', () => {
     configurable: true,
   })
   assert.equal(loadAnimations(), false)
-  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '' })
+  assert.deepEqual(loadJoinForm(), { playerName: '', gameId: '', role: 'player' })
   assert.deepEqual(loadLandingFilters(), DEFAULT_FILTERS)
   assert.equal(loadPlaybackSpeed(), 1)
   assert.deepEqual(loadPreferences(), DEFAULT_PREFERENCES)
   saveAnimations(true)
   savePlaybackSpeed(2)
-  saveJoinForm({ playerName: 'Ann', gameId: 'abc' })
+  saveJoinForm({ playerName: 'Ann', gameId: 'abc', role: 'player' })
   saveLandingFilters(DEFAULT_FILTERS)
   savePreferences(DEFAULT_PREFERENCES)
   saveHistorySounds(true)
@@ -82,8 +105,8 @@ test('preferences default to every sound on at half volume, symbols off and the 
   installStorage()
   assert.deepEqual(loadPreferences(), {
     volume: 0.5, muted: false,
-    sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true },
-    colorSymbols: false, highlightDrawn: true,
+    sounds: { turn: true, move: true, dice: true, gameOver: true, timer: true, reaction: true },
+    colorSymbols: false, highlightDrawn: true, notifications: true,
   })
 })
 
@@ -106,6 +129,15 @@ test('each bad preference falls back to its own default and the good ones are ke
   assert.deepEqual(loadPreferences(), DEFAULT_PREFERENCES)
 })
 
+test('notifications default on and a bad saved value keeps the default', () => {
+  installStorage()
+  assert.equal(loadPreferences().notifications, true)
+  installStorage({ preferences: '{"notifications":"no"}' })
+  assert.equal(loadPreferences().notifications, true)
+  installStorage({ preferences: '{"notifications":false}' })
+  assert.equal(loadPreferences().notifications, false)
+})
+
 test('history sounds default to off and round-trip', () => {
   installStorage()
   assert.equal(loadHistorySounds(), false)
@@ -124,4 +156,22 @@ test('landing filters default to everything shown and round-trip', () => {
 test('junk landing filters fall back field by field', () => {
   installStorage({ landingFilters: '{"search":5,"sort":"x","categories":["dice","nope"],"players":2.5}' })
   assert.deepEqual(loadLandingFilters(), { search: '', sort: 'category', categories: ['dice'], players: null })
+})
+
+test('loadRecentReactions falls back to the defaults and drops anything that is not a single emoji', () => {
+  installStorage()
+  assert.deepEqual(loadRecentReactions(), DEFAULT_RECENT_REACTIONS)
+  installStorage({ recentReactions: JSON.stringify(['hi', 5]) })
+  assert.deepEqual(loadRecentReactions(), DEFAULT_RECENT_REACTIONS)
+  installStorage({ recentReactions: JSON.stringify(['🎉']) })
+  assert.deepEqual(loadRecentReactions(), ['🎉'])
+})
+
+test('table layout defaults to hand only and is remembered', () => {
+  installStorage()
+  assert.equal(loadTableLayout(), 'handOnly')
+  saveTableLayout('board')
+  assert.equal(loadTableLayout(), 'board')
+  installStorage({ tableLayout: '"nonsense"' })
+  assert.equal(loadTableLayout(), 'handOnly')
 })

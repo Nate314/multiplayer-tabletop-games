@@ -17,7 +17,7 @@ const has = (tiles: Placement[], row: number, col: number) => tiles.some(tile =>
 // The 15x15 board, scaled to the width it is given
 export default function Board({ board, pending = [], highlighted = [], onSquare, sourceProps }: BoardProps) {
   return (
-    <div className="board-wrap">
+    <div className="board-wrap hand-only-board">
       <div className="board">
         {board.map((cells, row) => cells.map((cell, col) => {
           const premium = premiumAt(row, col);

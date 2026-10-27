@@ -32,10 +32,11 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 - With the 7-0 rule, click a 7 and then the player to swap hands with, or Cancel. With stacking, the table shows the cards waiting to be drawn; play a highlighted Draw Two or Wild Draw Four on it, or click Accept to draw them
 - When a Wild Draw Four is played on you, click Challenge or Accept and draw 4. After a challenge, the challenged hand is shown to you below the table until your next move
 - The table shows the round, every player's card count and score in seat order, the dealer, an arrow for the direction of play, the top discard and the current color. The player whose turn it is is outlined
-- After each round, read the scoring screen and click Continue; after the last round click Close, and Show Scoring opens it again
+- After each round, read the scoring screen and click Continue; the last round's scoring is on the game-over screen
 - With Color-blind symbols on in Settings, each color also shows its shape: red circle, blue square, green triangle, yellow star. Colored cards, the current color and the color buttons show it; Wild cards carry no color
 - With Highlight newly drawn cards on in Settings (the default), the cards you draw are outlined, including those a Draw Two or Wild Draw Four makes you take, until your next move (the 2 cards a caught missed UNO makes you draw are not outlined)
 - Click Undo to ask everyone to undo the last move
+- With a table screen connected, on Hand only (the default) the other players are hidden
 - Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia

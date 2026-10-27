@@ -13,7 +13,6 @@ import type { PublicGameState } from '../types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const [chosen, setChosen] = useState<number[]>([]); // places in the hand picked to pass
-  const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
   const {
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable, started,
@@ -26,7 +25,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const direction = passDirection(handNumber);
   const receiver = playerNames[passTarget(playerNumber, direction)];
   const choosing = phase === 'passing' && full && !isGameOver && !voting && !passed.includes(playerNumber);
-  const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+  const showSummary = roundSummary !== null && !isGameOver;
 
   useMoveAnimation(screenRef, gameState, animateMove);
 
@@ -34,10 +33,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     // A new hand starts with nothing picked
     setChosen([]);
   }, [handNumber, phase]);
-
-  useEffect(() => {
-    if (!isGameOver) setFinalScoringClosed(false);
-  }, [isGameOver]);
 
   function toggle(slot: number) {
     setChosen(picked => picked.includes(slot) ? picked.filter(other => other !== slot)
@@ -71,7 +66,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
@@ -88,9 +83,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               </button>
             )}
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
-            {isGameOver && roundSummary && finalScoringClosed && (
-              <button type="button" onClick={() => setFinalScoringClosed(false)}>Show Scoring</button>
-            )}
           </div>
         </div>
         <Table gameState={gameState} viewer={playerNumber} />
@@ -118,7 +110,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           gameState={gameState}
           playerNumber={playerNumber}
           onContinue={() => gameService.sendAction({ type: 'acknowledgeRound' })}
-          onClose={() => setFinalScoringClosed(true)}
         />
       )}
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={approve => gameService.voteUndo(approve)} />

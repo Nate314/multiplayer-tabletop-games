@@ -46,7 +46,7 @@ test('the listing names every asset with its samples', async () => {
 
 test('the sound listing has every sound with its notes', async () => {
   const sounds = (await (await fetch(`${base}/api/sound`)).json()) as SoundDef[];
-  assert.equal(sounds.length, 5);
+  assert.equal(sounds.length, 6);
   const turn = sounds.find(sound => sound.name === 'turn');
   assert.deepEqual(turn?.notes, [{ at: 0, length: 0.25, hz: 660, type: 'sine' }, { at: 0.15, length: 0.35, hz: 880, type: 'sine' }]);
 });
@@ -55,4 +55,19 @@ test('one sound by name, or a 404', async () => {
   const dice = (await (await fetch(`${base}/api/sound/dice`)).json()) as SoundDef;
   assert.equal(dice.noise?.bursts, 6);
   assert.equal((await fetch(`${base}/api/sound/nope`)).status, 404);
+});
+
+test('the qr asset draws a link and refuses text that does not fit', async () => {
+  const real = express();
+  mountAssetRoutes(real);
+  const realServer = real.listen(0);
+  try {
+    const url = `http://localhost:${(realServer.address() as AddressInfo).port}/api/svg/qr/`;
+    const ok = await fetch(url + encodeURIComponent('https://x.example/join/chess/a%2Eb'));
+    assert.equal(ok.status, 200);
+    assert.match(ok.headers.get('content-type') ?? '', /^image\/svg\+xml/);
+    assert.equal((await fetch(url + 'a'.repeat(300))).status, 400);
+  } finally {
+    realServer.close();
+  }
 });

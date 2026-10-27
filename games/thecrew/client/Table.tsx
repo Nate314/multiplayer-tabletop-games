@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Card from './Card';
 import { seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 import { leftOf, missionRules, tokenName, totalTricks } from '../rules.ts';
@@ -93,6 +94,7 @@ export default function Table({ gameState, viewer, showLastMove = false, taskPic
         <div className="seats">
           {order.map(seat => {
             const classes = ['seat'];
+            if (seat !== viewer) classes.push('hand-only-hide');
             if (seat === currentPlayer && phase !== 'missionOver') classes.push('seat-current');
             if (winners.includes(seat)) classes.push('seat-winner');
             const said = communications[seat];
@@ -103,7 +105,7 @@ export default function Table({ gameState, viewer, showLastMove = false, taskPic
               <div key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)} aria-label={`Seat of ${playerNames[seat]}`}>
                 <span className="seat-name">
                   {playerNames[seat]}
-                  {seat === viewer && ' (you)'}
+                  <YouTag when={seat === viewer} />
                 </span>
                 {seat === commander && <span className="seat-badge">Commander</span>}
                 {role && <span className="seat-role">{role}</span>}
@@ -125,7 +127,7 @@ export default function Table({ gameState, viewer, showLastMove = false, taskPic
         </div>
       )}
       {seated && (
-        <div className="trick" aria-label="The trick">
+        <div className="trick hand-only-hide" aria-label="The trick">
           {order.map(seat => {
             const play = shown.find(p => p.seat === seat);
             return (

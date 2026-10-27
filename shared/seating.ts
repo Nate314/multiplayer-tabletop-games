@@ -145,7 +145,19 @@ export function reconnectPlayer<S extends BaseGameState>(state: S, seat: Seat): 
   };
 }
 
-// Dismisses the target once every connected player has approved
+// Who votes on the open dismiss: every connected player but the target. During a rematch vote only the requester and
+// the seats that joined: a silent player can never hold the vote open, and one who dropped (or was dismissed) has
+// no stake in the next table
+export function dismissVoters(state: Pick<BaseGameState, 'activePlayers' | 'disconnected' | 'dismissVote' | 'rematchVote'>): Seat[] {
+  const vote = state.dismissVote;
+  if (!vote) return [];
+  const rematch = state.rematchVote;
+  return connectedPlayers(state).filter(seat => seat !== vote.target
+    && (!rematch || seat === vote.requestedBy || rematch.votes[seat] === true));
+}
+
+// Dismisses the target once every voter has approved.
+// During a rematch vote the finished game stays as it is: the target only counts as Drop
 export function resolveDismissVote<S extends BaseGameState>(
   game: GameDefinition<S, BasePublicState>,
   state: S,
@@ -153,8 +165,13 @@ export function resolveDismissVote<S extends BaseGameState>(
 ): S {
   const vote = state.dismissVote;
   if (!vote) return state;
-  const voters = connectedPlayers(state);
+  const voters = dismissVoters(state);
   if (voters.length === 0 || !voters.every(seat => vote.votes[seat] === true)) return state;
+  const rematch = state.rematchVote;
+  if (rematch) {
+    const votes = { ...rematch.votes, [vote.target]: false };
+    return { ...state, dismissVote: null, rematchVote: { ...rematch, votes }, gameStatus: `${state.playerNames[vote.target]} was dismissed` };
+  }
   return removePlayer(game, { ...state, dismissVote: null }, vote.target, random);
 }
 

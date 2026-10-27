@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import CardView from './CardView';
 import { cardKey } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
@@ -54,20 +55,23 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
         if (seat === currentPlayer) classes.push('seat-current');
         if (!activePlayers.includes(seat)) classes.push('seat-left');
         if (winners.includes(seat)) classes.push('seat-winner');
+        const mine = seat === playerNumber;
         const own = groups.map((group, index) => ({ group, index })).filter(({ group }) => group.owner === seat);
+        // Another player matters only for the groups you can hit
+        if (!mine) classes.push(own.length > 0 ? 'hand-only-board' : 'hand-only-hide');
 
         return (
           <section key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
             <header className="seat-header">
               <span className="seat-name">
                 {playerNames[seat]}
-                {seat === playerNumber && ' (you)'}
+                <YouTag when={seat === playerNumber} />
                 {!activePlayers.includes(seat) && ' (left)'}
                 {winners.includes(seat) && ' ★'}
               </span>
               <span className="seat-score">{scores[seat]} pts</span>
             </header>
-            <div className="seat-details">
+            <div className={mine ? 'seat-details' : 'seat-details hand-only-hide'}>
               <span>{progress(gameState, seat)}</span>
               <span>
                 {handCounts[seat] ?? 0} {handCounts[seat] === 1 ? 'card' : 'cards'}
@@ -77,7 +81,7 @@ export default function Table({ gameState, seats, playerNumber, canHit, onHit, l
               </span>
             </div>
             {own.length > 0 && (
-              <div className="groups">
+              <div className="groups hand-only-board">
                 {own.map(({ group, index }) => (
                   <div key={index} className={lit.includes(index) ? 'group group-last' : 'group'}>
                     <div className="group-label">{groupLabel(group)}</div>

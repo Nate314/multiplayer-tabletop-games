@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Dice from './Dice';
 import { CHECKER_COLORS, CHECKERS_PER_PLAYER, canDouble, canRoll, pointsText } from '../rules.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
@@ -72,7 +73,7 @@ export default function GameStatus({ gameState, playerNumber, isMyTurn, error, o
           <li key={seat} className={activePlayers.includes(seat) ? '' : 'player-left'}>
             <span className={`bg-swatch ${CHECKER_COLORS[seat]}`} />
             <span className={seat === playerNumber ? 'bg-you' : ''}>
-              {playerNames[seat]}{seat === playerNumber && ' (you)'}
+              {playerNames[seat]}<YouTag when={seat === playerNumber} />
             </span>
             <span className="bg-off">{borneOff[seat] ?? 0}/{CHECKERS_PER_PLAYER} off</span>
           </li>

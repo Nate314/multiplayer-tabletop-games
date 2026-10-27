@@ -1,3 +1,4 @@
+import { createGameState, finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -86,7 +87,7 @@ function play(state: GameState, seat: number, tile: number, side: ArmName['kind'
 }
 const pipsOfEnds = (state: GameState) => openEnds(boardOf(state)).map(({ pips }) => pips);
 const act = (state: GameState, seat: number, action: unknown, random: Random = noShuffle) =>
-  dominoes.applyAction?.(state, seat, action, random) ?? assert.fail('Dominoes has actions');
+  dominoes.applyAction?.(state, seat, action, random, 0) ?? assert.fail('Dominoes has actions');
 
 test('double-six has 28 tiles and double-nine 55', () => {
   assert.equal(tilesOf(6).length, 28);
@@ -798,4 +799,19 @@ test('hand-crafted moves under Trains and Chickenfoot are refused with the state
   const before = JSON.stringify(finished);
   assert.deepEqual(move(finished, 1, { type: 'play', tile: t(5, 4), end: 2 }), TRAIN_ERROR);
   assert.equal(JSON.stringify(finished), before);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [2], scores: { 1: 90, 2: 120, 3: 90 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 2, place: 1, score: '120 points' },
+    { seat: 1, place: 2, score: '90 points' }, { seat: 3, place: 2, score: '90 points' }
+  ]);
+});
+
+test('waitingOn names the seats yet to continue past the round summary', () => {
+  const state = { ...game(), roundSummary: { acknowledged: [1] } } as unknown as GameState;
+  assert.deepEqual(waitingOn(state), state.activePlayers.filter(seat => seat !== 1));
 });

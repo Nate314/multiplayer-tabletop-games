@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Card from './Card';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { DISCARD_KEY } from './animateMove.ts';
@@ -40,6 +41,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
         {seats.map(seat => {
           const count = handCounts[seat];
           const classes = ['player'];
+          if (seat !== viewer) classes.push('hand-only-hide');
           if (seat === currentPlayer) classes.push('player-current');
           if (winners.includes(seat)) classes.push('player-winner');
           if (seat === lastMover) classes.push('player-last');
@@ -48,7 +50,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
             <li key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
               <span className="player-name">
                 {playerNames[seat]}
-                {seat === viewer && ' (you)'}
+                <YouTag when={seat === viewer} />
                 {winners.includes(seat) && ' ★'}
               </span>
               <span className="player-count">{count} {count === 1 ? 'card' : 'cards'}</span>

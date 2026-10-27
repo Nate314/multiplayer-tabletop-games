@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -117,7 +117,7 @@ async function counter(page: Page, label: string, times: number): Promise<void> 
 
 // Waits until the server has seen `name` drop
 async function dropped(page: Page, name: string): Promise<void> {
-  await expect(page.locator('.presence-player', { hasText: name })).toBeVisible();
+  await expect(page.locator('.presence-player[data-disconnected]', { hasText: name })).toBeVisible();
 }
 
 // The numbers the server's random must return for the next lobby reset to deal a board, a deck in printed order and
@@ -742,6 +742,7 @@ test.describe('Catan rules', () => {
     await expect(turnMessage(bob)).toHaveText('Game over: Alice won');
     await expect(row(bob, 'Alice').locator('.player-points')).toHaveText('10 pts');
 
+    await seeTable(bob);
     await button(bob, 'History').click();
     const downloading = bob.waitForEvent('download');
     await bob.getByRole('dialog', { name: 'History' }).getByRole('button', { name: 'Download game' }).click();
@@ -1031,9 +1032,9 @@ test.describe('Catan controls', () => {
     });
     await hex(alice, 4).click();
     await expect(alice.getByText('Steal from')).toBeVisible();
-    await expect(button(alice, 'Bob')).toBeVisible();
+    await expect(alice.locator('.turn-buttons').getByRole('button', { name: 'Bob' })).toBeVisible();
     await table.random(0);
-    await button(alice, 'Cara').click();
+    await alice.locator('.turn-buttons').getByRole('button', { name: 'Cara' }).click();
     await expectHand(alice, { ore: 1 });
   });
 
@@ -1229,7 +1230,7 @@ test.describe('Catan differences from Wikipedia', () => {
     });
     await hex(alice, 4).click();
     await table.random(0.75); // the second of Bob's two cards
-    await button(alice, 'Bob').click();
+    await alice.locator('.turn-buttons').getByRole('button', { name: 'Bob' }).click();
     await expectHand(alice, { ore: 1 });
     await expect(bob.locator('.steal-note')).toHaveText('Alice stole your ore');
     await expect(cara.locator('.steal-note')).toHaveCount(0);

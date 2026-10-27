@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
@@ -20,18 +20,12 @@ function turnMessage(state: PublicGameState, isMe: boolean): string {
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const screenRef = useRef<HTMLDivElement>(null);
-  const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const { currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, gameStatus, heldFrom, myHeld, roundSummary } = gameState;
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
-  const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+  const showSummary = roundSummary !== null && !isGameOver;
 
   useMoveAnimation(screenRef, gameState, animateMove);
-
-  useEffect(() => {
-    // An undo can reopen a finished game; its next ending shows the scoring again
-    if (!isGameOver) setFinalScoringClosed(false);
-  }, [isGameOver]);
 
   let hint = '';
   if (isMyTurn && heldFrom === null) hint = 'Take the top card of the draw pile or the discard pile';
@@ -40,7 +34,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">You are {gameState.playerNames[playerNumber]} (Player {playerNumber})</div>
@@ -51,9 +45,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           <div className="hint">{hint}</div>
           <div className="action-buttons">
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
-            {isGameOver && roundSummary && finalScoringClosed && (
-              <button type="button" onClick={() => setFinalScoringClosed(false)}>Show Scoring</button>
-            )}
           </div>
         </div>
         <Table
@@ -70,7 +61,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           gameState={gameState}
           playerNumber={playerNumber}
           onContinue={() => gameService.sendAction({ type: 'acknowledgeRound' })}
-          onClose={() => setFinalScoringClosed(true)}
         />
       )}
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={approve => gameService.voteUndo(approve)} />

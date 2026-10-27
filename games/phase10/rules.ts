@@ -1,12 +1,13 @@
 // Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, mapSeats, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type {
   Card,
   CardColor,
@@ -615,3 +616,13 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   if (next.hands[seat].length === 0) return { state: endHand(next, seat) };
   return { state: parsed.type === 'discard' ? passTurn(next, seat) : next };
 }
+
+// Further along in the phases ranks higher, then fewer points
+export function finalStandings(state: GameState): Standing[] {
+  const phase = (seat: Seat) => state.phases[seat] ?? 1;
+  const points = (seat: Seat) => state.scores[seat] ?? 0;
+  const progress = (seat: Seat) => (phase(seat) > LAST_PHASE ? 'All phases' : `Phase ${phase(seat)}`);
+  return rankStandings(state, (a, b) => phase(b) - phase(a) || points(a) - points(b), seat => `${progress(seat)}, ${pointsText(points(seat))}`);
+}
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

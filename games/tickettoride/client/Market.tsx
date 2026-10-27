@@ -19,7 +19,7 @@ export default function Market({ gameState, canDraw, second, canTickets, onDraw,
   const { faceUp, deckCount, discardCount, ticketDeckCount } = gameState;
   const deckLeft = deckCount + discardCount;
   return (
-    <section className="market" aria-label="Train cards to draw">
+    <section className="market hand-only-board" aria-label="Train cards to draw">
       <div className="face-up">
         {faceUp.map((card, slot) => {
           if (card === null) return <span key={slot} className="card empty" data-anim-key={slotKey(slot)}>Empty</span>;

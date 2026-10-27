@@ -229,7 +229,9 @@
   gap: 2px;
 }
 
-.lobby-game-name {
+/* Kept apart from .lobby-game-name so game-card lookups by name skip the open game entries */
+.lobby-game-name,
+.open-game-name {
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -256,7 +258,19 @@
   font-size: 0.8rem;
 }
 
-/* Back to a game and Open a saved game span the game list: side by side where two game cards fit, else stacked */
+/* A game ID and a player name are free text, so both break anywhere rather than push the card wider than a phone */
+.open-game-id {
+  color: var(--lobby-muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.open-game .lobby-game-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Back to a game, Open a saved game and Stats span the game list: side by side where they fit, else stacked */
 .lobby-actions {
   display: flex;
   flex-wrap: wrap;
@@ -264,9 +278,15 @@
   margin-bottom: 12px;
 }
 
-.lobby-actions > button {
+.lobby-actions > :is(button, a) {
   flex: 1 1 280px;
   min-width: 0;
+}
+
+.lobby-stats-link {
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
 }
 
 .lobby-actions > .lobby-error {
@@ -607,13 +627,14 @@
   text-align: left;
 }
 
-:where([data-game] .rules-switch) {
+:where([data-game] .rules-switch, [data-game] .layout-switch, .join-role-switch) {
   display: flex;
+  flex-wrap: wrap; /* more roles are coming; they wrap at 320px */
   justify-content: center;
   margin-bottom: 8px;
 }
 
-:where([data-game] .rules-switch button) {
+:where([data-game] .rules-switch button, [data-game] .layout-switch button, .join-role-switch button) {
   padding: 6px 18px;
   border: 2px solid var(--platform-button-bg, var(--lobby-accent));
   background: transparent;
@@ -621,17 +642,26 @@
   font-weight: 600;
 }
 
-:where([data-game] .rules-switch button:first-child) {
+:where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child, .join-role-switch button:first-child) {
   border-radius: 6px 0 0 6px;
 }
 
-:where([data-game] .rules-switch button:last-child) {
+:where([data-game] .rules-switch button:last-child, [data-game] .layout-switch button:last-child, .join-role-switch button:last-child) {
   border-radius: 0 6px 6px 0;
 }
 
-:where([data-game] .rules-switch button[aria-pressed="true"]) {
+:where([data-game] .rules-switch button[aria-pressed="true"], [data-game] .layout-switch button[aria-pressed="true"], .join-role-switch button[aria-pressed="true"]) {
   background: var(--platform-button-bg, var(--lobby-accent));
   color: var(--platform-button-text, var(--lobby-accent-text));
+}
+
+/* On a phone beside a table screen, Hand only hides what the TV already shows */
+[data-hand-only] .hand-only-hide:not(.history-board *) { /* History shows the whole table */
+  display: none !important; /* a game's own display rule is as specific and loads later */
+}
+
+[data-hand-only]:not([data-my-turn]) .hand-only-board:not(.history-board *) {
+  display: none !important;
 }
 
 :where([data-game] .rules-failed) {
@@ -732,6 +762,16 @@
   overflow-y: auto;
   line-height: 1.5;
   font-weight: 600;
+}
+
+/* Two lines kept like the move, and more reactions scroll, so the board never moves between steps */
+:where([data-game] .history-reactions) {
+  flex: none;
+  margin: 0 0 8px;
+  height: 3em;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 :where([data-game] .history-slider) {
@@ -989,7 +1029,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
-:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button) {
+:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button, [data-game] .rematch-vote-list button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -1011,7 +1051,94 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   justify-content: center;
 }
 
-:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover) {
+:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover, [data-game] .rematch-vote-list button:hover) {
+  background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+/* Game-over screen (GameOverDialog): the standings and the last round scroll together between the title and the buttons, so the buttons stay in view */
+
+:where([data-game] .modal.game-over) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+:where([data-game] .game-over-meta) {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+:where([data-game] .game-over-body) {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+:where([data-game] .game-over-standings) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+:where([data-game] .game-over-round h3) {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+  text-align: left;
+}
+
+:where([data-game] .game-over-standings li) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  padding: 6px 4px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+:where([data-game] .standing-place) {
+  min-width: 2.5em;
+  font-weight: 600;
+}
+
+:where([data-game] .standing-name) {
+  /* The score wraps below a name that would get narrower than this. */
+  flex: 1 1 8em;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+:where([data-game] .standing-score) {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+:where([data-game] .game-over-actions) {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Brings the game-over screen back after See the table */
+:where([data-game] .game-over-reopen) {
+  display: block;
+  margin: 0 auto 12px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where([data-game] .game-over-reopen:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -1025,9 +1152,9 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   color: var(--muted);
 }
 
-/* Undo and dismiss votes */
+/* Undo, dismiss and rematch votes */
 
-:where([data-game] .undo-vote, [data-game] .dismiss-vote) {
+:where([data-game] .undo-vote, [data-game] .dismiss-vote, [data-game] .rematch-vote) {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -1037,7 +1164,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   background: var(--platform-backdrop, rgba(0, 0, 0, 0.45));
 }
 
-:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel) {
+:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel, [data-game] .rematch-vote-panel) {
   padding: 20px;
   border-radius: 10px;
   background: var(--platform-panel-bg, var(--lobby-surface));
@@ -1046,20 +1173,42 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   text-align: center;
 }
 
-:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title) {
+:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title, [data-game] .rematch-vote-title) {
   font-weight: 600;
 }
 
-:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list) {
+:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list, [data-game] .rematch-vote-list) {
   list-style: none;
   margin: 12px 0;
   padding: 0;
 }
 
-:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions) {
+:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions, [data-game] .rematch-vote-actions) {
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* On the game-over screen the rematch vote is a section below the standings, not an overlay */
+:where([data-game] .game-over .rematch-vote) {
+  position: static;
+  display: block;
+  margin-top: 12px;
+  background: none;
+}
+
+:where([data-game] .game-over .rematch-vote-panel) {
+  padding: 12px 0 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* The Remove button beside a seat still waiting, smaller than the vote buttons */
+:where([data-game] .rematch-vote-list button) {
+  margin-left: 10px;
+  padding: 4px 12px;
 }
 
 /* Resign and draw offers (DrawAndResign), in a two-player game's side panel */
@@ -1244,7 +1393,138 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   gap: 8px;
 }
 
+:where([data-game] .presence-player) {
+  position: relative;
+}
+
+:where([data-game] .presence-name) {
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+:where([data-game] .presence-name:disabled) {
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Out of the flow, so a picker or bubble never makes the bar taller or moves the board */
+:where([data-game] .reaction-picker) {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 32px));
+  margin-top: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--lobby-text);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 25%);
+}
+
+:where([data-game] .reaction-picker h2) {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+:where([data-game] .reaction-cooldown) {
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+:where([data-game] .reaction-recent) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+:where([data-game] .reaction-recent button) {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1.4rem;
+}
+
+:where([data-game] .reaction-custom) {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+:where([data-game] .reaction-custom input) {
+  min-width: 0;
+  flex: 1;
+}
+
+:where([data-game] .reaction-bubble) {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  margin-top: 4px;
+  padding: 4px 12px;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 32px));
+  border-radius: 999px;
+  background: var(--platform-button-bg, var(--lobby-accent));
+  color: var(--platform-button-text, var(--lobby-accent-text));
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  animation: reaction-bubble 3s ease-in-out forwards;
+}
+
+@keyframes reaction-bubble {
+  0% { opacity: 0; }
+  10%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-game] .reaction-bubble) {
+    animation: none;
+  }
+}
+
 :where([data-game] .presence-waiting) {
+  font-weight: 600;
+}
+
+:where([data-game] .presence-timer) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; // lets a long name ellipsize instead of pushing the bar wider than a 320 px phone
+  max-width: 100%;
+  font-weight: 600;
+}
+
+:where([data-game] .presence-clock) {
+  flex: none; /* the clock never shrinks or wraps; the name gives way instead */
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+:where([data-game] .presence-name) {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where([data-game] .presence-timer[data-low], [data-game] .presence-timer[data-over], [data-game] .presence-overtime) {
+  color: var(--lobby-error-text);
+}
+
+:where([data-game] .presence-overtime) {
   font-weight: 600;
 }
 
@@ -1510,6 +1790,13 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   font-size: 1rem;
 }
 
+/* Why notifications are off in this browser */
+:where([data-game] .settings-note, .lobby .settings-note) {
+  margin: 0;
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
 :where([data-game] .settings-volume, .lobby .settings-volume) {
   display: flex;
   align-items: center;
@@ -1604,4 +1891,184 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Pass and play: the join dialog's names, the handoff banner over the dimmed table, and the bar above a shown hand */
+
+.join-local-name {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.join-local-name .lobby-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.join-local-name .lobby-button,
+.join-local-names > .lobby-button {
+  min-height: 44px;
+  margin-bottom: 12px;
+}
+
+/* The table and the banner share one grid cell, so the banner sits over the table however tall either is */
+:where([data-game] .handoff) {
+  display: grid;
+  justify-items: center;
+}
+
+:where([data-game] .handoff > *) {
+  grid-area: 1 / 1;
+}
+
+:where([data-game] .handoff-table) {
+  width: 100%;
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+
+:where([data-game] .handoff-banner) {
+  position: sticky;
+  top: 16px;
+  z-index: 5;
+  align-self: start;
+  box-sizing: border-box;
+  width: min(480px, calc(100% - 32px));
+  margin-top: 24px;
+  padding: 24px 20px;
+  border-radius: 12px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+:where([data-game] .handoff-banner h2) {
+  margin: 0;
+  font-size: 1.8rem;
+  overflow-wrap: anywhere;
+}
+
+:where([data-game] .handoff-banner button, [data-game] .pass-and-play-bar button) {
+  min-height: 44px;
+}
+
+:where([data-game] .handoff-others) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+:where([data-game] .pass-and-play-bar) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  margin: 8px auto;
+  font-weight: 600;
+}
+
+/* Spectator screen and the hand request a player is asked */
+
+:where([data-game] .spectator-view) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+:where([data-game] .spectator-seats) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+:where([data-game] .spectator-seats button[aria-pressed='true']) {
+  font-weight: 700;
+}
+
+:where([data-game] .presence-watching) {
+  font-weight: 600;
+}
+
+:where([data-game] .hand-request) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:where([data-game] .hand-request-actions) {
+  display: flex;
+  gap: 8px;
+}
+
+/* A shared screen is read from across the room: larger type, and the board grows to fill what is left */
+[data-table-screen] {
+  font-size: clamp(18px, 1.6vw, 36px);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+:where([data-table-screen] .table-screen) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75em;
+}
+
+:where([data-table-screen] .table-screen-qr) {
+  width: min(40vh, 60vw);
+  height: min(40vh, 60vw);
+}
+
+:where([data-table-screen] .table-screen-link) {
+  margin: 0;
+  word-break: break-all;
+}
+
+:where([data-table-screen] .table-screen-players) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+:where([data-table-screen] .table-screen-status) {
+  font-size: 1.5em;
+}
+
+:where([data-table-screen] .table-screen-board) {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+:where([data-table-screen] .table-screen-board-content) {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max-content;
+  transform-origin: top center;
+  transform: translateX(-50%) scale(var(--fit-scale, 1));
 }

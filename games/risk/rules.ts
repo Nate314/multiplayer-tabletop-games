@@ -1,5 +1,7 @@
 // Risk rules: the game's hooks for the platform, the setup, reading untrusted moves, ending a turn, and the public view.
 // The rules themselves live in map.ts, state.ts, cards.ts, battle.ts and placement.ts.
+import { rankStandings } from '../../shared/standings.ts';
+import type { Standing } from '../../shared/types.ts';
 import { handCounts } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
@@ -251,4 +253,11 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
     working = { ...working, currentPlayer: working.turnHolder };
   }
   return finish(state, working);
+}
+
+// The last player holding territory wins; each eliminated player ranks above those eliminated before them
+export function finalStandings(state: GameState): Standing[] {
+  const eliminated = state.eliminated ?? [];
+  const lasted = (seat: Seat) => (eliminated.includes(seat) ? eliminated.indexOf(seat) : eliminated.length);
+  return rankStandings(state, (a, b) => lasted(b) - lasted(a), seat => (eliminated.includes(seat) ? 'Eliminated' : undefined));
 }

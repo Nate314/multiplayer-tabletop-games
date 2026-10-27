@@ -14,17 +14,18 @@
 //   highest card of the suit led, wins, and the winner leads next.
 // - Scoring: makers taking 3 or 4 tricks score 1, all 5 (a march) 2, a lone march 4. Makers who take fewer than 3
 //   are euchred and the defenders score 2. Games are played to 5, 7 or 10; this game plays to 10.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { cardName, rankValue, sameCard, standardDeck, SUITS } from '../../shared/playingCards.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { FOUR_SEATS as SEATS, nextSeat, partnerOf, partnershipBroken, teamNames, teamOf, teamSeats } from '../../shared/partnerships.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { canFollow, describeTrickPlay, trickWinner as sharedTrickWinner } from '../../shared/tricks.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { Card, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, Seat, Suit, Team, TeamScores } from './types.ts';
 import { TARGET_RULE } from './options.ts';
 
@@ -365,3 +366,11 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
   return startNextHandIfReady(state, random);
 }
+
+// Both partners take their team's place, ranked by the team's total
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.scores[teamOf(seat)];
+  return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
+}
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

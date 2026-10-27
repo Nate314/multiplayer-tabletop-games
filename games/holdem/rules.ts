@@ -1,12 +1,13 @@
 // No-limit Texas Hold'em rules shared by the browser (what the viewer may do) and the server (validation)
+import { rankStandings } from '../../shared/standings.ts';
 import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { standardDeck } from '../../shared/playingCards.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import { bestHand, compareHands } from './handRank.ts';
 import type { HandRank } from './handRank.ts';
 import type {
@@ -477,3 +478,10 @@ export function toPublicState(state: GameState, undoAvailable: boolean, viewer: 
     undoAvailable
   };
 }
+
+export function finalStandings(state: GameState): Standing[] {
+  const stack = (seat: Seat) => state.chips[seat] ?? 0;
+  return rankStandings(state, (a, b) => stack(b) - stack(a), seat => `${chipText(stack(seat))} ${stack(seat) === 1 ? 'chip' : 'chips'}`);
+}
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

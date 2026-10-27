@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Card, GameState, OrderToken, Task } from '../games/thecrew/types.ts';
 
 // One test per rule, control and difference in games/thecrew/README.md. Seats join in order: Alice 1, Bob 2, Cara 3
@@ -302,6 +302,7 @@ test.describe('The Crew rules', () => {
     await expect(status(alice)).toHaveText('Mission 50 complete! The crew has finished the logbook');
     await expect(turn(alice)).toHaveText('Game over');
     await expect(alice.locator('.seat-winner')).toHaveCount(3);
+    await seeTable(alice);
     await button(alice, 'Close').click();
     await button(alice, 'Show the mission').click();
     await expect(result(alice)).toBeVisible();

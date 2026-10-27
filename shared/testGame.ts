@@ -2,6 +2,7 @@ import type { GameDefinition } from './gameDefinition.ts';
 import type { ChoiceRule, ToggleRule } from './houseRules.ts';
 import { asRecord } from './messages.ts';
 import { baseGameState, nextActivePlayer } from './seating.ts';
+import { seatFields } from './spectators.ts';
 import type { BaseGameState, BasePublicState, Result, Seat } from './types.ts';
 
 // A fake game for platform tests: every valid move is a tick, and the third tick wins.
@@ -42,6 +43,21 @@ export const testGame: GameDefinition<TestState, TestPublicState> = {
     const { secret: _secret, ...view } = state;
     return { ...view, undoAvailable, viewer };
   }
+};
+
+export type HandState = TestState & { hands: Record<Seat, string> };
+export type HandPublicState = TestPublicState & { hand: string | null };
+
+// testGame with a private hand per seat, shown only to its owner
+export const handGame: GameDefinition<HandState, HandPublicState> = {
+  ...(testGame as unknown as GameDefinition<HandState, HandPublicState>),
+  createGameState: gameId => ({ ...testGame.createGameState(gameId), hands: {} }),
+  resetLobby: state => ({ ...state, hands: Object.fromEntries(state.activePlayers.map(seat => [seat, `card${seat}`])) }),
+  toPublicState(state, undoAvailable, viewer) {
+    const { secret: _secret, hands, ...view } = state;
+    return { ...view, undoAvailable, viewer, hand: viewer === null ? null : hands[viewer] ?? null };
+  },
+  privateSeatView: (state, seat) => seatFields(handGame.toPublicState(state, false, seat), ['hand'])
 };
 
 const FAST: ToggleRule = { id: 'fast', label: 'Fast', kind: 'toggle', standard: false };

@@ -1,0 +1,66 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { nextShownSeat, seatsToAct } from './passAndPlay.ts';
+import { testGame } from './testGame.ts';
+import type { TestState } from './testGame.ts';
+
+const table = (overrides: Partial<TestState> = {}): TestState => ({
+  ...testGame.createGameState('g1'), started: true, activePlayers: [1, 2, 3], currentPlayer: 2, ...overrides
+});
+
+test('the seat holding the turn is the one to act', () => {
+  assert.deepEqual(seatsToAct(testGame, table()), [2]);
+});
+
+test('nobody acts once the game is over', () => {
+  assert.deepEqual(seatsToAct(testGame, table({ isGameOver: true, currentPlayer: null })), []);
+});
+
+test('connected seats that have not voted on an undo are waited on', () => {
+  const undoVote = { requestedBy: 1, votes: { 1: true } };
+  assert.deepEqual(seatsToAct(testGame, table({ undoVote })), [2, 3]);
+});
+
+test('a disconnected seat does not hold up a vote', () => {
+  const undoVote = { requestedBy: 1, votes: { 1: true } };
+  assert.deepEqual(seatsToAct(testGame, table({ undoVote, disconnected: [3] })), [2]);
+});
+
+test('a dismiss vote waits on the seats that have not voted', () => {
+  const dismissVote = { target: 3, requestedBy: 1, votes: { 1: true } };
+  assert.deepEqual(seatsToAct(testGame, table({ dismissVote, currentPlayer: 1, disconnected: [3] })), [1, 2]);
+});
+
+test('a rematch vote waits on the connected seats that have not answered', () => {
+  const rematchVote = { requestedBy: 1, votes: { 1: true } };
+  assert.deepEqual(seatsToAct(testGame, table({ isGameOver: true, currentPlayer: null, rematchVote, disconnected: [3] })), [2]);
+  const waiting = { ...testGame, waitingOn: () => [1, 3] }; // a game hook left over from the last move counts for nothing now
+  assert.deepEqual(seatsToAct(waiting, table({ isGameOver: true, currentPlayer: null, rematchVote })), [2, 3]);
+});
+
+test('a hand request does not hold the device, since answering it is optional', () => {
+  assert.deepEqual(seatsToAct(testGame, table({ handRequests: [{ spectator: 's', seat: 3 }] })), [2]);
+});
+
+test("the game's out-of-turn waits come first, in place of the seat holding the turn", () => {
+  const game = { ...testGame, waitingOn: () => [3, 1] };
+  assert.deepEqual(seatsToAct(game, table()), [1, 3]);
+});
+
+test("a vote still adds its voters to the game's out-of-turn waits", () => {
+  const game = { ...testGame, waitingOn: () => [3] };
+  const undoVote = { requestedBy: 3, votes: { 3: true } };
+  assert.deepEqual(seatsToAct(game, table({ undoVote })), [1, 2, 3]);
+  assert.deepEqual(seatsToAct({ ...testGame, waitingOn: () => [] }, table()), [2]);
+});
+
+test('a private hand is hidden while another local seat is waited on', () => {
+  assert.equal(nextShownSeat(1, [1, 2], [2], true), null);
+  assert.equal(nextShownSeat(1, [1, 2], [1, 3], true), 1);
+  assert.equal(nextShownSeat(1, [1, 2], [3], true), 1);
+});
+
+test('without private hands the view follows the first waiting local seat', () => {
+  assert.equal(nextShownSeat(null, [1, 2], [2], false), 2);
+  assert.equal(nextShownSeat(1, [1, 2], [3], false), 1);
+});

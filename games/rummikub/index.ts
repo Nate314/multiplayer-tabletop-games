@@ -1,6 +1,7 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
+import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import { rummikubInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -11,5 +12,7 @@ export const rummikub: GameDefinition<GameState, PublicGameState> = {
   onPlayerLeft,
   applyMove,
   onUndo: (state, random) => ({ ...state, pool: shuffle(state.pool, random) }),
-  toPublicState
+  toPublicState,
+  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['rack']),
+  finalStandings
 };

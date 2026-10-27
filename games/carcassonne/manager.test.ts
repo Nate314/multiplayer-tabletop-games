@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { placementOptions, tileFeatures } from './board.ts';
 import { carcassonne } from './index.ts';
 import { meepleError } from './rules.ts';
@@ -93,13 +93,13 @@ test('a seeded game plays to the last tile, and no step shows the draw order', (
   assert.notEqual(state.finalScores, null);
   assert.ok(state.winners.length > 0);
 
-  const steps = manager.history('carcassonne', 'g1') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'carcassonne') ?? assert.fail('no history');
   assert.ok(steps.length > 100);
   for (const past of steps) {
     assert.equal('drawPile' in past, false);
     assert.equal(typeof (past as unknown as PublicGameState).tilesLeft, 'number');
   }
-  const file = manager.gameFile('carcassonne', 'g1', new Date());
+  const file = fileOf(manager, 'carcassonne', new Date());
   assert.ok(file && 'file' in file);
   assert.equal(JSON.stringify(file).includes('drawPile'), false);
 });

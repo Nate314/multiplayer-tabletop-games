@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { openGameStore } from './store.ts';
+import { openGameStore, type ArchivedGame } from './store.ts';
 import { testGame } from '../shared/testGame.ts';
 import type { BaseGameState } from '../shared/types.ts';
 
@@ -86,4 +86,69 @@ test('creates the folder for a new database file', () => {
   const folder = path.join(tempFolder(), 'nested');
   openGameStore(path.join(folder, 'games.sqlite'));
   assert.ok(fs.existsSync(folder));
+});
+
+function archived(gameId: string, n: number, finishedAt = 1000): ArchivedGame {
+  const state = started(`final ${n}`);
+  return {
+    id: `test/${gameId}#${n}`, gameType: 'test', gameId, n, finishedAt,
+    state, history: [started('before')], timeline: [state]
+  };
+}
+
+test('an archived game loads back as it was saved', () => {
+  const store = openGameStore(':memory:');
+  const game = archived('g1', 1);
+  store.archive(game);
+  assert.deepEqual(store.loadArchive(game.id), game);
+  assert.equal(store.loadArchive('test/g1#2'), undefined);
+});
+
+test('archiving the same id again replaces it', () => {
+  const store = openGameStore(':memory:');
+  store.archive(archived('g1', 1));
+  const again = { ...archived('g1', 1), finishedAt: 2000, state: started('replaced') };
+  store.archive(again);
+  assert.deepEqual(store.loadArchive(again.id), again);
+});
+
+test('nextGameNumber is 1 for a new game and one past the highest archived n', () => {
+  const store = openGameStore(':memory:');
+  assert.equal(store.nextGameNumber('test', 'g1'), 1);
+  store.archive(archived('g1', 1));
+  store.archive(archived('g1', 3));
+  assert.equal(store.nextGameNumber('test', 'g1'), 4);
+  assert.equal(store.nextGameNumber('test', 'g2'), 1);
+});
+
+test('pruneArchive removes only games finished before the cutoff', () => {
+  const store = openGameStore(':memory:');
+  store.archive(archived('g1', 1, 100));
+  store.archive(archived('g1', 2, 200));
+  assert.equal(store.pruneArchive(200), 1);
+  assert.equal(store.loadArchive('test/g1#1'), undefined);
+  assert.notEqual(store.loadArchive('test/g1#2'), undefined);
+});
+
+test('an archive whose data does not parse loads as undefined and is logged', (t: TestContext) => {
+  const error = t.mock.method(console, 'error', () => {});
+  const file = path.join(tempFolder(), 'games.sqlite');
+  const store = openGameStore(file);
+  store.archive(archived('g1', 1));
+  store.archive(archived('g1', 2));
+  const db = new DatabaseSync(file);
+  db.prepare("UPDATE archived_games SET data = 'not json' WHERE n = 1").run();
+  db.prepare("UPDATE archived_games SET data = '{\"state\":1,\"history\":[],\"timeline\":[]}' WHERE n = 2").run();
+  db.close();
+  assert.equal(store.loadArchive('test/g1#1'), undefined);
+  assert.equal(store.loadArchive('test/g1#2'), undefined);
+  assert.equal(error.mock.callCount(), 2);
+});
+
+test('removing a room keeps its archive', () => {
+  const store = openGameStore(':memory:');
+  store.save('test/g1', 'test', started('live'));
+  store.archive(archived('g1', 1));
+  store.remove('test/g1');
+  assert.notEqual(store.loadArchive('test/g1#1'), undefined);
 });

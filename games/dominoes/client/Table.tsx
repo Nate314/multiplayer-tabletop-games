@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import Board from './Board';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import { Fragment } from 'react';
@@ -41,6 +42,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
         {seats.map(seat => {
           const count = handCounts[seat];
           const classes = ['player'];
+          if (seat !== viewer) classes.push('hand-only-hide');
           if (seat === currentPlayer) classes.push('player-current');
           if (winners.includes(seat)) classes.push('player-winner');
           if (seat === lastMover) classes.push('player-last');
@@ -48,7 +50,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
             <li key={seat} className={classes.join(' ')} data-anim-key={seatKey(seat)}>
               <span className="player-name">
                 {playerNames[seat]}
-                {seat === viewer && ' (you)'}
+                <YouTag when={seat === viewer} />
                 {winners.includes(seat) && ' ★'}
               </span>
               <span className="player-count">{count} {count === 1 ? 'tile' : 'tiles'}</span>
@@ -57,7 +59,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
           );
         })}
       </ol>
-      <div className="boneyard">
+      <div className="boneyard hand-only-hide">
         {onDraw ? (
           <button type="button" className="tile tile-back tile-playable" onClick={onDraw} aria-label="Draw a tile" />
         ) : (
@@ -65,7 +67,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw,
         )}
         <span className="boneyard-label">Boneyard: {boneyardCount}</span>
       </div>
-      <div className="line-ends">
+      <div className="line-ends hand-only-hide">
         {!begun ? 'No tiles played yet' : (
           <>Open ends: {ends.map((pips, i) => (
             <Fragment key={i}>{separator(i, ends.length)}<span className="end-pips">{pips}</span></Fragment>

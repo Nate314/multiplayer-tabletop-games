@@ -1,4 +1,6 @@
 // Parchisi rules shared by the browser (move hints) and the server (validation).
+import { rankStandings } from '../../shared/standings.ts';
+import type { Standing } from '../../shared/types.ts';
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
@@ -357,4 +359,9 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
   const rollsAgain = isDoubles(next.dice) && next.dice.every(die => die.used);
   const roller = rollsAgain ? seat : nextPlayer(next, seat) ?? seat;
   return { state: startTurn(next, roller, rollsAgain ? next.doublesRolled : 0, random, [next.gameStatus]) };
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  const home = (seat: Seat) => (state.pawns[seat] ?? []).filter(progress => progress === HOME).length;
+  return rankStandings(state, (a, b) => home(b) - home(a), seat => `${home(seat)} of ${state.pawns[seat]?.length ?? 0} pawns home`);
 }

@@ -1,13 +1,14 @@
 // Rack-O rules shared by the browser (move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Rack-O, and the default target score of 500 from the official rules.
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { Card, GameState, LastMove, Move, Pile, PublicGameState, Result, RoundSummary, Seat } from './types.ts';
 import { TARGET_RULE } from './options.ts';
 
@@ -262,3 +263,10 @@ export function onPlayerLeft(state: GameState, seat: Seat, random: Random): Game
 export function onPlayerDisconnected(state: GameState, _seat: Seat, random: Random): GameState {
   return startNextRoundIfReady(state, random);
 }
+
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.scores[seat] ?? 0;
+  return rankStandings(state, (a, b) => points(b) - points(a), seat => pointsText(points(seat)));
+}
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

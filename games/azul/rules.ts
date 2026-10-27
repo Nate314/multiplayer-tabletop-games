@@ -1,11 +1,12 @@
 // Azul rules shared by the browser (legal picks and lines) and the server (validation).
+import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { mapSeats } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { acknowledge, everyoneReady } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type {
   Bonus,
   Color,
@@ -410,3 +411,12 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   if (tableEmpty) return { state: endRound(next) };
   return { state: { ...next, currentPlayer: nextActivePlayer(next, seat) } };
 }
+
+// The game's own order: score, then complete rows
+export function finalStandings(state: GameState): Standing[] {
+  const points = (seat: Seat) => state.boards[seat]?.score ?? 0;
+  const rows = (seat: Seat) => completeRows(state.boards[seat]?.wall ?? []);
+  return rankStandings(state, (a, b) => points(b) - points(a) || rows(b) - rows(a), seat => pointsText(points(seat)));
+}
+
+export const waitingOn = (state: GameState) => awaiting(state, ROUND);

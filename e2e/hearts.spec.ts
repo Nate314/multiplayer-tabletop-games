@@ -58,6 +58,7 @@ const turn = (page: Page) => page.locator('.turn-message');
 const hint = (page: Page) => page.locator('.hint');
 const status = (page: Page) => page.locator('.game-status');
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Hand scoring' });
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const passButton = (page: Page) => page.getByRole('button', { name: /^Pass \d\/3$/ });
 
 // Picks the first three cards of the hand and passes them
@@ -268,7 +269,7 @@ test.describe('Hearts rules', () => {
     const { table, pages } = await start(seat, { houseRules: { targetScore: 50 } });
     await lastTrick(table, { 1: 20, 2: 48, 3: 30, 4: 40 }); // Bob reaches 50
     await playLastTrick(pages);
-    await expect(scoring(pages[0]).locator('.summary-target')).toHaveText('The game ends when someone reaches 50; the lowest score wins');
+    await expect(gameOver(pages[0]).locator('.summary-target')).toHaveText('The game ends when someone reaches 50; the lowest score wins');
     await expect(status(pages[0])).toHaveText('Alice wins with 20 points!');
     await expect(turn(pages[0])).toHaveText('Game over');
   });
@@ -340,7 +341,7 @@ test.describe('Hearts controls', () => {
     await expect(seatOf(alice, 'Bob').locator('.seat-count')).toHaveText('1 card, 1 point');
   });
 
-  test('after a hand click Continue on the scoring screen; after the last hand click Close, and Show Scoring opens it again', async ({ seat }) => {
+  test('after a hand click Continue on the scoring screen; after the last hand the game-over screen shows its scoring', async ({ seat }) => {
     const { table, pages } = await start(seat);
     await lastTrick(table, zero);
     await playLastTrick(pages);
@@ -352,12 +353,14 @@ test.describe('Hearts controls', () => {
     const alice = final.pages[0];
     await lastTrick(final.table, { 1: 10, 2: 98, 3: 20, 4: 30 });
     await playLastTrick(final.pages);
-    await expect(scoring(alice).locator('h2')).toHaveText('Final scoring');
-    await expect(scoring(alice).getByRole('button', { name: 'Continue' })).toHaveCount(0);
-    await scoring(alice).getByRole('button', { name: 'Close' }).click();
+    const dialog = gameOver(alice);
+    await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Alice wins');
+    await expect(dialog.getByRole('heading', { name: 'Hand 1 scoring' })).toBeVisible();
+    await expect(dialog.locator('.game-over-meta')).toContainText('1 hand');
+    await expect(dialog.locator('.summary-player', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('10 pts');
     await expect(scoring(alice)).toHaveCount(0);
-    await alice.getByRole('button', { name: 'Show Scoring' }).click();
-    await expect(scoring(alice)).toContainText('Alice wins with 10 points!');
+    await dialog.getByRole('button', { name: 'See the table' }).click();
+    await expect(dialog).toHaveCount(0);
   });
 
   test('clicking Undo asks everyone to undo the last card played', async ({ seat }) => {

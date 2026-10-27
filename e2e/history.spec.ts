@@ -148,3 +148,15 @@ test('speed and animations are remembered, and 4x plays a step every 375 ms', as
     await expect(dialog.locator('.history-move')).toContainText(`Move ${move} of 3`, { timeout: 500 });
   }
 });
+
+test('history without the seat key is not available', async ({ seat, server }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const [alice] = table.pages;
+  const url = `${server.url}/api/history/connectfour/${table.gameId}`;
+  const response = await alice.request.get(url);
+  expect(response.status()).toBe(404);
+  expect(await response.json()).toEqual({ error: 'This game is not available' });
+  expect((await alice.request.get(`${server.url}/api/game-file/connectfour/${table.gameId}`)).status()).toBe(404);
+  expect((await alice.request.get(url, { headers: { Authorization: 'Bearer nope' } })).status()).toBe(404);
+  expect((await alice.request.get(`${url}/x`)).status()).toBe(404);
+});

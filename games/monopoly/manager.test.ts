@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { ownable, streetAt } from './board.ts';
 import { buildError, mortgageError, sellError } from './buildings.ts';
 import { inGame } from './state.ts';
@@ -119,13 +119,13 @@ test('a seeded game plays to one player left, and no step shows the deck order',
   assert.equal(state.winners.length, 1);
   assert.equal(state.bankrupt.length, 2);
 
-  const steps = manager.history('monopoly', 'g1') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'monopoly') ?? assert.fail('no history');
   assert.ok(steps.length > 10);
   for (const past of steps) {
     assert.equal('decks' in past, false);
     assert.equal(typeof (past as unknown as PublicGameState).deckCounts.chance, 'number');
   }
-  const file = manager.gameFile('monopoly', 'g1', new Date());
+  const file = fileOf(manager, 'monopoly', new Date());
   assert.ok(file && 'file' in file);
 });
 

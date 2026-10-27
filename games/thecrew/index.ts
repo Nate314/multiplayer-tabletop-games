@@ -1,5 +1,6 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, toPublicState } from './rules.ts';
+import { seatFields } from '../../shared/spectators.ts';
+import { applyAction, applyMove, createGameState, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, toPublicState, waitingOn } from './rules.ts';
 import { thecrewInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -12,5 +13,7 @@ export const thecrew: GameDefinition<GameState, PublicGameState> = {
   onUndo,
   applyMove,
   applyAction,
-  toPublicState
+  waitingOn,
+  toPublicState,
+  privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'distress'])
 };

@@ -22,6 +22,12 @@ export type ClientGame = {
   // Animates one step forward in the history dialog, as seen by the chosen seat (null for the table only)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   animateMove?: (change: MoveChange<any>, viewer: Seat | null) => void;
+  // How long the finished game took on the game-over screen, e.g. '5 rounds'; without it, the move count
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gameLength?(gameState: any): string;
+  // The last round's scoring, shown under the standings on the game-over screen
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  FinalRound?: ComponentType<{ gameState: any; viewer: Seat | null }>;
 };
 
 // Each game's client is its own chunk, downloaded when first needed; use loadClientGame, which shares one download per game
@@ -39,10 +45,12 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   gofish: () => import('../games/gofish/client/index.ts').then(m => m.gofishClient),
   hearts: () => import('../games/hearts/client/index.ts').then(m => m.heartsClient),
   holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),
+  jenga: () => import('../games/jenga/client/index.ts').then(m => m.loadJengaClient()),
   mancala: () => import('../games/mancala/client/index.ts').then(m => m.mancalaClient),
   monopoly: () => import('../games/monopoly/client/index.ts').then(m => m.monopolyClient),
   parchisi: () => import('../games/parchisi/client/index.ts').then(m => m.parchisiClient),
   phase10: () => import('../games/phase10/client/index.ts').then(m => m.phase10Client),
+  pictionary: () => import('../games/pictionary/client/index.ts').then(m => m.pictionaryClient),
   quoridor: () => import('../games/quoridor/client/index.ts').then(m => m.quoridorClient),
   racko: () => import('../games/racko/client/index.ts').then(m => m.rackoClient),
   risk: () => import('../games/risk/client/index.ts').then(m => m.riskClient),

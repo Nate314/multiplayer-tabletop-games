@@ -1,3 +1,4 @@
+import { finalStandings, waitingOn } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
@@ -45,7 +46,7 @@ function ok(result: Result<GameState> | undefined): GameState {
 
 // Moves through the platform, which checks the turn first
 const move = (state: GameState, seat: number, m: unknown) => applyMove(hearts, state, seat, m, seeded(3));
-const act = (state: GameState, seat: number, action: unknown) => hearts.applyAction?.(state, seat, action, seeded(3));
+const act = (state: GameState, seat: number, action: unknown) => hearts.applyAction?.(state, seat, action, seeded(3), 0);
 const pass = (state: GameState, seat: number, cards: unknown = [0, 1, 2]) => act(state, seat, { type: 'pass', cards });
 
 function passAll(state: GameState): GameState {
@@ -409,4 +410,19 @@ test('without the rule the jack is worth nothing', () => {
   assert.equal(state.jackTaker, null);
   assert.equal(state.roundSummary?.jack, null);
   assert.deepEqual(state.roundSummary?.change, { 1: 0, 2: 4, 3: 0, 4: 0 });
+});
+
+test('finalStandings ranks by the lowest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3, 4], isGameOver: true, winners: [1, 3], scores: { 1: 30, 2: 80, 3: 30, 4: 101 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '30 points' }, { seat: 3, place: 1, score: '30 points' },
+    { seat: 2, place: 2, score: '80 points' }, { seat: 4, place: 3, score: '101 points' }
+  ]);
+});
+
+test('waitingOn names the seats that have not passed', () => {
+  assert.deepEqual(waitingOn(ok(pass(lobby(), 2))), [1, 3, 4]);
+  assert.deepEqual(waitingOn(passAll(lobby())), []);
 });

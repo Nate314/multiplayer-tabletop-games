@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys } from '../../server/testing.ts';
+import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { isSet } from './cards.ts';
 import { NEIGHBORS } from './map.ts';
 import { territoriesHeld } from './state.ts';
@@ -90,14 +90,14 @@ test('a seeded game plays to a world conqueror, and no step shows a hand or the 
   assert.equal(territoriesHeld(state, state.winners[0]).length, 42);
   assert.equal(state.eliminated.length, 2);
 
-  const steps = manager.history('risk', 'g1') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'risk') ?? assert.fail('no history');
   assert.ok(steps.length > 20);
   for (const past of steps) {
     assert.equal('hands' in past, false);
     assert.equal('deck' in past, false);
     assert.equal((past as unknown as PublicGameState).hand, null);
   }
-  const file = manager.gameFile('risk', 'g1', new Date());
+  const file = fileOf(manager, 'risk', new Date());
   if (!file || !('file' in file)) assert.fail('no game file');
   const last = file.file.steps.at(-1) as unknown as PublicGameState & { views: Record<string, PublicGameState> };
   assert.equal(last.hand, null);

@@ -1,3 +1,4 @@
+import YouTag from '../../../src/components/YouTag.tsx';
 import { BAG_KEY } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
 import type { PublicGameState, Seat } from '../types.ts';
@@ -25,13 +26,14 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
             'score-row',
             currentPlayer === seat ? 'score-current' : '',
             winners.includes(seat) ? 'score-winner' : '',
-            hasLeft ? 'score-left' : ''
+            hasLeft ? 'score-left' : '',
+            seat !== playerNumber ? 'hand-only-hide' : ''
           ];
           const adjustment = endAdjustments?.[seat];
           return (
             <li key={seat} className={classes.filter(Boolean).join(' ')} data-anim-key={seatKey(seat)}>
               <span className="score-name">
-                {playerNames[seat]}{seat === playerNumber && ' (you)'}{hasLeft && ' (left)'}
+                {playerNames[seat]}<YouTag when={seat === playerNumber} />{hasLeft && ' (left)'}
               </span>
               <span className="score-tiles">{hasLeft ? '' : `${rackCounts[seat] ?? 0} tiles`}</span>
               <span className="score-points">
@@ -42,7 +44,7 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
           );
         })}
       </ul>
-      <div className="bag-count" data-anim-key={BAG_KEY}>Tiles in the bag: {bagCount}</div>
+      <div className="bag-count hand-only-hide" data-anim-key={BAG_KEY}>Tiles in the bag: {bagCount}</div>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export function nextAuction(state: GameState): GameState {
 }
 
 // A disconnected player counts as passed, unless they hold the high bid, so the auction never waits on them
-function stillBidding(state: GameState, auction: Auction): Seat[] {
+export function stillBidding(state: GameState, auction: Auction): Seat[] {
   return inGame(state).filter(seat =>
     !auction.passed.includes(seat) && (!state.disconnected.includes(seat) || seat === auction.highBidder));
 }

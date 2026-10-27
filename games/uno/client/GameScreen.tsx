@@ -52,7 +52,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [pendingSwap, setPendingSwap] = useState<CardData | null>(null);
   // UNO is called with the next play, which leaves one card
   const [unoArmed, setUnoArmed] = useState(false);
-  const [finalScoringClosed, setFinalScoringClosed] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
   const {
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable,
@@ -74,7 +73,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const canJump = hand.some(jumpable);
   const canArmUno = (canPlayCards || canJump) && hand.length === 2 && !lateUno;
   const catchable = canAct && unoWindow !== null && !unoWindow.called && unoWindow.seat !== playerNumber ? unoWindow.seat : null;
-  const showSummary = roundSummary !== null && !(isGameOver && finalScoringClosed);
+  const showSummary = roundSummary !== null && !isGameOver;
 
   // Only the live table animates; the history dialog renders it without this hook
   useMoveAnimation(screenRef, gameState, animateMove);
@@ -85,11 +84,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     setPendingSwap(null);
     setUnoArmed(false);
   }, [currentPlayer, hasDrawn]);
-
-  useEffect(() => {
-    // An undo can reopen a finished game; its next ending shows the scoring again
-    if (!isGameOver) setFinalScoringClosed(false);
-  }, [isGameOver]);
 
   // After drawing, only the drawn card may be played
   // A Draw Two goes on a Draw Two, a Wild Draw Four on either
@@ -154,7 +148,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id">Game ID: {gameState.gameId}</div>
+      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">
@@ -188,11 +182,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
               Undo
             </button>
-            {isGameOver && roundSummary && finalScoringClosed && (
-              <button type="button" onClick={() => setFinalScoringClosed(false)}>
-                Show Scoring
-              </button>
-            )}
           </div>
           {catchable !== null && (
             <button type="button" className="catch-button" onClick={() => gameService.sendAction({ type: 'catchUno' })}>
@@ -272,7 +261,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           gameState={gameState}
           playerNumber={playerNumber}
           onContinue={() => gameService.sendAction({ type: 'acknowledgeRound' })}
-          onClose={() => setFinalScoringClosed(true)}
         />
       )}
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />

@@ -3,19 +3,28 @@ import express from 'express';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createGameManager } from './games.ts';
+import { createGameManager, NOT_AVAILABLE, type Reseat } from './games.ts';
 import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
 import { mountRulesRoute } from './rules.ts';
+import { mountOpenGamesRoute } from './openGames.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
+import { createAlerts, mountPushRoutes } from './alerts.ts';
+import { loadVapidKeys, openPushStore } from './pushStore.ts';
+import { isPushEndpoint } from './vapid.ts';
+import { openStatsStore } from './stats/store.ts';
+import { mountStatsRoutes } from './stats/routes.ts';
 import { GAMES } from '../games/registry.ts';
 import { MESSAGE_TYPES, asRecord, type ServerMessage } from '../shared/messages.ts';
-import type { BasePublicState, Result, Seat } from '../shared/types.ts';
+import type { BasePublicState, JoinRole, Result, Seat } from '../shared/types.ts';
+import type { Reaction } from '../shared/reactions.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
+const PUSH_CONTACT = process.env.PUSH_CONTACT || 'mailto:admin@localhost'; // push services may contact this about our pushes
+const SHOW_OPEN_GAMES = process.env.SHOW_OPEN_GAMES === 'true'; // lists every game on the landing page, so it is off unless asked for
 const HEARTBEAT_MS = 15_000; // a socket that misses one ping is dead within about 30 s
 const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data/games.sqlite');
 const E2E = process.env.E2E === '1'; // test hooks for the Playwright suite; never set on a real server
@@ -24,32 +33,66 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real messages are well under 1 KB
 
-type Connection = { roomId: string; seat: Seat };
+// A spectator has no seat; a shared device holds several and shows one at a time, none (null) during a handoff
+type Connection =
+  | { roomId: string; seat: Seat; spectatorId?: undefined; localSeats?: undefined }
+  | { roomId: string; seat: Seat | null; spectatorId?: undefined; localSeats: Seat[] }
+  | { roomId: string; seat: null; spectatorId: string; localSeats?: undefined };
+type LocalConnection = Extract<Connection, { localSeats: Seat[] }>;
 
+const JOIN_ROLES: readonly JoinRole[] = ['player', 'spectator', 'passAndPlay', 'tableScreen'];
+
+const pushStore = openPushStore(DATABASE_PATH);
+const alerts = createAlerts({ store: pushStore, keys: loadVapidKeys(pushStore), subject: PUSH_CONTACT, games: GAMES.map(game => game.info) });
 const e2eRandom = E2E ? createE2eRandom() : null;
-const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), { changed: broadcast });
+const stats = openStatsStore(DATABASE_PATH);
+const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, openGameStore(DATABASE_PATH), {
+  changed: broadcast,
+  onGameFinished: result => {
+    console.log(`Game finished: ${result.archiveId}`);
+    try {
+      stats.record(result);
+    } catch (error) { // a stats failure never touches play
+      console.error(`Could not record stats for ${result.archiveId}:`, error);
+    }
+  },
+  reseated: reseat,
+  removed: roomId => alerts.roomChanged(roomId, null, new Set()),
+  manualSimulation: E2E,
+  samePerson: (hash, hashes) => {
+    try {
+      return stats.samePerson(hash, hashes);
+    } catch (error) { // a stats failure only refuses the linked device; the log names no hash
+      console.error('Could not check linked devices:', error instanceof Error ? error.message : 'unknown error');
+      return false;
+    }
+  }
+});
+// Rooms that ended while the server was down
+for (const roomId of pushStore.roomIds()) if (!manager.getState(roomId)) pushStore.removeRoom(roomId);
 const connections = new Map<WebSocket, Connection>(); // Filled once the socket has joined a game
 const answered = new WeakSet<WebSocket>(); // sockets that answered the last ping
+const hidden = new WeakSet<WebSocket>(); // players whose page is not in view; absent means looking
 
 // Configure Express routes
-app.get('/api/history/:gameType/:gameId', (req, res) => {
-  const steps = manager.history(req.params.gameType, req.params.gameId);
-  if (!steps) {
-    res.status(404).json({ error: 'Game not found' });
-    return;
-  }
-  res.json({ steps });
+// The same answer for a missing game, a refused credential and a bad number, so none can be told apart
+const NOT_AVAILABLE_BODY = { error: 'This game is not available' };
+
+// The archive number from the optional `:n`: undefined for the live game, NaN for anything but a positive integer
+const archiveNumber = (n: unknown) => (n === undefined ? undefined : /^[1-9]\d{0,8}$/.test(String(n)) ? Number(n) : NaN);
+const bearer = (req: express.Request) => req.header('Authorization')?.match(/^Bearer (.+)$/)?.[1];
+
+app.get('/api/history/:gameType/:gameId{/:n}', (req, res) => {
+  const result = manager.history(req.params.gameType, req.params.gameId, bearer(req), archiveNumber(req.params.n));
+  if ('error' in result) res.status(404).json(NOT_AVAILABLE_BODY);
+  else res.json(result);
 });
 
-app.get('/api/game-file/:gameType/:gameId', (req, res) => {
-  const result = manager.gameFile(req.params.gameType, req.params.gameId, new Date());
-  if (!result) {
-    res.status(404).json({ error: 'Game not found' });
-  } else if ('error' in result) {
-    res.status(409).json({ error: result.error });
-  } else {
-    res.json(result.file);
-  }
+app.get('/api/game-file/:gameType/:gameId{/:n}', (req, res) => {
+  const result = manager.gameFile(req.params.gameType, req.params.gameId, bearer(req), new Date(), archiveNumber(req.params.n));
+  if (!('error' in result)) res.json(result.file);
+  else if (result.error === NOT_AVAILABLE) res.status(404).json(NOT_AVAILABLE_BODY);
+  else res.status(409).json({ error: result.error });
 });
 
 mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
@@ -57,6 +100,12 @@ mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.in
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
 
 mountAssetRoutes(app);
+
+mountStatsRoutes(app, stats);
+
+if (SHOW_OPEN_GAMES) mountOpenGamesRoute(app, manager.openGames);
+
+mountPushRoutes(app, alerts);
 
 serveClient(app, path.join(__dirname, '../dist'));
 
@@ -114,7 +163,24 @@ function handleMessage(ws: WebSocket, data: unknown): void {
 
   const { roomId, seat } = connection;
   const payload = asRecord(message?.payload);
+  if (handlePushMessage(ws, connection, message?.type, payload)) return;
+  if (connection.spectatorId !== undefined) {
+    handleSpectatorMessage(ws, roomId, connection.spectatorId, message?.type, payload);
+    return;
+  }
+  if (connection.localSeats && handleLocalMessage(ws, connection, message?.type, payload)) return;
+  if (seat === null) {
+    if (typeof message?.type === 'string' && message.type in MESSAGE_TYPES) sendError(ws, 'Pass the device first');
+    return;
+  }
   switch (message?.type) {
+    case MESSAGE_TYPES.ANSWER_HAND:
+      respond(ws, roomId, manager.answerHand(roomId, seat, payload?.spectator, payload?.allow));
+      break;
+    case MESSAGE_TYPES.REQUEST_HAND:
+    case MESSAGE_TYPES.SWITCH_TO_PLAYER:
+      sendError(ws, 'Only spectators can do that');
+      break;
     case MESSAGE_TYPES.MAKE_MOVE:
       respond(ws, roomId, manager.move(roomId, seat, payload?.move, payload?.moveCount));
       break;
@@ -139,6 +205,15 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_DISMISS:
       respond(ws, roomId, manager.voteDismiss(roomId, seat, payload?.approve));
       break;
+    case MESSAGE_TYPES.REQUEST_REMATCH:
+      respond(ws, roomId, manager.requestRematch(roomId, seat));
+      break;
+    case MESSAGE_TYPES.VOTE_REMATCH:
+      respond(ws, roomId, manager.voteRematch(roomId, seat, payload?.join));
+      break;
+    case MESSAGE_TYPES.REACT:
+      react(ws, roomId, seat, payload);
+      break;
   }
 }
 
@@ -148,15 +223,163 @@ function handleJoinGame(ws: WebSocket, message: Record<string, unknown>): void {
     return;
   }
 
-  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey);
+  const { role } = message;
+  if (role !== undefined && !JOIN_ROLES.some(known => known === role)) {
+    sendError(ws, 'Unknown role');
+    return;
+  }
+  if (role === 'passAndPlay') {
+    joinLocal(ws, message);
+    return;
+  }
+
+  const result = manager.join(message.gameType, message.gameId, message.playerName, message.rejoin, message.seatKey, role as JoinRole | undefined, message.deviceId);
   if ('error' in result) {
     sendError(ws, result.error);
     return;
   }
 
-  connections.set(ws, { roomId: result.roomId, seat: result.seat });
-  send(ws, { type: MESSAGE_TYPES.GAME_JOINED, payload: { playerNumber: result.seat, seatKey: result.seatKey, gameState: result.state } });
+  connections.set(ws, connectionFor(result.roomId, result.seat, result.spectatorId));
+  sendJoined(ws, result);
   broadcast(result.roomId);
+}
+
+// A reload starts on the handoff screen (no seat shown), so no hand shows before its player has the device
+function joinLocal(ws: WebSocket, message: Record<string, unknown>): void {
+  const result = manager.joinLocal(message.gameType, message.gameId, message.playerNames, message.rejoin, message.seatKeys, message.deviceId);
+  if ('error' in result) {
+    sendError(ws, result.error);
+    return;
+  }
+
+  connections.set(ws, { roomId: result.roomId, seat: null, localSeats: result.seats.map(({ seat }) => seat) });
+  send(ws, {
+    type: MESSAGE_TYPES.GAME_JOINED,
+    payload: { playerNumber: null, localSeats: result.seats, gameState: { ...result.state, shownSeat: null } }
+  });
+  broadcast(result.roomId);
+}
+
+// A shared device picks the seat it shows, and settles the lobby for its players at once (nothing in a lobby is private).
+// False when the message is an ordinary one for the shown seat
+function handleLocalMessage(
+  ws: WebSocket, connection: LocalConnection, type: unknown, payload: Record<string, unknown> | null
+): boolean {
+  const { roomId, localSeats } = connection;
+  if (type === MESSAGE_TYPES.SHOW_SEAT) {
+    const seat = payload?.seat === null ? null : localSeats.find(local => local === payload?.seat);
+    if (seat === undefined) {
+      sendError(ws, "Not one of this device's players");
+    } else {
+      connection.seat = seat;
+      sendState(ws, connection, false); // an explicit "I'm <name>" is consent, so no handoff overrides it until the state changes
+    }
+    return true;
+  }
+  if (type === MESSAGE_TYPES.SET_HOUSE_RULES) {
+    const host = localSeats.find(local => local === manager.getState(roomId)?.houseRules?.host);
+    if (host === undefined) return false;
+    respond(ws, roomId, manager.setHouseRules(roomId, host, payload?.proposal));
+    return true;
+  }
+  if (type === MESSAGE_TYPES.AGREE_HOUSE_RULES) {
+    const results = localSeats.map(seat => manager.agreeHouseRules(roomId, seat, payload?.revision));
+    respond(ws, roomId, results.find(result => !('error' in result)) ?? results[0]);
+    return true;
+  }
+  return false;
+}
+
+// Seats come from the connection, so a shared device covers all its players, even during a handoff.
+// False when the message is not about alerts
+function handlePushMessage(ws: WebSocket, connection: Connection, type: unknown, payload: Record<string, unknown> | null): boolean {
+  if (type !== MESSAGE_TYPES.PUSH_SUBSCRIBE && type !== MESSAGE_TYPES.PUSH_UNSUBSCRIBE && type !== MESSAGE_TYPES.SET_VISIBLE) return false;
+  if (connection.spectatorId !== undefined) {
+    sendError(ws, 'Only players get notifications');
+    return true;
+  }
+  const { roomId } = connection;
+  const seats = connection.localSeats ?? [connection.seat];
+  if (type === MESSAGE_TYPES.SET_VISIBLE) {
+    if (payload?.visible === true) hidden.delete(ws);
+    else if (payload?.visible === false) hidden.add(ws);
+  } else if (type === MESSAGE_TYPES.PUSH_UNSUBSCRIBE) {
+    for (const seat of seats) pushStore.removeSeat(roomId, seat);
+  } else if (!isPushEndpoint(payload?.endpoint)) {
+    sendError(ws, 'That is not a push service this server sends to');
+  } else {
+    for (const seat of seats) pushStore.add(roomId, seat, payload.endpoint);
+  }
+  return true;
+}
+
+// A joined spectator has an id and no seat; a player has a seat
+function connectionFor(roomId: string, seat: Seat | null, spectatorId?: string): Connection {
+  return spectatorId !== undefined ? { roomId, seat: null, spectatorId } : { roomId, seat: seat as Seat };
+}
+
+function sendJoined(ws: WebSocket, joined: { seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }): void {
+  send(ws, {
+    type: MESSAGE_TYPES.GAME_JOINED,
+    payload: { playerNumber: joined.seat, spectatorId: joined.spectatorId, seatKey: joined.seatKey, gameState: joined.state }
+  });
+}
+
+// A spectator may only ask to see a hand or sit down; everything else is refused
+function react(
+  ws: WebSocket, roomId: string, sender: Seat | { spectatorId: string }, payload: Record<string, unknown> | null
+): void {
+  const result = manager.react(roomId, sender, payload?.target, payload?.emoji);
+  if ('error' in result) sendError(ws, result.error);
+  else broadcastReaction(roomId, result.reaction);
+}
+
+function handleSpectatorMessage(
+  ws: WebSocket, roomId: string, spectatorId: string, type: unknown, payload: Record<string, unknown> | null
+): void {
+  if (type === MESSAGE_TYPES.REQUEST_HAND) {
+    respond(ws, roomId, manager.requestHand(roomId, spectatorId, payload?.seat));
+  } else if (type === MESSAGE_TYPES.REACT) {
+    react(ws, roomId, { spectatorId }, payload);
+  } else if (type === MESSAGE_TYPES.SWITCH_TO_PLAYER) {
+    const result = manager.switchToPlayer(roomId, spectatorId, payload?.deviceId);
+    if ('error' in result) {
+      sendError(ws, result.error);
+      return;
+    }
+    connections.set(ws, connectionFor(roomId, result.seat));
+    sendJoined(ws, result);
+    broadcast(roomId);
+  } else if (typeof type === 'string' && type in MESSAGE_TYPES) {
+    sendError(ws, 'Spectators cannot do that');
+  }
+}
+
+// A rematch reset the room: each player's socket follows its seat into the lobby, and one whose seat went is told and
+// forgotten. A shared device keeps the seats that joined and starts on its handoff screen; it leaves only when all went.
+// Read from a snapshot of the old seats, so seat 2 moving to 1 never meets seat 1 leaving
+function reseat(roomId: string, moves: Reseat[]): void {
+  const players = [...connections].filter(([, connection]) => connection.roomId === roomId && connection.spectatorId === undefined);
+  for (const [ws, connection] of players) {
+    const seats = connection.localSeats ?? (connection.seat !== null ? [connection.seat] : []);
+    const mine = moves.filter(move => seats.includes(move.from));
+    if (mine.length === 0) continue;
+    const kept = mine.flatMap(move => move.to === null ? [] : [{ seat: move.to, seatKey: move.seatKey }]);
+    if (kept.length === 0) {
+      send(ws, { type: MESSAGE_TYPES.LEFT_GAME, payload: { message: 'You left after the game' } });
+      connections.delete(ws);
+      continue;
+    }
+    if (connection.localSeats) {
+      connections.set(ws, { roomId, seat: null, localSeats: kept.map(local => local.seat) });
+      const state = manager.getState(roomId);
+      if (state) send(ws, { type: MESSAGE_TYPES.GAME_JOINED, payload: { playerNumber: null, localSeats: kept, gameState: { ...state, shownSeat: null } } });
+      continue;
+    }
+    connections.set(ws, connectionFor(roomId, kept[0].seat));
+    const state = manager.getState(roomId, kept[0].seat);
+    if (state) sendJoined(ws, { seat: kept[0].seat, seatKey: kept[0].seatKey, state });
+  }
 }
 
 function handleDisconnect(ws: WebSocket): void {
@@ -164,8 +387,18 @@ function handleDisconnect(ws: WebSocket): void {
   if (!connection) return;
 
   connections.delete(ws);
-  const result = manager.disconnect(connection.roomId, connection.seat);
-  if (result) broadcast(connection.roomId);
+  if (connection.spectatorId !== undefined) {
+    manager.disconnectSpectator(connection.roomId, connection.spectatorId);
+    broadcast(connection.roomId);
+    return;
+  }
+  const seats = connection.localSeats ?? (connection.seat !== null ? [connection.seat] : []);
+  const results = seats.map(seat => manager.disconnect(connection.roomId, seat));
+  if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
+    for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
+  } else if (results.some(Boolean)) {
+    broadcast(connection.roomId);
+  }
 }
 
 function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>): void {
@@ -176,12 +409,46 @@ function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>)
   }
 }
 
-// Each player gets their own view, so a game can show them their own hand
 function broadcast(roomId: string): void {
   for (const [ws, connection] of connections) {
-    if (connection.roomId !== roomId) continue;
-    const state = manager.getState(roomId, connection.seat);
-    if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
+    if (connection.roomId === roomId) sendState(ws, connection);
+  }
+  // Alerts never hold up or break play
+  try {
+    const state = manager.getState(roomId);
+    const views = state && new Map(state.activePlayers.map(seat => [seat, manager.getState(roomId, seat)!]));
+    const visible = new Set<Seat>();
+    for (const [ws, connection] of connections) {
+      if (connection.roomId !== roomId || connection.spectatorId !== undefined || hidden.has(ws)) continue;
+      for (const seat of connection.localSeats ?? [connection.seat]) visible.add(seat);
+    }
+    alerts.roomChanged(roomId, views ?? null, visible);
+  } catch (error) {
+    console.error('Alerts failed:', error);
+  }
+}
+
+// Each player gets their own view, so a game can show them their own hand.
+// A shared device first hands over when another local player's hand would show, and is told which seat it sees
+function sendState(ws: WebSocket, connection: Connection, handoff = true): void {
+  const { roomId } = connection;
+  let state: BasePublicState | undefined;
+  if (connection.spectatorId !== undefined) {
+    state = manager.getSpectatorState(roomId, connection.spectatorId);
+  } else if (connection.localSeats) {
+    if (handoff) connection.seat = manager.handoffSeat(roomId, connection.seat, connection.localSeats);
+    const view = manager.getState(roomId, connection.seat);
+    state = view && { ...view, shownSeat: connection.seat };
+  } else {
+    state = manager.getState(roomId, connection.seat);
+  }
+  if (state) send(ws, { type: MESSAGE_TYPES.GAME_STATE, payload: state });
+}
+
+// A reaction is the same for every viewer and changes no view, so no GAME_STATE follows it
+function broadcastReaction(roomId: string, reaction: Reaction): void {
+  for (const [ws, connection] of connections) {
+    if (connection.roomId === roomId) send(ws, { type: MESSAGE_TYPES.REACTION, payload: reaction });
   }
 }
 
@@ -199,5 +466,6 @@ server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`WebSocket server active on ws://localhost:${PORT}`);
   console.log(`Saving started games to ${DATABASE_PATH}`);
+  if (SHOW_OPEN_GAMES) console.log('Listing open games on the landing page');
   console.log('Use Ctrl+C to stop the server');
 });

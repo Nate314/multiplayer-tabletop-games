@@ -1,5 +1,8 @@
 // Catan rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, building.ts, dice.ts, trades.ts, devCards.ts, roads.ts and state.ts.
+import { rankStandings } from '../../shared/standings.ts';
+import { plural } from '../../shared/text.ts';
+import type { Standing } from '../../shared/types.ts';
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
@@ -18,7 +21,7 @@ import {
 } from './state.ts';
 import { editionFor } from './editions.ts';
 import { buildChance, playSpecialBuild, startSpecialBuild, withoutBuilder } from './specialBuild.ts';
-import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade } from './trades.ts';
+import { answerTrade, bankTrade, cancelTrade, dropTradesOf, offerTrade, tradeAnswerers } from './trades.ts';
 import type { GameState, LastMove, Move, PublicGameState, Random, Resources, Result, Seat, Setup } from './types.ts';
 import { PLAYERS } from './options.ts';
 
@@ -355,4 +358,14 @@ export function onPlayerDisconnected(state: GameState, seat: Seat, random: Rando
   next = discardForAbsent(next, random);
   if (buildChance(next, seat)) next = withoutBuilder(note(next, `${nameOf(state, seat)} is away, so their build chance is skipped`), seat);
   return next.log.length > 0 ? finish(state, next) : state;
+}
+
+export function finalStandings(state: GameState): Standing[] {
+  return rankStandings(state, (a, b) => points(state, b) - points(state, a), seat => plural(points(state, seat), 'victory point'));
+}
+
+// Beyond the turn: players owing a discard, those who may answer an open offer, and the special builder with the chance
+export function waitingOn(state: GameState): Seat[] {
+  const owing = state.pending?.kind === 'discard' ? Object.keys(state.pending.counts).map(Number) : [];
+  return [...owing, ...tradeAnswerers(state), ...(state.specialBuild?.builders.slice(0, 1) ?? [])];
 }

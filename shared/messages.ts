@@ -1,5 +1,6 @@
 import type { HouseRulesProposal } from './houseRules.ts';
-import type { BasePublicState, Seat } from './types.ts';
+import type { BasePublicState, JoinRole, Seat } from './types.ts';
+import type { Reaction } from './reactions.ts';
 
 // WebSocket message types shared by the browser and the server
 export const MESSAGE_TYPES = {
@@ -11,14 +12,32 @@ export const MESSAGE_TYPES = {
   AGREE_HOUSE_RULES: 'AGREE_HOUSE_RULES',
   REQUEST_UNDO: 'REQUEST_UNDO',
   VOTE_UNDO: 'VOTE_UNDO',
+  REQUEST_HAND: 'REQUEST_HAND',
+  ANSWER_HAND: 'ANSWER_HAND',
+  SWITCH_TO_PLAYER: 'SWITCH_TO_PLAYER',
   REQUEST_DISMISS: 'REQUEST_DISMISS',
   VOTE_DISMISS: 'VOTE_DISMISS',
+  REQUEST_REMATCH: 'REQUEST_REMATCH',
+  VOTE_REMATCH: 'VOTE_REMATCH',
+  LEFT_GAME: 'LEFT_GAME',
+  REACT: 'REACT',
+  SHOW_SEAT: 'SHOW_SEAT',
+  PUSH_SUBSCRIBE: 'PUSH_SUBSCRIBE',
+  PUSH_UNSUBSCRIBE: 'PUSH_UNSUBSCRIBE',
+  SET_VISIBLE: 'SET_VISIBLE',
+  REACTION: 'REACTION',
   GAME_STATE: 'GAME_STATE',
   GAME_ERROR: 'GAME_ERROR'
 } as const;
 
 export type ClientMessage =
-  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string }
+  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerName: string; rejoin?: boolean; seatKey?: string; role?: JoinRole; deviceId?: string }
+  // role 'passAndPlay': seats every name on this device; seatKeys follow the order of playerNames
+  | { type: typeof MESSAGE_TYPES.JOIN_GAME; gameType: string; gameId: string; playerNames: string[]; rejoin?: boolean; seatKeys?: string[]; role: 'passAndPlay'; deviceId?: string }
+  | { type: typeof MESSAGE_TYPES.SHOW_SEAT; payload: { seat: Seat | null } }
+  | { type: typeof MESSAGE_TYPES.REQUEST_HAND; payload: { seat: Seat } }
+  | { type: typeof MESSAGE_TYPES.ANSWER_HAND; payload: { spectator: string; allow: boolean } }
+  | { type: typeof MESSAGE_TYPES.SWITCH_TO_PLAYER; payload: { deviceId: string } }
   | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown; moveCount?: number } } // moveCount: the count the mover saw
   | { type: typeof MESSAGE_TYPES.GAME_ACTION; payload: { action: unknown } }
   | { type: typeof MESSAGE_TYPES.SET_HOUSE_RULES; payload: { proposal: HouseRulesProposal } }
@@ -26,11 +45,21 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }
   | { type: typeof MESSAGE_TYPES.VOTE_UNDO; payload: { approve: boolean } }
   | { type: typeof MESSAGE_TYPES.REQUEST_DISMISS; payload: { seat: Seat } }
-  | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } };
+  | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } }
+  | { type: typeof MESSAGE_TYPES.REQUEST_REMATCH }
+  | { type: typeof MESSAGE_TYPES.VOTE_REMATCH; payload: { join: boolean } }
+  | { type: typeof MESSAGE_TYPES.REACT; payload: { target: Seat; emoji: string } }
+  // Push and visibility apply to every seat this connection holds; spectators are refused
+  | { type: typeof MESSAGE_TYPES.PUSH_SUBSCRIBE; payload: { endpoint: string } }
+  | { type: typeof MESSAGE_TYPES.PUSH_UNSUBSCRIBE }
+  | { type: typeof MESSAGE_TYPES.SET_VISIBLE; payload: { visible: boolean } };
 
 export type ServerMessage =
-  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat; seatKey: string; gameState: BasePublicState } }
+  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: Seat | null; spectatorId?: string; seatKey: string; localSeats?: undefined; gameState: BasePublicState } }
+  | { type: typeof MESSAGE_TYPES.GAME_JOINED; payload: { playerNumber: null; localSeats: { seat: Seat; seatKey: string }[]; gameState: BasePublicState; spectatorId?: undefined; seatKey?: undefined } }
   | { type: typeof MESSAGE_TYPES.GAME_STATE; payload: BasePublicState }
+  | { type: typeof MESSAGE_TYPES.REACTION; payload: Reaction }
+  | { type: typeof MESSAGE_TYPES.LEFT_GAME; payload: { message: string } }
   | { type: typeof MESSAGE_TYPES.GAME_ERROR; payload: { message: string } };
 
 // Reads untrusted data as an object whose fields are all still unchecked, or null if it is not an object

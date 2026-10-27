@@ -1,3 +1,4 @@
+import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -224,7 +225,7 @@ test('after six scoreless turns in a row play goes on until a player ends the ga
   let state = game({ 1: 'QAAAAAA', 2: 'ZEEEEEE' });
   for (let turn = 0; turn < 5; turn++) state = ok(move(state, state.currentPlayer ?? 0, { type: 'pass' }));
   assert.equal(state.gameStatus, 'A passed');
-  assert.deepEqual(scrabble.applyAction?.(state, 1, { type: 'endGame' }, first), {
+  assert.deepEqual(scrabble.applyAction?.(state, 1, { type: 'endGame' }, first, 0), {
     error: 'The game can end only after 6 scoreless turns in a row'
   });
 
@@ -237,20 +238,20 @@ test('after six scoreless turns in a row play goes on until a player ends the ga
   assert.equal(seventh.scorelessTurns, 7);
 
   // Either player may end it, not only the one whose turn it is
-  const ended = ok(scrabble.applyAction?.(seventh, 1, { type: 'endGame' }, first) ?? { error: 'no actions' });
+  const ended = ok(scrabble.applyAction?.(seventh, 1, { type: 'endGame' }, first, 0) ?? { error: 'no actions' });
   assert.equal(ended.isGameOver, true);
   assert.equal(ended.currentPlayer, null);
   assert.deepEqual(ended.scores, { 1: -16, 2: -16 });
   assert.deepEqual(ended.endAdjustments, { 1: -16, 2: -16 });
   assert.deepEqual(ended.winners, [1, 2]);
   assert.equal(ended.gameStatus, 'A ended the game. A and B share the win with -16 points!');
-  assert.deepEqual(scrabble.applyAction?.(ended, 2, { type: 'endGame' }, first), {
+  assert.deepEqual(scrabble.applyAction?.(ended, 2, { type: 'endGame' }, first, 0), {
     error: 'The game can end only after 6 scoreless turns in a row'
   });
-  assert.deepEqual(scrabble.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first), {
+  assert.deepEqual(scrabble.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first, 0), {
     error: 'An undo vote is in progress'
   });
-  assert.deepEqual(scrabble.applyAction?.(seventh, 1, { type: 'resign' }, first), { error: 'Unknown action' });
+  assert.deepEqual(scrabble.applyAction?.(seventh, 1, { type: 'resign' }, first, 0), { error: 'Unknown action' });
 
   // A scoring play starts the count again
   const scored = ok(move({ ...game({ 1: 'CATAAAA', 2: 'AAAAAAA' }), scorelessTurns: 7 }, 1, { type: 'play', tiles: CAT }));
@@ -364,7 +365,7 @@ const timed = (minutes: 'off' | 1 | 2 | 3 | 5 = 2): GameState => ({
 
 test('with the timer off there is no deadline', () => {
   const state = scrabble.resumeClock?.(timed('off'), T0) as GameState;
-  assert.equal(state.turnStartedAt, null);
+  assert.equal(state.turnLimitStartedAt, null);
   assert.equal(scrabble.deadline?.(state), null);
   assert.equal(scrabble.deadline?.(scrabble.createGameState('g1')), null);
 });
@@ -389,11 +390,21 @@ test('a timed-out turn counts as scoreless', () => {
 test('each turn gets the full time', () => {
   const started = scrabble.resumeClock?.(timed(), T0) as GameState;
   const next = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 90_000));
-  assert.equal(next.turnStartedAt, T0 + 90_000);
+  assert.equal(next.turnLimitStartedAt, T0 + 90_000);
   assert.equal(scrabble.deadline?.(next), T0 + 90_000 + 2 * MINUTE);
   const late = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 3 * MINUTE));
   assert.equal(late.lastMove?.type === 'pass' && late.lastMove.timedOut, true); // a move that arrives late is a timeout
   const loaded = scrabble.resumeClock?.(next, T0 + 9_999_999) as GameState;
   assert.equal(scrabble.deadline?.(loaded), T0 + 9_999_999 + 2 * MINUTE); // downtime is not charged
   assert.equal(scrabble.deadline?.(scrabble.resetLobby(loaded, first)), null);
+});
+
+test('finalStandings ranks by the highest score', () => {
+  const state: GameState = {
+    ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [1], scores: { 1: 310, 2: 188, 3: 188 }
+  };
+  assert.deepEqual(finalStandings(state), [
+    { seat: 1, place: 1, score: '310 points' },
+    { seat: 2, place: 2, score: '188 points' }, { seat: 3, place: 2, score: '188 points' }
+  ]);
 });

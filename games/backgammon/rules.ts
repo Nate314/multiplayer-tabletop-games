@@ -1,8 +1,9 @@
 // Backgammon rules shared by the browser (legal move hints) and the server (validation).
+import { rankStandings } from '../../shared/standings.ts';
 import { rollDie } from '../../shared/dice.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
-import type { Random } from '../../shared/types.ts';
+import type { Random, Standing } from '../../shared/types.ts';
 import type { GameState, LastMove, PointStack, Position, PublicGameState, Result, Seat, Step } from './types.ts';
 
 export const POINT_COUNT = 24;
@@ -306,4 +307,9 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
     case 'move': return moveChecker(state, seat, input);
     default: return { error: 'Unknown move type' };
   }
+}
+
+// Only the winner has a score, the points the game was worth
+export function finalStandings(state: GameState): Standing[] {
+  return rankStandings(state, () => 0, seat => (state.winners.includes(seat) ? pointsText(state.pointsWon ?? 0) : undefined));
 }

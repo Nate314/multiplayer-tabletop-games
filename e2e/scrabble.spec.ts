@@ -575,11 +575,11 @@ test.describe('Scrabble turn timer', () => {
     const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
     const [alice, bob] = table.pages;
     const dealt = (await table.state<GameState>()).racks;
-    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnStartedAt: Date.now() + 5000 });
+    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnLimitStartedAt: Date.now() + 5000 });
     await expect(alice.locator('.turn-timer')).toHaveText(/^[01]:\d\d$/);
     await placeWord(alice, spell('CAT', 7, 6));
     await expect(freeSlots(alice)).toHaveCount(4);
-    await table.patch({ turnStartedAt: Date.now() - 61_000 });
+    await table.patch({ turnLimitStartedAt: Date.now() - 61_000 });
     await expect(status(bob)).toHaveText('Alice ran out of time');
     await expect(turn(bob)).toHaveText('Your turn');
     await expect(freeSlots(alice)).toHaveCount(7);
@@ -593,7 +593,7 @@ test.describe('Scrabble turn timer', () => {
     await recordTones(alice);
     await recordTones(bob);
     const dealt = (await table.state<GameState>()).racks;
-    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnStartedAt: Date.now() - 50_000 });
+    await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnLimitStartedAt: Date.now() - 50_000 });
     await drag(alice, rackTile(alice, 'C'), square(alice, 7, 7));
     await expect(square(alice, 7, 7).locator('.tile-pending')).toHaveText('C3');
     await expect.poll(async () => (await tones(alice)).filter(tone => tone === 'square:1000').length).toBeGreaterThan(1);
