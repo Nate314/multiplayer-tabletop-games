@@ -54,7 +54,7 @@
   --piece-tray-selected-default: #4ba67d;
 }
 
-/* Firefox and Safari expose the OS accent color; elsewhere the green above stays. color-mix is checked too so hover never stays green */
+/* Browsers that support AccentColor (Firefox, Safari, recent Chrome) show the OS accent as the browser exposes it; older ones keep the green above. color-mix is checked too so hover never stays green */
 @supports (color: AccentColor) and (color: color-mix(in srgb, AccentColor 80%, black)) {
   :root {
     --lobby-accent: AccentColor;
