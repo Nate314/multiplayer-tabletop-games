@@ -521,7 +521,7 @@
   min-width: 0;
 }
 
-/* Phones: the title takes its own row, and Back to games, History, Rules and Settings fit one row under it.
+/* Phones: the title takes its own row with Hide at its end, and Back to games, History, Rules and Settings fit one row under it.
    Share and the theme toggle move into Settings and the GitHub link stays on the landing page only.
    Outside :where(), so no game's header rule can show them again. */
 @media (max-width: 480px) {
@@ -542,8 +542,25 @@
     order: -1;
   }
 
-  :where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
+  /* Outside :where(), so the card games' wider header gap and button padding cannot push the row onto two lines */
+  [data-game].game-root > .game-header {
+    column-gap: 0.375rem;
+  }
+
+  [data-game] .game-header > :is(.back-button, .history-button, .rules-button) {
     padding: 0 0.6rem;
+  }
+
+  /* Hide sits at the end of the title row; the padding balances it so the title stays centered.
+     Outside :where(), so Azul's and Quoridor's own header rules cannot undo it. */
+  [data-game].game-root > .game-header > h1 {
+    flex: 1 0 calc(100% - 4rem);
+    box-sizing: border-box;
+    padding-left: 2.875rem;
+  }
+
+  [data-game].game-root > .game-header > .hide-button {
+    order: -1;
   }
 }
 

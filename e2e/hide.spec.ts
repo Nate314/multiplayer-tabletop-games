@@ -1,5 +1,6 @@
 import { test, expect, tableScreen, watch } from './fixtures.ts';
 import type { Page } from '@playwright/test';
+import { GAMES } from '../games/registry.ts';
 
 const hideButton = (page: Page) => page.locator('.game-header').getByRole('button', { name: 'Hide', exact: true });
 const showButton = (page: Page) => page.locator('.game-header').getByRole('button', { name: 'Show', exact: true });
@@ -65,3 +66,25 @@ test('History still opens while hidden', async ({ seat }) => {
   await alice.getByRole('button', { name: 'History' }).click();
   await expect(alice.getByRole('dialog', { name: 'History' })).toBeVisible();
 });
+
+for (const { info } of GAMES) {
+  test(`${info.name}: Hide sits by the title on a phone and matches Settings`, async ({ seat }) => {
+    const { pages: [alice] } = await seat(info.id, ['Alice', 'Bob', 'Cara', 'Dan'].slice(0, info.minPlayers));
+    const header = alice.locator('.game-header');
+    const hide = header.locator('.hide-button');
+    const settings = header.locator('.settings-button');
+    await expect(hide).toHaveCSS('background-color', await settings.evaluate(element => getComputedStyle(element).backgroundColor));
+    for (const width of [390, 320]) {
+      await alice.setViewportSize({ width, height: 700 });
+      // h1 and Hide share the first row; the four other controls share the second
+      const [title, hideBox] = await Promise.all([header.locator('h1').boundingBox(), hide.boundingBox()]);
+      expect(Math.abs(title!.y + title!.height / 2 - (hideBox!.y + hideBox!.height / 2))).toBeLessThanOrEqual(4);
+      expect(title!.x + title!.width).toBeLessThanOrEqual(hideBox!.x);
+      const controls = header.locator(':scope > :not(h1, .hide-button):visible');
+      await expect(controls).toHaveCount(4);
+      const tops = await controls.evaluateAll(elements => elements.map(element => Math.round(element.getBoundingClientRect().top)));
+      expect(new Set(tops).size).toBe(1);
+      expect(await header.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0); // the header only: Rack-O, Skip-Bo and Dominoes boards are wider than 320 px
+    }
+  });
+}

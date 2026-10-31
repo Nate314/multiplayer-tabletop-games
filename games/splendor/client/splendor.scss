@@ -96,6 +96,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
+  .hide-button,
   .settings-button,
   .theme-toggle {
     width: 2.5rem;
@@ -115,6 +116,7 @@
   .back-button:hover,
   .history-button:hover:enabled,
   .rules-button:hover,
+  .hide-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);

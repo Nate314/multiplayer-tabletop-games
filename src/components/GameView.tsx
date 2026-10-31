@@ -93,7 +93,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
 
   return (
     <WatchingContext value={playerNumber === null}>
-      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-hidden={hidden ? '' : undefined}data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
+      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-hidden={hidden ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
         <header className="game-header">
           <button type="button" className="back-button" onClick={onBack}>Back to games</button>
           <h1>{game.name}</h1>
