@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { expect, joinPassAndPlay, nameOf, newPlayer, test, type Seat } from './fixtures.ts';
+import { expect, joinPassAndPlay, nameOf, newPlayer, openJoinDialog, test, type Seat } from './fixtures.ts';
 
 // Alice is seat 1 and Bob seat 2. Every pause needs the whole table to agree, and the paused screen offers each
 // player their own file
@@ -113,7 +113,74 @@ test('a pass and play phone pauses from Settings straight to the paused screen',
   await device.context().close();
 });
 
-test('a spectator sees the pause but no download', async ({ seat, browser, server }) => {
+type PauseFileJson = { hand: unknown };
+type UnoState = { currentPlayer: number; hands: unknown };
+
+// Pauses Alice and Bob's game, has both download their files and then go back to the games, and loses the room as a
+// server restart would
+async function lostGame(seat: Seat, server: { url: string }) {
+  const table = await started(seat);
+  const [alice, bob] = table.pages;
+  await pauseAll(alice, bob);
+  const before = await table.state<UnoState>();
+  const files: string[] = [];
+  for (const page of [alice, bob]) {
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download my pause file' }).click();
+    files.push(await (await downloading).path());
+  }
+  for (const page of [alice, bob]) await page.getByRole('button', { name: 'Back to games' }).click();
+  const response = await fetch(`${server.url}/api/e2e/room/uno/${table.gameId}`, { method: 'DELETE' });
+  expect(response.ok).toBe(true);
+  return { table, alice, bob, before, files };
+}
+
+async function resumeFrom(page: Page, file: string | { name: string; mimeType: string; buffer: Buffer }): Promise<void> {
+  const choosing = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Resume a game', exact: true }).click();
+  await (await choosing).setFiles(file);
+}
+
+const waitingRoom = (page: Page) => page.locator('.resume-waiting');
+
+test("a lost game resumes from everyone's files", async ({ seat, server }) => {
+  const { table, alice, bob, before, files } = await lostGame(seat, server);
+  await resumeFrom(alice, files[0]);
+  await expect(waitingRoom(alice).getByRole('heading')).toHaveText(`Resuming ${nameOf('uno')} ${table.gameId}`);
+  await expect(waitingRoom(alice).getByText('Alice: file in')).toBeVisible();
+  await expect(waitingRoom(alice).getByText('Bob: waiting')).toBeVisible();
+  await resumeFrom(bob, files[1]);
+  for (const page of [alice, bob]) await expect(page.getByText('Everyone is here')).toBeVisible();
+  await alice.getByRole('button', { name: 'Resume', exact: true }).click();
+  for (const page of [alice, bob]) await expect(page.locator('.game-screen')).toBeVisible();
+  const after = await table.state<UnoState>();
+  expect(after.currentPlayer).toBe(before.currentPlayer);
+  expect(after.hands).toEqual(before.hands);
+});
+
+test('a changed file is named in the waiting room', async ({ seat, server }) => {
+  const { alice, bob, files } = await lostGame(seat, server);
+  await resumeFrom(alice, files[0]);
+  await expect(waitingRoom(alice).getByText('Bob: waiting')).toBeVisible();
+  const changed = { ...JSON.parse(await readFile(files[1], 'utf8')) as PauseFileJson, hand: { edited: true } };
+  await resumeFrom(bob, { name: 'bob.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(changed)) });
+  await expect(bob.getByText("Bob's pause file does not match the others")).toBeVisible();
+  await expect(waitingRoom(alice).getByText("Bob's pause file does not match the others")).toBeVisible();
+  await expect(waitingRoom(alice).getByText('Bob: waiting')).toBeVisible();
+});
+
+test('joining by ID while files are awaited explains what to do', async ({ seat, server }) => {
+  const { table, alice, bob, files } = await lostGame(seat, server);
+  await resumeFrom(alice, files[0]);
+  await expect(waitingRoom(alice).getByText('Bob: waiting')).toBeVisible();
+  await openJoinDialog(bob, 'uno');
+  await bob.getByLabel('Your name').fill('Bob');
+  await bob.getByLabel('Game ID').fill(table.gameId);
+  await bob.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(bob.getByText('This game is waiting for its pause files. Choose Resume a game and upload yours')).toBeVisible();
+});
+
+test('a spectator sees the pause but no download',async ({ seat, browser, server }) => {
   const table = await started(seat);
   const [alice, bob] = table.pages;
   const cara = await newPlayer(browser, server);

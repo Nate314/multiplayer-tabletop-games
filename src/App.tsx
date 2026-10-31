@@ -8,6 +8,7 @@ import JoinDialog from './components/JoinDialog'
 import OpenGames from './components/OpenGames'
 import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
+import ResumeGame from './components/ResumeGame'
 import GitHubLink from './components/GitHubLink'
 import SettingsButton from './components/SettingsButton'
 import ThemeToggle from './components/ThemeToggle'
@@ -27,7 +28,7 @@ function App() {
   const [gameId, setGameId] = useState(link?.gameId ?? initialForm.gameId)
   const [role, setRole] = useState(initialForm.role)
   const [localNames, setLocalNames] = useState(initialForm.localNames ?? ['', ''])
-  const { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin } = useGameConnection(link)
+  const { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin, resume } = useGameConnection(link)
   // So a refresh or Back does not reopen the dialog, and a stale ?game= does not make the service worker think this tab shows that game
   useEffect(() => {
     if (window.location.pathname.startsWith('/join/') || window.location.search) window.history.replaceState(null, '', '/')
@@ -97,6 +98,7 @@ function App() {
             <RejoinButton gameName={sessionGame.name} gameId={session.gameId} onRejoin={rejoin} />
           )}
           <OpenSavedGame games={GAME_INFOS} />
+          <ResumeGame games={GAME_INFOS} onReady={resume} />
           <a className="open-saved-game lobby-stats-link" href="/stats">Stats</a>
         </div>
         <OpenGames

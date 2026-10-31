@@ -270,7 +270,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Back to a game, Open a saved game and Stats span the game list: side by side where they fit, else stacked */
+/* Back to a game, Open a saved game, Resume a game and Stats span the game list: side by side where they fit, else stacked */
 .lobby-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2021,6 +2021,44 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 
 :where([data-game] .paused-screen-waiting) {
   font-weight: 600;
+}
+
+/* Resuming a lost game from pause files (ResumeWaitingRoom): who is in, and the code for everyone else */
+
+:where(.lobby .modal.resume-waiting) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
+:where(.lobby .modal.resume-waiting) h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+:where(.lobby .modal.resume-waiting) :is(p, .lobby-error) {
+  margin: 0;
+}
+
+:where(.lobby .resume-waiting-players) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+:where(.lobby .resume-waiting-qr) {
+  display: block;
+  width: min(180px, 60vw);
+  height: min(180px, 60vw);
+}
+
+:where(.lobby .modal.resume-waiting .primary-button) {
+  min-height: 44px;
+  margin-top: 0;
 }
 
 /* Spectator screen and the hand request a player is asked */

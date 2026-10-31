@@ -270,6 +270,12 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     updateSession(null);
   }, [leave, updateSession]);
 
+  // A game brought back from pause files: its new keys take the seats like any remembered game
+  const resume = useCallback((next: Session) => {
+    updateSession(next);
+    rejoin();
+  }, [rejoin, updateSession]);
+
   const showSeat = useCallback((seat: Seat | null) => gameService.showSeat(seat), []);
 
   // Only seats still in the game, named as the game state names them
@@ -277,5 +283,5 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     ? localSeatNumbers.filter(seat => gameState.activePlayers.includes(seat)).map(seat => ({ seat, name: gameState.playerNames[seat] }))
     : null;
 
-  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin };
+  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin, resume };
 }
