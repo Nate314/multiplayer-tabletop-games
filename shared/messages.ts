@@ -19,6 +19,9 @@ export const MESSAGE_TYPES = {
   VOTE_DISMISS: 'VOTE_DISMISS',
   REQUEST_REMATCH: 'REQUEST_REMATCH',
   VOTE_REMATCH: 'VOTE_REMATCH',
+  REQUEST_PAUSE: 'REQUEST_PAUSE',
+  VOTE_PAUSE: 'VOTE_PAUSE',
+  RESUME_GAME: 'RESUME_GAME',
   LEFT_GAME: 'LEFT_GAME',
   REACT: 'REACT',
   SHOW_SEAT: 'SHOW_SEAT',
@@ -48,6 +51,9 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } }
   | { type: typeof MESSAGE_TYPES.REQUEST_REMATCH }
   | { type: typeof MESSAGE_TYPES.VOTE_REMATCH; payload: { join: boolean } }
+  | { type: typeof MESSAGE_TYPES.REQUEST_PAUSE }
+  | { type: typeof MESSAGE_TYPES.VOTE_PAUSE; payload: { approve: boolean } }
+  | { type: typeof MESSAGE_TYPES.RESUME_GAME }
   | { type: typeof MESSAGE_TYPES.REACT; payload: { target: Seat; emoji: string } }
   // Push and visibility apply to every seat this connection holds; spectators are refused
   | { type: typeof MESSAGE_TYPES.PUSH_SUBSCRIBE; payload: { endpoint: string } }

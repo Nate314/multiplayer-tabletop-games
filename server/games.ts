@@ -8,6 +8,8 @@ import {
   agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules, tableLimit
 } from '../shared/houseRules.ts';
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
+import { castPauseVote, openPauseVote, pauseVotePassed } from '../shared/pause.ts';
+import type { PauseFile } from '../shared/pauseFile.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
@@ -17,6 +19,8 @@ import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
+import { sealRoom } from './pauseSeal.ts';
+import { buildPauseFile, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
@@ -229,7 +233,7 @@ export function createGameManager(
 
   // Every change passes through save, so this starts the timer when play begins simulating and stops it when it ends
   function scheduleSimulation(roomId: string, room: Room): void {
-    if (hooks.manualSimulation || !room.game.simulating?.(room.state)) {
+    if (hooks.manualSimulation || room.state.paused || !room.game.simulating?.(room.state)) {
       clearInterval(room.simTimer);
       room.simTimer = undefined;
       return;
@@ -241,7 +245,7 @@ export function createGameManager(
 
   function runSimulationTick(roomId: string, room: Room): void {
     const { game, state } = room;
-    if (rooms.get(roomId) !== room || !game.simulate || !game.simulating?.(state)) return;
+    if (rooms.get(roomId) !== room || state.paused || !game.simulate || !game.simulating?.(state)) return;
     let next: BaseGameState;
     try {
       next = game.simulate(state);
@@ -282,9 +286,10 @@ export function createGameManager(
   }
 
   // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.
-  // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it
+  // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it. No clock runs while paused
   function clockMayRun(room: Room): boolean {
     const { game, state } = room;
+    if (state.paused) return false;
     return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info));
   }
 
@@ -332,9 +337,9 @@ export function createGameManager(
     }
   }
 
-  // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS
+  // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS; a paused game waits for its players
   function startEmptyTimer(roomId: string, room: Room): void {
-    if (!room.state.started || room.emptyTimer || connectedPlayers(room.state).length > 0) return;
+    if (!room.state.started || room.state.paused || room.emptyTimer || connectedPlayers(room.state).length > 0) return;
     room.emptyTimer = setTimeout(() => {
       if (rooms.get(roomId) === room) deleteRoom(roomId);
     }, EMPTY_ROOM_TIMEOUT_MS);
@@ -464,6 +469,17 @@ export function createGameManager(
     room.emptyTimer = undefined;
   }
 
+  // Pauses once every seat approved: a simulation in flight goes back to its turn start, then the room is sealed under the seats' shares
+  function settlePause(room: Room): void {
+    if (!pauseVotePassed(room.state)) return;
+    const { game } = room;
+    let state = room.state;
+    if (game.simulating?.(state) && game.onUndo) state = game.onUndo(state, random);
+    const { turnStartedAt: _started, turnPausedAt: _paused, ...bare } = state;
+    state = { ...bare, paused: true, pauseVote: null, gameStatus: 'Game paused' };
+    room.state = { ...state, pause: sealRoom(sealedRoomOf({ ...room, state }), state.activePlayers) };
+  }
+
   // Saves the room, first settling an open rematch vote once every seat has answered: with no connected joiner the
   // vote just closes; otherwise the finished game is archived and the connected joiners sit down in a fresh lobby
   function settleRematch(roomId: string, room: Room, step?: StepChange): void {
@@ -530,7 +546,7 @@ export function createGameManager(
     }
   }
 
-  // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
+  // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared; a paused game stays paused.
   // No game hook runs but `resumeClock`: a game's disconnect hook may deal the next round once nobody is waiting,
   // and a clock restarts from now, so the time the server was down is never charged
   function loadRoom(roomId: string, saved: SavedRoom): void {
@@ -539,7 +555,7 @@ export function createGameManager(
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     // Nobody is watching either, so no hand request is still open; downtime is never charged to the turn timer
     let state: BaseGameState = {
-      ...saved.state, undoVote: null, dismissVote: null, rematchVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
+      ...saved.state, undoVote: null, dismissVote: null, rematchVote: null, pauseVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
     };
     if (game.resumeClock) state = game.resumeClock(state, now());
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
@@ -562,6 +578,19 @@ export function createGameManager(
       rooms.delete(roomId);
       writeStore(roomId, target => target.remove(roomId));
     }
+  }
+
+  // Opens or answers the pause vote through `change`, pausing the room once it passes
+  function changePause(roomId: string, seat: Seat, change: (state: BaseGameState) => Result<BaseGameState>): Result<BasePublicState> {
+    const found = findPlayer(roomId, seat);
+    if ('error' in found) return found;
+    const { room } = found;
+    const result = change(room.state);
+    if ('error' in result) return result;
+    room.state = result.state;
+    settlePause(room);
+    save(roomId, room);
+    return { state: view(room, seat) };
   }
 
   // "Table screen", then "Table screen 2" and so on while the name is taken
@@ -757,6 +786,7 @@ export function createGameManager(
       if ('error' in found) return found;
       const { room } = found;
       if (!room.game.applyAction) return { error: 'This game has no actions' };
+      if (room.state.paused) return { error: 'The game is paused' };
 
       const recorded = room.game.recordsAction?.(room.state, seat, action) === true;
       const result = room.game.applyAction(room.state, seat, action, random, now());
@@ -780,6 +810,8 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.paused) return { error: 'The game is paused' };
+      if (state.pauseVote) return { error: 'A pause vote is in progress' };
       if (state.rematchVote) return { error: 'A rematch vote is in progress' };
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
@@ -822,13 +854,14 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.paused) return { error: 'The game is paused' };
       // During a rematch vote any seat that has not answered may be dismissed, connected or not
       const rematch = state.rematchVote;
       const held = rematch
         ? state.activePlayers.find(candidate => candidate === target && candidate !== seat && rematch.votes[candidate] === undefined)
         : state.disconnected.find(candidate => candidate === target);
       if (held === undefined) return { error: rematch ? 'That player already answered' : 'That player is not disconnected' };
-      if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
+      if (state.undoVote || state.dismissVote || state.pauseVote) return { error: 'A vote is already in progress' };
 
       const opened = {
         ...state,
@@ -871,9 +904,10 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.paused) return { error: 'The game is paused' };
       if (!state.isGameOver) return { error: 'The game is not over yet' };
       if (state.rematchVote) return { error: 'A rematch vote is already in progress' };
-      if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
+      if (state.undoVote || state.dismissVote || state.pauseVote) return { error: 'A vote is already in progress' };
 
       room.state = {
         ...state,
@@ -900,6 +934,53 @@ export function createGameManager(
       room.state = { ...state, dismissVote, rematchVote: { ...vote, votes: { ...vote.votes, [seat]: join } } };
       settleRematch(roomId, room);
       return { state: view(room, seat) };
+    },
+
+    requestPause(roomId: string, seat: Seat): Result<BasePublicState> {
+      return changePause(roomId, seat, state => openPauseVote(state, seat));
+    },
+
+    votePause(roomId: string, seat: Seat, approve: unknown): Result<BasePublicState> {
+      return changePause(roomId, seat, state => castPauseVote(state, seat, approve));
+    },
+
+    // Not a move: play picks up on the same turn, with a fresh turn clock, once every seat is back
+    resumeGame(roomId: string, seat: Seat): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { pause: _pause, ...state } = room.state;
+      if (!state.paused) return { error: 'The game is not paused' };
+      if (state.disconnected.length > 0) {
+        return { error: `Waiting for ${state.disconnected.map(missing => state.playerNames[missing]).join(', ')}` };
+      }
+      let next: BaseGameState = { ...state, pauseVote: null, paused: false, turnStartedAt: null };
+      if (room.game.resumeClock) next = room.game.resumeClock(next, now());
+      room.state = { ...next, gameStatus: 'Play resumed' };
+      save(roomId, room);
+      return { state: view(room, seat) };
+    },
+
+    // One seat's pause file, for that seat's key or remembered device only; any other ask is NOT_AVAILABLE
+    pauseFile(gameType: unknown, gameId: unknown, seat: unknown, credential: unknown, now: Date): { file: PauseFile } | { error: string } {
+      const game = findGame(gameType);
+      const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
+      const state = room?.state;
+      if (!room || !state?.paused || !state.pause || typeof credential !== 'string') return { error: NOT_AVAILABLE };
+      if (typeof seat !== 'number' || !state.activePlayers.includes(seat)) return { error: NOT_AVAILABLE };
+      const key = state.seatKeys?.[seat];
+      const device = hashDeviceId(credential);
+      const hash = state.seatDevices?.[seat];
+      const allowed = (key !== undefined && sameSecret(key, credential)) || (!!device && hash !== undefined && sameSecret(hash, device));
+      if (!allowed) return { error: NOT_AVAILABLE };
+      return { file: buildPauseFile(room.game, sealedRoomOf(room), seat, state.pause, now) };
+    },
+
+    // Only for the end-to-end test hooks in e2e.ts
+    removeRoom(roomId: string): boolean {
+      if (!rooms.has(roomId)) return false;
+      deleteRoom(roomId);
+      return true;
     },
 
     // Not a move: only the log on the live state changes, so undo, the move count and the turn are untouched.
