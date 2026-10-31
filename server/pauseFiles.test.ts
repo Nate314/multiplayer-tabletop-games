@@ -6,7 +6,7 @@ import { PAUSE_FILE_FORMAT, parsePauseFile, type PauseFile } from '../shared/pau
 import { handGame } from '../shared/testGame.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, pausePlainParts, sealedRoomOf } from './pauseFiles.ts';
 import { createGameManager } from './games.ts';
-import { openSeal, sealRoom } from './pauseSeal.ts';
+import { openSeal, sealRoom, type SealedRoom } from './pauseSeal.ts';
 import { rememberingKeys } from './testing.ts';
 import type { ViewRoom } from './views.ts';
 
@@ -133,4 +133,39 @@ test('a room that opens but does not rebuild names every seat', () => {
   const seal = sealRoom({ state: null, history: null, timeline: null } as never, [1, 2]);
   const forged = files.map(file => ({ ...file, seal: seal.seal, share: seal.shares[file.seat] }));
   assert.deepEqual(checkPauseFiles(handGame, forged), { error: 'The pause files from Alice and Bob do not match', seats: [1, 2] });
+});
+
+// A stranger's own key over a room of their making, with every plain part rebuilt from it so the files agree
+function selfMade(files: PauseFile[], room: SealedRoom): PauseFile[] {
+  const { seal, shares } = sealRoom(room, [1, 2]);
+  return files.map(file => {
+    let parts: Partial<PauseFile> = {};
+    try {
+      parts = pausePlainParts(handGame, room, file.seat);
+    } catch { /* a room that cannot rebuild keeps the real parts */ }
+    return JSON.parse(JSON.stringify({ ...file, ...parts, seal, share: shares[file.seat] })) as PauseFile;
+  });
+}
+
+const EVERY_SEAT = { error: 'The pause files from Alice and Bob do not match', seats: [1, 2] };
+
+test('a self-made room that is not a game is refused naming every seat', () => {
+  const { files } = pausedFiles(['Alice', 'Bob']);
+  const real = checkPauseFiles(handGame, files);
+  assert.ok('room' in real);
+  const notObjects = [
+    { ...real.room, state: 'text' }, { ...real.room, state: [] },
+    { ...real.room, history: {} }, { ...real.room, timeline: [] },
+    { ...real.room, state: { ...real.room.state, activePlayers: [1, 2, 3] } },
+    { ...real.room, state: { ...real.room.state, playerNames: { 1: 'Alice', 2: 'Eve' } } }
+  ];
+  for (const room of notObjects) assert.deepEqual(checkPauseFiles(handGame, selfMade(files, room as never)), EVERY_SEAT);
+});
+
+test('a self-made room for another game ID is refused naming every seat', () => {
+  const { files } = pausedFiles(['Alice', 'Bob']);
+  const real = checkPauseFiles(handGame, files);
+  assert.ok('room' in real);
+  const room = { ...real.room, state: { ...real.room.state, gameId: 'g2' } };
+  assert.deepEqual(checkPauseFiles(handGame, selfMade(files, room)), EVERY_SEAT);
 });

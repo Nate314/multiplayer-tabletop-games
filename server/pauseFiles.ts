@@ -77,6 +77,20 @@ const sharedPart = (file: PauseFile) => canonicalJson({
   players: file.players, table: file.table, history: file.history, seal: file.seal
 });
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+// Anyone can seal a room under their own key, so the opened room must be this game's, seated as the files say;
+// history and timeline are walked in step, so they are the same length
+function roomFits(room: SealedRoom, { gameId, players }: PauseFile): boolean {
+  if (!isPlainObject(room) || !isPlainObject(room.state) || !Array.isArray(room.history) || !Array.isArray(room.timeline)) return false;
+  const { state } = room;
+  const seats = Object.keys(players).map(Number).sort((a, b) => a - b);
+  return room.history.length === room.timeline.length && state.gameId === gameId &&
+    Array.isArray(state.activePlayers) && canonicalJson(state.activePlayers) === canonicalJson(seats) &&
+    isPlainObject(state.playerNames) && seats.every(seat => state.playerNames[seat] === players[seat]);
+}
+
 // The tamper check on untrusted files, one per seat: plain parts are compared only as canonical JSON, and nothing throws
 export function checkPauseFiles(
   game: GameDefinition<any, BasePublicState>, files: PauseFile[] // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -100,7 +114,7 @@ export function checkPauseFiles(
   assert.deepEqual([...every].sort((a, b) => a - b), Object.keys(players).map(Number).sort((a, b) => a - b));
 
   const room = openSeal(seal, Object.fromEntries(files.map(file => [file.seat, file.share])));
-  if (!room) return mismatch(files, every);
+  if (!room || !roomFits(room, files[0])) return mismatch(files, every);
 
   // the opened room is unchecked JSON that every player agreed on, so rebuilding its parts may throw
   try {

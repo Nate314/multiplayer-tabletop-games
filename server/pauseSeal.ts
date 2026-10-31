@@ -9,7 +9,7 @@ const KEY_BYTES = 32;
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
 // A crafted small payload must not inflate into a huge buffer.
-const MAX_INFLATED_BYTES = 64 * 1024 * 1024;
+const MAX_INFLATED_BYTES = 32 * 1024 * 1024;
 
 const subkey = (key: Buffer, info: string) => Buffer.from(hkdfSync('sha256', key, '', info, KEY_BYTES));
 
