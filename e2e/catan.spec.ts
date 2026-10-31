@@ -750,7 +750,7 @@ test.describe('Catan rules', () => {
     await (await downloading).saveAs(file);
     const visitor = await newPlayer(browser, server);
     await visitor.goto('/');
-    await visitor.locator('input[type="file"]').setInputFiles(file);
+    await visitor.locator('input[type="file"]:not([multiple])').setInputFiles(file);
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved.locator('.hand-panel')).toHaveCount(0);
     await saved.getByRole('button', { name: 'Playback settings' }).click();
