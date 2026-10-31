@@ -83,8 +83,8 @@ flowchart TD
   - Phase 10: phases in any order (off); 2 to 8 players
   - Pictionary: time per turn (90 seconds; 30 seconds, 1, 2 or 3 minutes), word choices (3; 4, 5), draws per player (3; 1, 2, 4, 5)
   - Rack-O: target score (500; 250, 1,000)
-  - Rummikub: Jokers move freely (off), add to melds on your first turn (off)
   - Rook: target score (500; 300, 1,000), teams at 6 players (two of three; three of two), defending teams score (each its own counters; together, offered only for three teams); 4 to 7 players
+  - Rummikub: Jokers move freely (off), add to melds on your first turn (off)
   - Scrabble: turn limit (off; 1, 2, 3 or 5 minutes)
   - Spades: target score (500; 250, 300)
   - Splendor: prestige to win (15; 10, 21)

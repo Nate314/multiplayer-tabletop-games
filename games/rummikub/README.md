@@ -48,3 +48,4 @@ These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Ru
 - **Drawing for the first turn.** Wikipedia says only that the highest number starts. Here a joker counts lowest and tied players draw again
 - **When a joker counts as taken.** A joker counts as taken when, after the play, it stands for a different tile or is no longer with any of the tiles it was with. Wikipedia does not say how to read a group of one number tile and two jokers, which could be a run or a set; here it counts as a run
 - **Leaving.** The rules do not cover a player leaving mid-game. Here their tiles go back into the pool
+- **House rules.** Jokers move freely and Add to melds on your first turn are not in the official rules. Both are off by default.

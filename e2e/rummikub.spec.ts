@@ -686,8 +686,12 @@ test.describe('Rummikub controls', () => {
     await lay(bob, t('red', 10), t('red', 11), t('red', 12));
     await playButton(bob).click();
     await expect(status(alice)).toHaveText('Bob played 3 tiles');
-    expect(await animated('.rk-rack .rk-tile')).toBe(0);
-    expect(await animated('.rk-table .rk-tile')).toBeGreaterThan(0); // the move itself still animates
+    const [rackAnimated, tableAnimated] = await alice.evaluate(() => [
+      document.getAnimations().filter(a => (a.effect as KeyframeEffect | null)?.target?.closest('.rk-rack') && (a.effect as KeyframeEffect).target?.matches('.rk-tile')).length,
+      document.getAnimations().filter(a => (a.effect as KeyframeEffect | null)?.target?.closest('.rk-table') && (a.effect as KeyframeEffect).target?.matches('.rk-tile')).length,
+    ]);
+    expect(rackAnimated).toBe(0);
+    expect(tableAnimated).toBeGreaterThan(0); // the move itself still animates
 
     await settled();
     await drag(alice, rackTile(alice, J1), rackArea(alice).locator('.rk-tile').first());

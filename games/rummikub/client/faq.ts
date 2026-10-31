@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I rearrange the table?',
-    answer: 'After your first meld you may change the table freely during your turn: move tiles between groups, split a group with the thin bar between two of its tiles, or pick up a whole group with its handle and put it at the end of another group to merge them. At the end of the turn every group must be a valid set or run and you must have added at least one tile from your rack. Tiles that were on the table cannot go back to your rack. Click Reset to put the table back as it was.'
+    answer: 'After your first meld you may change the table freely during your turn: move tiles between groups, split a group with the thin bar between two of its tiles, or pick up a whole group with its handle and put it at the end of another group to merge them. At the end of the turn every group must be a valid set or run and you must have added at least one tile from your rack. Tiles that were on the table cannot go back to your rack. Click Reset to go back to your saved arrangement, or to the table as it was if you saved none.'
   },
   {
     question: 'Do other players see my changes?',
