@@ -94,19 +94,19 @@ async function pauseFromSettings(page: Page, width = 390): Promise<void> {
   await expect(dialog).toHaveCount(0);
 }
 
-// Between the phone width and 680px only Pause moves into Settings, under no heading; Share and the theme stay in the header
-test('a narrow tablet pauses from Settings while Share and the theme stay in the header', async ({ seat }) => {
+// Up to 860px the header is compact: every button stays on screen, and Pause, Share and the theme move into Settings
+test('a tablet-width header keeps every button on screen and pauses from Settings', async ({ seat }) => {
   const [alice, bob] = (await started(seat)).pages;
-  // Pause pushed the last buttons off screen here; narrower, the header overflows a little without it (not Pause's doing)
-  await alice.setViewportSize({ width: 680, height: 844 });
-  const rights = await alice.locator('.game-header > *').evaluateAll(items => items.map(item => item.getBoundingClientRect().right));
-  for (const right of rights) expect(right).toBeLessThanOrEqual(680);
+  for (const width of [481, 600, 680, 760, 860]) {
+    await alice.setViewportSize({ width, height: 844 });
+    const rights = await alice.locator('.game-header > *').evaluateAll(items => items.map(item => item.getBoundingClientRect().right));
+    for (const right of rights) expect(right, `header at ${width}px`).toBeLessThanOrEqual(width);
+  }
   await alice.setViewportSize({ width: 600, height: 844 });
-  await expect(alice.locator('.game-header > .theme-toggle')).toBeVisible();
+  await expect(alice.locator('.game-header > .theme-toggle')).toBeHidden();
   await alice.getByRole('button', { name: 'Settings' }).click();
   const dialog = alice.getByRole('dialog', { name: 'Settings' });
-  await expect(dialog.getByRole('heading', { name: 'Share and theme' })).toBeHidden();
-  await expect(dialog.getByText('Share this game')).toBeHidden();
+  await expect(dialog.getByText('Share this game')).toBeVisible();
   await alice.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await pauseFromSettings(alice, 600);
