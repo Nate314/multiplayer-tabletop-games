@@ -1,9 +1,9 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import * as THREE from 'three';
 import { SIMULATION_TICK_MS } from '../../../shared/gameDefinition.ts';
-import { BLOCK, LEVELS } from '../physics.ts';
-import type { Block, Pose, Vec3 } from '../types.ts';
-import { DEFAULT_ORBIT, cameraPosition, orbitBy, zoomBy, type Orbit } from './orbit.ts';
+import { BLOCK, IDENTITY, LEVELS, TURNTABLE } from '../physics.ts';
+import type { Block, Pose, Quat, Vec3 } from '../types.ts';
+import { DEFAULT_ORBIT, cameraPosition, orbitBy, spinSpeed, tiltBy, zoomBy, type Orbit } from './orbit.ts';
 import { throttleDrag } from './pullInput.ts';
 
 type Interactive = {
@@ -11,19 +11,26 @@ type Interactive = {
   onGrab(block: number, anchor: Vec3): void;
   onDrag(target: Vec3): void;
   onRelease(): void;
+  onTurn(speed: number | null): void;
 };
 
 // The preview draws its frames through this, without a React render each frame
-export type TowerHandle = { draw(blocks: Block[]): void };
+export type TowerHandle = { draw(blocks: Block[], turntable?: Quat): void; camera(): Orbit; setCamera(orbit: Orbit): void };
 
-type TowerViewProps = { blocks: Block[]; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive; ref?: Ref<TowerHandle> };
-type Drawn = Pick<TowerViewProps, 'blocks' | 'highlight' | 'ghost'>;
+// turning: dragging empty space turns the turntable instead of swinging the camera round
+type TowerViewProps = {
+  blocks: Block[]; turntable?: Quat; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive; turning?: boolean; ref?: Ref<TowerHandle>;
+};
+type Drawn = Required<Pick<TowerViewProps, 'blocks' | 'turntable' | 'highlight' | 'ghost'>>;
 
 const BLOCK_COUNT = LEVELS * 3;
 const LOOK_Y = BLOCK.height * LEVELS / 2;
 const HALF: Vec3 = [BLOCK.length / 2, BLOCK.height / 2, BLOCK.width / 2];
 const WHEEL_ZOOM = 0.001;
 const GHOST_OPACITY = 0.35;
+const MARK = { width: 0.25, height: 0.04, tick: 1, front: 2 };
+// The rim ticks sit between the front and the sides, so the front mark stands alone
+const TICK_ANGLES = [1, 3, 5, 7].map(n => n * Math.PI / 4);
 
 // Colors come from the game's CSS so dark mode recolors the tower; the fallbacks keep it drawable without the stylesheet
 function themeColors(canvas: HTMLCanvasElement) {
@@ -34,6 +41,8 @@ function themeColors(canvas: HTMLCanvasElement) {
     highlight: read('--jenga-highlight', '#f2a33a'),
     sky: read('--jenga-light', '#ffffff'),
     ground: read('--jenga-shadow', '#6b5a48'),
+    turntable: read('--jenga-turntable', '#6f5640'),
+    mark: read('--jenga-mark', '#eadbc4'),
   };
 }
 
@@ -45,16 +54,28 @@ const place = (object: THREE.Object3D, pose: Pose) => {
   object.quaternion.set(...pose.q);
 };
 
-export default function TowerView({ blocks, highlight = null, ghost = null, interactive, ref }: TowerViewProps) {
+// A mark lying on the turntable's top, running in from the rim along the direction `angle` about +Y from the front
+function rimMark(geometry: THREE.BoxGeometry, material: THREE.Material, length: number, angle: number) {
+  const mark = new THREE.Mesh(geometry, material);
+  const r = TURNTABLE.radius - length / 2;
+  mark.position.set(r * Math.sin(angle), MARK.height / 2, r * Math.cos(angle));
+  mark.rotation.y = angle;
+  return mark;
+}
+
+export default function TowerView({ blocks, turntable = IDENTITY, highlight = null, ghost = null, interactive, turning = false, ref }: TowerViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const paintRef = useRef<(() => void) | null>(null);
-  const drawnRef = useRef<Drawn>({ blocks, highlight, ghost });
+  const drawnRef = useRef<Drawn>({ blocks, turntable, highlight, ghost });
   const interactiveRef = useRef(interactive);
+  const turningRef = useRef(turning);
+  const orbitRef = useRef<Orbit>(DEFAULT_ORBIT);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     interactiveRef.current = interactive;
-  }, [interactive]);
+    turningRef.current = turning;
+  }, [interactive, turning]);
 
   useEffect(() => {
     // A fresh canvas per mount: StrictMode remounts, and a canvas whose context was force-lost cannot get a new one
@@ -84,9 +105,21 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     const ghostMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ transparent: true, opacity: GHOST_OPACITY, depthWrite: false }));
     scene.add(...meshes, ghostMesh);
 
-    let orbit: Orbit = DEFAULT_ORBIT;
+    // The disc, its top at y = 0, and its rim marks turn together as one group
+    const discGeometry = new THREE.CylinderGeometry(TURNTABLE.radius, TURNTABLE.radius, TURNTABLE.height, 64);
+    const tickGeometry = new THREE.BoxGeometry(MARK.width, MARK.height, MARK.tick);
+    const frontGeometry = new THREE.BoxGeometry(MARK.width, MARK.height, MARK.front);
+    const discMaterial = new THREE.MeshStandardMaterial({ roughness: 0.7 });
+    const markMaterial = new THREE.MeshStandardMaterial({ roughness: 0.7 });
+    const frontMaterial = new THREE.MeshStandardMaterial({ roughness: 0.7 });
+    const disc = new THREE.Mesh(discGeometry, discMaterial);
+    disc.position.y = -TURNTABLE.height / 2;
+    const table = new THREE.Group();
+    table.add(disc, ...TICK_ANGLES.map(angle => rimMark(tickGeometry, markMaterial, MARK.tick, angle)), rimMark(frontGeometry, frontMaterial, MARK.front, 0));
+    scene.add(table);
+
     const render = () => {
-      camera.position.set(...cameraPosition(orbit, LOOK_Y));
+      camera.position.set(...cameraPosition(orbitRef.current, LOOK_Y));
       camera.lookAt(0, LOOK_Y, 0);
       renderer.render(scene, camera);
     };
@@ -101,9 +134,13 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     };
 
     const paint = () => {
-      const { blocks, highlight, ghost } = drawnRef.current;
+      const { blocks, turntable, highlight, ghost } = drawnRef.current;
       hemisphere.color.copy(colors.sky);
       hemisphere.groundColor.copy(colors.ground);
+      table.quaternion.set(...turntable);
+      discMaterial.color.copy(colors.turntable);
+      markMaterial.color.copy(colors.mark);
+      frontMaterial.color.copy(colors.highlight);
       const shown = new Map(blocks.map(block => [block.id, block]));
       meshes.forEach((mesh, id) => {
         const block = shown.get(id);
@@ -148,9 +185,11 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
       raycaster.setFromCamera(pointer, camera);
     };
 
-    // A press on a block that may be pulled grabs it; any other press orbits, and two pointers pinch to zoom
+    // A press on a block that may be pulled grabs it; any other press orbits (or turns the turntable), and two pointers pinch to zoom
     const pointers = new Map<number, { x: number; y: number }>();
     let pulling: { pointer: number; plane: THREE.Plane; lastSent: number; pending: Vec3 | null; timer: number | null } | null = null;
+    // dx is dragged since `since`; sent is the last speed sent, null before the first
+    let spin: { pointer: number; dx: number; since: number; lastSent: number; sent: number | null; timer: number | null } | null = null;
     const spread = () => {
       const [a, b] = [...pointers.values()];
       return Math.hypot(a.x - b.x, a.y - b.y);
@@ -176,6 +215,44 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
       interactiveRef.current?.onRelease();
     };
 
+    const sendSpin = (now: number) => {
+      if (!spin) return;
+      const speed = spinSpeed(spin.dx, now - spin.since);
+      spin.dx = 0;
+      spin.since = now;
+      spin.lastSent = now;
+      // A press that has not moved sends nothing, since any speed claims the turn
+      if (speed !== spin.sent && (spin.sent !== null || speed !== 0)) {
+        spin.sent = speed;
+        interactiveRef.current?.onTurn(speed);
+      }
+      // A finger held still sends no moves, so one more window brings the speed down to 0
+      if (spin.sent) spin.timer ??= window.setTimeout(flushSpin, SIMULATION_TICK_MS);
+    };
+    const flushSpin = () => {
+      if (!spin) return;
+      spin.timer = null;
+      sendSpin(performance.now());
+    };
+    const endSpin = () => {
+      if (!spin) return;
+      if (spin.timer !== null) clearTimeout(spin.timer);
+      if (spin.sent !== null) interactiveRef.current?.onTurn(null);
+      spin = null;
+    };
+    // Throttled like drags, the last speed skipped still going out once the window ends
+    const spinBy = (dx: number, now: number) => {
+      if (!spin) return;
+      spin.dx += dx;
+      if (!throttleDrag(spin.lastSent, now)) {
+        spin.timer ??= window.setTimeout(flushSpin, SIMULATION_TICK_MS - (now - spin.lastSent));
+        return;
+      }
+      if (spin.timer !== null) clearTimeout(spin.timer);
+      spin.timer = null;
+      sendSpin(now);
+    };
+
     const onDown = (event: PointerEvent) => {
       if (pulling || (event.pointerType === 'mouse' && event.button !== 0)) return;
       castFrom(event);
@@ -192,6 +269,12 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
         return;
       }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      // A second finger pinches instead, letting go of the turntable
+      if (pointers.size === 1 && turningRef.current) {
+        spin = { pointer: event.pointerId, dx: 0, since: event.timeStamp, lastSent: -Infinity, sent: null, timer: null };
+      } else {
+        endSpin();
+      }
     };
 
     const onMove = (event: PointerEvent) => {
@@ -211,22 +294,27 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
         const before = spread();
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
         const after = spread();
-        if (before > 0 && after > 0) orbit = zoomBy(orbit, before / after);
+        if (before > 0 && after > 0) orbitRef.current = zoomBy(orbitRef.current, before / after);
+      } else if (spin?.pointer === event.pointerId) {
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        orbitRef.current = tiltBy(orbitRef.current, event.clientY - last.y);
+        spinBy(event.clientX - last.x, event.timeStamp);
       } else {
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        orbit = orbitBy(orbit, event.clientX - last.x, event.clientY - last.y);
+        orbitRef.current = orbitBy(orbitRef.current, event.clientX - last.x, event.clientY - last.y);
       }
       render();
     };
 
     const onUp = (event: PointerEvent) => {
       if (pulling?.pointer === event.pointerId) endPull();
+      if (spin?.pointer === event.pointerId) endSpin();
       pointers.delete(event.pointerId);
     };
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      orbit = zoomBy(orbit, Math.exp(event.deltaY * WHEEL_ZOOM));
+      orbitRef.current = zoomBy(orbitRef.current, Math.exp(event.deltaY * WHEEL_ZOOM));
       render();
     };
 
@@ -240,13 +328,14 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
     canvas.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
-      // Unmounting mid-drag must not leave the server holding the grab
+      // Unmounting mid-drag must not leave the server holding the grab or driving the turntable
       endPull();
+      endSpin();
       dark.removeEventListener('change', recolor);
       theme.disconnect();
       observer.disconnect();
-      geometry.dispose();
-      for (const mesh of [...meshes, ghostMesh]) mesh.material.dispose();
+      for (const shape of [geometry, discGeometry, tickGeometry, frontGeometry]) shape.dispose();
+      for (const material of [...meshes.map(mesh => mesh.material), ghostMesh.material, discMaterial, markMaterial, frontMaterial]) material.dispose();
       renderer.dispose();
       // History mounts one view per step, and browsers cap live WebGL contexts
       renderer.forceContextLoss();
@@ -256,13 +345,18 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
   }, []);
 
   useEffect(() => {
-    drawnRef.current = { blocks, highlight, ghost };
+    drawnRef.current = { blocks, turntable, highlight, ghost };
     paintRef.current?.();
-  }, [blocks, highlight, ghost]);
+  }, [blocks, turntable, highlight, ghost]);
 
   useImperativeHandle(ref, () => ({
-    draw(blocks: Block[]) {
-      drawnRef.current = { ...drawnRef.current, blocks };
+    draw(blocks: Block[], turntable?: Quat) {
+      drawnRef.current = { ...drawnRef.current, blocks, turntable: turntable ?? drawnRef.current.turntable };
+      paintRef.current?.();
+    },
+    camera: () => orbitRef.current,
+    setCamera(orbit: Orbit) {
+      orbitRef.current = orbit;
       paintRef.current?.();
     }
   }), []);

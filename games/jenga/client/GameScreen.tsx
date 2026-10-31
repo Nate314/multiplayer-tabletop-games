@@ -3,18 +3,23 @@ import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import TowerView, { type TowerHandle } from './TowerView';
 import { usePreview } from './usePreview.ts';
-import { across, keySteps, keyboardTarget, nextSelection } from './pullInput.ts';
+import { KEY_SPIN, across, keySteps, keyboardTarget, nextSelection } from './pullInput.ts';
+import { ownsTurn, turnEndViews, turnStartView, viewTurntable, type SavedViews } from './camera.ts';
 import { BLOCK, anchorWorld } from '../physics.ts';
 import { canPull, openSlots } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
-import type { Block, Grab, PublicGameState, Seat, Vec3 } from '../types.ts';
+import type { Block, Grab, PublicGameState, Quat, Seat, Vec3 } from '../types.ts';
 
 const SLOT_NAMES = ['left', 'middle', 'right'] as const;
 // The keyboard holds a block by its end, so pulling moves it straight out along its length
 const KEY_ANCHOR: Vec3 = [BLOCK.length / 2, 0, 0];
 
-const slotName = (block: Block) => SLOT_NAMES[Math.max(0, Math.min(2, Math.round(across(block) / BLOCK.width) + 1))];
-const blockName = (block: Block) => `Level ${block.level + 1}, ${slotName(block)} block`;
+const slotName = (block: Block, table: Quat) => SLOT_NAMES[Math.max(0, Math.min(2, Math.round(across(block, table) / BLOCK.width) + 1))];
+const blockName = (block: Block, table: Quat) => `Level ${block.level + 1}, ${slotName(block, table)} block`;
+const turnKey = (key: string) => key === 'q' || key === 'Q' ? -KEY_SPIN : key === 'e' || key === 'E' ? KEY_SPIN : null;
+
+// Each seat's view by game, outside the component: pass and play remounts the screen for every seat
+const savedViews = new Map<string, SavedViews>();
 
 function statusLine(state: PublicGameState, me: Seat): string {
   const { loser, isGameOver, activePlayers, currentPlayer, playerNames, phase } = state;
@@ -32,17 +37,33 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote && !toppled;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
   const pulling = isMyTurn && phase === 'pull';
+  // Votes do not change it, so a vote never snaps the camera or hands the drag back to the orbit
+  const owns = ownsTurn(gameState, playerNumber);
+  const turntable = useMemo(() => viewTurntable(gameState.turntable), [gameState.turntable]);
   const [localGrab, setLocalGrab] = useState<Grab | null>(null);
+  const [localDrive, setLocalDrive] = useState<number | null>(null);
+  const keyTurning = useRef(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [steps, setSteps] = useState(0);
   const tower = useRef<TowerHandle>(null);
-  const draw = useCallback((shown: Block[]) => tower.current?.draw(shown), []);
-  usePreview(gameState, localGrab, draw);
+  const draw = useCallback((shown: Block[], table: Quat) => tower.current?.draw(shown, table), []);
+  usePreview(gameState, localGrab, owns ? localDrive : null, draw);
   // Pointer callbacks fire between renders, so they read the newest state
-  const latest = useRef({ gameState, pulling });
+  const latest = useRef({ gameState, pulling, isMyTurn, owns, table: turntable.q });
   useEffect(() => {
-    latest.current = { gameState, pulling };
-  }, [gameState, pulling]);
+    latest.current = { gameState, pulling, isMyTurn, owns, table: turntable.q };
+  }, [gameState, pulling, isMyTurn, owns, turntable]);
+
+  // A turn starts from this seat's last view, kept against the turntable, and its end saves the view for next time
+  const { gameId } = gameState;
+  useEffect(() => {
+    const view = tower.current;
+    if (!owns || !view) return;
+    view.setCamera(turnStartView(savedViews.get(gameId) ?? {}, playerNumber, latest.current.table));
+    return () => {
+      savedViews.set(gameId, turnEndViews(savedViews.get(gameId) ?? {}, playerNumber, view.camera(), latest.current.table));
+    };
+  }, [owns, playerNumber, gameId]);
 
   const selectedBlock = blocks.find(b => b.id === selected && canPull(gameState, b.id));
   const holding = pulling && selectedBlock !== undefined && gameState.grab?.block === selectedBlock.id;
@@ -66,12 +87,31 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     onRelease() {
       setLocalGrab(null);
       if (steerable()) gameService.sendAction({ type: 'release' });
+    },
+    // Letting go stays allowed during a vote, like a release; a speed needs the turn itself
+    onTurn(speed: number | null) {
+      if (speed !== null && !latest.current.isMyTurn) return;
+      setLocalDrive(speed);
+      if (speed !== null || latest.current.owns) gameService.sendAction({ type: 'turn', speed });
     }
   }), []);
 
+  const stopKeyTurn = () => {
+    if (!keyTurning.current) return;
+    keyTurning.current = false;
+    interactive.onTurn(null);
+  };
+
   const onKeyDown = (event: KeyboardEvent) => {
-    if (!pulling) return;
     const { key } = event;
+    const spin = turnKey(key);
+    if (spin !== null) {
+      if (event.repeat || !isMyTurn) return;
+      keyTurning.current = true;
+      interactive.onTurn(spin);
+      return;
+    }
+    if (!pulling) return;
     if (holding && (key === 'ArrowDown' || key === 'ArrowUp')) {
       const next = keySteps(steps, key === 'ArrowDown' ? 1 : -1);
       setSteps(next);
@@ -79,7 +119,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     } else if (holding && key === 'Escape') {
       gameService.sendAction({ type: 'release' });
     } else if (!holding && key.startsWith('Arrow')) {
-      setSelected(nextSelection(blocks, selected, key));
+      setSelected(nextSelection(blocks, selected, key, turntable.q));
     } else if (!holding && (key === 'Enter' || key === ' ') && selectedBlock) {
       setSteps(0);
       gameService.sendAction({ type: 'grab', block: selectedBlock.id, anchor: KEY_ANCHOR });
@@ -90,21 +130,24 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   };
 
   const selection = !pulling ? ''
-    : holding ? `${blockName(selectedBlock)}, held. Down arrow pulls it out, Up arrow pushes it back, Escape lets go`
-      : selectedBlock ? `${blockName(selectedBlock)}. Enter grabs it` : 'Arrow keys choose a block';
-  const open = openSlots(blocks);
+    : holding ? `${blockName(selectedBlock, turntable.q)}, held. Down arrow pulls it out, Up arrow pushes it back, Escape lets go`
+      : selectedBlock ? `${blockName(selectedBlock, turntable.q)}. Enter grabs it` : 'Arrow keys choose a block';
+  const open = openSlots(blocks, turntable.q);
 
   return (
     <>
       <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-layout">
         <div className="board-area">
-          <div className="jenga-controls hand-only-board" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}>
+          <div className="jenga-controls hand-only-board" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}
+            onKeyUp={(event) => turnKey(event.key) !== null && stopKeyTurn()} onBlur={stopKeyTurn}>
             <TowerView
               ref={tower}
               blocks={blocks}
+              turntable={turntable.q}
               highlight={gameState.grab?.block ?? localGrab?.block ?? (pulling ? selected : null)}
               interactive={interactive}
+              turning={owns}
             />
             <div className="jenga-selection" aria-live="polite">{selection}</div>
           </div>
@@ -115,7 +158,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <div className={error ? 'game-status game-status-error' : 'game-status'}>{error || gameStatus}</div>
           )}
           <div className="jenga-status">{statusLine(gameState, playerNumber)}</div>
-          {pulling && <div className="hint">Drag a block out with the mouse or a finger; drag empty space to turn the tower</div>}
+          {pulling && <div className="hint">Drag a block out with the mouse or a finger; drag empty space left or right to turn the turntable, or up and down to tilt the view. Q and E turn it too</div>}
           {isMyTurn && phase === 'place' && (
             <div className="jenga-place">
               {sim && <div className="hint">Wait for the tower to settle</div>}

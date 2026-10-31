@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_ORBIT, cameraPosition, orbitBy, zoomBy } from './orbit.ts';
+import { DEFAULT_ORBIT, cameraPosition, orbitBy, spinSpeed, tiltBy, zoomBy } from './orbit.ts';
+import { MAX_SPIN } from '../physics.ts';
 
 const degrees = (radians: number) => radians * 180 / Math.PI;
 
@@ -13,6 +14,22 @@ test('dragging right turns the camera and pitch stays between 5 and 85 degrees',
   assert.ok(Math.abs(degrees(orbitBy(DEFAULT_ORBIT, 0, -100000).pitch) - 5) < 1e-9);
   const tilted = orbitBy(DEFAULT_ORBIT, 0, 20);
   assert.ok(tilted.pitch > DEFAULT_ORBIT.pitch && degrees(tilted.pitch) < 85);
+});
+
+test('tilting changes only the pitch, within 5 to 85 degrees', () => {
+  const tilted = tiltBy(DEFAULT_ORBIT, 20);
+  assert.ok(tilted.pitch > DEFAULT_ORBIT.pitch && degrees(tilted.pitch) < 85);
+  assert.equal(tilted.yaw, DEFAULT_ORBIT.yaw);
+  assert.equal(tilted.distance, DEFAULT_ORBIT.distance);
+  assert.ok(Math.abs(degrees(tiltBy(DEFAULT_ORBIT, 100000).pitch) - 85) < 1e-9);
+  assert.ok(Math.abs(degrees(tiltBy(DEFAULT_ORBIT, -100000).pitch) - 5) < 1e-9);
+});
+
+test('a drag right spins the turntable right, capped at MAX_SPIN', () => {
+  assert.ok(Math.abs(spinSpeed(10, 50) - 1.6) < 1e-9);
+  assert.ok(Math.abs(spinSpeed(-10, 50) + 1.6) < 1e-9);
+  assert.equal(spinSpeed(1000, 50), MAX_SPIN);
+  assert.equal(spinSpeed(10, 0), 0);
 });
 
 test('zoom is clamped between 25 and 120', () => {

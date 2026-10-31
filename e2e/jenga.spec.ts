@@ -38,6 +38,21 @@ async function pressAndTick(table: Table, page: Page, key: string, times: number
   }
 }
 
+// The turntable angle q[1] of every state in a socket frame
+function turntableYs(frame: string): number[] {
+  const found: number[] = [];
+  const walk = (value: unknown) => {
+    if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === 'object') {
+      const { turntable } = value as { turntable?: { q?: number[] } };
+      if (turntable?.q) found.push(turntable.q[1]);
+      Object.values(value).forEach(walk);
+    }
+  };
+  walk(JSON.parse(frame));
+  return found;
+}
+
 async function settle(table: Table) {
   for (let round = 0; round < 20 && (await state(table)).sim !== null; round++) await table.simulate(20);
   expect((await state(table)).sim).toBeNull();
@@ -114,6 +129,33 @@ test.describe('Jenga rules', () => {
     await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
     expect(frames.filter(frame => frame.includes('"blocks"')).length).toBeGreaterThan(10);
     expect(frames.filter(frame => frame.includes('grip'))).toEqual([]);
+  });
+
+  test('Q and E turn the turntable on your turn and Bob sees it turn', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    const frames: string[] = [];
+    const cdp = await bob.context().newCDPSession(bob);
+    await cdp.send('Network.enable');
+    cdp.on('Network.webSocketFrameReceived', event => frames.push(event.response.payloadData));
+    await tower(alice).focus();
+    await alice.keyboard.down('e');
+    await expect.poll(async () => (await state(table)).turntable?.drive).toBe(1);
+    await table.simulate(20);
+    await alice.keyboard.up('e');
+    await expect.poll(async () => (await state(table)).turntable?.drive).toBeNull();
+    await settle(table);
+    const turned = await state(table);
+    expect(turned.turntable!.q[1]).toBeGreaterThan(0.05);
+    expect(turned.turntable!.drive).toBeNull();
+    await expect.poll(() => frames.some(frame => turntableYs(frame).some(y => y > 0.05))).toBe(true);
+    // Alice is still to move, so Bob's E does nothing
+    await tower(bob).focus();
+    await bob.keyboard.down('e');
+    await bob.waitForTimeout(200);
+    const after = await state(table);
+    expect(after.turntable!.drive).toBeNull();
+    expect(after.turntable!.q).toEqual(turned.turntable!.q);
+    await bob.keyboard.up('e');
   });
 
   test('a block can be slid back and another chosen', async ({ seat }) => {
