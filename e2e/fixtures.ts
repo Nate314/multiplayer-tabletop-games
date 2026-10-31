@@ -307,3 +307,18 @@ export async function recordTones(page: Page): Promise<void> {
 }
 
 export const tones = (page: Page) => page.evaluate(() => (window as unknown as { tones: string[] }).tones.slice());
+
+// Records, for each element matching `piece` added directly under `parent` from now on, whether it has a drawn face
+export async function recordGhosts(page: Page, parent: string, piece: string): Promise<void> {
+  await page.evaluate(([parentSelector, pieceSelector]) => {
+    const seen: boolean[] = [];
+    (window as unknown as { ghosts: boolean[] }).ghosts = seen;
+    new MutationObserver(records => {
+      for (const node of records.flatMap(record => [...record.addedNodes])) {
+        if (node instanceof Element && node.matches(pieceSelector)) seen.push(node.querySelector('.piece-art svg') !== null);
+      }
+    }).observe(document.querySelector(parentSelector)!, { childList: true });
+  }, [parent, piece]);
+}
+
+export const ghostsSeen = (page: Page) => page.evaluate(() => (window as unknown as { ghosts: boolean[] }).ghosts.slice());
