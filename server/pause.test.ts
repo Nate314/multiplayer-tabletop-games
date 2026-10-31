@@ -5,10 +5,11 @@ import { openGameStore, type GameStore } from './store.ts';
 import { rememberingKeys } from './testing.ts';
 import { openSeal } from './pauseSeal.ts';
 import { sealedRoomOf } from './pauseFiles.ts';
-import { handGame, testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
+import { hashDeviceId } from './devices.ts';
+import { handGame, testGame, type HandPublicState, type TestPublicState, type TestState } from '../shared/testGame.ts';
 import { SIMULATION_TICK_MS, type GameDefinition } from '../shared/gameDefinition.ts';
 import { asRecord } from '../shared/messages.ts';
-import type { PauseFile } from '../shared/pauseFile.ts';
+import type { PauseFile, ResumeStatus, ResumeUpload } from '../shared/pauseFile.ts';
 import type { BaseGameState, Random, Result } from '../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
@@ -220,4 +221,209 @@ test('a disconnect while paused leaves the game alone', () => {
   assert.ok(opened);
   const room = sealedRoomOf({ game: handGame, state: { ...live, disconnected: [] }, history: [], timeline: [] });
   assert.deepEqual(opened.state, room.state);
+});
+
+const BOB_DEVICE = 'device-bob-0123456789';
+const MISMATCH = "Bob's pause file does not match the others";
+const ANOTHER_GAME = 'Another game with this ID is on this server';
+const WAITING = 'This game is waiting for its pause files. Choose Resume a game and upload yours';
+
+function pauseFiles(): { original: Manager; alice: PauseFile; bob: PauseFile } {
+  const original = paused(started());
+  return { original, alice: fileOf(original, 1, keyOf(original, 1)), bob: fileOf(original, 2, keyOf(original, 2)) };
+}
+
+// A ResumeUpload carries `error: null`, so a refusal is told apart by its missing key
+function uploaded(result: ResumeUpload | { error: string }): ResumeUpload {
+  if (!('seatKey' in result)) assert.fail(result.error);
+  return result;
+}
+
+function statusOf(manager: Manager, credential: unknown): ResumeStatus {
+  const result = manager.resumeStatus('test', 'g1', credential);
+  if (!('players' in result)) assert.fail(result.error);
+  return result;
+}
+
+function rejoined(manager: Manager, name: string, seatKey: string): void {
+  const result = manager.join('test', 'g1', name, true, seatKey);
+  if ('error' in result) assert.fail(result.error);
+}
+
+// A new manager given both files, with both players back and play resumed
+function resumedFromFiles(store?: GameStore) {
+  const files = pauseFiles();
+  const { manager } = managerFor(handGame, store);
+  const alice = uploaded(manager.uploadPauseFile(files.alice, DEVICE)).seatKey;
+  const bob = uploaded(manager.uploadPauseFile(files.bob, BOB_DEVICE)).seatKey;
+  rejoined(manager, 'Alice', alice);
+  rejoined(manager, 'Bob', bob);
+  ok(manager.resumeGame(ROOM, 1));
+  return { ...files, manager, alice, bob };
+}
+
+test('files resume a lost game in the same seats on the same turn', () => {
+  const { original, alice, bob } = pauseFiles();
+  const { manager } = managerFor();
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.equal(first.ready, false);
+  assert.equal(first.seat, 1);
+  assert.equal(first.playerName, 'Alice');
+  assert.deepEqual(first.players, [{ seat: 1, name: 'Alice', ready: true }, { seat: 2, name: 'Bob', ready: false }]);
+  assert.deepEqual(statusOf(manager, first.seatKey).players, first.players);
+
+  const second = uploaded(manager.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(second.ready, true);
+  assert.equal(second.seat, 2);
+  assert.notEqual(second.seatKey, first.seatKey);
+  assert.ok(!JSON.stringify(second).includes(first.seatKey));
+  assert.equal(manager.rawState(ROOM)?.paused, true);
+  assert.deepEqual(manager.rawState(ROOM)?.disconnected, [1, 2]);
+  assert.equal(statusOf(manager, first.seatKey).ready, true);
+
+  rejoined(manager, 'Alice', first.seatKey);
+  rejoined(manager, 'Bob', second.seatKey);
+  const state = ok(manager.resumeGame(ROOM, 1));
+  assert.equal(state.currentPlayer, original.rawState(ROOM)?.currentPlayer);
+  for (const seat of [1, 2]) {
+    assert.equal((manager.getState(ROOM, seat) as HandPublicState).hand, (original.getState(ROOM, seat) as HandPublicState).hand);
+  }
+  assert.deepEqual(manager.history('test', 'g1', first.seatKey), original.history('test', 'g1', keyOf(original, 1)));
+  assert.equal(manager.rawState(ROOM)?.pause, undefined);
+});
+
+test('the uploader\'s device takes the seat', () => {
+  const { manager } = resumedFromFiles();
+  assert.equal(manager.rawState(ROOM)?.seatDevices?.[1], hashDeviceId(DEVICE));
+  assert.equal(manager.rawState(ROOM)?.seatDevices?.[2], hashDeviceId(BOB_DEVICE));
+});
+
+test('undo works after a resume from files', () => {
+  const { manager, alice, bob } = resumedFromFiles();
+  ok(manager.move(ROOM, 2, tick));
+  for (const moveCount of [1, 0]) { // the second undo reaches the step from before the pause
+    ok(manager.requestUndo(ROOM, 1));
+    assert.equal(ok(manager.voteUndo(ROOM, 2, true)).moveCount, moveCount);
+  }
+  manager.disconnect(ROOM, 1);
+  manager.disconnect(ROOM, 2);
+  rejoined(manager, 'Alice', alice);
+  rejoined(manager, 'Bob', bob);
+});
+
+test('a game resumed from files survives a restart', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const store = openGameStore(':memory:');
+  const { manager, original, alice } = resumedFromFiles(store);
+  const steps = manager.history('test', 'g1', alice);
+  assert.deepEqual(steps, original.history('test', 'g1', keyOf(original, 1)));
+  const { manager: back } = managerFor(handGame, store);
+  assert.deepEqual(back.history('test', 'g1', alice), steps);
+  rejoined(back, 'Alice', alice);
+});
+
+test('a tampered file is refused and can be replaced', () => {
+  const { alice, bob } = pauseFiles();
+  const { manager } = managerFor();
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.deepEqual(manager.uploadPauseFile({ ...bob, hand: { hand: 'card1' } }, BOB_DEVICE), { error: MISMATCH });
+  const status = statusOf(manager, first.seatKey);
+  assert.equal(status.error, MISMATCH);
+  assert.equal(status.ready, false);
+  assert.deepEqual(status.players.map(player => player.ready), [true, false]);
+  assert.equal(manager.rawState(ROOM), undefined);
+
+  const second = uploaded(manager.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(second.ready, true);
+  assert.equal(second.error, null);
+});
+
+test('a file goes to its paused game on the server', () => {
+  const { original, bob } = pauseFiles();
+  assert.deepEqual(original.uploadPauseFile(bob, BOB_DEVICE), { error: 'Bob is already in this game' });
+  original.disconnect(ROOM, 2);
+  const wrongShare = { ...bob, share: original.rawState(ROOM)!.pause!.shares[1] };
+  assert.deepEqual(original.uploadPauseFile(wrongShare, BOB_DEVICE), { error: MISMATCH });
+
+  const oldKey = keyOf(original, 2);
+  const upload = uploaded(original.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(upload.ready, true);
+  assert.equal(upload.seat, 2);
+  assert.notEqual(upload.seatKey, oldKey);
+  assert.deepEqual(upload.players.map(player => player.ready), [true, true]);
+  assert.equal(original.rawState(ROOM)?.seatDevices?.[2], hashDeviceId(BOB_DEVICE));
+  assert.ok('error' in original.join('test', 'g1', 'Bob', true, oldKey));
+  rejoined(original, 'Bob', upload.seatKey);
+
+  // an undo past the pause keeps the key the file gave
+  ok(original.resumeGame(ROOM, 1));
+  ok(original.requestUndo(ROOM, 1));
+  ok(original.voteUndo(ROOM, 2, true));
+  original.disconnect(ROOM, 2);
+  rejoined(original, 'Bob', upload.seatKey);
+});
+
+test('a file from another game is refused', () => {
+  const { alice } = pauseFiles();
+  assert.deepEqual(started().uploadPauseFile(alice, DEVICE), { error: ANOTHER_GAME });
+  const other = paused(started());
+  other.disconnect(ROOM, 1);
+  assert.deepEqual(other.uploadPauseFile(alice, DEVICE), { error: ANOTHER_GAME });
+
+  const { manager } = managerFor();
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.deepEqual(manager.uploadPauseFile(fileOf(other, 2, keyOf(other, 2)), BOB_DEVICE), { error: ANOTHER_GAME });
+  assert.deepEqual(statusOf(manager, first.seatKey).players.map(player => player.ready), [true, false]);
+});
+
+test('the same seat twice is refused', () => {
+  const { alice } = pauseFiles();
+  const { manager } = managerFor();
+  uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.deepEqual(manager.uploadPauseFile(alice, DEVICE), { error: "Alice's file is already in" });
+});
+
+test('hostile uploads are refused before they are stored', () => {
+  const { alice, bob } = pauseFiles();
+  const { manager } = managerFor();
+  const extraSeat = { ...alice, players: { ...alice.players, 3: 'Eve' } };
+  for (const file of [undefined, 'text', [], extraSeat, { ...alice, gameId: ' g1' }]) {
+    assert.deepEqual(manager.uploadPauseFile(file, DEVICE), { error: 'This file is not a pause file' });
+  }
+  const unknown = manager.uploadPauseFile({ ...alice, gameType: 'nope' }, DEVICE);
+  assert.deepEqual(unknown, { error: 'This pause file is for a game this site does not have' });
+
+  const first = uploaded(manager.uploadPauseFile(alice, { long: 'not a device' }));
+  const renamed = { ...bob, players: { 1: 'Alice', 2: 'Bobby' }, playerName: 'Bobby' };
+  assert.deepEqual(manager.uploadPauseFile(renamed, BOB_DEVICE), { error: "Bobby's pause file does not match the others" });
+  for (const credential of [undefined, 42, 'wrong', alice.share, keyOf(pauseFiles().original, 1)]) {
+    assert.deepEqual(manager.resumeStatus('test', 'g1', credential), { error: NOT_AVAILABLE });
+  }
+  assert.deepEqual(manager.resumeStatus('nope', 'g1', first.seatKey), { error: NOT_AVAILABLE });
+  uploaded(manager.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(manager.rawState(ROOM)?.seatDevices?.[1], undefined);
+});
+
+test('joining a game waiting for files is refused', () => {
+  const { alice } = pauseFiles();
+  const { manager } = managerFor();
+  uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.deepEqual(manager.join('test', 'g1', 'Cara'), { error: WAITING });
+  assert.deepEqual(manager.join('test', 'g1', 'Alice', true), { error: WAITING });
+  assert.deepEqual(manager.join('test', 'g1', 'Dana', undefined, undefined, 'spectator'), { error: WAITING });
+  assert.deepEqual(manager.joinLocal('test', 'g1', ['Cara', 'Dan']), { error: WAITING });
+});
+
+test('a lobby nobody touches is forgotten', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { alice } = pauseFiles();
+  const { manager } = managerFor();
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  statusOf(manager, first.seatKey); // a status read keeps it
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  statusOf(manager, first.seatKey);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS + 1);
+  assert.deepEqual(manager.resumeStatus('test', 'g1', first.seatKey), { error: NOT_AVAILABLE });
+  assert.ok(!('error' in manager.join('test', 'g1', 'Cara')));
 });

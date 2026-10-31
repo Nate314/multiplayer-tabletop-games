@@ -103,6 +103,19 @@ app.get('/api/pause-file/:gameType/:gameId/:seat', (req, res) => {
   else res.status(409).json({ error: result.error });
 });
 
+// A pause file from a browser, { file, deviceId }; the large body limit is for this route only
+app.post('/api/resume', express.json({ limit: '20mb' }), (req, res) => {
+  const result = manager.uploadPauseFile(req.body?.file, req.body?.deviceId);
+  if ('seatKey' in result) res.json(result); // a ResumeUpload carries `error: null`, so a refusal is the one without a key
+  else res.status(400).json({ error: result.error });
+});
+
+app.get('/api/resume/:gameType/:gameId', (req, res) => {
+  const result = manager.resumeStatus(req.params.gameType, req.params.gameId, bearer(req));
+  if ('players' in result) res.json(result);
+  else res.status(404).json(NOT_AVAILABLE_BODY);
+});
+
 mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
 
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));

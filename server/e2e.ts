@@ -54,6 +54,12 @@ export function mountE2eRoutes(app: Express, manager: Manager, e2eRandom: E2eRan
     res.json({ ok: true });
   });
 
+  // Deletes the room as a server restart without a store would lose it, so a test can resume it from files
+  app.delete('/api/e2e/room/:gameType/:gameId', (req, res) => {
+    if (manager.removeRoom(`${req.params.gameType}/${req.params.gameId}`)) res.json({ ok: true });
+    else res.status(404).json({ error: 'Game not found' });
+  });
+
   // Runs { ticks } simulation ticks at once, then sends every player their new view
   app.post('/api/e2e/simulate/:gameType/:gameId', (req, res) => {
     const ticks: unknown = req.body?.ticks;

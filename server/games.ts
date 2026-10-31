@@ -9,7 +9,7 @@ import {
 } from '../shared/houseRules.ts';
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { castPauseVote, openPauseVote, pauseVotePassed } from '../shared/pause.ts';
-import type { PauseFile } from '../shared/pauseFile.ts';
+import { parsePauseFile, type PauseFile, type ResumeStatus, type ResumeUpload } from '../shared/pauseFile.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
@@ -19,8 +19,8 @@ import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
-import { sealRoom } from './pauseSeal.ts';
-import { buildPauseFile, sealedRoomOf } from './pauseFiles.ts';
+import { sealRoom, type SealedRoom } from './pauseSeal.ts';
+import { buildPauseFile, canonicalJson, checkPauseFiles, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
@@ -67,6 +67,30 @@ export type JoinResult =
 
 export type LocalSeat = { seat: Seat; seatKey: string };
 
+// The pause files gathered for a game this server lost; in memory only, at most one upload per seat of `players`
+type ResumeLobby = {
+  game: Room['game'];
+  gameId: string;
+  fingerprint: string;
+  players: Record<Seat, string>;
+  uploads: Map<Seat, { file: PauseFile; seatKey: string; device: string | null }>;
+  error: string | null;
+  timer?: ReturnType<typeof setTimeout>;
+};
+
+const NOT_A_PAUSE_FILE = 'This file is not a pause file';
+const ANOTHER_GAME = 'Another game with this ID is on this server';
+const WAITING_FOR_FILES = 'This game is waiting for its pause files. Choose Resume a game and upload yours';
+const doesNotMatch = (name: string) => `${name}'s pause file does not match the others`;
+
+// The file's seats are whole numbers, no more than the game can seat, and the same in `players` and the seal
+function seatsAgree(game: Room['game'], file: PauseFile): boolean {
+  const seats = Object.keys(file.players);
+  const most = Math.max(game.info.maxPlayers, game.info.stretchedPlayers?.max ?? 0);
+  return seats.length <= most && seats.length === Object.keys(file.seal.shareHashes).length &&
+    seats.every(seat => /^[1-9]\d{0,2}$/.test(seat) && Object.hasOwn(file.seal.shareHashes, seat));
+}
+
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
 }
@@ -101,6 +125,7 @@ export function createGameManager(
   games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore, hooks: ManagerHooks = {}
 ) {
   const rooms = new Map<string, Room>();
+  const lobbies = new Map<string, ResumeLobby>(); // by room ID; a room ID never has both
   const now = hooks.now ?? Date.now;
 
   function pruneArchive(): void {
@@ -421,6 +446,7 @@ export function createGameManager(
       playerNames: state.playerNames,
       spectators: state.spectators,
       spectatorKeys: state.spectatorKeys,
+      seatKeys: state.seatKeys, // a pause file may have given a seat a new key since
       seatDevices: state.seatDevices,
       handRequests: state.handRequests,
       startedAt: state.startedAt,
@@ -593,6 +619,78 @@ export function createGameManager(
     return { state: view(room, seat) };
   }
 
+  // A resume lobby lives EMPTY_ROOM_TIMEOUT_MS from its last upload or status read
+  function touchLobby(roomId: string, lobby: ResumeLobby): void {
+    clearTimeout(lobby.timer);
+    lobby.timer = setTimeout(() => {
+      if (lobbies.get(roomId) === lobby) lobbies.delete(roomId);
+    }, EMPTY_ROOM_TIMEOUT_MS);
+    lobby.timer.unref(); // never keeps the process alive on its own
+  }
+
+  function forgetLobby(roomId: string, lobby: ResumeLobby): void {
+    clearTimeout(lobby.timer);
+    lobbies.delete(roomId);
+  }
+
+  function lobbyStatus(lobby: ResumeLobby): ResumeStatus {
+    const players = Object.entries(lobby.players).map(([seat, name]) => ({ seat: Number(seat), name, ready: lobby.uploads.has(Number(seat)) }));
+    return { gameType: lobby.game.info.id, gameId: lobby.gameId, players, ready: false, error: lobby.error };
+  }
+
+  function roomStatus({ game, state }: Room): ResumeStatus {
+    const players = [...state.activePlayers].sort((a, b) => a - b).map(seat => ({ seat, name: state.playerNames[seat], ready: true }));
+    return { gameType: game.info.id, gameId: state.gameId, players, ready: true, error: null };
+  }
+
+  // A file for a room still paused here takes its held seat: the share proves the seat, so the key and device are replaced
+  function takePausedSeat(roomId: string, room: Room, file: PauseFile, device: string | null): ResumeUpload | { error: string } {
+    const { state } = room;
+    if (!state.paused || !state.pause || state.pause.seal.fingerprint !== file.seal.fingerprint) return { error: ANOTHER_GAME };
+    const { seat } = file;
+    const name = state.playerNames[seat] ?? file.playerName;
+    const share = state.pause.shares[seat];
+    if (share === undefined || !sameSecret(share, file.share)) return { error: doesNotMatch(name) };
+    if (!state.disconnected.includes(seat)) return { error: `${name} is already in this game` };
+    const seatKey = randomUUID();
+    const { [seat]: _old, ...seatDevices } = state.seatDevices ?? {};
+    room.state = { ...state, seatKeys: { ...state.seatKeys, [seat]: seatKey }, seatDevices: device ? { ...seatDevices, [seat]: device } : seatDevices };
+    save(roomId, room);
+    return { ...roomStatus(room), seat, seatKey, playerName: name };
+  }
+
+  // Brings back a lost game paused, with every seat held for its uploader's new key and device.
+  // Every step gets the new keys too, so an undo never brings back a key nobody holds
+  function restoreRoom(roomId: string, lobby: ResumeLobby, sealed: SealedRoom): void {
+    const uploads = [...lobby.uploads];
+    const seatKeys = Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.seatKey]));
+    const seatDevices = Object.fromEntries(uploads.flatMap(([seat, { device }]) => (device ? [[seat, device]] : [])));
+    const rekeyed = (state: BaseGameState): BaseGameState => ({ ...state, seatKeys, seatDevices });
+    const pause = { seal: uploads[0][1].file.seal, shares: Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.file.share])) };
+    const state: BaseGameState = {
+      ...rekeyed(sealed.state),
+      paused: true,
+      disconnected: [...sealed.state.activePlayers].sort((a, b) => a - b),
+      spectators: [],
+      spectatorKeys: {},
+      handRequests: [],
+      pause
+    };
+    const room: Room = {
+      game: lobby.game, state, history: sealed.history.map(rekeyed), timeline: sealed.timeline.map(rekeyed),
+      watching: new Set(), lastReactionAt: new Map()
+    };
+    forgetLobby(roomId, lobby);
+    rooms.set(roomId, room);
+    writeStore(roomId, target => {
+      target.remove(roomId);
+      room.history.forEach((before, index) => {
+        target.save(roomId, room.game.info.id, state, { type: 'push', index, before, after: room.timeline[index] });
+      });
+    });
+    save(roomId, room);
+  }
+
   // "Table screen", then "Table screen 2" and so on while the name is taken
   function freeScreenName(state: BaseGameState): string {
     const taken = (name: string) => findSeatByName(state, name) !== undefined
@@ -619,6 +717,7 @@ export function createGameManager(
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
+      if (!existing && lobbies.has(roomId)) return { error: WAITING_FOR_FILES };
       if (!existing && (rejoin === true || role === 'spectator' || tableScreen)) return { error: 'Game not found' };
       const room = existing ?? newRoom(game, id);
       const { state } = room;
@@ -678,6 +777,7 @@ export function createGameManager(
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
+      if (!existing && lobbies.has(roomId)) return { error: WAITING_FOR_FILES };
       if (!existing && rejoin === true) return { error: 'Game not found' };
       const room = existing ?? newRoom(game, id);
       const free = tableLimit(game.info, room.state) - room.state.activePlayers.length;
@@ -974,6 +1074,59 @@ export function createGameManager(
       const allowed = (key !== undefined && sameSecret(key, credential)) || (!!device && hash !== undefined && sameSecret(hash, device));
       if (!allowed) return { error: NOT_AVAILABLE };
       return { file: buildPauseFile(room.game, sealedRoomOf(room), seat, state.pause, now) };
+    },
+
+    // An untrusted upload: to its paused room here, else to the resume lobby for its game ID, which restores the room
+    // once every seat's file is in and checks out. The answer carries only the uploader's own new key
+    uploadPauseFile(upload: unknown, deviceId: unknown): ResumeUpload | { error: string } {
+      const parsed = parsePauseFile(JSON.stringify(upload) ?? '', games.map(game => game.info.id));
+      if ('error' in parsed) return parsed;
+      const { file } = parsed;
+      const game = findGame(file.gameType)!;
+      if (cleanName(file.gameId) !== file.gameId || !seatsAgree(game, file)) return { error: NOT_A_PAUSE_FILE };
+      const roomId = `${game.info.id}/${file.gameId}`;
+      const device = hashDeviceId(deviceId);
+      const room = rooms.get(roomId);
+      if (room) return takePausedSeat(roomId, room, file, device);
+
+      // Refused before it is stored, so the lobby holds one file per seat of its own game
+      let lobby = lobbies.get(roomId);
+      if (lobby && lobby.fingerprint !== file.seal.fingerprint) return { error: ANOTHER_GAME };
+      if (lobby && canonicalJson(lobby.players) !== canonicalJson(file.players)) return { error: doesNotMatch(file.playerName) };
+      if (lobby?.uploads.has(file.seat)) return { error: `${lobby.players[file.seat]}'s file is already in` };
+      lobby ??= { game, gameId: file.gameId, fingerprint: file.seal.fingerprint, players: { ...file.players }, uploads: new Map(), error: null };
+      lobbies.set(roomId, lobby);
+      const seatKey = randomUUID();
+      lobby.uploads.set(file.seat, { file, seatKey, device });
+      lobby.error = null;
+      touchLobby(roomId, lobby);
+      const mine = { seat: file.seat, seatKey, playerName: file.playerName };
+      if (lobby.uploads.size < Object.keys(lobby.players).length) return { ...lobbyStatus(lobby), ...mine };
+
+      const checked = checkPauseFiles(game, [...lobby.uploads.values()].map(entry => entry.file));
+      if ('error' in checked) {
+        for (const seat of checked.seats) lobby.uploads.delete(seat);
+        lobby.error = checked.error;
+        if (lobby.uploads.size === 0) forgetLobby(roomId, lobby);
+        return lobby.uploads.has(file.seat) ? { ...lobbyStatus(lobby), ...mine } : { error: checked.error };
+      }
+      restoreRoom(roomId, lobby, checked.room);
+      return { ...roomStatus(rooms.get(roomId)!), ...mine };
+    },
+
+    // For a key an upload was given: the lobby's status (which keeps it), or the restored room's; anything else is NOT_AVAILABLE
+    resumeStatus(gameType: unknown, gameId: unknown, credential: unknown): ResumeStatus | { error: typeof NOT_AVAILABLE } {
+      const game = findGame(gameType);
+      if (!game || typeof credential !== 'string') return { error: NOT_AVAILABLE };
+      const roomId = `${game.info.id}/${cleanName(gameId)}`;
+      const holds = (keys: string[]) => keys.some(key => sameSecret(key, credential));
+      const lobby = lobbies.get(roomId);
+      if (lobby && holds([...lobby.uploads.values()].map(upload => upload.seatKey))) {
+        touchLobby(roomId, lobby);
+        return lobbyStatus(lobby);
+      }
+      const room = rooms.get(roomId);
+      return room && holds(Object.values(room.state.seatKeys ?? {})) ? roomStatus(room) : { error: NOT_AVAILABLE };
     },
 
     // Only for the end-to-end test hooks in e2e.ts
