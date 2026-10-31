@@ -1,5 +1,5 @@
 import RAPIER from '@dimforge/rapier3d-deterministic-compat';
-import type { Block, Grab, Quat, Vec3 } from './types.ts';
+import type { Block, Grab, Pose, Quat, Turntable, Vec3 } from './types.ts';
 
 // Units are cm, g and s. Determinism needs the same inputs in the same order, and no sin, cos, random or clock
 export const BLOCK = { length: 7.5, height: 1.5, width: 2.5 };
@@ -12,6 +12,13 @@ export const MAX_PULL_FORCE = 600000;
 export const MAX_REACH = 3;
 export const QUARTER_TURN: Quat = [0, Math.SQRT1_2, 0, Math.SQRT1_2];
 export const DEFAULT_GRIP = 0.5;
+export const TURNTABLE = { radius: 8, height: 1 };
+export const TURNTABLE_FRICTION = 0.6;
+export const MAX_SPIN = 6;
+export const SPIN_ACCEL = 300;
+export const COAST_DECEL = 3;
+export const IDENTITY: Quat = [0, 0, 0, 1];
+export const REST_TURNTABLE: Turntable = { q: IDENTITY, w: 0, drive: null };
 
 const DENSITY = 0.6;
 const GROUND_FRICTION = 0.6;
@@ -27,7 +34,7 @@ const TILT_DOT = 0.9659258262890683;
 let ready: Promise<void> | null = null;
 export const initPhysics = () => (ready ??= RAPIER.init());
 
-export type TowerWorld = { world: RAPIER.World; bodies: Map<number, RAPIER.RigidBody> };
+export type TowerWorld = { world: RAPIER.World; bodies: Map<number, RAPIER.RigidBody>; turntable: RAPIER.RigidBody };
 
 export function startingTower(): Block[] {
   const blocks: Block[] = [];
@@ -62,11 +69,23 @@ const rotate = ([x, y, z, w]: Quat, v: Vec3): Vec3 => {
   return add(add(v, scale(t, w)), cross(u, t));
 };
 
+const conj = ([x, y, z, w]: Quat): Quat => [-x, -y, -z, w];
+const multiply = ([ax, ay, az, aw]: Quat, [bx, by, bz, bw]: Quat): Quat => [
+  aw * bx + ax * bw + ay * bz - az * by,
+  aw * by - ax * bz + ay * bw + az * bx,
+  aw * bz + ax * by - ay * bx + az * bw,
+  aw * bw - ax * bx - ay * by - az * bz,
+];
+
+// World to turntable frame and back, so footprint and topple checks turn with the table
+export const toTable = (pose: Pose, table: Quat): Pose => ({ p: rotate(conj(table), pose.p), q: multiply(conj(table), pose.q) });
+export const fromTable = (pose: Pose, table: Quat): Pose => ({ p: rotate(table, pose.p), q: multiply(table, pose.q) });
+
 export const anchorWorld = (block: Block, anchor: Vec3) => add(block.pose.p, rotate(block.pose.q, anchor));
 
 export const clampTarget = (anchor: Vec3, target: Vec3) => add(anchor, capped(sub(target, anchor), MAX_REACH));
 
-export function buildWorld(blocks: Block[], grip: (id: number) => number): TowerWorld {
+export function buildWorld(blocks: Block[], grip: (id: number) => number, turntable: Turntable = REST_TURNTABLE): TowerWorld {
   const world = new RAPIER.World({ x: 0, y: -981, z: 0 });
   world.lengthUnit = 100;
   world.timestep = STEP_S;
@@ -74,8 +93,13 @@ export function buildWorld(blocks: Block[], grip: (id: number) => number): Tower
   world.integrationParameters.contact_natural_frequency = CONTACT_HZ;
   world.numSolverIterations = SOLVER_ITERATIONS;
   // A kinematic ground that never moves: contacts with a fixed body ignore the contact frequency and let the tower sink
-  const ground = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -1, 0));
+  const ground = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -1 - TURNTABLE.height, 0));
   world.createCollider(RAPIER.ColliderDesc.cuboid(100, 1, 100).setFriction(GROUND_FRICTION), ground);
+  // The tower stands on the turntable, whose top is y = 0; created before the blocks so it has the same body handle in every world
+  const [tx, ty, tz, tw] = turntable.q;
+  const table = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicVelocityBased()
+    .setTranslation(0, -TURNTABLE.height / 2, 0).setRotation({ x: tx, y: ty, z: tz, w: tw }).setAngvel({ x: 0, y: turntable.w, z: 0 }));
+  world.createCollider(RAPIER.ColliderDesc.cylinder(TURNTABLE.height / 2, TURNTABLE.radius).setFriction(TURNTABLE_FRICTION), table);
   const bodies = new Map<number, RAPIER.RigidBody>();
   for (const block of blocks) {
     const [x, y, z, w] = block.pose.q;
@@ -86,7 +110,20 @@ export function buildWorld(blocks: Block[], grip: (id: number) => number): Tower
     world.createCollider(RAPIER.ColliderDesc.cuboid(...HALF).setDensity(DENSITY).setFriction(grip(block.id)), body);
     bodies.set(block.id, body);
   }
-  return { world, bodies };
+  return { world, bodies, turntable: table };
+}
+
+// The turntable's spin after one step: toward the clamped drive at SPIN_ACCEL, or coasting toward 0 at COAST_DECEL
+export function spinStep(w: number, drive: number | null): number {
+  const target = drive === null ? 0 : Math.min(MAX_SPIN, Math.max(-MAX_SPIN, drive));
+  const most = (drive === null ? COAST_DECEL : SPIN_ACCEL) * STEP_S;
+  // The slack absorbs rounding left over from earlier steps, so a coast ends on exactly 0 instead of a step later
+  return Math.abs(target - w) <= most * (1 + 1e-9) ? target : w + Math.sign(target - w) * most;
+}
+
+export function readTurntable(tower: TowerWorld, drive: number | null): Turntable {
+  const { x, y, z, w } = tower.turntable.rotation();
+  return { q: [x, y, z, w], w: tower.turntable.angvel().y, drive };
 }
 
 // A spring from the anchor to the target, damped by the anchor's speed. Clamping the target to MAX_REACH is what bounds
@@ -102,17 +139,25 @@ function pull(body: RAPIER.RigidBody, grab: Grab) {
   body.applyImpulseAtPoint(vec(scale(force, STEP_S)), vec(anchor), true);
 }
 
-export function stepWorld(tower: TowerWorld, grab: Grab | null, steps: number) {
+export function stepWorld(tower: TowerWorld, grab: Grab | null, steps: number, drive: number | null = null) {
   const body = grab && tower.bodies.get(grab.block);
   for (let i = 0; i < steps; i++) {
+    const w = tower.turntable.angvel().y;
+    const next = spinStep(w, drive);
+    // Setting an unchanged spin would wake a resting world
+    if (next !== w) tower.turntable.setAngvel({ x: 0, y: next, z: 0 }, true);
     if (grab && body) pull(body, grab);
     tower.world.step();
   }
 }
 
 // Moves a running world's bodies to `blocks` instead of rebuilding it; false when a block has no body yet and only a rebuild will do
-export function syncWorld(tower: TowerWorld, blocks: Block[]): boolean {
+export function syncWorld(tower: TowerWorld, blocks: Block[], turntable: Turntable = REST_TURNTABLE): boolean {
   if (blocks.some(block => !tower.bodies.has(block.id))) return false;
+  const [tx, ty, tz, tw] = turntable.q;
+  const spinning = turntable.w !== 0;
+  tower.turntable.setRotation({ x: tx, y: ty, z: tz, w: tw }, spinning);
+  tower.turntable.setAngvel({ x: 0, y: turntable.w, z: 0 }, spinning);
   const shown = new Set(blocks.map(block => block.id));
   for (const [id, body] of tower.bodies) {
     if (shown.has(id)) continue;
@@ -156,22 +201,24 @@ function extents([x, y, z, w]: Quat): Vec3 {
   return m.map(row => row.reduce((sum, v, j) => sum + Math.abs(v) * HALF[j], 0)) as Vec3;
 }
 
-export function isOut(block: Block) {
-  const [ex, , ez] = extents(block.pose.q);
-  const [x, , z] = block.pose.p;
+export function isOut(block: Block, table: Quat = IDENTITY) {
+  const pose = toTable(block.pose, table);
+  const [ex, , ez] = extents(pose.q);
+  const [x, , z] = pose.p;
   return Math.abs(x) - ex > FOOTPRINT || Math.abs(z) - ez > FOOTPRINT;
 }
 
 export const topSurface = (block: Block) => block.pose.p[1] + extents(block.pose.q)[1];
 
-export const onGroundOutside = (block: Block) => block.pose.p[1] < BLOCK.height && isOut(block);
+export const onGroundOutside = (block: Block, table: Quat = IDENTITY) => block.pose.p[1] < BLOCK.height && isOut(block, table);
 
-export function toppled(start: Block[], now: Block[], exempt: number | null) {
+// Each block is compared in its own turntable frame, so a tower carried round by the table has not toppled
+export function toppled(start: Block[], now: Block[], exempt: number | null, startTable: Quat = IDENTITY, nowTable: Quat = IDENTITY) {
   const before = new Map(start.map(b => [b.id, b.pose]));
   return now.some(block => {
     const from = before.get(block.id);
     if (!from || block.id === exempt) return false;
-    const [a, b] = [from.q, block.pose.q];
+    const [a, b] = [toTable(from, startTable).q, toTable(block.pose, nowTable).q];
     const dot = Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]);
     return from.p[1] - block.pose.p[1] > 0.75 || dot < TILT_DOT;
   });

@@ -2,12 +2,13 @@ import { before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
-  DEFAULT_GRIP, MAX_REACH, QUARTER_TURN, anchorWorld, buildWorld, clampTarget, initPhysics, isOut, isResting, onGroundOutside,
-  readBlocks, startingTower, stepWorld, syncWorld, toppled,
+  COAST_DECEL, DEFAULT_GRIP, IDENTITY, MAX_REACH, MAX_SPIN, QUARTER_TURN, SPIN_ACCEL, STEPS_PER_TICK, STEP_S, anchorWorld, buildWorld,
+  clampTarget, fromTable, initPhysics, isOut, isResting, onGroundOutside, readBlocks, readTurntable, spinStep, startingTower, stepWorld,
+  syncWorld, toTable, toppled,
 } from './physics.ts';
-import type { Block, Grab, Vec3 } from './types.ts';
+import type { Block, Grab, Pose, Quat, Vec3 } from './types.ts';
 
-const GOLDEN = '658911cf44695f0b917870cddd8e2cd5f7c6fe1fa21f289956a6317f2d1cb588';
+const GOLDEN = '24001cc3e949dacb3fe84adf9ef8557dc68a60041002ad81f79da372f6677ae8';
 
 before(initPhysics);
 
@@ -143,12 +144,17 @@ test('syncing a running world to a server state moves its bodies there and drops
   const server = start.filter(b => b.id !== MIDDLE).map(b => (b.id === 0 ? { ...b, pose: { ...b.pose, p: [0.5, 0.75, -2.5] as Vec3 }, v: [1, 0, 0] as Vec3 } : b));
   assert.equal(syncWorld(tower, server), true);
   assert.equal(tower.bodies.has(MIDDLE), false);
-  assert.equal(tower.world.bodies.len(), 54);
+  // The ground, the turntable and 53 blocks
+  assert.equal(tower.world.bodies.len(), 55);
   const read = readBlocks(tower, server);
   for (const block of server) assert.ok(distance(read.find(b => b.id === block.id)!.pose.p, block.pose.p) < 1e-4, `block ${block.id}`);
   assert.deepEqual(read.find(b => b.id === 0)!.v, [1, 0, 0]);
   // A block the world has never seen needs a rebuild
   assert.equal(syncWorld(tower, start), false);
+  assert.equal(syncWorld(tower, server, { q: QUARTER_TURN, w: 1, drive: null }), true);
+  const table = readTurntable(tower, null);
+  assert.ok(table.q.every((v, i) => Math.abs(v - QUARTER_TURN[i]) < 1e-6), `turntable at ${table.q}`);
+  assert.ok(Math.abs(table.w - 1) < 1e-6);
 });
 
 test('toppled ignores the exempt block and catches a drop of more than 0.75 or a tilt over 30 degrees', () => {
@@ -166,4 +172,65 @@ test('toppled ignores the exempt block and catches a drop of more than 0.75 or a
   assert.equal(toppled(start, moved(0, tilt(0.3420201433256687, 0.9396926207859084)), 0), false);
   // A block in hand is missing from the tower and is not a topple
   assert.equal(toppled(start, start.filter(b => b.id !== 7), null), false);
+});
+
+test('spinStep accelerates to the drive, clamps it and coasts to exactly zero', () => {
+  assert.equal(spinStep(0, 1), 1);
+  assert.equal(spinStep(0, 100), SPIN_ACCEL * STEP_S);
+  let w = 0;
+  for (let i = 0; i < 200; i++) {
+    w = spinStep(w, 100);
+    assert.ok(w <= MAX_SPIN, `spin ${w}`);
+  }
+  assert.equal(w, MAX_SPIN);
+  w = 6;
+  const steps = Math.ceil(6 / (COAST_DECEL * STEP_S));
+  for (let i = 0; i < steps; i++) w = spinStep(w, null);
+  assert.equal(w, 0);
+  assert.equal(spinStep(w, null), 0);
+});
+
+const near = (a: Pose, b: Pose) => [...a.p, ...a.q].every((v, i) => Math.abs(v - [...b.p, ...b.q][i]) < 1e-9);
+
+test('toTable and fromTable undo each other, and the footprint turns with the table', () => {
+  const t = QUARTER_TURN;
+  for (const block of startingTower()) assert.ok(near(fromTable(toTable(block.pose, t), t), block.pose), `block ${block.id}`);
+  const block = startingTower()[1];
+  const carried = (by: number, table: Quat): Block => ({ ...block, pose: fromTable({ ...block.pose, p: [by, block.pose.p[1], 0] }, table) });
+  assert.equal(isOut(carried(0, t), t), false);
+  assert.equal(isOut(carried(10, t), t), true);
+  // An eighth turn, as half-angle sine and cosine: 9 along the table's X clears its footprint but not the world's
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  assert.equal(isOut(carried(9, eighth), eighth), true);
+  assert.equal(isOut(carried(9, eighth)), false);
+});
+
+// Drives the turntable for `ticks` ticks at whatever `drive(tick)` asks, then lets it coast to a stop
+const turned = (drive: (tick: number) => number, ticks: number) => {
+  const start = startingTower();
+  const tower = buildWorld(start, () => DEFAULT_GRIP);
+  for (let tick = 0; tick < ticks; tick++) stepWorld(tower, null, STEPS_PER_TICK, drive(tick));
+  let guard = 0;
+  while (readTurntable(tower, null).w !== 0 && guard++ < 1000) stepWorld(tower, null, STEPS_PER_TICK);
+  const table = readTurntable(tower, null);
+  return { start, now: readBlocks(tower, start), table };
+};
+
+test('a gentle turn carries the tower round with the turntable', () => {
+  const { start, now, table } = turned(() => 0.5, 120);
+  assert.equal(table.w, 0);
+  assert.ok(table.q[1] > 0.4, `turntable at ${table.q}`);
+  assert.equal(toppled(start, now, null, IDENTITY, table.q), false);
+});
+
+test('jerking the turntable at full speed back and forth topples the tower', () => {
+  const { start, now, table } = turned(tick => (Math.floor(tick / 10) % 2 === 0 ? MAX_SPIN : -MAX_SPIN), 200);
+  assert.equal(toppled(start, now, null, IDENTITY, table.q), true);
+});
+
+test('a turned but undisturbed tower has not toppled', () => {
+  const start = startingTower();
+  const turnedRound = start.map(b => ({ ...b, pose: fromTable(b.pose, QUARTER_TURN) }));
+  assert.equal(toppled(start, turnedRound, null, IDENTITY, QUARTER_TURN), false);
+  assert.equal(toppled(start, turnedRound, null), true);
 });

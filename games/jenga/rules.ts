@@ -8,7 +8,7 @@ import {
   startingTower, stepWorld, topSurface, toppled,
 } from './physics.ts';
 import { forgetWorld, keepWorld, worldFor } from './simulation.ts';
-import type { Block, GameState, PublicGameState, Quat, Result, Seat, Sim, Vec3 } from './types.ts';
+import type { Block, GameState, PublicGameState, Quat, Result, Seat, Sim, Slot, Vec3 } from './types.ts';
 
 const HALF: Vec3 = [BLOCK.length / 2, BLOCK.height / 2, BLOCK.width / 2];
 const CALM_TICKS = 10;
@@ -18,7 +18,6 @@ const NEW_SIM: Sim = { ticks: 0, calmTicks: 0, sinceRelease: 0 };
 
 export const topLevel = (blocks: Block[]) => Math.max(...blocks.map(b => b.level));
 
-type Slot = 0 | 1 | 2;
 const SLOTS: Slot[] = [0, 1, 2];
 // Even levels run along X, so their slot is across Z; odd levels the other way
 const acrossAxis = (level: number) => level % 2 === 0 ? 2 : 0;
