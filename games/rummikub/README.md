@@ -16,6 +16,13 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 - A dismissed player's tiles go back into the pool, which is shuffled, and their turns are skipped. If the pool was empty, those tiles refill it and the passes start again. The last player left wins
 - Any player can ask to undo the last move. It is undone only if every player still in the game approves
 
+## House rules
+
+Before the first move the host picks the rules and every player must agree. They cannot change once play starts.
+
+- **Jokers move freely.** Off by default. A joker on the table moves like any other tile: no tile has to replace it, and it need not be played again with two rack tiles. Every group must still be a valid set or run at the end of the turn. It does not loosen the first meld
+- **Add to melds on your first turn.** Off by default. After laying 30 points in new groups, you may also add rack tiles to the groups on the table, but not move them
+
 ## Controls
 
 - On your turn, click a tile on your rack or the table to pick it up (it lifts and is outlined), then click the tile it should go in front of, the + at the end of a group, or New group. Click a held tile again to put it down. You can also drag a tile, or a group by its handle, with the mouse or a finger and drop it in the same places; dropped anywhere else, it goes back. On a phone, drag a table tile or group sideways (a swipe up or down on the table scrolls the page), or pick it with a tap

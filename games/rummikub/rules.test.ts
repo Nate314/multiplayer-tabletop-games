@@ -8,12 +8,14 @@ import {
   analyzeGroup,
   createGameState,
   fullPool,
+  playRulesOf,
   rackTotal,
   tileOf,
   toPublicState
 } from './rules.ts';
 import { rummikub } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
+import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import type { GameState, Move, Result, Seat, Table, TileColor } from './types.ts';
 
 // Always picks the first choice, so shuffles and deals are predictable
@@ -50,6 +52,10 @@ function game(racks: Record<Seat, number[]>, table: Table = [], melded: Seat[] =
     pool: fullPool().filter(id => !used.has(id)),
     melded
   };
+}
+
+function withRules(state: GameState, values: HouseRuleValues): GameState {
+  return { ...state, houseRules: { host: 1, values, maxPlayers: null, agreed: [1, 2], revision: 1 } };
 }
 
 function ok(result: Result<GameState>): GameState {
@@ -293,6 +299,39 @@ test('the tile that replaces a joker must come from the rack', () => {
     play(state, 1, [[t('red', 4), t('red', 5, 1), t('red', 6)], [t('blue', 5), t('black', 5), t('orange', 5)], [t('blue', 9), t('orange', 9), J1]]),
     { error: 'The tile that replaces a joker must come from your rack' }
   );
+  // A candidate from the rack is used before one from the table
+  const both = game({ 1: [t('red', 5), t('blue', 9), t('orange', 9)], 2: [t('orange', 1)] }, table);
+  assert.ok('state' in play(both, 1, [[t('red', 4), t('red', 5), t('red', 6)], [t('red', 5, 1), t('blue', 5), t('black', 5), t('orange', 5)], [t('blue', 9), t('orange', 9), J1]]));
+});
+
+test('jokers move freely when the house rule is on', () => {
+  const table = [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]];
+  const state = game({ 1: [t('red', 5), t('black', 1)], 2: [t('orange', 1)] }, table);
+  const moved = [[t('red', 4), t('red', 5), t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9), J1]];
+  assert.ok('state' in play(withRules(state, { freeJokers: true }), 1, moved));
+  assert.deepEqual(
+    play(withRules(state, { freeJokers: false }), 1, moved),
+    { error: 'A joker taken from the table must be played again with at least two tiles from your rack' }
+  );
+  assert.deepEqual(
+    play(withRules(state, { freeJokers: true }), 1, [[t('red', 4), t('red', 6), t('black', 1)], [t('blue', 7), t('blue', 8), t('blue', 9), J1]]),
+    { error: 'Group 1 is not a valid set or run' }
+  );
+});
+
+test('a game saved before house rules plays with the strict rule', () => {
+  const table = [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]];
+  const { houseRules, ...state } = game({ 1: [t('red', 5), t('black', 1)], 2: [t('orange', 1)] }, table);
+  assert.ok(houseRules);
+  assert.deepEqual(
+    play(state, 1, [[t('red', 4), t('red', 5), t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9), J1]]),
+    { error: 'A joker taken from the table must be played again with at least two tiles from your rack' }
+  );
+});
+
+test('playRulesOf reads both toggles', () => {
+  assert.deepEqual(playRulesOf({}), { freeJokers: false, addOnFirstMeld: false });
+  assert.deepEqual(playRulesOf(withRules(game({ 1: [], 2: [] }), { freeJokers: true })), { freeJokers: true, addOnFirstMeld: false });
 });
 
 test('a freed joker needs two more rack tiles in its group', () => {

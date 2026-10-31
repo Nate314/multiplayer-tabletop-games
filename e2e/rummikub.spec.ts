@@ -84,13 +84,13 @@ test.describe('Rummikub rules', () => {
     const [alice] = first.pages;
     // Alice draws the black 13, then Bob the black 5
     await first.random(12.5 / 106, 4.5 / 105);
-    const [bob] = (await seat('rummikub', ['Bob'], { gameId: first.gameId })).pages;
+    const bob = await first.join('Bob');
     await expect(status(alice)).toContainText('Alice drew black 13, Bob drew black 5. Alice goes first.');
     await expect(turn(bob)).toHaveText('Alice goes first. Joining closes after the first move.');
 
     // Cara joins and the draw is redone. Bob's joker counts lowest; Alice and Cara tie on 1s and draw again
     await first.random(0, 104.5 / 105, 12.5 / 104, 0, 0);
-    const [cara] = (await seat('rummikub', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     await expect(status(alice)).toContainText(
       'Alice drew black 1, Bob drew a joker, Cara drew blue 1; tie, so they draw again: Alice drew black 2, Cara drew black 3. Cara goes first.'
     );
@@ -234,6 +234,24 @@ test.describe('Rummikub rules', () => {
       await expect(hint(alice)).toHaveText('Ready to play 3 tiles');
       await button(alice, 'Reset').click();
     }
+  });
+
+  test('with Jokers move freely, a joker moves like any tile', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      table: [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]],
+      racks: { 1: [t('red', 5), t('black', 1)] }
+    }, ['Alice', 'Bob'], { houseRules: { freeJokers: true } });
+    await tableTile(alice, J1).click();
+    await groupEnd(alice, 2).click();
+    await rackTile(alice, t('red', 5)).click();
+    await tableTile(alice, t('red', 6)).click();
+    await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+    await expect(playButton(alice)).toBeEnabled();
+    await alice.getByRole('button', { name: 'Settings' }).click();
+    const rules = alice.getByRole('dialog', { name: 'Settings' }).getByRole('region', { name: 'House rules' });
+    await expect(rules).toContainText('Jokers move freely');
+    await expect(rules).toContainText('On');
   });
 
   test('a player who does not play draws one tile, which ends the turn, and with the pool empty it is a pass', async ({ seat }) => {
@@ -704,7 +722,7 @@ test.describe('Rummikub differences from Wikipedia', () => {
     const first = await seat('rummikub', ['Alice']);
     // Alice draws the last tile, a joker, and Bob the black 1
     await first.random(105.5 / 106, 0);
-    await seat('rummikub', ['Bob'], { gameId: first.gameId });
+    await first.join('Bob');
     await expect(status(first.pages[0])).toContainText('Alice drew a joker, Bob drew black 1. Bob goes first.');
   });
 

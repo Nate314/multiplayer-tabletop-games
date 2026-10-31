@@ -7,7 +7,7 @@ import { canReturnToRack, clickTile, isRackTarget, placeHeld, resetDraft, sortRa
 import { useLocalSlides } from './useLocalSlides.ts';
 import { useDrag } from '../../../src/drag/useDrag.ts';
 import { takeDrop } from '../../../src/drag/recentDrop.ts';
-import { checkPlay, tileName } from '../rules.ts';
+import { checkPlay, playRulesOf, tileName } from '../rules.ts';
 import type { Draft, Held, Interaction, Target } from './draft.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -49,7 +49,7 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
 
   const committed = new Set(table.flat());
   const changed = !sameTable(draft.table, table);
-  const check = changed ? checkPlay(table, melded.includes(playerNumber), rack, draft.table) : null;
+  const check = changed ? checkPlay(table, melded.includes(playerNumber), rack, draft.table, playRulesOf(gameState)) : null;
   const highlighted = lastMove?.type === 'play' && lastMove.playerNumber !== playerNumber ? lastMove.added : [];
 
   function apply(next: Interaction) {

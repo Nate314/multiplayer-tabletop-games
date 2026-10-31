@@ -2,10 +2,12 @@
 // A play is the whole table as it should be at the end of the turn; the server works out which rack tiles it adds.
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random, Standing } from '../../shared/types.ts';
+import { ADD_ON_FIRST_MELD_RULE, FREE_JOKERS_RULE } from './options.ts';
 import type { GameState, LastMove, Move, PublicGameState, Result, RoundResult, Seat, Table, Tile, TileColor } from './types.ts';
 
 export const COLORS: readonly TileColor[] = ['black', 'blue', 'orange', 'red'];
@@ -163,7 +165,14 @@ function takenJokerError(before: GroupInfo[], after: GroupInfo[], added: Readonl
 // What a play would do, checked against the table and the player's rack. The browser calls it for the preview.
 export type CheckedPlay = { table: Table; added: number[]; meld: number | null };
 
-export function checkPlay(table: Table, melded: boolean, rack: number[], proposed: Table): Result<CheckedPlay> {
+export type PlayRules = { freeJokers: boolean; addOnFirstMeld: boolean };
+
+// A game saved before house rules has none set, so both read as off
+export function playRulesOf(state: Pick<GameState, 'houseRules'>): PlayRules {
+  return { freeJokers: houseRule(state, FREE_JOKERS_RULE), addOnFirstMeld: houseRule(state, ADD_ON_FIRST_MELD_RULE) };
+}
+
+export function checkPlay(table: Table, melded: boolean, rack: number[], proposed: Table, rules: PlayRules): Result<CheckedPlay> {
   const tiles = proposed.flat();
   if (new Set(tiles).size !== tiles.length) return { error: 'A tile can be in only one group' };
   const onTable = new Set(table.flat());
@@ -191,7 +200,7 @@ export function checkPlay(table: Table, melded: boolean, rack: number[], propose
     if (!unchanged) return { error: 'Your first meld may not use or change the tiles on the table' };
     meld = groups.filter(group => group.tiles.every(id => !onTable.has(id))).reduce((sum, group) => sum + group.points, 0);
     if (meld < INITIAL_MELD) return { error: `Your first meld must total at least ${INITIAL_MELD} points (this one totals ${meld})` };
-  } else {
+  } else if (!rules.freeJokers) {
     const error = takenJokerError(table.map(ids => analyzeGroup(ids)).filter(group => group !== null), groups, new Set(added));
     if (error) return { error };
   }
@@ -302,7 +311,7 @@ function finishTurn(state: GameState, seat: Seat): GameState {
 
 function play(state: GameState, seat: Seat, proposed: Table): Result<GameState> {
   const rack = state.racks[seat] ?? [];
-  const checked = checkPlay(state.table, state.melded.includes(seat), rack, proposed);
+  const checked = checkPlay(state.table, state.melded.includes(seat), rack, proposed, playRulesOf(state));
   if ('error' in checked) return checked;
   const { table, added, meld } = checked.state;
   const rest = rack.filter(id => !added.includes(id));
