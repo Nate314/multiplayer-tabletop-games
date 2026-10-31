@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { jenga } from './index.ts';
 import {
   CALM_TICKS, COLLAPSE_TICKS, applyAction, canPull, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
-  turntableOf,
+  restingLevel, turntableOf,
 } from './rules.ts';
 import { forgetWorld } from './simulation.ts';
-import { IDENTITY, MAX_REACH, MAX_SPIN, QUARTER_TURN, REST_TURNTABLE, anchorWorld, fromTable } from './physics.ts';
+import { IDENTITY, MAX_REACH, MAX_SPIN, QUARTER_TURN, REST_TURNTABLE, anchorWorld, fromTable, toTable } from './physics.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Block, GameState, Pose, Quat, Seat, Vec3 } from './types.ts';
 
@@ -766,5 +766,59 @@ test('a dismissal while a dropped block settles puts the turn back', () => {
   assert.deepEqual(left.blocks, state.turnStart);
   assert.deepEqual(left.turntable, { q: eighth, w: 0, drive: null });
   assert.equal(left.held, null);
+  forgetWorld('g1');
+});
+
+test('a topple while a dropped block settles is the dropper\'s loss', () => {
+  const held = freeRules(holding(MIDDLE));
+  const dropped = place({ ...held, turnStart: raised(held.turnStart) }, 1, drop([0, 0]));
+  const fallen = simulate(dropped);
+  assert.equal(fallen.toppled, true);
+  assert.equal(fallen.loser, 1);
+  const over = settle(fallen, 700);
+  assert.equal(over.isGameOver, true);
+  assert.equal(over.dropping, null);
+  assert.deepEqual(over.winners, [2]);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+  forgetWorld('g1');
+});
+
+test('a dropper who disconnects while the block settles still has it rest and end the turn', () => {
+  let state = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
+  state = simulate(state);
+  const gone = disconnectPlayer(jenga, state, 1);
+  assert.equal(gone.dropping, MIDDLE);
+  assert.equal(simulating(gone), true);
+  const rested = settle(gone);
+  assert.equal(rested.dropping, null);
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(block(rested, MIDDLE).level, 18);
+  forgetWorld('g1');
+});
+
+test('a block resting on an incomplete top level\'s blocks starts the level above', () => {
+  // Level 17 lacks block 53; one laid on the middle block 52, not beside it, is on level 18
+  const others = holding(53).blocks;
+  const middle = block(holding(53), 52).pose;
+  const onTop: Block = { id: 53, level: 17, pose: { p: [middle.p[0], middle.p[1] + 1.5, middle.p[2]], q: middle.q } };
+  assert.equal(restingLevel(onTop, others, IDENTITY), 18);
+  const beside: Block = { id: 53, level: 17, pose: { p: [2.5, middle.p[1], 0], q: middle.q } };
+  assert.equal(restingLevel(beside, others, IDENTITY), 17);
+  // And through the physics: dropped over the middle, it settles on block 52
+  const rested = settle(place(freeRules(holding(53)), 1, drop([0, 0])));
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(block(rested, 53).level, 18);
+  forgetWorld('g1');
+});
+
+test('a drop off center on a turned table rests where it was let go and ends the turn', () => {
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  const rested = settle(place(turnedBy(freeRules(holding(MIDDLE)), eighth), 1, drop([1, -0.5])));
+  assert.equal(rested.toppled, false);
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(block(rested, MIDDLE).level, 18);
+  const [x, , z] = toTable(block(rested, MIDDLE).pose, eighth).p;
+  assert.ok(near(x, 1, 0.3) && near(z, -0.5, 0.3), `${x}, ${z}`);
+  assert.ok(nearPose({ p: [0, 0, 0], q: turntableOf(rested).q }, { p: [0, 0, 0], q: eighth }, 1e-6));
   forgetWorld('g1');
 });

@@ -89,6 +89,34 @@ test('a free drop is one recorded move and undo puts the whole turn back', () =>
   assert.deepEqual(raw(manager).blocks, raw(manager).turnStart);
 });
 
+// Known gap: every drop is recorded, so a slid-off attempt stays on the timeline beside the drop that ended the turn
+test('a drop that slides off and a drop again are two recorded moves, and undo puts the turn back', () => {
+  const manager = game({ freePlacement: true });
+  turnTable(manager, 1, 1);
+  pullOut(manager);
+  manager.simulateTicks(ROOM, 400);
+  const start = raw(manager);
+  ok(manager.move(ROOM, 1, { type: 'drop', at: [6, 6] }));
+  manager.simulateTicks(ROOM, 400);
+  assert.equal(raw(manager).held, MIDDLE);
+  assert.equal(raw(manager).currentPlayer, 1);
+  const again = ok(manager.move(ROOM, 1, { type: 'drop', at: [0, 0] }));
+  assert.equal(again.moveCount, 2);
+  manager.simulateTicks(ROOM, 400);
+  assert.equal(raw(manager).currentPlayer, 2);
+  assert.deepEqual(stepsOf(manager, 'jenga')!.map(step => step.historyStep), ['start', 'move', 'move']);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  ok(manager.voteUndo(ROOM, 3, true));
+  const undone = raw(manager);
+  assert.equal(undone.currentPlayer, 1);
+  assert.deepEqual(undone.blocks, start.turnStart);
+  assert.ok(undone.blocks.some(b => b.id === MIDDLE));
+  assert.deepEqual(undone.turntable, { q: start.turnStartTurntable, w: 0, drive: null });
+  assert.equal(undone.held, null);
+  assert.equal(undone.dropping, null);
+});
+
 test('a placement is refused while the simulation still runs', () => {
   const manager = game();
   pullOut(manager);
