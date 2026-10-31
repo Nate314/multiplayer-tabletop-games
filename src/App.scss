@@ -455,7 +455,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .settings-button, [data-game] .theme-toggle) {
+:where([data-game] .game-header .settings-button, [data-game] .hide-button, [data-game] .theme-toggle) {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -480,7 +480,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -1337,6 +1337,12 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   opacity: 0.5;
 }
 
+/* Hide covers everything below the header (History stays usable); visibility keeps it mounted and out of clicks and Tab.
+   Outside :where(), so a game's own visibility rules do not undo it */
+[data-game][data-hidden] > :not(.game-header, .hidden-cover, .history-overlay) {
+  visibility: hidden;
+}
+
 /* The current game's house rules in the Settings dialog, read only */
 :where([data-game] .settings-house-rules dl) {
   margin: 0;
@@ -1928,7 +1934,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   filter: grayscale(0.6);
 }
 
-:where([data-game] .handoff-banner) {
+:where([data-game] .handoff-banner, [data-game] .hidden-cover) {
   position: sticky;
   top: 16px;
   z-index: 5;
@@ -1944,10 +1950,18 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   text-align: center;
 }
 
-:where([data-game] .handoff-banner h2) {
+:where([data-game] .handoff-banner h2, [data-game] .hidden-cover h2) {
   margin: 0;
   font-size: 1.8rem;
   overflow-wrap: anywhere;
+}
+
+:where([data-game] .hidden-cover) {
+  margin: 24px auto 0;
+}
+
+:where([data-game] .hidden-cover p) {
+  margin: 12px 0 0;
 }
 
 :where([data-game] .handoff-banner button, [data-game] .pass-and-play-bar button) {

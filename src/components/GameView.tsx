@@ -5,6 +5,7 @@ import HistoryButton, { useHistoryDialog } from './HistoryButton';
 import GameOverDialog from './GameOverDialog';
 import { canRematch } from './gameOver.ts';
 import ShareButton from './ShareButton';
+import HideButton from './HideButton';
 import SettingsButton from './SettingsButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
@@ -56,6 +57,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const history = useHistoryDialog(game.id, gameState, client, credential);
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
+  // Kept mounted and only made invisible, so nothing a player arranged is lost
+  const [hidden, setHidden] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back).
   // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss,
@@ -90,13 +93,14 @@ export default function GameView({ game, client, gameState, playerNumber, specta
 
   return (
     <WatchingContext value={playerNumber === null}>
-      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
+      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-hidden={hidden ? '' : undefined}data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
         <header className="game-header">
           <button type="button" className="back-button" onClick={onBack}>Back to games</button>
           <h1>{game.name}</h1>
           <HistoryButton onOpen={history.open} />
           <ShareButton game={game} gameId={gameState.gameId} />
           <RulesButton game={game} faq={client.faq} />
+          {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} />}
           <SettingsButton phoneControls={(
             <>
               <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
@@ -108,6 +112,12 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           <GitHubLink />
           <ThemeToggle />
         </header>
+        {hidden && (
+          <section className="hidden-cover" aria-label="Game hidden">
+            <h2>Game hidden</h2>
+            <p>Press the eye button above to show it again.</p>
+          </section>
+        )}
         {gameState.isGameOver && closed && !voting && (
           <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
         )}

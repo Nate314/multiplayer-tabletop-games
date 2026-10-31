@@ -1,4 +1,4 @@
-import { test, expect, newPlayer, nameOf, type Seat } from './fixtures.ts';
+import { test, expect, newPlayer, watch, type Seat } from './fixtures.ts';
 import type { Page } from '@playwright/test';
 
 type Received = { type: string; payload: Record<string, unknown> };
@@ -93,19 +93,6 @@ test('a started game offers to watch instead', async ({ seat, browser, server })
   await expect(visitor.locator('.spectator-status')).toBeVisible();
   for (const page of table.pages) await expect(page.locator('.presence-watching')).toHaveText('Watching: Cara');
 });
-
-// Opens the site in a new context and watches `gameId` as `name` through the join dialog
-async function watch(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1], gameType: string, gameId: string, name: string) {
-  const page = await newPlayer(browser, server);
-  await page.goto('/');
-  await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
-  await page.getByRole('button', { name: 'Spectator' }).click();
-  await page.getByLabel('Your name').fill(name);
-  await page.getByLabel('Game ID').fill(gameId);
-  await page.getByRole('button', { name: 'Watch', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
-  return page;
-}
 
 test('a spectator\'s reaction countdown sits in the reaction picker, not beside the turn clock', async ({ seat, browser, server }) => {
   const table = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
