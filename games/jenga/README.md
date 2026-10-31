@@ -2,12 +2,12 @@
 
 Pull blocks from a wobbly tower and stack them on top without knocking it over.
 
-For 2 to 8 players, who take turns in join order. Nobody can join after the first block is grabbed. House rule: Free placement (off by default), where you set the block on top yourself and the physics decides what happens.
+For 2 to 8 players, who take turns in join order. Nobody can join after the first block is grabbed or the turntable first turned. House rule: Free placement (off by default), where you set the block on top yourself and the physics decides what happens.
 
 ## Rules
 
 - The tower starts as 54 blocks in 18 levels of 3, each level laid across the one below, standing on a turntable. Marks on it show which way it faces
-- On your turn you can turn the turntable. A hard or jerky turn can shake or topple the tower, and that is your topple. The turntable stays where the last player left it, and a turntable that is still spinning, like a moving tower, must stop before the next grab
+- On your turn you can turn the turntable. A hard or jerky turn can shake or topple the tower, and that is your topple. The turntable stays where the last player left it, and a turntable that is still spinning, like a moving tower, must stop before the next player grabs a block (you may still grab during your own turn while it coasts)
 - On your turn, pull one block out of the tower and place it on top
 - You may take any block below the top level. While the top level has fewer than 3 blocks, the level under it is off limits too
 - During your turn you may slide a block, push it back in, let go and try another as often as you like
@@ -41,7 +41,7 @@ For 2 to 8 players, who take turns in join order. Nobody can join after the firs
 
 The server runs the tower's physics (Rapier, deterministic build) 20 times a second while anyone pulls, turns or the tower moves, and is the only judge of what happens. Each browser runs the same physics between the server's updates so the tower moves smoothly, and draws it with three.js. The grips never leave the server: the browser simulates every block with the same middling grip, and the server's next update corrects it.
 
-The physics runs in the turntable's frame. The turntable is a static disc collider in Rapier and never rotates there; turning acts on the blocks through the rotating frame's Euler, centrifugal and Coriolis forces, and the turntable's angle is integrated without trig. State poses stay world poses. A turntable that Rapier carried by friction drifted every block outward and toppled the tower after about two thirds of a turn at any speed, so it is not done that way. The spin values are `MAX_SPIN` 10 rad/s, `SPIN_ACCEL` 300 rad/s^2 and `COAST_DECEL` 3 rad/s^2: in the Task 2 measurements a steady turn at 6 rad/s or less stands (measured, not a test; only 2 rad/s is pinned by a test), while a held full-speed turn or a back-and-forth jerk can topple. The player's speed request is clamped to `MAX_SPIN`, and letting go makes the turntable coast to a stop.
+The physics runs in the turntable's frame. The turntable is a disc collider in Rapier that never moves and never rotates there; turning acts on the blocks through the rotating frame's Euler, centrifugal and Coriolis forces, and the turntable's angle is integrated without trig. State poses stay world poses. A turntable that Rapier carried by friction drifted every block outward and toppled the tower after about two thirds of a turn at any speed, so it is not done that way. The spin values are `MAX_SPIN` 10 rad/s, `SPIN_ACCEL` 300 rad/s^2 and `COAST_DECEL` 3 rad/s^2: in measurements made while tuning a steady turn at 6 rad/s or less stands (measured, not a test; only 2 rad/s is pinned by a test), while a held full-speed turn or a back-and-forth jerk can topple. The player's speed request is clamped to `MAX_SPIN`, and letting go makes the turntable coast to a stop.
 
 The physics costs server CPU. Measured on a Windows dev machine over five runs, a tick during a pull (about 60 ticks a run, since the pull stops simulating once the block is out) takes a median of about 8 ms (90th percentile 13 ms, maximum about 97 ms) of the 50 ms between ticks, a tick while turning the turntable and coasting a median of about 12 ms (90th percentile 14 ms), a tick during a collapse a median of about 10 ms (90th percentile 14 ms, maximum 18 ms), and each placement settles synchronously in a median of about 96 ms (90th percentile 121 ms), so a few Jenga rooms playing at once can slow the server.
 
@@ -49,6 +49,7 @@ Known gaps:
 
 - Blocks lying on the ground beside the turntable turn with it while it coasts after a topple
 - If the last opponent leaves mid-collapse, the platform ends the game at once and the game-over screen can show over a tower that is still falling
+- The Coriolis force is applied explicitly each step, so at high spin airborne blocks gain a little speed (about 2% a step at 6 rad/s, 5% at 10) and get flung slightly further than real physics; the server and the browser compute it the same way, so nothing desyncs
 - `COLLAPSE_TICKS` (600, so 30 seconds) is only a safety cap on the wait for the fallen tower to come to rest
 
 ## Differences from Wikipedia

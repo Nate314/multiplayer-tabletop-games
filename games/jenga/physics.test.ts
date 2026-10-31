@@ -157,6 +157,27 @@ test('syncing a running world to a server state moves its bodies there and drops
   assert.ok(Math.abs(table.w - 1) < 1e-6);
 });
 
+test('at an eighth-turn table, moving blocks round-trip through readBlocks and a synced world steps like a rebuilt one', () => {
+  const eighthTurn: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  const table = { q: eighthTurn, w: 4, drive: 4 };
+  const moving = startingTower().map((b): Block => (b.id % 3 === 0 ? { ...b, v: [0.5, -0.25, 0.75], w: [0.1, -0.2, 0.3] } : b));
+  const built = buildWorld(moving, () => DEFAULT_GRIP, table);
+  const read = readBlocks(built, moving);
+  for (const [i, block] of moving.entries()) {
+    const back = read[i];
+    const flat = (b: Block) => [...b.pose.p, ...b.pose.q, ...(b.v ?? [0, 0, 0]), ...(b.w ?? [0, 0, 0])];
+    flat(block).forEach((v, j) => assert.ok(Math.abs(flat(back)[j] - v) < 1e-6, `block ${block.id} value ${j}: ${flat(back)[j]} vs ${v}`));
+  }
+  // A world synced to the same state steps exactly like one built from it
+  const synced = buildWorld(startingTower(), () => DEFAULT_GRIP);
+  assert.equal(syncWorld(synced, moving, table), true);
+  const fresh = buildWorld(moving, () => DEFAULT_GRIP, table);
+  stepWorld(synced, null, STEPS_PER_TICK, 4);
+  stepWorld(fresh, null, STEPS_PER_TICK, 4);
+  assert.deepEqual(readBlocks(synced, moving).map(b => b.pose.p), readBlocks(fresh, moving).map(b => b.pose.p));
+  assert.deepEqual(readTurntable(synced, 4).q, readTurntable(fresh, 4).q);
+});
+
 test('toppled ignores the exempt block and catches a drop of more than 0.75 or a tilt over 30 degrees', () => {
   const start = startingTower();
   const moved = (id: number, change: (b: Block) => Block) => start.map(b => (b.id === id ? change(b) : b));

@@ -94,6 +94,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     // Letting go stays allowed during a vote, like a release; a speed needs the turn itself
     onTurn(speed: number | null) {
       if (speed !== null && !latest.current.isMyTurn) return;
+      // The server refuses a speed while a placement settles (rules.ts placementSettling), so neither preview nor send one
+      const { sim, pull, dropping } = latest.current.gameState;
+      if (speed !== null && ((sim !== null && !pull) || dropping != null)) return;
       setLocalDrive(speed);
       if (speed !== null || latest.current.owns) gameService.sendAction({ type: 'turn', speed });
     },
