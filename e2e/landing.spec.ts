@@ -158,3 +158,44 @@ test('games happening now is absent without SHOW_OPEN_GAMES', async ({ browser, 
   await expect(page.locator('.lobby-game').first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Games happening now' })).toHaveCount(0);
 });
+
+test('the lobby accent follows the OS accent color where the browser supports AccentColor', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  // Finds the @supports rule in the loaded stylesheets and reads the tokens it sets per selector
+  const rules = await page.evaluate(() => {
+    const found: Record<string, Record<string, string>> = {};
+    for (const sheet of Array.from(document.styleSheets)) {
+      for (const rule of Array.from(sheet.cssRules)) {
+        if (!(rule instanceof CSSSupportsRule) || !rule.conditionText.includes('AccentColor')) continue;
+        for (const inner of Array.from(rule.cssRules)) {
+          if (!(inner instanceof CSSStyleRule)) continue;
+          found[inner.selectorText] = Object.fromEntries(['--lobby-accent', '--lobby-accent-hover', '--lobby-accent-text']
+            .map(name => [name, inner.style.getPropertyValue(name).trim()]));
+        }
+      }
+    }
+    return found;
+  });
+  expect(rules[':root']).toEqual({
+    '--lobby-accent': 'AccentColor',
+    '--lobby-accent-hover': 'color-mix(in srgb, AccentColor 80%, black)',
+    '--lobby-accent-text': 'AccentColorText'
+  });
+  expect(rules[':root[data-theme="dark"]']).toEqual({
+    '--lobby-accent': 'AccentColor',
+    '--lobby-accent-hover': 'color-mix(in srgb, AccentColor 85%, white)',
+    '--lobby-accent-text': 'AccentColorText'
+  });
+});
+
+test('browsers without AccentColor keep the green accent in both themes', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  expect(await page.evaluate(() => CSS.supports('color', 'AccentColor'))).toBe(false);
+  await card(page, 'Connect Four').click();
+  const join = page.locator('.lobby-button-primary');
+  await expect(join).toHaveCSS('background-color', 'rgb(45, 106, 79)');
+  await expect(join).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+  await expect(join).toHaveCSS('background-color', 'rgb(63, 143, 107)');
+  await expect(join).toHaveCSS('color', 'rgb(255, 255, 255)');
+});
