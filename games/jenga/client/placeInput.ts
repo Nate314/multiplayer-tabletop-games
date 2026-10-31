@@ -1,11 +1,15 @@
 // Pointer placement input, kept free of three so it runs under node:test; rendering only, never fed to the physics
 import { BLOCK, TURNTABLE } from '../physics.ts';
-import type { Pose, Slot } from '../types.ts';
+import type { Pose, PublicGameState, Slot } from '../types.ts';
 
 // How near, in screen pixels, the dragged block must come to an open spot to snap into it
 export const SNAP_PX = 28;
 // How far out the held block lies, past the turntable's rim
 export const HELD_REST_DISTANCE = 11;
+
+// The server refuses a place while the tower settles or a vote is open, so the carry neither snaps nor drops then
+export const placeReady = (state: Pick<PublicGameState, 'sim' | 'undoVote' | 'dismissVote'>) =>
+  state.sim === null && !state.undoVote && !state.dismissVote;
 
 export function snapSlot(pointer: { x: number; y: number }, targets: { slot: Slot; x: number; y: number }[]): Slot | null {
   let best: Slot | null = null;

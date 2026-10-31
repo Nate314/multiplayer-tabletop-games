@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import TowerView, { type TowerHandle } from './TowerView';
 import { usePreview } from './usePreview.ts';
+import { placeReady } from './placeInput.ts';
 import { across, heldSpeed, keySteps, keyboardTarget, nextSelection, turnKey } from './pullInput.ts';
 import { ownsTurn, turnEndViews, turnStartView, viewTurntable, type SavedViews } from './camera.ts';
 import { BLOCK, anchorWorld } from '../physics.ts';
@@ -49,9 +50,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const tower = useRef<TowerHandle>(null);
   const draw = useCallback((shown: Block[], table: Quat) => tower.current?.draw(shown, table), []);
   usePreview(gameState, localGrab, owns ? localDrive : null, draw);
-  // Pointer callbacks fire between renders, so they read the newest state
+  // Pointer callbacks fire between renders, so they read the newest state; a layout effect, so it is fresh before any child's effect calls back
   const latest = useRef({ gameState, pulling, isMyTurn, owns, table: turntable.q });
-  useEffect(() => {
+  useLayoutEffect(() => {
     latest.current = { gameState, pulling, isMyTurn, owns, table: turntable.q };
   }, [gameState, pulling, isMyTurn, owns, turntable]);
 
@@ -89,6 +90,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       setLocalGrab(null);
       if (steerable()) gameService.sendAction({ type: 'release' });
     },
+    onCarry: () => setLocalGrab(null),
     // Letting go stays allowed during a vote, like a release; a speed needs the turn itself
     onTurn(speed: number | null) {
       if (speed !== null && !latest.current.isMyTurn) return;
@@ -139,7 +141,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const open = openSlots(blocks, turntable.q);
   const free = houseRule(gameState, FREE_PLACEMENT_RULE);
   const { held } = gameState;
-  const ready = sim === null;
+  const ready = placeReady(gameState);
   // A new object only when a field changes, so the view does not redo the carry on every server tick
   const carry = useMemo(() => owns && phase === 'place' && held !== null ? { block: held, free, ready } : null, [owns, phase, held, free, ready]);
 

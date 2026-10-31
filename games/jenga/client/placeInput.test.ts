@@ -1,7 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { HELD_REST_DISTANCE, restPose, snapSlot } from './placeInput.ts';
+import { HELD_REST_DISTANCE, placeReady, restPose, snapSlot } from './placeInput.ts';
 import { BLOCK, TURNTABLE } from '../physics.ts';
+import type { PublicGameState } from '../types.ts';
+
+test('the carry neither snaps nor drops while the tower settles or a vote is open', () => {
+  const calm = { sim: null, undoVote: null, dismissVote: null };
+  assert.equal(placeReady(calm), true);
+  assert.equal(placeReady({ ...calm, sim: { ticks: 0, calmTicks: 0, sinceRelease: 0 } }), false);
+  assert.equal(placeReady({ ...calm, undoVote: {} as PublicGameState['undoVote'] }), false);
+  assert.equal(placeReady({ ...calm, dismissVote: {} as PublicGameState['dismissVote'] }), false);
+});
 
 test('snapSlot picks the nearest open spot within reach', () => {
   const targets = [{ slot: 0 as const, x: 100, y: 0 }, { slot: 1 as const, x: 140, y: 0 }, { slot: 2 as const, x: 180, y: 0 }];

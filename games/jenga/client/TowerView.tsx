@@ -13,6 +13,8 @@ type Interactive = {
   onGrab(block: number, anchor: Vec3): void;
   onDrag(target: Vec3): void;
   onRelease(): void;
+  // The pulled block came out under the pointer; the server has already ended the grab, so nothing is sent
+  onCarry(): void;
   onTurn(speed: number | null): void;
   onPlace(slot: Slot): void;
   onDrop(at: [number, number]): void;
@@ -20,6 +22,8 @@ type Interactive = {
 
 // The held block, yours to place; ready is false while the tower still settles
 type Carry = { block: number; free: boolean; ready: boolean };
+// A pointer position on the page, kept so a carry can be redone without a new event
+type At = { clientX: number; clientY: number };
 
 // The preview draws its frames through this, without a React render each frame
 export type TowerHandle = { draw(blocks: Block[], turntable?: Quat): void; camera(): Orbit; setCamera(orbit: Orbit): void };
@@ -199,7 +203,7 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
-    const castFrom = (event: PointerEvent) => {
+    const castFrom = (event: At) => {
       const rect = canvas.getBoundingClientRect();
       pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
@@ -210,8 +214,9 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
     let pulling: { pointer: number; plane: THREE.Plane; lastSent: number; pending: Vec3 | null; timer: number | null } | null = null;
     // dx is dragged since `since`; sent is the last speed sent, null before the first
     let spin: { pointer: number; dx: number; since: number; lastSent: number; sent: number | null; timer: number | null } | null = null;
-    // at is the table-frame point a free drop would go to, null when not over the tower; placed once a snap has sent the place
-    let carrying: { pointer: number; at: [number, number] | null; placed: boolean } | null = null;
+    // at is the table-frame point a free drop would go to, null when not over the tower; placed once a snap has sent the place;
+    // last is the pointer's last position, so a carry turning ready can snap without a move
+    let carrying: { pointer: number; at: [number, number] | null; placed: boolean; last: At | null } | null = null;
     const spread = () => {
       const [a, b] = [...pointers.values()];
       return Math.hypot(a.x - b.x, a.y - b.y);
@@ -281,9 +286,10 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
     };
 
     // Only previews and requests: the server decides where the block ends up
-    const carryTo = (event: PointerEvent) => {
+    const carryTo = (event: At) => {
       const carried = carryRef.current;
       if (!carrying || !carried || carrying.placed) return;
+      carrying.last = { clientX: event.clientX, clientY: event.clientY };
       castFrom(event);
       const { blocks, turntable } = drawnRef.current;
       const drop = freeDropPose(blocks, turntable, [0, 0]);
@@ -333,11 +339,16 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
         heldPose = null;
       } else if (pulling && !carrying) {
         // The block came out under the pointer, so the same press carries on from where it was last drawn
-        const { pointer } = pulling;
-        endPull();
+        const { pointer, timer } = pulling;
+        if (timer !== null) clearTimeout(timer);
+        pulling = null;
+        interactiveRef.current?.onCarry();
         const mesh = meshes[carried.block];
         heldPose = { p: mesh.position.toArray(), q: mesh.quaternion.toArray() as Quat };
-        carrying = { pointer, at: null, placed: false };
+        carrying = { pointer, at: null, placed: false, last: null };
+      } else if (carrying?.last) {
+        // ready may have just turned true with the pointer resting over a slot
+        return carryTo(carrying.last);
       }
       paint();
     };
@@ -350,7 +361,7 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
       const controls = interactiveRef.current;
       canvas.setPointerCapture(event.pointerId);
       if (hit && id === carryRef.current?.block && pointers.size === 0) {
-        carrying = { pointer: event.pointerId, at: null, placed: false };
+        carrying = { pointer: event.pointerId, at: null, placed: false, last: null };
         carryTo(event);
         return;
       }
