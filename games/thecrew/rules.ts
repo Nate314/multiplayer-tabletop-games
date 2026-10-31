@@ -189,7 +189,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
 }
 
 // Face down: every task during a commander's decision, and the tasks after the one being handed out
-function faceDownTasks(state: GameState): (index: number) => boolean {
+export function faceDownTasks(state: GameState): (index: number) => boolean {
   const firstOpen = state.tasks.findIndex(t => t.owner === null);
   const deciding = state.phase === 'decision' && missionOf(state.mission).rule?.kind === 'takesAll';
   return index => deciding || (state.phase === 'distribute' && state.tasks[index].owner === null && index !== firstOpen);

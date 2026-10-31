@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
 import { carcassonneInfo } from './info.ts';
@@ -12,5 +13,6 @@ export const carcassonne: GameDefinition<GameState, PublicGameState> = {
   applyMove,
   onUndo: (state, random) => ({ ...state, drawPile: shuffle(state.drawPile, random) }),
   toPublicState,
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['drawPile'])
 };

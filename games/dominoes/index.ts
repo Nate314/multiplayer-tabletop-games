@@ -18,5 +18,6 @@ export const dominoes: GameDefinition<GameState, PublicGameState> = {
   onUndo,
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['boneyard'])
 };

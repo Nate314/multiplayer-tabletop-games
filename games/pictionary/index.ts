@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import {
   applyAction, applyMove, createGameState, deadline, finalStandings, onDeadline, onPlayerLeft, privateSeatView, recordsAction,
   resetLobby, resumeClock, spectatorState, toPublicState
@@ -21,5 +22,6 @@ export const pictionary: GameDefinition<GameState, PublicGameState> = {
   privateSeatView,
   spectatorState,
   spectatorsSeeEverySeat: true,
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['deck'])
 };

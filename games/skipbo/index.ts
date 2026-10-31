@@ -19,5 +19,6 @@ export const skipbo: GameDefinition<GameState, PublicGameState> = {
   }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['myHand']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['drawPile', 'stocks'])
 };

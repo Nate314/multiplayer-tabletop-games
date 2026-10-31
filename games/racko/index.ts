@@ -16,5 +16,6 @@ export const racko: GameDefinition<GameState, PublicGameState> = {
   waitingOn,
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['myRack', 'myHeld']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['drawPile'])
 };

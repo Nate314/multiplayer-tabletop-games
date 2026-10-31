@@ -19,5 +19,6 @@ export const uno: GameDefinition<GameState, PublicGameState> = {
   toPublicState,
   // Not `revealed`: that is another seat's hand, which the challenger alone may see
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'drawnCard']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['drawPile'])
 };

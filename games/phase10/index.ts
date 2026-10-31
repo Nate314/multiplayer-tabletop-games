@@ -17,5 +17,6 @@ export const phase10: GameDefinition<GameState, PublicGameState> = {
   onUndo: (state, random) => ({ ...state, drawPile: shuffle(state.drawPile, random) }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['myHand']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['drawPile'])
 };

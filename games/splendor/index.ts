@@ -14,5 +14,6 @@ export const splendor: GameDefinition<GameState, PublicGameState> = {
   onUndo: (state, random) => ({ ...state, decks: shuffleEach(state.decks, random) }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['players']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['decks'])
 };
