@@ -20,7 +20,7 @@ import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
 import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
-import { buildPauseFile, canonicalJson, checkPauseFiles, sealedRoomOf } from './pauseFiles.ts';
+import { buildPauseFile, canonicalJson, checkPauseFiles, pauseFilesMismatch, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
@@ -1135,7 +1135,14 @@ export function createGameManager(
       const mine = { seat: file.seat, seatKey, playerName: file.playerName };
       if (lobby.uploads.size < Object.keys(lobby.players).length) return { ...lobbyStatus(lobby), ...mine };
 
-      const checked = checkPauseFiles(game, [...lobby.uploads.values()].map(entry => entry.file));
+      const files = [...lobby.uploads.values()].map(entry => entry.file);
+      // a throw (too deep to compare, say) refuses every file, so the lobby never stays full
+      let checked: ReturnType<typeof checkPauseFiles>;
+      try {
+        checked = checkPauseFiles(game, files);
+      } catch {
+        checked = pauseFilesMismatch(files, files.map(entry => entry.seat));
+      }
       if ('error' in checked) {
         for (const seat of checked.seats) dropUpload(lobby, seat);
         lobby.error = checked.error;

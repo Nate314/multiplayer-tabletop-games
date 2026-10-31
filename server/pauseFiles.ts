@@ -63,7 +63,7 @@ function namesList(names: string[]): string {
   return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
-function mismatch(files: PauseFile[], seats: Seat[]): { error: string; seats: Seat[] } {
+export function pauseFilesMismatch(files: PauseFile[], seats: Seat[]): { error: string; seats: Seat[] } {
   const named = files.filter(file => seats.includes(file.seat)).sort((a, b) => a.seat - b.seat);
   const names = named.map(file => file.playerName);
   const error = names.length === 1
@@ -104,17 +104,17 @@ export function checkPauseFiles(
   const sizes = [...groups.values()].map(group => group.length).sort((a, b) => b - a);
   if (sizes.length > 1) {
     const largest = sizes[0] > sizes[1] ? [...groups.values()].find(group => group.length === sizes[0])! : [];
-    return mismatch(files, every.filter(seat => !largest.includes(seat)));
+    return pauseFilesMismatch(files, every.filter(seat => !largest.includes(seat)));
   }
 
   const badShares = files.filter(file => typeof file.share !== 'string' || shareHash(file.share) !== file.seal.shareHashes[file.seat]);
-  if (badShares.length > 0) return mismatch(files, badShares.map(file => file.seat));
+  if (badShares.length > 0) return pauseFilesMismatch(files, badShares.map(file => file.seat));
 
   const { players, seal } = files[0];
   assert.deepEqual([...every].sort((a, b) => a - b), Object.keys(players).map(Number).sort((a, b) => a - b));
 
   const room = openSeal(seal, Object.fromEntries(files.map(file => [file.seat, file.share])));
-  if (!room || !roomFits(room, files[0])) return mismatch(files, every);
+  if (!room || !roomFits(room, files[0])) return pauseFilesMismatch(files, every);
 
   // the opened room is unchecked JSON that every player agreed on, so rebuilding its parts may throw
   try {
@@ -122,12 +122,12 @@ export function checkPauseFiles(
     for (const file of files) {
       const parts = pausePlainParts(game, room, file.seat);
       if (canonicalJson(parts.table) !== canonicalJson(file.table) || canonicalJson(parts.history) !== canonicalJson(file.history)) {
-        return mismatch(files, every);
+        return pauseFilesMismatch(files, every);
       }
       if (canonicalJson(parts.hand) !== canonicalJson(file.hand)) badHands.push(file.seat);
     }
-    return badHands.length > 0 ? mismatch(files, badHands) : { room };
+    return badHands.length > 0 ? pauseFilesMismatch(files, badHands) : { room };
   } catch {
-    return mismatch(files, every);
+    return pauseFilesMismatch(files, every);
   }
 }
