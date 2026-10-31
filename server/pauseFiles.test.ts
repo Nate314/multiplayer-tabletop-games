@@ -25,12 +25,14 @@ for (const game of GAMES) {
     const sealed = sealedRoomOf(room);
     const { seal, shares } = sealRoom(sealed, room.state.activePlayers);
     const secret = game.secretState?.(room.state);
-    const secretJson = secret === undefined || secret === null ? null : JSON.stringify(secret);
+    // each field on its own: a leak sits inside a larger object, where the whole secret's JSON would not match
+    const secretFields = secret !== null && typeof secret === 'object' ? Object.values(secret) : [];
+    const secretJsons = secretFields.map(field => JSON.stringify(field)).filter(json => json !== undefined && json.length >= 12);
     for (const seat of room.state.activePlayers) {
       const file = buildPauseFile(game, sealed, seat, { seal, shares }, new Date(0));
       const plain = JSON.stringify({ ...file, seal: null, share: null });
       assert.ok(!plain.includes('key-one') && !plain.includes('key-two'));
-      if (secretJson && secretJson.length > 2) assert.ok(!plain.includes(secretJson), 'secret state leaked');
+      for (const json of secretJsons) assert.ok(!plain.includes(json), `secret state leaked: ${json.slice(0, 40)}`);
       const own = JSON.stringify(game.privateSeatView?.(room.state, seat) ?? null);
       for (const other of room.state.activePlayers.filter(candidate => candidate !== seat)) {
         const hand = JSON.stringify(game.privateSeatView?.(room.state, other) ?? null);
