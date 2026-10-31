@@ -95,11 +95,12 @@ export function buildWorld(blocks: Block[], grip: (id: number) => number, turnta
   // A kinematic ground that never moves: contacts with a fixed body ignore the contact frequency and let the tower sink
   const ground = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -1 - TURNTABLE.height, 0));
   world.createCollider(RAPIER.ColliderDesc.cuboid(100, 1, 100).setFriction(GROUND_FRICTION), ground);
-  // The tower stands on the turntable, whose top is y = 0; created before the blocks so it has the same body handle in every world
+  // The tower stands on the turntable, whose top is y = 0; created before the blocks so it has the same body handle in every world.
+  // A box, not a cylinder: Rapier's cylinder lets a block centered on it fall through at some angles
   const [tx, ty, tz, tw] = turntable.q;
   const table = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicVelocityBased()
     .setTranslation(0, -TURNTABLE.height / 2, 0).setRotation({ x: tx, y: ty, z: tz, w: tw }).setAngvel({ x: 0, y: turntable.w, z: 0 }));
-  world.createCollider(RAPIER.ColliderDesc.cylinder(TURNTABLE.height / 2, TURNTABLE.radius).setFriction(TURNTABLE_FRICTION), table);
+  world.createCollider(RAPIER.ColliderDesc.cuboid(TURNTABLE.radius, TURNTABLE.height / 2, TURNTABLE.radius).setFriction(TURNTABLE_FRICTION), table);
   const bodies = new Map<number, RAPIER.RigidBody>();
   for (const block of blocks) {
     const [x, y, z, w] = block.pose.q;

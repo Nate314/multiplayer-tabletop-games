@@ -234,3 +234,21 @@ test('a turned but undisturbed tower has not toppled', () => {
   assert.equal(toppled(start, turnedRound, null, IDENTITY, QUARTER_TURN), false);
   assert.equal(toppled(start, turnedRound, null), true);
 });
+
+test('the tower stands on the turntable at any angle', () => {
+  // Half-angle sine and cosine of 0, 10, 30, 45, 60 and 90 degrees about Y
+  const angles: [number, number][] = [
+    [0, 1], [0.08715574274765817, 0.9961946980917455], [0.25881904510252074, 0.9659258262890683],
+    [0.3826834323650898, 0.9238795325112867], [0.5, 0.8660254037844387], [Math.SQRT1_2, Math.SQRT1_2],
+  ];
+  for (const [s, c] of angles) {
+    const q: Quat = [0, s, 0, c];
+    const start = startingTower().map(b => ({ ...b, pose: fromTable(b.pose, q) }));
+    const tower = buildWorld(start, () => DEFAULT_GRIP, { q, w: 0, drive: null });
+    stepWorld(tower, null, 40 * STEPS_PER_TICK);
+    const now = readBlocks(tower, start);
+    assert.equal(toppled(start, now, null, q, q), false, `toppled at ${q}`);
+    assert.ok(now[1].pose.p[1] > 0, `block 1 at ${now[1].pose.p} with the table at ${q}`);
+    tower.world.free();
+  }
+});
