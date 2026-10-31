@@ -539,6 +539,9 @@ test('letting go of the turntable is allowed during a vote and nothing else is',
   const voting = { ...turning, undoVote: { requestedBy: 2 as Seat, votes: { 2: true } } };
   assert.equal(refusal(voting, 1, turn(2)), 'An undo vote is in progress');
   assert.equal(turntableOf(act(voting, 1, turn(null))).drive, null);
+  const dismissing = { ...turning, dismissVote: { target: 2 as Seat, requestedBy: 1 as Seat, votes: { 1: true } } };
+  assert.equal(refusal(dismissing, 1, turn(2)), 'A dismiss vote is in progress');
+  assert.equal(turntableOf(act(dismissing, 1, turn(null))).drive, null);
   // A stray key-up with nothing driven changes nothing
   const idle = lobby();
   assert.equal(act(idle, 1, turn(null)), idle);
@@ -555,14 +558,21 @@ test('a grab is refused while the turntable still spins into the next turn', () 
 });
 
 test('the simulation stops only once the turntable has coasted to a stop', () => {
-  let state = act(lobby(), 1, turn(3));
-  for (let tick = 0; tick < 5; tick++) state = simulate(state);
+  // A gentle spin held long enough that the tower rides it at rest, so only the spin itself keeps the simulation going
+  let state = act(lobby(), 1, turn(1));
+  for (let tick = 0; tick < 40; tick++) state = simulate(state);
   state = act(state, 1, turn(null));
-  for (let tick = 0; tick < 300 && simulating(state); tick++) {
+  // atRest zeroes the spin, so the table must have reached 0 on its own and then stayed calm for CALM_TICKS (10) ticks,
+  // the tick it stopped on being the first of them
+  let stoppedAt: number | null = null;
+  let tick = 0;
+  for (; tick < 300 && simulating(state); tick++) {
     state = simulate(state);
-    if (turntableOf(state).w !== 0) assert.equal(simulating(state), true);
+    if (simulating(state) && turntableOf(state).w === 0) stoppedAt ??= tick;
   }
   assert.equal(simulating(state), false);
+  assert.notEqual(stoppedAt, null, 'the simulation ended while the turntable still spun');
+  assert.ok(tick - 1 - stoppedAt! >= 9, `ended ${tick - 1 - stoppedAt!} ticks after the table stopped`);
   assert.equal(turntableOf(state).w, 0);
   assert.equal(turntableOf(state).drive, null);
   assert.equal(state.sim, null);
@@ -633,6 +643,11 @@ test('a disconnect lets go of the turntable', () => {
 test('a room saved before the turntable loads and plays', () => {
   const { turntable: _turntable, turnStartTurntable: _turnStartTurntable, ...saved } = lobby();
   assert.deepEqual(jenga.toPublicState(saved, false, 1).turntable, REST_TURNTABLE);
+  let turning = act(saved, 1, turn(2));
+  for (let tick = 0; tick < 3; tick++) turning = simulate(turning);
+  assert.notDeepEqual(turntableOf(turning).q, IDENTITY);
+  assert.deepEqual(onUndo(turning).turntable, REST_TURNTABLE);
+  forgetWorld('g1');
   const out = dragUntil(act(saved, 1, { type: 'grab', block: MIDDLE, anchor: END }), s => s.held === MIDDLE);
   assert.equal(onUndo(out).blocks.length, 54);
   assert.deepEqual(onUndo(out).turntable, REST_TURNTABLE);
