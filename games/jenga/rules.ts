@@ -11,9 +11,10 @@ import { forgetWorld, keepWorld, worldFor } from './simulation.ts';
 import type { Block, GameState, Pose, PublicGameState, Quat, Result, Seat, Sim, Slot, Turntable, Vec3 } from './types.ts';
 
 const HALF: Vec3 = [BLOCK.length / 2, BLOCK.height / 2, BLOCK.width / 2];
-const CALM_TICKS = 10;
+export const CALM_TICKS = 10;
 const RELEASE_TICKS = 200;
-const COLLAPSE_TICKS = 100;
+// A collapse normally ends by calm; this only stops one that never settles (30 s)
+export const COLLAPSE_TICKS = 600;
 const NEW_SIM: Sim = { ticks: 0, calmTicks: 0, sinceRelease: 0 };
 
 export const topLevel = (blocks: Block[]) => Math.max(...blocks.map(b => b.level));

@@ -268,5 +268,5 @@ export default function TowerView({ blocks, highlight = null, ghost = null, inte
   }), []);
 
   if (failed) return <p className="jenga-no-webgl">This device cannot draw the 3D tower</p>;
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} data-block-count={blocks.length} />;
 }

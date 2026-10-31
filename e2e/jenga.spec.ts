@@ -66,6 +66,22 @@ test.describe('Jenga rules', () => {
     await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and placed it on top');
   });
 
+  test('History starts from the untouched tower', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await grabMiddle(table, alice);
+    for (let press = 0; press < 80 && (await state(table)).held === null; press++) await pressAndTick(table, alice, 'ArrowDown', 1);
+    await settle(table);
+    await place(alice, 'middle').click();
+    await expect(status(alice)).toHaveText("Bob's turn to pull a block");
+    await alice.getByRole('button', { name: 'History' }).click();
+    const dialog = alice.getByRole('dialog', { name: 'History' });
+    const drawn = dialog.locator('.jenga-history [data-block-count]');
+    await dialog.getByRole('slider', { name: 'Step' }).fill('0');
+    await expect(drawn).toHaveAttribute('data-block-count', '54');
+    await dialog.getByRole('slider', { name: 'Step' }).fill('1');
+    await expect(drawn).toHaveAttribute('data-block-count', '54');
+  });
+
   test('no block grip reaches either player over the socket during a grab, pull and place', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     expect((await state(table)).grip).toHaveLength(54);
@@ -109,6 +125,17 @@ test.describe('Jenga rules', () => {
     const end = await state(table);
     expect(end.isGameOver).toBe(true);
     expect(end.winners).toEqual([2]);
+  });
+
+  test('the game-over screen waits for the fallen tower to stop', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    const { blocks } = await state(table);
+    await table.patch({ started: true, blocks: blocks.filter(b => b.id !== 4 && b.id !== 5), sim: { ticks: 0, calmTicks: 0, sinceRelease: 0 } });
+    await table.simulate(5);
+    await expect(status(alice)).toHaveText('Alice toppled the tower!');
+    for (const page of [alice, bob]) await expect(page.getByRole('dialog', { name: 'Game over' })).toHaveCount(0);
+    await settle(table);
+    for (const page of [alice, bob]) await expect(page.getByRole('dialog', { name: 'Game over' })).toBeVisible();
   });
 
   test('a pull in progress settles when the puller leaves', async ({ seat }) => {

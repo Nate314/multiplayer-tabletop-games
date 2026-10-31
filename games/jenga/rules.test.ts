@@ -2,7 +2,7 @@ import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { jenga } from './index.ts';
 import {
-  applyAction, canPull, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
+  CALM_TICKS, COLLAPSE_TICKS, applyAction, canPull, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
   turntableOf,
 } from './rules.ts';
 import { forgetWorld } from './simulation.ts';
@@ -208,6 +208,24 @@ test('a topple ends the game once the collapse comes to rest', () => {
   assert.equal(fallen.gameStatus, 'Alice toppled the tower!');
   assert.equal(fallen.sim, null);
   forgetWorld('g1');
+});
+
+test('a collapse ends only once every block is at rest', () => {
+  for (const pair of [[3, 4], [4, 5]]) {
+    const state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
+    let fallen = act({ ...state, blocks: state.blocks.filter(b => !pair.includes(b.id)) }, 1, { type: 'release' });
+    let ticks = 0;
+    let before = fallen;
+    while (simulating(fallen) && ticks < COLLAPSE_TICKS + 100) {
+      before = fallen;
+      fallen = simulate(fallen);
+      ticks++;
+    }
+    assert.equal(fallen.isGameOver, true);
+    assert.equal(before.sim?.calmTicks, CALM_TICKS - 1);
+    assert.ok(ticks < COLLAPSE_TICKS, `ended after ${ticks} ticks`);
+    forgetWorld('g1');
+  }
 });
 
 test('a world is rebuilt when the state did not come from the last tick', () => {
