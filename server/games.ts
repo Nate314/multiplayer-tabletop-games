@@ -341,6 +341,11 @@ export function createGameManager(
     }
   }
 
+  // A TV may open the lobby before anyone sits down, so it keeps the room alive
+  function tableScreenWatching(room: Room): boolean {
+    return (room.state.spectators ?? []).some(spectator => spectator.tableScreen && room.watching.has(spectator.id));
+  }
+
   // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS
   function startEmptyTimer(roomId: string, room: Room): void {
     if (!room.state.started || room.emptyTimer || connectedPlayers(room.state).length > 0) return;
@@ -654,7 +659,7 @@ export function createGameManager(
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
-      if (!existing && (rejoin === true || role === 'spectator' || tableScreen)) return { error: 'Game not found' };
+      if (!existing && (rejoin === true || role === 'spectator')) return { error: 'Game not found' };
       const room = existing ?? newRoom(game, id);
       const { state } = room;
       // A table screen's typed name is ignored: it is named by the server and found again by its key
@@ -684,6 +689,7 @@ export function createGameManager(
           spectatorKeys: { ...state.spectatorKeys, [added.id]: key }
         };
         room.watching.add(added.id);
+        rooms.set(roomId, room); // a table screen may have just created the room
         save(roomId, room);
         return { roomId, seat: null, spectatorId: added.id, seatKey: key, state: spectatorViewOf(room, added.id)! };
       }
@@ -762,7 +768,7 @@ export function createGameManager(
 
       // A disconnect can settle a dismiss vote, which may move the turn on like any other dismissal
       room.state = resumeIfTurnMoved(room, room.state, dismissed(room, room.state, disconnectPlayer(room.game, room.state, seat, random)));
-      if (room.state.activePlayers.length === 0) {
+      if (room.state.activePlayers.length === 0 && (room.state.started || !tableScreenWatching(room))) {
         deleteRoom(roomId);
         return null;
       }
@@ -1077,7 +1083,8 @@ export function createGameManager(
       if (!room.state.started) { // nothing to keep before the start, and the browser drops its key, so free the name
         const { [spectatorId]: _key, ...spectatorKeys } = room.state.spectatorKeys ?? {};
         room.state = { ...room.state, spectators: (room.state.spectators ?? []).filter(s => s.id !== spectatorId), spectatorKeys };
-        save(roomId, room);
+        if (room.state.activePlayers.length === 0 && !tableScreenWatching(room)) deleteRoom(roomId); // the TV was all that held it open
+        else save(roomId, room);
         return;
       }
       room.state = { ...room.state, handRequests: (room.state.handRequests ?? []).filter(r => r.spectator !== spectatorId) };

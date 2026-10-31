@@ -1,4 +1,4 @@
-import { test, expect, newPlayer } from './fixtures.ts';
+import { test, expect, newPlayer, openJoinDialog } from './fixtures.ts';
 
 async function landing(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1]) {
   const page = await newPlayer(browser, server);
@@ -199,4 +199,34 @@ test('browsers without AccentColor keep the green accent in both themes', async 
   await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
   await expect(join).toHaveCSS('background-color', 'rgb(63, 143, 107)');
   await expect(join).toHaveCSS('color', 'rgb(255, 255, 255)');
+});
+
+async function rowsOf(page: Awaited<ReturnType<typeof newPlayer>>): Promise<{ rows: number; widths: number[]; heights: number[] }> {
+  const boxes = await page.getByRole('group', { name: 'Join as' }).getByRole('button').evaluateAll(
+    (buttons) => buttons.map((b) => {
+      const r = b.getBoundingClientRect();
+      return { y: r.y, width: r.width, height: r.height };
+    }),
+  );
+  return {
+    rows: new Set(boxes.map((b) => Math.round(b.y))).size,
+    widths: boxes.map((b) => b.width),
+    heights: boxes.map((b) => b.height),
+  };
+}
+
+test('the join choices sit in one row, two per row or one per row', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  const sizes = [{ width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 320, height: 700 }];
+  for (const [game, rowCounts] of [['hearts', [1, 2, 4]], ['pictionary', [1, 2, 3]]] as const) {
+    await page.setViewportSize(sizes[0]);
+    await openJoinDialog(page, game);
+    for (const [i, size] of sizes.entries()) {
+      await page.setViewportSize(size);
+      const { rows, widths, heights } = await rowsOf(page);
+      expect(rows, `${game} rows at ${size.width}`).toBe(rowCounts[i]);
+      for (const w of widths) expect(Math.abs(w - widths[0])).toBeLessThanOrEqual(1);
+      for (const h of heights) expect(Math.abs(h - heights[0])).toBeLessThanOrEqual(1);
+    }
+  }
 });

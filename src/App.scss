@@ -365,6 +365,11 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
+.join-dialog {
+  max-width: 640px;
+  container-type: inline-size;
+}
+
 .lobby-dialog h2 {
   margin: 0 0 16px;
   font-size: 1.3rem;
@@ -659,7 +664,7 @@
   text-align: left;
 }
 
-:where([data-game] .rules-switch, [data-game] .layout-switch, .join-role-switch) {
+:where([data-game] .rules-switch, [data-game] .layout-switch) {
   display: flex;
   flex-wrap: wrap; /* more roles are coming; they wrap at 320px */
   justify-content: center;
@@ -674,12 +679,40 @@
   font-weight: 600;
 }
 
-:where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child, .join-role-switch button:first-child) {
+:where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child) {
   border-radius: 6px 0 0 6px;
 }
 
-:where([data-game] .rules-switch button:last-child, [data-game] .layout-switch button:last-child, .join-role-switch button:last-child) {
+:where([data-game] .rules-switch button:last-child, [data-game] .layout-switch button:last-child) {
   border-radius: 0 6px 6px 0;
+}
+
+/* The join choices: one row when the dialog is wide, two per row, one per row when narrow */
+:where(.join-role-switch) {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+:where(.join-role-switch button) {
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+@container (min-width: 560px) {
+  :where(.join-role-switch) {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    grid-template-columns: none;
+  }
+}
+
+@container (max-width: 279px) {
+  :where(.join-role-switch) {
+    grid-template-columns: 1fr;
+  }
 }
 
 :where([data-game] .rules-switch button[aria-pressed="true"], [data-game] .layout-switch button[aria-pressed="true"], .join-role-switch button[aria-pressed="true"]) {
@@ -2089,6 +2122,25 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 :where([data-table-screen] .table-screen-link) {
   margin: 0;
   word-break: break-all;
+}
+
+/* Above the game-over backdrop, so the code can be shown to late joiners from the end screen */
+:where([data-table-screen] .qr-button) {
+  position: relative;
+  z-index: 21;
+}
+
+/* After the lobby rules, so the dialog's bigger code wins at equal weight */
+:where([data-table-screen] .qr-dialog .table-screen-qr) {
+  width: min(60vh, 80vw);
+  height: min(60vh, 80vw);
+}
+
+/* Outside :where() on purpose, so a game's own .modal text-align (Hearts sets left) does not win */
+[data-table-screen] .modal.qr-dialog {
+  width: fit-content; /* sized to the code, not to a game's own .modal width */
+  max-width: 100%;
+  text-align: center;
 }
 
 :where([data-table-screen] .table-screen-players) {
