@@ -2,10 +2,12 @@
 // A play is the whole table as it should be at the end of the turn; the server works out which rack tiles it adds.
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random, Standing } from '../../shared/types.ts';
+import { ADD_ON_FIRST_MELD_RULE, FREE_JOKERS_RULE } from './options.ts';
 import type { GameState, LastMove, Move, PublicGameState, Result, RoundResult, Seat, Table, Tile, TileColor } from './types.ts';
 
 export const COLORS: readonly TileColor[] = ['black', 'blue', 'orange', 'red'];
@@ -131,34 +133,62 @@ function sharesNatural(a: GroupInfo, b: GroupInfo): boolean {
   return a.tiles.some(id => !isJoker(id) && b.tiles.includes(id));
 }
 
+function jokerStays(was: JokerPlace, is: JokerPlace | undefined): boolean {
+  return is !== undefined && is.value === was.value && is.colors.some(color => was.colors.includes(color)) && sharesNatural(is.group, was.group);
+}
+
+function tableGroups(table: Table): GroupInfo[] {
+  return table.map(ids => analyzeGroup(ids)).filter(group => group !== null);
+}
+
+// With Add to melds on your first turn, each table group sits inside one group of the play with its own
+// tiles in the same order and only rack tiles besides, and every joker on the table keeps its meaning
+function addsOnly(table: Table, after: GroupInfo[]): boolean {
+  const onTable = new Set(table.flat());
+  const kept = table.every(ids => after.some(group => group.tiles.filter(id => onTable.has(id)).join(',') === ids.join(',')));
+  const now = jokerPlaces(after);
+  return kept && [...jokerPlaces(tableGroups(table))].every(([id, was]) => jokerStays(was, now.get(id)));
+}
+
 // A joker that no longer stands for the same tile alongside the same tiles has been taken. In a set it may
-// stand for any missing color, so it stays put while one of the colors it could stand for is still missing. It is allowed only
-// if the tile it stood for now sits with the tiles it was with, from the rack or from elsewhere on the table.
-// Each taken joker needs a tile of its own: one tile never frees two jokers.
-function jokersReplaced(before: GroupInfo[], after: GroupInfo[]): boolean {
+// stand for any missing color, so it stays put while one of the colors it could stand for is still missing.
+// A taken joker needs the tile it stood for, from the rack, to sit with the tiles it was with, and one tile
+// never frees two jokers. The joker must then be in a group with two more rack tiles, which jokers may share.
+function takenJokerError(before: GroupInfo[], after: GroupInfo[], added: ReadonlySet<number>): string | null {
   const old = jokerPlaces(before);
   const now = jokerPlaces(after);
-  const used = new Set<number>();
-  return [...old].every(([id, was]) => {
-    const is = now.get(id);
-    const stayed = is !== undefined && is.value === was.value && is.colors.some(color => was.colors.includes(color)) &&
-      sharesNatural(is.group, was.group);
-    if (stayed) return true;
-    const replacement = after.filter(group => sharesNatural(group, was.group)).flatMap(group => group.tiles).find(tileId => {
+  const replacing = new Set<number>();
+  const taken: JokerPlace[] = [];
+  for (const [id, was] of old) {
+    const is = now.get(id)!;
+    if (jokerStays(was, is)) continue;
+    const candidates = after.filter(group => sharesNatural(group, was.group)).flatMap(group => group.tiles).filter(tileId => {
       const tile = tileOf(tileId);
-      return tile.kind === 'number' && !used.has(tileId) && !was.group.tiles.includes(tileId) &&
+      return tile.kind === 'number' && !replacing.has(tileId) && !was.group.tiles.includes(tileId) &&
         tile.value === was.value && was.colors.includes(tile.color);
     });
-    if (replacement === undefined) return false;
-    used.add(replacement);
-    return true;
-  });
+    if (candidates.length === 0) return 'A joker taken from the table must be replaced by the tile it stands for';
+    const replacement = candidates.find(tileId => added.has(tileId));
+    if (replacement === undefined) return 'The tile that replaces a joker must come from your rack';
+    replacing.add(replacement);
+    taken.push(is);
+  }
+  const fromRack = (group: GroupInfo) => group.tiles.filter(tileId => added.has(tileId) && !replacing.has(tileId)).length;
+  if (taken.some(is => fromRack(is.group) < 2)) return 'A joker taken from the table must be played again with at least two tiles from your rack';
+  return null;
 }
 
 // What a play would do, checked against the table and the player's rack. The browser calls it for the preview.
 export type CheckedPlay = { table: Table; added: number[]; meld: number | null };
 
-export function checkPlay(table: Table, melded: boolean, rack: number[], proposed: Table): Result<CheckedPlay> {
+export type PlayRules = { freeJokers: boolean; addOnFirstMeld: boolean };
+
+// A game saved before house rules has none set, so both read as off
+export function playRulesOf(state: Pick<GameState, 'houseRules'>): PlayRules {
+  return { freeJokers: houseRule(state, FREE_JOKERS_RULE), addOnFirstMeld: houseRule(state, ADD_ON_FIRST_MELD_RULE) };
+}
+
+export function checkPlay(table: Table, melded: boolean, rack: number[], proposed: Table, rules: PlayRules): Result<CheckedPlay> {
   const tiles = proposed.flat();
   if (new Set(tiles).size !== tiles.length) return { error: 'A tile can be in only one group' };
   const onTable = new Set(table.flat());
@@ -176,18 +206,24 @@ export function checkPlay(table: Table, melded: boolean, rack: number[], propose
 
   let meld: number | null = null;
   if (!melded) {
-    // In exact order, since reordering a group can change what its jokers stand for
-    const keys = groups.map(group => group.tiles.join(','));
-    const unchanged = table.every(ids => {
-      const at = keys.indexOf(ids.join(','));
-      if (at >= 0) keys[at] = '';
-      return at >= 0;
-    });
-    if (!unchanged) return { error: 'Your first meld may not use or change the tiles on the table' };
+    if (rules.addOnFirstMeld) {
+      if (!addsOnly(table, groups)) return { error: 'On your first meld you may add tiles to the groups on the table, but not move them' };
+    } else {
+      // In exact order, since reordering a group can change what its jokers stand for
+      const keys = groups.map(group => group.tiles.join(','));
+      const unchanged = table.every(ids => {
+        const at = keys.indexOf(ids.join(','));
+        if (at >= 0) keys[at] = '';
+        return at >= 0;
+      });
+      if (!unchanged) return { error: 'Your first meld may not use or change the tiles on the table' };
+    }
+    // Only groups made entirely of rack tiles count, so tiles added to table groups never reach the 30
     meld = groups.filter(group => group.tiles.every(id => !onTable.has(id))).reduce((sum, group) => sum + group.points, 0);
     if (meld < INITIAL_MELD) return { error: `Your first meld must total at least ${INITIAL_MELD} points (this one totals ${meld})` };
-  } else if (!jokersReplaced(table.map(ids => analyzeGroup(ids)).filter(group => group !== null), groups)) {
-    return { error: 'A joker taken from the table must be replaced by the tile it stands for' };
+  } else if (!rules.freeJokers) {
+    const error = takenJokerError(tableGroups(table), groups, new Set(added));
+    if (error) return { error };
   }
   return { state: { table: groups.map(group => group.tiles), added, meld } };
 }
@@ -296,7 +332,7 @@ function finishTurn(state: GameState, seat: Seat): GameState {
 
 function play(state: GameState, seat: Seat, proposed: Table): Result<GameState> {
   const rack = state.racks[seat] ?? [];
-  const checked = checkPlay(state.table, state.melded.includes(seat), rack, proposed);
+  const checked = checkPlay(state.table, state.melded.includes(seat), rack, proposed, playRulesOf(state));
   if ('error' in checked) return checked;
   const { table, added, meld } = checked.state;
   const rest = rack.filter(id => !added.includes(id));

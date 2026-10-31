@@ -1,4 +1,4 @@
-import { MOVE_DURATION_MS, slideFrom } from '../../../src/animation/motion.ts';
+import { MOVE_DURATION_MS, hasMoved, slideFrom } from '../../../src/animation/motion.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { PublicGameState } from '../types.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
@@ -24,7 +24,8 @@ export function slidePlan(previous: Pick<PublicGameState, 'table' | 'rack'>, nex
   });
 }
 
-// Tiles glide to their new places; tiles another player put down come from their row, a drawn tile from the pool
+// Tiles glide to their new places; tiles another player put down come from their row, a drawn tile from the pool.
+// A tile that stays in its place does not slide, so it is not drawn moving at all.
 export function animateMove({ previous, next, root, rectOf }: MoveChange<PublicGameState>) {
   const { lastMove } = next;
   if (!lastMove) return;
@@ -33,6 +34,8 @@ export function animateMove({ previous, next, root, rectOf }: MoveChange<PublicG
     const element = root.querySelector(`[data-anim-key="${tileKey(id)}"]`);
     const fromKey = from === 'self' ? tileKey(id) : from === 'pool' ? POOL_KEY : seatKey(lastMove.playerNumber);
     const rect = rectOf(fromKey);
-    if (element && rect) slideFrom(element, rect, MOVE_DURATION_MS, from === 'self' ? 0 : STAGGER_MS * incoming++);
+    if (!element || !rect) continue;
+    if (from !== 'self') slideFrom(element, rect, MOVE_DURATION_MS, STAGGER_MS * incoming++);
+    else if (hasMoved(rect, element.getBoundingClientRect())) slideFrom(element, rect);
   }
 }

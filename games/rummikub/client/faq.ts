@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is the first meld?',
-    answer: 'Your first play must be groups made only from your own tiles that add up to at least 30 points, counting each tile at its number and a joker as the tile it stands for. In that turn you may not add to or move the tiles already on the table. Players who have made their first meld are marked with a check.'
+    answer: 'Your first play must be groups made only from your own tiles that add up to at least 30 points, counting each tile at its number and a joker as the tile it stands for. In that turn you may not add to or move the tiles already on the table. If the host turned on the house rule Add to melds on your first turn (everyone agrees to it before play), once your new groups reach 30 you may also add tiles from your rack to the groups on the table; those tiles do not count toward the 30, and you still may not split, move or reorder the tiles already there. Players who have made their first meld are marked with a check.'
   },
   {
     question: 'How do I play tiles?',
@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I rearrange the table?',
-    answer: 'After your first meld you may change the table freely during your turn: move tiles between groups, split a group with the thin bar between two of its tiles, or pick up a whole group with its handle and put it at the end of another group to merge them. At the end of the turn every group must be a valid set or run and you must have added at least one tile from your rack. Tiles that were on the table cannot go back to your rack. Click Reset to put the table back as it was.'
+    answer: 'After your first meld you may change the table freely during your turn: move tiles between groups, split a group with the thin bar between two of its tiles, or pick up a whole group with its handle and put it at the end of another group to merge them. At the end of the turn every group must be a valid set or run and you must have added at least one tile from your rack. Tiles that were on the table cannot go back to your rack. Click Reset to go back to your saved arrangement, or to the table as it was if you saved none.'
   },
   {
     question: 'Do other players see my changes?',
@@ -27,7 +27,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do jokers work?',
-    answer: 'A joker stands for any tile. In a run it stands for the number of its place, so put it where it belongs, for example between the red 4 and the red 6 to be a red 5 (hover over it to see what it stands for). In a set it stands for a missing color. After your first meld you may take a joker from the table by putting the tile it stands for in its place (in a set of three, either missing color), from your rack or from elsewhere on the table. The joker must then be used again on the table in the same turn.'
+    answer: 'A joker stands for any tile. In a run it stands for the number of its place, so put it where it belongs, for example between the red 4 and the red 6 to be a red 5 (hover over it to see what it stands for). In a set it stands for a missing color. After your first meld you may take a joker from the table by putting the tile it stands for, from your rack, in its place (in a set of three, either missing color). You must then play the freed joker in the same turn, in a new or existing group, together with at least two more tiles from your rack. If the host turned on the house rule Jokers move freely (everyone agrees to it before play), a joker on the table moves like any other tile and nothing has to replace it.'
   },
   {
     question: 'What if I cannot or do not want to play?',
@@ -52,6 +52,10 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Why is a tile in my rack outlined?',
     answer: 'It is the tile you just drew. The outline stays until your move on your next turn, and it follows the tile when you rearrange your rack. Turn it off with Highlight newly drawn cards in Settings.'
+  },
+  {
+    question: 'Can I keep a good arrangement while I try another?',
+    answer: 'Yes. During your turn click Save when the table and your rack are in an arrangement you would be happy to play; Save works only while every group is a valid set or run and the play would be accepted. Click Reset to come back to it, and Reset again to go back to the start of the turn. Saved arrangements stay in your browser and end with your turn.'
   },
   {
     question: 'Can I take back a move?',

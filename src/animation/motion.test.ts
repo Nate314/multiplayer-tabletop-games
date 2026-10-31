@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardScale, slideOffset } from './motion.ts';
+import { boardScale, hasMoved, slideOffset } from './motion.ts';
 
 test('slideOffset is center to center', () =>
   assert.deepEqual(slideOffset({ x: 0, y: 0, width: 10, height: 10 }, { x: 100, y: 50, width: 10, height: 10 }, 1), { x: -100, y: -50 }));
@@ -14,3 +14,9 @@ const inBoard = (fitScale: string | null) => ({ closest: () => (fitScale === nul
 test('boardScale reads the scale of the board the element is in', () => assert.equal(boardScale(inBoard('0.5')), 0.5));
 
 test('boardScale is 1 outside a scaled board', () => assert.equal(boardScale(inBoard(null)), 1));
+
+test('hasMoved is false within a pixel and true beyond it', () => {
+  assert.equal(hasMoved({ x: 10, y: 10 }, { x: 10.8, y: 9.2 }), false);
+  assert.equal(hasMoved({ x: 10, y: 10 }, { x: 11.5, y: 10 }), true);
+  assert.equal(hasMoved({ x: 10, y: 10 }, { x: 10, y: 8 }), true);
+});
