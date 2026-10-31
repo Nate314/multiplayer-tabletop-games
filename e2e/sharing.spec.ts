@@ -4,7 +4,7 @@ test('a join link opens the join dialog with the game ID and the last used name 
   const { gameId } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/');
-  await visitor.evaluate(() => localStorage.setItem('joinForm', JSON.stringify({ playerName: 'Bob', gameId: 'other' })));
+  await visitor.evaluate(() => localStorage.setItem('multiplayer-tabletop-games:joinForm', JSON.stringify({ playerName: 'Bob', gameId: 'other' })));
   await visitor.goto(`/join/connectfour/${encodeURIComponent(gameId)}`);
   const dialog = visitor.getByRole('dialog', { name: 'Join Connect Four' });
   await expect(dialog.getByLabel('Game ID')).toHaveValue('Fri day #1');

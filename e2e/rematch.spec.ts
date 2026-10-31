@@ -36,7 +36,7 @@ test('Rematch opens a vote and everyone joining starts a new lobby at the same l
   }
   expect((await table.state<{ gameId: string; started: boolean }>())).toMatchObject({ gameId: table.gameId, started: false });
   // Like any lobby, the new one is not remembered for a rejoin, so a refresh goes quietly to the list
-  await expect.poll(() => alice.evaluate(() => sessionStorage.getItem('inGame'))).toBeNull();
+  await expect.poll(() => alice.evaluate(() => sessionStorage.getItem('multiplayer-tabletop-games:inGame'))).toBeNull();
   await alice.reload();
   await expect(alice.locator('.lobby-game').first()).toBeVisible();
   await expect(alice.locator('.lobby-error')).toHaveCount(0);
