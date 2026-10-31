@@ -16,8 +16,9 @@ export type Block = { id: number; level: number; pose: Pose; v?: Vec3; w?: Vec3 
 // anchor is block-local; target is world, at the anchor's height
 export type Grab = { block: number; anchor: Vec3; target: Vec3 };
 
-// The seat pulling this turn and the block they grabbed last, the one block the topple check ignores
-export type Pull = { seat: Seat; block: number };
+// The seat pulling this turn and the block they grabbed last, the one block the topple check ignores;
+// block is null when the turn so far is only turning the turntable
+export type Pull = { seat: Seat; block: number | null };
 // ticks counts from the first grab, or from the topple once the tower has toppled
 export type Sim = { ticks: number; calmTicks: number; sinceRelease: number };
 export type LastMove = { type: 'place'; seat: Seat; block: number; level: number; from: Pose; to: Pose } | { type: 'topple'; seat: Seat };
@@ -36,9 +37,16 @@ export type GameState = BaseGameState & {
   loser: Seat | null;
   placed: Record<Seat, number>;
   lastMove: LastMove | null;
+  turntable?: Turntable;
+  // The turntable's rotation when turnStart was taken; the topple check and an undo use both together
+  turnStartTurntable?: Quat;
 };
 
-export type PublicGameState = Omit<GameState, 'grip' | 'turnStart'> & BasePublicState;
+export type PublicGameState = Omit<GameState, 'grip' | 'turnStart' | 'turnStartTurntable'> & BasePublicState;
 
-export type Action = { type: 'grab'; block: number; anchor: Vec3 } | { type: 'drag'; target: Vec3 } | { type: 'release' };
+export type Action =
+  | { type: 'grab'; block: number; anchor: Vec3 }
+  | { type: 'drag'; target: Vec3 }
+  | { type: 'release' }
+  | { type: 'turn'; speed: number | null };
 export type Move = { type: 'place'; slot: Slot };

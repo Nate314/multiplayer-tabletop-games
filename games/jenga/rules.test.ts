@@ -1,11 +1,14 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { jenga } from './index.ts';
-import { applyAction, canPull, jengaStandings, openSlots, simulate, simulating, topLevel } from './rules.ts';
+import {
+  applyAction, canPull, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
+  turntableOf,
+} from './rules.ts';
 import { forgetWorld } from './simulation.ts';
-import { MAX_REACH, anchorWorld } from './physics.ts';
+import { IDENTITY, MAX_REACH, MAX_SPIN, QUARTER_TURN, REST_TURNTABLE, anchorWorld, fromTable } from './physics.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
-import type { Block, GameState, Quat, Seat, Vec3 } from './types.ts';
+import type { Block, GameState, Pose, Quat, Seat, Vec3 } from './types.ts';
 
 // Middle of level 7, which runs along Z; local +X is its long axis
 const MIDDLE = 22;
@@ -502,4 +505,149 @@ test('standings put the toppler last and everyone else first with blocks placed'
   assert.deepEqual(jengaStandings(over), [
     { seat: 1, place: 2, score: 'Toppled the tower' }, { seat: 2, place: 1, score: '1 block placed' }, { seat: 3, place: 1, score: '0 blocks placed' }
   ]);
+});
+
+const turn = (speed: unknown) => ({ type: 'turn', speed });
+
+// Every block, the turn start and the turntable carried round by `table`, as if the tower had been turned there
+function turnedBy(state: GameState, table: Quat): GameState {
+  const carry = (blocks: Block[]) => blocks.map(b => ({ ...b, pose: fromTable(b.pose, table) }));
+  return { ...state, blocks: carry(state.blocks), turnStart: carry(state.turnStart), turntable: { q: table, w: 0, drive: null }, turnStartTurntable: table };
+}
+
+const nearPose = (a: Pose, b: Pose, within = 1e-9) => [...a.p, ...a.q].every((v, i) => Math.abs(v - [...b.p, ...b.q][i]) < within);
+
+test('turning the turntable starts the simulation and only the current player may turn', () => {
+  const state = lobby();
+  const turning = act(state, 1, turn(2));
+  assert.equal(turntableOf(turning).drive, 2);
+  assert.notEqual(turning.sim, null);
+  assert.equal(turning.started, true);
+  assert.deepEqual(turning.pull, { seat: 1, block: null });
+  assert.equal(refusal(state, 2, turn(2)), 'Not your turn');
+});
+
+test('a turn speed is checked and clamped', () => {
+  const state = lobby();
+  for (const speed of [NaN, Infinity, -Infinity, 'fast', undefined, '2']) assert.equal(refusal(state, 1, turn(speed)), 'Invalid speed', String(speed));
+  assert.equal(turntableOf(act(state, 1, turn(1000))).drive, MAX_SPIN);
+  assert.equal(turntableOf(act(state, 1, turn(-1000))).drive, -MAX_SPIN);
+});
+
+test('letting go of the turntable is allowed during a vote and nothing else is', () => {
+  const turning = act(lobby(), 1, turn(2));
+  const voting = { ...turning, undoVote: { requestedBy: 2 as Seat, votes: { 2: true } } };
+  assert.equal(refusal(voting, 1, turn(2)), 'An undo vote is in progress');
+  assert.equal(turntableOf(act(voting, 1, turn(null))).drive, null);
+  // A stray key-up with nothing driven changes nothing
+  const idle = lobby();
+  assert.equal(act(idle, 1, turn(null)), idle);
+});
+
+test('a turn waits for the last placement to settle', () => {
+  assert.equal(refusal(settling(), 2, turn(1)), 'Wait for the tower to settle');
+});
+
+test('a grab is refused while the turntable still spins into the next turn', () => {
+  const spinning = { ...lobby(), started: true, sim: { ticks: 3, calmTicks: 0, sinceRelease: 3 }, pull: null, turntable: { q: IDENTITY, w: 2, drive: null } };
+  assert.equal(refusal(spinning, 1, { type: 'grab', block: MIDDLE, anchor: END }), 'Wait for the tower to settle');
+  assert.equal(refusal({ ...spinning, pull: { seat: 1 as Seat, block: null } }, 1, { type: 'grab', block: MIDDLE, anchor: END }), 'accepted');
+});
+
+test('the simulation stops only once the turntable has coasted to a stop', () => {
+  let state = act(lobby(), 1, turn(3));
+  for (let tick = 0; tick < 5; tick++) state = simulate(state);
+  state = act(state, 1, turn(null));
+  for (let tick = 0; tick < 300 && simulating(state); tick++) {
+    state = simulate(state);
+    if (turntableOf(state).w !== 0) assert.equal(simulating(state), true);
+  }
+  assert.equal(simulating(state), false);
+  assert.equal(turntableOf(state).w, 0);
+  assert.equal(turntableOf(state).drive, null);
+  assert.equal(state.sim, null);
+  assert.notDeepEqual(turntableOf(state).q, IDENTITY);
+  assert.equal(state.toppled, false);
+  forgetWorld('g1');
+});
+
+test('a turn before any grab that topples the tower is the turner\'s loss', () => {
+  let state = lobby();
+  for (let tick = 0; tick < 400 && !state.toppled; tick++) {
+    if (tick % 10 === 0) state = act(state, 1, turn(Math.floor(tick / 10) % 2 === 0 ? MAX_SPIN : -MAX_SPIN));
+    state = simulate(state);
+  }
+  assert.equal(state.toppled, true);
+  assert.equal(state.loser, 1);
+  const over = settle(state, 700);
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+  forgetWorld('g1');
+});
+
+test('slots and the footprint follow the turned tower', () => {
+  const plain = holding(53);
+  const turned = turnedBy(plain, QUARTER_TURN);
+  assert.deepEqual(openSlots(turned.blocks, QUARTER_TURN), openSlots(plain.blocks));
+  const plainTargets = placementTargets(plain.blocks, IDENTITY);
+  const turnedTargets = placementTargets(turned.blocks, QUARTER_TURN);
+  assert.deepEqual(turnedTargets.map(t => t.slot), plainTargets.map(t => t.slot));
+  turnedTargets.forEach((t, i) => assert.ok(nearPose(t.pose, fromTable(plainTargets[i].pose, QUARTER_TURN)), `slot ${t.slot}`));
+  assert.deepEqual(openSlots(turnedBy(holding(MIDDLE), QUARTER_TURN).blocks, QUARTER_TURN), [0, 1, 2]);
+  // A place on a turned tower lands where its target said, and a pull out still takes the block out
+  const placed = place(turned, 1, { type: 'place', slot: 2 });
+  assert.equal(placed.toppled, false);
+  // The settled tower sags a few mm, so only the spot on the top is compared
+  const [at, aim] = [block(placed, 53).pose.p, turnedTargets.find(t => t.slot === 2)!.pose.p];
+  assert.ok(near(at[0], aim[0]) && near(at[2], aim[2]), String(at));
+  assert.deepEqual(placed.turnStartTurntable, QUARTER_TURN);
+  const grabbed = act(turnedBy(lobby(), QUARTER_TURN), 1, { type: 'grab', block: MIDDLE, anchor: END });
+  const out = dragUntil(grabbed, s => s.held === MIDDLE);
+  assert.equal(out.toppled, false);
+  assert.equal(out.phase, 'place');
+  forgetWorld('g1');
+});
+
+test('undo and a dismissal put the turntable back to its turn-start angle', () => {
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  let state = act(turnedBy(lobby(), eighth), 1, turn(2));
+  for (let tick = 0; tick < 5; tick++) state = simulate(state);
+  assert.notDeepEqual(turntableOf(state).q, eighth);
+  for (const back of [onUndo(state), onPlayerLeft(state, 1)]) {
+    assert.deepEqual(back.turntable, { q: eighth, w: 0, drive: null });
+    assert.deepEqual(back.blocks, state.turnStart);
+  }
+  forgetWorld('g1');
+});
+
+test('a disconnect lets go of the turntable', () => {
+  const state = simulate(act(lobby(), 1, turn(2)));
+  const gone = onPlayerDisconnected(state, 1);
+  assert.equal(turntableOf(gone).drive, null);
+  assert.equal(simulating(gone), true);
+  assert.equal(onPlayerDisconnected(state, 2), state);
+  assert.equal(turntableOf(jenga.resumeClock!(state, 0)).drive, null);
+  forgetWorld('g1');
+});
+
+test('a room saved before the turntable loads and plays', () => {
+  const { turntable: _turntable, turnStartTurntable: _turnStartTurntable, ...saved } = lobby();
+  assert.deepEqual(jenga.toPublicState(saved, false, 1).turntable, REST_TURNTABLE);
+  const out = dragUntil(act(saved, 1, { type: 'grab', block: MIDDLE, anchor: END }), s => s.held === MIDDLE);
+  assert.equal(onUndo(out).blocks.length, 54);
+  assert.deepEqual(onUndo(out).turntable, REST_TURNTABLE);
+  const placed = place(settle(out), 1, { type: 'place', slot: 0 });
+  assert.equal(placed.currentPlayer, 2);
+  assert.equal(placed.toppled, false);
+  forgetWorld('g1');
+});
+
+test('views carry the turntable rounded and never the turn-start angle', () => {
+  const state = { ...act(lobby(), 1, turn(2)), turntable: { q: [0, 0.123456, 0, 0.99234567] as Quat, w: 1.23456, drive: 2 } };
+  for (const viewer of [1, 2, null]) {
+    const json = JSON.stringify(jenga.toPublicState(state, false, viewer));
+    assert.ok(json.includes('"turntable"'));
+    assert.equal(json.includes('turnStartTurntable'), false);
+  }
+  assert.deepEqual(jenga.toPublicState(state, false, 1).turntable, { q: [0, 0.1235, 0, 0.9923], w: 1.235, drive: 2 });
 });

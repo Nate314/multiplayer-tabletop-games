@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { jenga } from './index.ts';
-import { anchorWorld } from './physics.ts';
-import type { GameState, PublicGameState, Vec3 } from './types.ts';
+import { IDENTITY, anchorWorld } from './physics.ts';
+import type { GameState, PublicGameState, Seat, Vec3 } from './types.ts';
 import type { Result } from '../../shared/types.ts';
 
 const ROOM = 'jenga/g1';
@@ -26,15 +26,15 @@ function game() {
 type Manager = ReturnType<typeof game>;
 const raw = (manager: Manager) => manager.rawState(ROOM) as GameState;
 
-// Drags the middle block straight out until it is in hand, then lets the tower settle
-function pullOut(manager: Manager) {
-  ok(manager.action(ROOM, 1, { type: 'grab', block: MIDDLE, anchor: END }));
+// Drags a middle block straight out until it is in hand, then lets the tower settle
+function pullOut(manager: Manager, seat: Seat = 1, id = MIDDLE) {
+  ok(manager.action(ROOM, seat, { type: 'grab', block: id, anchor: END }));
   for (let tick = 0; tick < 400 && raw(manager).held === null; tick++) {
-    const block = raw(manager).blocks.find(b => b.id === MIDDLE)!;
-    ok(manager.action(ROOM, 1, { type: 'drag', target: anchorWorld(block, [100, 0, 0]) }));
+    const block = raw(manager).blocks.find(b => b.id === id)!;
+    ok(manager.action(ROOM, seat, { type: 'drag', target: anchorWorld(block, [100, 0, 0]) }));
     manager.simulateTicks(ROOM, 1);
   }
-  assert.equal(raw(manager).held, MIDDLE);
+  assert.equal(raw(manager).held, id);
 }
 
 // Takes away the middle and one side of level 1, which leaves the tower on one edge, and lets it fall
@@ -149,4 +149,34 @@ test('undo after a topple restores the toppler\'s turn start', () => {
   ok(manager.action(ROOM, 1, { type: 'grab', block: MIDDLE, anchor: END }));
   manager.simulateTicks(ROOM, 1);
   assert.equal(raw(manager).toppled, false);
+});
+
+// Turns the table at `speed` for a few ticks, then lets go and lets it coast to a stop
+function turnTable(manager: Manager, seat: Seat, speed: number) {
+  ok(manager.action(ROOM, seat, { type: 'turn', speed }));
+  manager.simulateTicks(ROOM, 5);
+  ok(manager.action(ROOM, seat, { type: 'turn', speed: null }));
+  manager.simulateTicks(ROOM, 400);
+  assert.equal(raw(manager).sim, null);
+}
+
+test('undo restores the turntable angle a turn started from', () => {
+  const manager = game();
+  turnTable(manager, 1, 1);
+  pullOut(manager);
+  manager.simulateTicks(ROOM, 400);
+  ok(manager.move(ROOM, 1, { type: 'place', slot: 0 }));
+  const afterAlice = raw(manager).turntable!.q;
+  assert.notDeepEqual(afterAlice, IDENTITY);
+  // Bob's turn starts where Alice left the table; he turns it on, then his place is undone
+  turnTable(manager, 2, 1);
+  pullOut(manager, 2, 19);
+  manager.simulateTicks(ROOM, 400);
+  ok(manager.move(ROOM, 2, { type: 'place', slot: 1 }));
+  assert.notDeepEqual(raw(manager).turntable!.q, afterAlice);
+  ok(manager.requestUndo(ROOM, 3));
+  ok(manager.voteUndo(ROOM, 1, true));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.deepEqual(raw(manager).turntable, { q: afterAlice, w: 0, drive: null });
+  assert.equal(raw(manager).currentPlayer, 2);
 });
