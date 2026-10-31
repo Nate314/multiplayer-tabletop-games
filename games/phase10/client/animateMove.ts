@@ -1,5 +1,7 @@
 import { ghostSlide, flash, slideFrom } from '../../../src/animation/motion.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
+import { pieceArt } from '../../../src/assets/pieceArt.ts';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 import { cardFace } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { Card, PublicGameState } from '../types.ts';
@@ -7,6 +9,9 @@ import type { Card, PublicGameState } from '../types.ts';
 export const cardKey = (id: number) => `card-${id}`;
 export const PILE_KEY = 'pile';
 export const DISCARD_KEY = 'discard';
+
+// The drawing under a card, shared by CardView and the flying copy of it; null is a card back
+export const cardArt = (card: Card | null) => cardArtUrl(card === null ? 'stripes' : card.kind === 'wild' ? 'bands' : 'solid');
 
 export type Ghost = { card: Card | null; from: string; to: string };
 
@@ -58,10 +63,12 @@ function ghostCard(card: Card | null): HTMLElement {
   ghost.setAttribute('aria-hidden', 'true');
   if (!card) {
     ghost.className = 'card card-back';
-    ghost.textContent = '10';
+    ghost.appendChild(pieceArt(cardArt(null)));
+    ghost.append('10');
     return ghost;
   }
   ghost.className = `card card-${card.kind === 'number' ? card.color : card.kind}`;
+  ghost.appendChild(pieceArt(cardArt(card)));
   const face = ghost.appendChild(document.createElement('span'));
   face.className = 'card-face';
   face.textContent = cardFace(card);

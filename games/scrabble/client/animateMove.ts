@@ -3,6 +3,8 @@ import { BLANK, tileValue } from '../rules.ts';
 import type { MoveChange } from '../../../src/animation/useMoveAnimation.ts';
 import type { LastMove, PublicGameState, RackTile, Seat } from '../types.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
+import { pieceArt } from '../../../src/assets/pieceArt.ts';
+import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 export const squareKey = (row: number, col: number) => `square-${row}-${col}`;
 export const rackKey = (position: number) => `rack-${position}`; // a place on the rack, whichever tile shows there
@@ -39,11 +41,13 @@ export function tilesUsed(lastMove: LastMove): number {
   return 0;
 }
 
-// A copy of a tile that left the rack, drawn where it was and slid into the bag
+// A copy of a tile that left the rack, face and all, drawn where it was and slid into the bag
 function ghostToBag(root: HTMLElement, letter: RackTile, from: DOMRect, to: DOMRect, delayMs: number) {
   const ghost = document.createElement('span');
   ghost.className = letter === BLANK ? 'tile tile-blank' : 'tile';
+  ghost.setAttribute('aria-hidden', 'true');
   ghost.style.fontSize = `${from.height / 2}px`;
+  ghost.appendChild(pieceArt(cardArtUrl('solid')));
   const letterSpan = ghost.appendChild(document.createElement('span'));
   letterSpan.className = 'tile-letter';
   letterSpan.textContent = letter === BLANK ? '' : letter;

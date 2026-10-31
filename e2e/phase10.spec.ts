@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, expect, ghostsSeen, leave, recordGhosts, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table } from './fixtures.ts';
 import { createDeck } from '../games/phase10/rules.ts';
 import type { Card, CardColor, GameState, Group } from '../games/phase10/types.ts';
 
@@ -621,10 +621,12 @@ test.describe('Phase 10 controls', () => {
   test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
     const animated = await start(seat, 2, { motion: true });
     await deal(animated.table, { hands: { 1: tenCards('blue'), 2: tenCards('green') } });
+    await recordGhosts(animated.bob, '.game-screen', '.card');
     await animated.alice.locator('.piles .pile').nth(0).click();
     await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0);
     await expect.poll(() => animated.bob.evaluate(() => document.getAnimations().length)).toBe(0);
     await expect(animated.bob.locator('.game-screen > .card')).toHaveCount(0);
+    expect(await ghostsSeen(animated.bob)).toEqual([true]);
 
     const still = await start(seat);
     await deal(still.table, { hands: { 1: tenCards('blue'), 2: tenCards('green') } });

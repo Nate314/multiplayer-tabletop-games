@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, recordTones, test, tones, undo, type Seat } from './fixtures.ts';
+import { dismiss, drag, expect, ghostsSeen, leave, lift, openFaq, recordGhosts, recordTones, test, tones, undo, type Seat, type SeatOptions } from './fixtures.ts';
 import { BLANK, emptyBoard } from '../games/scrabble/rules.ts';
 import type { GameState, Placement } from '../games/scrabble/types.ts';
 
@@ -24,8 +24,8 @@ function boardOf(words: Placement[]) {
 }
 
 // Seats the players, then sets up a game in progress on Alice's turn
-async function start(seat: Seat, setup: Setup = {}, names = ['Alice', 'Bob']) {
-  const table = await seat('scrabble', names);
+async function start(seat: Seat, setup: Setup = {}, names = ['Alice', 'Bob'], options: SeatOptions = {}) {
+  const table = await seat('scrabble', names, options);
   const { racks, words = [], ...rest } = setup;
   const patch: Record<string, unknown> = { started: true, currentPlayer: 1, board: boardOf(words), ...rest };
   // The patch replaces the whole of `racks`, so the racks not named keep the tiles they were dealt
@@ -488,6 +488,18 @@ test.describe('Scrabble controls', () => {
 });
 
 test.describe('Scrabble drag and drop', () => {
+  test('an exchanged tile flies into the bag with its face, and nothing is left behind', async ({ seat }) => {
+    const { alice } = await start(seat, { racks: { 1: 'CAT?YZE' } }, ['Alice', 'Bob'], { motion: true });
+    await recordGhosts(alice, '.game-layout', '.tile');
+    await button(alice, 'Exchange').click();
+    for (const letter of ['C', '?', 'Z']) await rackTile(alice, letter).click();
+    await button(alice, 'Exchange 3').click();
+    await expect.poll(() => ghostsSeen(alice)).toEqual([true, true, true]);
+    await expect.poll(() => alice.evaluate(() => document.getAnimations().length)).toBe(0);
+    await expect(alice.locator('.game-layout > .tile')).toHaveCount(0);
+    await expect(alice.locator('.game-layout > .tile-blank')).toHaveCount(0);
+  });
+
   test('a rack tile dragged onto a square is placed, and a blank dragged there asks for its letter', async ({ seat }) => {
     const { alice } = await start(seat, { racks: { 1: '?ATSXYZ' } });
     await drag(alice, rackTile(alice, 'A'), square(alice, 7, 7));
