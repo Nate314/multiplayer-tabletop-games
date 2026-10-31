@@ -92,7 +92,7 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 
 ## Pausing a game
 
-To stop a started game and finish it another day, press Pause in the game header (on a phone or a window 680 px wide or less it is in Settings, and pressing it closes Settings). It works while everyone is connected and no other vote is open. Everyone seated must approve; one decline cancels it, and so does a player disconnecting. A pass-and-play device answers for each of its players. When the vote passes the game shows "Game paused" and each player can press "Download my pause file" ("Download <name>'s pause file" for each player on a shared device).
+To stop a started game and finish it another day, press Pause in the game header (in a window 860 px wide or less it is in Settings, and pressing it closes Settings). It works while everyone is connected and no other vote is open. Everyone seated must approve; one decline cancels it, and so does a player disconnecting. A pass-and-play device answers for each of its players. When the vote passes the game shows "Game paused" and each player can press "Download my pause file" ("Download <name>'s pause file" for each player on a shared device).
 
 - **Keep your file.** Every player needs their own file. A file you lose cannot be replaced, and without every player's file a game the server lost cannot be resumed.
 - **A bit of protection.** The files hold the hidden cards (hands, draw piles, Jenga's grips) encrypted. One file unlocks nothing, but all of them together unlock the hidden cards, so keep yours.
