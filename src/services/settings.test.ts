@@ -175,3 +175,8 @@ test('table layout defaults to hand only and is remembered', () => {
   installStorage({ tableLayout: '"nonsense"' })
   assert.equal(loadTableLayout(), 'handOnly')
 })
+
+test('preferences saved under the old key are kept', () => {
+  installStorage({ preferences: JSON.stringify({ ...DEFAULT_PREFERENCES, muted: true }) })
+  assert.equal(loadPreferences().muted, true)
+})

@@ -40,3 +40,11 @@ test('malformed local seats load as a normal session', () => {
     assert.equal(session?.playerName, 'Ann')
   }
 })
+
+test('a last game saved under the old key is still offered', () => {
+  installStorage('localStorage', { lastGame: JSON.stringify({ gameType: 'gofish', gameId: 'abc', playerName: 'Ann' }) })
+  installStorage('sessionStorage')
+  const session = loadSession()
+  assert.equal(session?.playerName, 'Ann')
+  assert.equal(session?.inGame, false)
+})
