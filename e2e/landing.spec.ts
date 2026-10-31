@@ -190,6 +190,7 @@ test('the lobby accent follows the OS accent color where the browser supports Ac
 
 test('browsers without AccentColor keep the green accent in both themes', async ({ browser, server }) => {
   const { page } = await landing(browser, server);
+  // A canary: Playwright's Chromium lacks AccentColor today; when an upgrade adds it, run this check in a browser that still lacks it
   expect(await page.evaluate(() => CSS.supports('color', 'AccentColor'))).toBe(false);
   await card(page, 'Connect Four').click();
   const join = page.locator('.lobby-button-primary');
