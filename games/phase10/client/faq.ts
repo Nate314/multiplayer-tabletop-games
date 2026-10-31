@@ -23,7 +23,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I lay down my phase?',
-    answer: 'After drawing, select cards in your hand and click "Add selected to group 1" (or group 2). Click a staged card to put it back, or Clear to start over. "Lay down phase" is enabled once every group is right. You must use exactly the cards the phase asks for, and you can lay down only once per hand.'
+    answer: 'After drawing, select cards in your hand and click "Add selected to group 1" (or group 2). Click a staged card to put it back, or Clear to start over. "Lay down phase" is enabled once every group is right. Each group needs at least the cards its part asks for and may have more, such as a run of 8 for a run of 7 or a set of 4 for a set of 3, but you cannot add a group the phase does not ask for: play extra cards by hitting afterwards. You can lay down only once per hand.'
   },
   {
     question: 'How do Wilds work?',

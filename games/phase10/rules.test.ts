@@ -97,6 +97,29 @@ test('a set needs one number, wilds allowed', () => {
   assert.equal(buildGroup(1, { kind: 'set', size: 3 }, [num(7), num(7)]), null);
 });
 
+test('a group may have more cards than its part of the phase asks for', () => {
+  const set = buildGroup(1, { kind: 'set', size: 3 }, [num(7), num(7, 'blue'), wild(), num(7, 'green')]);
+  assert.equal(set?.kind, 'set');
+  assert.equal(set?.kind === 'set' && set.value, 7);
+  assert.equal(set?.cards.length, 4);
+
+  const long = buildGroup(1, { kind: 'run', size: 7 }, [5, 3, 9, 4, 10, 6, 8, 7].map(value => num(value)));
+  assert.equal(long?.kind === 'run' && long.start, 3);
+  assert.equal(long?.cards.length, 8);
+
+  const naturals = [num(9), num(10), num(11), num(12)];
+  const capped = buildGroup(1, { kind: 'run', size: 7 }, [...naturals, wild(), wild(), wild(), wild()]);
+  assert.equal(capped?.kind === 'run' && capped.start, 5);
+  assert.equal(capped?.cards.length, 8);
+  assert.deepEqual(ids(capped?.cards.slice(4) ?? []), ids(naturals));
+
+  const tooLong = Array.from({ length: 12 }, (_, index) => num(index + 1));
+  assert.equal(buildGroup(1, { kind: 'run', size: 4 }, [...tooLong, wild()]), null);
+
+  const reds = Array.from({ length: 9 }, (_, index) => num(index + 1));
+  assert.equal(buildGroup(1, { kind: 'color', size: 7 }, reds)?.kind, 'color');
+});
+
 test('a run is put in order, wilds filling the gaps and then the top', () => {
   const [three, five, w1, w2] = [num(3), num(5), wild(), wild()];
   const group = buildGroup(1, { kind: 'run', size: 4 }, [five, w1, three, w2]);
@@ -223,16 +246,40 @@ test('laying down a phase puts its groups on the table, once per hand', () => {
     { error: 'You have already laid down your phase this hand' });
 });
 
-test('a lay down must use the exact cards of the current phase', () => {
+test('a lay down must meet each part of the current phase, with no extra groups', () => {
   const { state, sevens, twos, extra } = readyToLayDown();
   const layDown = (groups: number[][]) => move(state, 1, { type: 'layDown', groups });
   assert.deepEqual(layDown([ids(sevens)]), { error: 'Phase 1 needs 2 sets of 3' });
+  assert.deepEqual(layDown([ids(sevens), ids(twos), [extra[0].id, extra[1].id]]), { error: 'Phase 1 needs 2 sets of 3' });
   assert.deepEqual(layDown([ids(sevens), [...ids(twos.slice(0, 2)), extra[1].id]]), { error: 'Group 2 is not a set of 3' });
   assert.deepEqual(layDown([ids(sevens), [...ids(twos), extra[0].id]]), { error: 'Group 2 is not a set of 3' });
   assert.deepEqual(layDown([ids(sevens), ids(sevens)]), { error: 'Those cards are not in your hand' });
   assert.deepEqual(layDown([ids(sevens), [twos[0].id, twos[1].id, 99999]]), { error: 'Those cards are not in your hand' });
   assert.deepEqual(move(game({ ...state, phases: { 1: 4, 2: 1 } }), 1, { type: 'layDown', groups: [ids(sevens), ids(twos)] }),
     { error: 'Phase 4 needs 1 run of 7' });
+});
+
+test('a lay down may put more cards in a group than the phase asks for', () => {
+  const { state, sevens, twos, extra } = readyToLayDown();
+  const laid = ok(move(state, 1, { type: 'layDown', groups: [[...ids(sevens), extra[0].id], ids(twos)] }));
+  assert.equal(laid.groups[0].cards.length, 4);
+  assert.equal(laid.groups[1].cards.length, 3);
+  assert.deepEqual(ids(laid.hands[1]), [extra[1].id]);
+  assert.deepEqual(laid.laidPhase, { 1: 1 });
+  assert.equal(laid.gameStatus, 'Alice laid down phase 1');
+});
+
+test('laying down every card in the hand goes out', () => {
+  const sevens = [num(7), num(7, 'blue'), wild()];
+  const twos = [num(2), num(2, 'green'), num(2, 'yellow')];
+  const extra = [num(7, 'green')];
+  const state = game({ hands: { 1: [...sevens, ...extra, ...twos], 2: [num(1)] }, drawnBy: 1 });
+  const done = ok(move(state, 1, { type: 'layDown', groups: [[...ids(sevens), extra[0].id], ids(twos)] }));
+  assert.equal(done.handSummary?.wentOut, 1);
+  assert.equal(done.handSummary?.seats[1].completed, true);
+  assert.equal(done.phases[1], 2);
+  assert.equal(done.currentPlayer, null);
+  assert.ok(done.gameStatus.startsWith('Alice went out.'));
 });
 
 test('hitting needs your own phase down, and may go on anyone\'s group', () => {

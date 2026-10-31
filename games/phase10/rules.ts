@@ -129,9 +129,9 @@ function runOf(owner: Seat, cards: Card[]): Group | null {
   return { owner, kind: 'run', start, cards: ordered };
 }
 
-// The group these cards make for one part of a phase, or null if they do not make it
+// The group these cards make for one part of a phase (at least its size), or null if they do not make it
 export function buildGroup(owner: Seat, requirement: Requirement, cards: Card[]): Group | null {
-  if (cards.length !== requirement.size || !usable(cards)) return null;
+  if (cards.length < requirement.size || !usable(cards)) return null;
   const numbers = naturals(cards);
   if (requirement.kind === 'run') return runOf(owner, cards);
   if (requirement.kind === 'set') {
