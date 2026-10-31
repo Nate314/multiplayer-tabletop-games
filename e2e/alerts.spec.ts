@@ -132,7 +132,7 @@ test.describe('Turn alerts', () => {
     await expect(box).toBeChecked();
     await box.click();
     await expect(box).not.toBeChecked();
-    const saved = await alice.evaluate(() => JSON.parse(localStorage.getItem('preferences') ?? '{}'));
+    const saved = await alice.evaluate(() => JSON.parse(localStorage.getItem('multiplayer-tabletop-games:preferences') ?? '{}'));
     expect(saved.notifications).toBe(false);
   });
 
