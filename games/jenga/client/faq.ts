@@ -39,8 +39,9 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do I place the block?',
     answer: 'Once the block is clear of the tower it is in your hand. Drag it to an open spot on top and it snaps in, or, once ' +
-      'the tower has stopped moving, click Place on top, left, middle or right. Let go anywhere else and the block lies on the ' +
-      'ground beside the turntable, to pick up again. A new level starts across the one below once the top level has 3 blocks. Placing the block ends your turn.'
+      'the tower has stopped moving, click Place on top, left, middle or right. Without Free placement, letting go anywhere ' +
+      'else leaves the block lying on the ground beside the turntable, to pick up again. A new level starts across the one ' +
+      'below once the top level has 3 blocks. Placing the block ends your turn.'
   },
   {
     question: 'What is Free placement?',
