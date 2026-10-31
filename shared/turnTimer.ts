@@ -7,7 +7,7 @@ export function turnLimitMs(state: Pick<BaseGameState, 'houseRules'>): number {
 
 // The one list of votes that pause the turn timer; hand requests involve two people only, so they never do
 export function votePauses(state: BaseGameState): boolean {
-  return !!state.undoVote || !!state.dismissVote || !!state.rematchVote;
+  return !!state.undoVote || !!state.dismissVote || !!state.rematchVote || !!state.pauseVote;
 }
 
 // Stamps the live state with when the current turn began and whether a vote has paused it. The clock only

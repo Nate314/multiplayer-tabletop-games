@@ -285,7 +285,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Back to a game, Open a saved game and Stats span the game list: side by side where they fit, else stacked */
+/* Back to a game, Open a saved game, Resume a game and Stats span the game list: side by side where they fit, else stacked */
 .lobby-actions {
   display: flex;
   flex-wrap: wrap;
@@ -463,7 +463,7 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button, [data-game] .pause-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -500,7 +500,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .pause-button:hover:enabled, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -539,6 +539,13 @@
 
 :where([data-game] .share-panel input) {
   min-width: 0;
+}
+
+/* Pause moves into Settings sooner, as below 680px it pushes the header's last buttons off screen. Outside :where() as below */
+@media (max-width: 680px) {
+  [data-game] .game-header > .pause-button {
+    display: none;
+  }
 }
 
 /* Phones: the title takes its own row with Hide at its end, and Back to games, History, Rules and Settings fit one row under it.
@@ -597,7 +604,7 @@
 }
 
 /* Before the first move there is no history */
-:where([data-game] .history-button:disabled) {
+:where([data-game] .history-button:disabled, [data-game] .pause-button:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -1094,7 +1101,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
-:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button, [data-game] .rematch-vote-list button) {
+:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button, [data-game] .rematch-vote-list button, [data-game] .pause-vote-actions button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -1116,7 +1123,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   justify-content: center;
 }
 
-:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover, [data-game] .rematch-vote-list button:hover) {
+:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover, [data-game] .rematch-vote-list button:hover, [data-game] .pause-vote-actions button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -1217,9 +1224,9 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   color: var(--muted);
 }
 
-/* Undo, dismiss and rematch votes */
+/* Undo, dismiss, rematch and pause votes */
 
-:where([data-game] .undo-vote, [data-game] .dismiss-vote, [data-game] .rematch-vote) {
+:where([data-game] .undo-vote, [data-game] .dismiss-vote, [data-game] .rematch-vote, [data-game] .pause-vote) {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -1229,7 +1236,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   background: var(--platform-backdrop, rgba(0, 0, 0, 0.45));
 }
 
-:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel, [data-game] .rematch-vote-panel) {
+:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel, [data-game] .rematch-vote-panel, [data-game] .pause-vote-panel) {
   padding: 20px;
   border-radius: 10px;
   background: var(--platform-panel-bg, var(--lobby-surface));
@@ -1238,17 +1245,17 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   text-align: center;
 }
 
-:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title, [data-game] .rematch-vote-title) {
+:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title, [data-game] .rematch-vote-title, [data-game] .pause-vote-title) {
   font-weight: 600;
 }
 
-:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list, [data-game] .rematch-vote-list) {
+:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list, [data-game] .rematch-vote-list, [data-game] .pause-vote-list) {
   list-style: none;
   margin: 12px 0;
   padding: 0;
 }
 
-:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions, [data-game] .rematch-vote-actions) {
+:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions, [data-game] .rematch-vote-actions, [data-game] .pause-vote-actions) {
   display: flex;
   gap: 10px;
   justify-content: center;
@@ -1890,6 +1897,17 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   }
 }
 
+/* Up to 680px Pause is here too, alone without the Share and theme heading until the phone width */
+@media (min-width: 481px) and (max-width: 680px) {
+  :where([data-game] .settings-phone-controls:has(> .settings-pause-row)) {
+    display: flex;
+  }
+
+  [data-game] .settings-phone-controls > :not(.settings-pause-row) {
+    display: none;
+  }
+}
+
 :where([data-game] .settings-row) {
   display: flex;
   align-items: center;
@@ -2050,6 +2068,93 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   gap: 8px 16px;
   margin: 8px auto;
   font-weight: 600;
+}
+
+/* Paused game: a panel in place of the table, like the handoff banner */
+
+:where([data-game] .paused-screen) {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(480px, 100%);
+  margin: 24px auto 0;
+  padding: 24px 20px;
+  border-radius: 12px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+:where([data-game] .paused-screen h2) {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+:where([data-game] .paused-screen p) {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+:where([data-game] .paused-screen .primary-button) {
+  min-height: 44px;
+  margin-top: 0;
+}
+
+:where([data-game] .paused-screen-download) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+:where([data-game] .paused-screen-error) {
+  color: var(--lobby-error-text);
+  font-size: 0.875rem;
+}
+
+:where([data-game] .paused-screen-waiting) {
+  font-weight: 600;
+}
+
+/* Resuming a lost game from pause files (ResumeWaitingRoom): who is in, and the code for everyone else */
+
+:where(.lobby .modal.resume-waiting) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
+:where(.lobby .modal.resume-waiting) h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+:where(.lobby .modal.resume-waiting) :is(p, .lobby-error) {
+  margin: 0;
+}
+
+:where(.lobby .resume-waiting-players) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+:where(.lobby .resume-waiting-qr) {
+  display: block;
+  width: min(180px, 60vw);
+  height: min(180px, 60vw);
+}
+
+:where(.lobby .modal.resume-waiting .primary-button) {
+  min-height: 44px;
+  margin-top: 0;
 }
 
 /* Spectator screen and the hand request a player is asked */

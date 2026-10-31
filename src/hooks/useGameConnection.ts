@@ -13,7 +13,7 @@ type Rejoining = { retriesLeft: number; timer?: ReturnType<typeof setTimeout> };
 
 export default function useGameConnection(joinLink: JoinLink | null = null) {
   const [playerNumber, setPlayerNumber] = useState<Seat | null>(null);
-  const [localSeatNumbers, setLocalSeatNumbers] = useState<Seat[] | null>(null); // a pass-and-play device's seats, null for any other join
+  const [heldSeats, setHeldSeats] = useState<{ seat: Seat; seatKey: string }[] | null>(null); // a pass-and-play device's seats and keys, null for any other join
   const [spectatorId, setSpectatorId] = useState<string | null>(null);
   const [credential, setCredential] = useState<string | undefined>(undefined); // the seat key, or for a spectator the spectator key; opens the history
   const [gameState, setGameState] = useState<BasePublicState | null>(null);
@@ -107,7 +107,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       // Any of a shared device's seat keys opens the history
       setCredential(data.seatKey ?? data.localSeats?.[0]?.seatKey);
       localKeys.current = data.localSeats ?? null;
-      setLocalSeatNumbers(data.localSeats?.map(local => local.seat) ?? null);
+      setHeldSeats(data.localSeats ?? null);
       // After switching to a player the same socket is seated, so the role is no longer a spectator's
       if (data.playerNumber !== null) joinedAs.current = { ...joinedAs.current, role: 'player' };
       // A shared device shows whichever seat the server says; no seat until the handoff is passed
@@ -168,7 +168,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setSpectatorId(null);
       setPlayerNumber(null);
       localKeys.current = null;
-      setLocalSeatNumbers(null);
+      setHeldSeats(null);
       setGameState(null);
       updateSession(null);
       setError(message);
@@ -181,7 +181,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setSpectatorId(null);
       setPlayerNumber(null);
       localKeys.current = null;
-      setLocalSeatNumbers(null);
+      setHeldSeats(null);
       setGameState(null);
       setError('Disconnected from server');
       // The seat is held on the server, so the list offers it again
@@ -202,7 +202,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       setSpectatorId(null);
       setPlayerNumber(null);
       localKeys.current = null;
-      setLocalSeatNumbers(null);
+      setHeldSeats(null);
       setGameState(null);
       if (sessionRef.current?.inGame) rejoin();
     };
@@ -270,12 +270,18 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
     updateSession(null);
   }, [leave, updateSession]);
 
+  // A game brought back from pause files: its new keys take the seats like any remembered game
+  const resume = useCallback((next: Session) => {
+    updateSession(next);
+    rejoin();
+  }, [rejoin, updateSession]);
+
   const showSeat = useCallback((seat: Seat | null) => gameService.showSeat(seat), []);
 
   // Only seats still in the game, named as the game state names them
-  const localSeats = localSeatNumbers && gameState
-    ? localSeatNumbers.filter(seat => gameState.activePlayers.includes(seat)).map(seat => ({ seat, name: gameState.playerNames[seat] }))
+  const localSeats = heldSeats && gameState
+    ? heldSeats.filter(({ seat }) => gameState.activePlayers.includes(seat)).map(({ seat, seatKey: key }) => ({ seat, name: gameState.playerNames[seat], seatKey: key }))
     : null;
 
-  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin };
+  return { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin, resume };
 }

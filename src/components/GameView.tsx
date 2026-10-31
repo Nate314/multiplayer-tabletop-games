@@ -21,6 +21,9 @@ import LayoutSwitch from './LayoutSwitch';
 import HandRequestPrompt from './HandRequestPrompt';
 import HandoffScreen from './HandoffScreen';
 import PassAndPlayBar from './PassAndPlayBar';
+import PauseButton from './PauseButton';
+import PauseVote from './PauseVote';
+import PausedScreen from './PausedScreen';
 import gameService from '../services/gameService';
 import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
 import { dismissVoters } from '../../shared/seating.ts';
@@ -39,7 +42,7 @@ type GameViewProps = {
   playerNumber: Seat | null;
   spectatorId: string | null;
   credential: string | undefined;
-  localSeats: { seat: Seat; name: string }[] | null; // a pass-and-play device's seats, null for any other join
+  localSeats: { seat: Seat; name: string; seatKey: string }[] | null; // a pass-and-play device's seats, null for any other join
   onShowSeat: (seat: Seat | null) => void;
   error: string | null;
   onBack: () => void;
@@ -92,6 +95,15 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const [layout, setLayout] = useState<TableLayout>(loadTableLayout);
   const chooseLayout = (next: TableLayout) => { setLayout(next); saveTableLayout(next); };
   const myTurn = playerNumber !== null && gameState.currentPlayer === playerNumber && !gameState.isGameOver;
+  // Keyed off `paused`, not the status line: a rejoin while paused rewrites gameStatus
+  const paused = gameState.paused === true;
+  const canPause = (playerNumber !== null || localSeats !== null) && gameState.started && !gameState.isGameOver && !paused;
+  const pauseBlocked = Boolean(gameState.undoVote || gameState.dismissVote || gameState.rematchVote || gameState.pauseVote) || gameState.disconnected.length > 0;
+  const pauseButton = (close?: () => void) => (
+    <PauseButton disabled={pauseBlocked} onPause={() => { close?.(); gameService.requestPause(); }} />
+  );
+  // A player's credential is its seat key
+  const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber], seatKey: credential }]);
 
   return (
     <WatchingContext value={playerNumber === null}>
@@ -104,8 +116,11 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
           <RulesButton game={game} faq={client.faq} />
           {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} />}
-          <SettingsButton phoneControls={(
+          {canPause && pauseButton()}
+          {/* Pausing closes Settings, so the vote and the paused screen are not left under it */}
+          <SettingsButton phoneControls={(close) => (
             <>
+              {canPause && <div className="settings-row settings-pause-row">Pause the game {pauseButton(close)}</div>}
               <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
               <div className="settings-row">Theme <ThemeToggle /></div>
             </>
@@ -129,11 +144,15 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           playerNumber={playerNumber}
           spectatorId={spectatorId}
           canReact={!handingOff}
-          onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
+          onDismiss={playerNumber === null || paused ? null : (seat) => gameService.requestDismiss(seat)}
         />
         {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
         {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
-        {tableScreen ? (
+        {/* A shared device mid-handoff votes too; the server counts it for every seat it holds */}
+        <PauseVote gameState={gameState} voter={playerNumber ?? localSeats?.[0]?.seat ?? null} onVote={(approve) => gameService.votePause(approve)} />
+        {paused ? (
+          <PausedScreen game={game} gameState={gameState} seats={pausedSeats} onResume={() => gameService.resumeGame()} />
+        ) : tableScreen ? (
           <TableScreenView game={game} client={client} gameState={gameState} />
         ) : handingOff ? (
           <HandoffScreen client={client} gameState={gameState} localSeats={localSeats!} onShow={onShowSeat} />

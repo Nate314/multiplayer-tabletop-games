@@ -8,6 +8,8 @@ import {
   agreeToHouseRules, agreementPending, everyoneAgreed, houseRulesOf, minimumToStart, setHouseRules, tableLimit
 } from '../shared/houseRules.ts';
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
+import { castPauseVote, openPauseVote, pauseVotePassed } from '../shared/pause.ts';
+import { parsePauseFile, type PauseFile, type ResumeStatus, type ResumeUpload } from '../shared/pauseFile.ts';
 import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
@@ -16,6 +18,9 @@ import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spect
 import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
+import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
+import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
+import { buildPauseFile, canonicalJson, checkPauseFiles, pauseFilesMismatch, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
@@ -28,13 +33,7 @@ const ARCHIVE_PRUNE_MS = 24 * 60 * 60 * 1000;
 
 // `history` holds the state before each move, for undo; `timeline` holds the state right after each move.
 // Neither leaves this module except through the game's public view.
-// Games differ in their state types, so a room holds its game's state type-erased.
-type Room = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  game: GameDefinition<any, BasePublicState>;
-  state: BaseGameState;
-  history: BaseGameState[];
-  timeline: BaseGameState[];
+type Room = ViewRoom & {
   clockSeat?: Seat | null; // whose turn the turn timer was stamped for; memory only
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
@@ -50,6 +49,7 @@ type Room = {
 // `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns;
 // `removed` hears of each room deleted, so nothing kept for it outlives it
 // `samePerson` says whether a device hash belongs to the person of any of `hashes` (linked devices)
+// `maxResumeBytes` replaces MAX_RESUME_BYTES, so a test can reach the cap with small files
 export type ManagerHooks = {
   now?: () => number;
   changed?: (roomId: string) => void;
@@ -58,19 +58,46 @@ export type ManagerHooks = {
   removed?: (roomId: string) => void;
   manualSimulation?: boolean;
   samePerson?: (hash: string, hashes: string[]) => boolean;
+  maxResumeBytes?: number;
 };
 
 export type Reseat = { from: Seat; to: Seat | null; seatKey: string }; // `to` is null for a seat that left
-
-const STAMP_KEYS = ['turnStartedAt', 'turnPausedAt'] as const;
-
-type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
 export type JoinResult =
   | { roomId: string; seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }
   | { error: string };
 
 export type LocalSeat = { seat: Seat; seatKey: string };
+
+// The pause files gathered for a game this server lost; in memory only, at most one upload per seat of `players`
+type ResumeLobby = {
+  game: Room['game'];
+  gameId: string;
+  fingerprint: string;
+  shareHashes: Record<Seat, string>; // from the first file, so a later file cannot bring its own
+  players: Record<Seat, string>;
+  uploads: Map<Seat, { file: PauseFile; seatKey: string; device: string | null; bytes: number }>;
+  error: string | null;
+  timer?: ReturnType<typeof setTimeout>;
+  lifetime?: ReturnType<typeof setTimeout>; // forgets it MAX_RESUME_LOBBY_MS after creation, however often it is polled
+};
+
+// Anyone may open a lobby, so the files every lobby holds together are capped to keep the process in memory
+export const MAX_RESUME_BYTES = 200 * 1024 * 1024;
+export const MAX_RESUME_LOBBY_MS = 60 * 60 * 1000; // status reads renew a lobby, but never past this
+const SERVER_BUSY = 'The server is too busy to resume a game. Try again later';
+const NOT_A_PAUSE_FILE = 'This file is not a pause file';
+const ANOTHER_GAME = 'Another game with this ID is on this server';
+const WAITING_FOR_FILES = 'This game is waiting for its pause files. Choose Resume a game and upload yours';
+const doesNotMatch = (name: string) => `${name}'s pause file does not match the others`;
+
+// The file's seats are whole numbers, no more than the game can seat, and the same in `players` and the seal
+function seatsAgree(game: Room['game'], file: PauseFile): boolean {
+  const seats = Object.keys(file.players);
+  const most = Math.max(game.info.maxPlayers, game.info.stretchedPlayers?.max ?? 0);
+  return seats.length <= most && seats.length === Object.keys(file.seal.shareHashes).length &&
+    seats.every(seat => /^[1-9]\d{0,2}$/.test(seat) && Object.hasOwn(file.seal.shareHashes, seat));
+}
 
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
@@ -106,6 +133,9 @@ export function createGameManager(
   games: readonly GameDefinition<any, any>[], random: Random = Math.random, store?: GameStore, hooks: ManagerHooks = {}
 ) {
   const rooms = new Map<string, Room>();
+  const lobbies = new Map<string, ResumeLobby>(); // by room ID; a room ID never has both
+  const maxResumeBytes = hooks.maxResumeBytes ?? MAX_RESUME_BYTES;
+  let resumeBytes = 0; // the JSON size of every file every lobby holds
   const now = hooks.now ?? Date.now;
 
   function pruneArchive(): void {
@@ -238,7 +268,7 @@ export function createGameManager(
 
   // Every change passes through save, so this starts the timer when play begins simulating and stops it when it ends
   function scheduleSimulation(roomId: string, room: Room): void {
-    if (hooks.manualSimulation || !room.game.simulating?.(room.state)) {
+    if (hooks.manualSimulation || room.state.paused || !room.game.simulating?.(room.state)) {
       clearInterval(room.simTimer);
       room.simTimer = undefined;
       return;
@@ -250,7 +280,7 @@ export function createGameManager(
 
   function runSimulationTick(roomId: string, room: Room): void {
     const { game, state } = room;
-    if (rooms.get(roomId) !== room || !game.simulate || !game.simulating?.(state)) return;
+    if (rooms.get(roomId) !== room || state.paused || !game.simulate || !game.simulating?.(state)) return;
     let next: BaseGameState;
     try {
       next = game.simulate(state);
@@ -291,9 +321,10 @@ export function createGameManager(
   }
 
   // A lobby clock runs only while the table could start: everyone agreed and enough players are seated.
-  // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it
+  // A join or leave clears the agreements, so it stops the clock until the last Agree restarts it. No clock runs while paused
   function clockMayRun(room: Room): boolean {
     const { game, state } = room;
+    if (state.paused) return false;
     return state.started || (!awaitingAgreement(room) && state.activePlayers.length >= minimumToStart(game.info));
   }
 
@@ -346,42 +377,13 @@ export function createGameManager(
     return (room.state.spectators ?? []).some(spectator => spectator.tableScreen && room.watching.has(spectator.id));
   }
 
-  // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS
+  // Deletes a started game once nobody has been connected for EMPTY_ROOM_TIMEOUT_MS; a paused game waits for its players
   function startEmptyTimer(roomId: string, room: Room): void {
-    if (!room.state.started || room.emptyTimer || connectedPlayers(room.state).length > 0) return;
+    if (!room.state.started || room.state.paused || room.emptyTimer || connectedPlayers(room.state).length > 0) return;
     room.emptyTimer = setTimeout(() => {
       if (rooms.get(roomId) === room) deleteRoom(roomId);
     }, EMPTY_ROOM_TIMEOUT_MS);
     room.emptyTimer.unref(); // never keeps the process alive on its own
-  }
-
-  // The one place a public state is built: the game hides its secrets and the platform adds the move count
-  function publicView(
-    room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
-  ): BasePublicState {
-    return platformView(room, state, room.game.toPublicState(state, undoAvailable, viewer), moveCount);
-  }
-
-  // Secrets and per-viewer lists are never part of a stored or shared view; the live view adds back what its viewer may see
-  function platformView(
-    room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number
-  ): BasePublicState {
-    const {
-      seatKeys: _seatKeys, seatDevices: _seatDevices, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
-      seatViews: _seatViews, reactions: _reactions, ...view
-    } = raw;
-    const { startedAt, finishedAt, gameNumber } = state;
-    const stamp = Object.fromEntries(STAMP_KEYS.filter(key => key in state).map(key => [key, state[key]]));
-    return {
-      ...view,
-      ...stamp,
-      moveCount,
-      houseRules: houseRulesOf(room.game.info, state),
-      startedAt,
-      finishedAt,
-      gameNumber,
-      ...(state.isGameOver && { standings: standingsOf(room.game, state) })
-    };
   }
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
@@ -427,32 +429,6 @@ export function createGameManager(
     return room && who ? { game, room, who } : null;
   }
 
-  function hasEndMoment(room: Room): boolean {
-    return room.state.isGameOver && !room.timeline.at(-1)?.isGameOver;
-  }
-
-  // The states a history shows, oldest first: the start, each move, and the live state when the game ended without one
-  function historyMoments(room: Room): HistoryMoment[] {
-    const moments: HistoryMoment[] = [
-      { state: room.history[0] ?? room.state, moveCount: 0, historyStep: 'start' },
-      ...room.timeline.map((state, index): HistoryMoment => ({ state, moveCount: index + 1, historyStep: 'move' }))
-    ];
-    if (hasEndMoment(room)) {
-      moments.push({ state: room.state, moveCount: room.timeline.length, historyStep: 'end' });
-    }
-    return moments;
-  }
-
-  function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
-    // The last moment with a move count owns its reactions, so the end moment takes the count it shares with the last move or the start
-    const shared = historyStep !== 'end' && moveCount === room.timeline.length && hasEndMoment(room);
-    const reactions = shared ? [] : (room.state.reactions ?? [])
-      .filter(reaction => reaction.moveCount === moveCount)
-      .map(({ at, emoji, from, fromSpectator, target }): Reaction => ({ from, fromSpectator, target, emoji, at }));
-    const { turnStartedAt: _started, turnPausedAt: _paused, ...past } = state; // a past turn has no live clock
-    return { ...publicView(room, past, false, moveCount, viewer), historyStep, ...(reactions.length > 0 && { reactions }) };
-  }
-
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
     const room = rooms.get(roomId);
     if (!room) return { error: 'Game not found' };
@@ -485,6 +461,7 @@ export function createGameManager(
       playerNames: state.playerNames,
       spectators: state.spectators,
       spectatorKeys: state.spectatorKeys,
+      seatKeys: state.seatKeys, // a pause file may have given a seat a new key since
       seatDevices: state.seatDevices,
       handRequests: state.handRequests,
       startedAt: state.startedAt,
@@ -531,6 +508,17 @@ export function createGameManager(
   function clearEmptyTimer(room: Room): void {
     clearTimeout(room.emptyTimer);
     room.emptyTimer = undefined;
+  }
+
+  // Pauses once every seat approved: a simulation in flight goes back to its turn start, then the room is sealed under the seats' shares
+  function settlePause(room: Room): void {
+    if (!pauseVotePassed(room.state)) return;
+    const { game } = room;
+    let state = room.state;
+    if (game.simulating?.(state) && game.onUndo) state = game.onUndo(state, random);
+    const { turnStartedAt: _started, turnPausedAt: _paused, ...bare } = state;
+    state = { ...bare, paused: true, pauseVote: null, gameStatus: 'Game paused' };
+    room.state = { ...state, pause: sealRoom(sealedRoomOf({ ...room, state }), state.activePlayers) };
   }
 
   // Saves the room, first settling an open rematch vote once every seat has answered: with no connected joiner the
@@ -599,7 +587,7 @@ export function createGameManager(
     }
   }
 
-  // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared.
+  // Nobody is connected after a restart, so every seat is held for a rejoin and open votes are cleared; a paused game stays paused.
   // No game hook runs but `resumeClock`: a game's disconnect hook may deal the next round once nobody is waiting,
   // and a clock restarts from now, so the time the server was down is never charged
   function loadRoom(roomId: string, saved: SavedRoom): void {
@@ -608,7 +596,7 @@ export function createGameManager(
     const disconnected = [...saved.state.activePlayers].sort((a, b) => a - b);
     // Nobody is watching either, so no hand request is still open; downtime is never charged to the turn timer
     let state: BaseGameState = {
-      ...saved.state, undoVote: null, dismissVote: null, rematchVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
+      ...saved.state, undoVote: null, dismissVote: null, rematchVote: null, pauseVote: null, disconnected, handRequests: [], turnStartedAt: null, turnPausedAt: null
     };
     if (game.resumeClock) state = game.resumeClock(state, now());
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
@@ -631,6 +619,101 @@ export function createGameManager(
       rooms.delete(roomId);
       writeStore(roomId, target => target.remove(roomId));
     }
+  }
+
+  // Opens or answers the pause vote through `change`, pausing the room once it passes
+  function changePause(roomId: string, seat: Seat, change: (state: BaseGameState) => Result<BaseGameState>): Result<BasePublicState> {
+    const found = findPlayer(roomId, seat);
+    if ('error' in found) return found;
+    const { room } = found;
+    const result = change(room.state);
+    if ('error' in result) return result;
+    room.state = result.state;
+    settlePause(room);
+    save(roomId, room);
+    return { state: view(room, seat) };
+  }
+
+  // A resume lobby lives EMPTY_ROOM_TIMEOUT_MS from its last upload or status read, and never past its lifetime
+  function touchLobby(roomId: string, lobby: ResumeLobby): void {
+    clearTimeout(lobby.timer);
+    lobby.timer = setTimeout(() => forgetLobby(roomId, lobby), EMPTY_ROOM_TIMEOUT_MS);
+    lobby.timer.unref(); // never keeps the process alive on its own
+    if (lobby.lifetime) return;
+    lobby.lifetime = setTimeout(() => forgetLobby(roomId, lobby), MAX_RESUME_LOBBY_MS);
+    lobby.lifetime.unref();
+  }
+
+  function dropUpload(lobby: ResumeLobby, seat: Seat): void {
+    resumeBytes -= lobby.uploads.get(seat)?.bytes ?? 0;
+    lobby.uploads.delete(seat);
+  }
+
+  // Also releases the bytes its files held; a lobby already forgotten is left alone
+  function forgetLobby(roomId: string, lobby: ResumeLobby): void {
+    clearTimeout(lobby.timer);
+    clearTimeout(lobby.lifetime);
+    if (lobbies.get(roomId) !== lobby) return;
+    for (const seat of [...lobby.uploads.keys()]) dropUpload(lobby, seat);
+    lobbies.delete(roomId);
+  }
+
+  function lobbyStatus(lobby: ResumeLobby): ResumeStatus {
+    const players = Object.entries(lobby.players).map(([seat, name]) => ({ seat: Number(seat), name, ready: lobby.uploads.has(Number(seat)) }));
+    return { gameType: lobby.game.info.id, gameId: lobby.gameId, players, ready: false, error: lobby.error };
+  }
+
+  function roomStatus({ game, state }: Room): ResumeStatus {
+    const players = [...state.activePlayers].sort((a, b) => a - b).map(seat => ({ seat, name: state.playerNames[seat], ready: true }));
+    return { gameType: game.info.id, gameId: state.gameId, players, ready: true, error: null };
+  }
+
+  // A file for a room still paused here takes its held seat: the share proves the seat, so the key and device are replaced
+  function takePausedSeat(roomId: string, room: Room, file: PauseFile, device: string | null): ResumeUpload | { error: string } {
+    const { state } = room;
+    if (!state.paused || !state.pause || state.pause.seal.fingerprint !== file.seal.fingerprint) return { error: ANOTHER_GAME };
+    const { seat } = file;
+    const name = state.playerNames[seat] ?? file.playerName;
+    const share = state.pause.shares[seat];
+    if (share === undefined || !sameSecret(share, file.share)) return { error: doesNotMatch(name) };
+    if (!state.disconnected.includes(seat)) return { error: `${name} is already in this game` };
+    const seatKey = randomUUID();
+    const { [seat]: _old, ...seatDevices } = state.seatDevices ?? {};
+    room.state = { ...state, seatKeys: { ...state.seatKeys, [seat]: seatKey }, seatDevices: device ? { ...seatDevices, [seat]: device } : seatDevices };
+    save(roomId, room);
+    return { ...roomStatus(room), seat, seatKey, playerName: name };
+  }
+
+  // Brings back a lost game paused, with every seat held for its uploader's new key and device.
+  // Every step gets the new keys too, so an undo never brings back a key nobody holds
+  function restoreRoom(roomId: string, lobby: ResumeLobby, sealed: SealedRoom): void {
+    const uploads = [...lobby.uploads];
+    const seatKeys = Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.seatKey]));
+    const seatDevices = Object.fromEntries(uploads.flatMap(([seat, { device }]) => (device ? [[seat, device]] : [])));
+    const rekeyed = (state: BaseGameState): BaseGameState => ({ ...state, seatKeys, seatDevices });
+    const pause = { seal: uploads[0][1].file.seal, shares: Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.file.share])) };
+    const state: BaseGameState = {
+      ...rekeyed(sealed.state),
+      paused: true,
+      disconnected: [...sealed.state.activePlayers].sort((a, b) => a - b),
+      spectators: [],
+      spectatorKeys: {},
+      handRequests: [],
+      pause
+    };
+    const room: Room = {
+      game: lobby.game, state, history: sealed.history.map(rekeyed), timeline: sealed.timeline.map(rekeyed),
+      watching: new Set(), lastReactionAt: new Map()
+    };
+    forgetLobby(roomId, lobby);
+    rooms.set(roomId, room);
+    writeStore(roomId, target => {
+      target.remove(roomId);
+      room.history.forEach((before, index) => {
+        target.save(roomId, room.game.info.id, state, { type: 'push', index, before, after: room.timeline[index] });
+      });
+    });
+    save(roomId, room);
   }
 
   // "Table screen", then "Table screen 2" and so on while the name is taken
@@ -659,6 +742,7 @@ export function createGameManager(
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
+      if (!existing && lobbies.has(roomId)) return { error: WAITING_FOR_FILES };
       if (!existing && (rejoin === true || role === 'spectator')) return { error: 'Game not found' };
       const room = existing ?? newRoom(game, id);
       const { state } = room;
@@ -719,6 +803,7 @@ export function createGameManager(
 
       const roomId = `${game.info.id}/${id}`;
       const existing = rooms.get(roomId);
+      if (!existing && lobbies.has(roomId)) return { error: WAITING_FOR_FILES };
       if (!existing && rejoin === true) return { error: 'Game not found' };
       const room = existing ?? newRoom(game, id);
       const free = tableLimit(game.info, room.state) - room.state.activePlayers.length;
@@ -827,6 +912,7 @@ export function createGameManager(
       if ('error' in found) return found;
       const { room } = found;
       if (!room.game.applyAction) return { error: 'This game has no actions' };
+      if (room.state.paused) return { error: 'The game is paused' };
 
       const recorded = room.game.recordsAction?.(room.state, seat, action) === true;
       const result = room.game.applyAction(room.state, seat, action, random, now());
@@ -850,6 +936,8 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.paused) return { error: 'The game is paused' };
+      if (state.pauseVote) return { error: 'A pause vote is in progress' };
       if (state.rematchVote) return { error: 'A rematch vote is in progress' };
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
@@ -892,13 +980,14 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.paused) return { error: 'The game is paused' };
       // During a rematch vote any seat that has not answered may be dismissed, connected or not
       const rematch = state.rematchVote;
       const held = rematch
         ? state.activePlayers.find(candidate => candidate === target && candidate !== seat && rematch.votes[candidate] === undefined)
         : state.disconnected.find(candidate => candidate === target);
       if (held === undefined) return { error: rematch ? 'That player already answered' : 'That player is not disconnected' };
-      if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
+      if (state.undoVote || state.dismissVote || state.pauseVote) return { error: 'A vote is already in progress' };
 
       const opened = {
         ...state,
@@ -941,9 +1030,10 @@ export function createGameManager(
       const { room } = found;
       const { state } = room;
 
+      if (state.paused) return { error: 'The game is paused' };
       if (!state.isGameOver) return { error: 'The game is not over yet' };
       if (state.rematchVote) return { error: 'A rematch vote is already in progress' };
-      if (state.undoVote || state.dismissVote) return { error: 'A vote is already in progress' };
+      if (state.undoVote || state.dismissVote || state.pauseVote) return { error: 'A vote is already in progress' };
 
       room.state = {
         ...state,
@@ -970,6 +1060,125 @@ export function createGameManager(
       room.state = { ...state, dismissVote, rematchVote: { ...vote, votes: { ...vote.votes, [seat]: join } } };
       settleRematch(roomId, room);
       return { state: view(room, seat) };
+    },
+
+    requestPause(roomId: string, seat: Seat): Result<BasePublicState> {
+      return changePause(roomId, seat, state => openPauseVote(state, seat));
+    },
+
+    votePause(roomId: string, seat: Seat, approve: unknown): Result<BasePublicState> {
+      return changePause(roomId, seat, state => castPauseVote(state, seat, approve));
+    },
+
+    // Not a move: play picks up on the same turn, with a fresh turn clock, once every seat is back
+    resumeGame(roomId: string, seat: Seat): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      const { pause: _pause, ...state } = room.state;
+      if (!state.paused) return { error: 'The game is not paused' };
+      if (state.disconnected.length > 0) {
+        return { error: `Waiting for ${state.disconnected.map(missing => state.playerNames[missing]).join(', ')}` };
+      }
+      let next: BaseGameState = { ...state, pauseVote: null, paused: false, turnStartedAt: null };
+      if (room.game.resumeClock) next = room.game.resumeClock(next, now());
+      room.state = { ...next, gameStatus: 'Play resumed' };
+      save(roomId, room);
+      return { state: view(room, seat) };
+    },
+
+    // One seat's pause file, for that seat's key or remembered device only; any other ask is NOT_AVAILABLE
+    pauseFile(gameType: unknown, gameId: unknown, seat: unknown, credential: unknown, now: Date): { file: PauseFile } | { error: string } {
+      const game = findGame(gameType);
+      const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
+      const state = room?.state;
+      if (!room || !state?.paused || !state.pause || typeof credential !== 'string') return { error: NOT_AVAILABLE };
+      if (typeof seat !== 'number' || !state.activePlayers.includes(seat)) return { error: NOT_AVAILABLE };
+      const key = state.seatKeys?.[seat];
+      const device = hashDeviceId(credential);
+      const hash = state.seatDevices?.[seat];
+      const allowed = (key !== undefined && sameSecret(key, credential)) || (!!device && hash !== undefined && sameSecret(hash, device));
+      if (!allowed) return { error: NOT_AVAILABLE };
+      // From the seal, not the live room: presence and status change while paused, and every file must match the seal
+      const sealed = openSeal(state.pause.seal, state.pause.shares);
+      if (!sealed) return { error: NOT_AVAILABLE };
+      return { file: buildPauseFile(room.game, sealed, seat, state.pause, now) };
+    },
+
+    // An untrusted upload: to its paused room here, else to the resume lobby for its game ID, which restores the room
+    // once every seat's file is in and checks out. The answer carries only the uploader's own new key
+    uploadPauseFile(upload: unknown, deviceId: unknown): ResumeUpload | { error: string } {
+      const text = JSON.stringify(upload) ?? '';
+      const parsed = parsePauseFile(text, games.map(game => game.info.id));
+      if ('error' in parsed) return parsed;
+      const { file } = parsed;
+      const game = findGame(file.gameType)!;
+      if (cleanName(file.gameId) !== file.gameId || !seatsAgree(game, file)) return { error: NOT_A_PAUSE_FILE };
+      const roomId = `${game.info.id}/${file.gameId}`;
+      const device = hashDeviceId(deviceId);
+      const room = rooms.get(roomId);
+      if (room) return takePausedSeat(roomId, room, file, device);
+
+      // Refused before it is stored, so the lobby holds one file per seat of its own game
+      let lobby = lobbies.get(roomId);
+      if (lobby && lobby.fingerprint !== file.seal.fingerprint) return { error: ANOTHER_GAME };
+      if (lobby && canonicalJson(lobby.players) !== canonicalJson(file.players)) return { error: doesNotMatch(file.playerName) };
+      // A share the lobby's seal does not know is a forged claim on the seat, so it never holds the seat
+      const shareHashes = lobby?.shareHashes ?? file.seal.shareHashes;
+      if (shareHash(file.share) !== shareHashes[file.seat]) return { error: doesNotMatch((lobby?.players ?? file.players)[file.seat]) };
+      if (lobby?.uploads.has(file.seat)) return { error: `${lobby.players[file.seat]}'s file is already in` };
+      if (resumeBytes + text.length > maxResumeBytes) return { error: SERVER_BUSY };
+      lobby ??= {
+        game, gameId: file.gameId, fingerprint: file.seal.fingerprint, shareHashes: { ...shareHashes }, players: { ...file.players },
+        uploads: new Map(), error: null
+      };
+      lobbies.set(roomId, lobby);
+      const seatKey = randomUUID();
+      lobby.uploads.set(file.seat, { file, seatKey, device, bytes: text.length });
+      resumeBytes += text.length;
+      lobby.error = null;
+      touchLobby(roomId, lobby);
+      const mine = { seat: file.seat, seatKey, playerName: file.playerName };
+      if (lobby.uploads.size < Object.keys(lobby.players).length) return { ...lobbyStatus(lobby), ...mine };
+
+      const files = [...lobby.uploads.values()].map(entry => entry.file);
+      // a throw (too deep to compare, say) refuses every file, so the lobby never stays full
+      let checked: ReturnType<typeof checkPauseFiles>;
+      try {
+        checked = checkPauseFiles(game, files);
+      } catch {
+        checked = pauseFilesMismatch(files, files.map(entry => entry.seat));
+      }
+      if ('error' in checked) {
+        for (const seat of checked.seats) dropUpload(lobby, seat);
+        lobby.error = checked.error;
+        if (lobby.uploads.size === 0) forgetLobby(roomId, lobby);
+        return lobby.uploads.has(file.seat) ? { ...lobbyStatus(lobby), ...mine } : { error: checked.error };
+      }
+      restoreRoom(roomId, lobby, checked.room);
+      return { ...roomStatus(rooms.get(roomId)!), ...mine };
+    },
+
+    // For a key an upload was given: the lobby's status (which keeps it), or the restored room's; anything else is NOT_AVAILABLE
+    resumeStatus(gameType: unknown, gameId: unknown, credential: unknown): ResumeStatus | { error: typeof NOT_AVAILABLE } {
+      const game = findGame(gameType);
+      if (!game || typeof credential !== 'string') return { error: NOT_AVAILABLE };
+      const roomId = `${game.info.id}/${cleanName(gameId)}`;
+      const holds = (keys: string[]) => keys.some(key => sameSecret(key, credential));
+      const lobby = lobbies.get(roomId);
+      if (lobby && holds([...lobby.uploads.values()].map(upload => upload.seatKey))) {
+        touchLobby(roomId, lobby);
+        return lobbyStatus(lobby);
+      }
+      const room = rooms.get(roomId);
+      return room && holds(Object.values(room.state.seatKeys ?? {})) ? roomStatus(room) : { error: NOT_AVAILABLE };
+    },
+
+    // Only for the end-to-end test hooks in e2e.ts
+    removeRoom(roomId: string): boolean {
+      if (!rooms.has(roomId)) return false;
+      deleteRoom(roomId);
+      return true;
     },
 
     // Not a move: only the log on the live state changes, so undo, the move count and the turn are untouched.

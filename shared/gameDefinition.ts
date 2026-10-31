@@ -62,6 +62,8 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   toPublicState(state: S, undoAvailable: boolean, viewer: Seat | null): Omit<P, 'moveCount'>;
   // Everything `toPublicState` shows only to `seat`; a spectator sees it once that seat allows.
   privateSeatView?(state: S, seat: Seat): unknown;
+  // Everything hidden from every player (draw piles, bags, grips), as a pick of the state's own fields; a seat's own hand is privateSeatView, not this
+  secretState?(state: S): unknown;
   // True when an ordinary spectator's view already shows what every seat's privateSeatView would, so there is nothing to ask for
   spectatorsSeeEverySeat?: boolean;
   // A spectator's table view when it differs from toPublicState(state, undoAvailable, null)

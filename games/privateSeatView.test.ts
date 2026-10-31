@@ -3,36 +3,9 @@ import { describe, it, test } from 'node:test';
 import { GAMES } from './registry.ts';
 import { addPlayer } from '../shared/seating.ts';
 import { spectatorView } from '../shared/spectators.ts';
-import type { BaseGameState, Random } from '../shared/types.ts';
+import { dealt, seeded, type Loose } from './testStates.ts';
 
-// The cases patch private fields directly, so they read the state loosely
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Loose = BaseGameState & Record<string, any>;
-
-function seeded(seed: number): Random {
-  let a = seed;
-  return () => {
-    a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const FOUR_SEATS = ['hearts', 'spades', 'euchre', 'rook', 'thecrew'];
-const NAMES = ['Alice', 'Bob', 'Cara', 'Dan'];
 const EVE = { id: 's1', name: 'Eve', tableScreen: false, allowedSeats: [] };
-
-function dealt(game: (typeof GAMES)[number]): Loose {
-  let state: Loose = game.createGameState('g');
-  const seats = FOUR_SEATS.includes(game.info.id) ? 4 : Math.max(game.info.minPlayers, 2);
-  for (const name of NAMES.slice(0, seats)) {
-    const result = addPlayer(game, state, name, seeded(7));
-    if ('error' in result) assert.fail(result.error);
-    state = result.state;
-  }
-  return state;
-}
 
 // One crafted state per conditional private field, built from the dealt state
 const CASES: Record<string, (s: Loose) => Loose[]> = {

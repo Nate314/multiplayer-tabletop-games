@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stampTurn, turnTimeLeft } from './turnTimer.ts';
+import { stampTurn, turnTimeLeft, votePauses } from './turnTimer.ts';
 import { withRules } from '../server/testing.ts';
 import type { BaseGameState } from './types.ts';
 
@@ -54,4 +54,9 @@ test('a stamp left on a state whose timer is off is removed, keys and all', () =
   assert.equal('turnStartedAt' in out.state, false);
   assert.equal('turnPausedAt' in out.state, false);
   assert.equal(out.clockSeat, null);
+});
+
+test('a pause vote holds the turn timer', () => {
+  assert.equal(votePauses(stateWith(60, { pauseVote: { requestedBy: 1, votes: { 1: true } } })), true);
+  assert.equal(votePauses(stateWith(60)), false);
 });

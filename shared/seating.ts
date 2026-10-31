@@ -122,11 +122,14 @@ export function disconnectPlayer<S extends BaseGameState>(
   if (!state.started) return removePlayer(game, state, seat, random);
   if (!state.activePlayers.includes(seat) || state.disconnected.includes(seat)) return state;
 
+  // A paused game changes only its disconnected list: no status, vote or game hook
+  if (state.paused) return { ...state, disconnected: [...state.disconnected, seat].sort((a, b) => a - b) };
   let next: S = {
     ...state,
     disconnected: [...state.disconnected, seat].sort((a, b) => a - b),
     gameStatus: `${state.playerNames[seat]} disconnected`
   };
+  if (next.pauseVote) next = { ...next, pauseVote: null }; // the vote needs everyone
   if (next.undoVote?.requestedBy === seat) next = { ...next, undoVote: null };
   if (next.dismissVote) next = resolveDismissVote(game, next, random);
   const stillHeld = next.disconnected.includes(seat);
@@ -186,6 +189,8 @@ export function applyMove<S extends BaseGameState>(
   if (state.isGameOver) return { error: 'The game is over' };
   // Only the start needs the minimum: a game that loses players to dismissals plays on, or ends itself in onPlayerLeft
   if (!state.started && state.activePlayers.length < minimumToStart(game.info)) return { error: 'Waiting for more players' };
+  if (state.paused) return { error: 'The game is paused' };
+  if (state.pauseVote) return { error: 'A pause vote is in progress' };
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   if (state.currentPlayer !== seat && !game.allowsOutOfTurn?.(state, seat, move)) return { error: 'Not your turn' };

@@ -2,7 +2,7 @@ import { connectedPlayers } from '../../shared/seating.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
 type VotePanelProps = {
-  className: 'undo-vote' | 'dismiss-vote' | 'rematch-vote'; // prefix of every class, so games can style each vote
+  className: 'undo-vote' | 'dismiss-vote' | 'rematch-vote' | 'pause-vote'; // prefix of every class, so games can style each vote
   title: string;
   votes: Record<Seat, boolean>;
   gameState: BasePublicState;

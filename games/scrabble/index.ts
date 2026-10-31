@@ -16,5 +16,6 @@ export const scrabble: GameDefinition<GameState, PublicGameState> = {
   resumeClock,
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['rack']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['bag'])
 };

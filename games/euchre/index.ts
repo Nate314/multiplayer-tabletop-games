@@ -15,5 +15,6 @@ export const euchre: GameDefinition<GameState, PublicGameState> = {
   waitingOn,
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'discard']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['kitty'])
 };
