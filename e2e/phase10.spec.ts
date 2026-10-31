@@ -129,7 +129,7 @@ test.describe('Phase 10 rules', () => {
     await expect(drawPile(bob)).toBeEnabled();
   });
 
-  test('you may lay down your phase once per hand, using exactly the cards it asks for', async ({ seat }) => {
+  test('you may lay down your phase once per hand, with more cards in a group than it asks for', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await deal(table, {
       hands: {
@@ -141,15 +141,18 @@ test.describe('Phase 10 rules', () => {
     await drawPile(alice).click();
     await stage(alice, 1, 'red 5', 'blue 5', 'green 5', 'yellow 7');
     await stage(alice, 2, 'red 7', 'blue 7', 'green 7');
-    await expect(alice.locator('.lay-down')).toContainText('Group 1: a set of 3 (4/3)');
-    await expect(button(alice, 'Lay down phase')).toBeDisabled(); // four cards where the phase asks for three
+    await expect(alice.locator('.lay-down')).toContainText('Group 1: a set of 3 or more (4 cards)');
+    await expect(button(alice, 'Lay down phase')).toBeDisabled(); // a 7 in the set of 5s
     await alice.locator('.lay-down').getByRole('button', { name: 'yellow 7' }).click();
-    await expect(alice.locator('.lay-down')).toContainText('Group 1: a set of 3 (3/3)');
+    await expect(alice.locator('.lay-down')).toContainText('Group 1: a set of 3 or more (3 cards)');
+    await stage(alice, 2, 'yellow 7');
+    await expect(alice.locator('.lay-down')).toContainText('Group 2: a set of 3 or more (4 cards)');
+    await expect(button(alice, 'Lay down phase')).toBeEnabled();
     await button(alice, 'Lay down phase').click();
 
     await expect(group(alice, 'Set of 5s').locator('.card')).toHaveCount(3);
-    await expect(group(alice, 'Set of 7s').locator('.card')).toHaveCount(3);
-    await expect(handRegion(alice)).toContainText('Your hand (5)');
+    await expect(group(alice, 'Set of 7s').locator('.card')).toHaveCount(4);
+    await expect(handRegion(alice)).toContainText('Your hand (4)');
     await expect(alice.locator('.lay-down')).toHaveCount(0); // no second phase this hand
   });
 
