@@ -16,6 +16,7 @@ import { MAX_SPECTATORS, openHandRequests, spectatorView } from '../shared/spect
 import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
+import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
@@ -28,13 +29,7 @@ const ARCHIVE_PRUNE_MS = 24 * 60 * 60 * 1000;
 
 // `history` holds the state before each move, for undo; `timeline` holds the state right after each move.
 // Neither leaves this module except through the game's public view.
-// Games differ in their state types, so a room holds its game's state type-erased.
-type Room = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  game: GameDefinition<any, BasePublicState>;
-  state: BaseGameState;
-  history: BaseGameState[];
-  timeline: BaseGameState[];
+type Room = ViewRoom & {
   clockSeat?: Seat | null; // whose turn the turn timer was stamped for; memory only
   emptyTimer?: ReturnType<typeof setTimeout>; // set while a started game has nobody connected
   deadlineTimer?: ReturnType<typeof setTimeout>; // set while the game has a deadline
@@ -61,10 +56,6 @@ export type ManagerHooks = {
 };
 
 export type Reseat = { from: Seat; to: Seat | null; seatKey: string }; // `to` is null for a seat that left
-
-const STAMP_KEYS = ['turnStartedAt', 'turnPausedAt'] as const;
-
-type HistoryMoment = { state: BaseGameState; moveCount: number; historyStep: HistoryStep['historyStep'] };
 
 export type JoinResult =
   | { roomId: string; seat: Seat | null; spectatorId?: string; seatKey: string; state: BasePublicState }
@@ -350,35 +341,6 @@ export function createGameManager(
     room.emptyTimer.unref(); // never keeps the process alive on its own
   }
 
-  // The one place a public state is built: the game hides its secrets and the platform adds the move count
-  function publicView(
-    room: Room, state: BaseGameState, undoAvailable: boolean, moveCount: number, viewer: Seat | null
-  ): BasePublicState {
-    return platformView(room, state, room.game.toPublicState(state, undoAvailable, viewer), moveCount);
-  }
-
-  // Secrets and per-viewer lists are never part of a stored or shared view; the live view adds back what its viewer may see
-  function platformView(
-    room: Room, state: BaseGameState, raw: Omit<BasePublicState, 'moveCount'>, moveCount: number
-  ): BasePublicState {
-    const {
-      seatKeys: _seatKeys, seatDevices: _seatDevices, spectatorKeys: _spectatorKeys, handRequests: _handRequests, spectators: _spectators,
-      seatViews: _seatViews, reactions: _reactions, ...view
-    } = raw;
-    const { startedAt, finishedAt, gameNumber } = state;
-    const stamp = Object.fromEntries(STAMP_KEYS.filter(key => key in state).map(key => [key, state[key]]));
-    return {
-      ...view,
-      ...stamp,
-      moveCount,
-      houseRules: houseRulesOf(room.game.info, state),
-      startedAt,
-      finishedAt,
-      gameNumber,
-      ...(state.isGameOver && { standings: standingsOf(room.game, state) })
-    };
-  }
-
   // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
     const base = publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
@@ -420,32 +382,6 @@ export function createGameManager(
     }
     const who = room && access(room.state, typeof credential === 'string' ? credential : undefined, hooks.samePerson);
     return room && who ? { game, room, who } : null;
-  }
-
-  function hasEndMoment(room: Room): boolean {
-    return room.state.isGameOver && !room.timeline.at(-1)?.isGameOver;
-  }
-
-  // The states a history shows, oldest first: the start, each move, and the live state when the game ended without one
-  function historyMoments(room: Room): HistoryMoment[] {
-    const moments: HistoryMoment[] = [
-      { state: room.history[0] ?? room.state, moveCount: 0, historyStep: 'start' },
-      ...room.timeline.map((state, index): HistoryMoment => ({ state, moveCount: index + 1, historyStep: 'move' }))
-    ];
-    if (hasEndMoment(room)) {
-      moments.push({ state: room.state, moveCount: room.timeline.length, historyStep: 'end' });
-    }
-    return moments;
-  }
-
-  function historyStep(room: Room, { state, moveCount, historyStep }: HistoryMoment, viewer: Seat | null): HistoryStep {
-    // The last moment with a move count owns its reactions, so the end moment takes the count it shares with the last move or the start
-    const shared = historyStep !== 'end' && moveCount === room.timeline.length && hasEndMoment(room);
-    const reactions = shared ? [] : (room.state.reactions ?? [])
-      .filter(reaction => reaction.moveCount === moveCount)
-      .map(({ at, emoji, from, fromSpectator, target }): Reaction => ({ from, fromSpectator, target, emoji, at }));
-    const { turnStartedAt: _started, turnPausedAt: _paused, ...past } = state; // a past turn has no live clock
-    return { ...publicView(room, past, false, moveCount, viewer), historyStep, ...(reactions.length > 0 && { reactions }) };
   }
 
   function findPlayer(roomId: string, seat: Seat): { room: Room } | { error: string } {
