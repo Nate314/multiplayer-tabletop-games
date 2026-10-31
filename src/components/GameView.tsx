@@ -40,7 +40,7 @@ type GameViewProps = {
   playerNumber: Seat | null;
   spectatorId: string | null;
   credential: string | undefined;
-  localSeats: { seat: Seat; name: string }[] | null; // a pass-and-play device's seats, null for any other join
+  localSeats: { seat: Seat; name: string; seatKey: string }[] | null; // a pass-and-play device's seats, null for any other join
   onShowSeat: (seat: Seat | null) => void;
   error: string | null;
   onBack: () => void;
@@ -97,7 +97,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const pauseButton = (close?: () => void) => (
     <PauseButton disabled={pauseBlocked} onPause={() => { close?.(); gameService.requestPause(); }} />
   );
-  const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber] }]);
+  // A player's credential is its seat key
+  const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber], seatKey: credential }]);
 
   return (
     <WatchingContext value={playerNumber === null}>
@@ -112,7 +113,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           {/* Pausing closes Settings, so the vote and the paused screen are not left under it */}
           <SettingsButton phoneControls={(close) => (
             <>
-              {canPause && <div className="settings-row">Pause the game {pauseButton(close)}</div>}
+              {canPause && <div className="settings-row settings-pause-row">Pause the game {pauseButton(close)}</div>}
               <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
               <div className="settings-row">Theme <ThemeToggle /></div>
             </>

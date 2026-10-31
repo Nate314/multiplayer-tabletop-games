@@ -16,6 +16,16 @@ test('fetchPauseFile sends the device ID and returns null on a 404', async (t) =
   assert.deepEqual(calls[0].init?.headers, { Authorization: `Bearer ${deviceId()}` });
 });
 
+test('fetchPauseFile sends the seat key when there is one', async (t) => {
+  const calls: (RequestInit | undefined)[] = [];
+  t.mock.method(globalThis, 'fetch', async (_url: string, init?: RequestInit) => {
+    calls.push(init);
+    return new Response('{"error":"Not available"}', { status: 404 });
+  });
+  await fetchPauseFile('uno', 'g', 2, 'seat-key-2');
+  assert.deepEqual(calls[0]?.headers, { Authorization: 'Bearer seat-key-2' });
+});
+
 test('fetchPauseFile returns the file, and null when the request fails', async (t) => {
   const file = { format: 'multiplayer-tabletop-games-pause', seat: 1 };
   const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json(file));

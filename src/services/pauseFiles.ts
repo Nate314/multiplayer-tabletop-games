@@ -9,11 +9,11 @@ export const RESUME_POLL_MS = 2000;
 const NOT_A_PAUSE_FILE = 'This file is not a pause file';
 const UNREACHABLE = 'Could not reach the server';
 
-// The server builds the file for a seat this device holds; null when it could not be fetched
-export async function fetchPauseFile(gameType: string, gameId: string, seat: Seat): Promise<PauseFile | null> {
+// The server builds the file for the seat's key, or without one for a seat this device holds; null when it could not be fetched
+export async function fetchPauseFile(gameType: string, gameId: string, seat: Seat, seatKey?: string): Promise<PauseFile | null> {
   try {
     const response = await fetch(`/api/pause-file/${gameType}/${encodeURIComponent(gameId)}/${seat}`, {
-      headers: { Authorization: `Bearer ${deviceId()}` }
+      headers: { Authorization: `Bearer ${seatKey ?? deviceId()}` }
     });
     if (!response.ok) return null;
     return await response.json() as PauseFile;

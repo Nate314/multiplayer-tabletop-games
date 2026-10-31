@@ -6,7 +6,7 @@ import type { BasePublicState, Seat } from '../../shared/types.ts';
 type PausedScreenProps = {
   game: GameInfo;
   gameState: BasePublicState;
-  seats: { seat: Seat; name: string }[]; // the seats this device holds, empty for a spectator or table screen
+  seats: { seat: Seat; name: string; seatKey?: string }[]; // the seats this device holds, empty for a spectator or table screen
   onResume: () => void;
 };
 
@@ -15,9 +15,9 @@ export default function PausedScreen({ game, gameState, seats, onResume }: Pause
   const [failed, setFailed] = useState<Seat | null>(null);
   const waiting = gameState.disconnected.map(seat => gameState.playerNames[seat]);
 
-  async function download(seat: Seat) {
+  async function download(seat: Seat, seatKey: string | undefined) {
     setFailed(null);
-    const file = await fetchPauseFile(game.id, gameState.gameId, seat);
+    const file = await fetchPauseFile(game.id, gameState.gameId, seat, seatKey);
     if (file) downloadPauseFile(file);
     else setFailed(seat);
   }
@@ -28,9 +28,9 @@ export default function PausedScreen({ game, gameState, seats, onResume }: Pause
       {seats.length > 0 && (
         <p>Keep your pause file. If the server loses this game, everyone's files together bring it back.</p>
       )}
-      {seats.map(({ seat, name }) => (
+      {seats.map(({ seat, name, seatKey }) => (
         <div key={seat} className="paused-screen-download">
-          <button type="button" className="primary-button" onClick={() => download(seat)}>
+          <button type="button" className="primary-button" onClick={() => download(seat, seatKey)}>
             {seats.length === 1 ? 'Download my pause file' : `Download ${name}'s pause file`}
           </button>
           {failed === seat && <span className="paused-screen-error" role="alert">Could not download the pause file</span>}

@@ -521,11 +521,17 @@
   min-width: 0;
 }
 
+/* Pause moves into Settings sooner, as below 680px it pushes the header's last buttons off screen. Outside :where() as below */
+@media (max-width: 680px) {
+  [data-game] .game-header > .pause-button {
+    display: none;
+  }
+}
+
 /* Phones: the title takes its own row, and Back to games, History, Rules and Settings fit one row under it.
    Share and the theme toggle move into Settings and the GitHub link stays on the landing page only.
    Outside :where(), so no game's header rule can show them again. */
 @media (max-width: 480px) {
-  [data-game] .game-header > .pause-button,
   [data-game] .game-header > .share-wrapper,
   [data-game] .game-header > .github-link,
   [data-game] .game-header > .theme-toggle {
@@ -1817,6 +1823,17 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 @media (max-width: 480px) {
   :where([data-game] .settings-phone-controls) {
     display: flex;
+  }
+}
+
+/* Up to 680px Pause is here too, alone without the Share and theme heading until the phone width */
+@media (min-width: 481px) and (max-width: 680px) {
+  :where([data-game] .settings-phone-controls:has(> .settings-pause-row)) {
+    display: flex;
+  }
+
+  [data-game] .settings-phone-controls > :not(.settings-pause-row) {
+    display: none;
   }
 }
 
