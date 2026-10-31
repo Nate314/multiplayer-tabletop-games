@@ -1,4 +1,4 @@
-import { test, expect, setPreference } from './fixtures.ts';
+import { test, expect, newPlayer, setPreference } from './fixtures.ts';
 
 test.describe('Settings', () => {
   test('the gear opens Settings from the landing page and the game header, every setting at its default', async ({ seat }) => {
@@ -63,7 +63,8 @@ test.describe('Settings', () => {
     await expect(header.getByRole('button', { name: 'Share' })).toBeVisible();
     await expect(header.getByRole('button', { name: `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode` })).toBeVisible();
   });
-  test('a theme saved before the storage prefix is kept and copied', async ({ page }) => {
+  test('a theme saved before the storage prefix is kept and copied', async ({ browser, server }) => {
+    const page = await newPlayer(browser, server);
     const stored = (key: string) => page.evaluate(k => localStorage.getItem(k), key);
     await page.goto('/');
     await page.evaluate(() => { localStorage.clear(); localStorage.setItem('theme', 'dark'); });
