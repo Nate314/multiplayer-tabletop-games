@@ -695,6 +695,9 @@ test.describe('Rummikub controls', () => {
 
     await settled();
     await drag(alice, rackTile(alice, J1), rackArea(alice).locator('.rk-tile').first());
+    // The drop must have landed and the drag's one-tick click guard be spent, or Draw's click can be swallowed under load
+    await expect.poll(async () => (await titles(rackArea(alice)))[0]).toBe(tileName(J1));
+    await expect(alice.locator('.rk-held')).toHaveCount(0);
     await settled();
     await button(alice, 'Draw a tile').click();
     await expect(rackHeader(alice)).toHaveText('Your rack (6)');
