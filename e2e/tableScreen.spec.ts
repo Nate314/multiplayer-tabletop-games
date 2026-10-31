@@ -146,6 +146,20 @@ test('the table screen shows the QR code from the header during play', async ({ 
   const dialog = tv.getByRole('dialog', { name: 'Scan to join' });
   await expect(dialog.locator('.table-screen-qr svg')).toBeVisible();
   await expect(dialog.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${table.gameId}$`));
+  for (const size of [{ width: 1920, height: 889 }, { width: 1280, height: 720 }, { width: 390, height: 844 }, { width: 320, height: 700 }]) {
+    await tv.setViewportSize(size);
+    const fit = await dialog.evaluate((el) => {
+      const qr = el.querySelector('.table-screen-qr')!.getBoundingClientRect();
+      const box = el.getBoundingClientRect();
+      return {
+        overflow: el.scrollWidth - el.clientWidth,
+        square: Math.abs(qr.width - qr.height),
+        inModal: qr.left >= box.left && qr.right <= box.right && qr.top >= box.top && qr.bottom <= box.bottom,
+        inViewport: qr.left >= 0 && qr.right <= innerWidth && qr.top >= 0 && qr.bottom <= innerHeight,
+      };
+    });
+    expect(fit, `${size.width}x${size.height}`).toEqual({ overflow: 0, square: 0, inModal: true, inViewport: true });
+  }
   await dialog.getByRole('button', { name: 'Close' }).click();
   await expect(dialog).toBeHidden();
   await tv.getByRole('button', { name: 'Show QR code' }).click();

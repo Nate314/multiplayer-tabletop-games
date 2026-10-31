@@ -2092,6 +2092,8 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 
 /* Outside :where() on purpose, so a game's own .modal text-align (Hearts sets left) does not win */
 [data-table-screen] .modal.qr-dialog {
+  width: fit-content; /* sized to the code, not to a game's own .modal width */
+  max-width: 100%;
   text-align: center;
 }
 
