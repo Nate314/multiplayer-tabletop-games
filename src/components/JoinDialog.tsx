@@ -67,7 +67,7 @@ export default function JoinDialog({
   return (
     <div className="lobby-overlay">
       <form
-        className="lobby-dialog"
+        className="lobby-dialog join-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="join-dialog-title"
