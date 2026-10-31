@@ -54,6 +54,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'It is the tile you just drew. The outline stays until your move on your next turn, and it follows the tile when you rearrange your rack. Turn it off with Highlight newly drawn cards in Settings.'
   },
   {
+    question: 'Can I keep a good arrangement while I try another?',
+    answer: 'Yes. During your turn click Save when the table and your rack are in an arrangement you would be happy to play; Save works only while every group is a valid set or run and the play would be accepted. Click Reset to come back to it, and Reset again to go back to the start of the turn. Saved arrangements stay in your browser and end with your turn.'
+  },
+  {
     question: 'Can I take back a move?',
     answer: 'Click Undo to ask everyone to undo the last turn. It is undone only if every player still in the game approves.'
   },

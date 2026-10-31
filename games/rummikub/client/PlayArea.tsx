@@ -3,7 +3,7 @@ import gameService from '../../../src/services/gameService';
 import Pickable from './Pickable';
 import TableArea from './TableArea';
 import Tile from './Tile';
-import { canReturnToRack, clickTile, isRackTarget, placeHeld, resetDraft, sortRack, splitGroup } from './draft.ts';
+import { canReturnToRack, clickTile, isRackTarget, placeHeld, resetTo, sameDraft, sortRack, splitGroup } from './draft.ts';
 import { useLocalSlides } from './useLocalSlides.ts';
 import { useDrag } from '../../../src/drag/useDrag.ts';
 import { takeDrop } from '../../../src/drag/recentDrop.ts';
@@ -45,6 +45,7 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
   const rootRef = useRef<HTMLDivElement>(null);
   const captureSlides = useLocalSlides(rootRef, onRearranged);
   const [state, setState] = useState<Interaction>({ draft: { table, rack: initialRack }, held: null, hint: null });
+  const [checkpoint, setCheckpoint] = useState<Draft | null>(null); // the remount after each move ends it with the turn
   const { draft, held, hint } = state;
 
   const committed = new Set(table.flat());
@@ -60,6 +61,13 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
     }
     setState(next);
   }
+
+  const canReset = changed || (checkpoint !== null && !sameDraft(draft, checkpoint));
+  const reset = () => {
+    const result = resetTo(table, draft, checkpoint);
+    setCheckpoint(result.checkpoint);
+    apply({ draft: result.draft, held: null, hint: null });
+  };
 
   const setDraft = (next: Draft) => apply({ draft: next, held: null, hint: null });
   const place = (target: Target) => apply(placeHeld(state, target, committed, isMyTurn));
@@ -156,7 +164,15 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
         >
           Play
         </button>
-        <button type="button" disabled={!isMyTurn || !changed} onClick={() => setDraft(resetDraft(table, draft))}>Reset</button>
+        <button
+          type="button"
+          title="Reset comes back to the saved arrangement"
+          disabled={!isMyTurn || !check || !('state' in check) || (checkpoint !== null && sameDraft(draft, checkpoint))}
+          onClick={() => setCheckpoint(draft)}
+        >
+          Save
+        </button>
+        <button type="button" disabled={!isMyTurn || !canReset} onClick={reset}>Reset</button>
         <button
           type="button"
           disabled={!isMyTurn}

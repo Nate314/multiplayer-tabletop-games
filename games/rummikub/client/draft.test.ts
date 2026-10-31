@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canReturnToRack, clickTile, heldTiles, isRackTarget, moveTo as move, placeHeld, rackOrder, resetDraft, sortRack, splitGroup } from './draft.ts';
+import { canReturnToRack, clickTile, heldTiles, isRackTarget, moveTo as move, placeHeld, rackOrder, resetDraft, resetTo, sameDraft, sortRack, splitGroup } from './draft.ts';
 import { COLORS, JOKERS } from '../rules.ts';
 import type { TileColor } from '../types.ts';
 
@@ -118,4 +118,31 @@ test('a target is on the rack when it is the rack or a rack tile', () => {
   assert.equal(isRackTarget(draft, { kind: 'before', id: r(5) }), false);
   assert.equal(isRackTarget(draft, { kind: 'groupEnd', index: 0 }), false);
   assert.equal(isRackTarget(draft, { kind: 'newGroup' }), false);
+});
+
+const mine = { table: [[1, 2, 3]], rack: [20, 21] };
+const saved = { table: [[1, 2, 3], [10, 11, 12]], rack: [20, 21] };
+const working = { table: [[1, 2, 3], [10, 11, 12, 20]], rack: [21] };
+
+test('reset goes to the checkpoint, then to the start of the turn', () => {
+  const first = resetTo(mine.table, working, saved);
+  assert.deepEqual(first, { draft: saved, checkpoint: saved });
+  assert.deepEqual(resetTo(mine.table, first.draft, first.checkpoint), {
+    draft: { table: [[1, 2, 3]], rack: [20, 21, 10, 11, 12] }, checkpoint: null
+  });
+});
+
+test('reset with no checkpoint goes to the start of the turn', () => {
+  assert.deepEqual(resetTo(mine.table, working, null), { draft: resetDraft(mine.table, working), checkpoint: null });
+});
+
+test('reset to a checkpoint restores its rack order', () => {
+  const result = resetTo(mine.table, { table: saved.table, rack: [21, 20] }, saved);
+  assert.deepEqual(result.draft.rack, [20, 21]);
+});
+
+test('sameDraft compares the rack order', () => {
+  assert.equal(sameDraft(saved, { table: saved.table, rack: [20, 21] }), true);
+  assert.equal(sameDraft(saved, { table: saved.table, rack: [21, 20] }), false);
+  assert.equal(sameDraft(saved, working), false);
 });

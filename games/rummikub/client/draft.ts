@@ -89,6 +89,17 @@ export function resetDraft(committedTable: Table, draft: Draft): Draft {
   return { table: committedTable, rack: [...draft.rack, ...placed] };
 }
 
+export function sameDraft(a: Draft, b: Draft): boolean {
+  const sameList = (x: number[], y: number[]) => x.length === y.length && x.every((id, i) => id === y[i]);
+  return a.table.length === b.table.length && a.table.every((group, i) => sameList(group, b.table[i])) && sameList(a.rack, b.rack);
+}
+
+// Reset goes to the saved checkpoint if the draft differs from it, else to the start of the turn, which ends the checkpoint
+export function resetTo(committedTable: Table, draft: Draft, checkpoint: Draft | null): { draft: Draft; checkpoint: Draft | null } {
+  if (checkpoint && !sameDraft(draft, checkpoint)) return { draft: checkpoint, checkpoint };
+  return { draft: resetDraft(committedTable, draft), checkpoint: null };
+}
+
 // The rack in the order last shown, with any newly drawn tiles at the end
 export function rackOrder(rack: number[], remembered: number[]): number[] {
   return [...remembered.filter(id => rack.includes(id)), ...rack.filter(id => !remembered.includes(id))];

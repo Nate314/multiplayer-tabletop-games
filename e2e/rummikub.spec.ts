@@ -618,6 +618,40 @@ test.describe('Rummikub controls', () => {
     await expect(rackHeader(alice)).toHaveText('Your rack (5)');
   });
 
+  test('Save keeps a valid arrangement that Reset comes back to', async ({ seat }) => {
+    const { alice, bob } = await start(seat, {
+      melded: [1, 2], racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('blue', 1)] }
+    });
+    const save = button(alice, 'Save');
+    await expect(save).toBeDisabled();
+    await expect(button(bob, 'Save')).toBeDisabled();
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await expect(save).toBeEnabled();
+    await expect(save).toHaveAttribute('title', 'Reset comes back to the saved arrangement');
+    await save.click();
+    await expect(save).toBeDisabled();
+
+    await rackTile(alice, t('blue', 1)).click();
+    await groupEnd(alice, 1).click();
+    await expect(save).toBeDisabled();
+    await button(alice, 'Reset').click();
+    await expect(groups(alice)).toHaveCount(1);
+    await expect(rackHeader(alice)).toHaveText('Your rack (1)');
+    await button(alice, 'Reset').click();
+    await expect(groups(alice)).toHaveCount(0);
+    await expect(rackHeader(alice)).toHaveText('Your rack (4)');
+    await expect(button(alice, 'Reset')).toBeDisabled();
+
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await save.click();
+    await button(alice, 'Draw a tile').click();
+    await expect(turn(bob)).toHaveText('Your turn');
+    await button(bob, 'Draw a tile').click();
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(button(alice, 'Reset')).toBeDisabled();
+    await expect(save).toBeDisabled();
+  });
+
   test('Color and Number sort the rack, rack tiles move about even on others\' turns, and only you see the order, kept from turn to turn', async ({ seat }) => {
     const rack = [t('red', 2), t('blue', 1), t('black', 3), J1, t('orange', 2)];
     const { table, alice, bob } = await start(seat, { currentPlayer: 2, racks: { 1: rack } });
