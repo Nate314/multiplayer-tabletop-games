@@ -12,7 +12,7 @@ All prose written for this work (README, docs, FAQ, commit messages) uses no em-
 
 - Every `localStorage` and `sessionStorage` key the app writes gets the prefix `multiplayer-tabletop-games:` (so `theme` becomes `multiplayer-tabletop-games:theme`).
 - The prefix is applied in one place. `src/services/storage.ts` is the existing shared helper; the keys in `settings.ts`, `session.ts`, `device.ts` and the direct `localStorage` use in `ThemeToggle.tsx` all go through it (or through one prefixing function). Any inline script in `index.html` that reads the theme before React loads must use the same prefixed key.
-- Migration (my call): on first read of a prefixed key that is missing, the old bare key is read, written under the new key, and removed. This keeps players' device ID, preferences, theme and seat after the update. The device ID matters most: losing it would detach a player from their stats and seats.
+- Migration (my call): once per browser, the app's old bare keys are copied to their prefixed names (never removed, since a bare key may belong to another app), and after that bare keys are never read. This keeps players' device ID, preferences, theme and seat after the update. The device ID matters most: losing it would detach a player from their stats and seats.
 - Tests: the prefix is applied on read and write, and migration moves an old key once.
 
 ## 2. Rummikub
