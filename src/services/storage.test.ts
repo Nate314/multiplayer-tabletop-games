@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { APP_KEYS, readJson, readText, removeKey, writeJson, writeText } from './storage.ts'
+import { APP_KEYS, STORAGE_PREFIX, readJson, readText, removeKey, writeJson, writeText } from './storage.ts'
 
 const P = 'multiplayer-tabletop-games:'
 
@@ -92,4 +92,10 @@ test('every storage key used by the app is in APP_KEYS', () => {
   )
   assert.ok(found.length >= 10)
   for (const key of found) assert.ok(APP_KEYS.includes(key), `${key} is missing from APP_KEYS`)
+})
+
+test('the inline theme script in index.html reads the prefixed theme and migration keys', () => {
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8')
+  assert.ok(html.includes(`'${STORAGE_PREFIX}theme'`))
+  assert.ok(html.includes(`'${STORAGE_PREFIX}migrated'`))
 })

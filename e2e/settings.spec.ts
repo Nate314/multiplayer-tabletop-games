@@ -63,4 +63,18 @@ test.describe('Settings', () => {
     await expect(header.getByRole('button', { name: 'Share' })).toBeVisible();
     await expect(header.getByRole('button', { name: `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode` })).toBeVisible();
   });
+  test('a theme saved before the storage prefix is kept and copied', async ({ page }) => {
+    const stored = (key: string) => page.evaluate(k => localStorage.getItem(k), key);
+    await page.goto('/');
+    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('theme', 'dark'); });
+    await page.reload();
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+    await expect.poll(() => stored('multiplayer-tabletop-games:theme')).toBe('dark');
+    expect(await stored('theme')).toBe('dark');
+    await page.getByRole('button', { name: 'Switch to light mode' }).first().click();
+    expect(await stored('multiplayer-tabletop-games:theme')).toBe('light');
+    expect(await stored('theme')).toBe('dark');
+    await page.reload();
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
+  });
 });
