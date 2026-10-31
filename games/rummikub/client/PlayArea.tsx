@@ -49,7 +49,8 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
 
   const committed = new Set(table.flat());
   const changed = !sameTable(draft.table, table);
-  const check = changed ? checkPlay(table, melded.includes(playerNumber), rack, draft.table, playRulesOf(gameState)) : null;
+  const rules = playRulesOf(gameState);
+  const check = changed ? checkPlay(table, melded.includes(playerNumber), rack, draft.table, rules) : null;
   const highlighted = lastMove?.type === 'play' && lastMove.playerNumber !== playerNumber ? lastMove.added : [];
 
   function apply(next: Interaction) {
@@ -104,9 +105,10 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
       ? `Ready to play ${count} ${count === 1 ? 'tile' : 'tiles'}`
       : `First meld of ${check.state.meld} points: ready to play`;
   } else if (!message && isMyTurn) {
-    message = melded.includes(playerNumber)
-      ? 'Your turn: add tiles from your rack to the table, rearranging it as you like, then click Play. Or draw a tile.'
-      : 'Your turn: lay down sets and runs worth 30 or more from your rack, then click Play. Or draw a tile.';
+    if (melded.includes(playerNumber)) message = 'Your turn: add tiles from your rack to the table, rearranging it as you like, then click Play. Or draw a tile.';
+    else if (rules.addOnFirstMeld) {
+      message = 'Your turn: lay down sets and runs worth 30 or more from your rack, and add to groups on the table if you like, then click Play. Or draw a tile.';
+    } else message = 'Your turn: lay down sets and runs worth 30 or more from your rack, then click Play. Or draw a tile.';
   } else if (!message && currentPlayer !== null) {
     message = `Waiting for ${playerNames[currentPlayer]}. You can sort and arrange your rack.`;
   }

@@ -254,6 +254,24 @@ test.describe('Rummikub rules', () => {
     await expect(rules).toContainText('On');
   });
 
+  test('with Add to melds on your first turn, a first meld may add to the table', async ({ seat }) => {
+    const { alice, bob } = await start(seat, {
+      melded: [2],
+      table: [[t('blue', 1), t('blue', 2), t('blue', 3)]],
+      racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('blue', 4)] }
+    }, ['Alice', 'Bob'], { houseRules: { addOnFirstMeld: true } });
+    await expect(hint(alice)).toHaveText(
+      'Your turn: lay down sets and runs worth 30 or more from your rack, and add to groups on the table if you like, then click Play. Or draw a tile.'
+    );
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await rackTile(alice, t('blue', 4)).click();
+    await groupEnd(alice, 1).click();
+    await expect(hint(alice)).toHaveText('First meld of 33 points: ready to play');
+    await playButton(alice).click();
+    await expect(group(bob, 1).locator('.rk-tile')).toHaveCount(4);
+    await expect(player(bob, 'Alice')).toContainText('✓ melded');
+  });
+
   test('a player who does not play draws one tile, which ends the turn, and with the pool empty it is a pass', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await expect(pool(alice)).toHaveText('Tiles in the pool: 78');

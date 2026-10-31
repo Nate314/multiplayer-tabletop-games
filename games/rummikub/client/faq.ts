@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is the first meld?',
-    answer: 'Your first play must be groups made only from your own tiles that add up to at least 30 points, counting each tile at its number and a joker as the tile it stands for. In that turn you may not add to or move the tiles already on the table. Players who have made their first meld are marked with a check.'
+    answer: 'Your first play must be groups made only from your own tiles that add up to at least 30 points, counting each tile at its number and a joker as the tile it stands for. In that turn you may not add to or move the tiles already on the table. If the host turned on the house rule Add to melds on your first turn (everyone agrees to it before play), once your new groups reach 30 you may also add tiles from your rack to the groups on the table; those tiles do not count toward the 30, and you still may not split, move or reorder the tiles already there. Players who have made their first meld are marked with a check.'
   },
   {
     question: 'How do I play tiles?',

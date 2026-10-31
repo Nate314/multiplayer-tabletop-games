@@ -21,7 +21,7 @@ Lay down sets and runs of numbered tiles, rearrange the table, and be the first 
 Before the first move the host picks the rules and every player must agree. They cannot change once play starts.
 
 - **Jokers move freely.** Off by default. A joker on the table moves like any other tile: no tile has to replace it, and it need not be played again with two rack tiles. Every group must still be a valid set or run at the end of the turn. It does not loosen the first meld
-- **Add to melds on your first turn.** Off by default. After laying 30 points in new groups, you may also add rack tiles to the groups on the table, but not move them
+- **Add to melds on your first turn.** Off by default. On the turn of their first meld a player first lays 30 or more points in new groups from their rack, then may add more rack tiles to groups already on the table and to the groups they just laid. Tiles added to groups that were on the table do not count toward the 30; a group laid that turn counts in full, since adding to it is the same as laying it longer. Adding only: splitting, moving or reordering tiles already on the table still waits until a later turn, and a joker on the table must keep standing for the same tile
 
 ## Controls
 

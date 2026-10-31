@@ -357,6 +357,72 @@ test('a joker that comes to stand for another tile in its own group counts as ta
   assert.ok('state' in play(withMore, 1, [[t('red', 4), t('red', 5), t('red', 6), J1, t('red', 8), t('red', 9)]]));
 });
 
+test('with the house rule, a first meld may add to the table', () => {
+  const table = [[t('blue', 1), t('blue', 2), t('blue', 3)], [t('black', 7), t('orange', 7), t('red', 7)]];
+  const state = withRules(game({ 1: [...RED_RUN, t('blue', 4), t('blue', 7)], 2: [t('orange', 1)] }, table, [2]), { addOnFirstMeld: true });
+  const result = ok(play(state, 1, [[...table[0], t('blue', 4)], [...table[1], t('blue', 7)], RED_RUN]));
+  assert.equal(result.lastMove?.type === 'play' && result.lastMove.meld, 33);
+  assert.deepEqual(result.melded, [2, 1]);
+  // A rack tile may also go between table tiles, which keep their order
+  const between = withRules(game({ 1: [...RED_RUN, t('blue', 7)], 2: [t('orange', 1)] }, table, [2]), { addOnFirstMeld: true });
+  assert.ok('state' in play(between, 1, [table[0], [t('black', 7), t('blue', 7), t('orange', 7), t('red', 7)], RED_RUN]));
+  assert.deepEqual(
+    play(between, 1, [table[0], [t('orange', 7), t('black', 7), t('red', 7), t('blue', 7)], RED_RUN]),
+    { error: 'On your first meld you may add tiles to the groups on the table, but not move them' }
+  );
+});
+
+test('added tiles do not count toward the 30', () => {
+  const table = [[t('blue', 1), t('blue', 2), t('blue', 3)], [t('black', 7), t('orange', 7), t('red', 7)]];
+  const rack = [t('red', 1), t('red', 2), t('red', 3), t('blue', 4), t('blue', 5)];
+  const state = withRules(game({ 1: rack, 2: [t('orange', 1)] }, table, [2]), { addOnFirstMeld: true });
+  assert.deepEqual(
+    play(state, 1, [[...table[0], t('blue', 4), t('blue', 5)], table[1], [t('red', 1), t('red', 2), t('red', 3)]]),
+    { error: 'Your first meld must total at least 30 points (this one totals 6)' }
+  );
+});
+
+test('a group laid on the first meld counts in full, with what was added to it', () => {
+  // Adding to a group you just laid is the same as laying the longer group
+  const table = [[t('blue', 1), t('blue', 2), t('blue', 3)]];
+  const laid = [t('red', 8), t('red', 9), t('red', 10), t('red', 11)];
+  const state = withRules(game({ 1: laid, 2: [t('orange', 1)] }, table, [2]), { addOnFirstMeld: true });
+  const result = ok(play(state, 1, [table[0], laid]));
+  assert.equal(result.lastMove?.type === 'play' && result.lastMove.meld, 38);
+});
+
+test('the first meld still may not move table tiles', () => {
+  const table = [[1, 2, 3, 4, 5, 6].map(value => t('blue', value))];
+  const state = game({ 1: RED_RUN, 2: [t('orange', 1)] }, table, [2]);
+  const split = [[t('blue', 1), t('blue', 2), t('blue', 3)], [t('blue', 4), t('blue', 5), t('blue', 6)], RED_RUN];
+  assert.deepEqual(
+    play(withRules(state, { addOnFirstMeld: true }), 1, split),
+    { error: 'On your first meld you may add tiles to the groups on the table, but not move them' }
+  );
+  assert.deepEqual(play(withRules(state, { addOnFirstMeld: false }), 1, split), { error: 'Your first meld may not use or change the tiles on the table' });
+});
+
+test('Jokers move freely does not loosen the first meld', () => {
+  const table = [[1, 2, 3, 4, 5, 6].map(value => t('blue', value))];
+  const state = withRules(game({ 1: RED_RUN, 2: [t('orange', 1)] }, table, [2]), { freeJokers: true });
+  assert.deepEqual(
+    play(state, 1, [[t('blue', 1), t('blue', 2), t('blue', 3)], [t('blue', 4), t('blue', 5), t('blue', 6)], RED_RUN]),
+    { error: 'Your first meld may not use or change the tiles on the table' }
+  );
+});
+
+test('adding on the first meld may not change what a joker stands for', () => {
+  const table = [[t('red', 4), t('red', 5), J1]];
+  const state = withRules(game({ 1: [...RED_RUN, t('red', 6)], 2: [t('orange', 1)] }, table, [2]), { addOnFirstMeld: true });
+  assert.deepEqual(
+    play(state, 1, [[t('red', 4), t('red', 5), t('red', 6), J1], RED_RUN]),
+    { error: 'On your first meld you may add tiles to the groups on the table, but not move them' }
+  );
+  // Adding where the joker keeps its number is fine
+  const after = withRules(game({ 1: [...RED_RUN, t('red', 7)], 2: [t('orange', 1)] }, table, [2]), { addOnFirstMeld: true });
+  assert.ok('state' in play(after, 1, [[t('red', 4), t('red', 5), J1, t('red', 7)], RED_RUN]));
+});
+
 test('drawing takes a tile from the pool and passes the turn', () => {
   const state = game({ 1: [t('red', 1)], 2: [t('orange', 5)] });
   const after = ok(move(state, 1, { type: 'draw' }));

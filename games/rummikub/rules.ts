@@ -133,6 +133,23 @@ function sharesNatural(a: GroupInfo, b: GroupInfo): boolean {
   return a.tiles.some(id => !isJoker(id) && b.tiles.includes(id));
 }
 
+function jokerStays(was: JokerPlace, is: JokerPlace | undefined): boolean {
+  return is !== undefined && is.value === was.value && is.colors.some(color => was.colors.includes(color)) && sharesNatural(is.group, was.group);
+}
+
+function tableGroups(table: Table): GroupInfo[] {
+  return table.map(ids => analyzeGroup(ids)).filter(group => group !== null);
+}
+
+// With Add to melds on your first turn, each table group sits inside one group of the play with its own
+// tiles in the same order and only rack tiles besides, and every joker on the table keeps its meaning
+function addsOnly(table: Table, after: GroupInfo[]): boolean {
+  const onTable = new Set(table.flat());
+  const kept = table.every(ids => after.some(group => group.tiles.filter(id => onTable.has(id)).join(',') === ids.join(',')));
+  const now = jokerPlaces(after);
+  return kept && [...jokerPlaces(tableGroups(table))].every(([id, was]) => jokerStays(was, now.get(id)));
+}
+
 // A joker that no longer stands for the same tile alongside the same tiles has been taken. In a set it may
 // stand for any missing color, so it stays put while one of the colors it could stand for is still missing.
 // A taken joker needs the tile it stood for, from the rack, to sit with the tiles it was with, and one tile
@@ -144,8 +161,7 @@ function takenJokerError(before: GroupInfo[], after: GroupInfo[], added: Readonl
   const taken: JokerPlace[] = [];
   for (const [id, was] of old) {
     const is = now.get(id)!;
-    const stayed = is.value === was.value && is.colors.some(color => was.colors.includes(color)) && sharesNatural(is.group, was.group);
-    if (stayed) continue;
+    if (jokerStays(was, is)) continue;
     const candidates = after.filter(group => sharesNatural(group, was.group)).flatMap(group => group.tiles).filter(tileId => {
       const tile = tileOf(tileId);
       return tile.kind === 'number' && !replacing.has(tileId) && !was.group.tiles.includes(tileId) &&
@@ -190,18 +206,23 @@ export function checkPlay(table: Table, melded: boolean, rack: number[], propose
 
   let meld: number | null = null;
   if (!melded) {
-    // In exact order, since reordering a group can change what its jokers stand for
-    const keys = groups.map(group => group.tiles.join(','));
-    const unchanged = table.every(ids => {
-      const at = keys.indexOf(ids.join(','));
-      if (at >= 0) keys[at] = '';
-      return at >= 0;
-    });
-    if (!unchanged) return { error: 'Your first meld may not use or change the tiles on the table' };
+    if (rules.addOnFirstMeld) {
+      if (!addsOnly(table, groups)) return { error: 'On your first meld you may add tiles to the groups on the table, but not move them' };
+    } else {
+      // In exact order, since reordering a group can change what its jokers stand for
+      const keys = groups.map(group => group.tiles.join(','));
+      const unchanged = table.every(ids => {
+        const at = keys.indexOf(ids.join(','));
+        if (at >= 0) keys[at] = '';
+        return at >= 0;
+      });
+      if (!unchanged) return { error: 'Your first meld may not use or change the tiles on the table' };
+    }
+    // Only groups made entirely of rack tiles count, so tiles added to table groups never reach the 30
     meld = groups.filter(group => group.tiles.every(id => !onTable.has(id))).reduce((sum, group) => sum + group.points, 0);
     if (meld < INITIAL_MELD) return { error: `Your first meld must total at least ${INITIAL_MELD} points (this one totals ${meld})` };
   } else if (!rules.freeJokers) {
-    const error = takenJokerError(table.map(ids => analyzeGroup(ids)).filter(group => group !== null), groups, new Set(added));
+    const error = takenJokerError(tableGroups(table), groups, new Set(added));
     if (error) return { error };
   }
   return { state: { table: groups.map(group => group.tiles), added, meld } };
