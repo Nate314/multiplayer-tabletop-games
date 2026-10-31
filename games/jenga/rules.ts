@@ -1,4 +1,5 @@
 // Jenga rules shared by the browser (legal pulls, open slots) and the server (validation and the physics tick)
+import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { plural } from '../../shared/text.ts';
@@ -7,6 +8,7 @@ import {
   BLOCK, DEFAULT_GRIP, IDENTITY, MAX_SPIN, QUARTER_TURN, REST_TURNTABLE, STEPS_PER_TICK, anchorWorld, buildWorld, clampTarget, fromTable, isOut,
   isResting, onGroundOutside, readBlocks, readTurntable, startingTower, stepWorld, toTable, topSurface, toppled,
 } from './physics.ts';
+import { FREE_PLACEMENT_RULE } from './options.ts';
 import { forgetWorld, keepWorld, worldFor } from './simulation.ts';
 import type { Block, GameState, Pose, PublicGameState, Quat, Result, Seat, Sim, Slot, Turntable, Vec3 } from './types.ts';
 
@@ -58,6 +60,29 @@ export function placementTargets(blocks: Block[], table: Quat): { slot: Slot; po
   });
 }
 
+// A free drop must be let go over the tower, and starts this far above its highest top
+export const DROP_REACH = BLOCK.length;
+export const DROP_GAP = 0.3;
+
+export const dropInReach = (at: [number, number]) => at.every(n => Math.abs(n) <= DROP_REACH);
+
+// The next level's orientation, laid across the level below, its bottom DROP_GAP above the highest top surface
+export function freeDropPose(blocks: Block[], table: Quat, at: [number, number]): Pose {
+  const { level } = nextLevel(blocks, table);
+  const y = Math.max(...blocks.map(topSurface)) + DROP_GAP + BLOCK.height / 2;
+  const q: Quat = level % 2 === 0 ? [0, 0, 0, 1] : [...QUARTER_TURN];
+  return fromTable({ p: [at[0], y, at[1]], q }, table);
+}
+
+// The level a settled drop counts on, or null when it slid off: outside the footprint or not above the level it was set on
+export function restingLevel(block: Block, others: Block[], table: Quat): number | null {
+  const { level } = nextLevel(others, table);
+  const topOf = (at: number) => Math.max(...others.filter(b => b.level === at).map(topSurface));
+  if (isOut(block, table) || block.pose.p[1] <= topOf(level - 1)) return null;
+  // Set on the blocks of an incomplete top rather than beside them, it starts the level above
+  return others.some(b => b.level === level) && block.pose.p[1] > topOf(level) ? level + 1 : level;
+}
+
 function pullRefusal(blocks: Block[], id: number): string | null {
   const block = blocks.find(b => b.id === id);
   if (!block) return 'Invalid block';
@@ -88,7 +113,8 @@ function freshTower(grip: () => number) {
     loser: null,
     lastMove: null,
     turntable: REST_TURNTABLE,
-    turnStartTurntable: IDENTITY
+    turnStartTurntable: IDENTITY,
+    dropping: null
   };
 }
 
@@ -126,10 +152,13 @@ export function toPublicState(state: GameState, undoAvailable: boolean): Omit<Pu
 const isVec3 = (value: unknown): value is Vec3 =>
   Array.isArray(value) && value.length === 3 && value.every(n => typeof n === 'number' && Number.isFinite(n));
 
+// A placement that did not settle in time keeps moving into the next turn, a fall then being the placer's;
+// a free drop settles before the physics says whether the turn ends
+const placementSettling = (state: GameState) => (state.sim !== null && !state.pull) || state.dropping != null;
+
 function grab(state: GameState, seat: Seat, input: Record<string, unknown>): Result<GameState> {
+  if (placementSettling(state)) return { error: 'Wait for the tower to settle' };
   if (state.phase !== 'pull') return { error: 'Place the block you are holding first' };
-  // A placement that did not settle in time keeps moving into the next turn; a fall then is the placer's
-  if (state.sim && !state.pull) return { error: 'Wait for the tower to settle' };
   const { block: id, anchor } = input;
   if (typeof id !== 'number' || !isVec3(anchor) || anchor.some((a, i) => Math.abs(a) > HALF[i])) return { error: 'Invalid block' };
   const refusal = pullRefusal(state.blocks, id);
@@ -162,7 +191,7 @@ function turn(state: GameState, seat: Seat, speed: unknown): Result<GameState> {
   const table = turntableOf(state);
   // A stray key-up with nothing driven is silent
   if (speed === null) return { state: table.drive === null ? state : { ...state, turntable: { ...table, drive: null } } };
-  if (state.sim && !state.pull) return { error: 'Wait for the tower to settle' };
+  if (placementSettling(state)) return { error: 'Wait for the tower to settle' };
   return {
     state: {
       ...state,
@@ -217,42 +246,88 @@ function settled(state: GameState, blocks: Block[]): { blocks: Block[]; rested: 
   }
 }
 
+function placeRefusal(state: GameState): string | null {
+  if (state.toppled) return 'The tower has toppled';
+  if (state.dropping != null || state.sim) return 'Wait for the tower to settle';
+  if (state.held === null) return 'You have no block to place';
+  return null;
+}
+
+const isPoint = (value: unknown): value is [number, number] =>
+  Array.isArray(value) && value.length === 2 && value.every(n => typeof n === 'number' && Number.isFinite(n));
+
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const input = asRecord(move);
+  const free = houseRule(state, FREE_PLACEMENT_RULE);
+  if (input?.type === 'drop') {
+    if (!free) return { error: 'Free placement is off' };
+    if (!isPoint(input.at) || !dropInReach(input.at)) return { error: 'Drop the block over the tower' };
+    const refusal = placeRefusal(state);
+    return refusal ? { error: refusal } : { state: dropped(state, seat, input.at) };
+  }
   if (input?.type !== 'place') return { error: 'Unknown move type' };
   const slot = SLOTS.find(s => s === input.slot);
   if (slot === undefined) return { error: 'Invalid slot' };
-  if (state.toppled) return { error: 'The tower has toppled' };
-  if (state.held === null) return { error: 'You have no block to place' };
-  if (state.sim) return { error: 'Wait for the tower to settle' };
+  const refusal = placeRefusal(state);
+  if (refusal) return { error: refusal };
   const table = turntableOf(state).q;
   const { level } = nextLevel(state.blocks, table);
   const target = placementTargets(state.blocks, table).find(t => t.slot === slot);
   if (!target) return { error: 'That spot is taken' };
+  // Under Free placement the Place buttons and keys drop over the slot instead, and the physics judges it the same way
+  if (free) {
+    const [x, , z] = toTable(target.pose, table).p;
+    return { state: dropped(state, seat, [x, z]) };
+  }
 
-  const id = state.held;
+  const id = state.held!;
   const result = settled(state, [...state.blocks, { id, level, pose: target.pose }]);
   const blocks = result.rested ? still(result.blocks) : result.blocks;
   const to = blocks.find(b => b.id === id)!.pose;
-  const startTable = state.turnStartTurntable ?? IDENTITY;
-  // Carried into the turned tower, so History's ghost of where it came from turns with it
-  const from = fromTable(toTable(state.turnStart.find(b => b.id === id)!.pose, startTable), table);
-  const placed = { ...state, blocks, held: null, phase: 'pull' as const, grab: null, lastMove: { type: 'place' as const, seat, block: id, level, from, to } };
+  return { state: finishPlacement({ ...state, sim: result.rested ? null : NEW_SIM }, seat, blocks, id, level, pulledFrom(state, id), to, false) };
+}
+
+// Where the block was at the turn start, carried into the turned tower, so History's ghost of where it came from turns with it
+const pulledFrom = (state: GameState, id: number) =>
+  fromTable(toTable(state.turnStart.find(b => b.id === id)!.pose, state.turnStartTurntable ?? IDENTITY), turntableOf(state).q);
+
+// The held block set over the tower to fall; the settle's end decides whether it stayed. The turn stays the dropper's until then
+function dropped(state: GameState, seat: Seat, at: [number, number]): GameState {
+  const id = state.held!;
+  const table = turntableOf(state).q;
+  const { level } = nextLevel(state.blocks, table);
+  const to = freeDropPose(state.blocks, table, at);
+  return {
+    ...state,
+    blocks: [...state.blocks, { id, level, pose: to }],
+    held: null,
+    dropping: id,
+    sim: NEW_SIM,
+    lastMove: { type: 'place', seat, block: id, level, from: pulledFrom(state, id), to, free: true },
+    gameStatus: `${state.playerNames[seat]} is setting a block on top`
+  };
+}
+
+// The block counts as placed on `level`: a topple loses, else the turn passes. The caller has set the sim the settle needs
+function finishPlacement(state: GameState, seat: Seat, blocks: Block[], id: number, level: number, from: Pose, to: Pose, free: boolean): GameState {
+  blocks = blocks.map(b => b.id === id ? { ...b, level } : b);
+  const table = turntableOf(state).q;
+  const lastMove = { type: 'place' as const, seat, block: id, level, from, to, ...(free && { free: true as const }) };
+  const placed = { ...state, blocks, held: null, dropping: null, phase: 'pull' as const, grab: null, lastMove };
 
   // A collapse keeps simulating, even if already still, so its own tick ends the game and is recorded as the topple
-  if (toppled(state.turnStart, blocks, id, startTable, table)) {
-    return { state: { ...placed, sim: NEW_SIM, toppled: true, loser: seat, gameStatus: `${state.playerNames[seat]} toppled the tower!` } };
+  if (toppled(state.turnStart, blocks, id, state.turnStartTurntable ?? IDENTITY, table)) {
+    return { ...placed, sim: NEW_SIM, toppled: true, loser: seat, gameStatus: `${state.playerNames[seat]} toppled the tower!` };
   }
   const next: GameState = {
     ...placed,
     turnStart: blocks,
     turnStartTurntable: table,
     pull: null,
-    sim: result.rested ? null : NEW_SIM,
     placed: { ...state.placed, [seat]: (state.placed[seat] ?? 0) + 1 },
     currentPlayer: nextActivePlayer(state, seat)
   };
-  return { state: { ...next, gameStatus: turnStatus(next) } };
+  return { ...next, gameStatus: turnStatus(next) };
 }
 
 // The undone or abandoned turn starts over: the tower and turntable as they were, nobody holding anything
@@ -268,7 +343,8 @@ function backToTurnStart(state: GameState): GameState {
     pull: null,
     sim: null,
     toppled: false,
-    loser: null
+    loser: null,
+    dropping: null
   };
 }
 
@@ -370,15 +446,29 @@ function tick(state: GameState): GameState {
   return atRest(next);
 }
 
+// A dropped block that came to rest on the tower is placed there; one that slid off goes back to hand, the tower left as it now stands
+function dropSettled(state: GameState, id: number): GameState {
+  const block = state.blocks.find(b => b.id === id)!;
+  const others = state.blocks.filter(b => b.id !== id);
+  const seat = state.pull!.seat;
+  const level = restingLevel(block, others, turntableOf(state).q);
+  if (level === null) {
+    return { ...state, blocks: others, held: id, dropping: null, gameStatus: `${state.playerNames[seat]}'s block slid off. Place it again` };
+  }
+  return finishPlacement(state, seat, state.blocks, id, level, pulledFrom(state, id), block.pose, true);
+}
+
 // Velocities dropped and the simulation stopped; a collapse ends the game, and a placement's settling sets the turn start
 function atRest(state: GameState): GameState {
   const blocks = still(state.blocks);
   const turntable = { ...turntableOf(state), w: 0, drive: null };
   const next = { ...state, blocks, turntable, sim: null };
+  if (!next.toppled && next.dropping != null) return dropSettled(next, next.dropping);
   if (!next.toppled) return next.pull ? next : { ...next, turnStart: blocks, turnStartTurntable: turntable.q };
   const loser = next.loser!;
   return {
     ...next,
+    dropping: null,
     isGameOver: true,
     winners: next.activePlayers.filter(seat => seat !== loser),
     currentPlayer: null,

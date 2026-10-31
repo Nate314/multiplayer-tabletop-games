@@ -17,6 +17,11 @@ test('a placement names the player and the level the block came from', () => {
   assert.equal(describeMove(placed), 'Alice pulled a block from level 6 and placed it on top');
 });
 
+test('a free drop says dropped it on top', () => {
+  const lastMove = { ...placed.lastMove!, free: true } as Described['lastMove'];
+  assert.equal(describeMove({ playerNames, lastMove }), 'Alice pulled a block from level 6 and dropped it on top');
+});
+
 test('a topple names the player', () => {
   assert.equal(describeMove(fallen), 'Alice toppled the tower');
 });

@@ -21,7 +21,8 @@ export type Grab = { block: number; anchor: Vec3; target: Vec3 };
 export type Pull = { seat: Seat; block: number | null };
 // ticks counts from the first grab, or from the topple once the tower has toppled
 export type Sim = { ticks: number; calmTicks: number; sinceRelease: number };
-export type LastMove = { type: 'place'; seat: Seat; block: number; level: number; from: Pose; to: Pose } | { type: 'topple'; seat: Seat };
+// free marks a block set down under Free placement rather than placed into a slot
+export type LastMove = { type: 'place'; seat: Seat; block: number; level: number; from: Pose; to: Pose; free?: true } | { type: 'topple'; seat: Seat };
 
 // grip is each block's friction by id and never leaves the server; turnStart is the tower the topple check compares with
 export type GameState = BaseGameState & {
@@ -40,6 +41,8 @@ export type GameState = BaseGameState & {
   turntable?: Turntable;
   // The turntable's rotation when turnStart was taken; the topple check and an undo use both together
   turnStartTurntable?: Quat;
+  // The block set on top under Free placement and still settling; the physics then decides if it stayed
+  dropping?: number | null;
 };
 
 export type PublicGameState = Omit<GameState, 'grip' | 'turnStart' | 'turnStartTurntable'> & BasePublicState;
@@ -49,4 +52,5 @@ export type Action =
   | { type: 'drag'; target: Vec3 }
   | { type: 'release' }
   | { type: 'turn'; speed: number | null };
-export type Move = { type: 'place'; slot: Slot };
+// at is x and z in the turntable's frame
+export type Move = { type: 'place'; slot: Slot } | { type: 'drop'; at: [number, number] };

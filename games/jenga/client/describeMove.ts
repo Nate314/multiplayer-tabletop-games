@@ -6,5 +6,5 @@ export function describeMove({ lastMove, playerNames }: Pick<PublicGameState, 'l
   if (!lastMove) return '';
   const name = playerNames[lastMove.seat];
   if (lastMove.type === 'topple') return `${name} toppled the tower`;
-  return `${name} pulled a block from level ${Math.floor(lastMove.from.p[1] / BLOCK.height) + 1} and placed it on top`;
+  return `${name} pulled a block from level ${Math.floor(lastMove.from.p[1] / BLOCK.height) + 1} and ${lastMove.free ? 'dropped' : 'placed'} it on top`;
 }

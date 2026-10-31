@@ -66,6 +66,21 @@ test.describe('Jenga rules', () => {
     await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and placed it on top');
   });
 
+  test('with Free placement, Place on top sets the block down and the physics finishes the turn', async ({ seat }) => {
+    const table = await seat('jenga', ['Alice', 'Bob'], { houseRules: { freePlacement: true } });
+    const [alice, bob] = table.pages;
+    await grabMiddle(table, alice);
+    for (let press = 0; press < 80 && (await state(table)).held === null; press++) await pressAndTick(table, alice, 'ArrowDown', 1);
+    expect((await state(table)).held).toBe(49);
+    await settle(table);
+    await place(alice, 'middle').click();
+    await expect.poll(async () => (await state(table)).dropping).toBe(49);
+    await settle(table);
+    await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
+    await alice.getByRole('button', { name: 'History' }).click();
+    await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and dropped it on top');
+  });
+
   test('History starts from the untouched tower', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await grabMiddle(table, alice);

@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
+import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
+import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import { jenga } from './index.ts';
 import { IDENTITY, anchorWorld } from './physics.ts';
 import type { GameState, PublicGameState, Seat, Vec3 } from './types.ts';
@@ -17,9 +18,12 @@ function ok(result: Result<unknown>): PublicGameState {
   return result.state as PublicGameState;
 }
 
-function game() {
+// Everyone joins and agrees to the house rules, after Alice sets `values` if given
+function game(values?: HouseRuleValues) {
   const manager = rememberingKeys(createGameManager([jenga], () => 0.5, undefined, { manualSimulation: true }));
   for (const name of ['Alice', 'Bob', 'Cat']) manager.join('jenga', 'g1', name);
+  if (values) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
+  agreeAll(manager, ROOM);
   return manager;
 }
 
@@ -58,6 +62,31 @@ test('a whole turn is one move: grabs and drags are not on the timeline', () => 
   assert.equal(history.length, 2);
   assert.deepEqual(history.map(step => step.historyStep), ['start', 'move']);
   assert.equal((history[1] as unknown as PublicGameState).lastMove?.type, 'place');
+});
+
+test('a free drop is one recorded move and undo puts the whole turn back', () => {
+  const manager = game({ freePlacement: true });
+  pullOut(manager);
+  manager.simulateTicks(ROOM, 400);
+  const dropped = ok(manager.move(ROOM, 1, { type: 'drop', at: [0, 0] }));
+  assert.equal(dropped.moveCount, 1);
+  assert.equal(dropped.dropping, MIDDLE);
+  manager.simulateTicks(ROOM, 400);
+  assert.equal(raw(manager).sim, null);
+  assert.equal(raw(manager).currentPlayer, 2);
+  const history = stepsOf(manager, 'jenga')!;
+  assert.deepEqual(history.map(step => step.historyStep), ['start', 'move']);
+  const lastMove = (history[1] as unknown as PublicGameState).lastMove;
+  assert.equal(lastMove?.type === 'place' && lastMove.free, true);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  const undone = ok(manager.voteUndo(ROOM, 3, true));
+  assert.equal(undone.currentPlayer, 1);
+  assert.equal(undone.phase, 'pull');
+  assert.equal(undone.held, null);
+  assert.equal(undone.dropping, null);
+  assert.equal(undone.blocks.length, 54);
+  assert.deepEqual(raw(manager).blocks, raw(manager).turnStart);
 });
 
 test('a placement is refused while the simulation still runs', () => {

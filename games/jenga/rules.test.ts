@@ -684,3 +684,87 @@ test('views carry the turntable rounded and never the turn-start angle', () => {
   }
   assert.deepEqual(jenga.toPublicState(state, false, 1).turntable, { q: [0, 0.1235, 0, 0.9923], w: 1.235, drive: 2 });
 });
+
+// Free placement on, as the host sets it before the first move
+const freeRules = (state: GameState): GameState => ({ ...state, houseRules: { host: 1, values: { freePlacement: true }, maxPlayers: null, agreed: [], revision: 0 } });
+const drop = (at: unknown) => ({ type: 'drop', at });
+const freeOf = (state: GameState) => state.lastMove?.type === 'place' ? state.lastMove.free : undefined;
+
+test('a drop is refused with the rule off or out of reach', () => {
+  assert.equal(placeRefusal(holding(MIDDLE), 1, drop([0, 0])), 'Free placement is off');
+  const free = freeRules(holding(MIDDLE));
+  for (const at of [[20, 0], [NaN, 0], [0, Infinity], [0], ['0', 0], null]) {
+    assert.equal(placeRefusal(free, 1, drop(at)), 'Drop the block over the tower', JSON.stringify(at));
+  }
+  assert.equal(placeRefusal(freeRules(lobby()), 1, drop([0, 0])), 'You have no block to place');
+  assert.equal(placeRefusal({ ...free, toppled: true, loser: 1 }, 1, drop([0, 0])), 'The tower has toppled');
+  assert.equal(placeRefusal(free, 1, drop([0, 0])), 'accepted');
+});
+
+test('a block dropped in the middle of the top rests there and ends the turn', () => {
+  const dropped = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
+  assert.equal(dropped.dropping, MIDDLE);
+  assert.equal(dropped.held, null);
+  assert.equal(dropped.currentPlayer, 1);
+  assert.equal(dropped.gameStatus, 'Alice is setting a block on top');
+  // Laid along X across level 17, its bottom a gap above the top
+  const start = block(dropped, MIDDLE).pose;
+  assert.ok(near(start.p[0], 0) && near(start.p[2], 0) && near(Math.abs(start.q[3]), 1, 0.01), String(start.p));
+  const top = Math.max(...holding(MIDDLE).blocks.map(b => b.pose.p[1] + 0.75));
+  assert.ok(near(start.p[1] - 0.75, top + 0.3, 0.01), String(start.p));
+  const rested = settle(dropped);
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(rested.placed[1], 1);
+  assert.equal(block(rested, MIDDLE).level, 18);
+  assert.equal(freeOf(rested), true);
+  assert.equal(rested.dropping, null);
+  assert.equal(rested.toppled, false);
+  assert.equal(rested.gameStatus, "Bob's turn to pull a block");
+  assert.deepEqual(rested.turnStart, rested.blocks);
+  forgetWorld('g1');
+});
+
+test('with the rule on, Place on top drops at that spot', () => {
+  const dropped = place(freeRules(holding(MIDDLE)), 1, { type: 'place', slot: 0 });
+  assert.equal(dropped.dropping, MIDDLE);
+  assert.equal(freeOf(dropped), true);
+  assert.notEqual(dropped.sim, null);
+  assert.ok(near(block(dropped, MIDDLE).pose.p[2], -2.5), String(block(dropped, MIDDLE).pose.p));
+  assert.equal(placeRefusal(freeRules(holding(53)), 1, { type: 'place', slot: 0 }), 'That spot is taken');
+  // With the rule off, a place carries no free mark
+  assert.equal(freeOf(place(holding(MIDDLE), 1, { type: 'place', slot: 0 })), undefined);
+  forgetWorld('g1');
+});
+
+test('a block dropped over the edge slides off and comes back to hand', () => {
+  const back = settle(place(freeRules(holding(MIDDLE)), 1, drop([6, 6])));
+  assert.equal(back.held, MIDDLE);
+  assert.equal(back.phase, 'place');
+  assert.equal(back.currentPlayer, 1);
+  assert.equal(back.gameStatus, "Alice's block slid off. Place it again");
+  assert.equal(back.toppled, false);
+  assert.equal(back.dropping, null);
+  assert.equal(back.blocks.some(b => b.id === MIDDLE), false);
+  // Placed again, it ends the turn as usual
+  assert.equal(settle(place(back, 1, drop([0, 0]))).currentPlayer, 2);
+  forgetWorld('g1');
+});
+
+test('a grab and a turn wait while the dropped block settles', () => {
+  const dropped = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
+  assert.equal(refusal(dropped, 1, { type: 'grab', block: 19, anchor: END }), 'Wait for the tower to settle');
+  assert.equal(refusal(dropped, 1, turn(1)), 'Wait for the tower to settle');
+  assert.equal(placeRefusal(dropped, 1, drop([0, 0])), 'Wait for the tower to settle');
+});
+
+test('a dismissal while a dropped block settles puts the turn back', () => {
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  let state = place(turnedBy(freeRules(holding(MIDDLE)), eighth), 1, drop([0, 0]));
+  for (let tick = 0; tick < 3; tick++) state = simulate(state);
+  const left = onPlayerLeft(state, 1);
+  assert.equal(left.dropping, null);
+  assert.deepEqual(left.blocks, state.turnStart);
+  assert.deepEqual(left.turntable, { q: eighth, w: 0, drive: null });
+  assert.equal(left.held, null);
+  forgetWorld('g1');
+});
