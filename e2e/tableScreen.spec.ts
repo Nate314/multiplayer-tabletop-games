@@ -136,3 +136,37 @@ test('the TV keeps the lobby when its only player leaves', async ({ browser, ser
   await expect(tv.locator('.table-screen-qr svg')).toBeVisible();
   await expect(tv.getByText('Game not found')).toHaveCount(0);
 });
+
+test('the table screen shows the QR code from the header during play', async ({ seat }) => {
+  const table = await seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan'], { agree: true });
+  const tv = await tableScreen(table);
+  await table.patch({ started: true });
+  await expect(tv.locator('.table-screen-board')).toBeVisible();
+  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  const dialog = tv.getByRole('dialog', { name: 'Scan to join' });
+  await expect(dialog.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(dialog.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${table.gameId}$`));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(dialog).toBeHidden();
+  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await expect(dialog).toBeVisible();
+  await tv.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(tv.locator('.table-screen-board')).toBeVisible();
+  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+});
+
+test('the QR button is there in the lobby and after the game ends', async ({ seat }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const tv = await tableScreen(table);
+  await expect(tv.getByRole('button', { name: 'Show QR code' })).toBeVisible();
+  await table.patch({ isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!' });
+  await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
+  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeVisible();
+  await tv.keyboard.press('Escape');
+  await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeHidden();
+  await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
+  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+});

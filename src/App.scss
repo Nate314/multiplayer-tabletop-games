@@ -2078,6 +2078,23 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   word-break: break-all;
 }
 
+/* Above the game-over backdrop, so the code can be shown to late joiners from the end screen */
+:where([data-table-screen] .qr-button) {
+  position: relative;
+  z-index: 21;
+}
+
+/* After the lobby rules, so the dialog's bigger code wins at equal weight */
+:where([data-table-screen] .qr-dialog .table-screen-qr) {
+  width: min(60vh, 80vw);
+  height: min(60vh, 80vw);
+}
+
+/* Outside :where() on purpose, so a game's own .modal text-align (Hearts sets left) does not win */
+[data-table-screen] .modal.qr-dialog {
+  text-align: center;
+}
+
 :where([data-table-screen] .table-screen-players) {
   list-style: none;
   margin: 0;

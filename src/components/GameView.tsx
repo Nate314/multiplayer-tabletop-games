@@ -15,6 +15,7 @@ import DismissVote from './DismissVote';
 import RematchVote from './RematchVote';
 import SpectatorView from './SpectatorView';
 import TableScreenView from './TableScreenView';
+import QrCodeDialog from './QrCodeDialog';
 import LayoutSwitch from './LayoutSwitch';
 import HandRequestPrompt from './HandRequestPrompt';
 import HandoffScreen from './HandoffScreen';
@@ -56,6 +57,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const history = useHistoryDialog(game.id, gameState, client, credential);
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back).
   // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss,
@@ -96,6 +98,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           <h1>{game.name}</h1>
           <HistoryButton onOpen={history.open} />
           <ShareButton game={game} gameId={gameState.gameId} />
+          {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
           <RulesButton game={game} faq={client.faq} />
           <SettingsButton phoneControls={(
             <>
@@ -145,8 +148,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
             canRematch={canRematch(gameState, playerNumber) && !gameState.rematchVote}
             onRematch={() => gameService.requestRematch()}
             onHistory={history.open}
-            // Escape in History closes only History
-            onSeeTable={() => { if (!history.dialog) setClosed(true); }}
+            // Escape in History or the QR code closes only that dialog
+            onSeeTable={() => { if (!history.dialog && !qrOpen) setClosed(true); }}
             onBack={onBack}
           >
             {rematchVote}
@@ -155,6 +158,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         {/* After See the table the vote shows on its own, with nothing under it to cover */}
         {gameState.isGameOver && closed && !voting && !handingOff && rematchVote}
         {history.dialog}
+        {qrOpen && <QrCodeDialog game={game} gameId={gameState.gameId} onClose={() => setQrOpen(false)} />}
       </div>
     </WatchingContext>
   );

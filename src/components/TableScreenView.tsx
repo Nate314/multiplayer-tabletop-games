@@ -1,7 +1,5 @@
 import { useRef } from 'react';
-import ServerSvg from '../assets/ServerSvg';
-import { svgUrl } from '../assets/svgCache.ts';
-import { joinLink } from '../services/share.ts';
+import JoinQr from './JoinQr';
 import useFitScale from './useFitScale.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState } from '../../shared/types.ts';
@@ -33,11 +31,9 @@ export default function TableScreenView({ game, client, gameState }: TableScreen
   const { started, gameId, activePlayers, playerNames, gameStatus } = gameState;
 
   if (!started) {
-    const link = joinLink(window.location.origin, game.id, gameId);
     return (
       <div className="table-screen">
-        <ServerSvg url={svgUrl('qr', link)} className="table-screen-qr" title={`QR code to join ${game.name} ${gameId}`} />
-        <p className="table-screen-link">{link}</p>
+        <JoinQr game={game} gameId={gameId} />
         <ul className="table-screen-players">
           {activePlayers.map(seat => <li key={seat}>{playerNames[seat]}</li>)}
         </ul>
