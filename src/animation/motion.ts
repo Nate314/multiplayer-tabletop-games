@@ -17,6 +17,11 @@ function center(rect: Rect): { x: number; y: number } {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 }
 
+// Whether an element measured at `from` and now at `to` moved more than a pixel, as rounding alone can shift one by less
+export function hasMoved(from: Pick<DOMRect, 'x' | 'y'>, to: Pick<DOMRect, 'x' | 'y'>): boolean {
+  return Math.abs(from.x - to.x) > 1 || Math.abs(from.y - to.y) > 1;
+}
+
 // The translate that puts an element at `to` back at `from`, center to center.
 // Screen pixels are divided by `scale`, as a translate inside a board scaled down by `scale` moves that much less on screen.
 export function slideOffset(from: Rect, to: Rect, scale: number): { x: number; y: number } {

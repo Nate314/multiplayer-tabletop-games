@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 import type { BasePublicState } from '../../shared/types.ts';
 import { takeDrop } from '../drag/recentDrop.ts';
@@ -43,11 +43,13 @@ function measure(root: HTMLElement): Map<string, DOMRect> {
 // The first render (also after a refresh or rejoin), a jump of several moves and an undo (fewer moves) snap without animating,
 // and so does a move this player just made by dropping the piece where it lands (markDropped in src/drag/recentDrop.ts).
 // rectOf(key) is where the element with data-anim-key="<key>" was after the previous render, in the current viewport coordinates.
+// A screen that moves pieces itself, without a move, calls the returned function once they are in place, so the next move
+// slides them from there rather than from where they were before.
 export function useMoveAnimation<P extends BasePublicState>(
   rootRef: RefObject<HTMLElement | null>,
   state: P,
   animate: (change: MoveChange<P>) => void
-): void {
+): () => void {
   const previousRef = useRef<P | null>(null);
   const rectsRef = useRef<Map<string, DOMRect> | null>(null);
 
@@ -80,4 +82,10 @@ export function useMoveAnimation<P extends BasePublicState>(
       rectsRef.current = nextRects;
     }
   }, [rootRef, state, animate]);
+
+  // Only when rects are held, so it never lets the first render animate
+  return useCallback(() => {
+    const root = rootRef.current;
+    if (root && rectsRef.current) rectsRef.current = measure(root);
+  }, [rootRef]);
 }

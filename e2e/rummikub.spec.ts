@@ -603,6 +603,30 @@ test.describe('Rummikub controls', () => {
     expect(await titles(rackArea(alice))).toEqual(arranged);
   });
 
+  test('a sorted or dragged rack stays still when the next move comes in', async ({ seat }) => {
+    const rack = [t('red', 2), t('blue', 1), t('black', 3), J1, t('orange', 2)];
+    const { alice, bob } = await start(seat, {
+      currentPlayer: 2, melded: [2], racks: { 1: rack, 2: [t('red', 10), t('red', 11), t('red', 12), t('blue', 1, 1)] }
+    }, ['Alice', 'Bob'], { motion: true });
+    const animated = (selector: string) => alice.locator(selector).evaluateAll(elements => elements.filter(e => e.getAnimations().length > 0).length);
+    const settled = () => expect.poll(() => alice.evaluate(() => document.getAnimations().length)).toBe(0);
+
+    await button(alice, 'Number').click();
+    await settled();
+    await lay(bob, t('red', 10), t('red', 11), t('red', 12));
+    await playButton(bob).click();
+    await expect(status(alice)).toHaveText('Bob played 3 tiles');
+    expect(await animated('.rk-rack .rk-tile')).toBe(0);
+    expect(await animated('.rk-table .rk-tile')).toBeGreaterThan(0); // the move itself still animates
+
+    await settled();
+    await drag(alice, rackTile(alice, J1), rackArea(alice).locator('.rk-tile').first());
+    await settled();
+    await button(alice, 'Draw a tile').click();
+    await expect(rackHeader(alice)).toHaveText('Your rack (6)');
+    expect(await animated('.rk-rack .rk-tile')).toBe(1); // only the drawn tile
+  });
+
   test('hovering a joker on the table shows what it stands for, and the last player\'s new tiles are outlined', async ({ seat }) => {
     const { alice, bob } = await start(seat, {
       melded: [1, 2],

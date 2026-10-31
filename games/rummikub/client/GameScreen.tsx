@@ -31,7 +31,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const onRackOrder = useCallback((order: number[]) => { orderRef.current = order; }, []);
   const initialRack = rackOrder(rack, orderRef.current);
 
-  useMoveAnimation(layoutRef, gameState, animateMove);
+  const onRearranged = useMoveAnimation(layoutRef, gameState, animateMove);
   const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   return (
@@ -57,6 +57,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           initialRack={initialRack}
           newlyDrawn={newlyDrawn}
           onRackOrder={onRackOrder}
+          onRearranged={onRearranged}
         />
       </div>
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
