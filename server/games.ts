@@ -19,7 +19,7 @@ import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
-import { sealRoom, type SealedRoom } from './pauseSeal.ts';
+import { sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -49,6 +49,7 @@ type Room = ViewRoom & {
 // `reseated` hears where every seat went when a rematch reset the room, before the call that reset it returns;
 // `removed` hears of each room deleted, so nothing kept for it outlives it
 // `samePerson` says whether a device hash belongs to the person of any of `hashes` (linked devices)
+// `maxResumeBytes` replaces MAX_RESUME_BYTES, so a test can reach the cap with small files
 export type ManagerHooks = {
   now?: () => number;
   changed?: (roomId: string) => void;
@@ -57,6 +58,7 @@ export type ManagerHooks = {
   removed?: (roomId: string) => void;
   manualSimulation?: boolean;
   samePerson?: (hash: string, hashes: string[]) => boolean;
+  maxResumeBytes?: number;
 };
 
 export type Reseat = { from: Seat; to: Seat | null; seatKey: string }; // `to` is null for a seat that left
@@ -72,12 +74,18 @@ type ResumeLobby = {
   game: Room['game'];
   gameId: string;
   fingerprint: string;
+  shareHashes: Record<Seat, string>; // from the first file, so a later file cannot bring its own
   players: Record<Seat, string>;
-  uploads: Map<Seat, { file: PauseFile; seatKey: string; device: string | null }>;
+  uploads: Map<Seat, { file: PauseFile; seatKey: string; device: string | null; bytes: number }>;
   error: string | null;
   timer?: ReturnType<typeof setTimeout>;
+  lifetime?: ReturnType<typeof setTimeout>; // forgets it MAX_RESUME_LOBBY_MS after creation, however often it is polled
 };
 
+// Anyone may open a lobby, so the files every lobby holds together are capped to keep the process in memory
+export const MAX_RESUME_BYTES = 200 * 1024 * 1024;
+export const MAX_RESUME_LOBBY_MS = 60 * 60 * 1000; // status reads renew a lobby, but never past this
+const SERVER_BUSY = 'The server is too busy to resume a game. Try again later';
 const NOT_A_PAUSE_FILE = 'This file is not a pause file';
 const ANOTHER_GAME = 'Another game with this ID is on this server';
 const WAITING_FOR_FILES = 'This game is waiting for its pause files. Choose Resume a game and upload yours';
@@ -126,6 +134,8 @@ export function createGameManager(
 ) {
   const rooms = new Map<string, Room>();
   const lobbies = new Map<string, ResumeLobby>(); // by room ID; a room ID never has both
+  const maxResumeBytes = hooks.maxResumeBytes ?? MAX_RESUME_BYTES;
+  let resumeBytes = 0; // the JSON size of every file every lobby holds
   const now = hooks.now ?? Date.now;
 
   function pruneArchive(): void {
@@ -619,17 +629,27 @@ export function createGameManager(
     return { state: view(room, seat) };
   }
 
-  // A resume lobby lives EMPTY_ROOM_TIMEOUT_MS from its last upload or status read
+  // A resume lobby lives EMPTY_ROOM_TIMEOUT_MS from its last upload or status read, and never past its lifetime
   function touchLobby(roomId: string, lobby: ResumeLobby): void {
     clearTimeout(lobby.timer);
-    lobby.timer = setTimeout(() => {
-      if (lobbies.get(roomId) === lobby) lobbies.delete(roomId);
-    }, EMPTY_ROOM_TIMEOUT_MS);
+    lobby.timer = setTimeout(() => forgetLobby(roomId, lobby), EMPTY_ROOM_TIMEOUT_MS);
     lobby.timer.unref(); // never keeps the process alive on its own
+    if (lobby.lifetime) return;
+    lobby.lifetime = setTimeout(() => forgetLobby(roomId, lobby), MAX_RESUME_LOBBY_MS);
+    lobby.lifetime.unref();
   }
 
+  function dropUpload(lobby: ResumeLobby, seat: Seat): void {
+    resumeBytes -= lobby.uploads.get(seat)?.bytes ?? 0;
+    lobby.uploads.delete(seat);
+  }
+
+  // Also releases the bytes its files held; a lobby already forgotten is left alone
   function forgetLobby(roomId: string, lobby: ResumeLobby): void {
     clearTimeout(lobby.timer);
+    clearTimeout(lobby.lifetime);
+    if (lobbies.get(roomId) !== lobby) return;
+    for (const seat of [...lobby.uploads.keys()]) dropUpload(lobby, seat);
     lobbies.delete(roomId);
   }
 
@@ -1079,7 +1099,8 @@ export function createGameManager(
     // An untrusted upload: to its paused room here, else to the resume lobby for its game ID, which restores the room
     // once every seat's file is in and checks out. The answer carries only the uploader's own new key
     uploadPauseFile(upload: unknown, deviceId: unknown): ResumeUpload | { error: string } {
-      const parsed = parsePauseFile(JSON.stringify(upload) ?? '', games.map(game => game.info.id));
+      const text = JSON.stringify(upload) ?? '';
+      const parsed = parsePauseFile(text, games.map(game => game.info.id));
       if ('error' in parsed) return parsed;
       const { file } = parsed;
       const game = findGame(file.gameType)!;
@@ -1093,11 +1114,19 @@ export function createGameManager(
       let lobby = lobbies.get(roomId);
       if (lobby && lobby.fingerprint !== file.seal.fingerprint) return { error: ANOTHER_GAME };
       if (lobby && canonicalJson(lobby.players) !== canonicalJson(file.players)) return { error: doesNotMatch(file.playerName) };
+      // A share the lobby's seal does not know is a forged claim on the seat, so it never holds the seat
+      const shareHashes = lobby?.shareHashes ?? file.seal.shareHashes;
+      if (shareHash(file.share) !== shareHashes[file.seat]) return { error: doesNotMatch((lobby?.players ?? file.players)[file.seat]) };
       if (lobby?.uploads.has(file.seat)) return { error: `${lobby.players[file.seat]}'s file is already in` };
-      lobby ??= { game, gameId: file.gameId, fingerprint: file.seal.fingerprint, players: { ...file.players }, uploads: new Map(), error: null };
+      if (resumeBytes + text.length > maxResumeBytes) return { error: SERVER_BUSY };
+      lobby ??= {
+        game, gameId: file.gameId, fingerprint: file.seal.fingerprint, shareHashes: { ...shareHashes }, players: { ...file.players },
+        uploads: new Map(), error: null
+      };
       lobbies.set(roomId, lobby);
       const seatKey = randomUUID();
-      lobby.uploads.set(file.seat, { file, seatKey, device });
+      lobby.uploads.set(file.seat, { file, seatKey, device, bytes: text.length });
+      resumeBytes += text.length;
       lobby.error = null;
       touchLobby(roomId, lobby);
       const mine = { seat: file.seat, seatKey, playerName: file.playerName };
@@ -1105,7 +1134,7 @@ export function createGameManager(
 
       const checked = checkPauseFiles(game, [...lobby.uploads.values()].map(entry => entry.file));
       if ('error' in checked) {
-        for (const seat of checked.seats) lobby.uploads.delete(seat);
+        for (const seat of checked.seats) dropUpload(lobby, seat);
         lobby.error = checked.error;
         if (lobby.uploads.size === 0) forgetLobby(roomId, lobby);
         return lobby.uploads.has(file.seat) ? { ...lobbyStatus(lobby), ...mine } : { error: checked.error };

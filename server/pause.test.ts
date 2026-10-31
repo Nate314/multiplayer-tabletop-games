@@ -1,9 +1,9 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGameManager, EMPTY_ROOM_TIMEOUT_MS, NOT_AVAILABLE } from './games.ts';
+import { createGameManager, EMPTY_ROOM_TIMEOUT_MS, MAX_RESUME_LOBBY_MS, NOT_AVAILABLE, type ManagerHooks } from './games.ts';
 import { openGameStore, type GameStore } from './store.ts';
 import { rememberingKeys } from './testing.ts';
-import { openSeal } from './pauseSeal.ts';
+import { openSeal, shareHash } from './pauseSeal.ts';
 import { sealedRoomOf } from './pauseFiles.ts';
 import { hashDeviceId } from './devices.ts';
 import { handGame, testGame, type HandPublicState, type TestPublicState, type TestState } from '../shared/testGame.ts';
@@ -26,9 +26,9 @@ function ok(result: Result<unknown>): TestPublicState {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function managerFor(game: GameDefinition<any, any> = handGame, store?: GameStore, keys = new Map<string, string>()) {
+function managerFor(game: GameDefinition<any, any> = handGame, store?: GameStore, keys = new Map<string, string>(), hooks: ManagerHooks = {}) {
   const clock = { now: 100_000 };
-  const manager = rememberingKeys(createGameManager([game], seededRandom, store, { now: () => clock.now }), keys);
+  const manager = rememberingKeys(createGameManager([game], seededRandom, store, { now: () => clock.now, ...hooks }), keys);
   return { manager, clock, keys };
 }
 
@@ -426,4 +426,52 @@ test('a lobby nobody touches is forgotten', (t: TestContext) => {
   t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS + 1);
   assert.deepEqual(manager.resumeStatus('test', 'g1', first.seatKey), { error: NOT_AVAILABLE });
   assert.ok(!('error' in manager.join('test', 'g1', 'Cara')));
+});
+
+test('a lobby kept polling is forgotten an hour after it opened', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { alice } = pauseFiles();
+  const { manager } = managerFor();
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
+  const polls = Math.floor(MAX_RESUME_LOBBY_MS / EMPTY_ROOM_TIMEOUT_MS);
+  for (let poll = 0; poll < polls; poll++) {
+    t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+    statusOf(manager, first.seatKey);
+  }
+  t.mock.timers.tick(polls);
+  assert.deepEqual(manager.resumeStatus('test', 'g1', first.seatKey), { error: NOT_AVAILABLE });
+});
+
+test('the files every lobby holds are capped, and freed when dropped or forgotten', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { alice, bob } = pauseFiles();
+  const busy = { error: 'The server is too busy to resume a game. Try again later' };
+  const size = (file: PauseFile) => JSON.stringify(file).length;
+
+  const small = managerFor(handGame, undefined, undefined, { maxResumeBytes: size(alice) + size(bob) - 1 }).manager;
+  const first = uploaded(small.uploadPauseFile(alice, DEVICE));
+  assert.deepEqual(small.uploadPauseFile(bob, BOB_DEVICE), busy);
+  assert.deepEqual(statusOf(small, first.seatKey).players.map(player => player.ready), [true, false]);
+  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS + 1);
+  uploaded(small.uploadPauseFile(bob, BOB_DEVICE)); // Alice's forgotten file no longer counts
+
+  // a file a failed check drops no longer counts either
+  const exact = managerFor(handGame, undefined, undefined, { maxResumeBytes: size(alice) + size(bob) }).manager;
+  uploaded(exact.uploadPauseFile(alice, DEVICE));
+  const tampered = { ...bob, hand: { hand: 'card1' } };
+  assert.equal(size(tampered), size(bob));
+  assert.deepEqual(exact.uploadPauseFile(tampered, BOB_DEVICE), { error: MISMATCH });
+  assert.equal(uploaded(exact.uploadPauseFile(bob, BOB_DEVICE)).ready, true);
+});
+
+test('a share the lobby\'s seal does not know is refused before it is stored', () => {
+  const { alice, bob } = pauseFiles();
+  const { manager } = managerFor();
+  assert.deepEqual(manager.uploadPauseFile({ ...alice, share: bob.share }, DEVICE), { error: "Alice's pause file does not match the others" });
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE)); // the forged file took no seat
+  const forged = { ...bob, share: alice.share, seal: { ...bob.seal, shareHashes: { ...bob.seal.shareHashes, 2: shareHash(alice.share) } } };
+  assert.deepEqual(manager.uploadPauseFile({ ...bob, share: alice.share }, BOB_DEVICE), { error: MISMATCH });
+  assert.deepEqual(manager.uploadPauseFile(forged, BOB_DEVICE), { error: MISMATCH });
+  assert.deepEqual(statusOf(manager, first.seatKey).players.map(player => player.ready), [true, false]);
+  assert.equal(uploaded(manager.uploadPauseFile(bob, BOB_DEVICE)).ready, true);
 });
