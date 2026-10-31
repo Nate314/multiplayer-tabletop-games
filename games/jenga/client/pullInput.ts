@@ -8,6 +8,11 @@ const KEY_STEP = 0.5;
 // rad/s while Q or E is held
 export const KEY_SPIN = 1;
 
+export const turnKey = (key: string) => key === 'q' || key === 'Q' ? -KEY_SPIN : key === 'e' || key === 'E' ? KEY_SPIN : null;
+
+// The turn keys held, oldest first; the last one pressed wins, so letting go of one hands back to the other
+export const heldSpeed = (held: string[]) => held.length > 0 ? turnKey(held[held.length - 1]) : null;
+
 // The server reads one drag per tick, so sending more only costs bandwidth
 export const throttleDrag = (lastSentMs: number, nowMs: number) => nowMs - lastSentMs >= SIMULATION_TICK_MS;
 

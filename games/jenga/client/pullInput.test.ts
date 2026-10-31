@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keySteps, keyboardTarget, nextSelection, throttleDrag } from './pullInput.ts';
+import { KEY_SPIN, heldSpeed, keySteps, keyboardTarget, nextSelection, throttleDrag } from './pullInput.ts';
 import { QUARTER_TURN, anchorWorld, fromTable, startingTower } from '../physics.ts';
 import type { Block, Vec3 } from '../types.ts';
 
@@ -67,4 +67,11 @@ test('selection follows the turned tower', () => {
       assert.equal(nextSelection(turned, selected, key, QUARTER_TURN), nextSelection(tower, selected, key), `${key} from ${selected}`);
     }
   }
+});
+
+test('with Q and E both held, letting one go keeps turning with the other', () => {
+  assert.equal(heldSpeed(['q', 'e']), KEY_SPIN);
+  assert.equal(heldSpeed(['e', 'q']), -KEY_SPIN);
+  assert.equal(heldSpeed(['q']), -KEY_SPIN);
+  assert.equal(heldSpeed([]), null);
 });

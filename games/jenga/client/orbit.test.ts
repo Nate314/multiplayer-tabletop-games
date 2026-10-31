@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_ORBIT, cameraPosition, orbitBy, spinSpeed, tiltBy, zoomBy } from './orbit.ts';
+import { DEFAULT_ORBIT, cameraPosition, dragView, orbitBy, spinSpeed, tiltBy, zoomBy } from './orbit.ts';
 import { MAX_SPIN } from '../physics.ts';
 
 const degrees = (radians: number) => radians * 180 / Math.PI;
@@ -46,4 +46,11 @@ test('the camera looks from distance away at the given height', () => {
   // Straight in front at yaw 0, so turning the yaw swings the camera around the tower
   const [x0, , z0] = cameraPosition({ ...orbit, yaw: 0 }, 10);
   assert.ok(Math.abs(x0) < 1e-9 && z0 > 0);
+});
+
+test('while the turntable turns, dragging the view tilts it but never swings it round', () => {
+  const dragged = dragView(DEFAULT_ORBIT, 100, 20, true);
+  assert.equal(dragged.yaw, DEFAULT_ORBIT.yaw);
+  assert.deepEqual(dragged, tiltBy(DEFAULT_ORBIT, 20));
+  assert.deepEqual(dragView(DEFAULT_ORBIT, 100, 20, false), orbitBy(DEFAULT_ORBIT, 100, 20));
 });

@@ -3,12 +3,14 @@ import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
 import TowerView, { type TowerHandle } from './TowerView';
 import { usePreview } from './usePreview.ts';
-import { KEY_SPIN, across, keySteps, keyboardTarget, nextSelection } from './pullInput.ts';
+import { across, heldSpeed, keySteps, keyboardTarget, nextSelection, turnKey } from './pullInput.ts';
 import { ownsTurn, turnEndViews, turnStartView, viewTurntable, type SavedViews } from './camera.ts';
 import { BLOCK, anchorWorld } from '../physics.ts';
 import { canPull, openSlots } from '../rules.ts';
+import { FREE_PLACEMENT_RULE } from '../options.ts';
+import { houseRule } from '../../../shared/houseRules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
-import type { Block, Grab, PublicGameState, Quat, Seat, Vec3 } from '../types.ts';
+import type { Block, Grab, PublicGameState, Quat, Seat, Slot, Vec3 } from '../types.ts';
 
 const SLOT_NAMES = ['left', 'middle', 'right'] as const;
 // The keyboard holds a block by its end, so pulling moves it straight out along its length
@@ -16,7 +18,6 @@ const KEY_ANCHOR: Vec3 = [BLOCK.length / 2, 0, 0];
 
 const slotName = (block: Block, table: Quat) => SLOT_NAMES[Math.max(0, Math.min(2, Math.round(across(block, table) / BLOCK.width) + 1))];
 const blockName = (block: Block, table: Quat) => `Level ${block.level + 1}, ${slotName(block, table)} block`;
-const turnKey = (key: string) => key === 'q' || key === 'Q' ? -KEY_SPIN : key === 'e' || key === 'E' ? KEY_SPIN : null;
 
 // Each seat's view by game, outside the component: pass and play remounts the screen for every seat
 const savedViews = new Map<string, SavedViews>();
@@ -42,7 +43,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const turntable = useMemo(() => viewTurntable(gameState.turntable), [gameState.turntable]);
   const [localGrab, setLocalGrab] = useState<Grab | null>(null);
   const [localDrive, setLocalDrive] = useState<number | null>(null);
-  const keyTurning = useRef(false);
+  const turnKeys = useRef<string[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [steps, setSteps] = useState(0);
   const tower = useRef<TowerHandle>(null);
@@ -93,13 +94,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       if (speed !== null && !latest.current.isMyTurn) return;
       setLocalDrive(speed);
       if (speed !== null || latest.current.owns) gameService.sendAction({ type: 'turn', speed });
-    }
+    },
+    onPlace: (slot: Slot) => gameService.makeMove({ type: 'place', slot }),
+    onDrop: (at: [number, number]) => gameService.makeMove({ type: 'drop', at })
   }), []);
 
-  const stopKeyTurn = () => {
-    if (!keyTurning.current) return;
-    keyTurning.current = false;
-    interactive.onTurn(null);
+  const releaseTurnKey = (key: string | null) => {
+    const held = turnKeys.current;
+    if (held.length === 0) return;
+    turnKeys.current = key === null ? [] : held.filter(k => k !== key);
+    if (turnKeys.current.length !== held.length) interactive.onTurn(heldSpeed(turnKeys.current));
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -107,7 +111,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     const spin = turnKey(key);
     if (spin !== null) {
       if (event.repeat || !isMyTurn) return;
-      keyTurning.current = true;
+      turnKeys.current = [...turnKeys.current.filter(k => k !== key.toLowerCase()), key.toLowerCase()];
       interactive.onTurn(spin);
       return;
     }
@@ -133,6 +137,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     : holding ? `${blockName(selectedBlock, turntable.q)}, held. Down arrow pulls it out, Up arrow pushes it back, Escape lets go`
       : selectedBlock ? `${blockName(selectedBlock, turntable.q)}. Enter grabs it` : 'Arrow keys choose a block';
   const open = openSlots(blocks, turntable.q);
+  const free = houseRule(gameState, FREE_PLACEMENT_RULE);
+  const { held } = gameState;
+  const ready = sim === null;
+  // A new object only when a field changes, so the view does not redo the carry on every server tick
+  const carry = useMemo(() => owns && phase === 'place' && held !== null ? { block: held, free, ready } : null, [owns, phase, held, free, ready]);
 
   return (
     <>
@@ -140,7 +149,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       <div className="game-layout">
         <div className="board-area">
           <div className="jenga-controls hand-only-board" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}
-            onKeyUp={(event) => turnKey(event.key) !== null && stopKeyTurn()} onBlur={stopKeyTurn}>
+            onKeyUp={(event) => turnKey(event.key) !== null && releaseTurnKey(event.key.toLowerCase())} onBlur={() => releaseTurnKey(null)}>
             <TowerView
               ref={tower}
               blocks={blocks}
@@ -148,6 +157,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               highlight={gameState.grab?.block ?? localGrab?.block ?? (pulling ? selected : null)}
               interactive={interactive}
               turning={owns}
+              carry={carry}
             />
             <div className="jenga-selection" aria-live="polite">{selection}</div>
           </div>
@@ -161,6 +171,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           {pulling && <div className="hint">Drag a block out with the mouse or a finger; drag empty space left or right to turn the turntable, or up and down to tilt the view. Q and E turn it too</div>}
           {isMyTurn && phase === 'place' && (
             <div className="jenga-place">
+              <div className="hint">
+                {free ? 'Drag the block over the top and let go where it should go, or use the buttons' : 'Drag the block to an open spot on top, or use the buttons'}
+              </div>
               {sim && <div className="hint">Wait for the tower to settle</div>}
               {SLOT_NAMES.map((name, slot) => (
                 <button key={name} type="button" disabled={sim !== null || !open.includes(slot as 0 | 1 | 2)}

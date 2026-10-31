@@ -1,9 +1,11 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import * as THREE from 'three';
 import { SIMULATION_TICK_MS } from '../../../shared/gameDefinition.ts';
-import { BLOCK, IDENTITY, LEVELS, TURNTABLE } from '../physics.ts';
-import type { Block, Pose, Quat, Vec3 } from '../types.ts';
-import { DEFAULT_ORBIT, cameraPosition, orbitBy, spinSpeed, tiltBy, zoomBy, type Orbit } from './orbit.ts';
+import { BLOCK, IDENTITY, LEVELS, TURNTABLE, toTable } from '../physics.ts';
+import { dropInReach, freeDropPose, placementTargets } from '../rules.ts';
+import type { Block, Pose, Quat, Slot, Vec3 } from '../types.ts';
+import { DEFAULT_ORBIT, cameraPosition, dragView, spinSpeed, tiltBy, zoomBy, type Orbit } from './orbit.ts';
+import { restPose, snapSlot } from './placeInput.ts';
 import { throttleDrag } from './pullInput.ts';
 
 type Interactive = {
@@ -12,14 +14,20 @@ type Interactive = {
   onDrag(target: Vec3): void;
   onRelease(): void;
   onTurn(speed: number | null): void;
+  onPlace(slot: Slot): void;
+  onDrop(at: [number, number]): void;
 };
+
+// The held block, yours to place; ready is false while the tower still settles
+type Carry = { block: number; free: boolean; ready: boolean };
 
 // The preview draws its frames through this, without a React render each frame
 export type TowerHandle = { draw(blocks: Block[], turntable?: Quat): void; camera(): Orbit; setCamera(orbit: Orbit): void };
 
 // turning: dragging empty space turns the turntable instead of swinging the camera round
 type TowerViewProps = {
-  blocks: Block[]; turntable?: Quat; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive; turning?: boolean; ref?: Ref<TowerHandle>;
+  blocks: Block[]; turntable?: Quat; highlight?: number | null; ghost?: Pose | null; interactive?: Interactive; turning?: boolean;
+  carry?: Carry | null; ref?: Ref<TowerHandle>;
 };
 type Drawn = Required<Pick<TowerViewProps, 'blocks' | 'turntable' | 'highlight' | 'ghost'>>;
 
@@ -63,12 +71,14 @@ function rimMark(geometry: THREE.BoxGeometry, material: THREE.Material, length: 
   return mark;
 }
 
-export default function TowerView({ blocks, turntable = IDENTITY, highlight = null, ghost = null, interactive, turning = false, ref }: TowerViewProps) {
+export default function TowerView({ blocks, turntable = IDENTITY, highlight = null, ghost = null, interactive, turning = false, carry = null, ref }: TowerViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const paintRef = useRef<(() => void) | null>(null);
   const drawnRef = useRef<Drawn>({ blocks, turntable, highlight, ghost });
   const interactiveRef = useRef(interactive);
   const turningRef = useRef(turning);
+  const carryRef = useRef(carry);
+  const carryChangedRef = useRef<(() => void) | null>(null);
   const orbitRef = useRef<Orbit>(DEFAULT_ORBIT);
   const [failed, setFailed] = useState(false);
 
@@ -133,6 +143,8 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
       paint();
     };
 
+    // Where the held block is drawn while carried or let go onto the tower; null lies it at rest
+    let heldPose: Pose | null = null;
     const paint = () => {
       const { blocks, turntable, highlight, ghost } = drawnRef.current;
       hemisphere.color.copy(colors.sky);
@@ -150,6 +162,14 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
         place(mesh, block.pose);
         mesh.material.color.copy(id === highlight ? colors.highlight : shades[id]);
       });
+      // The held block is out of the tower, so it is drawn where it is carried, or lying at rest
+      const carried = carryRef.current;
+      if (carried && !shown.has(carried.block)) {
+        const mesh = meshes[carried.block];
+        mesh.visible = true;
+        place(mesh, heldPose ?? restPose(orbitRef.current.yaw));
+        mesh.material.color.copy(colors.highlight);
+      }
       ghostMesh.visible = !!ghost;
       if (ghost) {
         place(ghostMesh, ghost);
@@ -190,6 +210,8 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
     let pulling: { pointer: number; plane: THREE.Plane; lastSent: number; pending: Vec3 | null; timer: number | null } | null = null;
     // dx is dragged since `since`; sent is the last speed sent, null before the first
     let spin: { pointer: number; dx: number; since: number; lastSent: number; sent: number | null; timer: number | null } | null = null;
+    // at is the table-frame point a free drop would go to, null when not over the tower; placed once a snap has sent the place
+    let carrying: { pointer: number; at: [number, number] | null; placed: boolean } | null = null;
     const spread = () => {
       const [a, b] = [...pointers.values()];
       return Math.hypot(a.x - b.x, a.y - b.y);
@@ -253,13 +275,85 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
       sendSpin(now);
     };
 
+    const screenOf = (p: Vec3, rect: DOMRect) => {
+      const v = new THREE.Vector3(...p).project(camera);
+      return { x: (v.x + 1) / 2 * rect.width, y: (1 - v.y) / 2 * rect.height };
+    };
+
+    // Only previews and requests: the server decides where the block ends up
+    const carryTo = (event: PointerEvent) => {
+      const carried = carryRef.current;
+      if (!carrying || !carried || carrying.placed) return;
+      castFrom(event);
+      const { blocks, turntable } = drawnRef.current;
+      const drop = freeDropPose(blocks, turntable, [0, 0]);
+      carrying.at = null;
+      if (carried.free) {
+        const hit = raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -drop.p[1]), new THREE.Vector3());
+        const [x, , z] = hit ? toTable({ p: hit.toArray(), q: IDENTITY }, turntable).p : [Infinity, 0, Infinity];
+        const at: [number, number] = [x, z];
+        if (dropInReach(at)) {
+          carrying.at = at;
+          heldPose = freeDropPose(blocks, turntable, at);
+          return paint();
+        }
+      } else if (carried.ready) {
+        const rect = canvas.getBoundingClientRect();
+        const targets = placementTargets(blocks, turntable);
+        const slot = snapSlot({ x: event.clientX - rect.left, y: event.clientY - rect.top }, targets.map(t => ({ slot: t.slot, ...screenOf(t.pose.p, rect) })));
+        if (slot !== null) {
+          carrying.placed = true;
+          heldPose = targets.find(t => t.slot === slot)!.pose;
+          paint();
+          interactiveRef.current?.onPlace(slot);
+          return;
+        }
+      }
+      // Elsewhere it follows the pointer on the upright plane through the tower's axis, facing the camera
+      const { yaw } = orbitRef.current;
+      const hit = raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), 0), new THREE.Vector3());
+      if (hit) heldPose = { p: hit.toArray(), q: drop.q };
+      paint();
+    };
+    const endCarry = () => {
+      if (!carrying) return;
+      const { at, placed } = carrying;
+      carrying = null;
+      const carried = carryRef.current;
+      if (placed) return;
+      // The block stays drawn over the tower until the server's state shows it falling
+      if (at && carried?.free && carried.ready) return interactiveRef.current?.onDrop(at);
+      heldPose = null;
+      paint();
+    };
+    carryChangedRef.current = () => {
+      const carried = carryRef.current;
+      if (!carried) {
+        carrying = null;
+        heldPose = null;
+      } else if (pulling && !carrying) {
+        // The block came out under the pointer, so the same press carries on from where it was last drawn
+        const { pointer } = pulling;
+        endPull();
+        const mesh = meshes[carried.block];
+        heldPose = { p: mesh.position.toArray(), q: mesh.quaternion.toArray() as Quat };
+        carrying = { pointer, at: null, placed: false };
+      }
+      paint();
+    };
+
     const onDown = (event: PointerEvent) => {
-      if (pulling || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      if (pulling || carrying || (event.pointerType === 'mouse' && event.button !== 0)) return;
       castFrom(event);
       const hit = raycaster.intersectObjects(meshes.filter(mesh => mesh.visible), false)[0];
       const id = hit ? meshes.indexOf(hit.object as (typeof meshes)[number]) : -1;
       const controls = interactiveRef.current;
       canvas.setPointerCapture(event.pointerId);
+      if (hit && id === carryRef.current?.block && pointers.size === 0) {
+        carrying = { pointer: event.pointerId, at: null, placed: false };
+        carryTo(event);
+        return;
+      }
       if (hit && controls?.canGrab(id) && pointers.size === 0) {
         const local = hit.object.worldToLocal(hit.point.clone());
         const anchor = local.toArray().map((n, i) => Math.max(-HALF[i], Math.min(HALF[i], n))) as Vec3;
@@ -278,6 +372,7 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
     };
 
     const onMove = (event: PointerEvent) => {
+      if (carrying?.pointer === event.pointerId) return carryTo(event);
       if (pulling?.pointer === event.pointerId) {
         castFrom(event);
         const hit = raycaster.ray.intersectPlane(pulling.plane, new THREE.Vector3());
@@ -301,13 +396,15 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
         spinBy(event.clientX - last.x, event.timeStamp);
       } else {
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        orbitRef.current = orbitBy(orbitRef.current, event.clientX - last.x, event.clientY - last.y);
+        // A finger left over from a pinch on your turn has no spin, and must still not swing the view round
+        orbitRef.current = dragView(orbitRef.current, event.clientX - last.x, event.clientY - last.y, turningRef.current);
       }
       render();
     };
 
     const onUp = (event: PointerEvent) => {
       if (pulling?.pointer === event.pointerId) endPull();
+      if (carrying?.pointer === event.pointerId) endCarry();
       if (spin?.pointer === event.pointerId) endSpin();
       pointers.delete(event.pointerId);
     };
@@ -341,8 +438,14 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
       renderer.forceContextLoss();
       canvas.remove();
       paintRef.current = null;
+      carryChangedRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    carryRef.current = carry;
+    carryChangedRef.current?.();
+  }, [carry]);
 
   useEffect(() => {
     drawnRef.current = { blocks, turntable, highlight, ghost };
