@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keySteps, keyboardTarget, nextSelection, throttleDrag } from './pullInput.ts';
-import { QUARTER_TURN, anchorWorld, startingTower } from '../physics.ts';
+import { KEY_SPIN, heldSpeed, keySteps, keyboardTarget, nextSelection, throttleDrag } from './pullInput.ts';
+import { QUARTER_TURN, anchorWorld, fromTable, startingTower } from '../physics.ts';
 import type { Block, Vec3 } from '../types.ts';
 
 const close = (a: Vec3, b: Vec3) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9);
@@ -57,4 +57,21 @@ test('arrow keys move the selection only over blocks that may be pulled', () => 
   assert.equal(nextSelection(short, 47, 'ArrowUp'), 47);
   assert.equal(nextSelection(short, 50, 'ArrowLeft'), 45);
   assert.equal(nextSelection(blocks.slice(0, 3), null, 'ArrowUp'), null);
+});
+
+test('selection follows the turned tower', () => {
+  const tower = startingTower().filter(b => b.id !== 48);
+  const turned = tower.map(b => ({ ...b, pose: fromTable(b.pose, QUARTER_TURN) }));
+  for (const key of ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']) {
+    for (const selected of [null, 45, 47, 49, 50]) {
+      assert.equal(nextSelection(turned, selected, key, QUARTER_TURN), nextSelection(tower, selected, key), `${key} from ${selected}`);
+    }
+  }
+});
+
+test('with Q and E both held, letting one go keeps turning with the other', () => {
+  assert.equal(heldSpeed(['q', 'e']), KEY_SPIN);
+  assert.equal(heldSpeed(['e', 'q']), -KEY_SPIN);
+  assert.equal(heldSpeed(['q']), -KEY_SPIN);
+  assert.equal(heldSpeed([]), null);
 });

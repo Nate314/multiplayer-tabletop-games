@@ -1,4 +1,5 @@
 // The orbit camera's maths, kept free of three so it runs under node:test; rendering only, never fed to the physics
+import { MAX_SPIN } from '../physics.ts';
 import type { Vec3 } from '../types.ts';
 
 export type Orbit = { yaw: number; pitch: number; distance: number };
@@ -15,8 +16,16 @@ export const DEFAULT_ORBIT: Orbit = { yaw: 35 * DEGREE, pitch: 20 * DEGREE, dist
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
-export const orbitBy = (o: Orbit, dxPx: number, dyPx: number): Orbit =>
-  ({ ...o, yaw: o.yaw + dxPx * TURN_SPEED, pitch: clamp(o.pitch + dyPx * TURN_SPEED, MIN_PITCH, MAX_PITCH) });
+export const tiltBy = (o: Orbit, dyPx: number): Orbit => ({ ...o, pitch: clamp(o.pitch + dyPx * TURN_SPEED, MIN_PITCH, MAX_PITCH) });
+
+export const orbitBy = (o: Orbit, dxPx: number, dyPx: number): Orbit => tiltBy({ ...o, yaw: o.yaw + dxPx * TURN_SPEED }, dyPx);
+
+// While the turntable turns it stands in for the swing, so the view only tilts
+export const dragView = (o: Orbit, dxPx: number, dyPx: number, turning: boolean): Orbit => turning ? tiltBy(o, dyPx) : orbitBy(o, dxPx, dyPx);
+
+// The turntable turns as fast as an orbit drag would have swung the camera, so the near face follows the finger
+export const spinSpeed = (dxPx: number, dtMs: number) =>
+  dtMs <= 0 ? 0 : clamp(dxPx / (dtMs / 1000) * TURN_SPEED, -MAX_SPIN, MAX_SPIN);
 
 export const zoomBy = (o: Orbit, factor: number): Orbit => ({ ...o, distance: clamp(o.distance * factor, MIN_DISTANCE, MAX_DISTANCE) });
 

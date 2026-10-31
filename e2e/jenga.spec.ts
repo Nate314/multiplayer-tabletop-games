@@ -38,6 +38,21 @@ async function pressAndTick(table: Table, page: Page, key: string, times: number
   }
 }
 
+// The turntable angle q[1] of every state in a socket frame
+function turntableYs(frame: string): number[] {
+  const found: number[] = [];
+  const walk = (value: unknown) => {
+    if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === 'object') {
+      const { turntable } = value as { turntable?: { q?: number[] } };
+      if (turntable?.q) found.push(turntable.q[1]);
+      Object.values(value).forEach(walk);
+    }
+  };
+  walk(JSON.parse(frame));
+  return found;
+}
+
 async function settle(table: Table) {
   for (let round = 0; round < 20 && (await state(table)).sim !== null; round++) await table.simulate(20);
   expect((await state(table)).sim).toBeNull();
@@ -66,6 +81,37 @@ test.describe('Jenga rules', () => {
     await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and placed it on top');
   });
 
+  test('with Free placement, Place on top sets the block down and the physics finishes the turn', async ({ seat }) => {
+    const table = await seat('jenga', ['Alice', 'Bob'], { houseRules: { freePlacement: true } });
+    const [alice, bob] = table.pages;
+    await grabMiddle(table, alice);
+    for (let press = 0; press < 80 && (await state(table)).held === null; press++) await pressAndTick(table, alice, 'ArrowDown', 1);
+    expect((await state(table)).held).toBe(49);
+    await settle(table);
+    await place(alice, 'middle').click();
+    await expect.poll(async () => (await state(table)).dropping).toBe(49);
+    await settle(table);
+    await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
+    await alice.getByRole('button', { name: 'History' }).click();
+    await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and dropped it on top');
+  });
+
+  test('History starts from the untouched tower', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await grabMiddle(table, alice);
+    for (let press = 0; press < 80 && (await state(table)).held === null; press++) await pressAndTick(table, alice, 'ArrowDown', 1);
+    await settle(table);
+    await place(alice, 'middle').click();
+    await expect(status(alice)).toHaveText("Bob's turn to pull a block");
+    await alice.getByRole('button', { name: 'History' }).click();
+    const dialog = alice.getByRole('dialog', { name: 'History' });
+    const drawn = dialog.locator('.jenga-history [data-block-count]');
+    await dialog.getByRole('slider', { name: 'Step' }).fill('0');
+    await expect(drawn).toHaveAttribute('data-block-count', '54');
+    await dialog.getByRole('slider', { name: 'Step' }).fill('1');
+    await expect(drawn).toHaveAttribute('data-block-count', '54');
+  });
+
   test('no block grip reaches either player over the socket during a grab, pull and place', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     expect((await state(table)).grip).toHaveLength(54);
@@ -83,6 +129,33 @@ test.describe('Jenga rules', () => {
     await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
     expect(frames.filter(frame => frame.includes('"blocks"')).length).toBeGreaterThan(10);
     expect(frames.filter(frame => frame.includes('grip'))).toEqual([]);
+  });
+
+  test('Q and E turn the turntable on your turn and Bob sees it turn', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    const frames: string[] = [];
+    const cdp = await bob.context().newCDPSession(bob);
+    await cdp.send('Network.enable');
+    cdp.on('Network.webSocketFrameReceived', event => frames.push(event.response.payloadData));
+    await tower(alice).focus();
+    await alice.keyboard.down('e');
+    await expect.poll(async () => (await state(table)).turntable?.drive).toBe(1);
+    await table.simulate(20);
+    await alice.keyboard.up('e');
+    await expect.poll(async () => (await state(table)).turntable?.drive).toBeNull();
+    await settle(table);
+    const turned = await state(table);
+    expect(turned.turntable!.q[1]).toBeGreaterThan(0.05);
+    expect(turned.turntable!.drive).toBeNull();
+    await expect.poll(() => frames.some(frame => turntableYs(frame).some(y => y > 0.05))).toBe(true);
+    // Alice is still to move, so Bob's E does nothing
+    await tower(bob).focus();
+    await bob.keyboard.down('e');
+    await bob.waitForTimeout(200);
+    const after = await state(table);
+    expect(after.turntable!.drive).toBeNull();
+    expect(after.turntable!.q).toEqual(turned.turntable!.q);
+    await bob.keyboard.up('e');
   });
 
   test('a block can be slid back and another chosen', async ({ seat }) => {
@@ -109,6 +182,17 @@ test.describe('Jenga rules', () => {
     const end = await state(table);
     expect(end.isGameOver).toBe(true);
     expect(end.winners).toEqual([2]);
+  });
+
+  test('the game-over screen waits for the fallen tower to stop', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    const { blocks } = await state(table);
+    await table.patch({ started: true, blocks: blocks.filter(b => b.id !== 4 && b.id !== 5), sim: { ticks: 0, calmTicks: 0, sinceRelease: 0 } });
+    await table.simulate(5);
+    await expect(status(alice)).toHaveText('Alice toppled the tower!');
+    for (const page of [alice, bob]) await expect(page.getByRole('dialog', { name: 'Game over' })).toHaveCount(0);
+    await settle(table);
+    for (const page of [alice, bob]) await expect(page.getByRole('dialog', { name: 'Game over' })).toBeVisible();
   });
 
   test('a pull in progress settles when the puller leaves', async ({ seat }) => {
