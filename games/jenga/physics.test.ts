@@ -8,7 +8,7 @@ import {
 } from './physics.ts';
 import type { Block, Grab, Pose, Quat, Vec3 } from './types.ts';
 
-const GOLDEN = '24001cc3e949dacb3fe84adf9ef8557dc68a60041002ad81f79da372f6677ae8';
+const GOLDEN = '57bdce152af2b0f6fb3bdd6eef87e3a6be786b48445d191ae7eb35e834b87d3c';
 
 before(initPhysics);
 
@@ -251,4 +251,22 @@ test('the tower stands on the turntable at any angle', () => {
     assert.ok(now[1].pose.p[1] > 0, `block 1 at ${now[1].pose.p} with the table at ${q}`);
     tower.world.free();
   }
+});
+
+test('a steady moderate turn does not topple the tower', () => {
+  const { start, now, table } = turned(() => 2, 100);
+  assert.equal(table.w, 0);
+  assert.equal(toppled(start, now, null, IDENTITY, table.q), false);
+});
+
+test('the spin forces stop with the turntable', () => {
+  const tower = buildWorld(startingTower(), () => DEFAULT_GRIP);
+  stepWorld(tower, null, 30, 1);
+  while (readTurntable(tower, null).w !== 0) stepWorld(tower, null, 1);
+  stepWorld(tower, null, 1);
+  for (const body of tower.bodies.values()) {
+    const { x, y, z } = body.userForce();
+    assert.equal(Math.hypot(x, y, z), 0);
+  }
+  tower.world.free();
 });
