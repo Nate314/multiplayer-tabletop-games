@@ -9,9 +9,22 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do I pull a block?',
     answer: 'On your turn, press on a block and drag it out of the tower. A slow drag slides it gently, a fast one jerks it. ' +
-      'Press on empty space to turn the tower, and scroll or pinch to zoom. With the keyboard, click the tower or tab to it, ' +
+      'Scroll or pinch to zoom. With the keyboard, click the tower or tab to it, ' +
       'choose a block with the arrow keys, press Enter to grab it, then press Down to pull and Up to push it back; ' +
       'pressing the same way again pulls harder. Escape lets go.'
+  },
+  {
+    question: 'How do I turn the turntable?',
+    answer: 'The tower stands on a turntable, and the marks on it show which way it faces. On your turn, press on empty space and ' +
+      'drag left or right to turn it, and up or down to tilt the view. Q turns it left and E turns it right while held. A ' +
+      'hard or jerky turn can shake or topple the tower, and that is your topple. The turntable stays where the last player ' +
+      'left it, and it must stop spinning before the next player grabs a block.'
+  },
+  {
+    question: 'How does the camera work?',
+    answer: 'Between turns you can turn the camera and zoom freely. On your turn the camera does not orbit left or right, since ' +
+      'you turn the turntable instead; you can still tilt it and zoom. Your turn starts from the view you ended your last turn ' +
+      'with, measured against the turntable (the default view on your first turn).'
   },
   {
     question: 'Which blocks can I take?',
@@ -25,8 +38,15 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I place the block?',
-    answer: 'Once the block is clear of the tower it is in your hand. When the tower has stopped moving, click Place on top, ' +
-      'left, middle or right. A new level starts across the one below once the top level has 3 blocks. Placing the block ends your turn.'
+    answer: 'Once the block is clear of the tower it is in your hand. Drag it to an open spot on top and it snaps in, or, once ' +
+      'the tower has stopped moving, click Place on top, left, middle or right. Let go anywhere else and the block lies on the ' +
+      'ground beside the turntable, to pick up again. A new level starts across the one below once the top level has 3 blocks. Placing the block ends your turn.'
+  },
+  {
+    question: 'What is Free placement?',
+    answer: 'A house rule, off by default. You set the block on top yourself, where you let go, and the physics decides what ' +
+      'happens. Your turn ends once the block rests on top and everything is still. A block that slides off comes back to your ' +
+      'hand, and blocks it knocks down are a topple.'
   },
   {
     question: 'What counts as toppling the tower?',
