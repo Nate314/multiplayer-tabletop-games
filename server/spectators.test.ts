@@ -81,8 +81,51 @@ test('a table screen takes its entry back with the key', () => {
   assert.deepEqual(screen(manager, 'x', true, 'wrong'), { error: 'You are not in this game' });
 });
 
-test('a table screen needs an existing game', () => {
-  assert.deepEqual(newManager().join('test', 'none', 'x', false, undefined, 'tableScreen'), { error: 'Game not found' });
+test('a table screen creates a missing game with nobody seated', () => {
+  const manager = newManager();
+  const tv = screen(manager);
+  if ('error' in tv) assert.fail(tv.error);
+  assert.equal(tv.seat, null);
+  const view = manager.getState(ROOM) as BasePublicState;
+  assert.deepEqual(view.activePlayers, []);
+  assert.equal(view.started, false);
+  assert.deepEqual(view.spectators?.map(s => s.name), ['Table screen']);
+  const alice = manager.join('test', 'g1', 'Alice');
+  if ('error' in alice) assert.fail(alice.error);
+  assert.equal(alice.seat, 1);
+});
+
+test('only a table screen creates a game', () => {
+  const manager = newManager();
+  const missing = { error: 'Game not found' };
+  assert.deepEqual(manager.join('test', 'none', 'Dana', false, undefined, 'spectator'), missing);
+  assert.deepEqual(manager.join('test', 'none', 'x', true, undefined, 'tableScreen'), missing);
+});
+
+test('a lobby the table screen watches survives its last player leaving', () => {
+  const manager = newManager();
+  screen(manager);
+  manager.join('test', 'g1', 'Alice');
+  assert.ok(manager.disconnect(ROOM, 1));
+  assert.deepEqual(manager.getState(ROOM)?.activePlayers, []);
+});
+
+test('a lobby with nobody seated goes when its table screen leaves', () => {
+  const manager = newManager();
+  const tv = screen(manager);
+  if ('error' in tv) assert.fail(tv.error);
+  watcher(manager, 'Dana');
+  manager.disconnectSpectator(ROOM, tv.spectatorId!);
+  assert.equal(manager.getState(ROOM), undefined);
+});
+
+test('a started game keeps its room when the table screen leaves', () => {
+  const manager = gameWith('Alice', 'Bob');
+  const tv = screen(manager);
+  if ('error' in tv) assert.fail(tv.error);
+  ok(manager.move(ROOM, 1, tick));
+  manager.disconnectSpectator(ROOM, tv.spectatorId!);
+  assert.ok(manager.getState(ROOM));
 });
 
 test('spectator and player names are unique together', () => {

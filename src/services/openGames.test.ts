@@ -31,3 +31,7 @@ test('the list is returned without malformed entries', async () => {
   stubFetch(respond(200, { games: [lobby, { gameType: 'chess', gameId: 1 }] }));
   assert.deepEqual(await fetchOpenGames(), [lobby]);
 });
+
+test('a lobby with nobody seated waits for players', () => {
+  assert.equal(describeOpenGame({ gameType: 'chess', gameId: 'a', players: [], playing: false }, 'Chess'), 'Waiting for players');
+});

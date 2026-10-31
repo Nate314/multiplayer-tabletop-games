@@ -1,4 +1,5 @@
-import { expect, tableScreen, test } from './fixtures.ts';
+import { expect, joinGame, newPlayer, openJoinDialog, tableScreen, test } from './fixtures.ts';
+import type { Browser, Page } from '@playwright/test';
 
 // A table screen joins as a spectator that only ever sees the table
 
@@ -101,4 +102,37 @@ test('pictionary: the table screen never shows the word', async ({ seat }) => {
   await table.patch({ phaseStartedAt: Date.now() - 89_500 });
   await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: red apple');
   expect(await shown()).toContain('red apple');
+});
+
+async function newScreen(browser: Browser, server: { url: string }, gameId: string): Promise<Page> {
+  const tv = await newPlayer(browser, server);
+  await openJoinDialog(tv, 'hearts');
+  await tv.getByRole('button', { name: 'Table screen' }).click();
+  await tv.getByLabel('Game ID').fill(gameId);
+  await tv.getByRole('button', { name: 'Show table', exact: true }).click();
+  return tv;
+}
+
+test('a table screen with a new game ID creates the game and shows its QR code', async ({ browser, server }) => {
+  const id = `tv${Date.now() % 100000}`;
+  const tv = await newScreen(browser, server, id);
+  await expect(tv.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(tv.locator('.table-screen-players li')).toHaveCount(0);
+  await expect(tv.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${id}$`));
+  const alice = await newPlayer(browser, server);
+  await joinGame(alice, 'hearts', id, 'Alice');
+  await expect(tv.locator('.table-screen-players li')).toHaveText(['Alice']);
+  await expect(alice.locator('.presence-watching')).toHaveText('Watching: Table screen');
+});
+
+test('the TV keeps the lobby when its only player leaves', async ({ browser, server }) => {
+  const id = `tv${Date.now() % 100000}`;
+  const tv = await newScreen(browser, server, id);
+  const alice = await newPlayer(browser, server);
+  await joinGame(alice, 'hearts', id, 'Alice');
+  await expect(tv.locator('.table-screen-players li')).toHaveText(['Alice']);
+  await alice.context().close();
+  await expect(tv.locator('.table-screen-players li')).toHaveCount(0);
+  await expect(tv.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(tv.getByText('Game not found')).toHaveCount(0);
 });

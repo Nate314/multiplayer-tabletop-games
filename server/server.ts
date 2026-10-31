@@ -389,16 +389,21 @@ function handleDisconnect(ws: WebSocket): void {
   connections.delete(ws);
   if (connection.spectatorId !== undefined) {
     manager.disconnectSpectator(connection.roomId, connection.spectatorId);
-    broadcast(connection.roomId);
+    if (manager.getState(connection.roomId)) broadcast(connection.roomId);
+    else tellRoomGone(connection.roomId);
     return;
   }
   const seats = connection.localSeats ?? (connection.seat !== null ? [connection.seat] : []);
   const results = seats.map(seat => manager.disconnect(connection.roomId, seat));
   if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
-    for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
+    tellRoomGone(connection.roomId);
   } else if (results.some(Boolean)) {
     broadcast(connection.roomId);
   }
+}
+
+function tellRoomGone(roomId: string): void {
+  for (const [other, connection] of connections) if (connection.roomId === roomId) sendError(other, 'Game not found');
 }
 
 function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>): void {
