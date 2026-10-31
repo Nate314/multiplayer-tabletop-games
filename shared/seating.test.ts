@@ -301,3 +301,21 @@ test('applyMove hands the game the server time, which defaults to now', () => {
   const before = Date.now();
   assert.ok((at() ?? 0) >= before + 1000);
 });
+
+test('applyMove refuses while paused or during a pause vote', () => {
+  const state = threeStarted();
+  assert.deepEqual(applyMove(testGame, { ...state, paused: true }, 2, { type: 'tick' }), { error: 'The game is paused' });
+  const pauseVote = { requestedBy: 1, votes: { 1: true } };
+  assert.deepEqual(applyMove(testGame, { ...state, pauseVote }, 2, { type: 'tick' }), { error: 'A pause vote is in progress' });
+});
+
+test('a disconnect cancels a pause vote', () => {
+  const state = { ...threeStarted(), pauseVote: { requestedBy: 1, votes: { 1: true } } };
+  assert.equal(disconnectPlayer(testGame, state, 3).pauseVote, null);
+});
+
+test('a disconnect while paused runs no game hook', () => {
+  const game = { ...testGame, onPlayerDisconnected: () => { throw new Error('hook ran'); } };
+  const state = { ...threeStarted(), paused: true };
+  assert.deepEqual(disconnectPlayer(game, state, 3), { ...state, disconnected: [3] });
+});

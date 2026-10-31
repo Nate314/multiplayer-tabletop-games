@@ -89,3 +89,14 @@ test('a rematch vote waits on the seat that has not answered, and the rest get g
   assert.deepEqual(alertFor(info, over, 2), { kind: 'vote', key: 'vote:rematch:1' });
   assert.deepEqual(alertFor(info, over, 1), { kind: 'gameOver', key: 'gameOver' });
 });
+
+test('a pause vote waits on every seat that has not voted', () => {
+  const state = running({ pauseVote: { requestedBy: 1, votes: { 1: true } } });
+  assert.deepEqual(votesWaitingOn(state, 2), ['vote:pause:1']);
+  assert.deepEqual(votesWaitingOn(state, 1), []);
+});
+
+test('a paused game alerts nobody', () => {
+  assert.deepEqual(alertFor(info, running(), 2), { kind: 'turn', key: 'turn' });
+  assert.equal(alertFor(info, running({ paused: true }), 2), null);
+});
