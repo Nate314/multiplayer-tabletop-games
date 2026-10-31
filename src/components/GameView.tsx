@@ -94,7 +94,9 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const paused = gameState.paused === true;
   const canPause = (playerNumber !== null || localSeats !== null) && gameState.started && !gameState.isGameOver && !paused;
   const pauseBlocked = Boolean(gameState.undoVote || gameState.dismissVote || gameState.rematchVote || gameState.pauseVote) || gameState.disconnected.length > 0;
-  const pauseButton = <PauseButton disabled={pauseBlocked} onPause={() => gameService.requestPause()} />;
+  const pauseButton = (close?: () => void) => (
+    <PauseButton disabled={pauseBlocked} onPause={() => { close?.(); gameService.requestPause(); }} />
+  );
   const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber] }]);
 
   return (
@@ -106,10 +108,11 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           <HistoryButton onOpen={history.open} />
           <ShareButton game={game} gameId={gameState.gameId} />
           <RulesButton game={game} faq={client.faq} />
-          {canPause && pauseButton}
-          <SettingsButton phoneControls={(
+          {canPause && pauseButton()}
+          {/* Pausing closes Settings, so the vote and the paused screen are not left under it */}
+          <SettingsButton phoneControls={(close) => (
             <>
-              {canPause && <div className="settings-row">Pause the game {pauseButton}</div>}
+              {canPause && <div className="settings-row">Pause the game {pauseButton(close)}</div>}
               <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
               <div className="settings-row">Theme <ThemeToggle /></div>
             </>

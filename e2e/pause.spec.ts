@@ -84,6 +84,35 @@ test('a pass and play device pauses for every seat it holds', async ({ seat, bro
   await device.context().close();
 });
 
+// A phone has Pause in Settings, which closes so nothing is left over the vote or the paused screen
+async function pauseFromSettings(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(pauseButton(page)).toBeHidden();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
+test('pausing from Settings on a phone closes Settings', async ({ seat }) => {
+  const [alice, bob] = (await started(seat)).pages;
+  await pauseFromSettings(alice);
+  await expect(voteTitle(alice)).toHaveText('Alice wants to pause the game');
+  await bob.getByRole('button', { name: 'Approve' }).click();
+  await expect(paused(alice)).toBeVisible();
+  await expect(alice.getByRole('dialog', { name: 'Settings' })).toHaveCount(0);
+});
+
+test('a pass and play phone pauses from Settings straight to the paused screen', async ({ seat, browser, server }) => {
+  const table = await seat('uno', [], { agree: false });
+  const device = await newPlayer(browser, server);
+  await joinPassAndPlay(device, 'uno', table.gameId, ['Alice', 'Bob']);
+  await table.patch({ started: true });
+  await pauseFromSettings(device);
+  await expect(paused(device)).toBeVisible();
+  await device.context().close();
+});
+
 test('a spectator sees the pause but no download', async ({ seat, browser, server }) => {
   const table = await started(seat);
   const [alice, bob] = table.pages;
