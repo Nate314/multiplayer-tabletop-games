@@ -19,7 +19,7 @@ import { nextShownSeat, seatsToAct } from '../shared/passAndPlay.ts';
 import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
-import { sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
+import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -1093,7 +1093,10 @@ export function createGameManager(
       const hash = state.seatDevices?.[seat];
       const allowed = (key !== undefined && sameSecret(key, credential)) || (!!device && hash !== undefined && sameSecret(hash, device));
       if (!allowed) return { error: NOT_AVAILABLE };
-      return { file: buildPauseFile(room.game, sealedRoomOf(room), seat, state.pause, now) };
+      // From the seal, not the live room: presence and status change while paused, and every file must match the seal
+      const sealed = openSeal(state.pause.seal, state.pause.shares);
+      if (!sealed) return { error: NOT_AVAILABLE };
+      return { file: buildPauseFile(room.game, sealed, seat, state.pause, now) };
     },
 
     // An untrusted upload: to its paused room here, else to the resume lobby for its game ID, which restores the room

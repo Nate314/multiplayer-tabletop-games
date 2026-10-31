@@ -116,8 +116,8 @@ test('a pass and play phone pauses from Settings straight to the paused screen',
 type PauseFileJson = { hand: unknown };
 type UnoState = { currentPlayer: number; hands: unknown };
 
-// Pauses Alice and Bob's game, has both download their files and then go back to the games, and loses the room as a
-// server restart would
+// Pauses Alice and Bob's game, has each download their file and go back to the games (so Alice has left before Bob
+// downloads), then loses the room as a server restart would
 async function lostGame(seat: Seat, server: { url: string }) {
   const table = await started(seat);
   const [alice, bob] = table.pages;
@@ -128,8 +128,8 @@ async function lostGame(seat: Seat, server: { url: string }) {
     const downloading = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download my pause file' }).click();
     files.push(await (await downloading).path());
+    await page.getByRole('button', { name: 'Back to games' }).click();
   }
-  for (const page of [alice, bob]) await page.getByRole('button', { name: 'Back to games' }).click();
   const response = await fetch(`${server.url}/api/e2e/room/uno/${table.gameId}`, { method: 'DELETE' });
   expect(response.ok).toBe(true);
   return { table, alice, bob, before, files };

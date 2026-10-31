@@ -292,6 +292,18 @@ test('files resume a lost game in the same seats on the same turn', () => {
   assert.equal(manager.rawState(ROOM)?.pause, undefined);
 });
 
+test('files downloaded after a player leaves and comes back still resume the game', () => {
+  const original = paused(started());
+  const alice = fileOf(original, 1, keyOf(original, 1));
+  original.disconnect(ROOM, 2);
+  rejoined(original, 'Bob', keyOf(original, 2));
+  original.disconnect(ROOM, 1);
+  const bob = fileOf(original, 2, keyOf(original, 2));
+  const { manager } = managerFor();
+  uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.equal(uploaded(manager.uploadPauseFile(bob, BOB_DEVICE)).ready, true);
+});
+
 test('the uploader\'s device takes the seat', () => {
   const { manager } = resumedFromFiles();
   assert.equal(manager.rawState(ROOM)?.seatDevices?.[1], hashDeviceId(DEVICE));
