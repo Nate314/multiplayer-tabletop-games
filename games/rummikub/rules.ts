@@ -132,27 +132,32 @@ function sharesNatural(a: GroupInfo, b: GroupInfo): boolean {
 }
 
 // A joker that no longer stands for the same tile alongside the same tiles has been taken. In a set it may
-// stand for any missing color, so it stays put while one of the colors it could stand for is still missing. It is allowed only
-// if the tile it stood for now sits with the tiles it was with, from the rack or from elsewhere on the table.
-// Each taken joker needs a tile of its own: one tile never frees two jokers.
-function jokersReplaced(before: GroupInfo[], after: GroupInfo[]): boolean {
+// stand for any missing color, so it stays put while one of the colors it could stand for is still missing.
+// A taken joker needs the tile it stood for, from the rack, to sit with the tiles it was with, and one tile
+// never frees two jokers. The joker must then be in a group with two more rack tiles, which jokers may share.
+function takenJokerError(before: GroupInfo[], after: GroupInfo[], added: ReadonlySet<number>): string | null {
   const old = jokerPlaces(before);
   const now = jokerPlaces(after);
-  const used = new Set<number>();
-  return [...old].every(([id, was]) => {
-    const is = now.get(id);
-    const stayed = is !== undefined && is.value === was.value && is.colors.some(color => was.colors.includes(color)) &&
-      sharesNatural(is.group, was.group);
-    if (stayed) return true;
-    const replacement = after.filter(group => sharesNatural(group, was.group)).flatMap(group => group.tiles).find(tileId => {
+  const replacing = new Set<number>();
+  const taken: JokerPlace[] = [];
+  for (const [id, was] of old) {
+    const is = now.get(id)!;
+    const stayed = is.value === was.value && is.colors.some(color => was.colors.includes(color)) && sharesNatural(is.group, was.group);
+    if (stayed) continue;
+    const candidates = after.filter(group => sharesNatural(group, was.group)).flatMap(group => group.tiles).filter(tileId => {
       const tile = tileOf(tileId);
-      return tile.kind === 'number' && !used.has(tileId) && !was.group.tiles.includes(tileId) &&
+      return tile.kind === 'number' && !replacing.has(tileId) && !was.group.tiles.includes(tileId) &&
         tile.value === was.value && was.colors.includes(tile.color);
     });
-    if (replacement === undefined) return false;
-    used.add(replacement);
-    return true;
-  });
+    if (candidates.length === 0) return 'A joker taken from the table must be replaced by the tile it stands for';
+    const replacement = candidates.find(tileId => added.has(tileId));
+    if (replacement === undefined) return 'The tile that replaces a joker must come from your rack';
+    replacing.add(replacement);
+    taken.push(is);
+  }
+  const fromRack = (group: GroupInfo) => group.tiles.filter(tileId => added.has(tileId) && !replacing.has(tileId)).length;
+  if (taken.some(is => fromRack(is.group) < 2)) return 'A joker taken from the table must be played again with at least two tiles from your rack';
+  return null;
 }
 
 // What a play would do, checked against the table and the player's rack. The browser calls it for the preview.
@@ -186,8 +191,9 @@ export function checkPlay(table: Table, melded: boolean, rack: number[], propose
     if (!unchanged) return { error: 'Your first meld may not use or change the tiles on the table' };
     meld = groups.filter(group => group.tiles.every(id => !onTable.has(id))).reduce((sum, group) => sum + group.points, 0);
     if (meld < INITIAL_MELD) return { error: `Your first meld must total at least ${INITIAL_MELD} points (this one totals ${meld})` };
-  } else if (!jokersReplaced(table.map(ids => analyzeGroup(ids)).filter(group => group !== null), groups)) {
-    return { error: 'A joker taken from the table must be replaced by the tile it stands for' };
+  } else {
+    const error = takenJokerError(table.map(ids => analyzeGroup(ids)).filter(group => group !== null), groups, new Set(added));
+    if (error) return { error };
   }
   return { state: { table: groups.map(group => group.tiles), added, meld } };
 }

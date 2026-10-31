@@ -27,7 +27,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do jokers work?',
-    answer: 'A joker stands for any tile. In a run it stands for the number of its place, so put it where it belongs, for example between the red 4 and the red 6 to be a red 5 (hover over it to see what it stands for). In a set it stands for a missing color. After your first meld you may take a joker from the table by putting the tile it stands for in its place (in a set of three, either missing color), from your rack or from elsewhere on the table. The joker must then be used again on the table in the same turn.'
+    answer: 'A joker stands for any tile. In a run it stands for the number of its place, so put it where it belongs, for example between the red 4 and the red 6 to be a red 5 (hover over it to see what it stands for). In a set it stands for a missing color. After your first meld you may take a joker from the table by putting the tile it stands for, from your rack, in its place (in a set of three, either missing color). You must then play the freed joker in the same turn, in a new or existing group, together with at least two more tiles from your rack.'
   },
   {
     question: 'What if I cannot or do not want to play?',

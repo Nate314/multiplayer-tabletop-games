@@ -286,6 +286,38 @@ test('a joker taken from the table must be replaced by its tile and played again
   assert.deepEqual(ok(play(adding, 1, [[t('red', 4), J1, t('red', 6), t('red', 7)]])).table, [[t('red', 4), J1, t('red', 6), t('red', 7)]]);
 });
 
+test('the tile that replaces a joker must come from the rack', () => {
+  const table = [[t('red', 4), J1, t('red', 6)], [t('red', 5, 1), t('blue', 5), t('black', 5), t('orange', 5)]];
+  const state = game({ 1: [t('blue', 9), t('orange', 9), t('black', 1)], 2: [t('orange', 1)] }, table);
+  assert.deepEqual(
+    play(state, 1, [[t('red', 4), t('red', 5, 1), t('red', 6)], [t('blue', 5), t('black', 5), t('orange', 5)], [t('blue', 9), t('orange', 9), J1]]),
+    { error: 'The tile that replaces a joker must come from your rack' }
+  );
+});
+
+test('a freed joker needs two more rack tiles in its group', () => {
+  const table = [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]];
+  const swapped = [t('red', 4), t('red', 5), t('red', 6)];
+  const oneMore = game({ 1: [t('red', 5), t('blue', 11)], 2: [t('orange', 1)] }, table);
+  assert.deepEqual(
+    play(oneMore, 1, [swapped, [t('blue', 7), t('blue', 8), t('blue', 9), J1, t('blue', 11)]]),
+    { error: 'A joker taken from the table must be played again with at least two tiles from your rack' }
+  );
+  const twoMore = game({ 1: [t('red', 5), t('blue', 11), t('blue', 12)], 2: [t('orange', 1)] }, table);
+  assert.ok('state' in play(twoMore, 1, [swapped, [t('blue', 7), t('blue', 8), t('blue', 9), J1, t('blue', 11), t('blue', 12)]]));
+});
+
+test('a joker that comes to stand for another tile in its own group counts as taken', () => {
+  const table = [[t('red', 4), t('red', 5), J1]];
+  const sixOnly = game({ 1: [t('red', 6), t('blue', 1)], 2: [t('orange', 1)] }, table);
+  assert.deepEqual(
+    play(sixOnly, 1, [[t('red', 4), t('red', 5), t('red', 6), J1]]),
+    { error: 'A joker taken from the table must be played again with at least two tiles from your rack' }
+  );
+  const withMore = game({ 1: [t('red', 6), t('red', 8), t('red', 9)], 2: [t('orange', 1)] }, table);
+  assert.ok('state' in play(withMore, 1, [[t('red', 4), t('red', 5), t('red', 6), J1, t('red', 8), t('red', 9)]]));
+});
+
 test('drawing takes a tile from the pool and passes the turn', () => {
   const state = game({ 1: [t('red', 1)], 2: [t('orange', 5)] });
   const after = ok(move(state, 1, { type: 'draw' }));

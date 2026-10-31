@@ -715,31 +715,42 @@ test.describe('Rummikub differences from Wikipedia', () => {
     expect(await jokers.evaluateAll(elements => elements.map(e => e.getAttribute('title')))).toEqual(['Joker as red 4', 'Joker as red 6']);
 
     // Red 4, red 5 and a joker as red 6. Putting the red 6 at the end makes the joker a red 7, which takes it,
-    // and the red 6 now sits with the tiles it was with, so the play is fine
+    // so the joker needs two more tiles from the rack in its group
     await table.patch({
       table: [[t('red', 4), t('red', 5), J1]],
-      racks: { ...(await table.state<GameState>()).racks, 1: [t('red', 6), t('blue', 1)] }
+      racks: { ...(await table.state<GameState>()).racks, 1: [t('red', 6), t('red', 8), t('red', 9)] }
     });
     await expect(group(bob, 1).locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 6');
     await rackTile(alice, t('red', 6)).click();
     await groupEnd(alice, 1).click();
-    await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+    await expect(hint(alice)).toHaveText('A joker taken from the table must be played again with at least two tiles from your rack');
+    await expect(playButton(alice)).toBeDisabled();
+    for (const value of [8, 9]) {
+      await rackTile(alice, t('red', value)).click();
+      await groupEnd(alice, 1).click();
+    }
+    await expect(hint(alice)).toHaveText('Ready to play 3 tiles');
     await playButton(alice).click();
     await expect(group(bob, 1).locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 7');
   });
 
-  test('a freed joker may go into a group already on the table, and each taken joker needs its own tile', async ({ seat }) => {
+  test('a freed joker may go into a group already on the table with two rack tiles, and each taken joker needs its own tile', async ({ seat }) => {
     const { table, alice } = await start(seat, {
       melded: [1, 2],
       table: [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]],
-      racks: { 1: [t('red', 5)] }
+      racks: { 1: [t('red', 5), t('blue', 11), t('blue', 12)] }
     });
     await tableTile(alice, J1).click();
     await groupEnd(alice, 2).click();
     await rackTile(alice, t('red', 5)).click();
     await tableTile(alice, t('red', 6)).click();
     await expect(group(alice, 2).locator('.rk-joker')).toHaveAttribute('title', 'Joker as blue 10');
-    await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+    await expect(hint(alice)).toHaveText('A joker taken from the table must be played again with at least two tiles from your rack');
+    for (const value of [11, 12]) {
+      await rackTile(alice, t('blue', value)).click();
+      await groupEnd(alice, 2).click();
+    }
+    await expect(hint(alice)).toHaveText('Ready to play 3 tiles');
 
     // Two jokers in a set of 5s: the black 5 frees only one of them
     await table.patch({
@@ -755,6 +766,24 @@ test.describe('Rummikub differences from Wikipedia', () => {
     await rackTile(alice, t('black', 5)).click();
     await groupEnd(alice, 1).click();
     await expect(hint(alice)).toHaveText('A joker taken from the table must be replaced by the tile it stands for');
+    await expect(playButton(alice)).toBeDisabled();
+  });
+
+  test('a joker cannot be freed with a tile from the table', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      table: [[t('red', 4), J1, t('red', 6)], [t('red', 5, 1), t('blue', 5), t('black', 5), t('orange', 5)]],
+      racks: { 1: [t('blue', 9), t('orange', 9), t('black', 1)] }
+    });
+    await tableTile(alice, J1).click();
+    await newGroup(alice).click();
+    await tableTile(alice, t('red', 5, 1)).click();
+    await tableTile(alice, t('red', 6)).click();
+    await rackTile(alice, t('blue', 9)).click();
+    await groupEnd(alice, 3).click();
+    await rackTile(alice, t('orange', 9)).click();
+    await groupEnd(alice, 3).click();
+    await expect(hint(alice)).toHaveText('The tile that replaces a joker must come from your rack');
     await expect(playButton(alice)).toBeDisabled();
   });
 
