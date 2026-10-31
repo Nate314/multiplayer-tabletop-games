@@ -1,7 +1,8 @@
+import assert from 'node:assert/strict';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { PAUSE_FILE_FORMAT, PAUSE_FILE_VERSION, type PauseFile, type PauseRecord } from '../shared/pauseFile.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Seat } from '../shared/types.ts';
-import type { SealedRoom } from './pauseSeal.ts';
+import { openSeal, shareHash, type SealedRoom } from './pauseSeal.ts';
 import { historyMoments, historyStep, publicView, type ViewRoom } from './views.ts';
 
 // Secrets and per-run bookkeeping that must not outlive the pause: the seal protects the rest
@@ -55,4 +56,63 @@ export function canonicalJson(value: unknown): string {
     if (item === null || typeof item !== 'object' || Array.isArray(item)) return item;
     return Object.fromEntries(Object.entries(item).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
   });
+}
+
+function namesList(names: string[]): string {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+function mismatch(files: PauseFile[], seats: Seat[]): { error: string; seats: Seat[] } {
+  const named = files.filter(file => seats.includes(file.seat)).sort((a, b) => a.seat - b.seat);
+  const names = named.map(file => file.playerName);
+  const error = names.length === 1
+    ? `${names[0]}'s pause file does not match the others`
+    : `The pause files from ${namesList(names)} do not match`;
+  return { error, seats: named.map(file => file.seat) };
+}
+
+const sharedPart = (file: PauseFile) => canonicalJson({
+  format: file.format, version: file.version, gameType: file.gameType, gameId: file.gameId,
+  players: file.players, table: file.table, history: file.history, seal: file.seal
+});
+
+// The tamper check on untrusted files, one per seat: plain parts are compared only as canonical JSON, and nothing throws
+export function checkPauseFiles(
+  game: GameDefinition<any, BasePublicState>, files: PauseFile[] // eslint-disable-line @typescript-eslint/no-explicit-any
+): { room: SealedRoom } | { error: string; seats: Seat[] } {
+  const every = files.map(file => file.seat);
+  const groups = new Map<string, Seat[]>();
+  for (const file of files) {
+    const key = sharedPart(file);
+    groups.set(key, [...(groups.get(key) ?? []), file.seat]);
+  }
+  const sizes = [...groups.values()].map(group => group.length).sort((a, b) => b - a);
+  if (sizes.length > 1) {
+    const largest = sizes[0] > sizes[1] ? [...groups.values()].find(group => group.length === sizes[0])! : [];
+    return mismatch(files, every.filter(seat => !largest.includes(seat)));
+  }
+
+  const badShares = files.filter(file => typeof file.share !== 'string' || shareHash(file.share) !== file.seal.shareHashes[file.seat]);
+  if (badShares.length > 0) return mismatch(files, badShares.map(file => file.seat));
+
+  const { players, seal } = files[0];
+  assert.deepEqual([...every].sort((a, b) => a - b), Object.keys(players).map(Number).sort((a, b) => a - b));
+
+  const room = openSeal(seal, Object.fromEntries(files.map(file => [file.seat, file.share])));
+  if (!room) return mismatch(files, every);
+
+  // the opened room is unchecked JSON that every player agreed on, so rebuilding its parts may throw
+  try {
+    const badHands: Seat[] = [];
+    for (const file of files) {
+      const parts = pausePlainParts(game, room, file.seat);
+      if (canonicalJson(parts.table) !== canonicalJson(file.table) || canonicalJson(parts.history) !== canonicalJson(file.history)) {
+        return mismatch(files, every);
+      }
+      if (canonicalJson(parts.hand) !== canonicalJson(file.hand)) badHands.push(file.seat);
+    }
+    return badHands.length > 0 ? mismatch(files, badHands) : { room };
+  } catch {
+    return mismatch(files, every);
+  }
 }

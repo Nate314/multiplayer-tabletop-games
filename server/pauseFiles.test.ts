@@ -2,9 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GAMES } from '../games/registry.ts';
 import { dealt, type Loose } from '../games/testStates.ts';
-import { PAUSE_FILE_FORMAT, parsePauseFile } from '../shared/pauseFile.ts';
-import { buildPauseFile, canonicalJson, pausePlainParts, sealedRoomOf } from './pauseFiles.ts';
-import { sealRoom } from './pauseSeal.ts';
+import { PAUSE_FILE_FORMAT, parsePauseFile, type PauseFile } from '../shared/pauseFile.ts';
+import { handGame } from '../shared/testGame.ts';
+import { buildPauseFile, canonicalJson, checkPauseFiles, pausePlainParts, sealedRoomOf } from './pauseFiles.ts';
+import { createGameManager } from './games.ts';
+import { openSeal, sealRoom } from './pauseSeal.ts';
+import { rememberingKeys } from './testing.ts';
 import type { ViewRoom } from './views.ts';
 
 function pausedRoom(game: (typeof GAMES)[number]): ViewRoom {
@@ -63,4 +66,71 @@ test('sealedRoomOf strips keys from history entries too', () => {
 test('canonicalJson sorts keys at every depth and drops undefined', () => {
   assert.equal(canonicalJson({ b: 1, a: { d: [{ z: 1, y: undefined, x: 2 }], c: null } }), '{"a":{"c":null,"d":[{"x":2,"z":1}]},"b":1}');
   assert.equal(canonicalJson({ a: 1, b: 2 }), canonicalJson({ b: 2, a: 1 }));
+});
+
+// A handGame room paused after Alice's first tick, with every seat's file
+function pausedFiles(names: string[]) {
+  const manager = rememberingKeys(createGameManager([handGame], () => 0.5));
+  for (const name of names) manager.join('test', 'g1', name);
+  const assertOk = (result: object) => assert.ok(!('error' in result), JSON.stringify(result));
+  assertOk(manager.move('test/g1', 1, { type: 'tick' }));
+  assertOk(manager.requestPause('test/g1', 1));
+  for (const seat of names.keys()) if (seat > 0) assertOk(manager.votePause('test/g1', seat + 1, true));
+  const state = manager.rawState('test/g1')!;
+  const files = names.map((_name, index) => {
+    const result = manager.pauseFile('test', 'g1', index + 1, state.seatKeys![index + 1], new Date(0));
+    if ('error' in result) assert.fail(result.error);
+    return JSON.parse(JSON.stringify(result.file)) as PauseFile;
+  });
+  return { state, files };
+}
+
+const changedTable = (file: PauseFile): PauseFile => ({ ...file, table: { ...file.table, gameStatus: 'Alice won' } });
+
+test('three good files open the room', () => {
+  const { state, files } = pausedFiles(['Alice', 'Bob', 'Cara']);
+  const result = checkPauseFiles(handGame, files);
+  assert.ok('room' in result, JSON.stringify(result));
+  assert.deepEqual(result.room, openSeal(state.pause!.seal, state.pause!.shares));
+  assert.deepEqual(result.room.state, sealedRoomOf({ game: handGame, state, history: [], timeline: [] }).state);
+});
+
+test('a changed hand names its seat', () => {
+  const { files } = pausedFiles(['Alice', 'Bob', 'Cara']);
+  files[2] = { ...files[2], hand: 'card1' };
+  assert.deepEqual(checkPauseFiles(handGame, files), { error: "Cara's pause file does not match the others", seats: [3] });
+});
+
+test('a changed table names the odd file out', () => {
+  const { files } = pausedFiles(['Alice', 'Bob', 'Cara']);
+  files[1] = changedTable(files[1]);
+  assert.deepEqual(checkPauseFiles(handGame, files), { error: "Bob's pause file does not match the others", seats: [2] });
+});
+
+test('a swapped share names its seat', () => {
+  const { files } = pausedFiles(['Alice', 'Bob', 'Cara']);
+  files[1] = { ...files[1], share: files[0].share };
+  assert.deepEqual(checkPauseFiles(handGame, files), { error: "Bob's pause file does not match the others", seats: [2] });
+});
+
+test('two files that disagree name both', () => {
+  const { files } = pausedFiles(['Alice', 'Bob']);
+  files[1] = changedTable(files[1]);
+  assert.deepEqual(checkPauseFiles(handGame, files), { error: 'The pause files from Alice and Bob do not match', seats: [1, 2] });
+});
+
+test('files that agree on a lie are refused', () => {
+  const { files } = pausedFiles(['Alice', 'Bob', 'Cara']);
+  assert.deepEqual(
+    checkPauseFiles(handGame, files.map(changedTable)),
+    { error: 'The pause files from Alice, Bob and Cara do not match', seats: [1, 2, 3] }
+  );
+});
+
+test('a room that opens but does not rebuild names every seat', () => {
+  const { files } = pausedFiles(['Alice', 'Bob']);
+  // only a table where every player colludes can seal a room like this
+  const seal = sealRoom({ state: null, history: null, timeline: null } as never, [1, 2]);
+  const forged = files.map(file => ({ ...file, seal: seal.seal, share: seal.shares[file.seat] }));
+  assert.deepEqual(checkPauseFiles(handGame, forged), { error: 'The pause files from Alice and Bob do not match', seats: [1, 2] });
 });
