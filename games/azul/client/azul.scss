@@ -98,6 +98,7 @@
 
   .github-link,
   .share-button,
+  .hide-button,
   .settings-button,
   .theme-toggle {
     width: 2.5rem;
@@ -119,6 +120,7 @@
   .rules-button:hover,
   .github-link:hover,
   .share-button:hover,
+  .hide-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);

@@ -24,6 +24,8 @@ export const rocketIcon = () => lineIcon(
   el('circle', { cx: 12, cy: 10, r: 1.5 }),
   el('path', { d: 'M7.5 13l-3 3v3h3M16.5 13l3 3v3h-3M10 20l2 2 2-2' }));
 
+const EYE_OUTLINE = 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z';
+
 // The header icons
 const ICONS: Record<string, () => string> = {
   share: () => lineIcon(
@@ -39,6 +41,8 @@ const ICONS: Record<string, () => string> = {
     el('path', { d: 'M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' })),
   moon: () => lineIcon(el('path', { d: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z' })),
   rocket: rocketIcon,
+  eye: () => lineIcon(el('path', { d: EYE_OUTLINE }), el('circle', { cx: 12, cy: 12, r: 3 })),
+  'eye-off': () => lineIcon(el('path', { d: EYE_OUTLINE }), el('circle', { cx: 12, cy: 12, r: 3 }), el('path', { d: 'M3 3l18 18' })),
 };
 
 export function iconSvg(name: string): string | null {

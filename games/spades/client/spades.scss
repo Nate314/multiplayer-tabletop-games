@@ -87,6 +87,7 @@
     white-space: nowrap;
   }
 
+  .hide-button,
   .settings-button,
   .theme-toggle {
     width: 2.5rem;
@@ -102,6 +103,7 @@
   .back-button:hover,
   .history-button:hover:enabled,
   .rules-button:hover,
+  .hide-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);

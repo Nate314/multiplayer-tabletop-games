@@ -49,10 +49,13 @@ test.describe('Settings', () => {
     const header = alice.locator('.game-header');
     await expect(header.getByRole('button', { name: 'Share' })).toBeHidden();
     await expect(header.getByRole('link', { name: /GitHub/ })).toBeHidden();
-    const controls = header.locator(':scope > :not(h1):visible');
+    const controls = header.locator(':scope > :not(h1, .hide-button):visible');
     await expect(controls).toHaveCount(4);
     const tops = await controls.evaluateAll(elements => elements.map(element => Math.round(element.getBoundingClientRect().top)));
     expect(new Set(tops).size).toBe(1);
+    const [title, hide] = await Promise.all([header.locator('h1').boundingBox(), header.locator('.hide-button').boundingBox()]);
+    expect(Math.abs(title!.y + title!.height / 2 - (hide!.y + hide!.height / 2))).toBeLessThanOrEqual(4);
+    expect(title!.x + title!.width).toBeLessThanOrEqual(hide!.x);
     await header.getByRole('button', { name: 'Settings' }).click();
     const dialog = alice.getByRole('dialog', { name: 'Settings' });
     await expect(dialog.getByRole('button', { name: 'Share' })).toBeVisible();

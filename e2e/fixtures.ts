@@ -283,6 +283,19 @@ export async function tableScreen(table: Table): Promise<Page> {
   return tv;
 }
 
+// Opens the site in a new context and watches `gameId` as `name` through the join dialog
+export async function watch(browser: Browser, server: Server, gameType: string, gameId: string, name: string): Promise<Page> {
+  const page = await newPlayer(browser, server);
+  await page.goto('/');
+  await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
+  await page.getByRole('button', { name: 'Spectator' }).click();
+  await page.getByLabel('Your name').fill(name);
+  await page.getByLabel('Game ID').fill(gameId);
+  await page.getByRole('button', { name: 'Watch', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
+  return page;
+}
+
 // Opens Settings, sets the checkbox `label` and closes the dialog
 export async function setPreference(page: Page, label: string, on: boolean): Promise<void> {
   await page.getByRole('button', { name: 'Settings' }).click();
