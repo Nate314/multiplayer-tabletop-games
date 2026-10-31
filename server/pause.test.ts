@@ -487,3 +487,42 @@ test('a share the lobby\'s seal does not know is refused before it is stored', (
   assert.deepEqual(statusOf(manager, first.seatKey).players.map(player => player.ready), [true, false]);
   assert.equal(uploaded(manager.uploadPauseFile(bob, BOB_DEVICE)).ready, true);
 });
+
+// Alice, Bob and Cara with Cara dismissed, then paused: only Alice and Bob hold files
+function pausedAfterDismissal(): { original: Manager; alice: PauseFile; bob: PauseFile } {
+  const { manager: original } = managerFor();
+  original.join('test', 'g1', 'Alice', undefined, undefined, undefined, DEVICE);
+  original.join('test', 'g1', 'Bob');
+  original.join('test', 'g1', 'Cara');
+  ok(original.move(ROOM, 1, tick));
+  original.disconnect(ROOM, 3);
+  ok(original.requestDismiss(ROOM, 1, 3));
+  assert.deepEqual(ok(original.voteDismiss(ROOM, 2, true)).activePlayers, [1, 2]);
+  paused(original);
+  return { original, alice: fileOf(original, 1, keyOf(original, 1)), bob: fileOf(original, 2, keyOf(original, 2)) };
+}
+
+test('a game with a dismissed player resumes from the seated players\' files', () => {
+  const { original, alice, bob } = pausedAfterDismissal();
+  assert.deepEqual(alice.players, { 1: 'Alice', 2: 'Bob' });
+  const { manager } = managerFor();
+  const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
+  assert.deepEqual(first.players, [{ seat: 1, name: 'Alice', ready: true }, { seat: 2, name: 'Bob', ready: false }]);
+  const second = uploaded(manager.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(second.ready, true);
+  rejoined(manager, 'Alice', first.seatKey);
+  rejoined(manager, 'Bob', second.seatKey);
+  const state = ok(manager.resumeGame(ROOM, 1));
+  assert.deepEqual(state.activePlayers, [1, 2]);
+  assert.equal(state.currentPlayer, original.rawState(ROOM)?.currentPlayer);
+});
+
+test('a file from a game with a dismissed player goes to its paused game on the server', () => {
+  const { original, bob } = pausedAfterDismissal();
+  original.disconnect(ROOM, 2);
+  const upload = uploaded(original.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(upload.ready, true);
+  assert.deepEqual(upload.players.map(player => player.name), ['Alice', 'Bob']);
+  rejoined(original, 'Bob', upload.seatKey);
+  ok(original.resumeGame(ROOM, 1));
+});

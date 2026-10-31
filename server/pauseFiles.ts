@@ -43,7 +43,8 @@ export function buildPauseFile(
     pausedAt: pausedAt.toISOString(),
     seat,
     playerName: room.state.playerNames[seat],
-    players: { ...room.state.playerNames },
+    // a dismissed seat keeps its name in playerNames but holds no share, so only seated players are listed
+    players: Object.fromEntries(room.state.activePlayers.map(active => [active, room.state.playerNames[active]])),
     ...pausePlainParts(game, room, seat),
     seal: pause.seal,
     share: pause.shares[seat]
