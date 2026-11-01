@@ -37,6 +37,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   carcassonne: () => import('../games/carcassonne/client/index.ts').then(m => m.carcassonneClient),
   catan: () => import('../games/catan/client/index.ts').then(m => m.catanClient),
   checkers: () => import('../games/checkers/client/index.ts').then(m => m.checkersClient),
+  chinesecheckers: () => import('../games/chinesecheckers/client/index.ts').then(m => m.chinesecheckersClient),
   chess: () => import('../games/chess/client/index.ts').then(m => m.chessClient),
   connectfour: () => import('../games/connectfour/client/index.ts').then(m => m.connectfourClient),
   dominoes: () => import('../games/dominoes/client/index.ts').then(m => m.dominoesClient),
