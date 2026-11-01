@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GAMES } from '../games/registry.ts';
-import { groupByCategory } from './categories.ts';
+import { CATEGORIES, groupByCategory } from './categories.ts';
 import type { GameCategory } from './categories.ts';
 
 const fake = (name: string, category: GameCategory) => ({ info: { id: name, name, description: '', minPlayers: 2, maxPlayers: 2, category } });
@@ -12,12 +12,20 @@ test('groupByCategory keeps the spec\'s group order and sorts by name', () => {
   assert.deepEqual(groups.map(g => g.games.map(game => game.info.name)), [['Beta', 'Gamma'], ['Alpha', 'Zed']]);
 });
 
+test('the Puzzles group sits after Classic board games and is dropped while empty', () => {
+  assert.deepEqual(CATEGORIES.map(c => c.id), ['card', 'dice', 'tile', 'classic', 'puzzle', 'strategy', 'party']);
+  assert.equal(CATEGORIES.find(c => c.id === 'puzzle')?.name, 'Puzzles');
+  assert.deepEqual(groupByCategory([fake('Alpha', 'classic'), fake('Beta', 'party')]).map(g => g.category), ['classic', 'party']);
+  assert.deepEqual(groupByCategory([fake('Alpha', 'classic'), fake('Grid', 'puzzle')]).map(g => g.category), ['classic', 'puzzle']);
+});
+
 test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
     card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
     tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
     classic: ['backgammon', 'checkers', 'chess', 'connectfour', 'mancala', 'parchisi', 'quoridor'],
+    puzzle: [],
     strategy: ['catan', 'monopoly', 'risk', 'splendor', 'tickettoride'],
     party: ['jenga', 'pictionary']
   };
