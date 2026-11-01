@@ -165,6 +165,7 @@ test.describe('Snakes and Ladders rules', () => {
   });
 
   test('a player who leaves loses their token and play goes on', async ({ seat }) => {
+    test.slow(); // three seats plus leave and dismiss flows
     const table = await seat('snakesladders', ['Alice', 'Bob', 'Cara']);
     const [alice, bob, cara] = table.pages;
     await rollOnce(table, alice, 1, 'Alice rolled 1 and moved from 1 to 2');
@@ -199,6 +200,7 @@ test.describe('Snakes and Ladders rules', () => {
   });
 
   test('a player who left has no say in an undo', async ({ seat }) => {
+    test.slow(); // three seats plus leave and dismiss flows
     const table = await seat('snakesladders', ['Alice', 'Bob', 'Cara']);
     const [alice, bob, cara] = table.pages;
     await rollOnce(table, alice, 1, 'Alice rolled 1 and moved from 1 to 2');
