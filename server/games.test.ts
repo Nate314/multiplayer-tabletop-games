@@ -750,7 +750,10 @@ function memoryStore(): MemoryStore {
       steps.set(roomId, roomSteps);
       written.push(step?.type === 'push' ? 3 : 1);
     },
-    remove: roomId => { rooms.delete(roomId); steps.delete(roomId); }
+    remove: roomId => { rooms.delete(roomId); steps.delete(roomId); },
+    saveImage: () => {},
+    loadImage: () => undefined,
+    deleteRoomImages: () => {}
   };
 }
 

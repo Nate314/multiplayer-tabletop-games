@@ -75,4 +75,6 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   spectatorsSeeEverySeat?: boolean;
   // A spectator's table view when it differs from toPublicState(state, undoAvailable, null)
   spectatorState?(state: S, undoAvailable: boolean, tableScreen: boolean): Omit<P, 'moveCount'>;
+  // The uploaded image ids the state shows; the platform keeps those images and puts them in game and pause files
+  imagesOf?(state: S): string[];
 };

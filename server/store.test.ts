@@ -152,3 +152,61 @@ test('removing a room keeps its archive', () => {
   store.remove('test/g1');
   assert.notEqual(store.loadArchive('test/g1#1'), undefined);
 });
+
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 4, 5, 6]);
+const IMAGE = '0123456789abcdef0123456789abcdef';
+const OTHER = 'fedcba9876543210fedcba9876543210';
+
+test('an image loads back with its mime, and saving its id again changes nothing', () => {
+  const store = openGameStore(':memory:');
+  store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);
+  store.saveImage(IMAGE, 'test/g2', 'image/png', PNG);
+  assert.deepEqual(store.loadImage(IMAGE), { mime: 'image/jpeg', bytes: JPEG });
+  assert.equal(store.loadImage(OTHER), undefined);
+  store.deleteRoomImages('test/g2');
+  assert.ok(store.loadImage(IMAGE), 'the second save did not move it to another room');
+});
+
+test("deleting a room's images keeps those an archived game shows, until the archive is pruned", () => {
+  const store = openGameStore(':memory:');
+  store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);
+  store.saveImage(OTHER, 'test/g1', 'image/png', PNG);
+  store.saveImage('a'.repeat(32), 'test/g2', 'image/png', PNG);
+  store.archive(archived('g1', 1, 100), [IMAGE]);
+  store.deleteRoomImages('test/g1');
+  assert.ok(store.loadImage(IMAGE));
+  assert.equal(store.loadImage(OTHER), undefined);
+  store.pruneArchive(200);
+  assert.equal(store.loadImage(IMAGE), undefined);
+  assert.ok(store.loadImage('a'.repeat(32)), 'a live room keeps its images through a prune');
+});
+
+test('pruning an archive keeps an image a live room still has', () => {
+  const store = openGameStore(':memory:');
+  store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);
+  store.archive(archived('g1', 1, 100), [IMAGE]);
+  store.pruneArchive(200);
+  assert.ok(store.loadImage(IMAGE));
+});
+
+test('archiving a game again replaces the images it shows', () => {
+  const store = openGameStore(':memory:');
+  store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);
+  store.archive(archived('g1', 1), [IMAGE]);
+  store.archive(archived('g1', 1), []);
+  store.deleteRoomImages('test/g1');
+  assert.equal(store.loadImage(IMAGE), undefined);
+});
+
+test('on load, the images of a room that was not saved (a lobby) are deleted', () => {
+  const file = path.join(tempFolder(), 'games.sqlite');
+  const store = openGameStore(file);
+  store.save('test/g1', 'test', started('live'));
+  store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);
+  store.saveImage(OTHER, 'test/lobby', 'image/png', PNG);
+  const reopened = openGameStore(file);
+  reopened.loadAll();
+  assert.ok(reopened.loadImage(IMAGE));
+  assert.equal(reopened.loadImage(OTHER), undefined);
+});

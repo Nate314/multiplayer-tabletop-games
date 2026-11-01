@@ -10,7 +10,7 @@ import {
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { castPauseVote, openPauseVote, pauseVotePassed } from '../shared/pause.ts';
 import { parsePauseFile, type PauseFile, type ResumeStatus, type ResumeUpload } from '../shared/pauseFile.ts';
-import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
+import { buildGameFile, isImageId, type EmbeddedImages, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
 import { hashDeviceId } from './devices.ts';
@@ -20,6 +20,7 @@ import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
 import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
+import { decodeImage, embedImages, imageMime, MAX_IMAGE_BYTES, newImageId, type ImageUploadError } from './images.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, pauseFilesMismatch, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -99,6 +100,14 @@ function seatsAgree(game: Room['game'], file: PauseFile): boolean {
   return seats.length <= most && seats.length === Object.keys(file.seal.shareHashes).length &&
     seats.every(seat => /^[1-9]\d{0,2}$/.test(seat) && Object.hasOwn(file.seal.shareHashes, seat));
 }
+
+// Every uploaded image id the states show, each once
+function imageIdsOf(game: Room['game'], states: BaseGameState[]): string[] {
+  return [...new Set(states.flatMap(state => game.imagesOf?.(state) ?? []))].filter(isImageId);
+}
+
+const roomStates = (room: { state: BaseGameState; history: BaseGameState[]; timeline: BaseGameState[] }) =>
+  [room.state, ...room.history, ...room.timeline];
 
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
@@ -224,7 +233,7 @@ export function createGameManager(
     writeStore(roomId, target => target.archive({
       id: archiveIdOf(roomId, state), gameType: game.info.id, gameId: state.gameId, n: state.gameNumber ?? 1,
       finishedAt: state.finishedAt ?? now(), state, history: room.history, timeline: room.timeline
-    }));
+    }, imageIdsOf(game, roomStates(room))));
   }
 
   // Stamps the first start and the first end; a game already stamped finished never reports again, even after an undo
@@ -375,7 +384,10 @@ export function createGameManager(
     clearTimeout(room?.deadlineTimer);
     clearInterval(room?.simTimer);
     rooms.delete(roomId);
-    writeStore(roomId, target => target.remove(roomId));
+    writeStore(roomId, target => {
+      target.remove(roomId);
+      target.deleteRoomImages(roomId); // after the archive above, so the images it shows stay
+    });
     try {
       hooks.removed?.(roomId);
     } catch (error) {
@@ -638,7 +650,10 @@ export function createGameManager(
     } catch (error) {
       console.error(`Dropping saved game ${roomId}:`, error);
       rooms.delete(roomId);
-      writeStore(roomId, target => target.remove(roomId));
+      writeStore(roomId, target => {
+        target.remove(roomId);
+        target.deleteRoomImages(roomId);
+      });
     }
   }
   prunePausedRooms();
@@ -736,8 +751,24 @@ export function createGameManager(
         target.save(roomId, room.game.info.id, state, { type: 'push', index, before, after: room.timeline[index] });
       });
     });
+    restoreImages(roomId, lobby.game, sealed, uploads[0][1].file.images ?? {});
     save(roomId, room);
   }
+
+  // The files are untrusted (every one carries the same images, as checkPauseFiles saw), so only the sealed states'
+  // own images go in, each a real JPEG or PNG of at most MAX_IMAGE_BYTES, and none replaces an image already stored
+  function restoreImages(roomId: string, game: Room['game'], sealed: SealedRoom, images: EmbeddedImages): void {
+    for (const id of imageIdsOf(game, roomStates(sealed))) {
+      const image = Object.hasOwn(images, id) ? decodeImage(images[id]) : null;
+      if (image) writeStore(roomId, target => target.saveImage(id, roomId, image.mime, image.bytes));
+    }
+  }
+
+  const loadImage = (id: string) => {
+    let image: { mime: string; bytes: Buffer } | undefined;
+    writeStore(id, target => { image = target.loadImage(id); });
+    return image;
+  };
 
   // "Table screen", then "Table screen 2" and so on while the name is taken
   function freeScreenName(state: BaseGameState): string {
@@ -1142,7 +1173,8 @@ export function createGameManager(
       // From the seal, not the live room: presence and status change while paused, and every file must match the seal
       const sealed = openSeal(state.pause.seal, state.pause.shares);
       if (!sealed) return { error: NOT_AVAILABLE };
-      return { file: buildPauseFile(room.game, sealed, seat, state.pause, now) };
+      const images = embedImages(imageIdsOf(room.game, roomStates(sealed)), loadImage);
+      return { file: buildPauseFile(room.game, sealed, seat, state.pause, now, images) };
     },
 
     // An untrusted upload: to its paused room here, else to the resume lobby for its game ID, which restores the room
@@ -1285,8 +1317,31 @@ export function createGameManager(
           )
         };
       });
-      return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };
+      const images = embedImages(imageIdsOf(game, roomStates(room)), loadImage);
+      return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now, images) };
     },
+
+    // A picture from a seated player of an existing room, the lobby included; the seat key proves the seat.
+    // It is kept until the room is deleted, or for as long as an archived game shows it
+    uploadImage(gameType: unknown, gameId: unknown, seatKey: unknown, bytes: Buffer): { id: string } | { error: ImageUploadError } {
+      const game = findGame(gameType);
+      const roomId = game && `${game.info.id}/${cleanName(gameId)}`;
+      const room = roomId && rooms.get(roomId);
+      if (!room || !store) return { error: 'no-room' };
+      const { state } = room;
+      const seated = typeof seatKey === 'string' && state.activePlayers.some(seat => {
+        const key = state.seatKeys?.[seat];
+        return key !== undefined && sameSecret(key, seatKey);
+      });
+      if (!seated) return { error: 'not-seated' };
+      const mime = imageMime(bytes);
+      if (!mime || bytes.length > MAX_IMAGE_BYTES) return { error: 'not-an-image' };
+      const id = newImageId();
+      store.saveImage(id, roomId, mime, bytes); // a failure throws, so no id is handed out for an image that is not there
+      return { id };
+    },
+
+    loadImage,
 
     // Lobbies, then games in progress, with player names only; takes no `this` so it can be passed as a callback
     openGames(): OpenGame[] {

@@ -24,11 +24,19 @@ export type GameStore = {
   loadAll(): Map<string, SavedRoom>;
   save(roomId: string, gameType: string, state: BaseGameState, step?: StepChange): void;
   remove(roomId: string): void;
-  archive(game: ArchivedGame): void;
+  archive(game: ArchivedGame, imageIds?: string[]): void; // `imageIds` are the uploaded images the game shows
   loadArchive(id: string): ArchivedGame | undefined;
   nextGameNumber(gameType: string, gameId: string): number;
+  // Also deletes the images whose room is gone and that no remaining archive shows
   pruneArchive(before: number): number;
+  // Never replaces an image stored under `id`; one whose room is gone (kept for an archive) joins `roomId`
+  saveImage(id: string, roomId: string, mime: ImageMime, bytes: Buffer): void;
+  loadImage(id: string): { mime: string; bytes: Buffer } | undefined;
+  // Deletes the room's images, except those an archived game shows: they stay until pruneArchive drops that archive
+  deleteRoomImages(roomId: string): void;
 };
+
+export type ImageMime = 'image/jpeg' | 'image/png';
 
 function isObject(value: unknown): value is BaseGameState {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -48,6 +56,13 @@ export function openGameStore(file: string): GameStore {
     'game_id TEXT NOT NULL, n INTEGER NOT NULL, finished_at INTEGER NOT NULL, data TEXT NOT NULL)'
   );
   db.exec('CREATE INDEX IF NOT EXISTS archived_games_game ON archived_games (game_type, game_id)');
+  // `room_id` is null once the room is gone and only an archive still shows the image
+  db.exec('CREATE TABLE IF NOT EXISTS images (id TEXT PRIMARY KEY, room_id TEXT, mime TEXT NOT NULL, bytes BLOB NOT NULL)');
+  db.exec('CREATE INDEX IF NOT EXISTS images_room ON images (room_id)');
+  db.exec(
+    'CREATE TABLE IF NOT EXISTS archive_images (archive_id TEXT NOT NULL, image_id TEXT NOT NULL, PRIMARY KEY (archive_id, image_id))'
+  );
+  db.exec('CREATE INDEX IF NOT EXISTS archive_images_image ON archive_images (image_id)');
 
   const selectAll = db.prepare('SELECT id, game_type, data FROM rooms');
   const selectSteps = db.prepare('SELECT idx, before, after FROM room_steps WHERE room_id = ? ORDER BY idx');
@@ -68,6 +83,22 @@ export function openGameStore(file: string): GameStore {
   const selectArchive = db.prepare('SELECT game_type, game_id, n, finished_at, data FROM archived_games WHERE id = ?');
   const selectMaxN = db.prepare('SELECT MAX(n) AS n FROM archived_games WHERE game_type = ? AND game_id = ?');
   const deleteArchivedBefore = db.prepare('DELETE FROM archived_games WHERE finished_at < ?');
+
+  const deleteArchiveImages = db.prepare('DELETE FROM archive_images WHERE archive_id = ?');
+  const insertArchiveImage = db.prepare('INSERT OR IGNORE INTO archive_images (archive_id, image_id) VALUES (?, ?)');
+  const deleteOrphanArchiveImages = db.prepare('DELETE FROM archive_images WHERE archive_id NOT IN (SELECT id FROM archived_games)');
+  const insertImage = db.prepare(
+    'INSERT INTO images (id, room_id, mime, bytes) VALUES (?, ?, ?, ?) ' +
+    'ON CONFLICT (id) DO UPDATE SET room_id = excluded.room_id WHERE images.room_id IS NULL'
+  );
+  const selectImage = db.prepare('SELECT mime, bytes FROM images WHERE id = ?');
+  const UNARCHIVED = 'id NOT IN (SELECT image_id FROM archive_images)';
+  const deleteRoomImages = db.prepare(`DELETE FROM images WHERE room_id = ? AND ${UNARCHIVED}`);
+  const detachRoomImages = db.prepare('UPDATE images SET room_id = NULL WHERE room_id = ?');
+  const deleteDetachedImages = db.prepare(`DELETE FROM images WHERE room_id IS NULL AND ${UNARCHIVED}`);
+  // A lobby is never saved, so on load the images of any room not in `rooms` belong to a room that is gone
+  const deleteUnsavedImages = db.prepare(`DELETE FROM images WHERE room_id NOT IN (SELECT id FROM rooms) AND ${UNARCHIVED}`);
+  const detachUnsavedImages = db.prepare('UPDATE images SET room_id = NULL WHERE room_id NOT IN (SELECT id FROM rooms)');
 
   function transaction(write: () => void): void {
     db.exec('BEGIN');
@@ -120,6 +151,10 @@ export function openGameStore(file: string): GameStore {
           remove(id);
         }
       }
+      transaction(() => {
+        deleteUnsavedImages.run();
+        detachUnsavedImages.run();
+      });
       return rooms;
     },
 
@@ -136,9 +171,13 @@ export function openGameStore(file: string): GameStore {
 
     remove,
 
-    archive(game) {
+    archive(game, imageIds = []) {
       const { id, gameType, gameId, n, finishedAt, state, history, timeline } = game;
-      insertArchive.run(id, gameType, gameId, n, finishedAt, JSON.stringify({ state, history, timeline }));
+      transaction(() => {
+        insertArchive.run(id, gameType, gameId, n, finishedAt, JSON.stringify({ state, history, timeline }));
+        deleteArchiveImages.run(id);
+        for (const imageId of imageIds) insertArchiveImage.run(id, imageId);
+      });
     },
 
     // An archive that does not load is logged and left in place; the 90 day prune clears it
@@ -164,7 +203,29 @@ export function openGameStore(file: string): GameStore {
     },
 
     pruneArchive(before) {
-      return Number(deleteArchivedBefore.run(before).changes);
+      let pruned = 0;
+      transaction(() => {
+        pruned = Number(deleteArchivedBefore.run(before).changes);
+        deleteOrphanArchiveImages.run();
+        deleteDetachedImages.run();
+      });
+      return pruned;
+    },
+
+    saveImage(id, roomId, mime, bytes) {
+      insertImage.run(id, roomId, mime, bytes);
+    },
+
+    loadImage(id) {
+      const row = selectImage.get(id);
+      return row && { mime: String(row.mime), bytes: Buffer.from(row.bytes as Uint8Array) };
+    },
+
+    deleteRoomImages(roomId) {
+      transaction(() => {
+        deleteRoomImages.run(roomId);
+        detachRoomImages.run(roomId);
+      });
     }
   };
 }
