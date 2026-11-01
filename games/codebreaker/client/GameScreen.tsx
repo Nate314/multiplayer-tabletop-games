@@ -55,7 +55,9 @@ export default function GameScreen({ gameState, playerNumber: me, error }: GameS
   const draft = draftState.key === draftKey ? draftState.pegs : emptyRow(pegs);
   const setDraft = (next: (Color | null)[]) => setDraftState({ key: draftKey, pegs: next });
 
+  // Empties the row as it is sent, so an undo that brings back the same guess count does not bring back the sent row
   const submit = (row: Color[]) => {
+    setDraft(emptyRow(pegs));
     if (setting) gameService.makeMove({ type: 'setCode', pegs: row });
     else if (playsAtOnce(mode)) gameService.sendAction({ type: 'guess', pegs: row });
     else gameService.makeMove({ type: 'guess', pegs: row });

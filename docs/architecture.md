@@ -76,6 +76,7 @@ flowchart TD
 - `shared/houseRules.ts` defines the house rules model: `HouseRule` (`ToggleRule` or `ChoiceRule`, with `offered` for rules that depend on the seat count), `HouseRulesState`, `HouseRulesProposal`, and the pure functions `needsAgreement`, `houseRulesOf`, `houseRule`, `tableLimit`, `minimumToStart`, `afterSeatChange`, `setHouseRules`, `agreeToHouseRules`, `everyoneAgreed`, `describeHouseRules` and `targetScoreRule`. `GameInfo` has the optional `houseRules` and `stretchedPlayers` (the range the host may seat: Most players goes up to its maximum, and play may start at its minimum, a count below `minPlayers` listed as a "Players" house rule), `GameDefinition` has the optional `allowsOutOfTurn` and `recordsAction`, the timed-rule hooks `deadline`, `onDeadline` and `resumeClock`, and every game state carries `houseRules`
 - The house rules each game declares (standard value first; the declarations are in each game's `options.ts`, and the stretched player-count range is `stretchedPlayers` in its `info.ts`):
   - Catan: points to win (10; 8, 12), friendly robber (off), special build phase (off, offered only with 5 or 6 seated); 2 to 6 players (2 play the normal board)
+  - Code Breaker: mode (Solo with 1 seat, Classic with 2, Together with 3 or more; Classic offered only at 2, Together and Race at 2 or more), code (4 pegs from 6 colors; 5 pegs from 8 colors)
   - Chess: clock (off; 5, 10 or 15 minutes), increment per move (none; 2, 5 or 10 seconds, offered only with a clock)
   - Dominoes: set (double-six; double-nine), doubles open branches (every double; none, starting double only), Chickenfoot (off), trains (off), target score (100 for 2 players, 61 for 3 or 4; 61, 100, 150, 200)
   - Euchre: target score (10; 5, 15)
@@ -104,7 +105,7 @@ flowchart TD
 - `shared/partnerships.ts` has the four-seat partnership helpers (`FOUR_SEATS`, `nextSeat`, `teamOf`, `teamSeats`, `partnerOf`, `teamNames`, `partnershipBroken`)
 - `shared/hands.ts` has `viewHand` (a viewer sees only their own hand), `handCounts` and `mapSeats`
 - `shared/dice.ts` has `rollDie` and `rollDice`, which take the game's `Random`
-- Every game declares a `category` in its `GameInfo`, which decides its landing page group: `card`, `dice`, `tile`, `classic`, `puzzle`, `strategy` or `party` ("Party games", after the strategy board games; Pictionary and Jenga are the party games; "Puzzles" sits between the classic and strategy board games, and a group with no game is not shown)
+- Every game declares a `category` in its `GameInfo`, which decides its landing page group: `card`, `dice`, `tile`, `classic`, `puzzle`, `strategy` or `party` ("Party games", after the strategy board games; Pictionary and Jenga are the party games and Code Breaker a puzzle; "Puzzles" sits between the classic and strategy board games, and a group with no game is not shown)
 
 Server code (`server/`, `shared/`, and the non-client files of each game) never imports from `src/` or any `games/<id>/client/`.
 
@@ -208,7 +209,7 @@ Pictionary's word list never reaches a browser: `games/pictionary/words.ts` is i
 - `/src/components/colorSymbols.ts` is the table: `COLOR_SYMBOLS` maps each player color to a shape. It has no React, so `node --test` can import it. `shared/svg/symbols.ts` holds each shape's SVG path in a 24 by 24 box (`SHAPE_PATHS`) and serves it as `color-symbol/<shape>`
 - `/src/components/ColorSymbol.tsx` shows the shape for a color through `ServerSvg`, as a `<span class="color-symbol color-symbol-<shape>">` (or, given `svgProps`, a nested `<svg>` placed inside a board). It reads `colorSymbols` from `usePreferences()` and renders nothing while the setting is off or the color is not set (`null` or `undefined`), so a game passes its seat color and positions the symbol itself
 - Its default look is in `App.scss`: the symbol takes `currentColor` and a 1 px stroke (`--color-symbol-stroke`) so it reads on any fill
-- Games told apart by light against dark (Checkers' red against cream) or by a printed symbol get nothing. Quoridor, Carcassonne, Monopoly and Ticket to Ride tell players apart by color alone, so they show their seat colors' shapes (Monopoly's seventh and eighth tokens, brown and slate, have no shape and keep their initial; a claimed Ticket to Ride route shows its owner's shape, not the route color's)
+- Games told apart by light against dark (Checkers' red against cream) or by a printed symbol get nothing. Quoridor, Carcassonne, Monopoly and Ticket to Ride tell players apart by color alone, so they show their seat colors' shapes. Code Breaker's pegs are told apart by color alone, so every peg shows its color's shape (Monopoly's seventh and eighth tokens, brown and slate, have no shape and keep their initial; a claimed Ticket to Ride route shows its owner's shape, not the route color's)
 
 | Color | Symbol | Also covers |
 |---|---|---|
