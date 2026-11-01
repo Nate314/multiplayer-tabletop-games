@@ -158,7 +158,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="catan-layout">
         <div className={`${boardAreaClass(boardOf(gameState.layout))}${canBuild ? '' : ' hand-only-board'}`} ref={boardRef}>
           <Board gameState={gameState} targets={targets} onVertex={clickVertex} onEdge={clickEdge} onHex={clickHex} />

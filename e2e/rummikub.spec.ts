@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, touchDrag, undo, type Seat, type SeatOptions } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, openHouseRules, type Seat, type SeatOptions, setPreference, test, touchDrag, undo } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
 import type { GameState, TileColor } from '../games/rummikub/types.ts';
 
@@ -248,8 +248,7 @@ test.describe('Rummikub rules', () => {
     await tableTile(alice, t('red', 6)).click();
     await expect(hint(alice)).toHaveText('Ready to play 1 tile');
     await expect(playButton(alice)).toBeEnabled();
-    await alice.getByRole('button', { name: 'Settings' }).click();
-    const rules = alice.getByRole('dialog', { name: 'Settings' }).getByRole('region', { name: 'House rules' });
+    const rules = (await openHouseRules(alice)).getByRole('region', { name: 'House rules' });
     await expect(rules).toContainText('Jokers move freely');
     await expect(rules).toContainText('On');
   });

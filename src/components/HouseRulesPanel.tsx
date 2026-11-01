@@ -35,7 +35,7 @@ function MostPlayersField({ value, min, max, disabled, onCommit }: {
   );
 }
 
-// Before the first move: the host edits the rules, everyone agrees to the current revision
+// The Rules dialog's House rules tab before the first move: the host edits the rules, everyone agrees to the current revision
 export default function HouseRulesPanel({ game, gameState, playerNumber, error }: HouseRulesPanelProps) {
   const rules = houseRulesOf(game, gameState);
   const { playerNames, activePlayers } = gameState;
@@ -54,7 +54,6 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
 
   return (
     <div className="house-rules-panel">
-      <div className="house-rules-title">House rules</div>
       {rules.host !== null && (
         <div className="house-rules-host">
           {isHost ? 'You set the house rules' : `${playerNames[rules.host]} sets the house rules`}

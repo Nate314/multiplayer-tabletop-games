@@ -160,7 +160,29 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
 }
 
 // The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
+// Opens Rules on its House rules tab, unless it is open already, and returns the dialog
+export async function openHouseRules(page: Page) {
+  const dialog = page.getByRole('dialog', { name: / rules$/ });
+  if (!await dialog.isVisible()) await page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+  const tab = dialog.getByRole('button', { name: 'House rules', exact: true });
+  if (await tab.getAttribute('aria-pressed') !== 'true') await tab.click();
+  return dialog;
+}
+
+export async function closeRules(page: Page): Promise<void> {
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: / rules$/ })).toHaveCount(0);
+}
+
+// Runs `check` on the House rules tab, then closes Rules so the game can be played
+export async function inHouseRules(page: Page, check: (dialog: Locator) => Promise<void>): Promise<void> {
+  await check(await openHouseRules(page));
+  await closeRules(page);
+}
+
+// The host sets the rules in the House rules tab and closes it
 export async function setHouseRules(page: Page, gameType: string, values: HouseRuleValues, maxPlayers?: number): Promise<void> {
+  await openHouseRules(page);
   for (const rule of rulesOf(gameOf(gameType))) {
     if (!(rule.id in values)) continue;
     const control = page.getByLabel(rule.label, { exact: true });
@@ -178,13 +200,16 @@ export async function setHouseRules(page: Page, gameType: string, values: HouseR
     await field.press('Enter');
     await expect(field).toHaveValue(String(maxPlayers));
   }
+  await closeRules(page);
 }
 
 // Each page clicks Agree and waits until its own row (the list marks it with aria-current) says agreed
 export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   for (const page of pages) {
-    await page.getByRole('button', { name: 'Agree', exact: true }).click();
-    await expect(page.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
+    await inHouseRules(page, async dialog => {
+      await dialog.getByRole('button', { name: 'Agree', exact: true }).click();
+      await expect(dialog.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
+    });
   }
 }
 
@@ -230,7 +255,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Rec
       const agreeAll = async () => {
         if (!agree || !needsAgreement(gameOf(gameType), houseRules ?? {})) return;
         // Every page must list every player first, so no Agree names a revision from before the last join
-        for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(everyone.length);
+        for (const page of everyone) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(everyone.length));
         await agreeToHouseRules(...everyone);
       };
       for (const name of names) {

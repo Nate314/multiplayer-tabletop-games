@@ -25,7 +25,7 @@ import PauseButton from './PauseButton';
 import PauseVote from './PauseVote';
 import PausedScreen from './PausedScreen';
 import gameService from '../services/gameService';
-import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
+import { agreementPending, houseRulesOf, needsAgreement } from '../../shared/houseRules.ts';
 import { dismissVoters } from '../../shared/seating.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
@@ -87,6 +87,12 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const localHost = localSeats?.find(local => local.seat === houseRulesOf(game, gameState).host)?.seat;
   const rulesSeat = localHost ?? playerNumber ?? localSeats?.[0]?.seat ?? null;
   const handingOff = localSeats !== null && playerNumber === null;
+  // Before the first move the House rules tab is the form; after it, or for a spectator, the read-only list
+  const houseRules = choosingRules && rulesSeat !== null
+    ? <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />
+    : <HouseRulesSection game={game} gameState={gameState} />;
+  const rules = houseRulesOf(game, gameState);
+  const agreeNeeded = choosingRules && rulesSeat !== null && needsAgreement(game, rules.values) && !rules.agreed.includes(rulesSeat);
   const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
   // A table screen is a spectator, so it and other spectators pass no seats: a plain title and no notifications
   useTurnAlerts(game, gameState, localSeats ? localSeats.map(local => local.seat) : playerNumber === null ? [] : [playerNumber]);
@@ -110,11 +116,11 @@ export default function GameView({ game, client, gameState, playerNumber, specta
       <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-hidden={hidden ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
         <header className="game-header">
           <button type="button" className="back-button" onClick={onBack}>Back to games</button>
-          <h1>{game.name}</h1>
+          <h1>{game.name} <span className="game-header-id">{gameState.gameId}</span></h1>
           <HistoryButton onOpen={history.open} />
           <ShareButton game={game} gameId={gameState.gameId} />
           {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
-          <RulesButton game={game} faq={client.faq} />
+          <RulesButton game={game} faq={client.faq} houseRules={houseRules} agreeNeeded={agreeNeeded} />
           {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} />}
           {canPause && pauseButton()}
           {/* Pausing closes Settings, so the vote and the paused screen are not left under it */}
@@ -124,9 +130,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
               <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
               <div className="settings-row">Theme <ThemeToggle /></div>
             </>
-          )}>
-            <HouseRulesSection game={game} gameState={gameState} />
-          </SettingsButton>
+          )} />
           <GitHubLink />
           <ThemeToggle />
         </header>
@@ -147,7 +151,6 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           onDismiss={playerNumber === null || paused ? null : (seat) => gameService.requestDismiss(seat)}
         />
         {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
-        {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
         {/* A shared device mid-handoff votes too; the server counts it for every seat it holds */}
         <PauseVote gameState={gameState} voter={playerNumber ?? localSeats?.[0]?.seat ?? null} onVote={(approve) => gameService.votePause(approve)} />
         {paused ? (

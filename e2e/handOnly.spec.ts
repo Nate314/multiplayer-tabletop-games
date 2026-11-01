@@ -19,7 +19,7 @@ const you = (selector: string) => `${selector}:has-text("(you)")`;
 const others = (selector: string) => `${selector}:not(:has-text("(you)"))`;
 const button = (page: Page, name: string | RegExp) => page.getByRole('button', { name, exact: typeof name === 'string' });
 
-const TRICK_HIDE = ['.game-id', '.seats'];
+const TRICK_HIDE = ['.seats'];
 const TRICK_KEEP = ['.hand', '.turn-message', '.scoreboard'];
 
 const HAND_ONLY: Record<string, Row> = {
@@ -48,17 +48,17 @@ const HAND_ONLY: Record<string, Row> = {
   },
   thecrew: {
     keep: ['.hand', '.turn-message', you('.seat'), '.task-pool'], // the open tasks and your own tasks are your goal
-    hide: [others('.seat'), '.trick', '.game-id'],
+    hide: [others('.seat'), '.trick'],
     move: async page => { await button(page, /^Take task/).first().click(); }
   },
   war: {
     keep: ['.turn-message', '.flip-button', you('.war-seat'), you('.war-seat') + ' .war-seat-count'],
-    hide: [others('.war-seat'), '.war-battle', '.war-summary', '.game-id'],
+    hide: [others('.war-seat'), '.war-battle', '.war-summary'],
     move: async page => { await button(page, 'Flip').click(); }
   },
   gofish: {
     keep: ['.hand', '.turn-message', '.ask-button', you('.player')],
-    hide: ['.table-middle', '.ask-log', '.game-id'],
+    hide: ['.table-middle', '.ask-log'],
     move: async page => {
       await page.locator('section.hand .rank-group').first().locator('.playing-card').last().click();
       await page.locator('.player-pick').first().click();
@@ -67,17 +67,17 @@ const HAND_ONLY: Record<string, Row> = {
   },
   holdem: {
     keep: ['.turn-message', you('.holdem-seat') + ' .playing-card', you('.holdem-seat') + ' .holdem-seat-chips', '.holdem-pots li', '.action-buttons >> text=Fold'],
-    hide: [others('.holdem-seat'), '.holdem-board', '.game-id'],
+    hide: [others('.holdem-seat'), '.holdem-board'],
     move: async page => { await button(page, /^(Check|Call)/).click(); }
   },
   uno: {
     keep: ['.hand', '.turn-message', '.uno-button', '.piles', you('.player')], // UNO! is open to everyone; the catch button shows only while a call is owed
-    hide: [others('.player'), '.game-id'],
+    hide: [others('.player')],
     move: async page => { await button(page, 'Draw').click(); }
   },
   phase10: {
     keep: ['.my-hand', '.turn-message', '.piles', you('.seat')],
-    hide: [others('.seat') + ' .seat-details', '.game-id'],
+    hide: [others('.seat') + ' .seat-details'],
     board: '.table .groups', // Bob's laid set, which Alice can hit
     setup: async table => {
       const cards = [4, 16, 28].map(id => ({ id, kind: 'number', value: 5, color: 'red' }));
@@ -87,7 +87,7 @@ const HAND_ONLY: Record<string, Row> = {
   },
   skipbo: {
     keep: ['.my-hand', '.turn-message', '.my-area .stock', '.my-area .discard-piles'],
-    hide: ['.other-seats', '.game-id'],
+    hide: ['.other-seats'],
     board: '.board',
     move: async page => {
       await page.locator('.my-hand .hand-cards button').first().click();
@@ -97,36 +97,36 @@ const HAND_ONLY: Record<string, Row> = {
   },
   racko: {
     keep: ['.my-rack', '.turn-message', '.piles .pile'],
-    hide: ['.other-racks', '.game-id'],
+    hide: ['.other-racks'],
     move: async page => { await button(page, /^Draw pile/).click(); }
   },
   rummikub: {
     keep: ['.rk-rack-area', '.rk-turn-message', '.rk-turn-buttons', you('.rk-player')],
-    hide: [others('.rk-player'), '.rk-pool', '.game-id'],
+    hide: [others('.rk-player'), '.rk-pool'],
     board: '.rk-table',
     move: async page => { await button(page, 'Draw a tile').click(); }
   },
   dominoes: {
     keep: ['.hand', '.turn-message', '.action-buttons', you('.player')],
-    hide: [others('.player'), '.boneyard', '.line-ends', '.game-id'],
+    hide: [others('.player'), '.boneyard', '.line-ends'],
     board: '.board',
     move: async page => { await page.locator('.hand-tiles .tile-playable').first().click(); }
   },
   scrabble: {
     keep: ['.rack', '.turn-message', '.turn-buttons', you('.score-row')],
-    hide: [others('.score-row'), '.bag-count', '.game-id'],
+    hide: [others('.score-row'), '.bag-count'],
     board: '.board-wrap',
     move: async page => { await button(page, 'Pass').click(); }
   },
   catan: {
     keep: ['.turn-message', '.hand-panel', you('.player-row')],
-    hide: [others('.player-row'), '.bank-line', '.game-id'],
+    hide: [others('.player-row'), '.bank-line'],
     board: '.board-area', // setup: the board is there on your turn to place
     move: async page => { await page.getByRole('button', { name: /^Intersection \d+$/ }).first().click(); }
   },
   risk: {
     keep: ['.turn-message', '.phase-panel', you('.player-row'), '.deck-line'],
-    hide: [others('.player-row'), '.game-id'],
+    hide: [others('.player-row')],
     board: '.map-area',
     move: async page => {
       await button(page, 'All').click();
@@ -136,13 +136,13 @@ const HAND_ONLY: Record<string, Row> = {
   },
   tickettoride: {
     keep: ['.turn-message', '.hand-panel', '.ticket-choice', you('.player-row')], // the ticket choice is open before your turn
-    hide: [others('.player-row'), '.game-id'],
+    hide: [others('.player-row')],
     board: '.map-frame',
     move: async page => { await button(page, /^Keep \d+ tickets?$/).click(); }
   },
   splendor: {
     keep: ['.turn-message', '.player-me', '.player-me .player-tokens'],
-    hide: ['.player:not(.player-me)', '.game-id'],
+    hide: ['.player:not(.player-me)'],
     board: 'section.table',
     move: async page => {
       for (const gem of ['white', 'blue', 'green']) await page.locator(`.supply .gem-${gem}`).click();
@@ -151,13 +151,13 @@ const HAND_ONLY: Record<string, Row> = {
   },
   monopoly: {
     keep: ['.turn-message', '.turn-panel', you('.player-row')],
-    hide: [others('.player-row'), '.game-id'],
+    hide: [others('.player-row')],
     board: '.board-area',
     move: async page => { await button(page, 'Roll the dice').click(); }
   },
   carcassonne: {
     keep: ['.cc-turn-message', '.cc-turn', you('.cc-player')],
-    hide: [others('.cc-player'), '.game-id'],
+    hide: [others('.cc-player')],
     board: '.cc-board-area',
     move: async page => {
       await page.locator('.cc-cell').first().click();
@@ -166,7 +166,7 @@ const HAND_ONLY: Record<string, Row> = {
   },
   azul: {
     keep: ['.turn-message', '.board-mine'],
-    hide: ['.board-other', '.game-id'],
+    hide: ['.board-other'],
     board: '.table',
     move: async page => {
       await page.locator('.factories .factory').getByRole('button', { name: /^Take / }).first().click();
@@ -175,7 +175,7 @@ const HAND_ONLY: Record<string, Row> = {
   },
   chess: {
     keep: ['.side-panel .player-list', you('.player-row'), 'button:has-text("Undo")', 'button:has-text("Offer draw")', 'button:has-text("Resign")'],
-    hide: ['.captured', '.game-id'],
+    hide: ['.captured'],
     board: '.board-frame',
     move: async page => {
       await page.locator('[data-anim-key="square-6-4"]').click();
@@ -184,7 +184,7 @@ const HAND_ONLY: Record<string, Row> = {
   },
   checkers: {
     keep: ['.turn-message', '.player-list', 'button:has-text("Undo")', 'button:has-text("Resign")'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.board-frame',
     move: async page => {
       await page.locator('[data-anim-key^="square-5-"] .piece.player1').first().click();
@@ -193,13 +193,13 @@ const HAND_ONLY: Record<string, Row> = {
   },
   connectfour: {
     keep: ['.turn-message', '.player-list', 'button:has-text("Undo")', 'button:has-text("Resign")'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.board-frame',
     move: async page => { await button(page, 'Drop in column 1').click(); }
   },
   backgammon: {
     keep: ['.bg-turn', '.bg-players', '.bg-undo'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.bg-board',
     setup: async table => { // the opening roll is made for Alice, so start from the turn that begins with a roll
       await table.patch({ dice: [], remaining: [], currentPlayer: 1, started: true, cube: 1, cubeOwner: null, doubleOffer: null, lastMove: null });
@@ -208,13 +208,13 @@ const HAND_ONLY: Record<string, Row> = {
   },
   mancala: {
     keep: ['.turn-message', '.undo-button'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.board-wrap',
     move: async page => { await page.locator('.pit-bottom').first().click(); }
   },
   parchisi: {
     keep: ['.turn-message', '.dice-tray', '.undo-button', '.player-list'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.board-area .board',
     setup: async table => {
       await table.patch({
@@ -229,29 +229,29 @@ const HAND_ONLY: Record<string, Row> = {
   },
   quoridor: {
     keep: ['.game-info', '.action-buttons', '.piece-tray'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.board-frame',
     move: async page => { await page.locator('.board-area .board .board-row').nth(7).locator('.square').nth(4).click(); }
   },
   farkle: {
     keep: ['.turn-message', '.action-buttons', '.farkle-dice', '.farkle-score:not(.hand-only-hide)'],
-    hide: ['.farkle-score.hand-only-hide', '.game-id'],
+    hide: ['.farkle-score.hand-only-hide'],
     move: async page => { await button(page, 'Roll').click(); }
   },
   yahtzee: {
     keep: ['.turn-message', '.yz-turn', '.yz-sheet', '.yz-total td:not(.hand-only-hide)'],
-    hide: ['.yz-player.hand-only-hide', '.game-id'],
+    hide: ['.yz-player.hand-only-hide'],
     move: async page => { await button(page, /^Roll/).click(); }
   },
   pictionary: {
     keep: ['.turn-message', '.pictionary-chat', '#pictionary-chat-input', you('.score-row')],
-    hide: [others('.score-row'), '.game-id'],
+    hide: [others('.score-row')],
     board: '.pictionary-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
     move: async page => { await page.getByRole('group', { name: 'Choose a word' }).getByRole('button').first().click(); }
   },
   jenga: {
     keep: ['.jenga-status', '.jenga-undo'],
-    hide: ['.game-id'],
+    hide: [],
     board: '.jenga-controls',
     setup: async table => { // Alice has pulled block 49 out, so the move is placing it, which needs no physics from the test
       const { blocks } = await table.state<{ blocks: { id: number }[] }>();

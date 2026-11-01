@@ -59,11 +59,6 @@
 }
 
 [data-game="mancala"] {
-  .game-id {
-    color: var(--muted);
-    font-size: 14px;
-  }
-
   .game-layout {
     display: flex;
     flex-direction: column;

@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react';
+import type { ReactNode } from 'react';
 import FaqList from './FaqList';
 import { REPO_URL } from './GitHubLink';
 import Markdown from '../markdown/Markdown';
@@ -7,9 +8,13 @@ import useEscapeKey from '../hooks/useEscapeKey';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { FaqItem } from '../clientGames.ts';
 
+export type RulesView = 'rules' | 'houseRules' | 'faq';
+
 type RulesDialogProps = {
   game: GameInfo;
   faq: FaqItem[];
+  houseRules?: ReactNode; // the game page's House rules tab; the landing page has none
+  initialView?: RulesView;
   onClose: () => void;
 };
 
@@ -30,10 +35,10 @@ function linkResolver(gameId: string) {
   };
 }
 
-export default function RulesDialog({ game, faq, onClose }: RulesDialogProps) {
+export default function RulesDialog({ game, faq, houseRules, initialView = 'rules', onClose }: RulesDialogProps) {
   useEscapeKey(onClose);
   const titleId = useId();
-  const [view, setView] = useState<'rules' | 'faq'>('rules');
+  const [view, setView] = useState<RulesView>(houseRules ? initialView : initialView === 'houseRules' ? 'rules' : initialView);
   const [rules, setRules] = useState<Rules>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
 
@@ -55,7 +60,9 @@ export default function RulesDialog({ game, faq, onClose }: RulesDialogProps) {
   }
 
   let body;
-  if (view === 'faq') {
+  if (view === 'houseRules') {
+    body = houseRules;
+  } else if (view === 'faq') {
     body = <div className="faq"><FaqList items={faq} /></div>;
   } else if (rules.status === 'loading') {
     body = <p>Loading the rules...</p>;
@@ -76,6 +83,7 @@ export default function RulesDialog({ game, faq, onClose }: RulesDialogProps) {
         <h2 id={titleId}>{`${game.name} rules`}</h2>
         <div className="rules-switch">
           <button type="button" aria-pressed={view === 'rules'} onClick={() => setView('rules')}>Rules</button>
+          {houseRules && <button type="button" aria-pressed={view === 'houseRules'} onClick={() => setView('houseRules')}>House rules</button>}
           <button type="button" aria-pressed={view === 'faq'} onClick={() => setView('faq')}>FAQ</button>
         </div>
         <div className="rules-body" key={view}>{body}</div>

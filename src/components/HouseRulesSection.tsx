@@ -7,14 +7,13 @@ type HouseRulesSectionProps = {
   gameState: BasePublicState;
 };
 
-// The Settings dialog's read-only list of the current game's house rules, for every player all game, with each
+// The Rules dialog's read-only House rules tab once play starts (and for spectators): the list of the current game's house rules, for every player all game, with each
 // non-standard value marked.
 export default function HouseRulesSection({ game, gameState }: HouseRulesSectionProps) {
   const lines = describeHouseRules(game, houseRulesOf(game, gameState), gameState.activePlayers.length);
 
   return (
-    <section className="settings-house-rules" aria-label="House rules">
-      <h3>House rules</h3>
+    <section className="house-rules-summary" aria-label="House rules">
       {lines.length === 0 ? <p>Standard rules</p> : (
         <dl>
           {lines.map(({ label, value, standard }) => (

@@ -21,7 +21,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="pictionary-layout">
         <div className="game-info">
           <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>

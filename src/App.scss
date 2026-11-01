@@ -463,6 +463,14 @@
   text-align: center;
 }
 
+/* The game ID beside the title, quieter than the name */
+:where([data-game] .game-header-id) {
+  font-size: 0.65em;
+  font-weight: 500;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
 :where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button, [data-game] .pause-button) {
   height: 2.5rem;
   padding: 0 1rem;
@@ -681,6 +689,14 @@ $compact-header: 860px;
   background: transparent;
   color: inherit;
   font-weight: 600;
+}
+
+/* Rules, House rules and FAQ stay on one row on the narrowest phones */
+@media (max-width: 400px) {
+  :where([data-game] .rules-switch button) {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
 }
 
 :where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child) {
@@ -1325,26 +1341,39 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   cursor: not-allowed;
 }
 
-/* House rules, above the game screen until play starts */
+/* House rules, in the Rules dialog's House rules tab */
 
 :where([data-game] .house-rules-panel) {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-sizing: border-box;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: var(--platform-panel-bg, var(--lobby-surface));
-  color: var(--platform-panel-text, var(--lobby-text));
   text-align: start;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .house-rules-title) {
-  font-weight: 700;
+/* Rules marks itself while this device still has to agree; the note is for screen readers only */
+:where([data-game] .rules-button[data-attention]) {
+  position: relative;
+}
+
+:where([data-game] .rules-button[data-attention])::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--platform-page-bg, var(--lobby-bg));
+  border-radius: 50%;
+  background: #e5484d;
+}
+
+:where([data-game] .rules-attention) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 :where([data-game] .house-rules-host) {
@@ -1400,9 +1429,9 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   gap: 8px;
 }
 
-/* Until everyone agreed nobody can move, so the game screen under the panel is dimmed (the server refuses a move).
+/* Until everyone agreed nobody can move, so the game screen is dimmed (the server refuses a move).
    Outside :where(), so a game's own opacity rules do not undo it */
-[data-game][data-awaiting-agreement] > :not(.game-header, .presence-bar, .house-rules-panel, .dismiss-vote) {
+[data-game][data-awaiting-agreement] > :not(.game-header, .presence-bar, .dismiss-vote) {
   opacity: 0.5;
 }
 
@@ -1412,25 +1441,25 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   visibility: hidden;
 }
 
-/* The current game's house rules in the Settings dialog, read only */
-:where([data-game] .settings-house-rules dl) {
+/* The current game's house rules once play starts, read only */
+:where([data-game] .house-rules-summary dl) {
   margin: 0;
 }
 
-:where([data-game] .settings-house-rules dl > div) {
+:where([data-game] .house-rules-summary dl > div) {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 4px 0;
 }
 
-:where([data-game] .settings-house-rules dd) {
+:where([data-game] .house-rules-summary dd) {
   margin: 0;
   font-weight: 600;
   text-align: right;
 }
 
-:where([data-game] .settings-house-rules p) {
+:where([data-game] .house-rules-summary p) {
   margin: 0;
 }
 

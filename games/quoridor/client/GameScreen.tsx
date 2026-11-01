@@ -72,7 +72,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game game-layout">
         <div className="board-area" ref={boardAreaRef}>
           <Board

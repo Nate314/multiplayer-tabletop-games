@@ -122,7 +122,6 @@ test.describe('Dominoes rules', () => {
     const leader = [alice, bob, cara][(state.currentPlayer as number) - 1];
     const [low, high] = tilesOf(9)[state.leadTile as number];
     await play(leader, low, high);
-    await expect(alice.locator('.house-rules-panel')).toHaveCount(0);
     expect((await table.state<GameState>()).set).toBe(9);
   });
 

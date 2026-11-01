@@ -36,7 +36,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="rk-layout" ref={layoutRef}>
         <div className="rk-side-panel">
           <div className="rk-player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
