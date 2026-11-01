@@ -2,7 +2,7 @@
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { modeOf } from '../../shared/puzzleModes.ts';
-import { acknowledge, awaiting } from '../../shared/rounds.ts';
+import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
@@ -140,7 +140,14 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   if (a?.type !== 'continue' || modeIn(state) !== 'classic' || state.phase !== 'summary' || state.isGameOver) {
     return { error: 'Nothing to continue' };
   }
-  return acknowledge(state, seat, ROUND, next => next.round >= CLASSIC_ROUNDS ? endGame(next) : startRound(next, next.round + 1));
+  return acknowledge(state, seat, ROUND, nextRound);
+}
+
+const nextRound = (state: GameState): GameState => state.round >= CLASSIC_ROUNDS ? endGame(state) : startRound(state, state.round + 1);
+
+// The next round may have been waiting only for the player who disconnected
+export function onPlayerDisconnected(state: GameState): GameState {
+  return everyoneReady(state, ROUND) ? nextRound(state) : state;
 }
 
 const total = (state: GameState, seat: Seat): number => state.points[seat] ?? 0;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyAction, applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, waitingOn } from './rules.ts';
+import { applyAction, applyMove, createGameState, finalStandings, onPlayerDisconnected, onPlayerLeft, resetLobby, waitingOn } from './rules.ts';
 import { feedback } from './feedback.ts';
 import { COLORS } from './options.ts';
 import type { Color, GameState, Seat } from './types.ts';
@@ -132,4 +132,18 @@ test('the player left behind wins', () => {
   assert.deepEqual(left.winners, [1]);
   assert.equal(left.gameStatus, 'Alice wins! Everyone else left.');
   assert.deepEqual(finalStandings({ ...left, activePlayers: [1, 2] }).map(row => [row.seat, row.place]), [[1, 1], [2, 2]]);
+});
+
+test('the next round starts when the only player not ready disconnects', () => {
+  const one = play(round(lobby(), 0, true), 1);
+  assert.equal(onPlayerDisconnected(one).phase, 'summary');
+  const gone = onPlayerDisconnected({ ...one, disconnected: [2] });
+  assert.equal(gone.round, 2);
+  assert.equal(gone.phase, 'setting');
+});
+
+test('an invalid guess and a second code are refused', () => {
+  const set = move(lobby(), 1, 'setCode', CODE);
+  assert.deepEqual(applyMove(set, 2, { type: 'guess', pegs: ['red', 'red', 'red', 'pink'] }), { error: 'Pick 4 colors' });
+  assert.ok('error' in applyMove(set, 1, { type: 'setCode', pegs: CODE }));
 });
