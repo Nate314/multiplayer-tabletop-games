@@ -72,11 +72,11 @@ test('player counts are whole numbers from 1 to 99', () => {
 });
 
 test('every registered game is shown with the default filters', () => {
-  assert.equal(arrangeGames(GAMES, DEFAULT_FILTERS).flatMap(s => s.games).length, 33);
+  assert.equal(arrangeGames(GAMES, DEFAULT_FILTERS).flatMap(s => s.games).length, 42);
 });
 
-test('seven players lists the nine games that seat seven, two of them only as a house rule', () => {
+test('seven players lists the eleven games that seat seven, two of them only as a house rule', () => {
   const games = arrangeGames(GAMES, { ...DEFAULT_FILTERS, players: 7, sort: 'name' })[0].games;
-  assert.deepEqual(games.map(g => g.info.name), ['Farkle', 'Jenga', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  assert.deepEqual(games.map(g => g.info.name), ['Farkle', 'Jenga', 'Jigsaw', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', 'Sudoku', "Texas Hold'em", 'UNO', 'Yahtzee']);
   assert.deepEqual(games.filter(g => needsHouseRule(g.info, 7)).map(g => g.info.name), ['Phase 10', 'Rook']);
 });

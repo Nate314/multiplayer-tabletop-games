@@ -15,6 +15,10 @@ test('winnerLine names one, two or three winners, and a draw', () => {
   assert.equal(winnerLine(state([])), 'Draw');
 });
 
+test('a one-player game nobody won is over, not a draw', () => {
+  assert.equal(winnerLine({ ...state([]), activePlayers: [1] }), 'Game over');
+});
+
 test('ordinal gives each place its suffix', () => {
   const places = [1, 2, 3, 4, 11, 12, 13, 21, 22].map(ordinal);
   assert.deepEqual(places, ['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd']);

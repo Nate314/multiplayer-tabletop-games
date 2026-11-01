@@ -1,0 +1,366 @@
+[data-game="go"] {
+  color-scheme: light;
+  --page-bg: #EEE8DC;
+  --text: #2B2420;
+  --panel-bg: #FFFDF8;
+  --panel-border: #DDD3C2;
+  --button-bg: #5C4630;
+  --button-hover-bg: #4A3826;
+  --button-text: #FFF;
+  --status-bg: #F3EBDD;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
+  /* The board, its lines and the stones look the same in both themes */
+  --wood: #DCB35C;
+  --wood-edge: #B8913F;
+  --line: #3A2A14;
+  --black-stone: #151515;
+  --white-stone: #F7F5F0;
+  --stone-outline: #2A2A2A;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #1C1A18;
+    --text: #EDE6DA;
+    --panel-bg: #2A2623;
+    --panel-border: #3D3732;
+    --button-bg: #7A5C44;
+    --button-hover-bg: #8F6D52;
+    --status-bg: #36302B;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+  }
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    max-width: 100%;
+    padding: 16px 0;
+  }
+
+  /* Square, as wide as the column allows, and never taller than most of the window */
+
+  .board-area {
+    position: relative;
+    width: min(640px, 80vh, 100%);
+  }
+
+  .go-board {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .go-wood {
+    fill: var(--wood);
+    stroke: var(--wood-edge);
+    stroke-width: 0.06;
+  }
+
+  .go-grid {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 0.04;
+    stroke-linecap: square;
+  }
+
+  .go-star {
+    fill: var(--line);
+  }
+
+  .go-coord {
+    fill: var(--line);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.36px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .go-point {
+    outline: none;
+  }
+
+  .go-point.clickable {
+    cursor: pointer;
+  }
+
+  .go-hit {
+    fill: transparent;
+  }
+
+  .go-point:focus-visible .go-hit {
+    stroke: var(--line);
+    stroke-width: 0.06;
+  }
+
+  .go-stone {
+    stroke-width: 0.04;
+    filter: drop-shadow(0.03px 0.05px 0.04px rgba(0, 0, 0, 0.45));
+  }
+
+  .go-stone.black {
+    fill: var(--black-stone);
+    stroke: var(--black-stone);
+  }
+
+  .go-stone.white {
+    fill: var(--white-stone);
+    stroke: var(--stone-outline);
+  }
+
+  .go-stone.dead {
+    opacity: 0.45;
+  }
+
+  .go-ghost {
+    opacity: 0.4;
+    filter: none;
+    pointer-events: none;
+  }
+
+  .go-last,
+  .go-cross {
+    fill: none;
+    stroke-width: 0.07;
+    pointer-events: none;
+  }
+
+  .go-last.black {
+    stroke: var(--white-stone);
+  }
+
+  .go-last.white {
+    stroke: var(--black-stone);
+  }
+
+  .go-cross {
+    stroke: #C62828;
+    stroke-width: 0.08;
+    stroke-linecap: round;
+  }
+
+  .go-territory {
+    pointer-events: none;
+  }
+
+  .go-territory.black {
+    fill: var(--black-stone);
+  }
+
+  .go-territory.white {
+    fill: var(--white-stone);
+    stroke: var(--stone-outline);
+    stroke-width: 0.03;
+  }
+
+  /* History: a fixed size that the dialog scales to fit */
+
+  .go-history {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    align-items: flex-start;
+    width: 760px;
+  }
+
+  .go-history-board {
+    width: 460px;
+  }
+
+  .go-history-score {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 280px;
+  }
+
+  /* Side panel */
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+    width: min(320px, 100%);
+    padding: 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-status {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .go-waiting {
+    font-weight: 600;
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-row {
+    padding: 8px 10px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--status-bg);
+  }
+
+  .player-row.to-move {
+    border-color: var(--button-bg);
+  }
+
+  .player-row.player-left {
+    opacity: 0.5;
+  }
+
+  .player-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .go-swatch {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--stone-outline);
+  }
+
+  .go-swatch.black {
+    background: var(--black-stone);
+  }
+
+  .go-swatch.white {
+    background: var(--white-stone);
+  }
+
+  .go-captures {
+    margin-top: 4px;
+    font-size: 14px;
+  }
+
+  .go-count {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .go-count caption {
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
+
+  .go-count th,
+  .go-count td {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .go-count th[scope="row"] {
+    text-align: left;
+    font-weight: 500;
+  }
+
+  .go-count .go-total {
+    font-weight: bold;
+  }
+
+  .go-count .go-total th[scope="row"] {
+    font-weight: bold;
+  }
+
+  .ending-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ending-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .side-panel button,
+  .undo-vote-actions button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .side-panel button:hover:enabled,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button.danger {
+    background: var(--danger-bg);
+  }
+
+  .side-panel button.danger:hover {
+    background: var(--danger-hover-bg);
+  }
+
+  .side-panel button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The undo vote covers the board while it runs */
+
+  .undo-vote {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+  }
+}

@@ -1,0 +1,330 @@
+[data-game="naval"] {
+  color-scheme: light;
+  --page-bg: #E6EEF3;
+  --text: #1B2A36;
+  --panel-bg: #FBFDFE;
+  --panel-border: #C9D7E1;
+  --button-bg: #2F5D7C;
+  --button-hover-bg: #244A63;
+  --button-text: #FFF;
+  --status-bg: #E3ECF2;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
+  --water: #BFDCEB;
+  --water-line: #8DB8CF;
+  --hull: #6E7B86;
+  --hull-edge: #46525C;
+  --miss: #2F5D7C;
+  --hit: #D0342C;
+  --sunk: #7A1712;
+  --selected: #F2B230;
+  /* The outline on the square under a dragged ship (src/App.scss [data-drag-over]) */
+  --drag-over: #F2B230;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  /* One grid square; stacked grids shrink so a 320 px screen fits ten squares and the labels */
+  --sq: clamp(24px, calc((100vw - 64px) / 11), 36px);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #121B22;
+    --text: #E2EBF1;
+    --panel-bg: #1C2731;
+    --panel-border: #2F3D49;
+    --button-bg: #3D6F91;
+    --button-hover-bg: #4C82A6;
+    --status-bg: #24323E;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --water: #1F4157;
+    --water-line: #2D5873;
+    --hull: #8C99A4;
+    --hull-edge: #C2CCD4;
+    --miss: #BFDCEB;
+    --hit: #FF6B5E;
+    --sunk: #FFB3AA;
+  }
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    max-width: 100%;
+    padding: 16px 0;
+  }
+
+  .board-area {
+    position: relative;
+    max-width: 100%;
+  }
+
+  /* Side by side on a wide screen, one above the other on a narrow one */
+  .naval-seas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  @media (min-width: 721px) {
+    --sq: 30px;
+
+    .naval-seas {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+
+  .sea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sea-title {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .sea-waiting {
+    font-weight: 600;
+  }
+
+  .naval-grid {
+    display: grid;
+    grid-template-columns: repeat(11, var(--sq));
+    grid-template-rows: repeat(11, var(--sq));
+  }
+
+  .grid-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--sq) * 0.42);
+    font-weight: 600;
+    user-select: none;
+  }
+
+  .square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--water-line);
+    border-radius: 0;
+    background: var(--water);
+    cursor: pointer;
+  }
+
+  .square:disabled {
+    cursor: default;
+  }
+
+  /* A ship is one run of grey squares, rounded at its two ends */
+  .square.ship {
+    background: var(--hull);
+    border-color: var(--hull-edge);
+  }
+
+  .square.ship-across:not(.ship-bow) { border-left-color: var(--hull); }
+  .square.ship-across:not(.ship-stern) { border-right-color: var(--hull); }
+  .square.ship-down:not(.ship-bow) { border-top-color: var(--hull); }
+  .square.ship-down:not(.ship-stern) { border-bottom-color: var(--hull); }
+  .square.ship-across.ship-bow { border-radius: 50% 0 0 50%; }
+  .square.ship-across.ship-stern { border-radius: 0 50% 50% 0; }
+  .square.ship-down.ship-bow { border-radius: 50% 50% 0 0; }
+  .square.ship-down.ship-stern { border-radius: 0 0 50% 50%; }
+
+  .square.miss::after {
+    content: '';
+    width: 28%;
+    height: 28%;
+    border-radius: 50%;
+    background: var(--miss);
+  }
+
+  .square.hit::after {
+    content: '\00d7';
+    color: var(--hit);
+    font-size: calc(var(--sq) * 0.9);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .square.sunk::after {
+    color: var(--sunk);
+  }
+
+  .square.sunk {
+    box-shadow: inset 0 0 0 2px var(--sunk);
+  }
+
+  .square.selected {
+    outline: 3px solid var(--selected);
+    outline-offset: -3px;
+  }
+
+  .naval-history {
+    --sq: clamp(18px, calc((100vw - 96px) / 11), 26px);
+  }
+
+  /* Placement */
+
+  .naval-placement {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  .ship-tray {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 10px;
+    min-height: var(--sq);
+    max-width: calc(var(--sq) * 11);
+  }
+
+  .tray-ship {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: calc(var(--sq) / 2);
+    background: none;
+    cursor: pointer;
+  }
+
+  .ship-tray-down .tray-ship {
+    flex-direction: column;
+  }
+
+  .tray-ship.selected {
+    border-color: var(--selected);
+  }
+
+  .tray-segment {
+    width: var(--sq);
+    height: var(--sq);
+    box-sizing: border-box;
+    background: var(--hull);
+  }
+
+  .ship-tray-across .tray-segment:first-child { border-radius: 50% 0 0 50%; }
+  .ship-tray-across .tray-segment:last-child { border-radius: 0 50% 50% 0; }
+  .ship-tray-down .tray-segment:first-child { border-radius: 50% 50% 0 0; }
+  .ship-tray-down .tray-segment:last-child { border-radius: 0 0 50% 50%; }
+
+  .placement-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .placement-buttons button,
+  .fire-button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .placement-buttons button:hover:enabled,
+  .fire-button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .placement-buttons button:disabled,
+  .fire-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Side panel */
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+    width: min(320px, 100%);
+    padding: 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-status {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+    overflow-wrap: anywhere;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-row {
+    padding: 8px 10px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .player-row.to-move {
+    border-color: var(--button-bg);
+  }
+
+  .player-row.player-left {
+    opacity: 0.5;
+  }
+
+  /* The undo vote covers the grids while it runs */
+  .undo-vote {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+  }
+}

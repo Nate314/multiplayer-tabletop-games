@@ -3,6 +3,7 @@ import { parseGameFile, type GameFile } from '../../shared/gameFile.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import ClientGameGate from '../games/ClientGameGate.tsx';
 import HistoryDialog from './HistoryDialog';
+import { registerImages } from '../services/images.ts';
 
 type OpenSavedGameProps = {
   games: GameInfo[];
@@ -31,8 +32,12 @@ export default function OpenSavedGame({ games }: OpenSavedGameProps) {
       return;
     }
     const result = parseGameFile(text, games.map(({ id }) => id));
-    if ('error' in result) setError(result.error);
-    else setFile(result.file);
+    if ('error' in result) {
+      setError(result.error);
+      return;
+    }
+    registerImages(result.file.images);
+    setFile(result.file);
   }
 
   function close() {

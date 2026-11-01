@@ -8,6 +8,7 @@ import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
 import { mountRulesRoute } from './rules.ts';
+import { mountImageRoutes } from './images.ts';
 import { mountOpenGamesRoute } from './openGames.ts';
 import { mountAssetRoutes } from './assets/routes.ts';
 import { createAlerts, mountPushRoutes } from './alerts.ts';
@@ -116,6 +117,7 @@ app.get('/api/resume/:gameType/:gameId', (req, res) => {
   else res.status(404).json(NOT_AVAILABLE_BODY);
 });
 
+mountImageRoutes(app, manager);
 mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
 
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
@@ -219,6 +221,9 @@ function handleMessage(ws: WebSocket, data: unknown): void {
       break;
     case MESSAGE_TYPES.VOTE_UNDO:
       respond(ws, roomId, manager.voteUndo(roomId, seat, payload?.approve));
+      break;
+    case MESSAGE_TYPES.UNDO_OWN:
+      respond(ws, roomId, manager.undoOwn(roomId, seat));
       break;
     case MESSAGE_TYPES.REQUEST_DISMISS:
       respond(ws, roomId, manager.requestDismiss(roomId, seat, payload?.seat));
