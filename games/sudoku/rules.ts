@@ -1,14 +1,16 @@
 // Sudoku rules: Solo plays by moves; Together and Race play by actions, any seat at any time
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { addContribution, MODE_RULE, modeOf, playsAtOnce, type Contributions, type PuzzleMode } from '../../shared/puzzleModes.ts';
+import {
+  addContribution, MODE_RULE, modeOf, playsAtOnce, raceProgress, visibleBoards, type Contributions, type PuzzleMode
+} from '../../shared/puzzleModes.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { rankStandings } from '../../shared/standings.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import { generatePuzzle } from './generator.ts';
 import { CELLS } from './grid.ts';
 import { DIFFICULTY } from './options.ts';
-import type { Board, GameState, LastMove, OwnMove, PublicGameState, Result, Seat } from './types.ts';
+import type { Board, GameState, LastMove, OwnMove, PublicGameState, PublicLastMove, Result, Seat } from './types.ts';
 
 const STATUS: Record<PuzzleMode, string> = {
   solo: 'Solve the puzzle',
@@ -63,12 +65,6 @@ export function resetLobby(state: GameState, random: Random): GameState {
     lastMove: null,
     gameStatus: STATUS[mode]
   };
-}
-
-// For now the view is the state without its solution
-export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
-  const { solution: _solution, ...rest } = state;
-  return { ...rest, undoAvailable };
 }
 
 const isCell = (cell: unknown): cell is number => Number.isInteger(cell) && (cell as number) >= 0 && (cell as number) < CELLS;
@@ -196,6 +192,54 @@ export function undoOwn(state: GameState, seat: Seat): Result<GameState> {
   return { error: 'Nothing of yours to undo' };
 }
 
+const openCellsOf = (state: GameState): number[] => state.givens.flatMap((given, cell) => (given ? [] : [cell]));
+const wrongCells = (state: GameState, board: Board): number[] =>
+  openCellsOf(state).filter(cell => board.entries[cell] && board.entries[cell] !== state.solution[cell]);
+
+// The share of non-given cells a Race board has filled, wrong or not
+function percentFilled(state: GameState, board: Board): number {
+  const open = openCellsOf(state);
+  return open.length ? (100 * open.filter(cell => board.entries[cell]).length) / open.length : 100;
+}
+
+// Another seat's Race move, while the race is on, shows only who moved, never the cell or digit
+function shownLastMove(state: GameState, viewer: Seat | null, seesEverything: boolean): PublicLastMove | null {
+  const { lastMove } = state;
+  if (!lastMove || seesEverything || state.isGameOver || modeOfState(state) !== 'race' || lastMove.playerNumber === viewer) return lastMove;
+  const { type, playerNumber } = lastMove;
+  return lastMove.type === 'enter' && lastMove.finished ? { type, playerNumber, finished: true } : { type, playerNumber };
+}
+
+// `seesEverything` is an ordinary spectator: every Race board and the full last move, still no solution or notes
+function view(state: GameState, undoAvailable: boolean, viewer: Seat | null, seesEverything: boolean): Omit<PublicGameState, 'moveCount'> {
+  const { solution, notes, ownMoves: _ownMoves, raceWrong, showMistakes, lastMove: _lastMove, ...rest } = state;
+  const mode = modeOfState(state);
+  const shown: Omit<PublicGameState, 'moveCount'> = {
+    ...rest,
+    undoAvailable: playsAtOnce(mode) ? false : undoAvailable,
+    raceBoards: seesEverything ? state.raceBoards : visibleBoards(state.raceBoards, viewer, state.isGameOver),
+    progress: mode === 'race' ? raceProgress(state.raceBoards, board => percentFilled(state, board)) : {},
+    myNotes: viewer === null ? null : notes[viewer] ?? [],
+    boardWrong: viewer !== null && !!raceWrong[viewer],
+    ownUndo: viewer !== null && 'state' in undoOwn(state, viewer),
+    lastMove: shownLastMove(state, viewer, seesEverything)
+  };
+  if (state.isGameOver) shown.solution = solution;
+  if (mode === 'solo') shown.showMistakes = showMistakes;
+  if (mode === 'together' || (mode === 'solo' && showMistakes)) shown.wrong = wrongCells(state, state.board);
+  return shown;
+}
+
+// A seat sees its own Race board, notes and moves; `null` is the History and the table screen
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
+  return view(state, undoAvailable, viewer, false);
+}
+
+// A table screen is in view of the racers, so it gets the History view
+export function spectatorState(state: GameState, undoAvailable: boolean, tableScreen: boolean): Omit<PublicGameState, 'moveCount'> {
+  return view(state, undoAvailable, null, !tableScreen);
+}
+
 // Together keeps the leaver's entries; their marks, undo stack and Race board go
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   return {
@@ -209,7 +253,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 
 // The share of non-given cells a Race board has right, as a whole percent
 function percentCorrect(state: GameState, board: Board | undefined): number {
-  const open = state.givens.flatMap((given, cell) => (given ? [] : [cell]));
+  const open = openCellsOf(state);
   const right = open.filter(cell => board?.entries[cell] === state.solution[cell]).length;
   return open.length ? Math.round((100 * right) / open.length) : 100;
 }

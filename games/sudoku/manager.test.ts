@@ -1,21 +1,25 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
-import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
+import { agreeAll, fileOf, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { seeded } from '../testStates.ts';
 import { sudoku } from './index.ts';
 import type { GameState, PublicGameState } from './types.ts';
+import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import type { Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 const ROOM = 'sudoku/g1';
 
-function gameWith(...names: string[]): Manager {
+// A started table; `values` are house rules the host sets before everyone agrees
+function tableWith(names: string[], values?: HouseRuleValues): Manager {
   const manager = rememberingKeys(createGameManager([sudoku], seeded(3)));
   for (const name of names) manager.join('sudoku', 'g1', name);
+  if (values) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
+const gameWith = (...names: string[]): Manager => tableWith(names);
 
 // The manager is generic over games, so tests narrow the public state to Sudoku's
 function ok(result: Result<unknown>): PublicGameState {
@@ -88,4 +92,28 @@ test('the game continues when one of two Together players is dismissed', () => {
   assert.equal(last.isGameOver, true);
   assert.deepEqual(last.winners, [1]);
   assert.equal(last.gameStatus, 'Solved together!');
+});
+
+// The platform offers the game file only once the game is over; its table steps before the end still hide both
+test('History and the game file never hold the solution mid-game', () => {
+  const manager = tableWith(['A', 'B'], { mode: 'race' });
+  const state = raw(manager);
+  const [a, b, c, ...rest] = openCells(state);
+  ok(manager.action(ROOM, 1, enter(a, state.solution[a])));
+  ok(manager.action(ROOM, 2, enter(b, wrong(state, b))));
+  ok(manager.action(ROOM, 2, enter(c, state.solution[c])));
+  const secrets = [JSON.stringify(state.solution), JSON.stringify(raw(manager).raceBoards[2]?.entries)];
+  const hidesSecrets = (shown: string) => secrets.every(secret => !shown.includes(secret));
+
+  const steps = stepsOf(manager, 'sudoku');
+  assert.equal(steps?.length, 4);
+  assert.ok(hidesSecrets(JSON.stringify(steps)));
+  assert.deepEqual(fileOf(manager, 'sudoku', new Date(0)), { error: 'The game is not over yet' });
+
+  for (const cell of [b, c, ...rest]) ok(manager.action(ROOM, 1, enter(cell, state.solution[cell])));
+  assert.equal(raw(manager).isGameOver, true);
+  const file = fileOf(manager, 'sudoku', new Date(0));
+  if (!('file' in file)) assert.fail(file.error);
+  const tableSteps = file.file.steps.slice(0, -1).map(step => ({ ...step, views: undefined }));
+  assert.ok(hidesSecrets(JSON.stringify(tableSteps)));
 });
