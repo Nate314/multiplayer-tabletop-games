@@ -151,8 +151,9 @@ test('every board decided with no line is a draw', () => {
 });
 
 test('a mark that claims the last open board and makes a line is a win, not a draw', () => {
-  // Boards 0 and 1 are X's; board 2 is the last open board and X claims it, making the top row
-  const boards = boardsOf(WON_BY_1, WON_BY_1, '11.......', WON_BY_2, WON_BY_2, WON_BY_2, WON_BY_2, WON_BY_2, WON_BY_2);
+  // Boards 0 and 1 are X's; board 2 is the last open board and X claims it, making the top row.
+  // Before the move no line exists for either seat, and the top row is the only line after it.
+  const boards = boardsOf(WON_BY_1, WON_BY_1, '11.......', WON_BY_2, WON_BY_2, WON_BY_1, WON_BY_1, FULL_DRAWN, WON_BY_2);
   const state = withBoards(boards, { currentPlayer: 1, forcedBoard: 2 });
   const won = place(state, 1, 2, 2);
   assert.equal(won.isGameOver, true);

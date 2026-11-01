@@ -21,9 +21,11 @@
   }
 
   /* Narrow phones: tighter page gutters leave the 81 cells room to stay tappable */
-  @media (max-width: 400px) {
-    padding-left: 8px;
-    padding-right: 8px;
+  &.game-root {
+    @media (max-width: 400px) {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
   }
 
   /* Square, as wide as the page allows but no taller than most of the window */
