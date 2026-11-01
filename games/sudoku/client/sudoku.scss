@@ -76,6 +76,21 @@
     width: min(540px, 80vh, 100%);
   }
 
+  /* Which Race board is on show, when the view holds more than one: chips that wrap on a narrow window */
+
+  .board-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .board-picker button {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
   /* Nine cells a side; the thin tracks after every third cell show as the thicker box lines */
 
   .sudoku-grid {

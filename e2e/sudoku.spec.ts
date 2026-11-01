@@ -30,6 +30,8 @@ const mode = (page: Page) => page.locator('.sudoku-mode');
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const standings = (page: Page) => gameOver(page).locator('.game-over-standings li');
 const progress = (page: Page) => page.getByRole('list', { name: 'Race progress' }).locator('li');
+const picker = (page: Page) => page.getByRole('group', { name: 'Boards' });
+const pick = (page: Page, name: string) => picker(page).getByRole('button', { name: new RegExp(`^${name} `) });
 const label = (index: number, shown: string) => `Row ${Math.floor(index / 9) + 1}, column ${(index % 9) + 1}, ${shown}`;
 
 // Selects `index` and clicks `digit` on the pad
@@ -166,6 +168,7 @@ test.describe('Sudoku rules', () => {
     await enter(alice, 0, 1); // wrong, still counted as filled
     await expect(progress(bob)).toHaveText('Alice 33%');
     await expectCell(bob, 0, 'empty');
+    await expect(picker(bob)).toHaveCount(0); // no other board to pick during play
     await expect(progress(alice)).toHaveText('Bob 0%');
     await expectCell(alice, 0, '1'); // a Race marks nothing wrong
     await expect(alice.getByRole('button', { name: 'Show mistakes' })).toHaveCount(0);
@@ -189,6 +192,20 @@ test.describe('Sudoku rules', () => {
     await enter(alice, 1, 3);
     for (const page of [alice, bob]) await expect(status(page)).toHaveText('Alice finished first!');
     await expect(standings(bob)).toHaveText(['1st Alice Solved', '2nd Bob (you) 50% correct']);
+
+    // Once it is over, every board can be seen, and the winning cell is outlined only on the winner's board
+    await gameOver(bob).getByRole('button', { name: 'See the table' }).click();
+    await expect(pick(bob, 'Bob')).toHaveAttribute('aria-pressed', 'true');
+    await expectCell(bob, 1, 'empty');
+    await expect(bob.locator('.cell.last-move')).toHaveCount(0);
+    await pick(bob, 'Alice').click();
+    await expect(pick(bob, 'Alice')).toHaveAttribute('aria-pressed', 'true');
+    await expectCell(bob, 1, '3');
+    await expect(cell(bob, 1)).toHaveClass(/last-move/);
+    // The picker wraps at phone width without scrolling the page sideways
+    await bob.setViewportSize({ width: 320, height: 640 });
+    await expect(picker(bob)).toBeVisible();
+    expect(await bob.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
   });
 
   test('History of a Race shows progress until the final step', async ({ seat }) => {
@@ -304,11 +321,19 @@ test.describe('Sudoku rules', () => {
     const dana = await watch(browser, server, 'sudoku', table.gameId, 'Dana');
     const tv = await tableScreen(table);
     await enter(alice, 0, 5);
-    await expectCell(dana, 0, '5'); // Alice's board
+    await expectCell(dana, 0, '5'); // the last mover's board, Alice's
     await enter(bob, 1, 3);
-    await expectCell(dana, 1, '3'); // now Bob's
+    await expect(picker(dana).getByRole('button')).toHaveText(['Alice 33%', 'Bob 33%']);
+    await pick(dana, 'Alice').click();
+    await expect(pick(dana, 'Alice')).toHaveAttribute('aria-pressed', 'true');
+    await expectCell(dana, 0, '5');
+    await expectCell(dana, 1, 'empty');
+    await pick(dana, 'Bob').click();
+    await expect(pick(dana, 'Bob')).toHaveAttribute('aria-pressed', 'true');
+    await expectCell(dana, 1, '3');
     await expectCell(dana, 0, 'empty');
     await expect(progress(dana)).toHaveText(['Alice 33%', 'Bob 33%']);
+    await expect(picker(tv)).toHaveCount(0);
     await expect(progress(tv)).toHaveText(['Alice 33%', 'Bob 33%']);
     await expectCell(tv, 0, 'empty');
     await expectCell(tv, 1, 'empty');

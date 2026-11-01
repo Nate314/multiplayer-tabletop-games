@@ -2,10 +2,12 @@ import { useRef, useState, type KeyboardEvent } from 'react';
 import gameService from '../../../src/services/gameService';
 import Grid from './Grid';
 import DigitPad from './DigitPad';
+import BoardPicker from './BoardPicker';
 import GameStatus from './GameStatus';
 import RaceProgress from './RaceProgress';
 import { keyToCommand } from './keys.ts';
-import { modeOfState, shownBoard } from './shown.ts';
+import useBoardOwner from './useBoardOwner.ts';
+import { lastCellOn, modeOfState, shownBoard } from './shown.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
 
@@ -13,9 +15,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const layoutRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [pencil, setPencil] = useState(false);
-  const { givens, wrong, myNotes, lastMove, isGameOver, activePlayers, undoAvailable, undoVote, dismissVote, ownUndo, showMistakes } = gameState;
+  const { givens, wrong, myNotes, isGameOver, activePlayers, undoAvailable, undoVote, dismissVote, ownUndo, showMistakes } = gameState;
   const mode = modeOfState(gameState);
-  const { entries } = shownBoard(gameState, playerNumber);
+  // During play a player's view holds only their own Race board; once a Race is over they can look at the others
+  const [owner, pick] = useBoardOwner(gameState, playerNumber);
+  const { entries } = shownBoard(gameState, owner);
   const canPlay = !isGameOver && activePlayers.includes(playerNumber) && !undoVote && !dismissVote;
   const target = canPlay && selected !== null && !givens[selected] ? selected : null;
 
@@ -60,13 +64,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   return (
     <div className="game-layout" ref={layoutRef} onKeyDown={onKeyDown}>
       <div className="board-area">
+        <BoardPicker gameState={gameState} owner={owner} onPick={pick} />
         <Grid
           givens={givens}
           entries={entries}
           notes={myNotes ?? []}
           wrong={wrong ?? []}
           selected={selected}
-          lastCell={lastMove?.cell ?? null}
+          lastCell={lastCellOn(gameState, owner)}
           onSelect={canPlay ? setSelected : undefined}
         />
       </div>
