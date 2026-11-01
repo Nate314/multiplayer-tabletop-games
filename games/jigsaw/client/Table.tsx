@@ -61,7 +61,8 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
       ))}
       {order.map(({ piece, index }) => {
         const mine = dragging?.piece === index;
-        const heldByOther = !mine && piece.heldBy !== null && piece.heldBy !== viewer ? piece.heldBy : null;
+        // A read-only table (History) shows no holders: a step can catch someone mid-hold
+        const heldByOther = drag !== undefined && !mine && piece.heldBy !== null && piece.heldBy !== viewer ? piece.heldBy : null;
         const liftable = drag !== undefined && (mine || drag.canLift(index));
         return (
           <PieceShape

@@ -2,7 +2,7 @@
 
 Put a picture back together alone, together or in a race.
 
-One to eight players. Seat 1 is the host, who picks the picture. There are no turns: everyone moves pieces whenever they like.
+One to eight players. The host picks the picture. The host is the first player seated; if they leave the lobby, the next player seated becomes host. There are no turns: everyone moves pieces whenever they like.
 
 ## Rules
 
@@ -15,7 +15,7 @@ One to eight players. Seat 1 is the host, who picks the picture. There are no tu
 - **Ending.** In Solo and Together the puzzle is done when the last piece is placed, and everyone still seated wins together. In a Race the first player to finish wins and the game ends there
 - **Standings.** Solo shows the piece count. Together puts everyone first, each with how many pieces they placed. Race puts the winner first, then the others by percentage placed (ties share a place)
 - **Leaving.** The game goes on when players leave, even down to one. A Race leaver's table goes with them
-- **Undo.** Solo undo takes back the last snap; loose pieces moved since the snap before it return to where they were. In Together and Race, Undo my last move takes back only your own last snap, with no vote: the piece comes loose half a cell right of and below its spot, and nobody else's pieces move
+- **Undo.** In Solo, Undo takes back the last placed piece, which goes back to where you picked it up. Loose pieces you moved after placing it go back too; loose moves from before it stay. In Together and Race, Undo my last move takes back only your own last snap, with no vote: the piece comes loose half a cell right of and below its spot, and nobody else's pieces move
 - Only snaps are steps in History; moving a loose piece is not
 
 ## Controls

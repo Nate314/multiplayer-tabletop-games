@@ -316,4 +316,45 @@
     stroke-width: 6;
     pointer-events: none;
   }
+
+  /* History and spectators: a Race shows every board side by side when it can, or the percentages alone */
+  .jigsaw-history-boards,
+  .jigsaw-history-progress {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .jigsaw-history-boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 12px;
+
+    li {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+  }
+
+  .jigsaw-history-label,
+  .jigsaw-history-progress li {
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .jigsaw-history-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    li {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--status-bg);
+    }
+  }
 }

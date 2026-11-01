@@ -116,15 +116,17 @@ export function scatter(grid: Grid, random: Random): Point[] {
     || p.y + grid.h <= BOARD_Y - margin || p.y >= BOARD_Y + PICTURE_H + margin;
   const spots: Point[] = [];
   for (let i = 0; i < grid.cols * grid.rows; i++) {
-    let spot: Point = { x: 0, y: 0 };
-    for (let tries = 0; tries < SCATTER_TRIES; tries++) {
-      spot = {
+    let spot: Point | null = null;
+    let last: Point = { x: 0, y: 0 };
+    for (let tries = 0; tries < SCATTER_TRIES && !spot; tries++) {
+      last = {
         x: Math.floor(random() * (TABLE_W - grid.w + 1)),
         y: Math.floor(random() * (TABLE_H - grid.h + 1)),
       };
-      if (offBoard(spot)) break;
+      if (offBoard(last)) spot = last;
     }
-    spots.push(spot);
+    // Every try landed on the board: move the last one down into the strip below it (every grid fits there)
+    spots.push(spot ?? clampToTable(grid, last.x, Math.max(last.y, Math.ceil(BOARD_Y + PICTURE_H + margin))));
   }
   return spots;
 }

@@ -20,12 +20,12 @@ test('a drag ends when the state shows the piece placed or held by someone else'
   assert.equal(lostHold(undefined, 1), true);
 });
 
-test('a piece is the same when its place and hold are, whatever the object', () => {
+test('a piece is the same when its place is, whatever the object or hold', () => {
   const piece = { x: 10, y: 20, placed: false, heldBy: 1, placedBy: null };
   assert.equal(samePiece({ ...piece }, piece), true);
   assert.equal(samePiece({ ...piece, x: 11 }, piece), false);
   assert.equal(samePiece({ ...piece, y: 21 }, piece), false);
-  assert.equal(samePiece({ ...piece, heldBy: null }, piece), false);
+  assert.equal(samePiece({ ...piece, heldBy: null }, piece), true); // a late pick-up answer keeps the landing
   assert.equal(samePiece({ ...piece, placed: true }, piece), false);
   assert.equal(samePiece(undefined, piece), false);
 });

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
-import { houseRulesOf } from '../../../shared/houseRules.ts';
+import { agreementPending, houseRulesOf } from '../../../shared/houseRules.ts';
 import { MODE_RULE, modeOf, playsAtOnce } from '../../../shared/puzzleModes.ts';
 import { jigsawInfo } from '../info.ts';
 import PicturePicker from './PicturePicker';
@@ -23,6 +23,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const host = houseRulesOf(jigsawInfo, gameState).host;
   const isHost = host === playerNumber;
   const playing = activePlayers.includes(playerNumber) && !isGameOver && !undoVote;
+  // Until everyone agrees to the house rules the server refuses a pick-up, so nothing can be lifted
+  const canPlay = playing && !(!started && agreementPending(jigsawInfo, gameState));
   const [guide, setGuide] = useState(false);
   const [zoom, setZoom] = useState(1);
   const scrollBox = useRef<HTMLDivElement>(null);
@@ -40,10 +42,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // The first lift starts play, which ends the lobby; its panel stays until that drag ends, so the table does not jump under the pointer
   const [liftedInLobby, setLiftedInLobby] = useState(false);
   const [landing, setLanding] = useState<(Dragging & { from: Piece }) | null>(null);
+  // A refused drop (or any refusal) lets go of the dropped piece, so no ghost stays where it was let go
+  useEffect(() => { if (error) setLanding(null); }, [error]);
 
   const canLift = (index: number) => {
     const piece = board.pieces[index];
-    return playing && !!piece && !piece.placed && (piece.heldBy === null || piece.heldBy === playerNumber);
+    return canPlay && !!piece && !piece.placed && (piece.heldBy === null || piece.heldBy === playerNumber);
   };
   const { dragging, bind, cancel } = usePieceDrag({
     canLift,

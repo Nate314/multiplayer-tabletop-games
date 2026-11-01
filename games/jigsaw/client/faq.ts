@@ -23,7 +23,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does undo work?',
-    answer: 'In Solo, Undo takes back your last placed piece; loose pieces you moved since the piece before it go back to where they were. In Together and Race, Undo my last move takes back only your own last placed piece, which comes loose just beside its spot; nobody else\'s pieces move.'
+    answer: 'In Solo, Undo takes back your last placed piece, which goes back to where you picked it up. Loose pieces you moved after placing it go back too; loose moves from before it stay. In Together and Race, Undo my last move takes back only your own last placed piece, which comes loose just beside its spot; nobody else\'s pieces move.'
   },
   {
     question: 'The pieces are tiny on my phone. What can I do?',

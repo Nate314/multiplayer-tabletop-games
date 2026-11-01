@@ -31,14 +31,26 @@ function ok(result: Result<unknown>): void {
 test('one player plays Solo, snaps and undoes at once', () => {
   const { manager, raw, moves, snap } = table(['Alice']);
   assert.equal(raw().houseRules?.values.mode, 'solo');
+  const move = (piece: number, x: number, y: number) => {
+    ok(manager.action(ROOM, 1, { type: 'pickUp', piece }));
+    ok(manager.action(ROOM, 1, { type: 'drop', piece, x, y }));
+  };
+  move(10, 10, 1400); // before the snap: stays
+  const lifted = { ...raw().board.pieces[4] };
+  const before11 = { ...raw().board.pieces[11] };
   snap(1, 4);
+  move(11, 20, 1400); // after the snap: goes back
   ok(manager.action(ROOM, 1, { type: 'pickUp', piece: 6 }));
   assert.equal(moves(), 1);
   ok(manager.requestUndo(ROOM, 1));
   assert.equal(moves(), 0);
   assert.equal(raw().undoVote, null);
-  assert.equal(raw().board.pieces[4].placed, false);
-  assert.ok(raw().board.pieces.every(piece => piece.heldBy === null));
+  const pieces = raw().board.pieces;
+  assert.deepEqual([pieces[10].x, pieces[10].y], [10, 1400]);
+  assert.deepEqual([pieces[11].x, pieces[11].y], [before11.x, before11.y]);
+  assert.deepEqual(pieces[4], { ...lifted, heldBy: null });
+  assert.equal(pieces[4].placed, false);
+  assert.ok(pieces.every(piece => piece.heldBy === null));
 });
 
 test('Together keeps going when one player leaves', () => {

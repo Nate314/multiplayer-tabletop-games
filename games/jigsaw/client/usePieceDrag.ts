@@ -20,9 +20,10 @@ export function lostHold(piece: Piece | undefined, seat: Seat): boolean {
   return !piece || piece.placed || (piece.heldBy !== null && piece.heldBy !== seat);
 }
 
-// The same place and hold, by value: every server message is freshly parsed, so identity says nothing
+// The same place, by value: every server message is freshly parsed, so identity says nothing.
+// The hold is left out: a pick-up answer arriving after a fast drop must not flick the piece back
 export function samePiece(a: Piece | undefined, b: Piece): boolean {
-  return a !== undefined && a.x === b.x && a.y === b.y && a.heldBy === b.heldBy && a.placed === b.placed;
+  return a !== undefined && a.x === b.x && a.y === b.y && a.placed === b.placed;
 }
 
 type Options = {

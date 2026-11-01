@@ -4,7 +4,7 @@ import { seeded } from '../testStates.ts';
 import { PICTURE_W, PICTURE_H } from './pictures.ts';
 import {
   GRIDS, TABLE_W, TABLE_H, BOARD_X, BOARD_Y, gridOf, homeOf, edgesOf, piecePath, snaps, clampToTable, scatter,
-  type PieceCount,
+  type Grid, type PieceCount, type Point,
 } from './cut.ts';
 
 const COUNTS: PieceCount[] = [24, 48, 96, 150];
@@ -57,16 +57,29 @@ test('a drop near home snaps and a far one does not', () => {
   assert.ok(!snaps(grid, 9, home.x + 0.31 * min, home.y));
 });
 
-test('scattered pieces lie on the table and off the board', () => {
-  const grid = gridOf(150);
-  const spots = scatter(grid, seeded(3));
-  assert.equal(spots.length, 150);
+function assertOffBoard(grid: Grid, spots: Point[]) {
   const tab = 0.22 * Math.min(grid.w, grid.h);
   for (const { x, y } of spots) {
     assert.ok(x >= 0 && y >= 0 && x + grid.w <= TABLE_W && y + grid.h <= TABLE_H);
     const overlaps = x < BOARD_X + PICTURE_W + tab && x + grid.w > BOARD_X - tab
       && y < BOARD_Y + PICTURE_H + tab && y + grid.h > BOARD_Y - tab;
     assert.ok(!overlaps, `piece at ${x},${y} sits on the board`);
+  }
+}
+
+test('scattered pieces lie on the table and off the board', () => {
+  const grid = gridOf(150);
+  const spots = scatter(grid, seeded(3));
+  assert.equal(spots.length, 150);
+  assertOffBoard(grid, spots);
+});
+
+test('a piece whose every try lands on the board goes below it', () => {
+  for (const count of [24, 150] as const) {
+    const grid = gridOf(count);
+    const spots = scatter(grid, () => 0.3); // always the middle of the board
+    assert.equal(spots.length, count);
+    assertOffBoard(grid, spots);
   }
 });
 

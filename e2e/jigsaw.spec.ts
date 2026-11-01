@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
 import {
-  agreeToHouseRules, dismiss, drag, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, test, touchDrag, undo,
+  agreeToHouseRules, dismiss, drag, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, test, touchDrag, undo, watch,
   type Seat, type Table
 } from './fixtures.ts';
 import { gridOf, homeOf, type PieceCount } from '../games/jigsaw/cut.ts';
@@ -312,6 +312,29 @@ test.describe('Jigsaw rules', () => {
       for (const frame of frames) expect(holdsBoard(JSON.parse(frame), '1'), frame.slice(0, 200)).toBe(false);
     } finally {
       await bob.context().close();
+    }
+  });
+
+  test('Race: a spectator sees every board, each with its name and percentage', async ({ seat, browser, server }) => {
+    const table = await seat('jigsaw', ['Alice', 'Bob']);
+    await race(table);
+    await table.patch({ boards: { 1: layout(48, [1], [0]), 2: layout(48, [0]) } });
+    const dana = await watch(browser, server, 'jigsaw', table.gameId, 'Dana');
+    try {
+      const board = (name: string) => dana.locator(`.jigsaw-history-boards li[aria-label="${name}'s board"]`);
+      await expect(board('Alice').locator('.jigsaw-history-label')).toHaveText('Alice: 2%');
+      await expect(board('Bob').locator('.jigsaw-history-label')).toHaveText('Bob: 0%');
+      await expect(board('Alice').locator('[data-piece]')).toHaveCount(48);
+      await expect(board('Bob').locator('[data-piece]')).toHaveCount(48);
+      await expect(board('Alice').locator('[data-piece="0"].placed')).toHaveCount(1);
+      await expect(board('Bob').locator('.placed')).toHaveCount(0);
+      // On a phone the boards stack and nothing scrolls sideways
+      await dana.setViewportSize({ width: 320, height: 700 });
+      const [alice, bob] = await Promise.all([board('Alice').boundingBox(), board('Bob').boundingBox()]);
+      expect(bob!.y).toBeGreaterThanOrEqual(alice!.y + alice!.height);
+      expect(await dana.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    } finally {
+      await dana.context().close();
     }
   });
 
