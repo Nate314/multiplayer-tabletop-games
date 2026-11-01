@@ -33,9 +33,10 @@ async function upload(gameId: string, file: File): Promise<string> {
   }
 }
 
-type PicturePickerProps = { gameId: string; picture: Picture; onPick(picture: Picture): void };
+// `locked`: play has just started, and the picker only holds its place until the first drag ends
+type PicturePickerProps = { gameId: string; picture: Picture; locked: boolean; onPick(picture: Picture): void };
 
-export default function PicturePicker({ gameId, picture, onPick }: PicturePickerProps) {
+export default function PicturePicker({ gameId, picture, locked, onPick }: PicturePickerProps) {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -64,6 +65,7 @@ export default function PicturePicker({ gameId, picture, onPick }: PicturePicker
             type="button"
             className="jigsaw-thumb"
             aria-pressed={picture.kind === 'builtin' && picture.name === name}
+            disabled={locked}
             onClick={() => onPick({ kind: 'builtin', name })}
           >
             <img src={svgUrl('jigsaw-picture', name)} alt="" />
@@ -73,7 +75,7 @@ export default function PicturePicker({ gameId, picture, onPick }: PicturePicker
       </div>
       <label className="jigsaw-upload">
         Upload a photo
-        <input type="file" accept="image/jpeg,image/png" disabled={busy} onChange={choosePhoto} />
+        <input type="file" accept="image/jpeg,image/png" disabled={busy || locked} onChange={choosePhoto} />
       </label>
       {busy && <p className="jigsaw-note">Adding your photo...</p>}
       {failure && <p className="jigsaw-error" role="alert">{failure}</p>}

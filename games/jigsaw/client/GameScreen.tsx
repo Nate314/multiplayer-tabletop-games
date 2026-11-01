@@ -37,6 +37,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     box.scrollTop = keepCentre(box.scrollTop, box.clientHeight, from, zoom);
   }, [zoom]);
   // A dropped piece stays where it was let go until the state answers for it, so it never flicks back to where it was lifted
+  // The first lift starts play, which ends the lobby; its panel stays until that drag ends, so the table does not jump under the pointer
+  const [liftedInLobby, setLiftedInLobby] = useState(false);
   const [landing, setLanding] = useState<(Dragging & { from: Piece }) | null>(null);
 
   const canLift = (index: number) => {
@@ -48,6 +50,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     positionOf: index => board.pieces[index],
     onLift: piece => {
       setLanding(null);
+      setLiftedInLobby(!started);
       gameService.sendAction({ type: 'pickUp', piece });
     },
     onDrop: (piece, x, y) => {
@@ -63,6 +66,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   const landed = landing !== null && samePiece(board.pieces[landing.piece], landing.from) ? landing : null;
   const shown = lost ? null : dragging ?? landed;
+  const lobbyPanel = !started || (dragging !== null && liftedInLobby);
   const placed = board.pieces.filter(piece => piece.placed).length;
   const undo = playsAtOnce(mode)
     ? { label: 'Undo my last move', disabled: !playing || (snaps[playerNumber]?.length ?? 0) === 0, onClick: () => gameService.undoOwn() }
@@ -81,8 +85,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         undo={undo}
         error={error}
       >
-        {!started && (isHost
-          ? <PicturePicker gameId={gameState.gameId} picture={picture} onPick={choice => gameService.sendAction({ type: 'setPicture', picture: choice })} />
+        {lobbyPanel && (isHost
+          ? <PicturePicker gameId={gameState.gameId} picture={picture} locked={started} onPick={choice => gameService.sendAction({ type: 'setPicture', picture: choice })} />
           : host !== null && <p className="jigsaw-note">{playerNames[host]} picks the picture</p>)}
       </SidePanel>
       <div className="jigsaw-main">
