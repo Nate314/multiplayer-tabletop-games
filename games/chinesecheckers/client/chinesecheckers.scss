@@ -14,7 +14,8 @@
   --status-bg: #E4EAF0;
   --error-bg: #FBE4E1;
   --error-text: #8A1C12;
-  --target: #2E7D32;
+  --target-fill: #FFFFFF;
+  --target-ring: #1F2933;
   --glow: #FFB300;
   --path: #1F2933;
   --last-move: #1F2933;
@@ -48,7 +49,8 @@
     --status-bg: #2E3640;
     --error-bg: #4A1D18;
     --error-text: #FFD6D0;
-    --target: #81C784;
+    --target-fill: #15191E;
+    --target-ring: #FFFFFF;
     --glow: #FFD54F;
     --path: #F2F4F6;
     --last-move: #F2F4F6;
@@ -148,12 +150,16 @@
     stroke-width: 0.16;
   }
 
-  /* A hole the picked marble can land on next */
+  /* A hole the picked marble can land on next: an empty hole with a bold ring, in no player's color */
 
   .hole.target {
-    fill: var(--target);
-    stroke: var(--path);
-    stroke-width: 0.12;
+    fill: var(--target-fill);
+    stroke: var(--target-ring);
+    stroke-width: 0.16;
+  }
+
+  .hole-hit.clickable,
+  .hole.clickable {
     cursor: pointer;
   }
 
@@ -344,9 +350,22 @@
     opacity: 1;
   }
 
-  /* A phone: the side panel goes below the board, which takes the full width */
+  /* Spectator screen: as wide as the room allows, and short enough that the whole star fits below the status */
 
-  @media (max-width: 480px) {
+  .spectator-view .board {
+    width: min(100%, 640px, calc(100vh - 160px));
+  }
+
+  /* Shared table screen: a set size, which the platform scales up to fill the screen */
+
+  .table-screen-board-content .board {
+    width: 480px;
+  }
+
+  /* A phone or narrow window: the side panel goes below the board, which takes the full width.
+     Beside a 280px panel the board would be narrower than about 360px below this width. */
+
+  @media (max-width: 700px) {
     .game-layout {
       flex-direction: column;
       align-items: stretch;

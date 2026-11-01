@@ -53,12 +53,14 @@ export default function Board({ gameState, viewer, dimmed, path, movable, target
       {HOLES.map(hole => {
         const { x, y } = at(hole);
         const isTarget = includesHole(targets, hole);
-        const classNames = `hole${tintOf(pointOf(hole))}${isTarget ? ' target' : ''}`;
+        // A hole under a movable marble, or a landing, shows the pointer: the marble itself lets clicks through
+        const clickable = isTarget || includesHole(movable, hole) ? ' clickable' : '';
+        const classNames = `hole${tintOf(pointOf(hole))}${isTarget ? ' target' : ''}${clickable}`;
         // Marbles let clicks through, so every click lands on a hole: the drawn hole, or the wider ring under it
         // that is as large as a marble, so the touch target does not shrink to the hole
         return (
           <g key={holeKey(hole)}>
-            <circle className="hole-hit" cx={x} cy={y} r={HIT_RADIUS} onClick={() => onHoleClick(hole)} />
+            <circle className={`hole-hit${clickable}`} cx={x} cy={y} r={HIT_RADIUS} onClick={() => onHoleClick(hole)} />
             <circle
               className={classNames}
               cx={x}
