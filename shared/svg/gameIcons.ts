@@ -39,6 +39,7 @@ const GAME_ICONS: Record<string, () => string> = {
   rummikub: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), label('7', 12, 14, 9), el('circle', { cx: 12, cy: 17.5, r: 1 })),
   scrabble: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), label('A', 11, 16.5, 12), label('1', 17.5, 19, 5)),
   skipbo: () => lineIcon(el('rect', { x: 8, y: 3, width: 12, height: 16, rx: 1.5 }), el('path', { d: 'M5 6v13a2 2 0 0 0 2 2h9' })),
+  snakesladders: () => lineIcon(el('path', { d: 'M5 21V3M10 21V3M5 8h5M5 13h5M5 18h5' }), el('path', { d: 'M20 3c-4 2 0 5-3 8s1 6-3 10' })),
   spades: () => lineIcon(solid('path', { d: 'M12 2C9 6 4 9 4 13a4 4 0 0 0 7 2.6L10 21h4l-1-5.4A4 4 0 0 0 20 13c0-4-5-7-8-11z' })),
   splendor: () => lineIcon(el('path', { d: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M8 9l4 12 4-12' })),
   thecrew: rocketIcon,

@@ -24,7 +24,13 @@ Players are seated in join order, each with a token of their own color: Player 1
 
 ## Controls
 
-Described with the board.
+- On your turn click Roll, beside the board (below it on a phone). The die is rolled for you and your token walks square by square, then climbs the ladder or slides down the snake it landed on. Roll is disabled when it is not your turn, while an undo or dismiss vote is open, and once the game is over
+- The die shows the last roll and whose it was, or "No roll yet" before the first
+- The last roll's starting square has a dashed outline and its final square a solid one. Tokens sharing a square are drawn side by side inside it
+- The player list shows each player's square, with the player on turn highlighted
+- Click Undo to ask everyone to undo the last roll; it happens only if every player still in the game approves
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens and the player list show it
 
 ## Differences from Wikipedia
 
