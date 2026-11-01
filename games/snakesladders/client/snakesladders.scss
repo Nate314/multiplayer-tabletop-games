@@ -152,7 +152,7 @@
     top: 2%;
     left: 5%;
     color: var(--number);
-    font-size: 2.3cqw;
+    font-size: max(9px, 2.3cqw);
     font-weight: 600;
     line-height: 1;
   }
