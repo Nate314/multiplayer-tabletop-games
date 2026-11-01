@@ -184,6 +184,36 @@ test.describe('Snakes and Ladders rules', () => {
   });
 
   test('an undo needs every player still in the game to approve', async ({ seat }) => {
+    const table = await seat('snakesladders', ['Alice', 'Bob', 'Cara']);
+    const [alice, bob, cara] = table.pages;
+    await rollOnce(table, alice, 4, 'Alice rolled 4 and moved from 1 to 5');
+    await bob.getByRole('button', { name: 'Undo' }).click();
+    await cara.getByRole('button', { name: 'Approve' }).click();
+    // One approval is not enough while Alice has not voted
+    await expect(alice.getByRole('button', { name: 'Approve' })).toBeVisible();
+    await expect(bob.locator('.undo-vote')).toHaveCount(1);
+    await expectAt(bob, 1, 'Alice', 5);
+    await alice.getByRole('button', { name: 'Approve' }).click();
+    for (const page of table.pages) await expectAt(page, 1, 'Alice', 1);
+    await expect(bob.locator('.undo-vote')).toHaveCount(0);
+  });
+
+  test('a player who left has no say in an undo', async ({ seat }) => {
+    const table = await seat('snakesladders', ['Alice', 'Bob', 'Cara']);
+    const [alice, bob, cara] = table.pages;
+    await rollOnce(table, alice, 1, 'Alice rolled 1 and moved from 1 to 2');
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(token(alice, 3)).toHaveCount(0);
+    await rollOnce(table, bob, 3, 'Bob rolled 3 and moved from 1 to 4');
+    // Alice and Bob are everyone still in the game, so Alice's request and Bob's approval undo the roll
+    await undo(alice, bob);
+    for (const page of [alice, bob]) await expectAt(page, 2, 'Bob', 1);
+    await expect(alice.locator('.undo-vote')).toHaveCount(0);
+    await expect(turn(bob)).toContainText('Your turn');
+  });
+
+  test('a declined undo keeps the roll, and an approved one is rolled again fresh', async ({ seat }) => {
     const table = await seat('snakesladders', ['Alice', 'Bob']);
     const [alice, bob] = table.pages;
     await rollOnce(table, alice, 4, 'Alice rolled 4 and moved from 1 to 5');
