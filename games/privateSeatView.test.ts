@@ -47,6 +47,16 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
         { id: 3, kind: 'close', seat: 1, text: 'So close!', audience: 1 }
       ]
     }
+  ],
+  codebreaker: s => [
+    { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
+    {
+      ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: null, maker: null,
+      houseRules: { ...s.houseRules!, values: { ...s.houseRules!.values, mode: 'race' } },
+      boards: Object.fromEntries(s.activePlayers.map((seat: number) => [seat, {
+        guesses: [{ pegs: ['red', 'red', 'red', 'red'], feedback: { exact: 1, colorOnly: 0 }, by: seat }], broken: false
+      }]))
+    }
   ]
 };
 
