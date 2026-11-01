@@ -43,8 +43,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What can I change in Together?',
-    answer: 'You can fill any empty square and replace any wrong entry. A square that is already correct cannot be ' +
-      'changed, and you can only erase your own entries or wrong ones.'
+    answer: 'You can fill any empty square, and anyone may replace or erase a wrong entry, whoever made it. A correct ' +
+      'entry is locked: nobody can change or erase it, not even the player who made it.'
   },
   {
     question: 'What does Undo do?',

@@ -48,8 +48,8 @@ test('the players filter shows games that seat that many, marking those that nee
   const { page, cards } = await landing(browser, server);
   await openFilters(page);
   await page.getByLabel('Players').fill('7');
-  await expect(cards).toHaveCount(9);
-  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Jenga', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  await expect(cards).toHaveCount(10);
+  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Jenga', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', 'Sudoku', "Texas Hold'em", 'UNO', 'Yahtzee']);
   const marked = page.locator('.lobby-game', { has: page.locator('.lobby-game-house-rule') }).locator('.lobby-game-name');
   expect((await marked.allTextContents()).sort()).toEqual(['Phase 10', 'Rook']);
   await expect(card(page, 'Rook').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
