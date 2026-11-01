@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, touchDrag, undo, type Seat, type SeatOptions } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openFaq, openHouseRules, type Seat, type SeatOptions, setPreference, test, touchDrag, undo } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
 import type { GameState, TileColor } from '../games/rummikub/types.ts';
 
@@ -84,13 +84,13 @@ test.describe('Rummikub rules', () => {
     const [alice] = first.pages;
     // Alice draws the black 13, then Bob the black 5
     await first.random(12.5 / 106, 4.5 / 105);
-    const [bob] = (await seat('rummikub', ['Bob'], { gameId: first.gameId })).pages;
+    const bob = await first.join('Bob');
     await expect(status(alice)).toContainText('Alice drew black 13, Bob drew black 5. Alice goes first.');
     await expect(turn(bob)).toHaveText('Alice goes first. Joining closes after the first move.');
 
     // Cara joins and the draw is redone. Bob's joker counts lowest; Alice and Cara tie on 1s and draw again
     await first.random(0, 104.5 / 105, 12.5 / 104, 0, 0);
-    const [cara] = (await seat('rummikub', ['Cara'], { gameId: first.gameId })).pages;
+    const cara = await first.join('Cara');
     await expect(status(alice)).toContainText(
       'Alice drew black 1, Bob drew a joker, Cara drew blue 1; tie, so they draw again: Alice drew black 2, Cara drew black 3. Cara goes first.'
     );
@@ -234,6 +234,41 @@ test.describe('Rummikub rules', () => {
       await expect(hint(alice)).toHaveText('Ready to play 3 tiles');
       await button(alice, 'Reset').click();
     }
+  });
+
+  test('with Jokers move freely, a joker moves like any tile', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      table: [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]],
+      racks: { 1: [t('red', 5), t('black', 1)] }
+    }, ['Alice', 'Bob'], { houseRules: { freeJokers: true } });
+    await tableTile(alice, J1).click();
+    await groupEnd(alice, 2).click();
+    await rackTile(alice, t('red', 5)).click();
+    await tableTile(alice, t('red', 6)).click();
+    await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+    await expect(playButton(alice)).toBeEnabled();
+    const rules = (await openHouseRules(alice)).getByRole('region', { name: 'House rules' });
+    await expect(rules).toContainText('Jokers move freely');
+    await expect(rules).toContainText('On');
+  });
+
+  test('with Add to melds on your first turn, a first meld may add to the table', async ({ seat }) => {
+    const { alice, bob } = await start(seat, {
+      melded: [2],
+      table: [[t('blue', 1), t('blue', 2), t('blue', 3)]],
+      racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('blue', 4)] }
+    }, ['Alice', 'Bob'], { houseRules: { addOnFirstMeld: true } });
+    await expect(hint(alice)).toHaveText(
+      'Your turn: lay down sets and runs worth 30 or more from your rack, and add to groups on the table if you like, then click Play. Or draw a tile.'
+    );
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await rackTile(alice, t('blue', 4)).click();
+    await groupEnd(alice, 1).click();
+    await expect(hint(alice)).toHaveText('First meld of 33 points: ready to play');
+    await playButton(alice).click();
+    await expect(group(bob, 1).locator('.rk-tile')).toHaveCount(4);
+    await expect(player(bob, 'Alice')).toContainText('✓ melded');
   });
 
   test('a player who does not play draws one tile, which ends the turn, and with the pool empty it is a pass', async ({ seat }) => {
@@ -582,6 +617,40 @@ test.describe('Rummikub controls', () => {
     await expect(rackHeader(alice)).toHaveText('Your rack (5)');
   });
 
+  test('Save keeps a valid arrangement that Reset comes back to', async ({ seat }) => {
+    const { alice, bob } = await start(seat, {
+      melded: [1, 2], racks: { 1: [t('red', 10), t('red', 11), t('red', 12), t('blue', 1)] }
+    });
+    const save = button(alice, 'Save');
+    await expect(save).toBeDisabled();
+    await expect(button(bob, 'Save')).toBeDisabled();
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await expect(save).toBeEnabled();
+    await expect(save).toHaveAttribute('title', 'Reset comes back to the saved arrangement');
+    await save.click();
+    await expect(save).toBeDisabled();
+
+    await rackTile(alice, t('blue', 1)).click();
+    await groupEnd(alice, 1).click();
+    await expect(save).toBeDisabled();
+    await button(alice, 'Reset').click();
+    await expect(groups(alice)).toHaveCount(1);
+    await expect(rackHeader(alice)).toHaveText('Your rack (1)');
+    await button(alice, 'Reset').click();
+    await expect(groups(alice)).toHaveCount(0);
+    await expect(rackHeader(alice)).toHaveText('Your rack (4)');
+    await expect(button(alice, 'Reset')).toBeDisabled();
+
+    await lay(alice, t('red', 10), t('red', 11), t('red', 12));
+    await save.click();
+    await button(alice, 'Draw a tile').click();
+    await expect(turn(bob)).toHaveText('Your turn');
+    await button(bob, 'Draw a tile').click();
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(button(alice, 'Reset')).toBeDisabled();
+    await expect(save).toBeDisabled();
+  });
+
   test('Color and Number sort the rack, rack tiles move about even on others\' turns, and only you see the order, kept from turn to turn', async ({ seat }) => {
     const rack = [t('red', 2), t('blue', 1), t('black', 3), J1, t('orange', 2)];
     const { table, alice, bob } = await start(seat, { currentPlayer: 2, racks: { 1: rack } });
@@ -601,6 +670,37 @@ test.describe('Rummikub controls', () => {
     await button(bob, 'Draw a tile').click();
     await expect(turn(alice)).toHaveText('Your turn');
     expect(await titles(rackArea(alice))).toEqual(arranged);
+  });
+
+  test('a sorted or dragged rack stays still when the next move comes in', async ({ seat }) => {
+    const rack = [t('red', 2), t('blue', 1), t('black', 3), J1, t('orange', 2)];
+    const { alice, bob } = await start(seat, {
+      currentPlayer: 2, melded: [2], racks: { 1: rack, 2: [t('red', 10), t('red', 11), t('red', 12), t('blue', 1, 1)] }
+    }, ['Alice', 'Bob'], { motion: true });
+    const animated = (selector: string) => alice.locator(selector).evaluateAll(elements => elements.filter(e => e.getAnimations().length > 0).length);
+    const settled = () => expect.poll(() => alice.evaluate(() => document.getAnimations().length)).toBe(0);
+
+    await button(alice, 'Number').click();
+    await settled();
+    await lay(bob, t('red', 10), t('red', 11), t('red', 12));
+    await playButton(bob).click();
+    await expect(status(alice)).toHaveText('Bob played 3 tiles');
+    const [rackAnimated, tableAnimated] = await alice.evaluate(() => [
+      document.getAnimations().filter(a => (a.effect as KeyframeEffect | null)?.target?.closest('.rk-rack') && (a.effect as KeyframeEffect).target?.matches('.rk-tile')).length,
+      document.getAnimations().filter(a => (a.effect as KeyframeEffect | null)?.target?.closest('.rk-table') && (a.effect as KeyframeEffect).target?.matches('.rk-tile')).length,
+    ]);
+    expect(rackAnimated).toBe(0);
+    expect(tableAnimated).toBeGreaterThan(0); // the move itself still animates
+
+    await settled();
+    await drag(alice, rackTile(alice, J1), rackArea(alice).locator('.rk-tile').first());
+    // The drop must have landed and the drag's one-tick click guard be spent, or Draw's click can be swallowed under load
+    await expect.poll(async () => (await titles(rackArea(alice)))[0]).toBe(tileName(J1));
+    await expect(alice.locator('.rk-held')).toHaveCount(0);
+    await settled();
+    await button(alice, 'Draw a tile').click();
+    await expect(rackHeader(alice)).toHaveText('Your rack (6)');
+    expect(await animated('.rk-rack .rk-tile')).toBe(1); // only the drawn tile
   });
 
   test('hovering a joker on the table shows what it stands for, and the last player\'s new tiles are outlined', async ({ seat }) => {
@@ -680,7 +780,7 @@ test.describe('Rummikub differences from Wikipedia', () => {
     const first = await seat('rummikub', ['Alice']);
     // Alice draws the last tile, a joker, and Bob the black 1
     await first.random(105.5 / 106, 0);
-    await seat('rummikub', ['Bob'], { gameId: first.gameId });
+    await first.join('Bob');
     await expect(status(first.pages[0])).toContainText('Alice drew a joker, Bob drew black 1. Bob goes first.');
   });
 
@@ -691,31 +791,42 @@ test.describe('Rummikub differences from Wikipedia', () => {
     expect(await jokers.evaluateAll(elements => elements.map(e => e.getAttribute('title')))).toEqual(['Joker as red 4', 'Joker as red 6']);
 
     // Red 4, red 5 and a joker as red 6. Putting the red 6 at the end makes the joker a red 7, which takes it,
-    // and the red 6 now sits with the tiles it was with, so the play is fine
+    // so the joker needs two more tiles from the rack in its group
     await table.patch({
       table: [[t('red', 4), t('red', 5), J1]],
-      racks: { ...(await table.state<GameState>()).racks, 1: [t('red', 6), t('blue', 1)] }
+      racks: { ...(await table.state<GameState>()).racks, 1: [t('red', 6), t('red', 8), t('red', 9)] }
     });
     await expect(group(bob, 1).locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 6');
     await rackTile(alice, t('red', 6)).click();
     await groupEnd(alice, 1).click();
-    await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+    await expect(hint(alice)).toHaveText('A joker taken from the table must be played again with at least two tiles from your rack');
+    await expect(playButton(alice)).toBeDisabled();
+    for (const value of [8, 9]) {
+      await rackTile(alice, t('red', value)).click();
+      await groupEnd(alice, 1).click();
+    }
+    await expect(hint(alice)).toHaveText('Ready to play 3 tiles');
     await playButton(alice).click();
     await expect(group(bob, 1).locator('.rk-joker')).toHaveAttribute('title', 'Joker as red 7');
   });
 
-  test('a freed joker may go into a group already on the table, and each taken joker needs its own tile', async ({ seat }) => {
+  test('a freed joker may go into a group already on the table with two rack tiles, and each taken joker needs its own tile', async ({ seat }) => {
     const { table, alice } = await start(seat, {
       melded: [1, 2],
       table: [[t('red', 4), J1, t('red', 6)], [t('blue', 7), t('blue', 8), t('blue', 9)]],
-      racks: { 1: [t('red', 5)] }
+      racks: { 1: [t('red', 5), t('blue', 11), t('blue', 12)] }
     });
     await tableTile(alice, J1).click();
     await groupEnd(alice, 2).click();
     await rackTile(alice, t('red', 5)).click();
     await tableTile(alice, t('red', 6)).click();
     await expect(group(alice, 2).locator('.rk-joker')).toHaveAttribute('title', 'Joker as blue 10');
-    await expect(hint(alice)).toHaveText('Ready to play 1 tile');
+    await expect(hint(alice)).toHaveText('A joker taken from the table must be played again with at least two tiles from your rack');
+    for (const value of [11, 12]) {
+      await rackTile(alice, t('blue', value)).click();
+      await groupEnd(alice, 2).click();
+    }
+    await expect(hint(alice)).toHaveText('Ready to play 3 tiles');
 
     // Two jokers in a set of 5s: the black 5 frees only one of them
     await table.patch({
@@ -731,6 +842,24 @@ test.describe('Rummikub differences from Wikipedia', () => {
     await rackTile(alice, t('black', 5)).click();
     await groupEnd(alice, 1).click();
     await expect(hint(alice)).toHaveText('A joker taken from the table must be replaced by the tile it stands for');
+    await expect(playButton(alice)).toBeDisabled();
+  });
+
+  test('a joker cannot be freed with a tile from the table', async ({ seat }) => {
+    const { alice } = await start(seat, {
+      melded: [1, 2],
+      table: [[t('red', 4), J1, t('red', 6)], [t('red', 5, 1), t('blue', 5), t('black', 5), t('orange', 5)]],
+      racks: { 1: [t('blue', 9), t('orange', 9), t('black', 1)] }
+    });
+    await tableTile(alice, J1).click();
+    await newGroup(alice).click();
+    await tableTile(alice, t('red', 5, 1)).click();
+    await tableTile(alice, t('red', 6)).click();
+    await rackTile(alice, t('blue', 9)).click();
+    await groupEnd(alice, 3).click();
+    await rackTile(alice, t('orange', 9)).click();
+    await groupEnd(alice, 3).click();
+    await expect(hint(alice)).toHaveText('The tile that replaces a joker must come from your rack');
     await expect(playButton(alice)).toBeDisabled();
   });
 

@@ -15,5 +15,6 @@ export const rook: GameDefinition<GameState, PublicGameState> = {
   waitingOn,
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'discards']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['nest', 'captured'])
 };

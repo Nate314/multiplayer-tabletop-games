@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, expect, fillPassAndPlay, joinPassAndPlay, newPlayer, openJoinDialog, test as base, type Seat } from './fixtures.ts';
+import { agreeToHouseRules, expect, fillPassAndPlay, inHouseRules, joinPassAndPlay, newPlayer, openJoinDialog, type Seat, test as base } from './fixtures.ts';
 import { cardName, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState, PlayingCard } from '../games/hearts/types.ts';
 
@@ -28,7 +28,7 @@ async function sharedTable(seat: Seat, device: Page) {
   await joinPassAndPlay(device, 'hearts', table.gameId, ['Ann', 'Bo', 'Cy']);
   const dee = await table.join('Dee');
   // One Agree on the device agrees for all three of its players
-  for (const page of [device, dee]) await expect(page.locator('.house-rules-list li')).toHaveCount(4);
+  for (const page of [device, dee]) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(4));
   await agreeToHouseRules(device, dee);
   return { table, dee };
 }

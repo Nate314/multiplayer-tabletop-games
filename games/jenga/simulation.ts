@@ -1,5 +1,6 @@
 // The server keeps each room's Rapier world between ticks, so a running simulation is not rebuilt 20 times a second
 import { DEFAULT_GRIP, buildWorld, type TowerWorld } from './physics.ts';
+import { turntableOf } from './rules.ts';
 import type { GameState } from './types.ts';
 
 // shortcut: a room deleted mid-simulation leaks its world until a game with its id simulates again, add a room-closed hook if rooms often close mid-pull
@@ -9,7 +10,7 @@ const worlds = new Map<string, { state: GameState; tower: TowerWorld }>();
 export function worldFor(gameId: string, state: GameState): TowerWorld {
   const kept = worlds.get(gameId);
   if (kept?.state.blocks === state.blocks) return kept.tower;
-  const tower = buildWorld(state.blocks, id => state.grip[id] ?? DEFAULT_GRIP);
+  const tower = buildWorld(state.blocks, id => state.grip[id] ?? DEFAULT_GRIP, turntableOf(state));
   keepWorld(gameId, state, tower);
   return tower;
 }

@@ -95,6 +95,27 @@ app.get('/api/game-file/:gameType/:gameId{/:n}', (req, res) => {
   else res.status(409).json({ error: result.error });
 });
 
+// Only the seat's own key or remembered device gets its file, and only while the game is paused
+app.get('/api/pause-file/:gameType/:gameId/:seat', (req, res) => {
+  const result = manager.pauseFile(req.params.gameType, req.params.gameId, Number(req.params.seat), bearer(req), new Date());
+  if (!('error' in result)) res.json(result.file);
+  else if (result.error === NOT_AVAILABLE) res.status(404).json(NOT_AVAILABLE_BODY);
+  else res.status(409).json({ error: result.error });
+});
+
+// A pause file from a browser, { file, deviceId }; the large body limit is for this route only
+app.post('/api/resume', express.json({ limit: '20mb' }), (req, res) => {
+  const result = manager.uploadPauseFile(req.body?.file, req.body?.deviceId);
+  if ('seatKey' in result) res.json(result); // a ResumeUpload carries `error: null`, so a refusal is the one without a key
+  else res.status(400).json({ error: result.error });
+});
+
+app.get('/api/resume/:gameType/:gameId', (req, res) => {
+  const result = manager.resumeStatus(req.params.gameType, req.params.gameId, bearer(req));
+  if ('players' in result) res.json(result);
+  else res.status(404).json(NOT_AVAILABLE_BODY);
+});
+
 mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
 
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
@@ -211,6 +232,15 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_REMATCH:
       respond(ws, roomId, manager.voteRematch(roomId, seat, payload?.join));
       break;
+    case MESSAGE_TYPES.REQUEST_PAUSE:
+      respond(ws, roomId, manager.requestPause(roomId, seat));
+      break;
+    case MESSAGE_TYPES.VOTE_PAUSE:
+      respond(ws, roomId, manager.votePause(roomId, seat, payload?.approve));
+      break;
+    case MESSAGE_TYPES.RESUME_GAME:
+      respond(ws, roomId, manager.resumeGame(roomId, seat));
+      break;
     case MESSAGE_TYPES.REACT:
       react(ws, roomId, seat, payload);
       break;
@@ -260,8 +290,8 @@ function joinLocal(ws: WebSocket, message: Record<string, unknown>): void {
   broadcast(result.roomId);
 }
 
-// A shared device picks the seat it shows, and settles the lobby for its players at once (nothing in a lobby is private).
-// False when the message is an ordinary one for the shown seat
+// A shared device picks the seat it shows, and settles the lobby and the pause for its players at once (neither shows a hand),
+// so a pause works from the handoff screen. False when the message is an ordinary one for the shown seat
 function handleLocalMessage(
   ws: WebSocket, connection: LocalConnection, type: unknown, payload: Record<string, unknown> | null
 ): boolean {
@@ -282,12 +312,21 @@ function handleLocalMessage(
     respond(ws, roomId, manager.setHouseRules(roomId, host, payload?.proposal));
     return true;
   }
+  const [first, ...rest] = localSeats;
+  let results: Result<BasePublicState>[];
   if (type === MESSAGE_TYPES.AGREE_HOUSE_RULES) {
-    const results = localSeats.map(seat => manager.agreeHouseRules(roomId, seat, payload?.revision));
-    respond(ws, roomId, results.find(result => !('error' in result)) ?? results[0]);
-    return true;
+    results = localSeats.map(seat => manager.agreeHouseRules(roomId, seat, payload?.revision));
+  } else if (type === MESSAGE_TYPES.REQUEST_PAUSE) {
+    results = [manager.requestPause(roomId, first), ...rest.map(seat => manager.votePause(roomId, seat, true))];
+  } else if (type === MESSAGE_TYPES.VOTE_PAUSE) {
+    results = localSeats.map(seat => manager.votePause(roomId, seat, payload?.approve));
+  } else if (type === MESSAGE_TYPES.RESUME_GAME) {
+    results = [manager.resumeGame(roomId, first)];
+  } else {
+    return false;
   }
-  return false;
+  respond(ws, roomId, results.find(result => !('error' in result)) ?? results[0]);
+  return true;
 }
 
 // Seats come from the connection, so a shared device covers all its players, even during a handoff.
@@ -389,16 +428,21 @@ function handleDisconnect(ws: WebSocket): void {
   connections.delete(ws);
   if (connection.spectatorId !== undefined) {
     manager.disconnectSpectator(connection.roomId, connection.spectatorId);
-    broadcast(connection.roomId);
+    if (manager.getState(connection.roomId)) broadcast(connection.roomId);
+    else tellRoomGone(connection.roomId);
     return;
   }
   const seats = connection.localSeats ?? (connection.seat !== null ? [connection.seat] : []);
   const results = seats.map(seat => manager.disconnect(connection.roomId, seat));
   if (!manager.getState(connection.roomId)) { // the last player left, so the room is gone: tell who still watches it
-    for (const [other, { roomId }] of connections) if (roomId === connection.roomId) sendError(other, 'Game not found');
+    tellRoomGone(connection.roomId);
   } else if (results.some(Boolean)) {
     broadcast(connection.roomId);
   }
+}
+
+function tellRoomGone(roomId: string): void {
+  for (const [other, connection] of connections) if (connection.roomId === roomId) sendError(other, 'Game not found');
 }
 
 function respond(ws: WebSocket, roomId: string, result: Result<BasePublicState>): void {

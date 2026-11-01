@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import ServerSvg from '../assets/ServerSvg.tsx';
 import { svgUrl } from '../assets/svgCache.ts';
+import { writeText } from '../services/storage.ts';
 
 const STORAGE_KEY = 'theme';
 
@@ -22,11 +23,7 @@ function applyTheme(theme: Theme): void {
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   const color = themeColor?.dataset[theme];
   if (themeColor && color) themeColor.content = color;
-  try {
-    localStorage.setItem(STORAGE_KEY, theme);
-  } catch {
-    // Storage is blocked; the theme lasts until the page goes away
-  }
+  writeText(() => localStorage, STORAGE_KEY, theme);
 }
 
 export default function ThemeToggle() {

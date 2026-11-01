@@ -3,11 +3,11 @@ import gameService from '../../../src/services/gameService';
 import Pickable from './Pickable';
 import TableArea from './TableArea';
 import Tile from './Tile';
-import { canReturnToRack, clickTile, isRackTarget, placeHeld, resetDraft, sortRack, splitGroup } from './draft.ts';
+import { canReturnToRack, clickTile, isRackTarget, placeHeld, resetTo, sameDraft, sortRack, splitGroup } from './draft.ts';
 import { useLocalSlides } from './useLocalSlides.ts';
 import { useDrag } from '../../../src/drag/useDrag.ts';
 import { takeDrop } from '../../../src/drag/recentDrop.ts';
-import { checkPlay, tileName } from '../rules.ts';
+import { checkPlay, playRulesOf, tileName } from '../rules.ts';
 import type { Draft, Held, Interaction, Target } from './draft.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -18,6 +18,7 @@ type PlayAreaProps = {
   initialRack: number[]; // the rack in the order last shown
   newlyDrawn: number[]; // the tile ids to outline in the rack
   onRackOrder: (order: number[]) => void;
+  onRearranged: () => void; // called once a change made here has rendered, so the next move slides from there
 };
 
 const sameTable = (a: number[][], b: number[][]) => JSON.stringify(a) === JSON.stringify(b);
@@ -39,16 +40,18 @@ function targetOf(id: string): Target {
 
 // The table and the player's rack. During their turn the player rearranges both here and sends the result as one play;
 // nobody else sees it until then. The game screen remounts this after every move, so a draft never outlives its turn.
-export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRack, newlyDrawn, onRackOrder }: PlayAreaProps) {
+export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRack, newlyDrawn, onRackOrder, onRearranged }: PlayAreaProps) {
   const { table, rack, melded, lastMove, poolCount, playerNames, currentPlayer } = gameState;
   const rootRef = useRef<HTMLDivElement>(null);
-  const captureSlides = useLocalSlides(rootRef);
+  const captureSlides = useLocalSlides(rootRef, onRearranged);
   const [state, setState] = useState<Interaction>({ draft: { table, rack: initialRack }, held: null, hint: null });
+  const [checkpoint, setCheckpoint] = useState<Draft | null>(null); // the remount after each move ends it with the turn
   const { draft, held, hint } = state;
 
   const committed = new Set(table.flat());
   const changed = !sameTable(draft.table, table);
-  const check = changed ? checkPlay(table, melded.includes(playerNumber), rack, draft.table) : null;
+  const rules = playRulesOf(gameState);
+  const check = changed ? checkPlay(table, melded.includes(playerNumber), rack, draft.table, rules) : null;
   const highlighted = lastMove?.type === 'play' && lastMove.playerNumber !== playerNumber ? lastMove.added : [];
 
   function apply(next: Interaction) {
@@ -58,6 +61,13 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
     }
     setState(next);
   }
+
+  const canReset = changed || (checkpoint !== null && !sameDraft(draft, checkpoint));
+  const reset = () => {
+    const result = resetTo(table, draft, checkpoint);
+    setCheckpoint(result.checkpoint);
+    apply({ draft: result.draft, held: null, hint: null });
+  };
 
   const setDraft = (next: Draft) => apply({ draft: next, held: null, hint: null });
   const place = (target: Target) => apply(placeHeld(state, target, committed, isMyTurn));
@@ -103,9 +113,10 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
       ? `Ready to play ${count} ${count === 1 ? 'tile' : 'tiles'}`
       : `First meld of ${check.state.meld} points: ready to play`;
   } else if (!message && isMyTurn) {
-    message = melded.includes(playerNumber)
-      ? 'Your turn: add tiles from your rack to the table, rearranging it as you like, then click Play. Or draw a tile.'
-      : 'Your turn: lay down sets and runs worth 30 or more from your rack, then click Play. Or draw a tile.';
+    if (melded.includes(playerNumber)) message = 'Your turn: add tiles from your rack to the table, rearranging it as you like, then click Play. Or draw a tile.';
+    else if (rules.addOnFirstMeld) {
+      message = 'Your turn: lay down sets and runs worth 30 or more from your rack, and add to groups on the table if you like, then click Play. Or draw a tile.';
+    } else message = 'Your turn: lay down sets and runs worth 30 or more from your rack, then click Play. Or draw a tile.';
   } else if (!message && currentPlayer !== null) {
     message = `Waiting for ${playerNames[currentPlayer]}. You can sort and arrange your rack.`;
   }
@@ -153,7 +164,15 @@ export default function PlayArea({ gameState, playerNumber, isMyTurn, initialRac
         >
           Play
         </button>
-        <button type="button" disabled={!isMyTurn || !changed} onClick={() => setDraft(resetDraft(table, draft))}>Reset</button>
+        <button
+          type="button"
+          title="Reset comes back to the saved arrangement"
+          disabled={!isMyTurn || !check || !('state' in check) || (checkpoint !== null && sameDraft(draft, checkpoint))}
+          onClick={() => setCheckpoint(draft)}
+        >
+          Save
+        </button>
+        <button type="button" disabled={!isMyTurn || !canReset} onClick={reset}>Reset</button>
         <button
           type="button"
           disabled={!isMyTurn}

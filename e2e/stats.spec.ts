@@ -18,7 +18,7 @@ async function finishConnectFour(seat: Seat, names: [string, string]) {
 }
 
 const recentGames = (page: Page) => page.locator('.stats-recent li');
-const deviceIdOf = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('deviceId') ?? 'null') as string);
+const deviceIdOf = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('multiplayer-tabletop-games:deviceId') ?? 'null') as string);
 
 async function openStats(page: Page) {
   await page.goto('/stats');

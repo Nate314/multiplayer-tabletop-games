@@ -6,7 +6,7 @@ import type { BaseGameState, BasePublicState, Seat } from './types.ts';
 export type AlertKind = 'turn' | 'vote' | 'gameOver';
 export type Alert = { kind: AlertKind; key: string }; // key changes only when a new alert begins
 
-// Keys in the order alertFor reports them: undo, dismiss, rematch, hand request
+// Keys in the order alertFor reports them: undo, dismiss, rematch, pause, hand request
 export function votesWaitingOn(state: BaseGameState, seat: Seat): string[] {
   const keys: string[] = [];
   const asked = connectedPlayers(state).includes(seat);
@@ -15,6 +15,8 @@ export function votesWaitingOn(state: BaseGameState, seat: Seat): string[] {
   if (dismissVote && asked && seat !== dismissVote.target && !(seat in dismissVote.votes)) keys.push(`vote:dismiss:${dismissVote.target}`);
   // A disconnected seat can still rejoin the rematch, so every active seat is asked
   if (rematchVote && state.activePlayers.includes(seat) && !(seat in rematchVote.votes)) keys.push(`vote:rematch:${rematchVote.requestedBy}`);
+  const { pauseVote } = state;
+  if (pauseVote && state.activePlayers.includes(seat) && !(seat in pauseVote.votes)) keys.push(`vote:pause:${pauseVote.requestedBy}`);
   for (const request of state.handRequests ?? []) if (request.seat === seat) keys.push(`vote:hand:${request.spectator}`);
   return keys;
 }
@@ -22,6 +24,7 @@ export function votesWaitingOn(state: BaseGameState, seat: Seat): string[] {
 export function alertFor(info: GameInfo, state: BasePublicState, seat: Seat): Alert | null {
   const [vote] = votesWaitingOn(state, seat);
   if (vote) return { kind: 'vote', key: vote };
+  if (state.paused) return null;
   if (state.isGameOver) return { kind: 'gameOver', key: 'gameOver' };
   // The server only moves a lobby once the table agreed, so an ungated lobby turn is not yet a turn
   const live = state.started || !needsAgreement(info, houseRulesOf(info, state).values) || everyoneAgreed(info, state);

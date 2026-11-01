@@ -1,11 +1,14 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { jenga } from './index.ts';
-import { applyAction, canPull, jengaStandings, openSlots, simulate, simulating, topLevel } from './rules.ts';
+import {
+  CALM_TICKS, COLLAPSE_TICKS, applyAction, canPull, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
+  restingLevel, turntableOf,
+} from './rules.ts';
 import { forgetWorld } from './simulation.ts';
-import { MAX_REACH, anchorWorld } from './physics.ts';
+import { IDENTITY, MAX_REACH, MAX_SPIN, QUARTER_TURN, REST_TURNTABLE, anchorWorld, fromTable, toTable } from './physics.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
-import type { Block, GameState, Quat, Seat, Vec3 } from './types.ts';
+import type { Block, GameState, Pose, Quat, Seat, Vec3 } from './types.ts';
 
 // Middle of level 7, which runs along Z; local +X is its long axis
 const MIDDLE = 22;
@@ -205,6 +208,24 @@ test('a topple ends the game once the collapse comes to rest', () => {
   assert.equal(fallen.gameStatus, 'Alice toppled the tower!');
   assert.equal(fallen.sim, null);
   forgetWorld('g1');
+});
+
+test('a collapse ends only once every block is at rest', () => {
+  for (const pair of [[3, 4], [4, 5]]) {
+    const state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
+    let fallen = act({ ...state, blocks: state.blocks.filter(b => !pair.includes(b.id)) }, 1, { type: 'release' });
+    let ticks = 0;
+    let before = fallen;
+    while (simulating(fallen) && ticks < COLLAPSE_TICKS + 100) {
+      before = fallen;
+      fallen = simulate(fallen);
+      ticks++;
+    }
+    assert.equal(fallen.isGameOver, true);
+    assert.equal(before.sim?.calmTicks, CALM_TICKS - 1);
+    assert.ok(ticks < COLLAPSE_TICKS, `ended after ${ticks} ticks`);
+    forgetWorld('g1');
+  }
 });
 
 test('a world is rebuilt when the state did not come from the last tick', () => {
@@ -502,4 +523,302 @@ test('standings put the toppler last and everyone else first with blocks placed'
   assert.deepEqual(jengaStandings(over), [
     { seat: 1, place: 2, score: 'Toppled the tower' }, { seat: 2, place: 1, score: '1 block placed' }, { seat: 3, place: 1, score: '0 blocks placed' }
   ]);
+});
+
+const turn = (speed: unknown) => ({ type: 'turn', speed });
+
+// Every block, the turn start and the turntable carried round by `table`, as if the tower had been turned there
+function turnedBy(state: GameState, table: Quat): GameState {
+  const carry = (blocks: Block[]) => blocks.map(b => ({ ...b, pose: fromTable(b.pose, table) }));
+  return { ...state, blocks: carry(state.blocks), turnStart: carry(state.turnStart), turntable: { q: table, w: 0, drive: null }, turnStartTurntable: table };
+}
+
+const nearPose = (a: Pose, b: Pose, within = 1e-9) => [...a.p, ...a.q].every((v, i) => Math.abs(v - [...b.p, ...b.q][i]) < within);
+
+test('turning the turntable starts the simulation and only the current player may turn', () => {
+  const state = lobby();
+  const turning = act(state, 1, turn(2));
+  assert.equal(turntableOf(turning).drive, 2);
+  assert.notEqual(turning.sim, null);
+  assert.equal(turning.started, true);
+  assert.deepEqual(turning.pull, { seat: 1, block: null });
+  assert.equal(refusal(state, 2, turn(2)), 'Not your turn');
+});
+
+test('a turn speed is checked and clamped', () => {
+  const state = lobby();
+  for (const speed of [NaN, Infinity, -Infinity, 'fast', undefined, '2']) assert.equal(refusal(state, 1, turn(speed)), 'Invalid speed', String(speed));
+  assert.equal(turntableOf(act(state, 1, turn(1000))).drive, MAX_SPIN);
+  assert.equal(turntableOf(act(state, 1, turn(-1000))).drive, -MAX_SPIN);
+});
+
+test('letting go of the turntable is allowed during a vote and nothing else is', () => {
+  const turning = act(lobby(), 1, turn(2));
+  const voting = { ...turning, undoVote: { requestedBy: 2 as Seat, votes: { 2: true } } };
+  assert.equal(refusal(voting, 1, turn(2)), 'An undo vote is in progress');
+  assert.equal(turntableOf(act(voting, 1, turn(null))).drive, null);
+  const dismissing = { ...turning, dismissVote: { target: 2 as Seat, requestedBy: 1 as Seat, votes: { 1: true } } };
+  assert.equal(refusal(dismissing, 1, turn(2)), 'A dismiss vote is in progress');
+  assert.equal(turntableOf(act(dismissing, 1, turn(null))).drive, null);
+  // A stray key-up with nothing driven changes nothing
+  const idle = lobby();
+  assert.equal(act(idle, 1, turn(null)), idle);
+});
+
+test('a turn waits for the last placement to settle', () => {
+  assert.equal(refusal(settling(), 2, turn(1)), 'Wait for the tower to settle');
+});
+
+test('a grab is refused while the turntable still spins into the next turn', () => {
+  const spinning = { ...lobby(), started: true, sim: { ticks: 3, calmTicks: 0, sinceRelease: 3 }, pull: null, turntable: { q: IDENTITY, w: 2, drive: null } };
+  assert.equal(refusal(spinning, 1, { type: 'grab', block: MIDDLE, anchor: END }), 'Wait for the tower to settle');
+  assert.equal(refusal({ ...spinning, pull: { seat: 1 as Seat, block: null } }, 1, { type: 'grab', block: MIDDLE, anchor: END }), 'accepted');
+});
+
+test('the simulation stops only once the turntable has coasted to a stop', () => {
+  // A gentle spin held long enough that the tower rides it at rest, so only the spin itself keeps the simulation going
+  let state = act(lobby(), 1, turn(1));
+  for (let tick = 0; tick < 40; tick++) state = simulate(state);
+  state = act(state, 1, turn(null));
+  // atRest zeroes the spin, so the table must have reached 0 on its own and then stayed calm for CALM_TICKS (10) ticks,
+  // the tick it stopped on being the first of them
+  let stoppedAt: number | null = null;
+  let tick = 0;
+  for (; tick < 300 && simulating(state); tick++) {
+    state = simulate(state);
+    if (simulating(state) && turntableOf(state).w === 0) stoppedAt ??= tick;
+  }
+  assert.equal(simulating(state), false);
+  assert.notEqual(stoppedAt, null, 'the simulation ended while the turntable still spun');
+  assert.ok(tick - 1 - stoppedAt! >= 9, `ended ${tick - 1 - stoppedAt!} ticks after the table stopped`);
+  assert.equal(turntableOf(state).w, 0);
+  assert.equal(turntableOf(state).drive, null);
+  assert.equal(state.sim, null);
+  assert.notDeepEqual(turntableOf(state).q, IDENTITY);
+  assert.equal(state.toppled, false);
+  forgetWorld('g1');
+});
+
+test('a turn before any grab that topples the tower is the turner\'s loss', () => {
+  let state = lobby();
+  for (let tick = 0; tick < 400 && !state.toppled; tick++) {
+    if (tick % 10 === 0) state = act(state, 1, turn(Math.floor(tick / 10) % 2 === 0 ? MAX_SPIN : -MAX_SPIN));
+    state = simulate(state);
+  }
+  assert.equal(state.toppled, true);
+  assert.equal(state.loser, 1);
+  const over = settle(state, 700);
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+  forgetWorld('g1');
+});
+
+test('slots and the footprint follow the turned tower', () => {
+  const plain = holding(53);
+  const turned = turnedBy(plain, QUARTER_TURN);
+  assert.deepEqual(openSlots(turned.blocks, QUARTER_TURN), openSlots(plain.blocks));
+  const plainTargets = placementTargets(plain.blocks, IDENTITY);
+  const turnedTargets = placementTargets(turned.blocks, QUARTER_TURN);
+  assert.deepEqual(turnedTargets.map(t => t.slot), plainTargets.map(t => t.slot));
+  turnedTargets.forEach((t, i) => assert.ok(nearPose(t.pose, fromTable(plainTargets[i].pose, QUARTER_TURN)), `slot ${t.slot}`));
+  assert.deepEqual(openSlots(turnedBy(holding(MIDDLE), QUARTER_TURN).blocks, QUARTER_TURN), [0, 1, 2]);
+  // A place on a turned tower lands where its target said, and a pull out still takes the block out
+  const placed = place(turned, 1, { type: 'place', slot: 2 });
+  assert.equal(placed.toppled, false);
+  // The settled tower sags a few mm, so only the spot on the top is compared
+  const [at, aim] = [block(placed, 53).pose.p, turnedTargets.find(t => t.slot === 2)!.pose.p];
+  assert.ok(near(at[0], aim[0]) && near(at[2], aim[2]), String(at));
+  assert.deepEqual(placed.turnStartTurntable, QUARTER_TURN);
+  const grabbed = act(turnedBy(lobby(), QUARTER_TURN), 1, { type: 'grab', block: MIDDLE, anchor: END });
+  const out = dragUntil(grabbed, s => s.held === MIDDLE);
+  assert.equal(out.toppled, false);
+  assert.equal(out.phase, 'place');
+  forgetWorld('g1');
+});
+
+test('undo and a dismissal put the turntable back to its turn-start angle', () => {
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  let state = act(turnedBy(lobby(), eighth), 1, turn(2));
+  for (let tick = 0; tick < 5; tick++) state = simulate(state);
+  assert.notDeepEqual(turntableOf(state).q, eighth);
+  for (const back of [onUndo(state), onPlayerLeft(state, 1)]) {
+    assert.deepEqual(back.turntable, { q: eighth, w: 0, drive: null });
+    assert.deepEqual(back.blocks, state.turnStart);
+  }
+  forgetWorld('g1');
+});
+
+test('a disconnect lets go of the turntable', () => {
+  const state = simulate(act(lobby(), 1, turn(2)));
+  const gone = onPlayerDisconnected(state, 1);
+  assert.equal(turntableOf(gone).drive, null);
+  assert.equal(simulating(gone), true);
+  assert.equal(onPlayerDisconnected(state, 2), state);
+  assert.equal(turntableOf(jenga.resumeClock!(state, 0)).drive, null);
+  forgetWorld('g1');
+});
+
+test('a room saved before the turntable loads and plays', () => {
+  const { turntable: _turntable, turnStartTurntable: _turnStartTurntable, ...saved } = lobby();
+  assert.deepEqual(jenga.toPublicState(saved, false, 1).turntable, REST_TURNTABLE);
+  let turning = act(saved, 1, turn(2));
+  for (let tick = 0; tick < 3; tick++) turning = simulate(turning);
+  assert.notDeepEqual(turntableOf(turning).q, IDENTITY);
+  assert.deepEqual(onUndo(turning).turntable, REST_TURNTABLE);
+  forgetWorld('g1');
+  const out = dragUntil(act(saved, 1, { type: 'grab', block: MIDDLE, anchor: END }), s => s.held === MIDDLE);
+  assert.equal(onUndo(out).blocks.length, 54);
+  assert.deepEqual(onUndo(out).turntable, REST_TURNTABLE);
+  const placed = place(settle(out), 1, { type: 'place', slot: 0 });
+  assert.equal(placed.currentPlayer, 2);
+  assert.equal(placed.toppled, false);
+  forgetWorld('g1');
+});
+
+test('views carry the turntable rounded and never the turn-start angle', () => {
+  const state = { ...act(lobby(), 1, turn(2)), turntable: { q: [0, 0.123456, 0, 0.99234567] as Quat, w: 1.23456, drive: 2 } };
+  for (const viewer of [1, 2, null]) {
+    const json = JSON.stringify(jenga.toPublicState(state, false, viewer));
+    assert.ok(json.includes('"turntable"'));
+    assert.equal(json.includes('turnStartTurntable'), false);
+  }
+  assert.deepEqual(jenga.toPublicState(state, false, 1).turntable, { q: [0, 0.1235, 0, 0.9923], w: 1.235, drive: 2 });
+});
+
+// Free placement on, as the host sets it before the first move
+const freeRules = (state: GameState): GameState => ({ ...state, houseRules: { host: 1, values: { freePlacement: true }, maxPlayers: null, agreed: [], revision: 0 } });
+const drop = (at: unknown) => ({ type: 'drop', at });
+const freeOf = (state: GameState) => state.lastMove?.type === 'place' ? state.lastMove.free : undefined;
+
+test('a drop is refused with the rule off or out of reach', () => {
+  assert.equal(placeRefusal(holding(MIDDLE), 1, drop([0, 0])), 'Free placement is off');
+  const free = freeRules(holding(MIDDLE));
+  for (const at of [[20, 0], [NaN, 0], [0, Infinity], [0], ['0', 0], null]) {
+    assert.equal(placeRefusal(free, 1, drop(at)), 'Drop the block over the tower', JSON.stringify(at));
+  }
+  assert.equal(placeRefusal(freeRules(lobby()), 1, drop([0, 0])), 'You have no block to place');
+  assert.equal(placeRefusal({ ...free, toppled: true, loser: 1 }, 1, drop([0, 0])), 'The tower has toppled');
+  assert.equal(placeRefusal(free, 1, drop([0, 0])), 'accepted');
+});
+
+test('a block dropped in the middle of the top rests there and ends the turn', () => {
+  const dropped = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
+  assert.equal(dropped.dropping, MIDDLE);
+  assert.equal(dropped.held, null);
+  assert.equal(dropped.currentPlayer, 1);
+  assert.equal(dropped.gameStatus, 'Alice is setting a block on top');
+  // Laid along X across level 17, its bottom a gap above the top
+  const start = block(dropped, MIDDLE).pose;
+  assert.ok(near(start.p[0], 0) && near(start.p[2], 0) && near(Math.abs(start.q[3]), 1, 0.01), String(start.p));
+  const top = Math.max(...holding(MIDDLE).blocks.map(b => b.pose.p[1] + 0.75));
+  assert.ok(near(start.p[1] - 0.75, top + 0.3, 0.01), String(start.p));
+  const rested = settle(dropped);
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(rested.placed[1], 1);
+  assert.equal(block(rested, MIDDLE).level, 18);
+  assert.equal(freeOf(rested), true);
+  assert.equal(rested.dropping, null);
+  assert.equal(rested.toppled, false);
+  assert.equal(rested.gameStatus, "Bob's turn to pull a block");
+  assert.deepEqual(rested.turnStart, rested.blocks);
+  forgetWorld('g1');
+});
+
+test('with the rule on, Place on top drops at that spot', () => {
+  const dropped = place(freeRules(holding(MIDDLE)), 1, { type: 'place', slot: 0 });
+  assert.equal(dropped.dropping, MIDDLE);
+  assert.equal(freeOf(dropped), true);
+  assert.notEqual(dropped.sim, null);
+  assert.ok(near(block(dropped, MIDDLE).pose.p[2], -2.5), String(block(dropped, MIDDLE).pose.p));
+  assert.equal(placeRefusal(freeRules(holding(53)), 1, { type: 'place', slot: 0 }), 'That spot is taken');
+  // With the rule off, a place carries no free mark
+  assert.equal(freeOf(place(holding(MIDDLE), 1, { type: 'place', slot: 0 })), undefined);
+  forgetWorld('g1');
+});
+
+test('a block dropped over the edge slides off and comes back to hand', () => {
+  const back = settle(place(freeRules(holding(MIDDLE)), 1, drop([6, 6])));
+  assert.equal(back.held, MIDDLE);
+  assert.equal(back.phase, 'place');
+  assert.equal(back.currentPlayer, 1);
+  assert.equal(back.gameStatus, "Alice's block slid off. Place it again");
+  assert.equal(back.toppled, false);
+  assert.equal(back.dropping, null);
+  assert.equal(back.blocks.some(b => b.id === MIDDLE), false);
+  // Placed again, it ends the turn as usual
+  assert.equal(settle(place(back, 1, drop([0, 0]))).currentPlayer, 2);
+  forgetWorld('g1');
+});
+
+test('a grab and a turn wait while the dropped block settles', () => {
+  const dropped = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
+  assert.equal(refusal(dropped, 1, { type: 'grab', block: 19, anchor: END }), 'Wait for the tower to settle');
+  assert.equal(refusal(dropped, 1, turn(1)), 'Wait for the tower to settle');
+  assert.equal(placeRefusal(dropped, 1, drop([0, 0])), 'Wait for the tower to settle');
+});
+
+test('a dismissal while a dropped block settles puts the turn back', () => {
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  let state = place(turnedBy(freeRules(holding(MIDDLE)), eighth), 1, drop([0, 0]));
+  for (let tick = 0; tick < 3; tick++) state = simulate(state);
+  const left = onPlayerLeft(state, 1);
+  assert.equal(left.dropping, null);
+  assert.deepEqual(left.blocks, state.turnStart);
+  assert.deepEqual(left.turntable, { q: eighth, w: 0, drive: null });
+  assert.equal(left.held, null);
+  forgetWorld('g1');
+});
+
+test('a topple while a dropped block settles is the dropper\'s loss', () => {
+  const held = freeRules(holding(MIDDLE));
+  const dropped = place({ ...held, turnStart: raised(held.turnStart) }, 1, drop([0, 0]));
+  const fallen = simulate(dropped);
+  assert.equal(fallen.toppled, true);
+  assert.equal(fallen.loser, 1);
+  const over = settle(fallen, 700);
+  assert.equal(over.isGameOver, true);
+  assert.equal(over.dropping, null);
+  assert.deepEqual(over.winners, [2]);
+  assert.deepEqual(over.lastMove, { type: 'topple', seat: 1 });
+  forgetWorld('g1');
+});
+
+test('a dropper who disconnects while the block settles still has it rest and end the turn', () => {
+  let state = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
+  state = simulate(state);
+  const gone = disconnectPlayer(jenga, state, 1);
+  assert.equal(gone.dropping, MIDDLE);
+  assert.equal(simulating(gone), true);
+  const rested = settle(gone);
+  assert.equal(rested.dropping, null);
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(block(rested, MIDDLE).level, 18);
+  forgetWorld('g1');
+});
+
+test('a block resting on an incomplete top level\'s blocks starts the level above', () => {
+  // Level 17 lacks block 53; one laid on the middle block 52, not beside it, is on level 18
+  const others = holding(53).blocks;
+  const middle = block(holding(53), 52).pose;
+  const onTop: Block = { id: 53, level: 17, pose: { p: [middle.p[0], middle.p[1] + 1.5, middle.p[2]], q: middle.q } };
+  assert.equal(restingLevel(onTop, others, IDENTITY), 18);
+  const beside: Block = { id: 53, level: 17, pose: { p: [2.5, middle.p[1], 0], q: middle.q } };
+  assert.equal(restingLevel(beside, others, IDENTITY), 17);
+  // And through the physics: dropped over the middle, it settles on block 52
+  const rested = settle(place(freeRules(holding(53)), 1, drop([0, 0])));
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(block(rested, 53).level, 18);
+  forgetWorld('g1');
+});
+
+test('a drop off center on a turned table rests where it was let go and ends the turn', () => {
+  const eighth: Quat = [0, 0.3826834323650898, 0, 0.9238795325112867];
+  const rested = settle(place(turnedBy(freeRules(holding(MIDDLE)), eighth), 1, drop([1, -0.5])));
+  assert.equal(rested.toppled, false);
+  assert.equal(rested.currentPlayer, 2);
+  assert.equal(block(rested, MIDDLE).level, 18);
+  const [x, , z] = toTable(block(rested, MIDDLE).pose, eighth).p;
+  assert.ok(near(x, 1, 0.3) && near(z, -0.5, 0.3), `${x}, ${z}`);
+  assert.ok(nearPose({ p: [0, 0, 0], q: turntableOf(rested).q }, { p: [0, 0, 0], q: eighth }, 1e-6));
+  forgetWorld('g1');
 });

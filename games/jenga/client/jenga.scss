@@ -16,6 +16,8 @@
   --jenga-highlight: #F2A33A;
   --jenga-light: #FFFFFF;
   --jenga-shadow: #6B5A48;
+  --jenga-turntable: #6F5640;
+  --jenga-mark: #EADBC4;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -40,17 +42,13 @@
     --jenga-highlight: #FFB347;
     --jenga-light: #D8D0C4;
     --jenga-shadow: #2A2119;
+    --jenga-turntable: #3A2E24;
+    --jenga-mark: #B8A68E;
   }
 
   .game-header {
     max-width: 1100px;
     margin: 0 auto;
-  }
-
-  .game-id {
-    text-align: center;
-    font-size: 14px;
-    opacity: 0.8;
   }
 
   /* The tower and the side panel side by side, or stacked when the window is narrow */

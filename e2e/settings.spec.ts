@@ -1,4 +1,4 @@
-import { test, expect, setPreference } from './fixtures.ts';
+import { test, expect, newPlayer, setPreference } from './fixtures.ts';
 
 test.describe('Settings', () => {
   test('the gear opens Settings from the landing page and the game header, every setting at its default', async ({ seat }) => {
@@ -49,10 +49,13 @@ test.describe('Settings', () => {
     const header = alice.locator('.game-header');
     await expect(header.getByRole('button', { name: 'Share' })).toBeHidden();
     await expect(header.getByRole('link', { name: /GitHub/ })).toBeHidden();
-    const controls = header.locator(':scope > :not(h1):visible');
+    const controls = header.locator(':scope > :not(h1, .hide-button):visible');
     await expect(controls).toHaveCount(4);
     const tops = await controls.evaluateAll(elements => elements.map(element => Math.round(element.getBoundingClientRect().top)));
     expect(new Set(tops).size).toBe(1);
+    const [title, hide] = await Promise.all([header.locator('h1').boundingBox(), header.locator('.hide-button').boundingBox()]);
+    expect(Math.abs(title!.y + title!.height / 2 - (hide!.y + hide!.height / 2))).toBeLessThanOrEqual(4);
+    expect(title!.x + title!.width).toBeLessThanOrEqual(hide!.x);
     await header.getByRole('button', { name: 'Settings' }).click();
     const dialog = alice.getByRole('dialog', { name: 'Settings' });
     await expect(dialog.getByRole('button', { name: 'Share' })).toBeVisible();
@@ -62,5 +65,20 @@ test.describe('Settings', () => {
     await alice.setViewportSize({ width: 1280, height: 800 });
     await expect(header.getByRole('button', { name: 'Share' })).toBeVisible();
     await expect(header.getByRole('button', { name: `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode` })).toBeVisible();
+  });
+  test('a theme saved before the storage prefix is kept and copied', async ({ browser, server }) => {
+    const page = await newPlayer(browser, server);
+    const stored = (key: string) => page.evaluate(k => localStorage.getItem(k), key);
+    await page.goto('/');
+    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('theme', 'dark'); });
+    await page.reload();
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+    await expect.poll(() => stored('multiplayer-tabletop-games:theme')).toBe('dark');
+    expect(await stored('theme')).toBe('dark');
+    await page.getByRole('button', { name: 'Switch to light mode' }).first().click();
+    expect(await stored('multiplayer-tabletop-games:theme')).toBe('light');
+    expect(await stored('theme')).toBe('dark');
+    await page.reload();
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
   });
 });

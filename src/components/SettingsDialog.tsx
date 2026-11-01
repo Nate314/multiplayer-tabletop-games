@@ -32,10 +32,9 @@ function NotificationsSetting() {
 type SettingsDialogProps = {
   onClose: () => void;
   phoneControls?: ReactNode;
-  children?: ReactNode; // after the preferences, such as the current game's house rules
 };
 
-export default function SettingsDialog({ onClose, phoneControls, children }: SettingsDialogProps) {
+export default function SettingsDialog({ onClose, phoneControls }: SettingsDialogProps) {
   useEscapeKey(onClose);
   const preferences = usePreferences();
 
@@ -102,7 +101,6 @@ export default function SettingsDialog({ onClose, phoneControls, children }: Set
           </label>
         </section>
         <NotificationsSetting />
-        {children}
         <div className="modal-buttons">
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>

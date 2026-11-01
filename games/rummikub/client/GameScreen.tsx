@@ -31,12 +31,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const onRackOrder = useCallback((order: number[]) => { orderRef.current = order; }, []);
   const initialRack = rackOrder(rack, orderRef.current);
 
-  useMoveAnimation(layoutRef, gameState, animateMove);
+  const onRearranged = useMoveAnimation(layoutRef, gameState, animateMove);
   const newlyDrawn = useNewlyDrawn(gameState, (previous, next) => drawnStep(previous, next, playerNumber));
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="rk-layout" ref={layoutRef}>
         <div className="rk-side-panel">
           <div className="rk-player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
@@ -57,6 +56,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           initialRack={initialRack}
           newlyDrawn={newlyDrawn}
           onRackOrder={onRackOrder}
+          onRearranged={onRearranged}
         />
       </div>
       <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />

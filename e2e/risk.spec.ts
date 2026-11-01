@@ -514,7 +514,7 @@ test.describe('Risk rules', () => {
     await download.saveAs(file);
 
     await visitor.goto('/');
-    await visitor.locator('input[type="file"]').setInputFiles(file);
+    await visitor.locator('input[type="file"]:not([multiple])').setInputFiles(file);
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved).toContainText(`Saved game: ${table.gameId}`);
     await expect(saved.locator('.risk-card')).toHaveCount(0);

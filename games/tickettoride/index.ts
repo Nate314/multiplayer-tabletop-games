@@ -14,5 +14,6 @@ export const tickettoride: GameDefinition<GameState, PublicGameState> = {
   onUndo: (state, random) => ({ ...state, deck: shuffle(state.deck, random), ticketDeck: shuffle(state.ticketDeck, random) }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['players']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['deck', 'ticketDeck'])
 };

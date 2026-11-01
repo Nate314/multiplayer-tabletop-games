@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures.ts';
+import { expect, inHouseRules, test } from './fixtures.ts';
 
 // The turn timer house rule, played in Connect Four (a game with no rules of its own) and Chess (which has a game clock).
 // Seat 1 (Alice) moves first. Running out is a warning only: nobody's turn is skipped.
@@ -10,8 +10,11 @@ const drop = (page: Page, column: number) => page.getByRole('button', { name: `D
 test.describe('Turn timer', () => {
   test('a game without house rules starts without Agree while the timer is off', async ({ seat }) => {
     const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
-    await expect(alice.locator('.house-rules-panel').getByLabel('Turn timer', { exact: true })).toHaveValue('0');
-    await expect(alice.getByRole('button', { name: 'Agree', exact: true })).toHaveCount(0);
+    await inHouseRules(alice, async dialog => {
+      await expect(dialog.getByLabel('Turn timer', { exact: true })).toHaveValue('0');
+      await expect(dialog.getByRole('button', { name: 'Agree', exact: true })).toHaveCount(0);
+    });
+    await expect(alice.locator('.rules-button')).not.toHaveAttribute('data-attention');
     await expect(timer(alice)).toHaveCount(0);
     await drop(alice, 1);
   });

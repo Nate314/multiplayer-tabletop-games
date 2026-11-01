@@ -40,7 +40,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="monopoly-layout">
         <div className="board-area hand-only-board" ref={boardRef}>
           <Board gameState={gameState} selected={selected} onSelect={select} />

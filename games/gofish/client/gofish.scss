@@ -44,16 +44,6 @@
     --book-bg: #2f86ba;
   }
 
-  .game-id {
-    width: fit-content;
-    margin: 0 auto 12px;
-    padding: 4px 12px;
-    border-radius: 6px;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    font-size: 0.9rem;
-  }
-
   .game-screen,
   .gofish-board {
     display: flex;

@@ -17,5 +17,6 @@ export const holdem: GameDefinition<GameState, PublicGameState> = {
   onUndo: (state, random) => ({ ...state, deck: shuffle(state.deck, random) }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['myCards']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['deck'])
 };

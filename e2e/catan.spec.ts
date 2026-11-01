@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, type Seat, seeTable, setHouseRules, setPreference, type Table, test, undo } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -256,12 +256,11 @@ test.describe('Catan rules', () => {
   test('two players can play once both agree to the seat count as a house rule', async ({ seat }) => {
     const table = await seat('catan', ['Alice', 'Bob'], { agree: false });
     for (const page of table.pages) {
-      await expect(page.locator('.house-rules-panel')).toContainText('Players: 2 (house rule)');
-      await expect(page.getByLabel('Most players')).toHaveValue('6');
+      await inHouseRules(page, async dialog => {
+        await expect(dialog.locator('.house-rules-panel')).toContainText('Players: 2 (house rule)');
+        await expect(dialog.getByLabel('Most players')).toHaveValue('6');
+      });
     }
-    await table.pages[0].getByRole('button', { name: 'Settings' }).click();
-    await expect(table.pages[0].getByRole('dialog', { name: 'Settings' })).toContainText('Players2 (house rule)');
-    await table.pages[0].keyboard.press('Escape');
     await agreeToHouseRules(...table.pages);
     const { currentPlayer } = await table.state<GameState>();
     const first = table.pages[currentPlayer! - 1];
@@ -277,9 +276,11 @@ test.describe('Catan rules', () => {
     try {
       await joinGame(cara, 'catan', table.gameId, 'Cara');
       for (const page of [...table.pages, cara]) {
-        await expect(page.locator('.house-rules-list li')).toHaveCount(3);
-        await expect(page.locator('.house-rules-panel')).not.toContainText('(house rule)');
-        await expect(page.locator('.house-rules-list li.house-rules-agreed')).toHaveCount(0);
+        await inHouseRules(page, async dialog => {
+          await expect(dialog.locator('.house-rules-list li')).toHaveCount(3);
+          await expect(dialog.locator('.house-rules-panel')).not.toContainText('(house rule)');
+          await expect(dialog.locator('.house-rules-list li.house-rules-agreed')).toHaveCount(0);
+        });
       }
     } finally {
       await cara.context().close();
@@ -299,7 +300,7 @@ test.describe('Catan rules', () => {
         'Cara joined (3/6 players). Highest roll goes first: Alice 12, Bob 12, Cara 2; tie: Alice 3, Bob 8. Bob goes first');
       await expect(turnMessage(bob)).toHaveText('You place first. Joining closes after the first move.');
       await expect(turnMessage(alice)).toHaveText('Bob places first. Joining closes after the first move.');
-      for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(3);
+      for (const page of everyone) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(3));
       await agreeToHouseRules(...everyone); // a join clears every agreement
 
       const order: [Page, string, number][] = [
@@ -750,7 +751,7 @@ test.describe('Catan rules', () => {
     await (await downloading).saveAs(file);
     const visitor = await newPlayer(browser, server);
     await visitor.goto('/');
-    await visitor.locator('input[type="file"]').setInputFiles(file);
+    await visitor.locator('input[type="file"]:not([multiple])').setInputFiles(file);
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved.locator('.hand-panel')).toHaveCount(0);
     await saved.getByRole('button', { name: 'Playback settings' }).click();

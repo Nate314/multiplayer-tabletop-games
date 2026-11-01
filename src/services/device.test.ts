@@ -8,6 +8,7 @@ function stubStorage(initial: Record<string, string> = {}) {
   const storage = {
     getItem: (key: string) => items.get(key) ?? null,
     setItem: (key: string, value: string) => void (writes.push(key), items.set(key, value)),
+    removeItem: (key: string) => void items.delete(key),
   } as unknown as Storage
   return { storage: () => storage, writes }
 }
@@ -19,7 +20,7 @@ test('the ID is 32 hex characters, saved once and reused', () => {
   const first = deviceId(storage)
   assert.match(first, HEX32)
   assert.equal(deviceId(storage), first)
-  assert.deepEqual(writes, ['deviceId'])
+  assert.deepEqual(writes, ['multiplayer-tabletop-games:migrated', 'multiplayer-tabletop-games:deviceId'])
 })
 
 test('a stored value that is not a valid ID is replaced', () => {

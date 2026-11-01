@@ -14,5 +14,6 @@ export const rummikub: GameDefinition<GameState, PublicGameState> = {
   onUndo: (state, random) => ({ ...state, pool: shuffle(state.pool, random) }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['rack']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['pool'])
 };

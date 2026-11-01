@@ -93,6 +93,7 @@
   .rules-button,
   .github-link,
   .share-button,
+  .hide-button,
   .settings-button,
   .theme-toggle {
     height: 2.5rem;
@@ -108,6 +109,7 @@
 
   .github-link,
   .share-button,
+  .hide-button,
   .settings-button,
   .theme-toggle {
     flex: none;
@@ -122,17 +124,10 @@
   .rules-button:hover,
   .github-link:hover,
   .share-button:hover,
+  .hide-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
-  }
-
-  .game-id {
-    padding: 8px 14px;
-    border-radius: 4px;
-    background: var(--banner-bg);
-    font-size: 14px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   /* Centered in the space under the header; the auto margins drop to 0 when the window is too short */

@@ -55,7 +55,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const ticket = hoveredTicket === null ? null : TICKETS[hoveredTicket];
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="ttr-layout" ref={screenRef}>
         <div className="map-area">
           <MapBoard

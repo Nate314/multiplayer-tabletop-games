@@ -23,5 +23,6 @@ export const catan: GameDefinition<GameState, PublicGameState> = {
   privateSeatView: (state, seat) => seatFields(
     toPublicState(state, false, seat), ['viewer', 'hand', 'myDevCards', 'myNewDevCards', 'points', 'steal']
   ),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['devDeck'])
 };

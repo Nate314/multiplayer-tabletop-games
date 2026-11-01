@@ -41,7 +41,7 @@ export default function LayDownPanel({ seat, phase, choices, staged, hasSelectio
           return (
             <div key={part} className="lay-down-part">
               <div className="group-label">
-                Group {part + 1}: {requirementName(requirement)} ({cards.length}/{requirement.size})
+                Group {part + 1}: {requirementName(requirement)} or more ({cards.length} {cards.length === 1 ? 'card' : 'cards'})
               </div>
               <div className="group-cards">
                 {cards.map(card => (

@@ -77,7 +77,7 @@ test('a saved game opened on the landing page downloads its game first', async (
   await page.goto('/');
   const start = { ...connectfour.toPublicState(connectfour.createGameState('saved'), false, null), moveCount: 0, historyStep: 'start' as const };
   const file = buildGameFile('connectfour', 'saved', [start], new Date());
-  await page.locator('input[type="file"]').setInputFiles({ name: 'saved.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+  await page.locator('input[type="file"]:not([multiple])').setInputFiles({ name: 'saved.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   const history = page.getByRole('dialog', { name: 'History' });
   await expect(history.getByRole('heading', { name: 'Saved game: saved' })).toBeVisible();
   await expect(history.getByText('Start of the game')).toBeVisible();

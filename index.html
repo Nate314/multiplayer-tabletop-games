@@ -15,7 +15,12 @@
         // Storage can be blocked; the default theme is used then
         let theme = 'light';
         try {
-          theme = localStorage.getItem('theme') || 'light';
+          // Mirrors readText in src/services/storage.ts, which this script cannot import
+          let saved = localStorage.getItem('multiplayer-tabletop-games:theme');
+          if (saved === null && localStorage.getItem('multiplayer-tabletop-games:migrated') === null) {
+            saved = localStorage.getItem('theme');
+          }
+          theme = saved || 'light';
         } catch {
           // keep the default
         }

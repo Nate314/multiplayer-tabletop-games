@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import { shuffleEach } from '../../shared/shuffle.ts';
 import {
   applyAction, applyMove, createGameState, finalStandings, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState, seatsWaitedOn
@@ -17,5 +18,6 @@ export const monopoly: GameDefinition<GameState, PublicGameState> = {
   waitingOn: seatsWaitedOn,
   onUndo: (state, random) => ({ ...state, decks: shuffleEach(state.decks, random) }),
   toPublicState,
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['decks'])
 };

@@ -122,6 +122,18 @@ class GameService {
     this.send({ type: MESSAGE_TYPES.VOTE_REMATCH, payload: { join } });
   }
 
+  requestPause(): void {
+    this.send({ type: MESSAGE_TYPES.REQUEST_PAUSE });
+  }
+
+  votePause(approve: boolean): void {
+    this.send({ type: MESSAGE_TYPES.VOTE_PAUSE, payload: { approve } });
+  }
+
+  resumeGame(): void {
+    this.send({ type: MESSAGE_TYPES.RESUME_GAME });
+  }
+
   requestHand(seat: Seat): void {
     this.send({ type: MESSAGE_TYPES.REQUEST_HAND, payload: { seat } });
   }

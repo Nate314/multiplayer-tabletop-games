@@ -5,6 +5,7 @@ import HistoryButton, { useHistoryDialog } from './HistoryButton';
 import GameOverDialog from './GameOverDialog';
 import { canRematch } from './gameOver.ts';
 import ShareButton from './ShareButton';
+import HideButton from './HideButton';
 import SettingsButton from './SettingsButton';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
@@ -15,12 +16,16 @@ import DismissVote from './DismissVote';
 import RematchVote from './RematchVote';
 import SpectatorView from './SpectatorView';
 import TableScreenView from './TableScreenView';
+import QrCodeDialog from './QrCodeDialog';
 import LayoutSwitch from './LayoutSwitch';
 import HandRequestPrompt from './HandRequestPrompt';
 import HandoffScreen from './HandoffScreen';
 import PassAndPlayBar from './PassAndPlayBar';
+import PauseButton from './PauseButton';
+import PauseVote from './PauseVote';
+import PausedScreen from './PausedScreen';
 import gameService from '../services/gameService';
-import { agreementPending, houseRulesOf } from '../../shared/houseRules.ts';
+import { agreementPending, houseRulesOf, needsAgreement } from '../../shared/houseRules.ts';
 import { dismissVoters } from '../../shared/seating.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
@@ -37,7 +42,7 @@ type GameViewProps = {
   playerNumber: Seat | null;
   spectatorId: string | null;
   credential: string | undefined;
-  localSeats: { seat: Seat; name: string }[] | null; // a pass-and-play device's seats, null for any other join
+  localSeats: { seat: Seat; name: string; seatKey: string }[] | null; // a pass-and-play device's seats, null for any other join
   onShowSeat: (seat: Seat | null) => void;
   error: string | null;
   onBack: () => void;
@@ -56,6 +61,9 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const history = useHistoryDialog(game.id, gameState, client, credential);
   // Closed with See the table; an undo past the end reopens it on the next ending
   const [closed, setClosed] = useState(false);
+  // Kept mounted and only made invisible, so nothing a player arranged is lost
+  const [hidden, setHidden] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   if (closed && !gameState.isGameOver) setClosed(false);
   // A vote runs above the table, so the screen steps aside until it ends (a decline brings it back).
   // A dismiss target does not vote on it: in a rematch they answer the rematch instead, which clears the dismiss,
@@ -79,6 +87,12 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const localHost = localSeats?.find(local => local.seat === houseRulesOf(game, gameState).host)?.seat;
   const rulesSeat = localHost ?? playerNumber ?? localSeats?.[0]?.seat ?? null;
   const handingOff = localSeats !== null && playerNumber === null;
+  // Before the first move the House rules tab is the form; after it, or for a spectator, the read-only list
+  const houseRules = choosingRules && rulesSeat !== null
+    ? <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />
+    : <HouseRulesSection game={game} gameState={gameState} />;
+  const rules = houseRulesOf(game, gameState);
+  const agreeNeeded = choosingRules && rulesSeat !== null && needsAgreement(game, rules.values) && !rules.agreed.includes(rulesSeat);
   const tableScreen = (gameState.spectators ?? []).some(s => s.id === spectatorId && s.tableScreen);
   // A table screen is a spectator, so it and other spectators pass no seats: a plain title and no notifications
   useTurnAlerts(game, gameState, localSeats ? localSeats.map(local => local.seat) : playerNumber === null ? [] : [playerNumber]);
@@ -87,27 +101,45 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const [layout, setLayout] = useState<TableLayout>(loadTableLayout);
   const chooseLayout = (next: TableLayout) => { setLayout(next); saveTableLayout(next); };
   const myTurn = playerNumber !== null && gameState.currentPlayer === playerNumber && !gameState.isGameOver;
+  // Keyed off `paused`, not the status line: a rejoin while paused rewrites gameStatus
+  const paused = gameState.paused === true;
+  const canPause = (playerNumber !== null || localSeats !== null) && gameState.started && !gameState.isGameOver && !paused;
+  const pauseBlocked = Boolean(gameState.undoVote || gameState.dismissVote || gameState.rematchVote || gameState.pauseVote) || gameState.disconnected.length > 0;
+  const pauseButton = (close?: () => void) => (
+    <PauseButton disabled={pauseBlocked} onPause={() => { close?.(); gameService.requestPause(); }} />
+  );
+  // A player's credential is its seat key
+  const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber], seatKey: credential }]);
 
   return (
     <WatchingContext value={playerNumber === null}>
-      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
+      <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-hidden={hidden ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
         <header className="game-header">
           <button type="button" className="back-button" onClick={onBack}>Back to games</button>
-          <h1>{game.name}</h1>
+          <h1>{game.name} <span className="game-header-id">{gameState.gameId}</span></h1>
           <HistoryButton onOpen={history.open} />
           <ShareButton game={game} gameId={gameState.gameId} />
-          <RulesButton game={game} faq={client.faq} />
-          <SettingsButton phoneControls={(
+          {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
+          <RulesButton game={game} faq={client.faq} houseRules={houseRules} agreeNeeded={agreeNeeded} />
+          {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} />}
+          {canPause && pauseButton()}
+          {/* Pausing closes Settings, so the vote and the paused screen are not left under it */}
+          <SettingsButton phoneControls={(close) => (
             <>
+              {canPause && <div className="settings-row settings-pause-row">Pause the game {pauseButton(close)}</div>}
               <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
               <div className="settings-row">Theme <ThemeToggle /></div>
             </>
-          )}>
-            <HouseRulesSection game={game} gameState={gameState} />
-          </SettingsButton>
+          )} />
           <GitHubLink />
           <ThemeToggle />
         </header>
+        {hidden && (
+          <section className="hidden-cover" aria-label="Game hidden">
+            <h2>Game hidden</h2>
+            <p>Press the eye button above to show it again.</p>
+          </section>
+        )}
         {gameState.isGameOver && closed && !voting && (
           <button type="button" className="game-over-reopen" onClick={() => setClosed(false)}>Game summary</button>
         )}
@@ -116,11 +148,14 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           playerNumber={playerNumber}
           spectatorId={spectatorId}
           canReact={!handingOff}
-          onDismiss={playerNumber === null ? null : (seat) => gameService.requestDismiss(seat)}
+          onDismiss={playerNumber === null || paused ? null : (seat) => gameService.requestDismiss(seat)}
         />
         {tableScreenOn && <LayoutSwitch layout={layout} onChange={chooseLayout} />}
-        {choosingRules && rulesSeat !== null && <HouseRulesPanel game={game} gameState={gameState} playerNumber={rulesSeat} error={error} />}
-        {tableScreen ? (
+        {/* A shared device mid-handoff votes too; the server counts it for every seat it holds */}
+        <PauseVote gameState={gameState} voter={playerNumber ?? localSeats?.[0]?.seat ?? null} onVote={(approve) => gameService.votePause(approve)} />
+        {paused ? (
+          <PausedScreen game={game} gameState={gameState} seats={pausedSeats} onResume={() => gameService.resumeGame()} />
+        ) : tableScreen ? (
           <TableScreenView game={game} client={client} gameState={gameState} />
         ) : handingOff ? (
           <HandoffScreen client={client} gameState={gameState} localSeats={localSeats!} onShow={onShowSeat} />
@@ -145,8 +180,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
             canRematch={canRematch(gameState, playerNumber) && !gameState.rematchVote}
             onRematch={() => gameService.requestRematch()}
             onHistory={history.open}
-            // Escape in History closes only History
-            onSeeTable={() => { if (!history.dialog) setClosed(true); }}
+            // Escape in History or the QR code closes only that dialog
+            onSeeTable={() => { if (!history.dialog && !qrOpen) setClosed(true); }}
             onBack={onBack}
           >
             {rematchVote}
@@ -155,6 +190,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         {/* After See the table the vote shows on its own, with nothing under it to cover */}
         {gameState.isGameOver && closed && !voting && !handingOff && rematchVote}
         {history.dialog}
+        {qrOpen && <QrCodeDialog game={game} gameId={gameState.gameId} onClose={() => setQrOpen(false)} />}
       </div>
     </WatchingContext>
   );

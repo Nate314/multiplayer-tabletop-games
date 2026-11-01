@@ -1,7 +1,5 @@
 import type { Page } from '@playwright/test';
-import {
-  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type SeatOptions, type Table
-} from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, inHouseRules, leave, openFaq, type Seat, type SeatOptions, setHouseRules, type Table, test, undo } from './fixtures.ts';
 import type { Card, Color, GameState, TeamScores } from '../games/rook/types.ts';
 
 // One test per rule and control in games/rook/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
@@ -573,10 +571,10 @@ test.describe('Rook at six players', () => {
     const table = await seat('rook', names, { maxPlayers: 6, agree: false });
     const { pages } = table;
     const [alice, bob, cara, dan] = pages;
-    for (const page of pages) await expect(page.locator('.house-rules-list li')).toHaveCount(6);
+    for (const page of pages) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(6));
     await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo' });
-    for (const page of pages) await expect(page.getByLabel('Teams at 6 players', { exact: true })).toHaveValue('threeOfTwo');
-    await expect(alice.getByLabel('Defending teams score', { exact: true })).toHaveValue('separate');
+    for (const page of pages) await inHouseRules(page, dialog => expect(dialog.getByLabel('Teams at 6 players', { exact: true })).toHaveValue('threeOfTwo'));
+    await inHouseRules(alice, dialog => expect(dialog.getByLabel('Defending teams score', { exact: true })).toHaveValue('separate'));
     await agreeToHouseRules(...pages);
 
     // Three teams of two, partners three seats apart; six cards each and a five-card nest

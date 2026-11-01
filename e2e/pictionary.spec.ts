@@ -1,7 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import {
-  agreeToHouseRules, dismiss, drag, expect, joinGame, leave, newPlayer, openFaq, test, touchDrag, undo, type Seat, type SeatOptions
-} from './fixtures.ts';
+import { agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, test, touchDrag, undo } from './fixtures.ts';
 import type { GameState } from '../games/pictionary/types.ts';
 
 // One test per rule and control in games/pictionary/README.md. Alice (seat 1) draws first; Bob and Cara guess.
@@ -151,7 +149,7 @@ test.describe('Pictionary rules', () => {
     await joinGame(bob, 'pictionary', table.gameId, 'Bob');
     const cara = await newPlayer(browser, server);
     await joinGame(cara, 'pictionary', table.gameId, 'Cara');
-    for (const page of [alice, bob, cara]) await expect(page.locator('.house-rules-list li')).toHaveCount(3);
+    for (const page of [alice, bob, cara]) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(3));
     await agreeToHouseRules(alice, bob, cara);
     await table.patch({ wordChoices: CHOICES });
     await expect(turn(bob)).toHaveText('Alice is choosing a word');

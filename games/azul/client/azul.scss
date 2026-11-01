@@ -98,6 +98,7 @@
 
   .github-link,
   .share-button,
+  .hide-button,
   .settings-button,
   .theme-toggle {
     width: 2.5rem;
@@ -119,19 +120,10 @@
   .rules-button:hover,
   .github-link:hover,
   .share-button:hover,
+  .hide-button:hover,
   .settings-button:hover,
   .theme-toggle:hover {
     background: var(--button-hover-bg);
-  }
-
-  .game-id {
-    width: fit-content;
-    margin: 0 auto 16px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    font-size: 0.9rem;
   }
 
   .game-info {

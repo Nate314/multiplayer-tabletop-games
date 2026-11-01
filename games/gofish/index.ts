@@ -14,5 +14,6 @@ export const gofish: GameDefinition<GameState, PublicGameState> = {
   onUndo: (state, random) => ({ ...state, stock: shuffle(state.stock, random) }),
   toPublicState,
   privateSeatView: (state, seat) => seatFields(toPublicState(state, false, seat), ['hand', 'fishedCard']),
-  finalStandings
+  finalStandings,
+  secretState: state => seatFields(state, ['stock'])
 };

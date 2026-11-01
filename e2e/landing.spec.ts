@@ -1,4 +1,4 @@
-import { test, expect, newPlayer } from './fixtures.ts';
+import { test, expect, newPlayer, openJoinDialog } from './fixtures.ts';
 
 async function landing(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1]) {
   const page = await newPlayer(browser, server);
@@ -157,4 +157,76 @@ test('games happening now is absent without SHOW_OPEN_GAMES', async ({ browser, 
   await page.goto('/');
   await expect(page.locator('.lobby-game').first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Games happening now' })).toHaveCount(0);
+});
+
+test('the lobby accent follows the OS accent color where the browser supports AccentColor', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  // Finds the @supports rule in the loaded stylesheets and reads the tokens it sets per selector
+  const rules = await page.evaluate(() => {
+    const found: Record<string, Record<string, string>> = {};
+    for (const sheet of Array.from(document.styleSheets)) {
+      for (const rule of Array.from(sheet.cssRules)) {
+        if (!(rule instanceof CSSSupportsRule) || !rule.conditionText.includes('AccentColor')) continue;
+        for (const inner of Array.from(rule.cssRules)) {
+          if (!(inner instanceof CSSStyleRule)) continue;
+          found[inner.selectorText] = Object.fromEntries(['--lobby-accent', '--lobby-accent-hover', '--lobby-accent-text']
+            .map(name => [name, inner.style.getPropertyValue(name).trim()]));
+        }
+      }
+    }
+    return found;
+  });
+  expect(rules[':root']).toEqual({
+    '--lobby-accent': 'AccentColor',
+    '--lobby-accent-hover': 'color-mix(in srgb, AccentColor 80%, black)',
+    '--lobby-accent-text': 'AccentColorText'
+  });
+  expect(rules[':root[data-theme="dark"]']).toEqual({
+    '--lobby-accent': 'AccentColor',
+    '--lobby-accent-hover': 'color-mix(in srgb, AccentColor 85%, white)',
+    '--lobby-accent-text': 'AccentColorText'
+  });
+});
+
+test('browsers without AccentColor keep the green accent in both themes', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  // A canary: Playwright's Chromium lacks AccentColor today; when an upgrade adds it, run this check in a browser that still lacks it
+  expect(await page.evaluate(() => CSS.supports('color', 'AccentColor'))).toBe(false);
+  await card(page, 'Connect Four').click();
+  const join = page.locator('.lobby-button-primary');
+  await expect(join).toHaveCSS('background-color', 'rgb(45, 106, 79)');
+  await expect(join).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+  await expect(join).toHaveCSS('background-color', 'rgb(63, 143, 107)');
+  await expect(join).toHaveCSS('color', 'rgb(255, 255, 255)');
+});
+
+async function rowsOf(page: Awaited<ReturnType<typeof newPlayer>>): Promise<{ rows: number; widths: number[]; heights: number[] }> {
+  const boxes = await page.getByRole('group', { name: 'Join as' }).getByRole('button').evaluateAll(
+    (buttons) => buttons.map((b) => {
+      const r = b.getBoundingClientRect();
+      return { y: r.y, width: r.width, height: r.height };
+    }),
+  );
+  return {
+    rows: new Set(boxes.map((b) => Math.round(b.y))).size,
+    widths: boxes.map((b) => b.width),
+    heights: boxes.map((b) => b.height),
+  };
+}
+
+test('the join choices sit in one row, two per row or one per row', async ({ browser, server }) => {
+  const { page } = await landing(browser, server);
+  const sizes = [{ width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 320, height: 700 }];
+  for (const [game, rowCounts] of [['hearts', [1, 2, 4]], ['pictionary', [1, 2, 3]]] as const) {
+    await page.setViewportSize(sizes[0]);
+    await openJoinDialog(page, game);
+    for (const [i, size] of sizes.entries()) {
+      await page.setViewportSize(size);
+      const { rows, widths, heights } = await rowsOf(page);
+      expect(rows, `${game} rows at ${size.width}`).toBe(rowCounts[i]);
+      for (const w of widths) expect(Math.abs(w - widths[0])).toBeLessThanOrEqual(1);
+      for (const h of heights) expect(Math.abs(h - heights[0])).toBeLessThanOrEqual(1);
+    }
+  }
 });

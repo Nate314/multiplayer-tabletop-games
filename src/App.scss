@@ -54,6 +54,21 @@
   --piece-tray-selected-default: #4ba67d;
 }
 
+/* Browsers that support AccentColor (Firefox, Safari, recent Chrome) show the OS accent as the browser exposes it; older ones keep the green above. color-mix is checked too so hover never stays green */
+@supports (color: AccentColor) and (color: color-mix(in srgb, AccentColor 80%, black)) {
+  :root {
+    --lobby-accent: AccentColor;
+    --lobby-accent-hover: color-mix(in srgb, AccentColor 80%, black);
+    --lobby-accent-text: AccentColorText;
+  }
+
+  :root[data-theme="dark"] {
+    --lobby-accent: AccentColor;
+    --lobby-accent-hover: color-mix(in srgb, AccentColor 85%, white);
+    --lobby-accent-text: AccentColorText;
+  }
+}
+
 .lobby {
   min-height: 100vh;
   box-sizing: border-box;
@@ -270,7 +285,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Back to a game, Open a saved game and Stats span the game list: side by side where they fit, else stacked */
+/* Back to a game, Open a saved game, Resume a game and Stats span the game list: side by side where they fit, else stacked */
 .lobby-actions {
   display: flex;
   flex-wrap: wrap;
@@ -348,6 +363,11 @@
   background: var(--lobby-surface);
   color: var(--lobby-text);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.join-dialog {
+  max-width: 640px;
+  container-type: inline-size;
 }
 
 .lobby-dialog h2 {
@@ -443,7 +463,15 @@
   text-align: center;
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
+/* The game ID beside the title, quieter than the name */
+:where([data-game] .game-header-id) {
+  font-size: 0.65em;
+  font-weight: 500;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button, [data-game] .pause-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -455,7 +483,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .settings-button, [data-game] .theme-toggle) {
+:where([data-game] .game-header .settings-button, [data-game] .hide-button, [data-game] .theme-toggle) {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -480,7 +508,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .game-header .settings-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .pause-button:hover:enabled, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -521,11 +549,15 @@
   min-width: 0;
 }
 
-/* Phones: the title takes its own row, and Back to games, History, Rules and Settings fit one row under it.
-   Share and the theme toggle move into Settings and the GitHub link stays on the landing page only.
+/* Up to the width where every header button fits beside the title (Quoridor's is the widest), the header is compact */
+$compact-header: 860px;
+
+/* Phones and tablets: the title takes its own row with Hide at its end, and Back to games, History, Rules and Settings fit one row under it.
+   Share, Pause and the theme toggle move into Settings and the GitHub link stays on the landing page only.
    Outside :where(), so no game's header rule can show them again. */
-@media (max-width: 480px) {
+@media (max-width: $compact-header) {
   [data-game] .game-header > .share-wrapper,
+  [data-game] .game-header > .pause-button,
   [data-game] .game-header > .github-link,
   [data-game] .game-header > .theme-toggle {
     display: none;
@@ -542,8 +574,25 @@
     order: -1;
   }
 
-  :where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button) {
+  /* Outside :where(), so the card games' wider header gap and button padding cannot push the row onto two lines */
+  [data-game].game-root > .game-header {
+    column-gap: 0.375rem;
+  }
+
+  [data-game] .game-header > :is(.back-button, .history-button, .rules-button) {
     padding: 0 0.6rem;
+  }
+
+  /* Hide sits at the end of the title row; the padding balances it so the title stays centered.
+     Outside :where(), so Azul's and Quoridor's own header rules cannot undo it. */
+  [data-game].game-root > .game-header > h1 {
+    flex: 1 0 calc(100% - 4rem);
+    box-sizing: border-box;
+    padding-left: 2.875rem;
+  }
+
+  [data-game].game-root > .game-header > .hide-button {
+    order: -1;
   }
 }
 
@@ -560,7 +609,7 @@
 }
 
 /* Before the first move there is no history */
-:where([data-game] .history-button:disabled) {
+:where([data-game] .history-button:disabled, [data-game] .pause-button:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -627,7 +676,7 @@
   text-align: left;
 }
 
-:where([data-game] .rules-switch, [data-game] .layout-switch, .join-role-switch) {
+:where([data-game] .rules-switch, [data-game] .layout-switch) {
   display: flex;
   flex-wrap: wrap; /* more roles are coming; they wrap at 320px */
   justify-content: center;
@@ -642,12 +691,48 @@
   font-weight: 600;
 }
 
-:where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child, .join-role-switch button:first-child) {
+/* Rules, House rules and FAQ stay on one row on the narrowest phones */
+@media (max-width: 400px) {
+  :where([data-game] .rules-switch button) {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+}
+
+:where([data-game] .rules-switch button:first-child, [data-game] .layout-switch button:first-child) {
   border-radius: 6px 0 0 6px;
 }
 
-:where([data-game] .rules-switch button:last-child, [data-game] .layout-switch button:last-child, .join-role-switch button:last-child) {
+:where([data-game] .rules-switch button:last-child, [data-game] .layout-switch button:last-child) {
   border-radius: 0 6px 6px 0;
+}
+
+/* The join choices: one row when the dialog is wide, two per row, one per row when narrow */
+:where(.join-role-switch) {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+:where(.join-role-switch button) {
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+@container (min-width: 560px) {
+  :where(.join-role-switch) {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    grid-template-columns: none;
+  }
+}
+
+@container (max-width: 279px) {
+  :where(.join-role-switch) {
+    grid-template-columns: 1fr;
+  }
 }
 
 :where([data-game] .rules-switch button[aria-pressed="true"], [data-game] .layout-switch button[aria-pressed="true"], .join-role-switch button[aria-pressed="true"]) {
@@ -1029,7 +1114,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   transform: translateX(-50%) scale(var(--fit-scale, 1));
 }
 
-:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button, [data-game] .rematch-vote-list button) {
+:where([data-game] .primary-button, .lobby .primary-button, [data-game] .undo-vote-actions button, [data-game] .dismiss-vote-actions button, [data-game] .rematch-vote-actions button, [data-game] .rematch-vote-list button, [data-game] .pause-vote-actions button) {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
@@ -1051,7 +1136,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   justify-content: center;
 }
 
-:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover, [data-game] .rematch-vote-list button:hover) {
+:where([data-game] .primary-button:hover, .lobby .primary-button:hover, [data-game] .undo-vote-actions button:hover, [data-game] .dismiss-vote-actions button:hover, [data-game] .rematch-vote-actions button:hover, [data-game] .rematch-vote-list button:hover, [data-game] .pause-vote-actions button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -1152,9 +1237,9 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   color: var(--muted);
 }
 
-/* Undo, dismiss and rematch votes */
+/* Undo, dismiss, rematch and pause votes */
 
-:where([data-game] .undo-vote, [data-game] .dismiss-vote, [data-game] .rematch-vote) {
+:where([data-game] .undo-vote, [data-game] .dismiss-vote, [data-game] .rematch-vote, [data-game] .pause-vote) {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -1164,7 +1249,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   background: var(--platform-backdrop, rgba(0, 0, 0, 0.45));
 }
 
-:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel, [data-game] .rematch-vote-panel) {
+:where([data-game] .undo-vote-panel, [data-game] .dismiss-vote-panel, [data-game] .rematch-vote-panel, [data-game] .pause-vote-panel) {
   padding: 20px;
   border-radius: 10px;
   background: var(--platform-panel-bg, var(--lobby-surface));
@@ -1173,17 +1258,17 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   text-align: center;
 }
 
-:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title, [data-game] .rematch-vote-title) {
+:where([data-game] .undo-vote-title, [data-game] .dismiss-vote-title, [data-game] .rematch-vote-title, [data-game] .pause-vote-title) {
   font-weight: 600;
 }
 
-:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list, [data-game] .rematch-vote-list) {
+:where([data-game] .undo-vote-list, [data-game] .dismiss-vote-list, [data-game] .rematch-vote-list, [data-game] .pause-vote-list) {
   list-style: none;
   margin: 12px 0;
   padding: 0;
 }
 
-:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions, [data-game] .rematch-vote-actions) {
+:where([data-game] .undo-vote-actions, [data-game] .dismiss-vote-actions, [data-game] .rematch-vote-actions, [data-game] .pause-vote-actions) {
   display: flex;
   gap: 10px;
   justify-content: center;
@@ -1256,26 +1341,39 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   cursor: not-allowed;
 }
 
-/* House rules, above the game screen until play starts */
+/* House rules, in the Rules dialog's House rules tab */
 
 :where([data-game] .house-rules-panel) {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-sizing: border-box;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: var(--platform-panel-bg, var(--lobby-surface));
-  color: var(--platform-panel-text, var(--lobby-text));
   text-align: start;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .house-rules-title) {
-  font-weight: 700;
+/* Rules marks itself while this device still has to agree; the note is for screen readers only */
+:where([data-game] .rules-button[data-attention]) {
+  position: relative;
+}
+
+:where([data-game] .rules-button[data-attention])::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--platform-page-bg, var(--lobby-bg));
+  border-radius: 50%;
+  background: #e5484d;
+}
+
+:where([data-game] .rules-attention) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 :where([data-game] .house-rules-host) {
@@ -1331,31 +1429,37 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   gap: 8px;
 }
 
-/* Until everyone agreed nobody can move, so the game screen under the panel is dimmed (the server refuses a move).
+/* Until everyone agreed nobody can move, so the game screen is dimmed (the server refuses a move).
    Outside :where(), so a game's own opacity rules do not undo it */
-[data-game][data-awaiting-agreement] > :not(.game-header, .presence-bar, .house-rules-panel, .dismiss-vote) {
+[data-game][data-awaiting-agreement] > :not(.game-header, .presence-bar, .dismiss-vote) {
   opacity: 0.5;
 }
 
-/* The current game's house rules in the Settings dialog, read only */
-:where([data-game] .settings-house-rules dl) {
+/* Hide covers everything below the header (History stays usable); visibility keeps it mounted and out of clicks and Tab.
+   Outside :where(), so a game's own visibility rules do not undo it */
+[data-game][data-hidden] > :not(.game-header, .hidden-cover, .history-overlay) {
+  visibility: hidden;
+}
+
+/* The current game's house rules once play starts, read only */
+:where([data-game] .house-rules-summary dl) {
   margin: 0;
 }
 
-:where([data-game] .settings-house-rules dl > div) {
+:where([data-game] .house-rules-summary dl > div) {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 4px 0;
 }
 
-:where([data-game] .settings-house-rules dd) {
+:where([data-game] .house-rules-summary dd) {
   margin: 0;
   font-weight: 600;
   text-align: right;
 }
 
-:where([data-game] .settings-house-rules p) {
+:where([data-game] .house-rules-summary p) {
   margin: 0;
 }
 
@@ -1808,12 +1912,12 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   min-width: 0;
 }
 
-/* Share and the theme toggle, shown here on phones only, where the game header has no room for them */
+/* Share, Pause and the theme toggle, shown here only where the game header is compact and has no room for them */
 :where([data-game] .settings-phone-controls) {
   display: none;
 }
 
-@media (max-width: 480px) {
+@media (max-width: $compact-header) {
   :where([data-game] .settings-phone-controls) {
     display: flex;
   }
@@ -1928,7 +2032,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   filter: grayscale(0.6);
 }
 
-:where([data-game] .handoff-banner) {
+:where([data-game] .handoff-banner, [data-game] .hidden-cover) {
   position: sticky;
   top: 16px;
   z-index: 5;
@@ -1944,10 +2048,18 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   text-align: center;
 }
 
-:where([data-game] .handoff-banner h2) {
+:where([data-game] .handoff-banner h2, [data-game] .hidden-cover h2) {
   margin: 0;
   font-size: 1.8rem;
   overflow-wrap: anywhere;
+}
+
+:where([data-game] .hidden-cover) {
+  margin: 24px auto 0;
+}
+
+:where([data-game] .hidden-cover p) {
+  margin: 12px 0 0;
 }
 
 :where([data-game] .handoff-banner button, [data-game] .pass-and-play-bar button) {
@@ -1971,6 +2083,93 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   gap: 8px 16px;
   margin: 8px auto;
   font-weight: 600;
+}
+
+/* Paused game: a panel in place of the table, like the handoff banner */
+
+:where([data-game] .paused-screen) {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(480px, 100%);
+  margin: 24px auto 0;
+  padding: 24px 20px;
+  border-radius: 12px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+:where([data-game] .paused-screen h2) {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+:where([data-game] .paused-screen p) {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+:where([data-game] .paused-screen .primary-button) {
+  min-height: 44px;
+  margin-top: 0;
+}
+
+:where([data-game] .paused-screen-download) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+:where([data-game] .paused-screen-error) {
+  color: var(--lobby-error-text);
+  font-size: 0.875rem;
+}
+
+:where([data-game] .paused-screen-waiting) {
+  font-weight: 600;
+}
+
+/* Resuming a lost game from pause files (ResumeWaitingRoom): who is in, and the code for everyone else */
+
+:where(.lobby .modal.resume-waiting) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
+:where(.lobby .modal.resume-waiting) h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+:where(.lobby .modal.resume-waiting) :is(p, .lobby-error) {
+  margin: 0;
+}
+
+:where(.lobby .resume-waiting-players) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+:where(.lobby .resume-waiting-qr) {
+  display: block;
+  width: min(180px, 60vw);
+  height: min(180px, 60vw);
+}
+
+:where(.lobby .modal.resume-waiting .primary-button) {
+  min-height: 44px;
+  margin-top: 0;
 }
 
 /* Spectator screen and the hand request a player is asked */
@@ -2043,6 +2242,25 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 :where([data-table-screen] .table-screen-link) {
   margin: 0;
   word-break: break-all;
+}
+
+/* Above the game-over backdrop, so the code can be shown to late joiners from the end screen */
+:where([data-table-screen] .qr-button) {
+  position: relative;
+  z-index: 21;
+}
+
+/* After the lobby rules, so the dialog's bigger code wins at equal weight */
+:where([data-table-screen] .qr-dialog .table-screen-qr) {
+  width: min(60vh, 80vw);
+  height: min(60vh, 80vw);
+}
+
+/* Outside :where() on purpose, so a game's own .modal text-align (Hearts sets left) does not win */
+[data-table-screen] .modal.qr-dialog {
+  width: fit-content; /* sized to the code, not to a game's own .modal width */
+  max-width: 100%;
+  text-align: center;
 }
 
 :where([data-table-screen] .table-screen-players) {

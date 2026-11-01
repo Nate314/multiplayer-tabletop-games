@@ -1,4 +1,5 @@
-import { expect, tableScreen, test } from './fixtures.ts';
+import { expect, joinGame, newPlayer, openJoinDialog, tableScreen, test } from './fixtures.ts';
+import type { Browser, Page } from '@playwright/test';
 
 // A table screen joins as a spectator that only ever sees the table
 
@@ -101,4 +102,85 @@ test('pictionary: the table screen never shows the word', async ({ seat }) => {
   await table.patch({ phaseStartedAt: Date.now() - 89_500 });
   await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: red apple');
   expect(await shown()).toContain('red apple');
+});
+
+async function newScreen(browser: Browser, server: { url: string }, gameId: string): Promise<Page> {
+  const tv = await newPlayer(browser, server);
+  await openJoinDialog(tv, 'hearts');
+  await tv.getByRole('button', { name: 'Table screen' }).click();
+  await tv.getByLabel('Game ID').fill(gameId);
+  await tv.getByRole('button', { name: 'Show table', exact: true }).click();
+  return tv;
+}
+
+test('a table screen with a new game ID creates the game and shows its QR code', async ({ browser, server }) => {
+  const id = `tv${Date.now() % 100000}`;
+  const tv = await newScreen(browser, server, id);
+  await expect(tv.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(tv.locator('.table-screen-players li')).toHaveCount(0);
+  await expect(tv.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${id}$`));
+  const alice = await newPlayer(browser, server);
+  await joinGame(alice, 'hearts', id, 'Alice');
+  await expect(tv.locator('.table-screen-players li')).toHaveText(['Alice']);
+  await expect(alice.locator('.presence-watching')).toHaveText('Watching: Table screen');
+});
+
+test('the TV keeps the lobby when its only player leaves', async ({ browser, server }) => {
+  const id = `tv${Date.now() % 100000}`;
+  const tv = await newScreen(browser, server, id);
+  const alice = await newPlayer(browser, server);
+  await joinGame(alice, 'hearts', id, 'Alice');
+  await expect(tv.locator('.table-screen-players li')).toHaveText(['Alice']);
+  await alice.context().close();
+  await expect(tv.locator('.table-screen-players li')).toHaveCount(0);
+  await expect(tv.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(tv.getByText('Game not found')).toHaveCount(0);
+});
+
+test('the table screen shows the QR code from the header during play', async ({ seat }) => {
+  const table = await seat('hearts', ['Alice', 'Bob', 'Cara', 'Dan'], { agree: true });
+  const tv = await tableScreen(table);
+  await table.patch({ started: true });
+  await expect(tv.locator('.table-screen-board')).toBeVisible();
+  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  const dialog = tv.getByRole('dialog', { name: 'Scan to join' });
+  await expect(dialog.locator('.table-screen-qr svg')).toBeVisible();
+  await expect(dialog.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${table.gameId}$`));
+  for (const size of [{ width: 1920, height: 889 }, { width: 1280, height: 720 }, { width: 390, height: 844 }, { width: 320, height: 700 }]) {
+    await tv.setViewportSize(size);
+    const fit = await dialog.evaluate((el) => {
+      const qr = el.querySelector('.table-screen-qr')!.getBoundingClientRect();
+      const box = el.getBoundingClientRect();
+      return {
+        overflow: el.scrollWidth - el.clientWidth,
+        square: Math.abs(qr.width - qr.height),
+        inModal: qr.left >= box.left && qr.right <= box.right && qr.top >= box.top && qr.bottom <= box.bottom,
+        inViewport: qr.left >= 0 && qr.right <= innerWidth && qr.top >= 0 && qr.bottom <= innerHeight,
+      };
+    });
+    expect(fit, `${size.width}x${size.height}`).toEqual({ overflow: 0, square: 0, inModal: true, inViewport: true });
+  }
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(dialog).toBeHidden();
+  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await expect(dialog).toBeVisible();
+  await tv.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(tv.locator('.table-screen-board')).toBeVisible();
+  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+});
+
+test('the QR button is there in the lobby and after the game ends', async ({ seat }) => {
+  const table = await seat('connectfour', ['Alice', 'Bob']);
+  await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
+  const tv = await tableScreen(table);
+  await expect(tv.getByRole('button', { name: 'Show QR code' })).toBeVisible();
+  await table.patch({ isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!' });
+  await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
+  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeVisible();
+  await tv.keyboard.press('Escape');
+  await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeHidden();
+  await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
+  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
 });

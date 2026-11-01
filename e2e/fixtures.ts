@@ -160,7 +160,29 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
 }
 
 // The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
+// Opens Rules on its House rules tab, unless it is open already, and returns the dialog
+export async function openHouseRules(page: Page) {
+  const dialog = page.getByRole('dialog', { name: / rules$/ });
+  if (!await dialog.isVisible()) await page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+  const tab = dialog.getByRole('button', { name: 'House rules', exact: true });
+  if (await tab.getAttribute('aria-pressed') !== 'true') await tab.click();
+  return dialog;
+}
+
+export async function closeRules(page: Page): Promise<void> {
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: / rules$/ })).toHaveCount(0);
+}
+
+// Runs `check` on the House rules tab, then closes Rules so the game can be played
+export async function inHouseRules(page: Page, check: (dialog: Locator) => Promise<void>): Promise<void> {
+  await check(await openHouseRules(page));
+  await closeRules(page);
+}
+
+// The host sets the rules in the House rules tab and closes it
 export async function setHouseRules(page: Page, gameType: string, values: HouseRuleValues, maxPlayers?: number): Promise<void> {
+  await openHouseRules(page);
   for (const rule of rulesOf(gameOf(gameType))) {
     if (!(rule.id in values)) continue;
     const control = page.getByLabel(rule.label, { exact: true });
@@ -178,13 +200,16 @@ export async function setHouseRules(page: Page, gameType: string, values: HouseR
     await field.press('Enter');
     await expect(field).toHaveValue(String(maxPlayers));
   }
+  await closeRules(page);
 }
 
 // Each page clicks Agree and waits until its own row (the list marks it with aria-current) says agreed
 export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   for (const page of pages) {
-    await page.getByRole('button', { name: 'Agree', exact: true }).click();
-    await expect(page.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
+    await inHouseRules(page, async dialog => {
+      await dialog.getByRole('button', { name: 'Agree', exact: true }).click();
+      await expect(dialog.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
+    });
   }
 }
 
@@ -230,7 +255,7 @@ export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Rec
       const agreeAll = async () => {
         if (!agree || !needsAgreement(gameOf(gameType), houseRules ?? {})) return;
         // Every page must list every player first, so no Agree names a revision from before the last join
-        for (const page of everyone) await expect(page.locator('.house-rules-list li')).toHaveCount(everyone.length);
+        for (const page of everyone) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(everyone.length));
         await agreeToHouseRules(...everyone);
       };
       for (const name of names) {
@@ -283,6 +308,19 @@ export async function tableScreen(table: Table): Promise<Page> {
   return tv;
 }
 
+// Opens the site in a new context and watches `gameId` as `name` through the join dialog
+export async function watch(browser: Browser, server: Server, gameType: string, gameId: string, name: string): Promise<Page> {
+  const page = await newPlayer(browser, server);
+  await page.goto('/');
+  await page.locator('.lobby-game').filter({ has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf(gameType)}$`) }) }).click();
+  await page.getByRole('button', { name: 'Spectator' }).click();
+  await page.getByLabel('Your name').fill(name);
+  await page.getByLabel('Game ID').fill(gameId);
+  await page.getByRole('button', { name: 'Watch', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
+  return page;
+}
+
 // Opens Settings, sets the checkbox `label` and closes the dialog
 export async function setPreference(page: Page, label: string, on: boolean): Promise<void> {
   await page.getByRole('button', { name: 'Settings' }).click();
@@ -307,3 +345,18 @@ export async function recordTones(page: Page): Promise<void> {
 }
 
 export const tones = (page: Page) => page.evaluate(() => (window as unknown as { tones: string[] }).tones.slice());
+
+// Records, for each element matching `piece` added directly under `parent` from now on, whether it has a drawn face
+export async function recordGhosts(page: Page, parent: string, piece: string): Promise<void> {
+  await page.evaluate(([parentSelector, pieceSelector]) => {
+    const seen: boolean[] = [];
+    (window as unknown as { ghosts: boolean[] }).ghosts = seen;
+    new MutationObserver(records => {
+      for (const node of records.flatMap(record => [...record.addedNodes])) {
+        if (node instanceof Element && node.matches(pieceSelector)) seen.push(node.querySelector('.piece-art svg') !== null);
+      }
+    }).observe(document.querySelector(parentSelector)!, { childList: true });
+  }, [parent, piece]);
+}
+
+export const ghostsSeen = (page: Page) => page.evaluate(() => (window as unknown as { ghosts: boolean[] }).ghosts.slice());

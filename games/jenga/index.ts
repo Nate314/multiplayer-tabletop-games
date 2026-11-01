@@ -1,4 +1,5 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import { initPhysics } from './physics.ts';
 import {
   applyAction, applyMove, createGameState, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, resumeClock, simulate,
@@ -23,5 +24,6 @@ export const jenga: GameDefinition<GameState, PublicGameState> = {
   simulating,
   simulate,
   toPublicState,
-  finalStandings: jengaStandings
+  finalStandings: jengaStandings,
+  secretState: state => seatFields(state, ['grip'])
 };

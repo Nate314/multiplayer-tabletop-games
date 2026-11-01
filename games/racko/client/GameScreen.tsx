@@ -34,7 +34,6 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="game-id hand-only-hide">Game ID: {gameState.gameId}</div>
       <div className="game-screen" ref={screenRef}>
         <div className="game-info">
           <div className="player-info">You are {gameState.playerNames[playerNumber]} (Player {playerNumber})</div>

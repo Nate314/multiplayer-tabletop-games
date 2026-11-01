@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, newPlayer, nameOf, test, type Seat } from './fixtures.ts';
+import { expect, nameOf, newPlayer, openHouseRules, type Seat, test } from './fixtures.ts';
 
 // The rematch vote on the game-over screen, and the fresh lobby at the same game ID that follows it.
 
@@ -36,7 +36,7 @@ test('Rematch opens a vote and everyone joining starts a new lobby at the same l
   }
   expect((await table.state<{ gameId: string; started: boolean }>())).toMatchObject({ gameId: table.gameId, started: false });
   // Like any lobby, the new one is not remembered for a rejoin, so a refresh goes quietly to the list
-  await expect.poll(() => alice.evaluate(() => sessionStorage.getItem('inGame'))).toBeNull();
+  await expect.poll(() => alice.evaluate(() => sessionStorage.getItem('multiplayer-tabletop-games:inGame'))).toBeNull();
   await alice.reload();
   await expect(alice.locator('.lobby-game').first()).toBeVisible();
   await expect(alice.locator('.lobby-error')).toHaveCount(0);
@@ -84,9 +84,9 @@ test('a silent player cannot hold up a Remove, and can be removed too', async ({
   await expect(bob.locator('.dismiss-vote')).toHaveCount(0);
   await cara.locator('.rematch-vote li', { hasText: 'Bob' }).getByRole('button', { name: 'Remove' }).click();
   for (const page of [alice, bob]) await expect(page.getByText('You left after the game')).toBeVisible();
-  // Cara alone is seated in the fresh lobby, where the house rules panel waits for players
+  // Cara alone is seated in the fresh lobby, where the house rules form is open again
   await expect(gameOver(cara)).toHaveCount(0);
-  await expect(cara.locator('.house-rules-panel')).toBeVisible();
+  await expect((await openHouseRules(cara)).locator('.house-rules-panel')).toBeVisible();
 });
 
 test('a spectator keeps watching and cannot vote', async ({ seat, browser, server }) => {
