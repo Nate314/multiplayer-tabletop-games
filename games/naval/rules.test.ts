@@ -182,3 +182,15 @@ test('resetLobby clears fleets and shots', () => {
   assert.equal(reset.drawOffer, null);
   assert.equal(reset.gameStatus, 'Place your fleets');
 });
+
+test('a placed fleet keeps only the four ship fields', () => {
+  const sent = A.map(ship => ({ ...ship, id: 'x', note: 'extra' }));
+  assert.deepEqual(place(lobby(), 1, sent).fleets[1], A);
+});
+
+test('an open draw offer during placement is waited on too', () => {
+  const alice = place(lobby(), 1, A);
+  const offered = applyAction(alice, 2, { type: 'offerDraw' });
+  if ('error' in offered) assert.fail(offered.error);
+  assert.deepEqual(waitingOn(offered.state), [1, 2]);
+});

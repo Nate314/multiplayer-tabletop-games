@@ -35,7 +35,10 @@ export function shotsAllowed(state: Pick<GameState, 'shots' | 'houseRules'>, sea
 
 export function waitingOn(state: GameState): Seat[] {
   if (state.isGameOver) return [];
-  return state.phase === 'placing' ? state.activePlayers.filter(seat => !state.fleets[seat]) : drawOfferAnswerers(state);
+  const answering = drawOfferAnswerers(state);
+  if (state.phase !== 'placing') return answering;
+  // a draw offer can be open while a fleet is still being placed
+  return state.activePlayers.filter(seat => !state.fleets[seat] || answering.includes(seat));
 }
 
 export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
@@ -56,7 +59,9 @@ function place(state: GameState, seat: Seat, action: Record<string, unknown>): R
   if (state.fleets[seat]) return { error: 'Your fleet is already placed' };
   const error = fleetError(action.ships);
   if (error) return { error };
-  const fleets = { ...state.fleets, [seat]: action.ships as Ship[] };
+  // Only the four ship fields are kept: anything else the browser sent is dropped
+  const ships = (action.ships as Ship[]).map(({ length, row, col, orientation }) => ({ length, row, col, orientation }));
+  const fleets = { ...state.fleets, [seat]: ships };
   const next: GameState = { ...state, started: true, fleets, gameStatus: `${state.playerNames[seat]} is ready` };
   if (!state.activePlayers.every(other => fleets[other])) return { state: next };
   const first = state.activePlayers[0];
