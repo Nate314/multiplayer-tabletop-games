@@ -297,3 +297,8 @@ test('only pieces of my own board count', () => {
   assert.equal(piecesOf(state, 2).length, 48);
   assert.equal(boardOf(state, 3), undefined);
 });
+
+test('Together and Race have no turn, so nobody is told it is their turn', () => {
+  assert.equal(lobby(['Alice', 'Bob']).currentPlayer, null);
+  assert.equal(lobby(['Alice', 'Bob'], { mode: 'race' }).currentPlayer, null);
+});

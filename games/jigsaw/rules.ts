@@ -2,7 +2,7 @@
 import { isImageId } from '../../shared/gameFile.ts';
 import { houseRule, houseRulesOf } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { MODE_RULE, addContribution, modeOf, raceProgress, visibleBoards } from '../../shared/puzzleModes.ts';
+import { MODE_RULE, addContribution, modeOf, playsAtOnce, raceProgress, visibleBoards } from '../../shared/puzzleModes.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import type { Random, Standing } from '../../shared/types.ts';
@@ -47,7 +47,9 @@ export function resetLobby(state: GameState, random: Random): GameState {
     boards: race ? Object.fromEntries(state.activePlayers.map(seat => [seat, board])) : {},
     snaps: {},
     contributions: {},
-    lastMove: null
+    lastMove: null,
+    // Together and Race have no turns: everyone plays at once
+    currentPlayer: playsAtOnce(modeOf(state, MODE_RULE)) ? null : state.currentPlayer
   };
 }
 
