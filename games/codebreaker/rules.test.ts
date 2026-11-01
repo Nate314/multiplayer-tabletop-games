@@ -6,6 +6,7 @@ import { COLORS } from './options.ts';
 import type { Color, GameState, Seat } from './types.ts';
 import { withRules } from '../../server/testing.ts';
 import type { HouseRuleValues } from '../../shared/houseRules.ts';
+import { seeded } from '../testStates.ts';
 
 const CODE: Color[] = ['red', 'blue', 'green', 'yellow'];
 const WRONG: Color[] = ['purple', 'purple', 'purple', 'purple'];
@@ -17,7 +18,7 @@ function lobby(values: HouseRuleValues = { mode: 'classic', code: '4of6' }): Gam
     playerNames: { 1: 'Alice', 2: 'Bob' },
     houseRules: withRules(values)
   };
-  return { ...resetLobby(state), started: true };
+  return { ...resetLobby(state, seeded(1)), started: true };
 }
 
 function move(state: GameState, seat: Seat, type: string, pegs: Color[]): GameState {
@@ -127,7 +128,7 @@ test('status and lastMove never hold the code', () => {
 
 test('the player left behind wins', () => {
   const mid = move(lobby(), 1, 'setCode', CODE);
-  const left = onPlayerLeft({ ...mid, activePlayers: [1] });
+  const left = onPlayerLeft({ ...mid, activePlayers: [1] }, 2);
   assert.equal(left.isGameOver, true);
   assert.deepEqual(left.winners, [1]);
   assert.equal(left.gameStatus, 'Alice wins! Everyone else left.');

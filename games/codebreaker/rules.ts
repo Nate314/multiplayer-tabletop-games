@@ -1,12 +1,15 @@
-// Code breaker rules. This file holds the Classic paths: two players alternate as maker and breaker for four rounds.
+// Code breaker rules. Classic: two players alternate as maker and breaker for four rounds.
+// Solo, Together and Race: the computer draws the code and nobody sees it until the game ends.
+import { rollDie } from '../../shared/dice.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { modeOf } from '../../shared/puzzleModes.ts';
+import { addContribution, modeOf, playsAtOnce } from '../../shared/puzzleModes.ts';
 import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
-import type { Result, Standing } from '../../shared/types.ts';
+import { plural } from '../../shared/text.ts';
+import type { Random, Result, Standing } from '../../shared/types.ts';
 import { feedback } from './feedback.ts';
 import { CODEBREAKER_MODE, CODE_RULE, MAX_GUESSES, ROUNDS_EACH, codeShape } from './options.ts';
 import type { Mode } from './options.ts';
@@ -54,6 +57,7 @@ export function isRevealed(state: GameState): boolean {
 
 const makerOf = (state: GameState, round: number): Seat => state.activePlayers[(round - 1) % 2];
 const breakerOf = (state: GameState, round: number): Seat => state.activePlayers[round % 2];
+const over = (winners: Seat[]) => ({ isGameOver: true, currentPlayer: null, winners });
 
 // Classic round `round` waits for its maker's code
 function startRound(state: GameState, round: number): GameState {
@@ -64,13 +68,21 @@ function startRound(state: GameState, round: number): GameState {
   };
 }
 
-export function resetLobby(state: GameState): GameState {
+// Runs after every seat and house rule change, so a drawn code always matches the current Code rule
+export function resetLobby(state: GameState, random: Random): GameState {
   const empty: GameState = {
     ...state, phase: 'setting', code: null, maker: null, round: 1, board: EMPTY_BOARD, boards: {}, finishOrder: [],
     points: {}, rounds: [], summary: null, contributions: {}, lastMove: null
   };
-  if (modeIn(state) === 'classic' && state.activePlayers.length === 2) return startRound(empty, 1);
-  return empty;
+  const mode = modeIn(state);
+  if (mode === 'classic') return state.activePlayers.length === 2 ? startRound(empty, 1) : empty;
+  const { pegs, colors } = codeShape(houseRule(state, CODE_RULE));
+  const code = Array.from({ length: pegs }, () => colors[rollDie(random, colors.length) - 1]);
+  const boards = mode === 'race' ? Object.fromEntries(state.activePlayers.map(seat => [seat, EMPTY_BOARD])) : {};
+  return {
+    ...empty, phase: 'breaking', code, boards,
+    currentPlayer: playsAtOnce(mode) ? null : state.currentPlayer, gameStatus: 'Break the code'
+  };
 }
 
 function pegsOf(state: GameState, move: Record<string, unknown>): Result<Color[]> {
@@ -80,10 +92,19 @@ function pegsOf(state: GameState, move: Record<string, unknown>): Result<Color[]
   return valid ? { state: given as Color[] } : { error: `Pick ${pegs} colors` };
 }
 
+// `board` with a guess by `seat` added, scored against the code
+function addGuess(state: GameState, board: Board, seat: Seat, pegs: Color[]): Board {
+  const code = state.code as Color[];
+  const clue = feedback(code, pegs);
+  return { guesses: [...board.guesses, { pegs, feedback: clue, by: seat }], broken: clue.exact === code.length };
+}
+
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   const m = asRecord(move);
   if (!m) return { error: 'Invalid move' };
-  if (modeIn(state) !== 'classic') return { error: 'Invalid move' }; // Solo, Together and Race arrive with their own paths
+  const mode = modeIn(state);
+  if (mode === 'solo') return m.type === 'guess' && !state.isGameOver ? sharedGuess(state, seat, m) : { error: 'Invalid move' };
+  if (mode !== 'classic') return { error: 'Invalid move' }; // Together and Race guess with actions
   if (state.isGameOver || state.phase === 'summary') return { error: 'Invalid move' };
   if (m.type === 'setCode') {
     if (state.phase !== 'setting' || seat !== state.maker) return { error: 'Invalid move' };
@@ -135,9 +156,73 @@ function endRound(state: GameState, breaker: Seat, code: Color[]): GameState {
   };
 }
 
+// A guess on the one board (Solo, Together): breaking it wins for everyone at the table, ten misses lose
+function sharedGuess(state: GameState, seat: Seat, move: Record<string, unknown>): Result<GameState> {
+  const pegs = pegsOf(state, move);
+  if ('error' in pegs) return pegs;
+  const board = addGuess(state, state.board, seat, pegs.state);
+  const clue = board.guesses[board.guesses.length - 1].feedback;
+  const outOfGuesses = !board.broken && isFinished(board);
+  const moved: GameState = {
+    ...state, board, lastMove: { type: 'guess', playerNumber: seat, feedback: clue, broken: board.broken, outOfGuesses },
+    contributions: modeIn(state) === 'together' ? addContribution(state.contributions, seat) : state.contributions,
+    gameStatus: `${state.playerNames[seat]} made guess ${board.guesses.length}`
+  };
+  if (board.broken) {
+    return { state: { ...moved, ...over(state.activePlayers), gameStatus: `Broken in ${plural(board.guesses.length, 'guess', 'guesses')}!` } };
+  }
+  return { state: outOfGuesses ? { ...moved, ...over([]), gameStatus: 'The code was not broken' } : moved };
+}
+
+// A guess on the guesser's own Race board; only the guess count and whether it broke the code are public
+function raceGuess(state: GameState, seat: Seat, move: Record<string, unknown>): Result<GameState> {
+  const own = state.boards[seat];
+  if (!own) return { error: 'Invalid move' };
+  if (isFinished(own)) return { error: 'Your board is finished' };
+  const pegs = pegsOf(state, move);
+  if ('error' in pegs) return pegs;
+  const board = addGuess(state, own, seat, pegs.state);
+  const name = state.playerNames[seat];
+  const count = board.guesses.length;
+  return {
+    state: raceEndCheck({
+      ...state,
+      boards: { ...state.boards, [seat]: board },
+      finishOrder: board.broken ? [...state.finishOrder, seat] : state.finishOrder,
+      lastMove: { type: 'raceGuess', playerNumber: seat, guessNumber: count, broken: board.broken },
+      gameStatus: board.broken ? `${name} broke the code in ${plural(count, 'guess', 'guesses')}` : `${name} made guess ${count}`
+    })
+  };
+}
+
+const raceSeats = (state: GameState): Seat[] => state.activePlayers.filter(seat => state.boards[seat]);
+const guessCount = (state: GameState, seat: Seat): number => state.boards[seat]?.guesses.length ?? 0;
+const unfinished = (state: GameState): Seat[] => raceSeats(state).filter(seat => !isFinished(state.boards[seat] as Board));
+
+// The fewest guesses on a broken board, or Infinity while nobody has broken it
+const bestRace = (state: GameState): number => Math.min(...state.finishOrder.map(seat => guessCount(state, seat)));
+
+// Over once nobody still guessing can match or beat the best; ties go to who finished first
+function raceEndCheck(state: GameState): GameState {
+  const best = bestRace(state);
+  if (unfinished(state).some(seat => guessCount(state, seat) < best)) return state;
+  const winner = state.finishOrder.find(seat => guessCount(state, seat) === best);
+  if (winner === undefined) return { ...state, ...over([]), gameStatus: 'Nobody broke the code' };
+  return { ...state, ...over([winner]), gameStatus: `${state.playerNames[winner]} wins, breaking the code in ${plural(best, 'guess', 'guesses')}` };
+}
+
+export function recordsAction(state: GameState, _seat: Seat, action: unknown): boolean {
+  return playsAtOnce(modeIn(state)) && !state.isGameOver && asRecord(action)?.type === 'guess';
+}
+
 export function applyAction(state: GameState, seat: Seat, action: unknown): Result<GameState> {
   const a = asRecord(action);
-  if (a?.type !== 'continue' || modeIn(state) !== 'classic' || state.phase !== 'summary' || state.isGameOver) {
+  const mode = modeIn(state);
+  if (a?.type === 'guess' && playsAtOnce(mode)) {
+    if (state.isGameOver || !state.activePlayers.includes(seat)) return { error: 'Invalid move' };
+    return mode === 'race' ? raceGuess(state, seat, a) : sharedGuess(state, seat, a);
+  }
+  if (a?.type !== 'continue' || mode !== 'classic' || state.phase !== 'summary' || state.isGameOver) {
     return { error: 'Nothing to continue' };
   }
   return acknowledge(state, seat, ROUND, nextRound);
@@ -156,27 +241,79 @@ function endGame(state: GameState): GameState {
   const best = Math.min(...state.activePlayers.map(seat => total(state, seat)));
   const winners = state.activePlayers.filter(seat => total(state, seat) === best);
   const names = winners.map(seat => state.playerNames[seat]).join(' and ');
-  return {
-    ...state, isGameOver: true, currentPlayer: null, winners,
-    gameStatus: `${names} ${winners.length > 1 ? 'tied' : 'won'} with ${pointsText(best)}`
-  };
+  return { ...state, ...over(winners), gameStatus: `${names} ${winners.length > 1 ? 'tied' : 'won'} with ${pointsText(best)}` };
 }
 
-// Called with one player left (the game continues alone), but Classic needs two: the one left behind wins
-export function onPlayerLeft(state: GameState): GameState {
-  if (modeIn(state) !== 'classic' || state.activePlayers.length !== 1) return state;
+// Together plays on with whoever is left; Race drops the leaver's board and checks whether that ends the race.
+// Classic needs two, so with one left (the game continues alone) the one left behind wins.
+export function onPlayerLeft(state: GameState, seat: Seat): GameState {
+  const mode = modeIn(state);
+  if (mode === 'race') {
+    const boards = { ...state.boards };
+    delete boards[seat];
+    return raceEndCheck({ ...state, boards, finishOrder: state.finishOrder.filter(finisher => finisher !== seat) });
+  }
+  if (mode !== 'classic' || state.activePlayers.length !== 1) return state;
   const winner = state.activePlayers[0];
+  return { ...state, ...over([winner]), undoVote: null, gameStatus: `${state.playerNames[winner]} wins! Everyone else left.` };
+}
+
+// Together and Race: each player undoes only their own guesses, with no vote
+export function allowsUndoVote(state: GameState): boolean {
+  return !playsAtOnce(modeIn(state));
+}
+
+export function undoOwn(state: GameState, seat: Seat): Result<GameState> {
+  const mode = modeIn(state);
+  if (!playsAtOnce(mode)) return { error: 'Use Undo' };
+  if (state.isGameOver) return { error: 'The game is over' };
+  const lastMove = { type: 'undoOwn' as const, playerNumber: seat };
+  const gameStatus = `${state.playerNames[seat]} took back a guess`;
+  if (mode === 'race') {
+    const own = state.boards[seat];
+    if (!own?.guesses.length) return { error: 'Nothing of yours to undo' };
+    if (isFinished(own)) return { error: 'Your board is finished' };
+    return { state: { ...state, boards: { ...state.boards, [seat]: { ...own, guesses: own.guesses.slice(0, -1) } }, lastMove, gameStatus } };
+  }
+  const index = state.board.guesses.map(guess => guess.by).lastIndexOf(seat);
+  if (index < 0) return { error: 'Nothing of yours to undo' };
+  const guesses = state.board.guesses.filter((_, i) => i !== index);
   return {
-    ...state, isGameOver: true, currentPlayer: null, winners: [winner], undoVote: null,
-    gameStatus: `${state.playerNames[winner]} wins! Everyone else left.`
+    state: { ...state, board: { ...state.board, guesses }, contributions: addContribution(state.contributions, seat, -1), lastMove, gameStatus }
   };
 }
 
+// Race waits on every unfinished board; Together on nobody in particular
 export function waitingOn(state: GameState): Seat[] {
+  if (modeIn(state) === 'race') return state.isGameOver ? [] : unfinished(state);
   return state.phase === 'summary' ? awaiting(state, ROUND) : [];
 }
 
-// Place 1 is exactly state.winners in every mode; the rest rank by total, lowest first
+// Race progress: 100 once broken, else the best guess's share of exact pegs
+export function progressOf(board: Board, pegs: number): number {
+  if (board.broken) return 100;
+  return Math.round(100 * Math.max(0, ...board.guesses.map(guess => guess.feedback.exact)) / pegs);
+}
+
+const brokenText = (board: Board): string => board.broken ? `Broken in ${plural(board.guesses.length, 'guess', 'guesses')}` : 'Not broken';
+
+// Place 1 is exactly state.winners in every mode
 export function finalStandings(state: GameState): Standing[] {
+  const mode = modeIn(state);
+  if (mode === 'solo') return rankStandings(state, () => 0, () => brokenText(state.board));
+  if (mode === 'together') return rankStandings(state, () => 0, seat => plural(state.contributions[seat] ?? 0, 'guess', 'guesses'));
+  if (mode === 'race') return rankStandings(state, (a, b) => compareRace(state, a, b), seat => brokenText(state.boards[seat] ?? EMPTY_BOARD));
+  // Classic: the rest rank by total, lowest first
   return rankStandings(state, (a, b) => total(state, a) - total(state, b), seat => pointsText(total(state, seat)));
+}
+
+// Broken boards first, by guesses then who finished first; the rest by progress, highest first
+function compareRace(state: GameState, a: Seat, b: Seat): number {
+  const order = (seat: Seat): number => state.finishOrder.indexOf(seat);
+  const brokeA = order(a) >= 0;
+  if (brokeA !== order(b) >= 0) return brokeA ? -1 : 1;
+  if (brokeA) return guessCount(state, a) - guessCount(state, b) || order(a) - order(b);
+  const { pegs } = codeShape(houseRule(state, CODE_RULE));
+  const progress = (seat: Seat): number => progressOf(state.boards[seat] ?? EMPTY_BOARD, pegs);
+  return progress(b) - progress(a);
 }
