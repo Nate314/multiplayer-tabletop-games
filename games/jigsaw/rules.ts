@@ -4,6 +4,7 @@ import { houseRule, houseRulesOf } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { MODE_RULE, addContribution, modeOf, raceProgress, visibleBoards } from '../../shared/puzzleModes.ts';
 import { baseGameState } from '../../shared/seating.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import { clampToTable, gridOf, homeOf, scatter, snaps } from './cut.ts';
 import { jigsawInfo } from './info.ts';
@@ -222,18 +223,49 @@ export function imagesOf(state: GameState): string[] {
   return state.picture.kind === 'photo' ? [state.picture.id] : [];
 }
 
-export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
+// What `viewer` may see; `everything` is the ordinary spectator's. In Race during play a seat's snaps, contributions and
+// last move name the pieces it placed, so only the viewer's own reach them (none for the table and History)
+function viewOf(state: GameState, undoAvailable: boolean, viewer: Seat | null, everything: boolean): Omit<PublicGameState, 'moveCount'> {
+  const open = everything || state.isGameOver || !isRace(state);
+  const mine = <T>(counts: Partial<Record<Seat, T>>) => viewer !== null && viewer in counts ? { [viewer]: counts[viewer] } : {};
   return {
     ...state,
     undoAvailable,
-    boards: visibleBoards(state.boards, viewer, state.isGameOver),
-    progress: raceProgress(state.boards, percentPlaced)
+    boards: everything ? state.boards : visibleBoards(state.boards, viewer, state.isGameOver),
+    progress: isRace(state) ? raceProgress(state.boards, percentPlaced) : {},
+    snaps: open ? state.snaps : mine(state.snaps),
+    contributions: open ? state.contributions : mine(state.contributions),
+    lastMove: open || state.lastMove?.playerNumber === viewer ? state.lastMove : null
   };
 }
 
-// A stand-in until the views task: the winners first, everyone else after
+export const toPublicState = (state: GameState, undoAvailable: boolean, viewer: Seat | null) =>
+  viewOf(state, undoAvailable, viewer, false);
+
+// An ordinary spectator sees every board; a table screen sits in front of the racers and gets the null view
+export const spectatorState = (state: GameState, undoAvailable: boolean, tableScreen: boolean) =>
+  viewOf(state, undoAvailable, null, !tableScreen);
+
+// A Race seat's own board and what names its pieces; nothing else differs per seat
+export function privateSeatView(state: GameState, seat: Seat): Partial<PublicGameState> {
+  if (!isRace(state) || state.isGameOver) return {};
+  return seatFields(toPublicState(state, false, seat), ['boards', 'snaps', 'contributions', 'lastMove']);
+}
+
+// Solo: the one row; Together: everyone shares place 1; Race: the winner first, then by progress (ties share a place)
 export function finalStandings(state: GameState): Standing[] {
-  const winners = state.activePlayers.filter(seat => state.winners.includes(seat));
-  const rest = state.activePlayers.filter(seat => !state.winners.includes(seat));
-  return [...winners.map(seat => ({ seat, place: 1 })), ...rest.map(seat => ({ seat, place: 2 }))];
+  switch (modeOf(state, MODE_RULE)) {
+    case 'solo':
+      return state.activePlayers.slice(0, 1).map(seat => ({ seat, place: 1, score: `${state.count} pieces` }));
+    case 'together':
+      return state.activePlayers.map(seat => ({ seat, place: 1, score: `${state.contributions[seat] ?? 0} placed` }));
+    default: {
+      const progress = raceProgress(state.boards, percentPlaced);
+      const percent = (seat: Seat) => state.winners.includes(seat) ? 101 : progress[seat] ?? 0;
+      const ranked = [...state.activePlayers].sort((a, b) => percent(b) - percent(a));
+      return ranked.map(seat => ({
+        seat, place: 1 + ranked.filter(other => percent(other) > percent(seat)).length, score: `${progress[seat] ?? 0}%`
+      }));
+    }
+  }
 }
