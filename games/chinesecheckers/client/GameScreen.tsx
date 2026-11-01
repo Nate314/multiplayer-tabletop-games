@@ -8,7 +8,7 @@ import animateMove from './animateMove.ts';
 import { livePath, pathFor, pickHole } from './selection.ts';
 import type { Picked } from './selection.ts';
 import { parseHole } from '../board.ts';
-import { isStep, nextLandings } from '../rules.ts';
+import { cannotStart, isStep, nextLandings } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Hole, PublicGameState } from '../types.ts';
 
@@ -16,7 +16,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [picked, setPicked] = useState<Picked>({ moveCount: -1, path: [] });
   const boardAreaRef = useRef<HTMLDivElement>(null);
   const { holes, currentPlayer, activePlayers, isGameOver, undoVote, dismissVote, undoAvailable, moveCount } = gameState;
-  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
+  const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !cannotStart(gameState) &&
+    !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
 
   const path = isMyTurn ? livePath(gameState, playerNumber, pathFor(picked, moveCount)) : [];

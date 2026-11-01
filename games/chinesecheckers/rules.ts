@@ -13,7 +13,9 @@ export const SEAT_COLORS: Record<Seat, string> = { 1: 'Red', 2: 'Blue', 3: 'Gree
 
 const NEEDS_PLAYABLE_COUNT = 'Chinese Checkers needs 2, 3, 4 or 6 players';
 
-const isPlayable = (state: GameState): boolean => PLAYABLE_COUNTS.includes(state.activePlayers.length);
+// Five seated cannot start; a table that drops to five after the first move plays on
+export const cannotStart = (state: Pick<GameState, 'started' | 'activePlayers'>): boolean =>
+  !state.started && !PLAYABLE_COUNTS.includes(state.activePlayers.length);
 
 // Only for a seat that still has a point
 export function targetOf(state: GameState, seat: Seat): PointIndex {
@@ -25,11 +27,11 @@ export function marblesHome(state: GameState, seat: Seat): number {
   return POINT_HOLES[targetOf(state, seat)].filter(hole => state.holes[holeKey(hole)] === seat).length;
 }
 
-// Every hole of the target is taken and at least one by the seat's own marble: opponents left there count for it
+// Every hole of the target is taken and the seat's own marbles fill all but at most one: a marble left there cannot block it
 export function hasWon(state: GameState, seat: Seat): boolean {
   if (state.points[seat] === undefined) return false;
   const target = POINT_HOLES[targetOf(state, seat)];
-  return target.every(hole => state.holes[holeKey(hole)] !== undefined) && marblesHome(state, seat) > 0;
+  return target.every(hole => state.holes[holeKey(hole)] !== undefined) && marblesHome(state, seat) >= MARBLE_COUNT - 1;
 }
 
 const sameHole = (a: Hole, b: Hole): boolean => a.q === b.q && a.r === b.r;
@@ -107,7 +109,7 @@ function giveTurn(state: GameState, order: Seat[], notes: string[]): GameState {
     isGameOver: true,
     currentPlayer: null,
     winners,
-    gameStatus: `Nobody can move. ${namesOf(state, winners)} win with the most marbles home`
+    gameStatus: `Nobody can move. ${namesOf(state, winners)} ${winners.length === 1 ? 'wins' : 'win'} with the most marbles home`
   };
 }
 
@@ -145,8 +147,7 @@ export function toPublicState(state: GameState, undoAvailable: boolean): Omit<Pu
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
-  // A table that drops to five after the first move plays on
-  if (!state.started && !isPlayable(state)) return { error: NEEDS_PLAYABLE_COUNT };
+  if (cannotStart(state)) return { error: NEEDS_PLAYABLE_COUNT };
   const input = asRecord(move);
   if (input?.type !== 'move') return { error: 'Unknown move type' };
   const path = asPath(input.path);
@@ -159,10 +160,11 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   const next: GameState = { ...state, holes, lastMove };
   const name = state.playerNames[seat];
 
-  if (hasWon(next, seat)) {
-    return {
-      state: { ...next, isGameOver: true, winners: [seat], currentPlayer: null, gameStatus: `${name} filled the far point and wins!` }
-    };
+  // Any move can complete a target, the mover's or another seat's; the mover is checked first
+  const winner = seatsFrom(next, seat).find(other => hasWon(next, other));
+  if (winner !== undefined) {
+    const gameStatus = `${state.playerNames[winner]} filled the far point and wins!`;
+    return { state: { ...next, isGameOver: true, winners: [winner], currentPlayer: null, gameStatus } };
   }
   // The mover comes last, so they move again only when nobody else can
   return { state: giveTurn(next, seatsFrom(next, seat + 1), [moveSummary(name, lastMove, false)]) };

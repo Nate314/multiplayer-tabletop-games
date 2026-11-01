@@ -29,8 +29,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Someone left a marble in my target point. Can I still win?',
-    answer: 'Yes. You win as soon as every hole of your target point is occupied and at least one of the marbles ' +
-      'there is yours. Opponent marbles left there count toward filling it, so nobody can block you by staying put.'
+    answer: 'Yes. You win as soon as every hole of your target point is occupied and at least nine of the ten ' +
+      'marbles there are yours. One opponent marble left there counts toward filling it, so nobody can block you ' +
+      'by staying put. Any move that completes a point that way, even another player\'s, makes its owner win.'
   },
   {
     question: 'Why can five players not start?',
@@ -45,7 +46,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What happens if someone leaves?',
-    answer: 'Their marbles are taken off the board and play goes on. The last player left wins.'
+    answer: 'A player who disconnects keeps their seat and marbles, and can rejoin. If the others dismiss them, ' +
+      'their marbles are taken off the board and play goes on. The last player left wins.'
   },
   {
     question: 'Can I tell the colors apart without seeing color?',

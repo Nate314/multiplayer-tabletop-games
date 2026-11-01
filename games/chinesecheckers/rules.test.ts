@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chinesecheckers } from './index.ts';
-import { POINT_HOLES, holeKey } from './board.ts';
+import { HOLES, POINT_HOLES, holeKey, pointOf } from './board.ts';
 import {
   finalStandings, hasWon, isLegalPath, marblesHome, moveSummary, nextLandings, onPlayerLeft, toPublicState
 } from './rules.ts';
@@ -191,6 +191,19 @@ test('when nobody can move the game ends with the most marbles home winning', ()
   assert.equal(next.gameStatus, 'Nobody can move. Alice and Cara win with the most marbles home');
 });
 
+test('when nobody can move and one player has the most marbles home, that player wins', () => {
+  // Every hole is taken, so when Bob leaves on his turn nobody can move. Alice has two marbles home, Cara none
+  const owner = (hole: Hole): Seat => {
+    if (pointOf(hole) === 1) return 1;
+    return POINT_HOLES[3].slice(0, 2).some(home => holeKey(home) === holeKey(hole)) ? 1 : 3;
+  };
+  const state = board(3, HOLES.map((hole): Marble => [hole.q, hole.r, owner(hole)]), 2);
+  const next = onPlayerLeft({ ...state, activePlayers: [1, 3] }, 2);
+  assert.equal(next.isGameOver, true);
+  assert.deepEqual(next.winners, [1]);
+  assert.equal(next.gameStatus, 'Nobody can move. Alice wins with the most marbles home');
+});
+
 test('filling the opposite point wins and ends the game', () => {
   const rest = inPoint(3, 1).filter(([q, r]) => !(q === 1 && r === -5));
   const next = ok(play(board(2, [...rest, [1, -4, 1], [0, 4, 2]]), 1, at([1, -4], [1, -5])));
@@ -214,6 +227,26 @@ test('a target full of opponent marbles is not a win', () => {
   assert.equal(hasWon(state, 2), false);
 });
 
+test('a full target with only four own marbles is not a win', () => {
+  const state = board(2, [...inPoint(3, 2, 6), ...POINT_HOLES[3].slice(6).map(({ q, r }): Marble => [q, r, 1])]);
+  assert.equal(marblesHome(state, 1), 4);
+  assert.equal(hasWon(state, 1), false);
+});
+
+test('a target holding ten own marbles is a win', () => {
+  assert.equal(hasWon(board(2, inPoint(3, 1)), 1), true);
+});
+
+test("a move that completes another seat's target makes that seat the winner", () => {
+  // Bob has nine marbles in point 0, his target; Alice steps into its last hole
+  const bobs = inPoint(0, 2).filter(([q, r]) => !(q === -1 && r === 5));
+  const next = ok(play(board(2, [...bobs, [-1, 4, 1], BOB_AWAY]), 1, at([-1, 4], [-1, 5])));
+  assert.equal(next.isGameOver, true);
+  assert.deepEqual(next.winners, [2]);
+  assert.equal(next.currentPlayer, null);
+  assert.equal(next.gameStatus, 'Bob filled the far point and wins!');
+});
+
 test('the others are ranked by marbles home', () => {
   // Alice's target is point 3, Bob's point 5, Cara's point 1
   const state = { ...board(3, [...inPoint(3, 1), ...inPoint(5, 2, 1), ...inPoint(1, 3, 3)]), isGameOver: true, winners: [1] };
@@ -224,7 +257,7 @@ test('the others are ranked by marbles home', () => {
   ]);
 });
 
-test('a player who leaves loses their marbles and play goes on', () => {
+test('a dismissed player loses their marbles and play goes on', () => {
   const state = { ...lobby(3), started: true, currentPlayer: 2 };
   const next = removePlayer(chinesecheckers, state, 2);
   assert.ok(Object.values(next.holes).every(owner => owner !== 2));

@@ -72,16 +72,18 @@ test.describe('Chinese Checkers seating', () => {
     const table = await seat('chinesecheckers', NAMES.slice(0, 5));
     const [alice] = table.pages;
     await expect(status(alice)).toHaveText('Chinese Checkers needs 2, 3, 4 or 6 players');
+    await expect(turn(alice)).toHaveText('Waiting for a player to join or leave');
+    await expect(alice.locator('.hint')).toHaveCount(0);
     await expect(alice.locator('.marble')).toHaveCount(0);
-    await hole(alice, '0,0').click();
-    await expect(targets(alice)).toHaveCount(0);
+    await expect(alice.locator('.board')).toHaveClass(/dimmed/);
 
-    // Even with a marble placed, the first move is refused
+    // Even with a marble placed, it does not glow and the board takes no clicks
     await table.patch({ holes: { '0,0': 1 }, currentPlayer: 1 });
     await expect(marbleAt(alice, '0,0')).toHaveCount(1);
-    await clickPath(alice, '0,0', '1,0');
-    await expect(alice.locator('.game-status-error')).toHaveText('Chinese Checkers needs 2, 3, 4 or 6 players');
-    await expect(marbleAt(alice, '0,0')).toHaveCount(1);
+    await expect(marbleAt(alice, '0,0')).not.toHaveClass(/movable/);
+    await expect(alice.locator('.board')).toHaveClass(/dimmed/);
+    await expect(alice.locator('.hint')).toHaveCount(0);
+    await expect(status(alice)).toHaveText('Chinese Checkers needs 2, 3, 4 or 6 players');
     expect((await table.state<{ started: boolean }>()).started).toBe(false);
   });
 
@@ -234,7 +236,7 @@ test.describe('Chinese Checkers rules', () => {
     }
   });
 
-  test('a player who leaves loses their marbles and play goes on', async ({ seat }) => {
+  test('a dismissed player loses their marbles and play goes on', async ({ seat }) => {
     const table = await seat('chinesecheckers', NAMES.slice(0, 3));
     const [alice, bob, cara] = table.pages;
     await craft(table, { '-4,0': 1, '-3,0': 2, '-1,0': 2, '0,-4': 3 });
