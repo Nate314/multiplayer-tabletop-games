@@ -222,6 +222,7 @@ test.describe('Jigsaw rules', () => {
       // The photo is served once by its id
       expect(await bob.evaluate(async src => (await fetch(src)).headers.get('content-type'), url)).toMatch(/^image\//);
 
+      await agreeToHouseRules(alice, bob);
       await table.patch({ board: layout(48, [0]) });
       await place(alice, 0);
       await expect(placedCount(bob)).toHaveText('1 of 48 placed');
