@@ -17,7 +17,7 @@ test('every registered game has the spec\'s category', () => {
     card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
     tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
-    classic: ['backgammon', 'checkers', 'chess', 'connectfour', 'mancala', 'parchisi', 'quoridor'],
+    classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'connectfour', 'mancala', 'parchisi', 'quoridor'],
     strategy: ['catan', 'monopoly', 'risk', 'splendor', 'tickettoride'],
     party: ['jenga', 'pictionary']
   };
@@ -25,6 +25,6 @@ test('every registered game has the spec\'s category', () => {
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
   assert.deepEqual(actual, sorted);
   const grouped = groupByCategory(GAMES).flatMap(g => g.games.map(game => game.info.id));
-  assert.equal(grouped.length, 33);
-  assert.equal(new Set(grouped).size, 33);
+  assert.equal(grouped.length, 34);
+  assert.equal(new Set(grouped).size, 34);
 });
