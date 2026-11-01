@@ -94,9 +94,11 @@ test('Solo entries are moves and Together entries are actions', () => {
 
   const together = lobby(2, 'together');
   assert.equal(act(together, 2, enter(0, 5)).board.entries[0], 5);
-  assert.deepEqual(applyMove(sudoku, together, 1, enter(0, 5)), { error: 'Wrong kind of entry for this mode' });
+  // Nobody holds the turn, so the platform refuses a move before the game sees it
+  assert.deepEqual(applyMove(sudoku, together, 1, enter(0, 5)), { error: 'Not your turn' });
+  assert.deepEqual(sudoku.applyMove(together, 1, enter(0, 5), seeded(1), 0), { error: 'Wrong kind of entry for this mode' });
   const race = lobby(2, 'race');
-  assert.deepEqual(applyMove(sudoku, race, 1, erase(0)), { error: 'Wrong kind of entry for this mode' });
+  assert.deepEqual(sudoku.applyMove(race, 1, erase(0), seeded(1), 0), { error: 'Wrong kind of entry for this mode' });
 });
 
 test('bad cells, digits and types are refused', () => {
@@ -140,11 +142,11 @@ test('Together: a correct entry is locked and a wrong one can be replaced by any
   assert.equal(state.board.by[40], 2);
 });
 
-test('Together: you may erase your own or a wrong entry only', () => {
+test('Together: a correct entry is locked against erasing, even by its owner', () => {
   let state = lobby(2, 'together');
   state = act(state, 1, enter(0, state.solution[0]));
-  assert.equal(refusal(state, 2, erase(0)), 'You can only erase your own or wrong entries');
-  assert.equal(refusal(state, 1, erase(0)), 'That square is already correct');
+  assert.equal(refusal(state, 2, erase(0)), 'A correct entry is locked');
+  assert.equal(refusal(state, 1, erase(0)), 'A correct entry is locked');
   assert.equal(refusal(state, 1, erase(40)), 'That square is empty');
 
   state = act(state, 1, enter(40, wrong(state, 40)));
@@ -343,4 +345,45 @@ test('allowsUndoVote only in Solo', () => {
   assert.equal(sudoku.allowsUndoVote!(lobby(1, 'solo')), true);
   assert.equal(sudoku.allowsUndoVote!(lobby(2, 'together')), false);
   assert.equal(sudoku.allowsUndoVote!(lobby(2, 'race')), false);
+});
+
+test('Together and Race have no turns; Solo keeps seat 1 to move', () => {
+  assert.equal(lobby(1, 'solo').currentPlayer, 1);
+  assert.equal(lobby(2, 'together').currentPlayer, null);
+  assert.equal(lobby(3, 'race').currentPlayer, null);
+
+  const together = lobby(3, 'together');
+  let state = act(together, 1, enter(0, wrong(together, 0)));
+  assert.equal(state.currentPlayer, null);
+  state = removePlayer(sudoku, state, 2, seeded(1));
+  assert.equal(state.currentPlayer, null);
+  assert.equal(state.isGameOver, false);
+  state = act(state, 3, enter(40, state.solution[40]));
+  assert.equal(state.currentPlayer, null);
+  assert.equal(undo(state, 3).currentPlayer, null);
+});
+
+test('re-entering the digit a square holds changes and records nothing', () => {
+  for (const mode of ['together', 'race'] as const) {
+    const state = act(lobby(2, mode), 1, enter(40, 5));
+    const again = act(state, 1, enter(40, 5));
+    assert.deepEqual(again, state);
+    assert.equal(sudoku.recordsAction!(state, 1, enter(40, 5)), false);
+    assert.equal(sudoku.recordsAction!(state, 1, enter(40, 6)), true);
+    assert.equal(again.ownMoves[1]?.length, 1);
+  }
+});
+
+test('Together: a second player typing the same correct digit is a silent no-op', () => {
+  const together = lobby(2, 'together');
+  const state = act(together, 1, enter(0, together.solution[0]));
+  const second = act(state, 2, enter(0, state.solution[0]));
+  assert.deepEqual(second, state);
+  assert.equal(second.board.by[0], 1);
+  assert.equal(sudoku.recordsAction!(state, 2, enter(0, state.solution[0])), false);
+});
+
+test('Solo refuses re-entering the digit a square holds', () => {
+  const state = move(lobby(1, 'solo'), 1, enter(40, 5));
+  assert.deepEqual(applyMove(sudoku, state, 1, enter(40, 5)), { error: 'That square already holds 5' });
 });

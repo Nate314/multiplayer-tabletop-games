@@ -46,7 +46,8 @@ export function createGameState(gameId: string): GameState {
   };
 }
 
-// A new puzzle only when there is none or the difficulty changed, so a join does not reshuffle it
+// A new puzzle only when there is none or the difficulty changed, so a join does not reshuffle it.
+// Together and Race have no turns, so nobody is currentPlayer; Solo keeps the platform's seat 1
 export function resetLobby(state: GameState, random: Random): GameState {
   const difficulty = houseRule(state, DIFFICULTY);
   const puzzle = state.givens.length === 0 || state.difficulty !== difficulty
@@ -63,6 +64,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     ownMoves: {},
     raceWrong: {},
     lastMove: null,
+    currentPlayer: playsAtOnce(mode) ? null : state.currentPlayer,
     gameStatus: STATUS[mode]
   };
 }
@@ -103,8 +105,10 @@ export function place(state: GameState, seat: Seat, cell: unknown, digit: number
   const before = board.entries[cell];
   const beforeBy = board.by[cell];
   if (digit === 0 && before === 0) return { error: 'That square is empty' };
+  // The digit the square already holds changes nothing: silent in Together and Race, refused as a Solo move
+  if (digit && digit === before) return playsAtOnce(mode) ? { state } : { error: `That square already holds ${digit}` };
   if (mode === 'together' && before === state.solution[cell]) {
-    return { error: digit === 0 && beforeBy !== seat ? 'You can only erase your own or wrong entries' : 'That square is already correct' };
+    return { error: digit === 0 ? 'A correct entry is locked' : 'That square is already correct' };
   }
 
   const entries = [...board.entries];
@@ -135,6 +139,9 @@ function entry(state: GameState, seat: Seat, input: Record<string, unknown>, atO
 }
 
 const isEntry = (input: Record<string, unknown> | null): boolean => input?.type === 'enter' || input?.type === 'erase';
+// An entry of the digit the square already holds, which place leaves as it is
+const repeatsEntry = (state: GameState, seat: Seat, input: Record<string, unknown> | null): boolean =>
+  input?.type === 'enter' && isCell(input.cell) && isDigit(input.digit) && boardOf(state, seat)?.entries[input.cell] === input.digit;
 
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
   if (state.isGameOver) return { error: GAME_OVER };
@@ -165,8 +172,9 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   return { error: INVALID };
 }
 
-export function recordsAction(state: GameState, _seat: Seat, action: unknown): boolean {
-  return isEntry(asRecord(action)) && playsAtOnce(modeOfState(state));
+export function recordsAction(state: GameState, seat: Seat, action: unknown): boolean {
+  const input = asRecord(action);
+  return isEntry(input) && playsAtOnce(modeOfState(state)) && !repeatsEntry(state, seat, input);
 }
 
 export function allowsUndoVote(state: GameState): boolean {
@@ -206,8 +214,7 @@ function percentFilled(state: GameState, board: Board): number {
 function shownLastMove(state: GameState, viewer: Seat | null, seesEverything: boolean): PublicLastMove | null {
   const { lastMove } = state;
   if (!lastMove || seesEverything || state.isGameOver || modeOfState(state) !== 'race' || lastMove.playerNumber === viewer) return lastMove;
-  const { type, playerNumber } = lastMove;
-  return lastMove.type === 'enter' && lastMove.finished ? { type, playerNumber, finished: true } : { type, playerNumber };
+  return { type: lastMove.type, playerNumber: lastMove.playerNumber };
 }
 
 // `seesEverything` is an ordinary spectator: every Race board and the full last move, still no solution or notes

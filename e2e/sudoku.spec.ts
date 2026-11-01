@@ -109,6 +109,8 @@ test.describe('Sudoku rules', () => {
     await expect(mode(alice)).toHaveText('Together, Medium');
     await enter(alice, 0, 5);
     await expectCell(bob, 0, '5');
+    // Nobody holds a turn, so neither tab claims one
+    for (const page of [alice, bob]) await expect(page).toHaveTitle('Sudoku · 2 players');
     await enter(bob, 1, 3);
     await expectCell(alice, 1, '3');
     await enter(alice, 2, 4);
@@ -142,10 +144,11 @@ test.describe('Sudoku rules', () => {
 
     await enter(bob, 0, 5);
     await expectCell(alice, 0, '5');
-    await pad(alice, 1).click();
-    await expect(status(alice)).toHaveText('That square is already correct');
-    await bob.getByRole('button', { name: 'Erase' }).click();
-    await expect(status(bob)).toHaveText('That square is already correct');
+    // A locked square offers no digit and no Erase, to its owner or anyone else
+    for (const page of [alice, bob]) {
+      await expect(pad(page, 1)).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Erase' })).toBeDisabled();
+    }
     await expectCell(alice, 0, '5');
   });
 
@@ -275,13 +278,21 @@ test.describe('Sudoku rules', () => {
     await enter(alice, 0, 2);
     await pad(alice, 7).click();
     await expect(cell(alice, 0).locator('.notes')).toHaveText('27');
-    await expectCell(alice, 0, 'empty');
+    await expectCell(alice, 0, 'empty, notes 2 7');
     await pad(alice, 2).click(); // a second press removes the mark
     await expect(cell(alice, 0).locator('.notes')).toHaveText('7');
     await enter(bob, 1, 3);
     await expectCell(alice, 1, '3');
     await expect(cell(bob, 0).locator('.notes')).toHaveCount(0);
 
+    // A note on a square holding an entry is ignored, so none shows once the entry is erased
+    await enter(bob, 2, 1);
+    await expectCell(alice, 2, '1, wrong');
+    await enter(alice, 2, 6);
+    await bob.getByRole('button', { name: 'Erase' }).click();
+    await expectCell(alice, 2, 'empty');
+
+    await cell(alice, 0).click();
     await pencil.click();
     await pad(alice, 5).click(); // writing a digit clears your marks there
     await expectCell(alice, 0, '5');
@@ -382,6 +393,36 @@ test.describe('Sudoku controls', () => {
     const grid = (await alice.locator('.sudoku-grid').boundingBox())!;
     expect(grid.x).toBeGreaterThanOrEqual(0);
     expect(grid.x + grid.width).toBeLessThanOrEqual(alice.viewportSize()!.width);
+
+    // At the narrowest phone, all nine pencil marks are readable and fit inside their square
+    await alice.setViewportSize({ width: 320, height: 640 });
+    await cell(alice, 0).tap();
+    await alice.getByRole('button', { name: 'Pencil' }).tap();
+    for (let digit = 1; digit <= 9; digit++) await pad(alice, digit).tap();
+    await expectCell(alice, 0, 'empty, notes 1 2 3 4 5 6 7 8 9');
+    // Each digit's inked box: the text box is taller than the glyph, so the glyph is placed from the font's baseline
+    const marks = await cell(alice, 0).evaluate(square => {
+      const box = square.getBoundingClientRect();
+      const context = document.createElement('canvas').getContext('2d')!;
+      return [...square.querySelectorAll('.notes span')].map(mark => {
+        const range = document.createRange();
+        range.selectNodeContents(mark);
+        const text = range.getBoundingClientRect();
+        const style = getComputedStyle(mark);
+        context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        const metrics = context.measureText(mark.textContent!);
+        const baseline = text.top + metrics.fontBoundingBoxAscent;
+        const glyph = { left: text.left, right: text.right, top: baseline - metrics.actualBoundingBoxAscent, bottom: baseline + metrics.actualBoundingBoxDescent };
+        const inside = glyph.left >= box.left && glyph.right <= box.right && glyph.top >= box.top && glyph.bottom <= box.bottom;
+        return { size: parseFloat(style.fontSize), inside, ...glyph };
+      });
+    });
+    expect(marks).toHaveLength(9);
+    for (const mark of marks) expect(mark.inside).toBe(true);
+    for (const at of [0, 1, 3, 4, 6, 7]) expect(marks[at].right).toBeLessThanOrEqual(marks[at + 1].left); // three to a row, apart
+    for (const at of [0, 1, 2, 3, 4, 5]) expect(marks[at].bottom).toBeLessThanOrEqual(marks[at + 3].top); // and rows apart
+    expect(Math.min(...marks.map(mark => mark.size))).toBeGreaterThanOrEqual(9);
+    await alice.getByRole('button', { name: 'Pencil' }).tap();
     await cell(alice, 0).tap();
     await pad(alice, 5).tap();
     await expect(status(alice)).toHaveText('Solved!');

@@ -22,19 +22,22 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const { entries } = shownBoard(gameState, owner);
   const canPlay = !isGameOver && activePlayers.includes(playerNumber) && !undoVote && !dismissVote;
   const target = canPlay && selected !== null && !givens[selected] ? selected : null;
+  // A correct Together entry is locked: nobody may write over or erase it
+  const locked = mode === 'together' && target !== null && !!entries[target] && !(wrong ?? []).includes(target);
 
   // Solo enters by moves; Together and Race by actions, as anyone may play at any time
   const sendEntry = (entry: { type: 'enter'; cell: number; digit: number } | { type: 'erase'; cell: number }) =>
     mode === 'solo' ? gameService.makeMove(entry) : gameService.sendAction(entry);
 
   function digit(d: number) {
-    if (target === null) return;
-    if (pencil) gameService.sendAction({ type: 'note', cell: target, digit: d });
-    else sendEntry({ type: 'enter', cell: target, digit: d });
+    if (target === null || locked) return;
+    if (pencil) {
+      if (!entries[target]) gameService.sendAction({ type: 'note', cell: target, digit: d }); // a note never goes on an entry
+    } else sendEntry({ type: 'enter', cell: target, digit: d });
   }
 
   function erase() {
-    if (target !== null && entries[target]) sendEntry({ type: 'erase', cell: target });
+    if (target !== null && !locked && entries[target]) sendEntry({ type: 'erase', cell: target });
   }
 
   // Arrows pass over givens, which cannot be selected, and stop at the edge
@@ -81,7 +84,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           <div className="board-wrong" role="status">Your board is full, but something is wrong</div>
         )}
         {mode === 'race' && <RaceProgress progress={gameState.progress} playerNames={gameState.playerNames} viewer={playerNumber} />}
-        <DigitPad disabled={target === null} pencil={pencil} canErase={target !== null && !!entries[target]}
+        <DigitPad disabled={target === null || locked} pencil={pencil} canErase={target !== null && !!entries[target]}
           onDigit={digit} onErase={erase} onPencil={() => setPencil(on => !on)} />
         <div className="sudoku-controls">
           {mode === 'solo' ? (

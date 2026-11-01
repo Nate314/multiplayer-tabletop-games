@@ -172,8 +172,9 @@
     width: 100%;
     height: 100%;
     color: var(--note-text);
-    font-size: 2.4cqi;
-    font-weight: 500;
+    /* Readable on a phone: 9px at 320px wide, three to a row still fit a cell there */
+    font-size: clamp(9px, 2.8cqi, 15px);
+    font-weight: 600;
     place-items: center;
   }
 

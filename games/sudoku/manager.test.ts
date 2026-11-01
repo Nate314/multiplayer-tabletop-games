@@ -117,3 +117,29 @@ test('History and the game file never hold the solution mid-game', () => {
   const tableSteps = file.file.steps.slice(0, -1).map(step => ({ ...step, views: undefined }));
   assert.ok(hidesSecrets(JSON.stringify(tableSteps)));
 });
+
+test('Together has no turn: a seat disconnects and is dismissed while play goes on', () => {
+  const manager = gameWith('A', 'B', 'C');
+  const state = raw(manager);
+  const [a, b, c] = openCells(state);
+  assert.equal(manager.getState(ROOM)?.currentPlayer, null);
+  ok(manager.action(ROOM, 1, enter(a, state.solution[a])));
+  manager.disconnect(ROOM, 1);
+  const during = ok(manager.action(ROOM, 2, enter(b, state.solution[b])));
+  assert.equal(during.currentPlayer, null);
+  assert.equal(during.isGameOver, false);
+  ok(manager.requestDismiss(ROOM, 2, 1));
+  const after = ok(manager.voteDismiss(ROOM, 3, true));
+  assert.deepEqual(after.activePlayers, [2, 3]);
+  const later = ok(manager.action(ROOM, 3, enter(c, state.solution[c])));
+  assert.equal(later.currentPlayer, null);
+  assert.equal(later.isGameOver, false);
+});
+
+test('re-entering the same digit is not a move', () => {
+  const manager = gameWith('A', 'B');
+  const state = raw(manager);
+  const [a] = openCells(state);
+  const before = ok(manager.action(ROOM, 1, enter(a, state.solution[a]))).moveCount;
+  assert.equal(ok(manager.action(ROOM, 2, enter(a, state.solution[a]))).moveCount, before);
+});

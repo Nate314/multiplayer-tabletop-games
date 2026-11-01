@@ -1,4 +1,4 @@
-import { boxOf, cellName, colOf, rowOf } from '../grid.ts';
+import { cellName, colOf, peers, rowOf } from '../grid.ts';
 
 type GridProps = {
   givens: readonly number[];
@@ -18,8 +18,7 @@ const track = (index: number) => index + 1 + Math.floor(index / 3);
 // The 9x9 grid: every cell a button, givens bold and never selectable
 export default function Grid({ givens, entries, notes, wrong, selected, lastCell, onSelect }: GridProps) {
   const selectedDigit = selected === null ? 0 : givens[selected] || entries[selected];
-  const related = (cell: number) => selected !== null && cell !== selected
-    && (rowOf(cell) === rowOf(selected) || colOf(cell) === colOf(selected) || boxOf(cell) === boxOf(selected));
+  const related = selected === null ? [] : peers(selected);
 
   return (
     <div className="sudoku-grid" role="group" aria-label="Sudoku grid">
@@ -29,11 +28,12 @@ export default function Grid({ givens, entries, notes, wrong, selected, lastCell
         const classNames = ['cell'];
         if (given) classNames.push('given');
         if (cell === selected) classNames.push('selected');
-        if (related(cell)) classNames.push('related');
+        if (related.includes(cell)) classNames.push('related');
         if (digit && digit === selectedDigit && cell !== selected) classNames.push('same-digit');
         if (isWrong) classNames.push('wrong');
         if (cell === lastCell) classNames.push('last-move');
         const mask = digit ? 0 : notes[cell] ?? 0;
+        const marks = DIGITS.filter(d => mask & (1 << d));
         return (
           <button
             key={cell}
@@ -41,7 +41,7 @@ export default function Grid({ givens, entries, notes, wrong, selected, lastCell
             className={classNames.join(' ')}
             style={{ gridRow: track(rowOf(cell)), gridColumn: track(colOf(cell)) }}
             data-cell={cell}
-            aria-label={`${capitalized(cellName(cell))}, ${digit || 'empty'}${isWrong ? ', wrong' : ''}`}
+            aria-label={`${capitalized(cellName(cell))}, ${digit || 'empty'}${isWrong ? ', wrong' : ''}${marks.length ? `, notes ${marks.join(' ')}` : ''}`}
             aria-pressed={onSelect && !given ? cell === selected : undefined}
             disabled={!onSelect || !!given}
             onClick={() => onSelect?.(cell)}
