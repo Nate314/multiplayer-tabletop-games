@@ -7,7 +7,7 @@ export default function HistoryBoard({ gameState, viewer }: { gameState: PublicG
   const seats: Seat[] = viewer === 2 ? [2, 1] : [1, 2];
   const lastShots = gameState.lastMove?.shots ?? [];
   return (
-    <div className="naval-seas history-board">
+    <div className="naval-seas naval-history">
       {seats.map(seat => (
         <section key={seat} className="sea">
           <h3 className="sea-title">{gameState.playerNames[seat]}</h3>
