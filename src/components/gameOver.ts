@@ -2,10 +2,10 @@ import { plural } from '../../shared/text.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
 
-// 'Alice wins', 'Alice and Bob win', 'Alice, Bob and Cara win', or 'Draw' when nobody won
-export function winnerLine({ winners, playerNames }: BasePublicState): string {
+// 'Alice wins', 'Alice and Bob win', 'Alice, Bob and Cara win', or 'Draw' when nobody won ('Game over' for one player)
+export function winnerLine({ winners, playerNames, activePlayers }: BasePublicState): string {
   const names = winners.map(seat => playerNames[seat]);
-  if (names.length === 0) return 'Draw';
+  if (names.length === 0) return activePlayers.length < 2 ? 'Game over' : 'Draw';
   if (names.length === 1) return `${names[0]} wins`;
   return `${names.slice(0, -1).join(', ')} and ${names.at(-1)} win`;
 }

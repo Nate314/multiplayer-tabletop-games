@@ -19,6 +19,7 @@ test('lobby, in-game and spectator titles', () => {
   assert.equal(tabTitle(info, running(), [1]), 'Test · 4 players');
   assert.equal(tabTitle(info, running(), [2]), '● Your turn · Test · 4 players');
   assert.equal(tabTitle(info, running(), []), 'Test · 4 players');
+  assert.equal(tabTitle(info, view([1], { started: true }), []), 'Test · 1 player');
 });
 
 test('a vote waiting on you wins over your turn', () => {
@@ -54,6 +55,7 @@ test('alert text holds only the game, the ID and public names', () => {
   const over = running({ isGameOver: true, winners: [1] });
   assert.deepEqual(alertText(info, over, 'gameOver'), { title: 'Game over', body: 'Ann won Test' });
   assert.equal(alertText(info, running({ isGameOver: true }), 'gameOver').body, 'Draw in Test');
+  assert.equal(alertText(info, view([1], { started: true, isGameOver: true }), 'gameOver').body, 'Test is over');
   assert.deepEqual(alertText(info, over, 'turn'), { title: 'Your turn', body: 'Test · g1' });
   assert.deepEqual(alertText(info, over, 'vote'), { title: 'A vote is waiting for you', body: 'Test · g1' });
   assert.deepEqual(alertText(info, over, 'turn', 'Bob'), { title: 'Your turn, Bob', body: 'Test · g1' });
