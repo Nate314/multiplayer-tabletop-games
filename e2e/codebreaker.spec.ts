@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { Locator, Page } from '@playwright/test';
 import {
   agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, setPreference, test, undo,
@@ -352,6 +353,116 @@ test.describe('Code Breaker rules', () => {
     } finally {
       await dana.context().close();
     }
+  });
+});
+
+test.describe('Code Breaker endings, leaving and hidden code', () => {
+  const misses = (count: number, by: number): Guess[] => Array.from({ length: count }, () => ({ pegs: WRONG, feedback: feedback(CODE, WRONG), by }));
+
+  test('Together: ten misses lose for everyone', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { mode: 'together', code: CODE });
+    await table.patch({ board: { guesses: misses(9, 1), broken: false } });
+    await expect(row(bob, 9).locator('.cb-answer')).toHaveCount(1);
+    await guess(bob, WRONG, 10);
+    for (const page of [alice, bob]) {
+      await expect(gameOver(page)).toBeVisible();
+      await expect(status(page)).toHaveText('The code was not broken');
+      await expect(codeRow(page)).toHaveAccessibleName('Code');
+    }
+  });
+
+  test('Race: if nobody breaks the code, nobody wins', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { mode: 'race', code: CODE });
+    await table.patch({ boards: { 1: { guesses: misses(9, 1), broken: false }, 2: { guesses: misses(9, 2), broken: false } } });
+    await expect(row(alice, 9, 'Your guesses').locator('.cb-answer')).toHaveCount(1);
+    await guess(alice, WRONG, 10, 'Your guesses');
+    await expect(turn(alice)).toHaveText('Out of guesses. Waiting for the others');
+    await expect(gameOver(alice)).toHaveCount(0);
+    await guess(bob, WRONG, 10, 'Your guesses');
+    for (const page of [alice, bob]) {
+      await expect(gameOver(page)).toBeVisible();
+      await expect(status(page)).toHaveText('Nobody broke the code');
+    }
+  });
+
+  test('Together: when a player leaves, the others play on', async ({ seat }) => {
+    test.slow(); // three seats plus leave and dismiss flows
+    const { table, pages: [alice, bob, cara] } = await start(seat, ['Alice', 'Bob', 'Cara']);
+    await table.patch({ code: CODE });
+    await guess(cara, WRONG, 1);
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(alice.locator('.presence-player[data-disconnected]')).toHaveCount(0);
+    await expect(gameOver(alice)).toHaveCount(0);
+    await expect(turn(alice)).toHaveText('Anyone can guess at any time');
+    await guess(bob, WRONG, 2);
+    await guess(alice, CODE, 3);
+    for (const page of [alice, bob]) await expect(status(page)).toHaveText('Broken in 3 guesses!');
+  });
+
+  test('Race: a leaver\'s board is dropped, which can end the race', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { mode: 'race', code: CODE });
+    await guess(alice, WRONG, 1, 'Your guesses');
+    await guess(alice, CODE, 2, 'Your guesses');
+    await guess(bob, WRONG, 1, 'Your guesses');
+    // Bob could still match Alice's 2, so the race waits for him until he is dismissed
+    await expect(gameOver(alice)).toHaveCount(0);
+    await leave(bob);
+    await dismiss('Bob', alice);
+    await expect(status(alice)).toHaveText('Alice wins, breaking the code in 2 guesses');
+    await expect(gameOver(alice)).toBeVisible();
+  });
+
+  test('Classic: a spectator the maker allows sees the code', async ({ seat, browser, server }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
+    await enter(alice, CODE, 'Set code');
+    await guess(bob, WRONG, 1);
+    const dana = await watch(browser, server, 'codebreaker', table.gameId, 'Dana');
+    try {
+      await expect(codeRow(dana)).toHaveAccessibleName('Code, hidden');
+      await dana.locator('.spectator-seats').getByRole('button', { name: 'Alice' }).click();
+      await dana.getByRole('button', { name: "Ask to see Alice's hand" }).click();
+      await expect(alice.getByText('Dana (watching) wants to see your hand')).toBeVisible();
+      await alice.getByRole('button', { name: 'Allow', exact: true }).click();
+      await expect(codeRow(dana)).toHaveAccessibleName('Code');
+      await expectNames(codeRow(dana).getByRole('img'), CODE.map(name));
+    } finally {
+      await dana.context().close();
+    }
+  });
+
+  test('Classic: the move descriptions, the game file and the pause file keep the code from the breaker mid-round', async ({ seat, server }) => {
+    const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob']);
+    const credentials: string[] = [];
+    bob.on('request', request => {
+      const auth = request.headers().authorization;
+      if (request.url().includes('/api/history/') && auth) credentials.push(auth);
+    });
+    await enter(alice, CODE, 'Set code');
+    await guess(bob, ['purple', 'yellow', 'orange', 'red'], 1);
+    await bob.getByRole('button', { name: 'History' }).click();
+    const history = bob.getByRole('dialog', { name: 'History' });
+    const move = history.locator('.history-move');
+    await expect(move).toHaveText('Move 2 of 2: Bob guessed: 1 right place, 2 right color');
+    await history.getByRole('slider', { name: 'Step' }).fill('1');
+    await expect(move).toHaveText('Move 1 of 2: Alice set a code');
+    await expect(history.getByRole('group', { name: 'Code, hidden' })).toBeVisible();
+    // The game file is offered only once the game is over, and the server refuses it before then
+    await expect(history.getByRole('button', { name: 'Download game' })).toHaveCount(0);
+    await history.getByRole('button', { name: 'Close' }).click();
+    expect(credentials.length).toBeGreaterThan(0);
+    const file = await bob.request.get(`${server.url}/api/game-file/codebreaker/${encodeURIComponent(table.gameId)}`, { headers: { authorization: credentials[0] } });
+    expect(file.status()).toBe(409);
+    expect(await file.text()).toContain('The game is not over yet');
+    // Paused mid-round, the breaker's own pause file does not hold the code in the clear
+    await alice.locator('.game-header').getByRole('button', { name: 'Pause', exact: true }).click();
+    await bob.getByRole('button', { name: 'Approve' }).click();
+    await expect(bob.getByRole('heading', { name: 'Game paused' })).toBeVisible();
+    const downloading = bob.waitForEvent('download');
+    await bob.getByRole('button', { name: 'Download my pause file' }).click();
+    const text = await readFile(await (await downloading).path(), 'utf8');
+    expect(JSON.parse(text).seat).toBe(2);
+    expect(text).not.toMatch(/"code":\[/);
   });
 });
 
