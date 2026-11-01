@@ -30,6 +30,7 @@ import { splendorInfo } from './splendor/info.ts';
 import { thecrewInfo } from './thecrew/info.ts';
 import { tictactoeInfo } from './tictactoe/info.ts';
 import { tickettorideInfo } from './tickettoride/info.ts';
+import { ultimatetictactoeInfo } from './ultimatetictactoe/info.ts';
 import { unoInfo } from './uno/info.ts';
 import { warInfo } from './war/info.ts';
 import { yahtzeeInfo } from './yahtzee/info.ts';
@@ -38,5 +39,5 @@ import { yahtzeeInfo } from './yahtzee/info.ts';
 export const GAME_INFOS: GameInfo[] = [
   azulInfo, backgammonInfo, carcassonneInfo, catanInfo, checkersInfo, chessInfo, connectfourInfo, dominoesInfo, euchreInfo, farkleInfo,
   gofishInfo, heartsInfo, jengaInfo, mancalaInfo, monopolyInfo, parchisiInfo, phase10Info, pictionaryInfo, quoridorInfo, rackoInfo, riskInfo, rookInfo, rummikubInfo,
-  scrabbleInfo, skipboInfo, spadesInfo, splendorInfo, holdemInfo, thecrewInfo, tictactoeInfo, tickettorideInfo, unoInfo, warInfo, yahtzeeInfo
+  scrabbleInfo, skipboInfo, spadesInfo, splendorInfo, holdemInfo, thecrewInfo, tictactoeInfo, tickettorideInfo, ultimatetictactoeInfo, unoInfo, warInfo, yahtzeeInfo
 ];
