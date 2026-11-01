@@ -454,15 +454,29 @@ test.describe('Code Breaker endings, leaving and hidden code', () => {
     const file = await bob.request.get(`${server.url}/api/game-file/codebreaker/${encodeURIComponent(table.gameId)}`, { headers: { authorization: credentials[0] } });
     expect(file.status()).toBe(409);
     expect(await file.text()).toContain('The game is not over yet');
-    // Paused mid-round, the breaker's own pause file does not hold the code in the clear
+    // Paused mid-round, the breaker's own pause file does not hold the code in the clear; the maker's does, in their hand,
+    // which shows the checks below would see a leak
     await alice.locator('.game-header').getByRole('button', { name: 'Pause', exact: true }).click();
     await bob.getByRole('button', { name: 'Approve' }).click();
-    await expect(bob.getByRole('heading', { name: 'Game paused' })).toBeVisible();
-    const downloading = bob.waitForEvent('download');
-    await bob.getByRole('button', { name: 'Download my pause file' }).click();
-    const text = await readFile(await (await downloading).path(), 'utf8');
-    expect(JSON.parse(text).seat).toBe(2);
-    expect(text).not.toMatch(/"code":\[/);
+    type PauseFile = { seat: number; table: { code: unknown }; hand: { code: unknown }; history: { code: unknown }[] };
+    const pauseFile = async (page: Page): Promise<{ text: string; file: PauseFile }> => {
+      await expect(page.getByRole('heading', { name: 'Game paused' })).toBeVisible();
+      const downloading = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Download my pause file' }).click();
+      const text = await readFile(await (await downloading).path(), 'utf8');
+      return { text, file: JSON.parse(text) as PauseFile };
+    };
+    const breaker = await pauseFile(bob);
+    expect(breaker.file.seat).toBe(2);
+    expect(breaker.file.table).toHaveProperty('code', null);
+    expect(breaker.file.hand).toHaveProperty('code', null);
+    expect(breaker.file.history.length).toBeGreaterThan(0);
+    for (const step of breaker.file.history) expect(step).toHaveProperty('code', null);
+    expect(breaker.text).not.toMatch(/"code":\s*\[/);
+    const maker = await pauseFile(alice);
+    expect(maker.file.seat).toBe(1);
+    expect(maker.file.hand).toHaveProperty('code', CODE);
+    expect(maker.text).toMatch(/"code":\s*\[/);
   });
 });
 
