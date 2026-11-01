@@ -20,6 +20,11 @@ export function lostHold(piece: Piece | undefined, seat: Seat): boolean {
   return !piece || piece.placed || (piece.heldBy !== null && piece.heldBy !== seat);
 }
 
+// The same place and hold, by value: every server message is freshly parsed, so identity says nothing
+export function samePiece(a: Piece | undefined, b: Piece): boolean {
+  return a !== undefined && a.x === b.x && a.y === b.y && a.heldBy === b.heldBy && a.placed === b.placed;
+}
+
 type Options = {
   canLift(piece: number): boolean;
   positionOf(piece: number): Point; // the piece's top left on the table now
@@ -73,11 +78,15 @@ export function usePieceDrag(options: Options) {
           latest.current.onDrop(piece, Math.round(spot.x), Math.round(spot.y));
           swallowNextClick();
         };
+        // touch-action: none on the piece should keep a finger from scrolling; this backs it up where a browser ignores it on SVG
+        const holdStill = (touch: TouchEvent) => touch.preventDefault();
         const stop = () => {
+          window.removeEventListener('touchmove', holdStill);
           window.removeEventListener('pointermove', onMove);
           window.removeEventListener('pointerup', onEnd);
           window.removeEventListener('pointercancel', onEnd);
         };
+        window.addEventListener('touchmove', holdStill, { passive: false });
         window.addEventListener('pointermove', onMove);
         window.addEventListener('pointerup', onEnd);
         window.addEventListener('pointercancel', onEnd);

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lostHold, toTablePoint } from './usePieceDrag.ts';
+import { lostHold, samePiece, toTablePoint } from './usePieceDrag.ts';
 
 const matrix = (a: number, b: number, c: number, d: number, e: number, f: number) =>
   ({ a, b, c, d, e, f }) as DOMMatrixReadOnly;
@@ -18,4 +18,14 @@ test('a drag ends when the state shows the piece placed or held by someone else'
   assert.equal(lostHold({ ...piece, heldBy: 2 }, 1), true);
   assert.equal(lostHold({ ...piece, placed: true, placedBy: 2 }, 1), true);
   assert.equal(lostHold(undefined, 1), true);
+});
+
+test('a piece is the same when its place and hold are, whatever the object', () => {
+  const piece = { x: 10, y: 20, placed: false, heldBy: 1, placedBy: null };
+  assert.equal(samePiece({ ...piece }, piece), true);
+  assert.equal(samePiece({ ...piece, x: 11 }, piece), false);
+  assert.equal(samePiece({ ...piece, y: 21 }, piece), false);
+  assert.equal(samePiece({ ...piece, heldBy: null }, piece), false);
+  assert.equal(samePiece({ ...piece, placed: true }, piece), false);
+  assert.equal(samePiece(undefined, piece), false);
 });
