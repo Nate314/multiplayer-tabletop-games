@@ -1,6 +1,5 @@
-import { drawOfferAnswerers } from '../../shared/drawOffer.ts';
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
-import { applyAction, applyMove, createGameState, resetLobby, toPublicState } from './rules.ts';
+import { applyAction, applyMove, createGameState, finalStandings, recordsAction, resetLobby, toPublicState, waitingOn } from './rules.ts';
 import { goInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
@@ -10,6 +9,8 @@ export const go: GameDefinition<GameState, PublicGameState> = {
   resetLobby,
   applyMove,
   applyAction,
-  waitingOn: drawOfferAnswerers,
+  recordsAction,
+  waitingOn,
+  finalStandings,
   toPublicState
 };
