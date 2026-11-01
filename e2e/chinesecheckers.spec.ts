@@ -80,7 +80,7 @@ test.describe('Chinese Checkers seating', () => {
     await table.patch({ holes: { '0,0': 1 }, currentPlayer: 1 });
     await expect(marbleAt(alice, '0,0')).toHaveCount(1);
     await clickPath(alice, '0,0', '1,0');
-    await expect(status(alice)).toHaveText('Chinese Checkers needs 2, 3, 4 or 6 players');
+    await expect(alice.locator('.game-status-error')).toHaveText('Chinese Checkers needs 2, 3, 4 or 6 players');
     await expect(marbleAt(alice, '0,0')).toHaveCount(1);
     expect((await table.state<{ started: boolean }>()).started).toBe(false);
   });
@@ -88,6 +88,7 @@ test.describe('Chinese Checkers seating', () => {
   test('each player sees their own point at the bottom', async ({ seat }) => {
     const table = await seat('chinesecheckers', NAMES.slice(0, 2));
     for (const [index, page] of table.pages.entries()) {
+      await expect(marbles(page, (index + 1) as SeatNumber)).toHaveCount(10);
       const board = (await page.locator('.board').boundingBox())!;
       const tops = await marbles(page, (index + 1) as SeatNumber).evaluateAll(list => list.map(marble => marble.getBoundingClientRect().top));
       expect(tops).toHaveLength(10);
@@ -156,6 +157,38 @@ test.describe('Chinese Checkers rules', () => {
       await expect(status(page)).toHaveText('Alice made 2 jumps');
     }
     await expect(turn(bob)).toHaveText('Your turn');
+  });
+
+  test('a chain of hops cannot revisit a hole', async ({ seat }) => {
+    const table = await seat('chinesecheckers', NAMES.slice(0, 2));
+    const [alice] = table.pages;
+    // A ring of Bob's marbles: 0,0 hops to 2,0 then 2,-2, from where hops back to 0,0 (the start, empty while the
+    // marble moves) and to 2,0 (an earlier landing) would fit, but only 4,-2 over 3,-2 is offered
+    await craft(table, { '0,0': 1, '1,0': 2, '2,-1': 2, '1,-1': 2, '3,-2': 2 });
+    await clickPath(alice, '0,0', '2,0');
+    await expect(hole(alice, '0,0')).not.toHaveClass(/target/);
+    await hole(alice, '2,-2').click();
+    await expect(hole(alice, '0,0')).not.toHaveClass(/target/);
+    await expect(hole(alice, '2,0')).not.toHaveClass(/target/);
+    await expect(hole(alice, '4,-2')).toHaveClass(/target/);
+    await expect(targets(alice)).toHaveCount(1);
+    await endMove(alice).click();
+    await expect(status(alice)).toHaveText('Alice made 2 jumps');
+    await expect(marbleAt(alice, '2,-2')).toHaveClass(/player1/);
+  });
+
+  test('if nobody can move the game ends and the most marbles home win', async ({ seat }) => {
+    const table = await seat('chinesecheckers', NAMES.slice(0, 3));
+    const [alice, bob, cara] = table.pages;
+    // Only Bob has marbles; once he is dismissed on his turn, nobody has a move left
+    await craft(table, { '0,0': 2 }, 2);
+    await leave(bob);
+    await dismiss('Bob', alice, cara);
+    for (const page of [alice, cara]) {
+      await expect(status(page)).toHaveText('Nobody can move. Alice and Cara win with the most marbles home');
+      await expect(turn(page)).toHaveText('Game Over');
+      await expect(gameOver(page)).toBeVisible();
+    }
   });
 
   test('no marble is captured', async ({ seat }) => {
