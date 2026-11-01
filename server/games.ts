@@ -447,14 +447,19 @@ export function createGameManager(
     return { room };
   }
 
-  // Applies the undo once every connected player has approved; an undo always needs two connected players,
-  // so a vote left with fewer (after a disconnect) is canceled instead. Returns the popped step when it undid a move
+  // An undo needs two connected players, or the one seat of a one-player table
+  function undoQuorum(state: BaseGameState): number {
+    return Math.min(2, state.activePlayers.length);
+  }
+
+  // Applies the undo once every connected player has approved; a vote left short of the quorum (after a disconnect)
+  // is canceled instead. Returns the popped step when it undid a move
   function resolveUndoVote(room: Room): StepChange | undefined {
     const { state } = room;
     const vote = state.undoVote;
     if (!vote) return;
     const voters = connectedPlayers(state);
-    if (voters.length < 2) {
+    if (voters.length < undoQuorum(state)) {
       room.state = { ...state, undoVote: null };
       return;
     }
@@ -956,14 +961,14 @@ export function createGameManager(
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-      if (connectedPlayers(state).length < 2) return { error: 'Not enough players to vote' };
+      if (connectedPlayers(state).length < undoQuorum(state)) return { error: 'Not enough players to vote' };
 
       room.state = {
         ...state,
         undoVote: { requestedBy: seat, votes: { [seat]: true } },
         gameStatus: `${state.playerNames[seat]} wants to undo the last turn`
       };
-      save(roomId, room);
+      save(roomId, room, resolveUndoVote(room)); // a lone player's own vote passes it at once
       return { state: view(room, seat) };
     },
 

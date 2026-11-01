@@ -2527,3 +2527,62 @@ test('a pass-and-play view holds no local seat\'s hand but the shown one', () =>
   assert.match(shown, /card1/);
   assert.doesNotMatch(shown, /card2/);
 });
+
+// One-player games: a puzzle table with a single seat
+const soloGame = { ...rulesGame, info: { ...rulesGame.info, minPlayers: 1, stretchedPlayers: undefined } };
+
+function soloTable(): Manager {
+  const manager = rememberingKeys(createGameManager([soloGame], seededRandom), keys);
+  joined(manager.join('test', 'g1', 'Alice'));
+  return manager;
+}
+
+test('a one-player game starts on its lone player agreeing', () => {
+  const manager = soloTable();
+  assert.deepEqual(manager.move(ROOM, 1, tick), { error: 'Everyone must agree to the house rules first' });
+  agreeAll(manager, ROOM);
+  assert.equal(ok(manager.move(ROOM, 1, tick)).started, true);
+});
+
+test('a lone player undoes at once, with no vote', () => {
+  const manager = soloTable();
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  const before = current(manager);
+  ok(manager.move(ROOM, 1, tick));
+  const restored = ok(manager.requestUndo(ROOM, 1));
+  assert.equal(restored.undoVote, null);
+  assert.equal(restored.moves, before.moves);
+  assert.equal(restored.currentPlayer, before.currentPlayer);
+  assert.equal(restored.gameStatus, 'Last turn undone');
+  assert.equal(manager.rawState(ROOM)?.undoVote, null);
+});
+
+test('a lone player pauses at once', () => {
+  const manager = soloTable();
+  agreeAll(manager, ROOM);
+  ok(manager.move(ROOM, 1, tick));
+  const paused = ok(manager.requestPause(ROOM, 1));
+  assert.equal(paused.paused, true);
+  assert.equal(paused.pauseVote, null);
+});
+
+test('a lone player starts the rematch at once', () => {
+  const manager = soloTable();
+  agreeAll(manager, ROOM);
+  for (let i = 0; i < 3; i++) ok(manager.move(ROOM, 1, tick));
+  assert.equal(current(manager).isGameOver, true);
+  const lobby = ok(manager.requestRematch(ROOM, 1));
+  assert.ok(!lobby.rematchVote);
+  assert.equal(lobby.started, false);
+  assert.equal(lobby.gameNumber, 2);
+  assert.deepEqual(lobby.activePlayers, [1]);
+});
+
+test('two connected players still vote on an undo', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  const requested = ok(manager.requestUndo(ROOM, 2));
+  assert.deepEqual(requested.undoVote, { requestedBy: 2, votes: { 2: true } });
+  assert.equal(requested.moves, 1);
+});
