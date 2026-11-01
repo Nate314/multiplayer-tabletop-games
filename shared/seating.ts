@@ -94,7 +94,7 @@ export function removePlayer<S extends BaseGameState>(
   };
   if (state.isGameOver) return activePlayers.length < 2 ? { ...next, undoVote: null } : next;
 
-  if (activePlayers.length === 1) {
+  if (activePlayers.length === 1 && !game.continuesAlone) {
     const winner = activePlayers[0];
     return {
       ...next,

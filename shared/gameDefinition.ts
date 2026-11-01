@@ -23,8 +23,10 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   createGameState(gameId: string): S;
   // Before the first move, after anyone joins or leaves. currentPlayer is already activePlayers[0].
   resetLobby(state: S, random: Random): S;
-  // Mid-game, after the platform has removed `seat` and moved the turn on; only while 2+ remain and the game is not over.
+  // Mid-game, after the platform has removed `seat` and moved the turn on; only while 2+ remain (or 1+ for a game that continuesAlone) and the game is not over.
   onPlayerLeft?(state: S, seat: Seat, random: Random): S;
+  // The last player keeps playing when the others leave, instead of winning by default.
+  continuesAlone?: true;
   // Mid-game, after the platform marked `seat` disconnected and settled votes.
   onPlayerDisconnected?(state: S, seat: Seat, random: Random): S;
   // After an approved undo, on the restored state. A game reshuffles its face-down piles here, so a player cannot
