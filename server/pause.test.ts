@@ -1,6 +1,8 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGameManager, EMPTY_ROOM_TIMEOUT_MS, MAX_RESUME_LOBBY_MS, NOT_AVAILABLE, type ManagerHooks } from './games.ts';
+import {
+  createGameManager, EMPTY_ROOM_TIMEOUT_MS, MAX_RESUME_LOBBY_MS, NOT_AVAILABLE, PAUSED_ROOM_TTL_MS, type ManagerHooks
+} from './games.ts';
 import { openGameStore, type GameStore } from './store.ts';
 import { rememberingKeys } from './testing.ts';
 import { openSeal, shareHash } from './pauseSeal.ts';
@@ -96,6 +98,50 @@ test('a paused room outlives the empty-room timer', (t: TestContext) => {
   manager.disconnect(ROOM, 2);
   t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS + 1);
   assert.equal(manager.getState(ROOM)?.paused, true);
+});
+
+// Alice and Bob paused at clock.now, with the store and clock to move the server on
+function pausedWithClock(store?: GameStore, keys = new Map<string, string>()) {
+  const { manager, clock } = managerFor(handGame, store, keys);
+  manager.join('test', 'g1', 'Alice');
+  manager.join('test', 'g1', 'Bob');
+  ok(manager.move(ROOM, 1, tick));
+  paused(manager);
+  return { manager, clock, keys };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+test('a paused room is deleted 30 days after the pause', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const { manager, clock } = pausedWithClock();
+  assert.equal(manager.rawState(ROOM)?.pausedAt, clock.now);
+  clock.now += PAUSED_ROOM_TTL_MS - DAY_MS;
+  t.mock.timers.tick(DAY_MS);
+  assert.equal(manager.rawState(ROOM)?.paused, true);
+  clock.now += DAY_MS;
+  t.mock.timers.tick(DAY_MS);
+  assert.equal(manager.rawState(ROOM), undefined);
+});
+
+test('a restart deletes a game paused 30 days ago and keeps a newer one', () => {
+  const store = openGameStore(':memory:');
+  const { clock, keys } = pausedWithClock(store);
+  const later = managerFor(handGame, store, keys, { now: () => clock.now + PAUSED_ROOM_TTL_MS - 1 }).manager;
+  assert.equal(later.rawState(ROOM)?.paused, true);
+  const expired = managerFor(handGame, store, keys, { now: () => clock.now + PAUSED_ROOM_TTL_MS }).manager;
+  assert.equal(expired.rawState(ROOM), undefined);
+  assert.equal(managerFor(handGame, store, keys).manager.rawState(ROOM), undefined); // gone from the store too
+});
+
+test('a resumed game is never deleted as an old pause', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const { manager, clock } = pausedWithClock();
+  manager.resumeGame(ROOM, 1);
+  assert.equal(manager.rawState(ROOM)?.pausedAt, undefined);
+  clock.now += PAUSED_ROOM_TTL_MS;
+  t.mock.timers.tick(DAY_MS);
+  assert.equal(manager.rawState(ROOM)?.paused, false);
 });
 
 test('a paused room survives a restart', (t: TestContext) => {

@@ -112,7 +112,7 @@ All in `games/jenga`. Server physics stays the only judge.
 
 - Any player can ask to pause. Everyone seated must agree, using the same voting pattern as undo. A pass and play device counts for each seat it holds.
 - When the vote passes, every player is offered a download of their own pause file, and the game is closed for play.
-- A paused game is kept on the server until it is resumed: the usual deletion 10 minutes after the last player leaves does not apply to it.
+- A paused game is kept on the server until it is resumed: the usual deletion 10 minutes after the last player leaves does not apply to it. It is deleted 30 days after the pause (decided after review, to stop abandoned pauses filling the server); the players' files still bring it back.
 - While the paused game is still on the server, any player can download their file again from the game page (my call: the server keeps the key shares with the paused room, so a missed download is not fatal; they are deleted when the game resumes or is removed).
 
 ### The pause file

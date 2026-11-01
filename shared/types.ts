@@ -44,6 +44,7 @@ export type BaseGameState = {
   rematchVote?: RematchVote | null; // only once the game is over; missing in rooms saved before rematches
   pauseVote?: PauseVote | null; // missing in rooms saved before pausing
   paused?: boolean; // missing in rooms saved before pausing
+  pausedAt?: number; // server ms the game was paused, or restored from files; only while paused
   pause?: PauseRecord; // only while paused; the server strips it from every view, like seatKeys
   houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
   turnStartedAt?: number | null; // server time the turn began, shifted later by paused time; absent with the turn timer off

@@ -7,7 +7,7 @@ import { historyMoments, historyStep, publicView, type ViewRoom } from './views.
 
 // Secrets and per-run bookkeeping that must not outlive the pause: the seal protects the rest
 const UNSEALED_KEYS = [
-  'seatKeys', 'seatDevices', 'spectatorKeys', 'spectators', 'handRequests', 'reactions', 'pause', 'turnStartedAt', 'turnPausedAt'
+  'seatKeys', 'seatDevices', 'spectatorKeys', 'spectators', 'handRequests', 'reactions', 'pause', 'pausedAt', 'turnStartedAt', 'turnPausedAt'
 ] as const;
 
 function stripped(state: BaseGameState): BaseGameState {

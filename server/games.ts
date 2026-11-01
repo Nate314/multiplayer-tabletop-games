@@ -29,6 +29,7 @@ import type {
 
 export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
 export const ARCHIVE_TTL_MS = 90 * 24 * 60 * 60 * 1000; // how long a finished game stays in the archive
+export const PAUSED_ROOM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // how long a paused game is kept; its players' files still bring it back
 const ARCHIVE_PRUNE_MS = 24 * 60 * 60 * 1000;
 
 // `history` holds the state before each move, for undo; `timeline` holds the state right after each move.
@@ -142,7 +143,17 @@ export function createGameManager(
     writeStore('archive', target => { target.pruneArchive(now() - ARCHIVE_TTL_MS); });
   }
   pruneArchive();
-  setInterval(pruneArchive, ARCHIVE_PRUNE_MS).unref();
+  setInterval(() => {
+    pruneArchive();
+    prunePausedRooms();
+  }, ARCHIVE_PRUNE_MS).unref();
+
+  // Deletes every game paused for PAUSED_ROOM_TTL_MS, so abandoned pauses never fill the store
+  function prunePausedRooms(): void {
+    for (const [roomId, room] of rooms) {
+      if (room.state.paused && (room.state.pausedAt ?? now()) <= now() - PAUSED_ROOM_TTL_MS) deleteRoom(roomId);
+    }
+  }
 
   function findGame(gameType: unknown) {
     return games.find(candidate => candidate.info.id === gameType);
@@ -517,7 +528,7 @@ export function createGameManager(
     let state = room.state;
     if (game.simulating?.(state) && game.onUndo) state = game.onUndo(state, random);
     const { turnStartedAt: _started, turnPausedAt: _paused, ...bare } = state;
-    state = { ...bare, paused: true, pauseVote: null, gameStatus: 'Game paused' };
+    state = { ...bare, paused: true, pausedAt: now(), pauseVote: null, gameStatus: 'Game paused' };
     room.state = { ...state, pause: sealRoom(sealedRoomOf({ ...room, state }), state.activePlayers) };
   }
 
@@ -602,6 +613,7 @@ export function createGameManager(
     // A room saved before these stamps existed gets them now, so loading it never reports it as just finished
     if (state.startedAt === undefined) state = { ...state, startedAt: now() };
     if (state.isGameOver && state.finishedAt === undefined) state = { ...state, finishedAt: now() };
+    if (state.paused && state.pausedAt === undefined) state = { ...state, pausedAt: now() }; // paused before the stamp existed
     const room: Room = {
       game, state, history: saved.history, timeline: saved.timeline, watching: new Set(), lastReactionAt: new Map()
     };
@@ -620,6 +632,7 @@ export function createGameManager(
       writeStore(roomId, target => target.remove(roomId));
     }
   }
+  prunePausedRooms();
 
   // Opens or answers the pause vote through `change`, pausing the room once it passes
   function changePause(roomId: string, seat: Seat, change: (state: BaseGameState) => Result<BaseGameState>): Result<BasePublicState> {
@@ -695,6 +708,7 @@ export function createGameManager(
     const state: BaseGameState = {
       ...rekeyed(sealed.state),
       paused: true,
+      pausedAt: now(),
       disconnected: [...sealed.state.activePlayers].sort((a, b) => a - b),
       spectators: [],
       spectatorKeys: {},
@@ -1075,7 +1089,7 @@ export function createGameManager(
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
-      const { pause: _pause, ...state } = room.state;
+      const { pause: _pause, pausedAt: _pausedAt, ...state } = room.state;
       if (!state.paused) return { error: 'The game is not paused' };
       if (state.disconnected.length > 0) {
         return { error: `Waiting for ${state.disconnected.map(missing => state.playerNames[missing]).join(', ')}` };
