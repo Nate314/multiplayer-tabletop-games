@@ -27,6 +27,8 @@ const GAME_ICONS: Record<string, () => string> = {
   holdem: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('circle', { cx: 12, cy: 12, r: 5 }), el('path', { d: 'M12 3v4M12 17v4M3 12h4M17 12h4' })),
   // Three courses of bricks, the middle one pulled halfway out to the right
   jenga: () => lineIcon(el('path', { d: 'M3 3h14v6H3zM7.7 3v6M12.3 3v6M7 9h14v6H7zM3 15h14v6H3zM7.7 15v6M12.3 15v6' })),
+  // One piece with a tab on top and on the right
+  jigsaw: () => lineIcon(el('path', { d: 'M4 8h4a2.2 2.2 0 1 1 4 0h4v4a2.2 2.2 0 1 1 0 4v4H4z' })),
   mancala: () => lineIcon(el('rect', { x: 2, y: 7, width: 20, height: 10, rx: 5 }),
     ...[8.5, 12, 15.5].flatMap(x => [el('circle', { cx: x, cy: 10.2, r: 1.2 }), el('circle', { cx: x, cy: 13.8, r: 1.2 })])),
   monopoly: () => lineIcon(el('path', { d: 'M3 18c0 1.5 4 2.5 9 2.5s9-1 9-2.5M6 18.5V6c0-1 2.7-2 6-2s6 1 6 2v12.5M6 14c2 .7 4 1 6 1s4-.3 6-1' })),
