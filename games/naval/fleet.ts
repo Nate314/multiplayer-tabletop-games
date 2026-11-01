@@ -24,14 +24,14 @@ export function shipAt(ships: Ship[], cell: Cell): number {
   return ships.findIndex(ship => shipCells(ship).some(c => c.row === cell.row && c.col === cell.col));
 }
 
-const onGrid = (cell: Cell) => Number.isInteger(cell.row) && Number.isInteger(cell.col)
+// Whether `cell` is a whole-numbered square inside the grid
+export const onGrid = (cell: Cell) => Number.isInteger(cell.row) && Number.isInteger(cell.col)
   && cell.row >= 0 && cell.row < GRID_SIZE && cell.col >= 0 && cell.col < GRID_SIZE;
 
 // Why these well-formed ships cannot all stand on the grid, or null. Also checks a partial fleet
 export function placementError(ships: Ship[]): string | null {
   const taken = new Set<string>();
   for (const ship of ships) {
-    if (!Number.isInteger(ship.row) || !Number.isInteger(ship.col)) return 'A ship goes off the grid';
     const cells = shipCells(ship);
     if (!cells.every(onGrid)) return 'A ship goes off the grid';
     for (const cell of cells) {

@@ -41,13 +41,13 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does undo work?',
-    answer: 'Press Undo to ask to take back the last shot. The other player votes, and the shot is taken back only ' +
-      'if they agree. An undo never shows either fleet.'
+    answer: 'Press Undo to ask to undo the last turn\'s shots. They are taken back only if the ' +
+      'other player approves. Placing a fleet cannot be undone, and an undo never shows either fleet.'
   },
   {
     question: 'Can I resign or offer a draw?',
     answer: 'Yes, once a fleet is placed. Resign ends the game and the other player wins. Offer draw asks the other ' +
-      'player, who can accept or decline; the offer lapses if they fire instead. If a player leaves the game, the one who ' +
-      'stays wins.'
+      'player, who can accept or decline; the offer lapses when they decline or fire. If a player disconnects, the game ' +
+      'waits for them to rejoin. If they are dismissed, the other player wins.'
   }
 ];

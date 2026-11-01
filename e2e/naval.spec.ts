@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { isDeepStrictEqual } from 'node:util';
 import {
-  agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, seeTable, tableScreen, test,
+  agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, seeTable, tableScreen, test,
   touchDrag, undo, watch, type Seat, type Table
 } from './fixtures.ts';
 import type { Ship, Shot } from '../games/naval/types.ts';
@@ -226,6 +226,16 @@ test.describe('Naval Battle rules', () => {
     await expect(shipSquares(bob, 'Target')).toHaveCount(17);
   });
 
+  test('Keep playing takes back a Resign and the game goes on', async ({ seat }) => {
+    const { alice, bob } = await playing(seat);
+    await button(alice, 'Resign').click();
+    await button(alice, 'Keep playing').click();
+    await expect(button(alice, 'Confirm resign')).toHaveCount(0);
+    await expect(button(alice, 'Resign')).toBeVisible();
+    await square(alice, 'Target', 'A1').click();
+    await expect(status(bob)).toHaveText('Alice fired at A1: miss');
+  });
+
   test('resigning during placement ends the game with only the placed fleet shown', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await randomFleet(alice);
@@ -249,6 +259,29 @@ test.describe('Naval Battle rules', () => {
     await expect(status(alice)).toHaveText('Draw by agreement');
   });
 
+  test('a declined draw offer goes away and play goes on', async ({ seat }) => {
+    const { alice, bob } = await playing(seat);
+    await button(alice, 'Offer draw').click();
+    await button(bob, 'Decline').click();
+    await expect(button(bob, 'Accept draw')).toHaveCount(0);
+    await expect(button(alice, 'Offer draw')).toBeEnabled();
+    await square(alice, 'Target', 'A1').click();
+    await expect(status(bob)).toHaveText('Alice fired at A1: miss');
+  });
+
+  test('an open draw offer lapses when the other player fires', async ({ seat }) => {
+    const { alice, bob } = await playing(seat);
+    await square(alice, 'Target', 'A1').click();
+    await expect(status(bob)).toHaveText('Alice fired at A1: miss');
+    // Offered on Bob's turn, and Bob fires instead of answering
+    await button(alice, 'Offer draw').click();
+    await expect(button(bob, 'Accept draw')).toBeVisible();
+    await square(bob, 'Target', 'A1').click();
+    await expect(status(alice)).toHaveText('Bob fired at A1: hit');
+    await expect(button(bob, 'Accept draw')).toHaveCount(0);
+    await expect(button(alice, 'Offer draw')).toBeEnabled();
+  });
+
   test('a player who disconnects is waited for, and if dismissed the other player wins', async ({ seat }) => {
     const { alice, bob } = await playing(seat);
     await square(alice, 'Target', 'A1').click();
@@ -267,6 +300,19 @@ test.describe('Naval Battle controls', () => {
     await drag(alice, trayShip(alice, 5), square(alice, 'Your fleet', 'C2'));
     await expectShips(alice, 'Your fleet', ['C2', 'C3', 'C4', 'C5', 'C6']);
     await expect(alice.getByRole('button', { name: 'A ship of length 5' })).toHaveCount(0);
+  });
+
+  test('while a ship is dragged over the grid, the squares it would take are marked', async ({ seat }) => {
+    const { alice } = await start(seat);
+    await lift(alice, trayShip(alice, 5));
+    const box = (await square(alice, 'Your fleet', 'C2').boundingBox())!;
+    await alice.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
+    const marked = grid(alice, 'Your fleet').locator('.selected');
+    await expect(marked).toHaveCount(5);
+    for (const name of ['C2', 'C3', 'C4', 'C5', 'C6']) await expect(square(alice, 'Your fleet', name)).toHaveClass(/selected/);
+    await expect(shipSquares(alice, 'Your fleet')).toHaveCount(0); // not placed until it is dropped
+    await alice.mouse.up();
+    await expectShips(alice, 'Your fleet', ['C2', 'C3', 'C4', 'C5', 'C6']);
   });
 
   test('a ship dropped where it does not fit goes back to the tray', async ({ seat }) => {
@@ -334,9 +380,11 @@ test.describe('Naval Battle controls', () => {
     await square(alice, 'Your fleet', 'J1').tap();
     await expectShips(alice, 'Your fleet', ['J1', 'J2']);
 
-    // A finger drags a ship onto the grid, and the page does not scroll
-    await alice.evaluate(() => window.scrollTo(0, 0));
+    // A finger drags a ship onto the grid, and the page does not scroll: the page can scroll, and is scrolled a little
+    expect(await alice.evaluate(() => document.documentElement.scrollHeight > innerHeight)).toBe(true);
+    await alice.evaluate(() => window.scrollTo(0, 40));
     const before = await alice.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(0);
     await touchDrag(alice, trayShip(alice, 5), square(alice, 'Your fleet', 'B1'));
     await expectShips(alice, 'Your fleet', ['J1', 'J2', 'B1', 'B2', 'B3', 'B4', 'B5']);
     expect(await alice.evaluate(() => window.scrollY)).toBe(before);
@@ -361,6 +409,18 @@ test.describe('Naval Battle controls', () => {
     await expect(shipSquares(history, 'Bob')).toHaveCount(0);
     await expect(square(history, 'Bob', 'F1')).toHaveClass(/\bhit\b/);
     await expect(square(history, 'Bob', 'F1')).toHaveClass(/selected/);
+  });
+
+  test('History opened after game over shows the other fleet', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await firing(table, { 1: [...sinking(BOB.slice(0, 4)), { row: 9, col: 8, result: 'hit' }] });
+    await square(alice, 'Target', 'J10').click();
+    await expect(status(alice)).toHaveText('Alice sank every ship. Alice wins!');
+    await alice.getByRole('dialog', { name: 'Game over' }).getByRole('button', { name: 'History' }).click();
+    const history = alice.getByRole('dialog', { name: 'History' });
+    await expect(history).toContainText('Move 1 of 1: Alice fired at J10: sank a ship of length 2');
+    await expect(shipSquares(history, 'Bob')).toHaveCount(17);
+    await expect(shipSquares(history, 'Alice')).toHaveCount(17);
   });
 
   test('a spectator and a table screen see no ship', async ({ seat, browser, server }) => {

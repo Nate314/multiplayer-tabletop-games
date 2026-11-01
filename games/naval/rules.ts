@@ -3,7 +3,7 @@ import { applyEndingAction, drawOfferAnswerers, endGame, lapseDrawOffer } from '
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
-import { FLEET, GRID_SIZE, cellName, fleetError, shipAt, shipCells, shotsText } from './fleet.ts';
+import { FLEET, GRID_SIZE, cellName, fleetError, onGrid, shipAt, shipCells, shotsText } from './fleet.ts';
 import { SALVO } from './options.ts';
 import type { Cell, GameState, PublicGameState, Result, Seat, Ship, Shot } from './types.ts';
 
@@ -75,9 +75,6 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   return input?.type === 'place' ? place(state, seat, input) : applyEndingAction(state, seat, action);
 }
 
-const isOnGrid = (cell: Cell) => Number.isInteger(cell.row) && Number.isInteger(cell.col)
-  && cell.row >= 0 && cell.row < GRID_SIZE && cell.col >= 0 && cell.col < GRID_SIZE;
-
 const countRefusal = (n: number) => (n === 1 ? 'Fire at 1 square' : `Fire at ${n} different squares`);
 
 // The targets as cells, or why they cannot be fired at
@@ -85,7 +82,7 @@ function asTargets(state: GameState, seat: Seat, value: unknown): Cell[] | strin
   const wanted = shotsAllowed(state, seat);
   if (!Array.isArray(value) || value.length !== wanted) return countRefusal(wanted);
   const targets = value.map(item => ({ row: asRecord(item)?.row as number, col: asRecord(item)?.col as number }));
-  if (!targets.every(isOnGrid)) return 'That square is off the grid';
+  if (!targets.every(onGrid)) return 'That square is off the grid';
   const fired = new Set(state.shots[seat].map(cellName));
   if (targets.some(target => fired.has(cellName(target)))) return 'You already fired there';
   if (new Set(targets.map(cellName)).size !== wanted) return countRefusal(wanted);
