@@ -220,6 +220,11 @@ test('finalStandings gives the winner place 1 with points', () => {
   assert.deepEqual(go.finalStandings?.(resigned), [{ seat: 2, place: 1 }, { seat: 1, place: 2 }]);
 });
 
+test('finalStandings has no seatless row when the other player left', () => {
+  const left = { ...act(lobby(), 1, { type: 'resign' }), activePlayers: [2 as Seat] };
+  assert.deepEqual(go.finalStandings?.(left), [{ seat: 2, place: 1 }]);
+});
+
 test('resign works while marking', () => {
   const state = act(marking(), 2, { type: 'resign' });
   assert.deepEqual(state.winners, [1]);

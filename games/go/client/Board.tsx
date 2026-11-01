@@ -1,10 +1,9 @@
 import { useState, type KeyboardEvent } from 'react';
-import { pointName, starPoints } from '../board.ts';
+import { COLUMNS, pointName, starPoints } from '../board.ts';
 import { ownerMap } from '../scoring.ts';
 import { pointKey } from './animateMove.ts';
 import type { Point, PublicGameState, Stone } from '../types.ts';
 
-const COLUMNS = 'ABCDEFGHJKLMNOPQRST';
 const STONE_RADIUS = 0.47;
 
 type BoardProps = {
@@ -30,7 +29,9 @@ export default function Board({ gameState, ghost = null, isLegal, onPoint }: Boa
   const indexes = Array.from({ length: size }, (_, index) => index);
   const end = size - 1;
   const last = lastMove?.type === 'place' ? lastMove.point : null;
-  const owners = phase === 'marking' ? ownerMap(board, dead) : null;
+  // A resignation ends play with no count, so its leftover marks are not drawn
+  const marking = phase === 'marking' && (!gameState.isGameOver || gameState.score !== null);
+  const owners = marking ? ownerMap(board, dead) : null;
   const grid = indexes.map(i => `M0 ${i}H${end}M${i} 0V${end}`).join('');
   const label = { className: 'go-coord', textAnchor: 'middle', dominantBaseline: 'central' } as const;
 
@@ -38,7 +39,7 @@ export default function Board({ gameState, ghost = null, isLegal, onPoint }: Boa
     const here = { row, col };
     const stone = board[row][col];
     const isLast = stone !== null && last !== null && same(last)(here);
-    const isDead = stone !== null && dead.some(same(here));
+    const isDead = marking && stone !== null && dead.some(same(here));
     const owner = !stone && owners ? owners[row][col] : null;
     const showGhost = !stone && ghost && hovered && same(hovered)(here) && isLegal?.(here);
     const name = `${pointName(here, size)}, ${stone ?? 'empty'}${isLast ? ', last move' : ''}${isDead ? ', marked dead' : ''}`;

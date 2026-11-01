@@ -1,4 +1,5 @@
 // Go rules shared by the browser and the server (validation)
+import { rankStandings } from '../../shared/standings.ts';
 import { applyEndingAction, endGame, endingRefusal, otherSeat } from '../../shared/drawOffer.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -168,8 +169,6 @@ export function waitingOn(state: GameState): Seat[] {
 }
 
 export function finalStandings(state: GameState): Standing[] {
-  const winner = state.winners[0];
-  const loser = state.activePlayers.find(seat => seat !== winner) as Seat;
-  const points = (seat: Seat) => (state.score ? { score: `${seat === 1 ? state.score.black.total : state.score.white.total} points` } : {});
-  return [winner, loser].map((seat, index) => ({ seat, place: index + 1, ...points(seat) }));
+  const points = (seat: Seat) => (state.score ? `${seat === 1 ? state.score.black.total : state.score.white.total} points` : undefined);
+  return rankStandings(state, () => 0, points);
 }

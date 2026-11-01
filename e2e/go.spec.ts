@@ -301,6 +301,17 @@ test.describe('Go controls', () => {
     await alice.touchscreen.tap(left + 10 * unit, top + 10 * unit);
     await expect(point(bob, 'K10')).toHaveAccessibleName('K10, black, last move');
     await expect(bob.locator('.go-stone:not(.go-ghost)')).toHaveCount(1); // the only stone; a ghost can follow a resting mouse
+    // A near-corner point catches a scale error the center cannot: White taps T1 (column 18, row 18) on a phone-wide page
+    await bob.setViewportSize({ width: 390, height: 844 });
+    const bobBoard = bob.locator('.board-area .go-board');
+    await bobBoard.scrollIntoViewIfNeeded();
+    const bobBox = (await bobBoard.boundingBox())!;
+    const bobSide = Math.min(bobBox.width, bobBox.height);
+    const bobUnit = bobSide / 20;
+    const bobLeft = bobBox.x + (bobBox.width - bobSide) / 2;
+    const bobTop = bobBox.y + (bobBox.height - bobSide) / 2;
+    await bob.touchscreen.tap(bobLeft + 19 * bobUnit, bobTop + 19 * bobUnit);
+    await expect(point(alice, 'T1')).toHaveAccessibleName('T1, white, last move');
   });
 
   test('the FAQ opens from Rules', async ({ seat }) => {

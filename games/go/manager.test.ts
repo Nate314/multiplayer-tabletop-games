@@ -84,6 +84,21 @@ test('an undone ko capture keeps the ko rule as it was', () => {
   assert.deepEqual(manager.move(ROOM, 2, place(1, 1)), KO_REFUSED);
 });
 
+test('an undone move after a ko capture still leaves the retake refused', () => {
+  const manager = gameOn9();
+  moves(manager, [
+    [1, place(0, 1)], [2, place(0, 2)],
+    [1, place(1, 0)], [2, place(2, 2)],
+    [1, place(2, 1)], [2, place(1, 3)],
+    [1, place(8, 8)], [2, place(1, 1)],
+    [1, place(1, 2)], // Black captures the ko
+    [2, place(7, 7)] // White plays elsewhere
+  ]);
+  ok(manager.requestUndo(ROOM, 2));
+  ok(manager.voteUndo(ROOM, 1, true));
+  assert.deepEqual(manager.move(ROOM, 2, place(1, 1)), KO_REFUSED);
+});
+
 test('resign is an action, not a move', () => {
   const manager = gameOn9();
   moves(manager, [[1, place(4, 4)]]);

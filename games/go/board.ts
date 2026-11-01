@@ -1,6 +1,6 @@
 import type { Board, BoardSize, Point, Stone } from './types.ts';
 
-const COLUMNS = 'ABCDEFGHJKLMNOPQRST';
+export const COLUMNS = 'ABCDEFGHJKLMNOPQRST';
 
 export function emptyBoard(size: number): Board {
   return Array.from({ length: size }, () => Array<Stone | null>(size).fill(null));
