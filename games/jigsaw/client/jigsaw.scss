@@ -1,0 +1,360 @@
+[data-game="jigsaw"] {
+  /* Jigsaw's felt table theme. Every rule is scoped to data-game="jigsaw", so none of it reaches other games. */
+  color-scheme: light;
+  --page-bg: #eef1ec;
+  --text: #1f2a24;
+  --muted: #5b6a61;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(31, 42, 36, 0.15);
+  --button-bg: #2f7d5b;
+  --button-hover-bg: #256548;
+  --button-text: #fff;
+  --status-bg: #e1efe7;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --cloth: #3f6f58;
+  --cloth-edge: #2c513f;
+  --board: #e9e4d6;
+  --board-edge: #b9ae92;
+  --outline: rgba(0, 0, 0, 0.45);
+  --highlight: #ffb703;
+  --player1: #d32f2f;
+  --player2: #1976d2;
+  --player3: #f9a825;
+  --player4: #7b1fa2;
+  --player5: #00897b;
+  --player6: #ef6c00;
+  --player7: #c2185b;
+  --player8: #5d4037;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #141a17;
+    --text: #e3ebe6;
+    --muted: #9aaba1;
+    --panel-bg: #1f2723;
+    --panel-border: rgba(227, 235, 230, 0.14);
+    --button-bg: #3c9a70;
+    --button-hover-bg: #4aae82;
+    --status-bg: #24372d;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --cloth: #22392e;
+    --cloth-edge: #172820;
+    --board: #39362f;
+    --board-edge: #5e5748;
+    --outline: rgba(0, 0, 0, 0.7);
+    --player1: #ef5350;
+    --player2: #42a5f5;
+    --player3: #ffca28;
+    --player4: #ba68c8;
+    --player5: #26a69a;
+    --player6: #ffa726;
+    --player7: #f06292;
+    --player8: #a1887f;
+  }
+
+  /* Above the table on a phone, beside it from 720 px */
+  .jigsaw-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 8px 0;
+    min-width: 0;
+  }
+
+  .jigsaw-main {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .jigsaw-side {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    min-width: 0;
+  }
+
+  @media (min-width: 721px) {
+    .jigsaw-layout {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    .jigsaw-side {
+      order: 2;
+      flex: 0 0 260px;
+      width: 260px;
+    }
+  }
+
+  .jigsaw-side > button,
+  .jigsaw-zoom button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover:enabled {
+      background: var(--button-hover-bg);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  /* The undo vote covers the table while it runs */
+  .undo-vote {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .jigsaw-preview {
+    width: 100%;
+    max-width: 320px;
+    align-self: center;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--panel-border);
+  }
+
+  .jigsaw-count {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .jigsaw-note {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .jigsaw-error {
+    margin: 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .jigsaw-guide-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .jigsaw-players {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 2px 8px;
+      border-left: 4px solid;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .jigsaw-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .jigsaw-thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 6px;
+  }
+
+  .jigsaw-thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    min-width: 0;
+    font-size: 0.75rem;
+    background: var(--panel-bg);
+    color: var(--text);
+    border: 2px solid var(--panel-border);
+    border-radius: 6px;
+
+    &:hover {
+      background: var(--status-bg);
+    }
+
+    &[aria-pressed="true"] {
+      border-color: var(--button-bg);
+      background: var(--status-bg);
+    }
+
+    img {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+      border-radius: 3px;
+    }
+  }
+
+  .jigsaw-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: 600;
+
+    input {
+      max-width: 100%;
+      font-weight: normal;
+    }
+  }
+
+  .jigsaw-zoom {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* Zoomed in, the table scrolls inside this box; a finger on the empty table scrolls it */
+  .jigsaw-scroll {
+    overflow: auto;
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 12px;
+  }
+
+  .jigsaw-table {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .jigsaw-table-cloth {
+    fill: var(--cloth);
+    stroke: var(--cloth-edge);
+    stroke-width: 6;
+  }
+
+  .jigsaw-board {
+    fill: var(--board);
+    stroke: var(--board-edge);
+    stroke-width: 4;
+  }
+
+  .jigsaw-spot {
+    fill: transparent;
+    pointer-events: none;
+  }
+
+  .jigsaw-guide {
+    pointer-events: none;
+  }
+
+  .jigsaw-piece {
+    &:not(.placed) .jigsaw-piece-face {
+      stroke: var(--outline);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+
+    &.liftable {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    &.held .jigsaw-piece-face {
+      stroke: var(--holder);
+      stroke-width: 4;
+    }
+
+    &.highlighted .jigsaw-piece-face {
+      stroke: var(--highlight);
+      stroke-width: 4;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+
+  .jigsaw-holder {
+    font: 600 28px system-ui, sans-serif;
+    fill: var(--holder);
+    paint-order: stroke;
+    stroke: var(--panel-bg);
+    stroke-width: 6;
+    pointer-events: none;
+  }
+
+  /* History and spectators: a Race shows every board side by side when it can, or the percentages alone */
+  .jigsaw-history-boards,
+  .jigsaw-history-progress {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .jigsaw-history-boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 12px;
+
+    li {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+  }
+
+  .jigsaw-history-label,
+  .jigsaw-history-progress li {
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .jigsaw-history-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    li {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--status-bg);
+    }
+  }
+}
