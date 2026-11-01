@@ -4,8 +4,11 @@ import { GAMES } from './registry.ts';
 import { addPlayer } from '../shared/seating.ts';
 import { spectatorView } from '../shared/spectators.ts';
 import { dealt, seeded, type Loose } from './testStates.ts';
+import { randomFleet } from './naval/fleet.ts';
 
 const EVE = { id: 's1', name: 'Eve', tableScreen: false, allowedSeats: [] };
+const NAVAL_FLEETS = { 1: randomFleet(seeded(1)), 2: randomFleet(seeded(2)) };
+const NAVAL_SHOTS = { 1: [{ row: 0, col: 0, result: 'miss' }], 2: [{ row: 4, col: 4, result: 'hit' }] };
 
 // One crafted state per conditional private field, built from the dealt state
 const CASES: Record<string, (s: Loose) => Loose[]> = {
@@ -29,6 +32,11 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
   splendor: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
   tickettoride: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
+  naval: s => [
+    { ...s, started: true, fleets: { 1: NAVAL_FLEETS[1] }, gameStatus: 'Alice is ready' },
+    { ...s, started: true, phase: 'firing', currentPlayer: 1, fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS },
+    { ...s, started: true, phase: 'firing', currentPlayer: null, isGameOver: true, winners: [1], fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS }
+  ],
   pictionary: s => [
     { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['cat', 'dog', 'owl'] },
     {

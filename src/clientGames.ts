@@ -50,6 +50,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   jenga: () => import('../games/jenga/client/index.ts').then(m => m.loadJengaClient()),
   mancala: () => import('../games/mancala/client/index.ts').then(m => m.mancalaClient),
   monopoly: () => import('../games/monopoly/client/index.ts').then(m => m.monopolyClient),
+  naval: () => import('../games/naval/client/index.ts').then(m => m.navalClient),
   parchisi: () => import('../games/parchisi/client/index.ts').then(m => m.parchisiClient),
   phase10: () => import('../games/phase10/client/index.ts').then(m => m.phase10Client),
   pictionary: () => import('../games/pictionary/client/index.ts').then(m => m.pictionaryClient),
