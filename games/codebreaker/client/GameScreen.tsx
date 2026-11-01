@@ -8,12 +8,11 @@ import HistoryBoard from './HistoryBoard';
 import { RoundSummaryView, Totals } from './RoundRows';
 import { houseRule } from '../../../shared/houseRules.ts';
 import { modeOf, playsAtOnce } from '../../../shared/puzzleModes.ts';
-import { CODEBREAKER_MODE, CODE_RULE, MAX_GUESSES, ROUNDS_EACH, codeShape } from '../options.ts';
+import { CODEBREAKER_MODE, CODE_RULE, ROUNDS_EACH, codeShape, isFinished } from '../options.ts';
 import type { Mode } from '../options.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Board, Color, PublicGameState, Seat } from '../types.ts';
 
-const isFinished = (board: Board): boolean => board.broken || board.guesses.length >= MAX_GUESSES;
 const emptyRow = (pegs: number): (Color | null)[] => Array.from({ length: pegs }, () => null);
 const nameOr = (gameState: PublicGameState, seat: Seat | null, fallback: string): string => seat === null ? fallback : gameState.playerNames[seat];
 
@@ -49,15 +48,15 @@ export default function GameScreen({ gameState, playerNumber: me, error }: GameS
     ? classicLive && phase === 'breaking' && currentPlayer === me
     : live && myBoard !== null && !isFinished(myBoard);
 
-  // The row being built lives only in this browser; it empties once my guess (or code) lands, or the round or game moves on
+  // The row being built lives only in this browser. It empties whenever the key changes: my guess (or code) lands, I undo,
+  // or the round or game moves on. A refused send keeps the key, so the row stays for another try
   const draftKey = `${gameState.gameNumber ?? 1}:${round}:${phase}:${pegs}:${myGuesses}`;
   const [draftState, setDraftState] = useState({ key: draftKey, pegs: emptyRow(pegs) });
-  const draft = draftState.key === draftKey ? draftState.pegs : emptyRow(pegs);
+  if (draftState.key !== draftKey) setDraftState({ key: draftKey, pegs: emptyRow(pegs) });
+  const draft = draftState.pegs;
   const setDraft = (next: (Color | null)[]) => setDraftState({ key: draftKey, pegs: next });
 
-  // Empties the row as it is sent, so an undo that brings back the same guess count does not bring back the sent row
   const submit = (row: Color[]) => {
-    setDraft(emptyRow(pegs));
     if (setting) gameService.makeMove({ type: 'setCode', pegs: row });
     else if (playsAtOnce(mode)) gameService.sendAction({ type: 'guess', pegs: row });
     else gameService.makeMove({ type: 'guess', pegs: row });
@@ -69,10 +68,13 @@ export default function GameScreen({ gameState, playerNumber: me, error }: GameS
     ? live && myBoard !== null && myGuesses > 0 && !(mode === 'race' && isFinished(myBoard))
     : live && undoAvailable;
 
+  // Race: every board this view holds, each under its player's name, once I have no board or the race is over
+  const allBoards = mode === 'race' && (!myBoard || isGameOver);
+
   return (
     <div className="cb-layout">
       <div className="cb-board-area">
-        {mode === 'race' && !myBoard
+        {allBoards
           ? <HistoryBoard gameState={gameState} viewer={me} />
           : <GuessRows board={myBoard ?? board} code={code} pegs={pegs} names={mode === 'together' ? playerNames : null}
               label={mode === 'race' ? 'Your guesses' : 'Guesses'} />}
@@ -97,7 +99,7 @@ export default function GameScreen({ gameState, playerNumber: me, error }: GameS
             <Totals gameState={gameState} viewer={me} />
           </div>
         )}
-        {mode === 'race' && <RaceProgress gameState={gameState} exclude={me} viewer={me} />}
+        {mode === 'race' && !allBoards && <RaceProgress gameState={gameState} exclude={me} viewer={me} />}
       </div>
       {mode === 'classic' && phase === 'summary' && summary && seated && !isGameOver && (
         <RoundSummaryView summary={summary} gameState={gameState} playerNumber={me} />

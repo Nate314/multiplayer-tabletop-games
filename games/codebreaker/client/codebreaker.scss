@@ -242,9 +242,18 @@
     background: var(--hole-bg);
   }
 
+  /* Together: the guesser's name after the answer pegs. The board grows to fit the name, up to 8em; past
+     that it ends in an ellipsis, with the full name in its title. When the row has less than 4em left
+     the name wraps onto a line of its own below the pegs instead of being squeezed */
+  .cb-board-named .cb-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
   .cb-guesser {
-    flex: 1 1 0;
+    flex: 1 0 4em;
     min-width: 0;
+    max-width: 8em;
     overflow: hidden;
     color: var(--text);
     font-size: 13px;
@@ -501,9 +510,10 @@
     max-width: 100%;
   }
 
-  /* Phones: the panel goes below the board, full width */
+  /* Phones and narrow windows: the panel goes below the board, full width. Beside a 300px panel a
+     5 peg Together board would leave its names no room below about 760px */
 
-  @media (max-width: 640px) {
+  @media (max-width: 760px) {
     .cb-layout {
       flex-direction: column;
       align-items: stretch;
@@ -533,6 +543,18 @@
 
     .cb-pegs {
       gap: 4px;
+    }
+  }
+
+  /* The narrowest phones, where 5 pegs leave no 4em for the name: it always takes its own line, lined
+     up under the pegs */
+
+  @media (max-width: 369px) {
+    .cb-board-named .cb-guesser {
+      flex-basis: 100%;
+      max-width: none;
+      padding-left: 24px;
+      box-sizing: border-box;
     }
   }
 }

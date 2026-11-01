@@ -11,7 +11,7 @@ import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { plural } from '../../shared/text.ts';
 import type { Random, Result, Standing } from '../../shared/types.ts';
 import { feedback } from './feedback.ts';
-import { CODEBREAKER_MODE, CODE_RULE, MAX_GUESSES, ROUNDS_EACH, codeShape } from './options.ts';
+import { CODEBREAKER_MODE, CODE_RULE, MAX_GUESSES, ROUNDS_EACH, codeShape, isFinished } from './options.ts';
 import type { Mode } from './options.ts';
 import type { Board, Color, GameState, Guess, PublicGameState, RoundResult, RoundSummary, Seat } from './types.ts';
 
@@ -44,10 +44,6 @@ export function createGameState(gameId: string): GameState {
 
 export function modeIn(state: GameState): Mode {
   return modeOf(state, CODEBREAKER_MODE);
-}
-
-export function isFinished(board: Board): boolean {
-  return board.broken || board.guesses.length >= MAX_GUESSES;
 }
 
 // Whether the code may be shown to everyone
@@ -220,7 +216,9 @@ export function applyAction(state: GameState, seat: Seat, action: unknown): Resu
   const mode = modeIn(state);
   if (a?.type === 'guess' && playsAtOnce(mode)) {
     if (state.isGameOver || !state.activePlayers.includes(seat)) return { error: 'Invalid move' };
-    return mode === 'race' ? raceGuess(state, seat, a) : sharedGuess(state, seat, a);
+    const guessed = mode === 'race' ? raceGuess(state, seat, a) : sharedGuess(state, seat, a);
+    // A guess starts play, so the server holds it to the house rule agreement like a move
+    return 'error' in guessed ? guessed : { state: { ...guessed.state, started: true } };
   }
   if (a?.type !== 'continue' || mode !== 'classic' || state.phase !== 'summary' || state.isGameOver) {
     return { error: 'Nothing to continue' };
@@ -295,14 +293,20 @@ export function progressOf(board: Board, pegs: number): number {
   return Math.round(100 * Math.max(0, ...board.guesses.map(guess => guess.feedback.exact)) / pegs);
 }
 
-const brokenText = (board: Board): string => board.broken ? `Broken in ${plural(board.guesses.length, 'guess', 'guesses')}` : 'Not broken';
+// Race adds the progress it ranks unbroken boards by
+const brokenText = (board: Board, progress?: number): string =>
+  board.broken ? `Broken in ${plural(board.guesses.length, 'guess', 'guesses')}` : progress === undefined ? 'Not broken' : `Not broken, ${progress}%`;
 
 // Place 1 is exactly state.winners in every mode
 export function finalStandings(state: GameState): Standing[] {
   const mode = modeIn(state);
   if (mode === 'solo') return rankStandings(state, () => 0, () => brokenText(state.board));
   if (mode === 'together') return rankStandings(state, () => 0, seat => plural(state.contributions[seat] ?? 0, 'guess', 'guesses'));
-  if (mode === 'race') return rankStandings(state, (a, b) => compareRace(state, a, b), seat => brokenText(state.boards[seat] ?? EMPTY_BOARD));
+  if (mode === 'race') {
+    const { pegs } = codeShape(houseRule(state, CODE_RULE));
+    const boardOf = (seat: Seat): Board => state.boards[seat] ?? EMPTY_BOARD;
+    return rankStandings(state, (a, b) => compareRace(state, a, b), seat => brokenText(boardOf(seat), progressOf(boardOf(seat), pegs)));
+  }
   // Classic: the rest rank by total, lowest first
   return rankStandings(state, (a, b) => total(state, a) - total(state, b), seat => pointsText(total(state, seat)));
 }

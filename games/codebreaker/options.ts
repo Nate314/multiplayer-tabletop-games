@@ -1,6 +1,7 @@
 // The house rules of code breaker, declared apart from the rules so the landing page can list them without loading the rules
 import type { ChoiceRule, HouseRule } from '../../shared/houseRules.ts';
 import { modeRule, type PuzzleMode } from '../../shared/puzzleModes.ts';
+import type { Board } from './types.ts';
 
 export type Mode = PuzzleMode | 'classic';
 
@@ -28,4 +29,9 @@ export const ROUNDS_EACH = 2; // Classic: each player makes the code this many t
 
 export function codeShape(value: '4of6' | '5of8'): { pegs: 4 | 5; colors: Color[] } {
   return value === '4of6' ? { pegs: 4, colors: COLORS.slice(0, 6) } : { pegs: 5, colors: [...COLORS] };
+}
+
+// A board is finished once broken or out of guesses
+export function isFinished(board: Board): boolean {
+  return board.broken || board.guesses.length >= MAX_GUESSES;
 }

@@ -15,7 +15,7 @@ type GuessRowsProps = {
 export default function GuessRows({ board, code, pegs, names = null, highlightLast = false, label = 'Guesses' }: GuessRowsProps) {
   const slots = Array.from({ length: pegs }, (_, i) => i);
   return (
-    <div className="cb-board" role="group" aria-label={label}>
+    <div className={names ? 'cb-board cb-board-named' : 'cb-board'} role="group" aria-label={label}>
       <div className="cb-row cb-code-row" role="group" aria-label={code ? 'Code' : 'Code, hidden'}>
         <span className="cb-row-number" aria-hidden="true" />
         <span className="cb-pegs">
@@ -33,7 +33,7 @@ export default function GuessRows({ board, code, pegs, names = null, highlightLa
                 {slots.map(i => <Peg key={i} color={guess?.pegs[i] ?? null} />)}
               </span>
               {guess && <AnswerPegs feedback={guess.feedback} pegs={pegs} />}
-              {guess && names && <span className="cb-guesser">{names[guess.by]}</span>}
+              {guess && names && <span className="cb-guesser" title={names[guess.by]}>{names[guess.by]}</span>}
             </li>
           );
         })}

@@ -284,6 +284,7 @@ test.describe('Code Breaker rules', () => {
       await expect(row(page, 1).locator('.cb-guesser')).toHaveText('Alice');
       await expect(row(page, 2).locator('.cb-guesser')).toHaveText('Bob');
     }
+    await expect(row(alice, 1).locator('.cb-guesser')).toHaveAttribute('title', 'Alice');
     await expect(answer(alice, 2)).toHaveAttribute('title', '1 right place, 0 right color');
     await guess(alice, CODE, 3);
     for (const page of [alice, bob]) await expect(gameOver(page)).toBeVisible();
@@ -306,10 +307,16 @@ test.describe('Code Breaker rules', () => {
     await expect(bobRow).toContainText('25%');
     await expect(bob.getByRole('list', { name: 'Race progress' })).toContainText('1 of 10');
     // Alice breaks it in 2; Bob has used 2 already, so he cannot match it and the race ends
-    await guess(alice, CODE, 2, 'Your guesses');
+    await guess(alice, CODE, 2, "Alice's guesses");
     for (const page of [alice, bob]) {
       await expect(gameOver(page)).toBeVisible();
       await expect(status(page)).toHaveText('Alice wins, breaking the code in 2 guesses');
+      // Once the race is over every page shows every board, each under its player's name
+      await expect(page.locator('.cb-board-area .cb-board-title')).toHaveText(['Alice', 'Bob']);
+      await expect(board(page, "Alice's guesses").locator('.cb-answer')).toHaveCount(2);
+      await expect(board(page, "Bob's guesses").locator('.cb-answer')).toHaveCount(2);
+      await expect(row(page, 2, "Bob's guesses").locator('.cb-answer')).toHaveAttribute('title', '1 right place, 0 right color');
+      await expect(codeRow(page, "Bob's guesses")).toHaveAccessibleName('Code');
     }
   });
 
@@ -323,7 +330,7 @@ test.describe('Code Breaker rules', () => {
     await expect(bob.getByRole('list', { name: 'Race progress' })).toContainText('Broken');
     // Bob ties on 2 guesses, but Alice finished first
     await guess(bob, WRONG, 1, 'Your guesses');
-    await guess(bob, CODE, 2, 'Your guesses');
+    await guess(bob, CODE, 2, "Bob's guesses");
     await expect(status(bob)).toHaveText('Alice wins, breaking the code in 2 guesses');
     await expect(gameOver(bob)).toBeVisible();
   });
@@ -378,7 +385,7 @@ test.describe('Code Breaker endings, leaving and hidden code', () => {
     await guess(alice, WRONG, 10, 'Your guesses');
     await expect(turn(alice)).toHaveText('Out of guesses. Waiting for the others');
     await expect(gameOver(alice)).toHaveCount(0);
-    await guess(bob, WRONG, 10, 'Your guesses');
+    await guess(bob, WRONG, 10, "Bob's guesses");
     for (const page of [alice, bob]) {
       await expect(gameOver(page)).toBeVisible();
       await expect(status(page)).toHaveText('Nobody broke the code');
@@ -517,6 +524,29 @@ test.describe('Code Breaker controls', () => {
     await expect(status(alice)).toHaveText('Broken in 2 guesses!');
   });
 
+  test('Together with 5 pegs: the guesser name stays readable and the board fits, from phone to laptop widths', async ({ seat }) => {
+    const code: Color[] = ['pink', 'cyan', 'red', 'blue', 'green'];
+    const { pages: [alexandra] } = await start(seat, ['Alexandra', 'Bob'], { mode: 'together', codeRule: '5of8', code });
+    await guess(alexandra, ['cyan', 'pink', 'red', 'red', 'red'], 1);
+    const name = row(alexandra, 1).locator('.cb-guesser');
+    await expect(name).toHaveAttribute('title', 'Alexandra');
+    for (const width of [320, 390, 660, 1280]) {
+      await alexandra.setViewportSize({ width, height: 800 });
+      // The whole name shows, nothing is cut off, and the board stays inside its area and the page
+      const fit = await name.evaluate(el => {
+        const boardBox = el.closest('.cb-board')!.getBoundingClientRect();
+        const area = el.closest('.cb-board-area')!.getBoundingClientRect();
+        const page = document.documentElement;
+        return {
+          clipped: el.scrollWidth > el.clientWidth,
+          inArea: boardBox.left >= area.left - 0.5 && boardBox.right <= area.right + 0.5,
+          pageFits: page.scrollWidth <= page.clientWidth
+        };
+      });
+      expect(fit, `at ${width}px`).toEqual({ clipped: false, inArea: true, pageFits: true });
+    }
+  });
+
   test('with Color-blind symbols on, every peg shows its shape', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, ['Alice'], { code: CODE });
     await guess(alice, ['red', 'blue', 'green', 'yellow'], 1);
@@ -569,12 +599,14 @@ test.describe('Code Breaker controls', () => {
     await guess(alice, WRONG, 1, 'Your guesses');
     await button(alice, 'Undo my last move').click();
     await expect(board(alice, 'Your guesses').locator('.cb-answer')).toHaveCount(0);
+    // The guess taken back does not come back into the row
+    await expectNames(draftSlots(alice), ['Slot 1: empty', 'Slot 2: empty', 'Slot 3: empty', 'Slot 4: empty']);
     await expect(bob.getByRole('list', { name: 'Race progress' })).toContainText('0 of 10');
     // Alice breaks it in 1; Bob has not guessed yet, so the race goes on, but her finished board cannot be undone
     await guess(alice, CODE, 1, 'Your guesses');
     await expect(turn(alice)).toHaveText('You broke the code. Waiting for the others');
     await expect(button(alice, 'Undo my last move')).toBeDisabled();
-    await guess(bob, WRONG, 1, 'Your guesses');
+    await guess(bob, WRONG, 1, "Bob's guesses");
     await expect(gameOver(alice)).toBeVisible();
   });
 

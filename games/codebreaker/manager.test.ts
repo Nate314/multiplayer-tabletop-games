@@ -83,6 +83,20 @@ test('Together guesses from two seats are both recorded and never refused as sta
   assert.ok('error' in manager.requestUndo(ROOM, 1), 'no undo vote in Together');
 });
 
+test('a Together or Race guess before everyone agreed is refused and changes nothing', () => {
+  for (const mode of ['together', 'race']) {
+    const manager = rememberingKeys(createGameManager([codebreaker], seeded(42)));
+    for (const name of ['A', 'B', 'C']) manager.join('codebreaker', 'g1', name);
+    ok(manager.setHouseRules(ROOM, 1, { values: { mode, code: '5of8' }, maxPlayers: null }));
+    const before = manager.rawState(ROOM);
+    const pegs = (raw(manager).code as Color[]).map(peg => peg === 'red' ? 'blue' : 'red');
+    assert.deepEqual(manager.action(ROOM, 1, { type: 'guess', pegs }), { error: 'Everyone must agree to the house rules first' });
+    assert.equal(manager.rawState(ROOM), before);
+    agreeAll(manager, ROOM);
+    assert.equal(ok(manager.action(ROOM, 1, { type: 'guess', pegs })).started, true);
+  }
+});
+
 test('Race: the history never shows another board during play', () => {
   const manager = gameWith(['A', 'B'], 'race');
   const pegs = miss(manager);

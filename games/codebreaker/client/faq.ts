@@ -64,6 +64,6 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What happens if a player leaves?',
     answer: 'In Classic the player left behind wins at once. In Together the others play on. In Race the leaver\'s board is ' +
-      'dropped, and the race may end if nobody left can beat the best result.'
+      'dropped, which ends the race if nobody left can match or beat the best result.'
   }
 ];

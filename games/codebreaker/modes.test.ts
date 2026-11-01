@@ -129,6 +129,14 @@ test('Race: nobody breaks it and every board runs out', () => {
   assert.equal(progressOf(boardOf(state, 2), 4), 50);
   assert.equal(progressOf(boardOf(state, 1), 4), 0);
   assert.deepEqual(finalStandings(state).map(row => [row.seat, row.place]), [[2, 1], [1, 2], [3, 2]]);
+  // Unbroken Race boards show the progress they rank by
+  assert.deepEqual(finalStandings(state).map(row => row.score), ['Not broken, 50%', 'Not broken, 0%', 'Not broken, 0%']);
+});
+
+test('a Together or Race guess starts the game', () => {
+  for (const mode of ['together', 'race']) {
+    assert.equal(guess({ ...lobby(mode), started: false }, 1, WRONG).started, true);
+  }
 });
 
 test('Race: undoOwn is refused on a finished board', () => {
