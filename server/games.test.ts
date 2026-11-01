@@ -2586,3 +2586,85 @@ test('two connected players still vote on an undo', () => {
   assert.deepEqual(requested.undoVote, { requestedBy: 2, votes: { 2: true } });
   assert.equal(requested.moves, 1);
 });
+
+// testGame where each seat marks freely and takes back only its own last mark; there is no room-wide undo vote
+type MarkState = TestState & { marks: { seat: Seat; n: number }[] };
+const markingGame: GameDefinition<MarkState, TestPublicState> = {
+  ...(testGame as unknown as GameDefinition<MarkState, TestPublicState>),
+  createGameState: gameId => ({ ...testGame.createGameState(gameId), marks: [] }),
+  recordsAction: (_state, _seat, action) => asRecord(action)?.type === 'mark',
+  applyAction(state, seat, action, random, now): Result<MarkState> {
+    if (asRecord(action)?.type !== 'mark') return testGame.applyAction!(state, seat, action, random, now) as Result<MarkState>;
+    return { state: { ...state, marks: [...state.marks, { seat, n: state.marks.length + 1 }] } };
+  },
+  undoOwn(state, seat): Result<MarkState> {
+    const index = state.marks.map(mark => mark.seat).lastIndexOf(seat);
+    if (index < 0) return { error: 'Nothing of yours to undo' };
+    return { state: { ...state, marks: state.marks.filter((_mark, i) => i !== index) } };
+  },
+  allowsUndoVote: () => false
+};
+
+function markingManager(): Manager {
+  const manager = rememberingKeys(createGameManager([markingGame], seededRandom), keys);
+  manager.join('test', 'g1', 'A');
+  manager.join('test', 'g1', 'B');
+  return manager;
+}
+
+const marksOf = (manager: Manager) => (manager.rawState(ROOM) as MarkState).marks;
+
+test('own-move undo takes back only that seat\'s last move, as a new step', () => {
+  const manager = markingManager();
+  ok(manager.action(ROOM, 2, { type: 'mark' }));
+  ok(manager.action(ROOM, 1, { type: 'mark' }));
+  assert.equal(current(manager).moveCount, 2);
+  ok(manager.undoOwn(ROOM, 2));
+  assert.deepEqual(marksOf(manager), [{ seat: 1, n: 2 }]);
+  assert.equal(current(manager).moveCount, 3);
+  assert.equal(stepsOf(manager, 'test')?.length, 4); // the start and three steps
+});
+
+test('own-move undo with nothing of the seat\'s own left answers an error and changes nothing', () => {
+  const manager = markingManager();
+  ok(manager.action(ROOM, 2, { type: 'mark' }));
+  ok(manager.action(ROOM, 1, { type: 'mark' }));
+  ok(manager.undoOwn(ROOM, 2));
+  const before = manager.rawState(ROOM);
+  const steps = stepsOf(manager, 'test');
+  assert.deepEqual(manager.undoOwn(ROOM, 2), { error: 'Nothing of yours to undo' });
+  assert.deepEqual(manager.rawState(ROOM), before);
+  assert.equal(current(manager).moveCount, 3);
+  assert.deepEqual(stepsOf(manager, 'test'), steps);
+});
+
+test('own-move undo is refused while paused and after the game is over', () => {
+  const manager = markingManager();
+  ok(manager.action(ROOM, 1, { type: 'mark' }));
+  ok(manager.requestPause(ROOM, 1));
+  ok(manager.votePause(ROOM, 2, true));
+  assert.deepEqual(manager.undoOwn(ROOM, 1), { error: 'The game is paused' });
+  assert.equal(marksOf(manager).length, 1);
+
+  const over = markingManager();
+  ok(over.action(ROOM, 1, { type: 'mark' }));
+  ok(over.action(ROOM, 2, { type: 'concede' }));
+  assert.deepEqual(over.undoOwn(ROOM, 1), { error: 'The game is over' });
+  assert.equal(marksOf(over).length, 1);
+});
+
+test('a game without own-move undo refuses it', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  assert.deepEqual(manager.undoOwn(ROOM, 1), { error: 'This game has no own-move undo' });
+  assert.equal(current(manager).moveCount, 1);
+});
+
+test('a game that allows no undo vote refuses one and offers no undo', () => {
+  const manager = markingManager();
+  ok(manager.action(ROOM, 1, { type: 'mark' }));
+  assert.equal(current(manager).undoAvailable, false);
+  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Use Undo my last move in this mode' });
+  assert.equal(manager.rawState(ROOM)?.undoVote, null);
+  assert.equal(current(manager).moveCount, 1);
+});

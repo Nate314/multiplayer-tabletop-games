@@ -399,7 +399,7 @@ export function createGameManager(
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
-    const base = publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
+    const base = publicView(room, room.state, room.history.length > 0 && allowsUndoVote(room), room.timeline.length, viewer);
     return live(room, base, request => request.seat === viewer);
   }
 
@@ -445,6 +445,10 @@ export function createGameManager(
     if (!room) return { error: 'Game not found' };
     if (!room.state.activePlayers.includes(seat)) return { error: 'You are not in this game' };
     return { room };
+  }
+
+  function allowsUndoVote({ game, state }: Room): boolean {
+    return game.allowsUndoVote?.(state) ?? true;
   }
 
   // An undo needs two connected players, or the one seat of a one-player table
@@ -949,12 +953,29 @@ export function createGameManager(
       return { state: view(room, seat) };
     },
 
+    // Takes back the seat's own last move at once, recorded as a new step so the history stays truthful.
+    // Only games without an undo vote offer it, so there is no vote to cancel
+    undoOwn(roomId: string, seat: Seat): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      if (!room.game.undoOwn) return { error: 'This game has no own-move undo' };
+      if (room.state.paused) return { error: 'The game is paused' };
+      if (room.state.isGameOver) return { error: 'The game is over' };
+
+      const result = room.game.undoOwn(room.state, seat);
+      if ('error' in result) return result;
+      record(roomId, room, result.state);
+      return { state: view(room, seat) };
+    },
+
     requestUndo(roomId: string, seat: Seat): Result<BasePublicState> {
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
       const { state } = room;
 
+      if (!allowsUndoVote(room)) return { error: 'Use Undo my last move in this mode' };
       if (state.paused) return { error: 'The game is paused' };
       if (state.pauseVote) return { error: 'A pause vote is in progress' };
       if (state.rematchVote) return { error: 'A rematch vote is in progress' };

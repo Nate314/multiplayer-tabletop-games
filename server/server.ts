@@ -220,6 +220,9 @@ function handleMessage(ws: WebSocket, data: unknown): void {
     case MESSAGE_TYPES.VOTE_UNDO:
       respond(ws, roomId, manager.voteUndo(roomId, seat, payload?.approve));
       break;
+    case MESSAGE_TYPES.UNDO_OWN:
+      respond(ws, roomId, manager.undoOwn(roomId, seat));
+      break;
     case MESSAGE_TYPES.REQUEST_DISMISS:
       respond(ws, roomId, manager.requestDismiss(roomId, seat, payload?.seat));
       break;

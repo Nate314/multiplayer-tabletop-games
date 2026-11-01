@@ -12,6 +12,7 @@ export const MESSAGE_TYPES = {
   AGREE_HOUSE_RULES: 'AGREE_HOUSE_RULES',
   REQUEST_UNDO: 'REQUEST_UNDO',
   VOTE_UNDO: 'VOTE_UNDO',
+  UNDO_OWN: 'UNDO_OWN',
   REQUEST_HAND: 'REQUEST_HAND',
   ANSWER_HAND: 'ANSWER_HAND',
   SWITCH_TO_PLAYER: 'SWITCH_TO_PLAYER',
@@ -47,6 +48,7 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.AGREE_HOUSE_RULES; payload: { revision: number } }
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }
   | { type: typeof MESSAGE_TYPES.VOTE_UNDO; payload: { approve: boolean } }
+  | { type: typeof MESSAGE_TYPES.UNDO_OWN }
   | { type: typeof MESSAGE_TYPES.REQUEST_DISMISS; payload: { seat: Seat } }
   | { type: typeof MESSAGE_TYPES.VOTE_DISMISS; payload: { approve: boolean } }
   | { type: typeof MESSAGE_TYPES.REQUEST_REMATCH }
