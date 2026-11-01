@@ -42,6 +42,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   dominoes: () => import('../games/dominoes/client/index.ts').then(m => m.dominoesClient),
   euchre: () => import('../games/euchre/client/index.ts').then(m => m.euchreClient),
   farkle: () => import('../games/farkle/client/index.ts').then(m => m.farkleClient),
+  go: () => import('../games/go/client/index.ts').then(m => m.goClient),
   gofish: () => import('../games/gofish/client/index.ts').then(m => m.gofishClient),
   hearts: () => import('../games/hearts/client/index.ts').then(m => m.heartsClient),
   holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),

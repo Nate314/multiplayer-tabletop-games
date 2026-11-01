@@ -8,31 +8,25 @@ export type AreaScore = {
   white: { stones: number; territory: number; komi: number; total: number };
 };
 
-// Area scoring: stones on the board plus empty points bordered by only one color. Dead stones are lifted first.
-export function areaScore(board: Board, dead: Point[], komi = KOMI): AreaScore {
+// Who owns each point once the dead stones are lifted: a live stone's own color, or for an empty point the one
+// color that borders its whole empty region (null when both colors or neither do)
+export function ownerMap(board: Board, dead: Point[]): Board {
   const size = board.length;
   const grid = board.map((row) => [...row]);
   for (const { row, col } of dead) grid[row][col] = null;
-
-  const stones = { black: 0, white: 0 };
-  const territory = { black: 0, white: 0 };
+  const owners = grid.map((row) => [...row]);
   const seen = new Set<string>();
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
-      const stone = grid[row][col];
-      if (stone) {
-        stones[stone]++;
-        continue;
-      }
-      if (seen.has(`${row},${col}`)) continue;
+      if (grid[row][col] || seen.has(`${row},${col}`)) continue;
       // Flood fill the empty region, noting which colors border it
       const borders = new Set<Stone>();
-      let area = 0;
+      const region: Point[] = [];
       const stack = [{ row, col }];
       seen.add(`${row},${col}`);
       while (stack.length > 0) {
         const current = stack.pop()!;
-        area++;
+        region.push(current);
         for (const next of neighbors(current, size)) {
           const around = grid[next.row][next.col];
           if (around) borders.add(around);
@@ -42,9 +36,22 @@ export function areaScore(board: Board, dead: Point[], komi = KOMI): AreaScore {
           }
         }
       }
-      if (borders.size === 1) territory[[...borders][0]] += area;
+      if (borders.size === 1) for (const p of region) owners[p.row][p.col] = [...borders][0];
     }
   }
+  return owners;
+}
+
+// Area scoring: stones on the board plus empty points bordered by only one color. Dead stones are lifted first.
+export function areaScore(board: Board, dead: Point[], komi = KOMI): AreaScore {
+  const isDead = (row: number, col: number) => dead.some((d) => d.row === row && d.col === col);
+  const stones = { black: 0, white: 0 };
+  const territory = { black: 0, white: 0 };
+  ownerMap(board, dead).forEach((cells, row) => cells.forEach((owner, col) => {
+    if (!owner) return;
+    if (board[row][col] && !isDead(row, col)) stones[owner]++;
+    else territory[owner]++;
+  }));
   return {
     black: { stones: stones.black, territory: territory.black, total: stones.black + territory.black },
     white: {
