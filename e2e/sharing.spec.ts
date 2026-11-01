@@ -17,7 +17,7 @@ test('a join link opens the join dialog with the game ID and the last used name 
 test('a join link with an unknown game opens the landing page with no dialog', async ({ browser, server }) => {
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/join/nope/abc');
-  await expect(visitor.locator('.lobby-game')).toHaveCount(39);
+  await expect(visitor.locator('.lobby-game')).toHaveCount(40);
   await expect(visitor.getByRole('dialog')).toHaveCount(0);
   await expect(visitor).toHaveURL(`${server.url}/`);
 });
