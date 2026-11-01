@@ -5,10 +5,10 @@ import GameStatus from './GameStatus';
 import UndoVote from '../../../src/components/UndoVote';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import animateMove from './animateMove.ts';
-import { pathFor, pickHole } from './selection.ts';
+import { livePath, pathFor, pickHole } from './selection.ts';
 import type { Picked } from './selection.ts';
 import { parseHole } from '../board.ts';
-import { nextLandings } from '../rules.ts';
+import { isStep, nextLandings } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Hole, PublicGameState } from '../types.ts';
 
@@ -19,7 +19,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
 
-  const path = isMyTurn ? pathFor(picked, moveCount) : [];
+  const path = isMyTurn ? livePath(gameState, playerNumber, pathFor(picked, moveCount)) : [];
   const movable = isMyTurn
     ? Object.entries(holes)
       .filter(([, seat]) => seat === playerNumber)
@@ -27,8 +27,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       .filter(hole => nextLandings(gameState, [hole]).length > 0)
     : [];
   const targets = path.length > 0 ? nextLandings(gameState, path) : [];
-  // A step, or a chain with nowhere left to go, is sent at once, so a longer path here is a chain that can go on
-  const canEndMove = path.length > 1;
+  // A chain of at least one hop that could go on further; one with nowhere left to go is sent by itself
+  const canEndMove = path.length > 1 && !isStep(path) && targets.length > 0;
 
   // Only the live board animates; the history dialog's board renders without this hook
   useMoveAnimation(boardAreaRef, gameState, animateMove);

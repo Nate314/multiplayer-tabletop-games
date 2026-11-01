@@ -125,6 +125,12 @@
     pointer-events: none;
   }
 
+  /* The invisible ring under each hole that catches clicks on a marble's edge */
+
+  .hole-hit {
+    fill: transparent;
+  }
+
   .hole {
     fill: var(--hole);
     stroke: rgba(0, 0, 0, 0.25);
@@ -183,11 +189,13 @@
     pointer-events: none;
   }
 
-  /* Your movable marbles glow on your turn */
+  /* Clicks pass through a marble to the hole under it (Board.tsx); the keyboard still focuses a movable marble */
 
-  .marble.movable {
-    cursor: pointer;
+  .marble {
+    pointer-events: none;
   }
+
+  /* Your movable marbles glow on your turn */
 
   .marble.movable circle {
     stroke: var(--glow);

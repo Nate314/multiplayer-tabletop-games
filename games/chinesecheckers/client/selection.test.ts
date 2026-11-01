@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pathFor, pickHole } from './selection.ts';
+import { livePath, pathFor, pickHole } from './selection.ts';
 import { createGameState } from '../rules.ts';
 import { holeKey } from '../board.ts';
 import type { Hole, PublicGameState, Seat } from '../types.ts';
@@ -49,6 +49,19 @@ test('an opponent marble or an unmarked hole changes nothing', () => {
   assert.deepEqual(pickHole(state, 1, path, at(1, 0)), { path, send: false });
   assert.deepEqual(pickHole(state, 1, path, at(3, -3)), { path, send: false });
   assert.deepEqual(pickHole(state, 1, [], at(1, 0)), { path: [], send: false });
+});
+
+test('a path the current state no longer allows is dropped', () => {
+  const chain = [at(0, 0), at(2, 0)];
+  const before = stateWith([[0, 0, 1], [1, 0, 2], [3, 0, 2]]);
+  assert.deepEqual(livePath(before, 1, chain), chain);
+  assert.deepEqual(livePath(before, 1, [at(0, 0)]), [at(0, 0)]);
+  // The hopped marble's owner was dismissed, so it came off the board without a new move
+  const after = stateWith([[0, 0, 1], [3, 0, 2]]);
+  assert.deepEqual(livePath(after, 1, chain), []);
+  // The picked marble itself is gone
+  assert.deepEqual(livePath(stateWith([[1, 0, 2]]), 1, [at(0, 0)]), []);
+  assert.deepEqual(livePath(after, 1, []), []);
 });
 
 test('a path from an earlier state is dropped', () => {

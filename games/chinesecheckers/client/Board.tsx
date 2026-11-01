@@ -10,6 +10,7 @@ import type { Hole, PointIndex, PublicGameState, Seat } from '../types.ts';
 
 const HOLE_RADIUS = 0.5;
 const MARBLE_RADIUS = 0.72;
+const HIT_RADIUS = 0.85; // a little over a marble, and under half the 1.73 between neighboring holes
 const SYMBOL_SIZE = 0.9;
 
 type BoardProps = {
@@ -53,18 +54,22 @@ export default function Board({ gameState, viewer, dimmed, path, movable, target
         const { x, y } = at(hole);
         const isTarget = includesHole(targets, hole);
         const classNames = `hole${tintOf(pointOf(hole))}${isTarget ? ' target' : ''}`;
+        // Marbles let clicks through, so every click lands on a hole: the drawn hole, or the wider ring under it
+        // that is as large as a marble, so the touch target does not shrink to the hole
         return (
-          <circle
-            key={holeKey(hole)}
-            className={classNames}
-            cx={x}
-            cy={y}
-            r={HOLE_RADIUS}
-            data-hole={holeKey(hole)}
-            data-anim-key={holeAnimKey(hole)}
-            onClick={() => onHoleClick(hole)}
-            {...(isTarget ? { role: 'button', tabIndex: 0, 'aria-label': 'Land here', onKeyDown: onKey(() => onHoleClick(hole)) } : {})}
-          />
+          <g key={holeKey(hole)}>
+            <circle className="hole-hit" cx={x} cy={y} r={HIT_RADIUS} onClick={() => onHoleClick(hole)} />
+            <circle
+              className={classNames}
+              cx={x}
+              cy={y}
+              r={HOLE_RADIUS}
+              data-hole={holeKey(hole)}
+              data-anim-key={holeAnimKey(hole)}
+              onClick={() => onHoleClick(hole)}
+              {...(isTarget ? { role: 'button', tabIndex: 0, 'aria-label': 'Land here', onKeyDown: onKey(() => onHoleClick(hole)) } : {})}
+            />
+          </g>
         );
       })}
       {lastMove && <polyline className="last-move-line" points={line(lastMove.path)} />}
@@ -81,7 +86,6 @@ export default function Board({ gameState, viewer, dimmed, path, movable, target
             className={classNames.join(' ')}
             data-marble={key}
             aria-label={`${SEAT_COLORS[seat]} marble`}
-            onClick={() => onHoleClick(hole)}
             {...(canMove ? { role: 'button', tabIndex: 0, onKeyDown: onKey(() => onHoleClick(hole)) } : { role: 'img' })}
           >
             <circle cx={x} cy={y} r={MARBLE_RADIUS} />
