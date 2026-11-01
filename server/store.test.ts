@@ -182,6 +182,18 @@ test("deleting a room's images keeps those an archived game shows, until the arc
   assert.ok(store.loadImage('a'.repeat(32)), 'a live room keeps its images through a prune');
 });
 
+test("countRoomImages counts only the room's own images", () => {
+  const store = openGameStore(':memory:');
+  assert.equal(store.countRoomImages('test/g1'), 0);
+  store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);
+  store.saveImage(OTHER, 'test/g1', 'image/png', PNG);
+  store.saveImage('a'.repeat(32), 'test/g2', 'image/png', PNG);
+  assert.equal(store.countRoomImages('test/g1'), 2);
+  store.deleteRoomImages('test/g1');
+  assert.equal(store.countRoomImages('test/g1'), 0);
+  assert.equal(store.countRoomImages('test/g2'), 1);
+});
+
 test('pruning an archive keeps an image a live room still has', () => {
   const store = openGameStore(':memory:');
   store.saveImage(IMAGE, 'test/g1', 'image/jpeg', JPEG);

@@ -116,7 +116,8 @@ test('parseGameFile refuses images that are not JPEG or PNG data under an image 
   const valid = buildGameFile('chess', 'friday', steps, new Date('2026-10-18T20:15:00.000Z'));
   for (const bad of [
     [], 'x', { [ID]: { mime: 'text/html', data: 'PGI+' } }, { [ID]: { mime: 'image/png' } }, { [ID]: null },
-    { 'not-an-id': { mime: 'image/png', data: 'iVBO' } }
+    { 'not-an-id': { mime: 'image/png', data: 'iVBO' } },
+    { [ID]: { mime: 'image/png', data: 'iVBO"),alert(1)//' } }, { [ID]: { mime: 'image/jpeg', data: '/9j/ 4AA' } }
   ]) {
     assert.deepEqual(parseGameFile(JSON.stringify({ ...valid, images: bad }), ['chess']), notSaved, JSON.stringify(bad));
   }

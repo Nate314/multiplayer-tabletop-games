@@ -118,8 +118,7 @@ app.get('/api/resume/:gameType/:gameId', (req, res) => {
 });
 
 mountImageRoutes(app, manager);
-
-mountRulesRoute(app,path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
+mountRulesRoute(app, path.join(__dirname, '../games'), GAMES.map(game => game.info.id));
 
 if (e2eRandom) mountE2eRoutes(app, manager, e2eRandom, roomId => broadcast(roomId));
 

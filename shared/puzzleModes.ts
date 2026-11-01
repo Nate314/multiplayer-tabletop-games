@@ -38,6 +38,7 @@ export type RaceBoards<B> = Partial<Record<Seat, B>>;
 export type RaceProgress = Partial<Record<Seat, number>>; // 0 to 100, whole numbers
 
 // The boards a viewer may see: during play only their own (none for null); once over, all
+// Spectators see every board, so a spectator view passes all boards rather than calling this with a null viewer
 export function visibleBoards<B>(boards: RaceBoards<B>, viewer: Seat | null, isGameOver: boolean): RaceBoards<B> {
   if (isGameOver) return boards;
   return viewer !== null && viewer in boards ? { [viewer]: boards[viewer] } : {};

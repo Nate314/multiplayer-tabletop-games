@@ -32,6 +32,7 @@ export type GameStore = {
   // Never replaces an image stored under `id`; one whose room is gone (kept for an archive) joins `roomId`
   saveImage(id: string, roomId: string, mime: ImageMime, bytes: Buffer): void;
   loadImage(id: string): { mime: string; bytes: Buffer } | undefined;
+  countRoomImages(roomId: string): number;
   // Deletes the room's images, except those an archived game shows: they stay until pruneArchive drops that archive
   deleteRoomImages(roomId: string): void;
 };
@@ -92,6 +93,7 @@ export function openGameStore(file: string): GameStore {
     'ON CONFLICT (id) DO UPDATE SET room_id = excluded.room_id WHERE images.room_id IS NULL'
   );
   const selectImage = db.prepare('SELECT mime, bytes FROM images WHERE id = ?');
+  const countRoomImages = db.prepare('SELECT COUNT(*) AS count FROM images WHERE room_id = ?');
   const UNARCHIVED = 'id NOT IN (SELECT image_id FROM archive_images)';
   const deleteRoomImages = db.prepare(`DELETE FROM images WHERE room_id = ? AND ${UNARCHIVED}`);
   const detachRoomImages = db.prepare('UPDATE images SET room_id = NULL WHERE room_id = ?');
@@ -219,6 +221,10 @@ export function openGameStore(file: string): GameStore {
     loadImage(id) {
       const row = selectImage.get(id);
       return row && { mime: String(row.mime), bytes: Buffer.from(row.bytes as Uint8Array) };
+    },
+
+    countRoomImages(roomId) {
+      return Number(countRoomImages.get(roomId)?.count ?? 0);
     },
 
     deleteRoomImages(roomId) {

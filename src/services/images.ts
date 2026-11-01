@@ -36,7 +36,7 @@ export async function uploadImage(gameType: string, gameId: string, blob: Blob):
   const same = session?.gameType === gameType && session.gameId === gameId;
   const seatKey = same ? session.seatKey ?? session.localSeats?.[0]?.seatKey : undefined;
   if (!seatKey) throw new Error('Only a player in this game can add a picture');
-  const response = await fetch(`/api/images/${gameType}/${encodeURIComponent(gameId)}`, {
+  const response = await fetch(`/api/images/${encodeURIComponent(gameType)}/${encodeURIComponent(gameId)}`, {
     method: 'POST', headers: { 'Content-Type': blob.type || 'image/jpeg', 'X-Seat-Key': seatKey }, body: blob
   });
   const body = await response.json().catch(() => null) as { id?: unknown; error?: unknown } | null;

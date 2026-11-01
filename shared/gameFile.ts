@@ -28,12 +28,12 @@ export type GameFile = {
 // An image id is 128 random bits in lowercase hex
 export const isImageId = (id: unknown): id is string => typeof id === 'string' && /^[0-9a-f]{32}$/.test(id);
 
-// Only JPEG and PNG, so a file can never put another kind of data URL in the page
+// Only JPEG and PNG, and only base64 characters in `data`, so a file can never put another kind of data URL in the page
 export function isEmbeddedImages(value: unknown): value is EmbeddedImages {
   const images = asRecord(value);
   return images !== null && !Array.isArray(value) && Object.entries(images).every(([id, image]) => {
     const { mime, data } = asRecord(image) ?? {};
-    return isImageId(id) && (mime === 'image/jpeg' || mime === 'image/png') && typeof data === 'string';
+    return isImageId(id) && (mime === 'image/jpeg' || mime === 'image/png') && typeof data === 'string' && /^[A-Za-z0-9+/]*={0,2}$/.test(data);
   });
 }
 

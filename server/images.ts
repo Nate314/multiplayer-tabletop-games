@@ -6,6 +6,9 @@ import type { ImageMime } from './store.ts';
 // A picture is shrunk in the browser first (longest side 1600 px, JPEG), so 1 MB is plenty
 export const MAX_IMAGE_BYTES = 1024 * 1024;
 
+// Uploads one room may hold, so a seated player cannot fill the disk
+export const MAX_ROOM_IMAGES = 20;
+
 export const newImageId = () => randomBytes(16).toString('hex');
 
 // By its leading bytes, never its name or declared type; null for anything but JPEG and PNG
@@ -35,17 +38,18 @@ export function decodeImage(image: { data: string }): { mime: ImageMime; bytes: 
 }
 
 // `uploadImage` answers which refusal it was, so the route can give each its status
-export type ImageUploadError = 'no-room' | 'not-seated' | 'not-an-image';
+export type ImageUploadError = 'no-room' | 'not-seated' | 'not-an-image' | 'too-many';
 export type ImageService = {
   uploadImage(gameType: unknown, gameId: unknown, seatKey: unknown, bytes: Buffer): { id: string } | { error: ImageUploadError };
   loadImage(id: string): { mime: string; bytes: Buffer } | undefined;
 };
 
-const STATUS: Record<ImageUploadError, number> = { 'no-room': 404, 'not-seated': 403, 'not-an-image': 415 };
+const STATUS: Record<ImageUploadError, number> = { 'no-room': 404, 'not-seated': 403, 'not-an-image': 415, 'too-many': 429 };
 const MESSAGES: Record<ImageUploadError | 'too-large', string> = {
   'no-room': 'This game is not available',
   'not-seated': 'Only a player in this game can add a picture',
   'not-an-image': 'Only JPEG and PNG pictures can be added',
+  'too-many': 'This game has too many pictures',
   'too-large': 'That picture is larger than 1 MB'
 };
 

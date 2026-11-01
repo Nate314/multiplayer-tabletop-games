@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import express from 'express';
 import type { AddressInfo } from 'net';
 import { createGameManager } from './games.ts';
-import { mountImageRoutes, MAX_IMAGE_BYTES } from './images.ts';
+import { mountImageRoutes, MAX_IMAGE_BYTES, MAX_ROOM_IMAGES } from './images.ts';
 import { openGameStore, type GameStore } from './store.ts';
 import { rememberingKeys } from './testing.ts';
 import { testGame, type TestPublicState, type TestState } from '../shared/testGame.ts';
@@ -101,6 +101,28 @@ test('every refused upload is a JSON 4xx and stores nothing', async () => {
 
 test('exactly 1 MB is accepted', async () => {
   await uploadedId(Buffer.concat([JPEG, Buffer.alloc(MAX_IMAGE_BYTES - JPEG.length)]));
+});
+
+test('a room holding MAX_ROOM_IMAGES pictures refuses another with a 429 and stores nothing', async () => {
+  const { store: own, saved: ownSaved } = spiedStore();
+  const other = managerOn(own);
+  const capApp = express();
+  mountImageRoutes(capApp, other);
+  const capServer = capApp.listen(0);
+  try {
+    other.join('test', 'g3', 'Cat');
+    const key = other.rawState('test/g3')?.seatKeys?.[1] as string;
+    for (let i = 0; i < MAX_ROOM_IMAGES; i++) assert.ok('id' in other.uploadImage('test', 'g3', key, JPEG));
+    const response = await fetch(`http://localhost:${(capServer.address() as AddressInfo).port}/api/images/test/g3`, {
+      method: 'POST', headers: { 'Content-Type': 'image/jpeg', 'X-Seat-Key': key }, body: JPEG
+    });
+    assert.equal(response.status, 429);
+    assert.deepEqual(await response.json(), { error: 'This game has too many pictures' });
+    assert.equal(ownSaved.length, MAX_ROOM_IMAGES);
+    assert.equal(own.countRoomImages('test/g3'), MAX_ROOM_IMAGES);
+  } finally {
+    capServer.close();
+  }
 });
 
 test('an unknown or malformed id is a 404', async () => {

@@ -20,7 +20,7 @@ import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
 import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
-import { decodeImage, embedImages, imageMime, MAX_IMAGE_BYTES, newImageId, type ImageUploadError } from './images.ts';
+import { decodeImage, embedImages, imageMime, MAX_IMAGE_BYTES, MAX_ROOM_IMAGES, newImageId, type ImageUploadError } from './images.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, pauseFilesMismatch, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -463,9 +463,9 @@ export function createGameManager(
     return game.allowsUndoVote?.(state) ?? true;
   }
 
-  // An undo needs two connected players, or the one seat of a one-player table
-  function undoQuorum(state: BaseGameState): number {
-    return Math.min(2, state.activePlayers.length);
+  // An undo needs two connected players. Only a one-player game, or one that continuesAlone, lets a lone seat undo
+  function undoQuorum({ game, state }: Room): number {
+    return game.info.minPlayers < 2 || game.continuesAlone ? Math.min(2, state.activePlayers.length) : 2;
   }
 
   // Applies the undo once every connected player has approved; a vote left short of the quorum (after a disconnect)
@@ -475,7 +475,7 @@ export function createGameManager(
     const vote = state.undoVote;
     if (!vote) return;
     const voters = connectedPlayers(state);
-    if (voters.length < undoQuorum(state)) {
+    if (voters.length < undoQuorum(room)) {
       room.state = { ...state, undoVote: null };
       return;
     }
@@ -984,8 +984,7 @@ export function createGameManager(
       return { state: view(room, seat) };
     },
 
-    // Takes back the seat's own last move at once, recorded as a new step so the history stays truthful.
-    // Only games without an undo vote offer it, so there is no vote to cancel
+    // Takes back the seat's own last move at once, recorded as a new step so the history stays truthful
     undoOwn(roomId: string, seat: Seat): Result<BasePublicState> {
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
@@ -996,7 +995,7 @@ export function createGameManager(
 
       const result = room.game.undoOwn(room.state, seat);
       if ('error' in result) return result;
-      record(roomId, room, result.state);
+      record(roomId, room, { ...result.state, undoVote: null });
       return { state: view(room, seat) };
     },
 
@@ -1013,7 +1012,7 @@ export function createGameManager(
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-      if (connectedPlayers(state).length < undoQuorum(state)) return { error: 'Not enough players to vote' };
+      if (connectedPlayers(state).length < undoQuorum(room)) return { error: 'Not enough players to vote' };
 
       room.state = {
         ...state,
@@ -1336,6 +1335,7 @@ export function createGameManager(
       if (!seated) return { error: 'not-seated' };
       const mime = imageMime(bytes);
       if (!mime || bytes.length > MAX_IMAGE_BYTES) return { error: 'not-an-image' };
+      if (store.countRoomImages(roomId) >= MAX_ROOM_IMAGES) return { error: 'too-many' };
       const id = newImageId();
       store.saveImage(id, roomId, mime, bytes); // a failure throws, so no id is handed out for an image that is not there
       return { id };

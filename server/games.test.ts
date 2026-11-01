@@ -753,6 +753,7 @@ function memoryStore(): MemoryStore {
     remove: roomId => { rooms.delete(roomId); steps.delete(roomId); },
     saveImage: () => {},
     loadImage: () => undefined,
+    countRoomImages: () => 0,
     deleteRoomImages: () => {}
   };
 }
@@ -2580,6 +2581,40 @@ test('a lone player starts the rematch at once', () => {
   assert.equal(lobby.started, false);
   assert.equal(lobby.gameNumber, 2);
   assert.deepEqual(lobby.activePlayers, [1]);
+});
+
+test('the lone winner of a two-player game left by the other cannot undo alone', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  left(manager.disconnect(ROOM, 2));
+  const over = ok(manager.requestDismiss(ROOM, 1, 2));
+  assert.equal(over.gameStatus, 'A wins! Everyone else left.');
+  const before = manager.rawState(ROOM);
+  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players to vote' });
+  assert.deepEqual(manager.rawState(ROOM), before);
+});
+
+test('a two-seat table with one player disconnected cannot undo', () => {
+  const manager = gameWith('A', 'B');
+  ok(manager.move(ROOM, 1, tick));
+  left(manager.disconnect(ROOM, 2));
+  assert.deepEqual(manager.requestUndo(ROOM, 1), { error: 'Not enough players to vote' });
+  assert.equal(current(manager).moves, 1);
+});
+
+test('a game that continuesAlone, reduced to one seat, undoes at once', () => {
+  const aloneGame = { ...testGame, continuesAlone: true as const };
+  const manager = rememberingKeys(createGameManager([aloneGame], seededRandom), keys);
+  joined(manager.join('test', 'g1', 'A'));
+  joined(manager.join('test', 'g1', 'B'));
+  ok(manager.move(ROOM, 1, tick));
+  left(manager.disconnect(ROOM, 2));
+  const alone = ok(manager.requestDismiss(ROOM, 1, 2));
+  assert.equal(alone.isGameOver, false);
+  assert.deepEqual(alone.activePlayers, [1]);
+  const restored = ok(manager.requestUndo(ROOM, 1));
+  assert.equal(restored.undoVote, null);
+  assert.equal(restored.moves, 0);
 });
 
 test('two connected players still vote on an undo', () => {
