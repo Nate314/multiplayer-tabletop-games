@@ -363,7 +363,7 @@ A pass-and-play device holds several seats on one connection but gets only the s
 
    Actions are not turn-bound and are not recorded for undo, unless the game's `recordsAction` says so for that action: then the result is recorded as a move (undoable, clearing an open undo vote), and `applyAction` gets the server time as `now`. Azul uses one to acknowledge the end of a round.
 
-   `shared/drawOffer.ts` holds resigning and draws by agreement for two-player games as actions: `resign`, `offerDraw` and `answerDraw` (`accept`). They work on either player's turn while the game runs, and are refused before the first move, after the game is over and during a vote. The state keeps the offering seat in `drawOffer`; the offer ends when it is answered, or when the game's `applyMove` calls `lapseDrawOffer` for a move by the other player. A game can score a resignation as a draw, as Chess does when the opponent could never checkmate. Chess, Checkers, Connect Four and Go use it (Go only for resigning); Chess adds its own `claimDraw` action.
+   `shared/drawOffer.ts` holds resigning and draws by agreement for two-player games as actions: `resign`, `offerDraw` and `answerDraw` (`accept`). They work on either player's turn while the game runs, and are refused before the first move, after the game is over and during a vote. The state keeps the offering seat in `drawOffer`; the offer ends when it is answered, or when the game's `applyMove` calls `lapseDrawOffer` for a move by the other player. A game can score a resignation as a draw, as Chess does when the opponent could never checkmate. Chess, Checkers, Connect Four, Go, Tic-Tac-Toe and Ultimate Tic-Tac-Toe use it (Go only for resigning); Chess adds its own `claimDraw` action.
 
 4. **Undo**
 
