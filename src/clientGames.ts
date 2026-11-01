@@ -59,6 +59,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   rummikub: () => import('../games/rummikub/client/index.ts').then(m => m.rummikubClient),
   scrabble: () => import('../games/scrabble/client/index.ts').then(m => m.scrabbleClient),
   skipbo: () => import('../games/skipbo/client/index.ts').then(m => m.skipboClient),
+  snakesladders: () => import('../games/snakesladders/client/index.ts').then(m => m.snakesladdersClient),
   spades: () => import('../games/spades/client/index.ts').then(m => m.spadesClient),
   splendor: () => import('../games/splendor/client/index.ts').then(m => m.splendorClient),
   thecrew: () => import('../games/thecrew/client/index.ts').then(m => m.thecrewClient),

@@ -18,6 +18,7 @@ import { phase10 } from './phase10/index.ts';
 import { pictionary } from './pictionary/index.ts';
 import { skipbo } from './skipbo/index.ts';
 import { go } from './go/index.ts';
+import { snakesladders } from './snakesladders/index.ts';
 import { gofish } from './gofish/index.ts';
 import { hearts } from './hearts/index.ts';
 import { jenga } from './jenga/index.ts';
@@ -38,5 +39,5 @@ import { thecrew } from './thecrew/index.ts';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
   azul, backgammon, carcassonne, catan, checkers, chess, connectfour, dominoes, euchre, farkle, go, gofish, hearts, jenga, mancala, monopoly, parchisi, phase10, pictionary,
-  quoridor, racko, risk, rook, rummikub, scrabble, skipbo, spades, splendor, holdem, thecrew, tickettoride, uno, war, yahtzee
+  quoridor, racko, risk, rook, rummikub, scrabble, skipbo, snakesladders, spades, splendor, holdem, thecrew, tickettoride, uno, war, yahtzee
 ];

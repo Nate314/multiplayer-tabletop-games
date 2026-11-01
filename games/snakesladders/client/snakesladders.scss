@@ -1,0 +1,409 @@
+[data-game="snakesladders"] {
+  color-scheme: light;
+  --page-bg: #EEF3E6;
+  --text: #1F2A1C;
+  --muted: #5B6656;
+  --panel-bg: #FFFFFF;
+  --panel-border: #D2DCC6;
+  --board-bg: #C9D8B6;
+  --square-light: #FBF7EC;
+  --square-dark: #E4EDD5;
+  --square-border: #B9C8A4;
+  --number: #6B7A63;
+  --button-bg: #3F7D3A;
+  --button-hover-bg: #32652E;
+  --button-text: #FFFFFF;
+  --status-bg: #E4EDD5;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --highlight: #E8890C;
+  --ladder: #8D5A2B;
+  --snake: #2E7D32;
+  --snake-head: #1B5E20;
+  --snake-eye: #FFF59D;
+  --token-edge: rgba(0, 0, 0, 0.55);
+  --die-bg: #FFFFFF;
+  --die-pip: #1F2A1C;
+  --player1: #E53935;
+  --player2: #1E88E5;
+  --player3: #43A047;
+  --player4: #FB8C00;
+  --player5: #8E24AA;
+  --player6: #00ACC1;
+  --symbol-ink: #FFFFFF;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #151A13;
+    --text: #E8F0E0;
+    --muted: #A6B39C;
+    --panel-bg: #222A1F;
+    --panel-border: #3B4636;
+    --board-bg: #2C3628;
+    --square-light: #2A3226;
+    --square-dark: #222A1F;
+    --square-border: #3F4B39;
+    --number: #8E9C85;
+    --button-bg: #4F9A48;
+    --button-hover-bg: #5FAE57;
+    --status-bg: #2C3628;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --highlight: #FFB300;
+    --ladder: #C08A55;
+    --snake: #66BB6A;
+    --snake-head: #43A047;
+    --snake-eye: #1B1B1B;
+    --token-edge: rgba(0, 0, 0, 0.8);
+    --die-bg: #E8F0E0;
+    --die-pip: #151A13;
+    --player1: #EF5350;
+    --player2: #42A5F5;
+    --player3: #66BB6A;
+    --player4: #FFA726;
+    --player5: #AB47BC;
+    --player6: #26C6DA;
+    --symbol-ink: #151A13;
+  }
+
+  /* Each seat's color, read by its token and player dot */
+
+  .sl-seat1 {
+    --seat: var(--player1);
+  }
+
+  .sl-seat2 {
+    --seat: var(--player2);
+  }
+
+  .sl-seat3 {
+    --seat: var(--player3);
+  }
+
+  .sl-seat4 {
+    --seat: var(--player4);
+  }
+
+  .sl-seat5 {
+    --seat: var(--player5);
+  }
+
+  .sl-seat6 {
+    --seat: var(--player6);
+  }
+
+  .sl-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .sl-board-area {
+    position: relative;
+    flex: 0 1 600px;
+    min-width: 0;
+  }
+
+  /* A square box: the 10 by 10 grid of squares with the SVG of ladders, snakes and tokens laid over it */
+
+  .sl-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    width: 100%;
+    aspect-ratio: 1;
+    container-type: inline-size;
+    border: 3px solid var(--board-bg);
+    border-radius: 6px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: var(--board-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .sl-square {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--square-border);
+    box-sizing: border-box;
+  }
+
+  .sl-square-light {
+    background: var(--square-light);
+  }
+
+  .sl-square-dark {
+    background: var(--square-dark);
+  }
+
+  .sl-square-number {
+    position: absolute;
+    top: 2%;
+    left: 5%;
+    color: var(--number);
+    font-size: max(9px, 2.3cqw);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .sl-last-from {
+    outline: 2px dashed var(--highlight);
+    outline-offset: -3px;
+  }
+
+  .sl-last-to {
+    outline: 3px solid var(--highlight);
+    outline-offset: -3px;
+  }
+
+  .sl-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .sl-ladder-rail,
+  .sl-ladder-rung {
+    stroke: var(--ladder);
+    stroke-linecap: round;
+  }
+
+  .sl-ladder-rail {
+    stroke-width: 0.9;
+  }
+
+  .sl-ladder-rung {
+    stroke-width: 0.6;
+  }
+
+  .sl-snake-body {
+    fill: none;
+    stroke: var(--snake);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    opacity: 0.9;
+  }
+
+  .sl-snake-head {
+    fill: var(--snake-head);
+  }
+
+  .sl-snake-eye {
+    fill: var(--snake-eye);
+  }
+
+  .sl-token-disc {
+    fill: var(--seat);
+    stroke: var(--token-edge);
+    stroke-width: 0.45;
+  }
+
+  .sl-token-symbol {
+    color: var(--symbol-ink);
+  }
+
+  .sl-side-panel {
+    display: flex;
+    flex: 0 0 300px;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .sl-panel-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .sl-status {
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .sl-status.sl-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .sl-turn.sl-your-turn {
+    font-weight: 700;
+    color: var(--button-bg);
+  }
+
+  .sl-roll-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .sl-last-roll {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .sl-roller {
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  .sl-die {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding: 5px;
+    box-sizing: border-box;
+    border: 1px solid var(--square-border);
+    border-radius: 8px;
+    background: var(--die-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --dice-pip: var(--die-pip);
+  }
+
+  .sl-button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sl-roll-button {
+    padding: 10px 28px;
+    font-size: 16px;
+  }
+
+  .sl-undo-button {
+    align-self: flex-start;
+  }
+
+  .sl-button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .sl-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .sl-player-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+
+  .sl-player-row.sl-player-current {
+    background: var(--status-bg);
+    box-shadow: inset 3px 0 0 var(--button-bg);
+  }
+
+  .sl-player-row.sl-player-you {
+    font-weight: 700;
+  }
+
+  .sl-player-row.sl-player-left {
+    opacity: 0.5;
+  }
+
+  .sl-player-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sl-player-square {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .sl-player-dot {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--seat);
+  }
+
+  /* Room round the shape, so a red circle on a red dot still reads as a shape */
+
+  .sl-player-dot:has(.sl-dot-symbol) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+  }
+
+  .sl-dot-symbol {
+    width: 12px;
+    height: 12px;
+    color: var(--symbol-ink);
+  }
+
+  /* History dialog: the board and where everyone stood after that roll */
+
+  .sl-history {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 480px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Phones: the panel goes below the board, full width */
+
+  @media (max-width: 640px) {
+    .sl-layout {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+      padding: 8px 0;
+    }
+
+    .sl-board-area {
+      flex: none;
+      width: 100%;
+    }
+
+    .sl-side-panel {
+      flex: none;
+      width: 100%;
+    }
+  }
+}
