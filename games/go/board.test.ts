@@ -1,18 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { playStone, starPoints, pointName } from './board.ts';
-import type { Board } from './types.ts';
-
-// '.' empty, 'X' black, 'O' white, top row first; short rows are padded to 5x5 with empty points
-function boardOf(rows: string[]): Board {
-  const size = 5;
-  return Array.from({ length: size }, (_, row) =>
-    Array.from({ length: size }, (_, col) => {
-      const ch = rows[row]?.[col];
-      return ch === 'X' ? 'black' : ch === 'O' ? 'white' : null;
-    })
-  );
-}
+import { boardOf } from './testBoards.ts';
 
 test('a stone with no liberties left is captured', () => {
   const result = playStone(boardOf(['.O...', 'OX...', '.O...']), { row: 1, col: 2 }, 'white');
