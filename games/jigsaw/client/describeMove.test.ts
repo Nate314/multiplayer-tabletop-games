@@ -18,6 +18,10 @@ test('an unsnap', () => {
 test('the step that ended the game', () => {
   assert.equal(describeMove(state(48, { type: 'snap', playerNumber: 1, piece: 3 }, true)), 'Alice placed the last piece');
 });
+test('a snap by another racer with no board of theirs in the view', () => {
+  const raceState = { ...(state(0, { type: 'snap', playerNumber: 1, piece: null }) as object), houseRules: { values: { mode: 'race' } } } as never;
+  assert.equal(describeMove(raceState), 'Alice placed a piece');
+});
 test('no move', () => {
   assert.equal(describeMove(state(0, null)), '');
 });

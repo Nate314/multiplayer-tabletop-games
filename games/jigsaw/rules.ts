@@ -224,7 +224,7 @@ export function imagesOf(state: GameState): string[] {
 }
 
 // What `viewer` may see; `everything` is the ordinary spectator's. In Race during play a seat's snaps, contributions and
-// last move name the pieces it placed, so only the viewer's own reach them (none for the table and History)
+// last move name the pieces it placed, so only the viewer's own reach them (the last move keeps its kind and seat, not its piece)
 function viewOf(state: GameState, undoAvailable: boolean, viewer: Seat | null, everything: boolean): Omit<PublicGameState, 'moveCount'> {
   const open = everything || state.isGameOver || !isRace(state);
   const mine = <T>(counts: Partial<Record<Seat, T>>) => viewer !== null && viewer in counts ? { [viewer]: counts[viewer] } : {};
@@ -235,7 +235,7 @@ function viewOf(state: GameState, undoAvailable: boolean, viewer: Seat | null, e
     progress: isRace(state) ? raceProgress(state.boards, percentPlaced) : {},
     snaps: open ? state.snaps : mine(state.snaps),
     contributions: open ? state.contributions : mine(state.contributions),
-    lastMove: open || state.lastMove?.playerNumber === viewer ? state.lastMove : null
+    lastMove: open || state.lastMove?.playerNumber === viewer || state.lastMove === null ? state.lastMove : { ...state.lastMove, piece: null }
   };
 }
 

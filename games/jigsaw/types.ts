@@ -23,7 +23,11 @@ export type GameState = BaseGameState & {
   lastMove: LastMove;
 };
 
-export type PublicGameState = BasePublicState & Omit<GameState, 'boards'> & {
+// Another racer's step in a Race during play keeps who and what kind, but not which piece
+export type PublicLastMove = (Omit<NonNullable<LastMove>, 'piece'> & { piece: number | null }) | null;
+
+export type PublicGameState = BasePublicState & Omit<GameState, 'boards' | 'lastMove'> & {
+  lastMove: PublicLastMove;
   boards: RaceBoards<Board>;
   progress: RaceProgress; // every Race seat; empty otherwise
 };

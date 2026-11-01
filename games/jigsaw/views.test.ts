@@ -108,7 +108,8 @@ test('a Race view names no piece another seat placed', () => {
     assert.equal(view.snaps[2], undefined, `viewer ${viewer} snaps`);
     assert.equal(JSON.stringify(view).includes(`"2":${bobSnaps}`), false);
     assert.deepEqual(view.contributions[2], undefined);
-    assert.equal(view.lastMove, viewer === 2 ? view.lastMove : null);
+    assert.deepEqual(view.lastMove, { type: 'snap', playerNumber: 2, piece: null });
+    assert.equal(JSON.stringify(view.lastMove).includes('6'), false);
   }
   // Bob's own view keeps his snaps and his last move
   const own = jigsaw.toPublicState(state, false, 2);
@@ -117,7 +118,7 @@ test('a Race view names no piece another seat placed', () => {
   assert.deepEqual(own.contributions, { 2: 2 });
   // Another seat's board is not in any other seat's private view either
   assert.deepEqual(jigsaw.privateSeatView!(state, 1), {
-    boards: { 1: state.boards[1] }, snaps: { 1: [0, 1, 2] }, contributions: { 1: 3 }, lastMove: null
+    boards: { 1: state.boards[1] }, snaps: { 1: [0, 1, 2] }, contributions: { 1: 3 }, lastMove: { type: 'snap', playerNumber: 2, piece: null }
   });
   // The last mover sees their own last move in the seat view
   assert.equal(jigsaw.toPublicState(state, false, 2).lastMove?.playerNumber, 2);
