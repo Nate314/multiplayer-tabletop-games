@@ -1,0 +1,211 @@
+@use './grid' as *;
+
+[data-game="tictactoe"] {
+  color-scheme: light;
+  --page-bg: #EEF1F6;
+  --text: #1B2230;
+  --panel-bg: #FFFFFF;
+  --panel-border: #CBD3E1;
+  --button-bg: #2F5DA8;
+  --button-hover-bg: #244A87;
+  --button-text: #FFF;
+  --status-bg: #E4EAF5;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --danger-bg: #B3261E;
+  --danger-hover-bg: #8C1D18;
+  --grid-line: #3B4558;
+  --cell-bg: #FFFFFF;
+  --cell-hover-bg: #E8EEF8;
+  --mark-x: #C62828;
+  --mark-o: #1565C0;
+  --last-move: #FFD54F;
+  --winning: #66BB6A;
+  /* Three cells and their two gaps fit a phone: 100vw less the page's 16px gutters and room for a desktop scrollbar */
+  --ttt-cell: min(110px, calc((100vw - 64px) / 3));
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #121722;
+    --text: #E6EBF5;
+    --panel-bg: #1C2432;
+    --panel-border: #33405A;
+    --button-bg: #3E6FC8;
+    --button-hover-bg: #5584DA;
+    --status-bg: #2A3550;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --grid-line: #8A97B0;
+    --cell-bg: #1C2432;
+    --cell-hover-bg: #26304A;
+    --mark-x: #FF7A6E;
+    --mark-o: #7DB4FF;
+  }
+
+  @include ttt-grid;
+
+  .game-header {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* The board and the side panel side by side, or stacked when the window is narrow */
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .board-area {
+    position: relative;
+    max-width: 100%;
+  }
+
+  .board {
+    width: fit-content;
+    transition: opacity 0.3s ease;
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 300px;
+    max-width: 100%;
+    padding: 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .player-list li.current {
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .player-list .player-left {
+    opacity: 0.5;
+  }
+
+  .player-mark {
+    display: flex;
+    flex: none;
+    width: 20px;
+    height: 20px;
+  }
+
+  .player-mark .mark {
+    width: 100%;
+    height: 100%;
+  }
+
+  .hint {
+    font-size: 14px;
+  }
+
+  .ending-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ending-buttons,
+  .draw-offer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .draw-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .ending-controls button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .ending-controls button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .ending-controls button.danger {
+    background: var(--danger-bg);
+  }
+
+  .ending-controls button.danger:hover {
+    background: var(--danger-hover-bg);
+  }
+
+  .ending-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The history dialog's board, a little smaller than the live one */
+
+  .history-board .board {
+    margin: 0 auto;
+    --ttt-cell: min(64px, calc((100vw - 96px) / 3));
+  }
+}

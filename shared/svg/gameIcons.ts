@@ -44,6 +44,7 @@ const GAME_ICONS: Record<string, () => string> = {
   thecrew: rocketIcon,
   tickettoride: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 14, rx: 3 }), el('rect', { x: 7.5, y: 6, width: 9, height: 4.5, rx: 1 }),
     pip(9, 14), pip(15, 14), el('path', { d: 'M8 17l-2 4M16 17l2 4' })),
+  tictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18M10.5 10.5l3 3M13.5 10.5l-3 3' })),
   uno: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), el('ellipse', { cx: 12, cy: 12, rx: 3.5, ry: 6.5, transform: 'rotate(30 12 12)' })),
   war: () => lineIcon(el('path', { d: 'M4 4l11 11M20 4L9 15M12.5 17.5l5-5M6.5 12.5l5 5M16 16l4 4M8 16l-4 4' })),
   yahtzee: () => lineIcon(el('rect', { x: 3, y: 10, width: 10, height: 10, rx: 2 }), pip(6, 13), pip(10, 17),

@@ -5,7 +5,7 @@ import { addPlayer } from '../shared/seating.ts';
 import { standingsOf } from '../shared/standings.ts';
 
 // These end with a winner and a loser or a whole crew, so the platform fallback is their standings
-const FALLBACK_GAMES = ['chess', 'checkers', 'connectfour', 'quoridor', 'thecrew'];
+const FALLBACK_GAMES = ['chess', 'checkers', 'connectfour', 'quoridor', 'thecrew', 'tictactoe'];
 
 test('every game but the fallback games has finalStandings', () => {
   for (const game of GAMES) {

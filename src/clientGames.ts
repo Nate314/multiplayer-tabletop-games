@@ -62,6 +62,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   splendor: () => import('../games/splendor/client/index.ts').then(m => m.splendorClient),
   thecrew: () => import('../games/thecrew/client/index.ts').then(m => m.thecrewClient),
   tickettoride: () => import('../games/tickettoride/client/index.ts').then(m => m.tickettorideClient),
+  tictactoe: () => import('../games/tictactoe/client/index.ts').then(m => m.tictactoeClient),
   uno: () => import('../games/uno/client/index.ts').then(m => m.unoClient),
   war: () => import('../games/war/client/index.ts').then(m => m.warClient),
   yahtzee: () => import('../games/yahtzee/client/index.ts').then(m => m.yahtzeeClient)
