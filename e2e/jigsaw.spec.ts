@@ -205,9 +205,7 @@ test.describe('Jigsaw rules', () => {
     await expect(bob.getByText('Alice picks the picture')).toBeVisible();
   });
 
-  // shortcut: fixme until the platform's uploadImage (src/services/images.ts) can find the seat key in the lobby. It reads
-  // the saved session, and useGameConnection saves one only once the game has started, so a lobby upload is refused
-  test.fixme('an uploaded photo becomes the picture without riding in state broadcasts', async ({ seat, browser, server }) => {
+  test('an uploaded photo becomes the picture without riding in state broadcasts', async ({ seat, browser, server }) => {
     const table = await seat('jigsaw', ['Alice']);
     const [alice] = table.pages;
     const bob = await newPlayer(browser, server);

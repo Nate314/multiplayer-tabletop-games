@@ -30,11 +30,20 @@ export async function shrinkImage(file: File): Promise<Blob> {
   return blob;
 }
 
-// The seat key comes from the saved session, as a rejoin's does; a pass-and-play device uses its first seat's
+// The seat key of the game this tab joined last. The saved session holds it only once play starts, and a
+// picture is usually added in the lobby, so the connection hands it over on every join
+let joinedSeat: { gameId: string; seatKey: string } | null = null;
+
+export function rememberJoinedSeat(gameId: string, seatKey: string | undefined): void {
+  joinedSeat = seatKey ? { gameId, seatKey } : null;
+}
+
+// The key of the seat joined in this tab, else the saved session's, as a rejoin's; a pass-and-play device uses its first seat's
 export async function uploadImage(gameType: string, gameId: string, blob: Blob): Promise<string> {
   const session = loadSession();
   const same = session?.gameType === gameType && session.gameId === gameId;
-  const seatKey = same ? session.seatKey ?? session.localSeats?.[0]?.seatKey : undefined;
+  const seatKey = (joinedSeat?.gameId === gameId ? joinedSeat.seatKey : undefined)
+    ?? (same ? session.seatKey ?? session.localSeats?.[0]?.seatKey : undefined);
   if (!seatKey) throw new Error('Only a player in this game can add a picture');
   const response = await fetch(`/api/images/${encodeURIComponent(gameType)}/${encodeURIComponent(gameId)}`, {
     method: 'POST', headers: { 'Content-Type': blob.type || 'image/jpeg', 'X-Seat-Key': seatKey }, body: blob
