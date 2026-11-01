@@ -341,6 +341,19 @@ test.describe('Snakes and Ladders controls', () => {
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
   });
+
+  test('on a phone the Roll button is on screen below the board', async ({ seat }) => {
+    const { pages: [alice] } = await seat('snakesladders', ['Alice', 'Bob']);
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await expect(rollButton(alice)).toBeVisible();
+    const box = (await rollButton(alice).boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(844);
+    const { scrollWidth, minWidth } = await alice.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      minWidth: parseFloat(getComputedStyle(document.body).minWidth) || 0,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(Math.max(390, minWidth));
+  });
 });
 
 test.describe('Snakes and Ladders differences from Wikipedia', () => {

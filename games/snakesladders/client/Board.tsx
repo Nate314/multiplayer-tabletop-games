@@ -13,7 +13,7 @@ const RUNG_SPACING = 3.5;
 const SNAKE_WAVE = 12; // board units per bend of a snake's body
 const SNAKE_SWAY = 2.5;
 const TOKEN_RADIUS = 2.8; // alone on a square
-const STACKED_RADIUS = 1.45; // sharing one, so six fit apart inside the cell
+const STACKED_RADIUS = 1.3; // sharing one, so six fit apart inside the cell
 
 // The length from a to b, the unit vector along it and the one at right angles to it
 function axes(a: Point, b: Point): { length: number; along: Point; across: Point } {
