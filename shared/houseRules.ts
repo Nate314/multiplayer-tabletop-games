@@ -12,10 +12,17 @@ type HouseRuleBase = {
   help?: string; // one line under the control
   // Offered at this seat count and with these other values; omitted means always offered
   offered?(seats: number, values: HouseRuleValues): boolean;
+  // The standard value at this seat count; used instead of `standard` when present
+  standardFor?(seats: number): HouseRuleValue;
 };
 export type ToggleRule = HouseRuleBase & { kind: 'toggle'; standard: boolean };
 export type ChoiceRule<V extends string | number = string | number> =
-  HouseRuleBase & { kind: 'choice'; standard: V; choices: { value: V; label: string }[] };
+  HouseRuleBase & { kind: 'choice'; standard: V; choices: {
+      value: V; label: string;
+      // Offered at this seat count and with these other values; omitted means always offered
+      offered?(seats: number, values: HouseRuleValues): boolean;
+    }[]
+  };
 export type HouseRule = ToggleRule | ChoiceRule;
 
 export type HouseRulesState = {
@@ -50,12 +57,27 @@ export function needsAgreement(info: RulesInfo, values: HouseRuleValues): boolea
   return (info.houseRules?.length ?? 0) > 0 || info.stretchedPlayers !== undefined || !!values.turnTimer;
 }
 
+export function standardOf(rule: HouseRule, seats: number): HouseRuleValue {
+  return rule.standardFor ? rule.standardFor(seats) : rule.standard;
+}
+
+export function offeredChoices(rule: ChoiceRule, seats: number, values: HouseRuleValues): ChoiceRule['choices'] {
+  return rule.choices.filter(choice => !choice.offered || choice.offered(seats, values));
+}
+
+// A choice rule's value is kept only while its choice is still offered
+function keepable(rule: HouseRule, value: HouseRuleValue, seats: number, values: HouseRuleValues): boolean {
+  return rule.kind !== 'choice' || offeredChoices(rule, seats, values).some(choice => choice.value === value);
+}
+
 // The values for `seats`, in declaration order: kept ones from `current`, newly offered ones standard
 function normalize(info: RulesInfo, seats: number, current: HouseRuleValues): HouseRuleValues {
   const values: HouseRuleValues = {};
   for (const rule of rulesOf(info)) {
     if (rule.offered && !rule.offered(seats, values)) continue;
-    values[rule.id] = rule.id in current ? current[rule.id] : rule.standard;
+    values[rule.id] = rule.id in current && keepable(rule, current[rule.id], seats, values)
+      ? current[rule.id]
+      : standardOf(rule, seats);
   }
   return values;
 }
@@ -108,8 +130,8 @@ export function afterSeatChange(info: RulesInfo, rules: HouseRulesState | undefi
   };
 }
 
-function allowed(rule: HouseRule, value: unknown): boolean {
-  return rule.kind === 'toggle' ? typeof value === 'boolean' : rule.choices.some(choice => choice.value === value);
+function allowed(rule: HouseRule, value: unknown, seats: number, values: HouseRuleValues): boolean {
+  return rule.kind === 'toggle' ? typeof value === 'boolean' : offeredChoices(rule, seats, values).some(choice => choice.value === value);
 }
 
 export function setHouseRules<S extends BaseGameState>(info: RulesInfo, state: S, seat: Seat, proposal: unknown): Result<S> {
@@ -127,7 +149,7 @@ export function setHouseRules<S extends BaseGameState>(info: RulesInfo, state: S
   for (const key of Object.keys(sent)) {
     const rule = rules.find(candidate => candidate.id === key);
     if (!rule || (rule.offered && !rule.offered(seated, merged))) return { error: 'That is not a house rule of this game' };
-    if (!allowed(rule, sent[key])) return { error: `That value is not allowed for ${rule.label}` };
+    if (!allowed(rule, sent[key], seated, merged)) return { error: `That value is not allowed for ${rule.label}` };
   }
 
   // A proposal from before the checkbox was removed may still carry `override`; maxPlayers alone decides
@@ -178,7 +200,7 @@ export function describeHouseRules(info: RulesInfo, rules: HouseRulesState, seat
     const text = rule.kind === 'toggle'
       ? (value ? 'On' : 'Off')
       : (rule.choices.find(choice => choice.value === value)?.label ?? String(value));
-    lines.push({ label: rule.label, value: text, standard: value === rule.standard });
+    lines.push({ label: rule.label, value: text, standard: value === standardOf(rule, seated) });
   }
   // Fewer than the stretched minimum is still waiting for players, not a smaller table
   if (seated < info.minPlayers && seated >= minimumToStart(info)) lines.push({ label: 'Players', value: String(seated), standard: false });

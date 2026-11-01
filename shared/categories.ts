@@ -1,6 +1,6 @@
 import type { GameInfo } from './gameDefinition.ts';
 
-export type GameCategory = 'card' | 'dice' | 'tile' | 'classic' | 'strategy' | 'party';
+export type GameCategory = 'card' | 'dice' | 'tile' | 'classic' | 'puzzle' | 'strategy' | 'party';
 
 // Landing page group order
 export const CATEGORIES: readonly { id: GameCategory; name: string }[] = [
@@ -8,6 +8,7 @@ export const CATEGORIES: readonly { id: GameCategory; name: string }[] = [
   { id: 'dice', name: 'Dice games' },
   { id: 'tile', name: 'Tile games' },
   { id: 'classic', name: 'Classic board games' },
+  { id: 'puzzle', name: 'Puzzles' },
   { id: 'strategy', name: 'Strategy board games' },
   { id: 'party', name: 'Party games' }
 ];

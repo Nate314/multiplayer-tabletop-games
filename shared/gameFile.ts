@@ -12,6 +12,9 @@ const NOT_A_SAVED_GAME = 'This file is not a saved game';
 // `views` holds the step as each seat saw it, keyed by seat number; version 1 files have none
 export type GameFileStep = HistoryStep & { views?: Record<string, HistoryStep> };
 
+// Uploaded pictures a file's steps show, by image id, as base64, so the file shows them on any server or offline
+export type EmbeddedImages = Record<string, { mime: string; data: string }>;
+
 export type GameFile = {
   format: typeof GAME_FILE_FORMAT;
   version: 1 | 2;
@@ -19,16 +22,31 @@ export type GameFile = {
   gameId: string;
   exportedAt: string;
   steps: GameFileStep[];
+  images?: EmbeddedImages;
 };
 
-export function buildGameFile(gameType: string, gameId: string, steps: GameFileStep[], now: Date): GameFile {
+// An image id is 128 random bits in lowercase hex
+export const isImageId = (id: unknown): id is string => typeof id === 'string' && /^[0-9a-f]{32}$/.test(id);
+
+// Only JPEG and PNG, and only base64 characters in `data`, so a file can never put another kind of data URL in the page
+export function isEmbeddedImages(value: unknown): value is EmbeddedImages {
+  const images = asRecord(value);
+  return images !== null && !Array.isArray(value) && Object.entries(images).every(([id, image]) => {
+    const { mime, data } = asRecord(image) ?? {};
+    return isImageId(id) && (mime === 'image/jpeg' || mime === 'image/png') && typeof data === 'string' && /^[A-Za-z0-9+/]*={0,2}$/.test(data);
+  });
+}
+
+// `images` is left out when there are none, so a file without pictures is as before
+export function buildGameFile(gameType: string, gameId: string, steps: GameFileStep[], now: Date, images: EmbeddedImages = {}): GameFile {
   return {
     format: GAME_FILE_FORMAT,
     version: GAME_FILE_VERSION,
     gameType,
     gameId,
     exportedAt: now.toISOString(),
-    steps
+    steps,
+    ...(Object.keys(images).length > 0 && { images })
   };
 }
 
@@ -62,7 +80,8 @@ function isGameFile(value: unknown): value is GameFile {
     typeof file.exportedAt === 'string' &&
     Array.isArray(file.steps) &&
     file.steps.length > 0 &&
-    file.steps.every(isGameFileStep)
+    file.steps.every(isGameFileStep) &&
+    (file.images === undefined || isEmbeddedImages(file.images))
   );
 }
 

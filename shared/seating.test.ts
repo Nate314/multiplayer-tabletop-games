@@ -85,6 +85,20 @@ test('the last player left wins', () => {
   assert.equal(state.gameStatus, 'A wins! Everyone else left.');
 });
 
+test('a game that continuesAlone keeps going with one player and calls onPlayerLeft', () => {
+  const seen: number[] = [];
+  const game = {
+    ...testGame,
+    continuesAlone: true as const,
+    onPlayerLeft: (s: TestState, seat: number) => { seen.push(seat); return s; }
+  };
+  const started = move(join(game.createGameState('g'), 'A', 'B'), 1);
+  const state = removePlayer(game, started, 2);
+  assert.equal(state.isGameOver, false);
+  assert.deepEqual(state.activePlayers, [1]);
+  assert.deepEqual(seen, [2]);
+});
+
 test('baseGameState starts empty', () => {
   assert.deepEqual(baseGameState('g'), {
     gameId: 'g',

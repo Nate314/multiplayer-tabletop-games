@@ -12,7 +12,7 @@ export type GameInfo = {
   minPlayers: number;
   maxPlayers: number;
   houseRules?: HouseRule[];
-  ownTurnLimit?: true; // the game enforces its own turn limit, so the platform turn timer is not offered
+  ownTurnLimit?: true; // the game enforces its own turn limit or has no turns, so the platform turn timer is not offered
   passAndPlay?: boolean; // false when players cannot share one device (a hidden word the others must guess)
   stretchedPlayers?: PlayerRange; // the table the host may set as a house rule; contains minPlayers..maxPlayers
 };
@@ -23,8 +23,10 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   createGameState(gameId: string): S;
   // Before the first move, after anyone joins or leaves. currentPlayer is already activePlayers[0].
   resetLobby(state: S, random: Random): S;
-  // Mid-game, after the platform has removed `seat` and moved the turn on; only while 2+ remain and the game is not over.
+  // Mid-game, after the platform has removed `seat` and moved the turn on; only while 2+ remain (or 1+ for a game that continuesAlone) and the game is not over.
   onPlayerLeft?(state: S, seat: Seat, random: Random): S;
+  // The last player keeps playing when the others leave, instead of winning by default.
+  continuesAlone?: true;
   // Mid-game, after the platform marked `seat` disconnected and settled votes.
   onPlayerDisconnected?(state: S, seat: Seat, random: Random): S;
   // After an approved undo, on the restored state. A game reshuffles its face-down piles here, so a player cannot
@@ -53,6 +55,11 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   applyAction?(state: S, seat: Seat, action: unknown, random: Random, now: number): Result<S>;
   // Asked before applyAction: true records the action's result as a move (history, timeline, undo), like a move.
   recordsAction?(state: S, seat: Seat, action: unknown): boolean;
+  // Takes back `seat`'s own last move at once, with no vote; the platform records the result as a new step.
+  // The game decides what that seat's last move is, and answers an error when it has none.
+  undoOwn?(state: S, seat: Seat): Result<S>;
+  // False refuses the room-wide undo vote and offers no undo (a mode where each player undoes their own move). Missing means true.
+  allowsUndoVote?(state: S): boolean;
   // Seats the game waits on besides currentPlayer (a pass, a discard, a trade answer, a round summary Continue).
   waitingOn?(state: S): Seat[];
   // Called only once isGameOver. Ranks by what chose `winners`, so place 1 is exactly the winners.
@@ -68,4 +75,6 @@ export type GameDefinition<S extends BaseGameState = BaseGameState, P extends Ba
   spectatorsSeeEverySeat?: boolean;
   // A spectator's table view when it differs from toPublicState(state, undoAvailable, null)
   spectatorState?(state: S, undoAvailable: boolean, tableScreen: boolean): Omit<P, 'moveCount'>;
+  // The uploaded image ids the state shows; the platform keeps those images and puts them in game and pause files
+  imagesOf?(state: S): string[];
 };
