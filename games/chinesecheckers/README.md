@@ -25,7 +25,13 @@ Each player sees their own point at the bottom of the board.
 
 ## Controls
 
-- Click Rules at the top of the page for these rules
+- On your turn, the marbles you can move glow. Click one, then click a marked hole to move there. A step is sent at once
+- After a hop, the holes the marble can hop to next are marked. Click the next one to keep going, or click End move beside Undo to stop there. When no further hop is possible, the move is sent by itself
+- Click the picked marble again to start over, or click another of your marbles to choose that one instead
+- A line follows the path built so far, and a faint line shows the last move. The board is dimmed when it is not your turn
+- Click Undo to ask everyone to take back the last move
+- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon. Marbles and the player list show it
 
 ## Differences from Wikipedia
 

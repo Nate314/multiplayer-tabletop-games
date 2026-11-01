@@ -1,0 +1,356 @@
+[data-game="chinesecheckers"] {
+  color-scheme: light;
+  --page-bg: #EEF1F4;
+  --text: #1F2933;
+  --muted: #5B6875;
+  --panel-bg: #FFFFFF;
+  --panel-border: #D3DAE1;
+  --board-bg: #E7D3B0;
+  --board-edge: #B8996A;
+  --hole: #8A6D45;
+  --button-bg: #2F5D8A;
+  --button-hover-bg: #244A6E;
+  --button-text: #FFFFFF;
+  --status-bg: #E4EAF0;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --target: #2E7D32;
+  --glow: #FFB300;
+  --path: #1F2933;
+  --last-move: #1F2933;
+  --player1: #D32F2F;
+  --player2: #1E63C6;
+  --player3: #2E8B3A;
+  --player4: #E3B505;
+  --player5: #7B3FA6;
+  --player6: #EF7A12;
+  --symbol-ink: #FFFFFF;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #15191E;
+    --text: #E6EBF0;
+    --muted: #A3AEB9;
+    --panel-bg: #222831;
+    --panel-border: #3A434E;
+    --board-bg: #4A3B28;
+    --board-edge: #2E2418;
+    --hole: #1E1810;
+    --button-bg: #3F78B0;
+    --button-hover-bg: #4E8AC4;
+    --status-bg: #2E3640;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --target: #81C784;
+    --glow: #FFD54F;
+    --path: #F2F4F6;
+    --last-move: #F2F4F6;
+    --player1: #EF5350;
+    --player2: #4A8FE7;
+    --player3: #4CAF50;
+    --player4: #F4D03F;
+    --player5: #A66DD4;
+    --player6: #FF9A3C;
+    --symbol-ink: #15191E;
+  }
+
+  /* Each seat's color, read by its marbles, its tinted points and its player dot */
+
+  .player1 {
+    --seat: var(--player1);
+  }
+
+  .player2 {
+    --seat: var(--player2);
+  }
+
+  .player3 {
+    --seat: var(--player3);
+  }
+
+  .player4 {
+    --seat: var(--player4);
+  }
+
+  .player5 {
+    --seat: var(--player5);
+  }
+
+  .player6 {
+    --seat: var(--player6);
+  }
+
+  /* The board beside the side panel, or above it on a phone */
+
+  .game-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  /* The board stays square: as wide as the room beside the panel allows, never taller than the window below the header */
+
+  .board-area {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: min(640px, calc(100vh - 120px));
+  }
+
+  .board {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    /* No border, so the drawing fills the whole box and animateMove can read the scale from its width */
+    border-radius: 50%;
+    background: var(--board-bg);
+    box-shadow: inset 0 0 0 4px var(--board-edge), 0 4px 16px rgba(0, 0, 0, 0.25);
+    transition: opacity 0.3s ease;
+  }
+
+  /* Not your turn: the board is dimmed and ignores clicks */
+
+  .board.dimmed {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  .hole {
+    fill: var(--hole);
+    stroke: rgba(0, 0, 0, 0.25);
+    stroke-width: 0.06;
+  }
+
+  .hole.start-tint {
+    fill: color-mix(in srgb, var(--seat) 55%, var(--hole));
+  }
+
+  /* Your target point: ringed in your color, over the color of whoever starts there */
+
+  .hole.my-target {
+    stroke: var(--viewer);
+    stroke-width: 0.16;
+  }
+
+  /* A hole the picked marble can land on next */
+
+  .hole.target {
+    fill: var(--target);
+    stroke: var(--path);
+    stroke-width: 0.12;
+    cursor: pointer;
+  }
+
+  .last-move-line,
+  .path-line {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  .last-move-line {
+    stroke: var(--last-move);
+    stroke-width: 0.18;
+    stroke-dasharray: 0.4 0.3;
+    opacity: 0.35;
+  }
+
+  .path-line {
+    stroke: var(--path);
+    stroke-width: 0.22;
+    opacity: 0.85;
+  }
+
+  .marble circle {
+    fill: var(--seat);
+    stroke: rgba(0, 0, 0, 0.45);
+    stroke-width: 0.08;
+  }
+
+  .marble-symbol {
+    color: var(--symbol-ink);
+    pointer-events: none;
+  }
+
+  /* Your movable marbles glow on your turn */
+
+  .marble.movable {
+    cursor: pointer;
+  }
+
+  .marble.movable circle {
+    stroke: var(--glow);
+    stroke-width: 0.18;
+  }
+
+  .marble.picked circle {
+    stroke: var(--path);
+    stroke-width: 0.2;
+  }
+
+  .marble:focus-visible,
+  .hole:focus-visible {
+    outline: none;
+  }
+
+  .marble:focus-visible circle,
+  .hole.target:focus-visible {
+    stroke: var(--glow);
+    stroke-width: 0.24;
+  }
+
+  .side-panel {
+    display: flex;
+    flex: 0 1 280px;
+    flex-direction: column;
+    min-width: 200px;
+    gap: 12px;
+    box-sizing: border-box;
+    padding: 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .hint {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .panel-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .panel-buttons button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .panel-buttons button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .panel-buttons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .player-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .player-list li.current {
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .player-list li.player-left {
+    opacity: 0.5;
+  }
+
+  .player-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .player-home {
+    flex-shrink: 0;
+    font-weight: normal;
+    color: var(--muted);
+  }
+
+  .player-dot {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--seat);
+  }
+
+  .dot-symbol {
+    width: 11px;
+    height: 11px;
+    color: var(--symbol-ink);
+  }
+
+  /* History dialog: the board at full strength, though nothing on it can be clicked */
+
+  .history-board .board {
+    width: 480px;
+    max-width: 100%;
+    margin: 0 auto;
+    opacity: 1;
+  }
+
+  /* A phone: the side panel goes below the board, which takes the full width */
+
+  @media (max-width: 480px) {
+    .game-layout {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .board-area {
+      flex: none;
+      max-width: none;
+    }
+
+    .side-panel {
+      flex: none;
+    }
+  }
+}
