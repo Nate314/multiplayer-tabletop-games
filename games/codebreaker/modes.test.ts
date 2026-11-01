@@ -162,3 +162,9 @@ test('recordsAction is true for a Together or Race guess and false in Classic', 
   assert.equal(recordsAction(lobby('classic'), 1, action), false);
   assert.equal(recordsAction(lobby('race'), 1, { type: 'continue' }), false);
 });
+
+test('Solo: the one seat is always the current player after a reset', () => {
+  const base: GameState = { ...createGameState('g1'), activePlayers: [2], currentPlayer: null, playerNames: NAMES, houseRules: withRules({ mode: 'solo', code: '4of6' }) };
+  assert.equal(resetLobby(base, seeded(5)).currentPlayer, 2);
+  assert.equal(resetLobby({ ...base, currentPlayer: 1 }, seeded(5)).currentPlayer, 2);
+});

@@ -3,7 +3,7 @@
 import { rollDie } from '../../shared/dice.ts';
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
-import { addContribution, modeOf, playsAtOnce } from '../../shared/puzzleModes.ts';
+import { addContribution, modeOf, playsAtOnce, raceProgress, visibleBoards } from '../../shared/puzzleModes.ts';
 import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState } from '../../shared/seating.ts';
@@ -13,7 +13,7 @@ import type { Random, Result, Standing } from '../../shared/types.ts';
 import { feedback } from './feedback.ts';
 import { CODEBREAKER_MODE, CODE_RULE, MAX_GUESSES, ROUNDS_EACH, codeShape } from './options.ts';
 import type { Mode } from './options.ts';
-import type { Board, Color, GameState, Guess, RoundResult, RoundSummary, Seat } from './types.ts';
+import type { Board, Color, GameState, Guess, PublicGameState, RoundResult, RoundSummary, Seat } from './types.ts';
 
 const EMPTY_BOARD: Board = { guesses: [], broken: false };
 const CLASSIC_ROUNDS = 2 * ROUNDS_EACH;
@@ -81,7 +81,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
   const boards = mode === 'race' ? Object.fromEntries(state.activePlayers.map(seat => [seat, EMPTY_BOARD])) : {};
   return {
     ...empty, phase: 'breaking', code, boards,
-    currentPlayer: playsAtOnce(mode) ? null : state.currentPlayer, gameStatus: 'Break the code'
+    currentPlayer: playsAtOnce(mode) ? null : state.activePlayers[0] ?? null, gameStatus: 'Break the code'
   };
 }
 
@@ -316,4 +316,27 @@ function compareRace(state: GameState, a: Seat, b: Seat): number {
   const { pegs } = codeShape(houseRule(state, CODE_RULE));
   const progress = (seat: Seat): number => progressOf(state.boards[seat] ?? EMPTY_BOARD, pegs);
   return progress(b) - progress(a);
+}
+
+// The code goes only to its maker until the round or game ends; Race boards only to their owner until the game ends
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
+  return view(state, undoAvailable, viewer, visibleBoards(state.boards, viewer, state.isGameOver));
+}
+
+// A spectator sees every Race board, never the code before the reveal. A table screen faces the players, so it sees what History sees
+export function spectatorState(state: GameState, undoAvailable: boolean, tableScreen: boolean): Omit<PublicGameState, 'moveCount'> {
+  return tableScreen ? toPublicState(state, undoAvailable, null) : view(state, undoAvailable, null, state.boards);
+}
+
+function view(state: GameState, undoAvailable: boolean, viewer: Seat | null, boards: GameState['boards']): Omit<PublicGameState, 'moveCount'> {
+  const { pegs } = codeShape(houseRule(state, CODE_RULE));
+  const seesCode = isRevealed(state) || (viewer !== null && viewer === state.maker);
+  return {
+    ...state,
+    code: seesCode ? state.code : null,
+    boards,
+    progress: raceProgress(state.boards, board => progressOf(board, pegs)),
+    guessesUsed: Object.fromEntries(Object.entries(state.boards).map(([seat, board]) => [seat, (board as Board).guesses.length])),
+    undoAvailable
+  };
 }

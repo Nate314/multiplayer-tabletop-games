@@ -14,6 +14,8 @@ const GAME_ICONS: Record<string, () => string> = {
   catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
   checkers: () => lineIcon(el('ellipse', { cx: 12, cy: 8, rx: 8, ry: 3 }), el('path', { d: 'M4 8v4a8 3 0 0 0 16 0V8M4 12v4a8 3 0 0 0 16 0v-4' })),
   chess: () => lineIcon(el('path', { d: 'M12 2v5M9.5 4.5h5M8 10h8l-1.5 8h-5zM6 21h12v-3H6zM8 10a4 3 0 0 1 8 0' })),
+  // A row of four pegs over two small answer pegs
+  codebreaker: () => lineIcon(...[4.5, 9.5, 14.5, 19.5].map(x => el('circle', { cx: x, cy: 9, r: 2.2 })), pip(9.5, 16.5, 1.4), el('circle', { cx: 14.5, cy: 16.5, r: 1.4 })),
   connectfour: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 2 }),
     ...[7.5, 12, 16.5].flatMap(x => [el('circle', { cx: x, cy: 9.5, r: 1.6 }), x === 12 ? solid('circle', { cx: x, cy: 14.5, r: 1.6 }) : el('circle', { cx: x, cy: 14.5, r: 1.6 })])),
   dominoes: () => lineIcon(el('rect', { x: 7, y: 2, width: 10, height: 20, rx: 2 }), el('path', { d: 'M7 12h10' }),
