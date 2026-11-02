@@ -59,3 +59,12 @@ test('pauseFileName names the file for its game and player', () => {
   assert.equal(pauseFileName('uno', 'g1', 'Alice'), 'uno-g1-Alice-paused.json');
   assert.equal(pauseFileName('uno', 'g/1', 'A b'), 'uno-g-1-A-b-paused.json');
 });
+
+test('parsePauseFile round-trips images and refuses broken ones', () => {
+  const images = { '0123456789abcdef0123456789abcdef': { mime: 'image/png', data: 'iVBORw0K' } };
+  assert.deepEqual(parse({ ...file(), images }), { file: { ...file(), images } });
+  for (const bad of [[], { x: { mime: 'image/png', data: 'iVBO' } }, { '0123456789abcdef0123456789abcdef': { mime: 'image/gif', data: 'R0lG' } },
+    { '0123456789abcdef0123456789abcdef': { mime: 'image/png', data: 'iVBO");' } }]) {
+    assert.deepEqual(parse({ ...file(), images: bad }), { error: NOT_A_PAUSE_FILE }, JSON.stringify(bad));
+  }
+});

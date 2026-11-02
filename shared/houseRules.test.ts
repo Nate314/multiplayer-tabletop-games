@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  afterSeatChange, agreeToHouseRules, agreementPending, describeHouseRules, everyoneAgreed, houseRule, houseRulesOf, minimumToStart,
+  afterSeatChange, agreeToHouseRules, agreementPending, describeHouseRules, everyoneAgreed, offeredChoices, standardOf, houseRule, houseRulesOf, minimumToStart,
   needsAgreement, rulesOf, setHouseRules, tableLimit, targetScoreRule, TURN_TIMER, type ChoiceRule, type HouseRulesProposal, type ToggleRule
 } from './houseRules.ts';
 import { chessInfo } from '../games/chess/info.ts';
@@ -246,4 +246,52 @@ test('agreementPending holds until everyone agreed to a non-standard rule', () =
   const { revision } = changed.houseRules!;
   const agreed = ok(agreeToHouseRules(info, ok(agreeToHouseRules(info, changed, 1, revision)), 2, revision));
   assert.equal(agreementPending(info, agreed), false);
+});
+
+const MODE: ChoiceRule<string> = {
+  id: 'mode', label: 'Mode', kind: 'choice', standard: 'together',
+  standardFor: seats => seats === 1 ? 'solo' : 'together',
+  choices: [
+    { value: 'solo', label: 'Solo', offered: seats => seats === 1 },
+    { value: 'together', label: 'Together', offered: seats => seats >= 2 },
+    { value: 'race', label: 'Race', offered: seats => seats >= 2 }
+  ]
+};
+const MODAL = { minPlayers: 1, maxPlayers: 4, houseRules: [MODE], ownTurnLimit: true as const };
+const withMode = (mode: string, seats: Seat[]) => ({
+  host: seats[0] ?? null, values: { mode }, maxPlayers: null, agreed: [], revision: 0
+});
+
+test('a rule with standardFor starts at the standard for the seat count', () => {
+  assert.equal(houseRulesOf(MODAL, { activePlayers: [1] }).values.mode, 'solo');
+  assert.equal(houseRulesOf(MODAL, { activePlayers: [1, 2] }).values.mode, 'together');
+  assert.equal(standardOf(MODE, 1), 'solo');
+  assert.equal(standardOf(TURN_TIMER, 2), 0);
+});
+
+test('afterSeatChange replaces a kept value whose choice is no longer offered, and keeps one still offered', () => {
+  assert.equal(afterSeatChange(MODAL, withMode('solo', [1]), [1, 2]).values.mode, 'together');
+  assert.equal(afterSeatChange(MODAL, withMode('race', [1, 2]), [1, 2, 3]).values.mode, 'race');
+});
+
+test('setHouseRules refuses a choice not offered at this seat count', () => {
+  const state = { ...lobby([1, 2]), houseRules: withMode('together', [1, 2]) };
+  assert.deepEqual(setHouseRules(MODAL, state, 1, { values: { mode: 'solo' }, maxPlayers: null }),
+    { error: 'That value is not allowed for Mode' });
+});
+
+test('offeredChoices lists only the choices offered, and all when none declare offered', () => {
+  assert.deepEqual(offeredChoices(MODE, 2, {}).map(choice => choice.value), ['together', 'race']);
+  assert.equal(offeredChoices(TURN_TIMER, 2, {}).length, TURN_TIMER.choices.length);
+});
+
+test('describeHouseRules compares against the standard for the seat count', () => {
+  const lines = (mode: string) => describeHouseRules(MODAL, withMode(mode, [1, 2]), 2);
+  assert.equal(lines('together')[0].standard, true);
+  assert.equal(lines('race')[0].standard, false);
+});
+
+test('rules without standardFor or per-choice offered normalize as before', () => {
+  assert.deepEqual(afterSeatChange(CATAN, undefined, [1, 2, 3]).values, { turnTimer: 0 });
+  assert.deepEqual(afterSeatChange(UNO, undefined, [1, 2]).values, { turnTimer: 0 });
 });

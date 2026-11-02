@@ -26,7 +26,7 @@ test('A to Z lists every game in one list without category headings', async ({ b
   await openFilters(page);
   await page.getByLabel('Sort').selectOption('A to Z');
   await expect(page.locator('.lobby-category-heading')).toHaveCount(0);
-  await expect(cards).toHaveCount(33);
+  await expect(cards).toHaveCount(42);
   await expect(cards.first()).toHaveText('Azul');
   await expect(cards.last()).toHaveText('Yahtzee');
 });
@@ -48,15 +48,15 @@ test('the players filter shows games that seat that many, marking those that nee
   const { page, cards } = await landing(browser, server);
   await openFilters(page);
   await page.getByLabel('Players').fill('7');
-  await expect(cards).toHaveCount(9);
-  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Jenga', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', "Texas Hold'em", 'UNO', 'Yahtzee']);
+  await expect(cards).toHaveCount(11);
+  expect((await cards.allTextContents()).sort()).toEqual(['Farkle', 'Jenga', 'Jigsaw', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', 'Sudoku', "Texas Hold'em", 'UNO', 'Yahtzee']);
   const marked = page.locator('.lobby-game', { has: page.locator('.lobby-game-house-rule') }).locator('.lobby-game-name');
   expect((await marked.allTextContents()).sort()).toEqual(['Phase 10', 'Rook']);
   await expect(card(page, 'Rook').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
   await page.getByLabel('Players').fill('2');
   await expect(card(page, 'Catan').locator('.lobby-game-house-rule')).toHaveText('2 with a house rule');
   await page.getByLabel('Players').fill('');
-  await expect(cards).toHaveCount(33);
+  await expect(cards).toHaveCount(42);
 });
 
 test('typing a third digit or a zero in the players filter keeps the previous value', async ({ browser, server }) => {
@@ -83,7 +83,7 @@ test('filters are remembered after a reload and Clear filters shows every game a
   await expect(search).toHaveValue('zzz');
   await expect(page.getByText('No games match these filters')).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters' }).click();
-  await expect(cards).toHaveCount(33);
+  await expect(cards).toHaveCount(42);
   await expect(search).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Clear filters' })).toHaveCount(0);
 });
@@ -114,7 +114,7 @@ test('the Filter button hides sort, chips and Players, and counts the filters it
   await expect(page.getByText('No games match these filters')).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters' }).click();
   await expect(filter).toHaveText('Filter');
-  await expect(cards).toHaveCount(33);
+  await expect(cards).toHaveCount(42);
 });
 
 test('a press outside the Filter panel closes it', async ({ browser, server }) => {

@@ -1,0 +1,110 @@
+@use '../../tictactoe/client/grid' as *;
+@use '../../tictactoe/client/page' as *;
+
+[data-game="ultimatetictactoe"] {
+  /* Each small grid fills its board, so the big board's size sets the cells' */
+  --ttt-cell: minmax(0, 1fr);
+  --ttt-gap: 1px;
+  --board-bg: #FFFFFF;
+  --playable: #2F5DA8;
+  --playable-bg: #DCE7FA;
+  --playable-hover-bg: #BFD3F5;
+
+  @include ttt-page;
+  @include ttt-grid;
+
+  :root[data-theme="dark"] & {
+    --board-bg: #1C2432;
+    --playable: #7DB4FF;
+    --playable-bg: #263A60;
+    --playable-hover-bg: #31497A;
+  }
+
+  /* Narrow phones: tighter page gutters leave the 81 cells room to stay tappable */
+  &.game-root {
+    @media (max-width: 400px) {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+  }
+
+  /* Square, as wide as the page allows but no taller than most of the window */
+  .board-area {
+    width: min(100%, 70vh, 560px);
+  }
+
+  .board {
+    width: 100%;
+  }
+
+  .big-board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--grid-line);
+  }
+
+  .small-board {
+    position: relative;
+    display: flex;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 3px;
+    background: var(--board-bg);
+    transition: background 0.2s ease;
+  }
+
+  .small-board .ttt-grid {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The boards the player to move may mark: outlined, and their cells tinted */
+  .small-board.playable {
+    --cell-bg: var(--playable-bg);
+    --cell-hover-bg: var(--playable-hover-bg);
+    outline: 3px solid var(--playable);
+    outline-offset: -3px;
+    background: var(--playable-bg);
+  }
+
+  /* A claimed board: its cells fade under the owner's big mark */
+  .small-board.claimed .ttt-grid {
+    opacity: 0.35;
+  }
+
+  .claimed-mark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .claimed-mark .mark {
+    width: 85%;
+    height: 85%;
+    stroke-width: 9;
+  }
+
+  .small-board.drawn {
+    filter: grayscale(1);
+    opacity: 0.55;
+  }
+
+  /* The three boards that won the game */
+  .small-board.winning {
+    z-index: 1;
+    box-shadow: inset 0 0 0 4px var(--winning), 0 0 14px var(--winning);
+  }
+
+  /* The history dialog's board, a little smaller than the live one, leaving room for the dialog's padding and controls */
+  .history-board .board {
+    width: min(360px, calc(100vw - 96px), 45vh);
+    margin: 0 auto;
+  }
+}

@@ -36,7 +36,7 @@ export function alertFor(info: GameInfo, state: BasePublicState, seat: Seat): Al
 export function alertText(info: GameInfo, state: BasePublicState, kind: AlertKind, name?: string): { title: string; body: string } {
   if (kind === 'gameOver') {
     const winners = state.winners.map(seat => state.playerNames[seat]).join(', ');
-    return { title: 'Game over', body: winners ? `${winners} won ${info.name}` : `Draw in ${info.name}` };
+    return { title: 'Game over', body: winners ? `${winners} won ${info.name}` : state.activePlayers.length < 2 ? `${info.name} is over` : `Draw in ${info.name}` };
   }
   const body = `${info.name} · ${state.gameId}`;
   if (kind === 'turn') return { title: name ? `Your turn, ${name}` : 'Your turn', body };
@@ -46,7 +46,7 @@ export function alertText(info: GameInfo, state: BasePublicState, kind: AlertKin
 export function tabTitle(info: GameInfo, state: BasePublicState, seats: Seat[]): string {
   const count = state.activePlayers.length;
   const base = state.started || state.isGameOver
-    ? `${info.name} · ${count} players`
+    ? `${info.name} · ${count} ${count === 1 ? 'player' : 'players'}`
     : `${info.name} · ${count} of ${tableLimit(info, state)} players`;
   const kinds = seats.map(seat => alertFor(info, state, seat)?.kind);
   if (kinds.includes('vote')) return `● Vote · ${base}`;

@@ -1,5 +1,5 @@
 import { asRecord } from './messages.ts';
-import { gameFileName } from './gameFile.ts';
+import { gameFileName, isEmbeddedImages, type EmbeddedImages } from './gameFile.ts';
 import { MAX_NAME_LENGTH } from './types.ts';
 import type { BasePublicState, HistoryStep, Seat } from './types.ts';
 
@@ -35,6 +35,7 @@ export type PauseFile = {
   history: HistoryStep[];
   seal: PauseSeal;
   share: string;
+  images?: EmbeddedImages; // outside the seal; every file of a pause must carry the same
 };
 
 export type ResumeStatus = {
@@ -75,7 +76,8 @@ function isPauseFile(value: unknown): value is PauseFile {
     typeof file.gameId !== 'string' || file.gameId.length === 0 || file.gameId.length > MAX_NAME_LENGTH ||
     typeof file.pausedAt !== 'string' || typeof file.playerName !== 'string' || typeof file.share !== 'string' ||
     !Number.isInteger(file.seat) || !isStringRecord(file.players) ||
-    table === null || Array.isArray(file.table) || !Array.isArray(file.history) || !isPauseSeal(file.seal)
+    table === null || Array.isArray(file.table) || !Array.isArray(file.history) || !isPauseSeal(file.seal) ||
+    (file.images !== undefined && !isEmbeddedImages(file.images))
   ) return false;
   return Object.hasOwn(file.players, file.seat as number) && file.players[file.seat as number] === file.playerName;
 }

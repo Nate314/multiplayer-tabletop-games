@@ -1,0 +1,68 @@
+// A 3x3 grid of X and O cells (Grid.tsx), shared with Ultimate Tic-Tac-Toe.
+// Include it under a game's [data-game]; that game sets the colors and --ttt-cell, the side of one cell.
+@mixin ttt-grid {
+  .ttt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, var(--ttt-cell));
+    grid-template-rows: repeat(3, var(--ttt-cell));
+    gap: var(--ttt-gap, 6px);
+    width: fit-content;
+    background: var(--grid-line);
+  }
+
+  .ttt-grid .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 0;
+    border: none;
+    background: var(--cell-bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .ttt-grid .cell:hover:enabled {
+    background: var(--cell-hover-bg);
+  }
+
+  .ttt-grid .cell:disabled {
+    cursor: default;
+  }
+
+  .mark {
+    width: 70%;
+    height: 70%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 12;
+    stroke-linecap: round;
+  }
+
+  .mark-x {
+    color: var(--mark-x);
+  }
+
+  .mark-o {
+    color: var(--mark-o);
+  }
+
+  // The last mark placed
+  .ttt-grid .cell.last-move {
+    outline: 3px solid var(--last-move);
+    outline-offset: -3px;
+  }
+
+  // The winning three
+  .ttt-grid .cell.winning {
+    z-index: 1;
+    box-shadow: inset 0 0 0 4px var(--winning), 0 0 14px var(--winning);
+  }
+
+  // Not your turn: dimmed and ignoring clicks
+  .dimmed {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+}

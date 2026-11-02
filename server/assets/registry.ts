@@ -18,6 +18,7 @@ import { UNO_ASSETS } from '../../games/uno/svg.ts';
 import { DOMINOES_ASSETS } from '../../games/dominoes/svg.ts';
 import { CATAN_ASSETS } from '../../games/catan/svg.ts';
 import { MONOPOLY_ASSETS } from '../../games/monopoly/svg.ts';
+import { JIGSAW_ASSETS } from '../../games/jigsaw/svg.ts';
 
 export type { SvgAsset };
 
@@ -43,6 +44,7 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...DOMINOES_ASSETS,
   ...CATAN_ASSETS,
   ...MONOPOLY_ASSETS,
+  ...JIGSAW_ASSETS,
 ];
 
 export function findSvg(name: string, assets: SvgAsset[] = SVG_ASSETS): SvgAsset | undefined {

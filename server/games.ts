@@ -10,7 +10,7 @@ import {
 import { stampTurn, turnLimitMs } from '../shared/turnTimer.ts';
 import { castPauseVote, openPauseVote, pauseVotePassed } from '../shared/pause.ts';
 import { parsePauseFile, type PauseFile, type ResumeStatus, type ResumeUpload } from '../shared/pauseFile.ts';
-import { buildGameFile, type GameFile } from '../shared/gameFile.ts';
+import { buildGameFile, isImageId, type EmbeddedImages, type GameFile } from '../shared/gameFile.ts';
 import { isSingleEmoji, MAX_REACTIONS, REACTION_COOLDOWN_MS, type Reaction } from '../shared/reactions.ts';
 import type { ArchivedGame, GameStore, SavedRoom, StepChange } from './store.ts';
 import { hashDeviceId } from './devices.ts';
@@ -20,6 +20,7 @@ import { standingsOf } from '../shared/standings.ts';
 import { plural } from '../shared/text.ts';
 import { historyMoments, historyStep, platformView, publicView, type ViewRoom } from './views.ts';
 import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
+import { decodeImage, embedImages, imageMime, MAX_IMAGE_BYTES, MAX_ROOM_IMAGES, newImageId, type ImageUploadError } from './images.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, pauseFilesMismatch, sealedRoomOf } from './pauseFiles.ts';
 import { MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
@@ -99,6 +100,14 @@ function seatsAgree(game: Room['game'], file: PauseFile): boolean {
   return seats.length <= most && seats.length === Object.keys(file.seal.shareHashes).length &&
     seats.every(seat => /^[1-9]\d{0,2}$/.test(seat) && Object.hasOwn(file.seal.shareHashes, seat));
 }
+
+// Every uploaded image id the states show, each once
+function imageIdsOf(game: Room['game'], states: BaseGameState[]): string[] {
+  return [...new Set(states.flatMap(state => game.imagesOf?.(state) ?? []))].filter(isImageId);
+}
+
+const roomStates = (room: { state: BaseGameState; history: BaseGameState[]; timeline: BaseGameState[] }) =>
+  [room.state, ...room.history, ...room.timeline];
 
 function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
@@ -224,7 +233,7 @@ export function createGameManager(
     writeStore(roomId, target => target.archive({
       id: archiveIdOf(roomId, state), gameType: game.info.id, gameId: state.gameId, n: state.gameNumber ?? 1,
       finishedAt: state.finishedAt ?? now(), state, history: room.history, timeline: room.timeline
-    }));
+    }, imageIdsOf(game, roomStates(room))));
   }
 
   // Stamps the first start and the first end; a game already stamped finished never reports again, even after an undo
@@ -375,7 +384,10 @@ export function createGameManager(
     clearTimeout(room?.deadlineTimer);
     clearInterval(room?.simTimer);
     rooms.delete(roomId);
-    writeStore(roomId, target => target.remove(roomId));
+    writeStore(roomId, target => {
+      target.remove(roomId);
+      target.deleteRoomImages(roomId); // after the archive above, so the images it shows stay
+    });
     try {
       hooks.removed?.(roomId);
     } catch (error) {
@@ -399,7 +411,7 @@ export function createGameManager(
 
   // The current state as `viewer` may see it, stamped with the server time for countdowns
   function view(room: Room, viewer: Seat | null): BasePublicState {
-    const base = publicView(room, room.state, room.history.length > 0, room.timeline.length, viewer);
+    const base = publicView(room, room.state, room.history.length > 0 && allowsUndoVote(room), room.timeline.length, viewer);
     return live(room, base, request => request.seat === viewer);
   }
 
@@ -447,14 +459,23 @@ export function createGameManager(
     return { room };
   }
 
-  // Applies the undo once every connected player has approved; an undo always needs two connected players,
-  // so a vote left with fewer (after a disconnect) is canceled instead. Returns the popped step when it undid a move
+  function allowsUndoVote({ game, state }: Room): boolean {
+    return game.allowsUndoVote?.(state) ?? true;
+  }
+
+  // An undo needs two connected players. Only a one-player game, or one that continuesAlone, lets a lone seat undo
+  function undoQuorum({ game, state }: Room): number {
+    return game.info.minPlayers < 2 || game.continuesAlone ? Math.min(2, state.activePlayers.length) : 2;
+  }
+
+  // Applies the undo once every connected player has approved; a vote left short of the quorum (after a disconnect)
+  // is canceled instead. Returns the popped step when it undid a move
   function resolveUndoVote(room: Room): StepChange | undefined {
     const { state } = room;
     const vote = state.undoVote;
     if (!vote) return;
     const voters = connectedPlayers(state);
-    if (voters.length < 2) {
+    if (voters.length < undoQuorum(room)) {
       room.state = { ...state, undoVote: null };
       return;
     }
@@ -629,7 +650,10 @@ export function createGameManager(
     } catch (error) {
       console.error(`Dropping saved game ${roomId}:`, error);
       rooms.delete(roomId);
-      writeStore(roomId, target => target.remove(roomId));
+      writeStore(roomId, target => {
+        target.remove(roomId);
+        target.deleteRoomImages(roomId);
+      });
     }
   }
   prunePausedRooms();
@@ -727,8 +751,24 @@ export function createGameManager(
         target.save(roomId, room.game.info.id, state, { type: 'push', index, before, after: room.timeline[index] });
       });
     });
+    restoreImages(roomId, lobby.game, sealed, uploads[0][1].file.images ?? {});
     save(roomId, room);
   }
+
+  // The files are untrusted (every one carries the same images, as checkPauseFiles saw), so only the sealed states'
+  // own images go in, each a real JPEG or PNG of at most MAX_IMAGE_BYTES, and none replaces an image already stored
+  function restoreImages(roomId: string, game: Room['game'], sealed: SealedRoom, images: EmbeddedImages): void {
+    for (const id of imageIdsOf(game, roomStates(sealed))) {
+      const image = Object.hasOwn(images, id) ? decodeImage(images[id]) : null;
+      if (image) writeStore(roomId, target => target.saveImage(id, roomId, image.mime, image.bytes));
+    }
+  }
+
+  const loadImage = (id: string) => {
+    let image: { mime: string; bytes: Buffer } | undefined;
+    writeStore(id, target => { image = target.loadImage(id); });
+    return image;
+  };
 
   // "Table screen", then "Table screen 2" and so on while the name is taken
   function freeScreenName(state: BaseGameState): string {
@@ -944,26 +984,42 @@ export function createGameManager(
       return { state: view(room, seat) };
     },
 
+    // Takes back the seat's own last move at once, recorded as a new step so the history stays truthful
+    undoOwn(roomId: string, seat: Seat): Result<BasePublicState> {
+      const found = findPlayer(roomId, seat);
+      if ('error' in found) return found;
+      const { room } = found;
+      if (!room.game.undoOwn) return { error: 'This game has no own-move undo' };
+      if (room.state.paused) return { error: 'The game is paused' };
+      if (room.state.isGameOver) return { error: 'The game is over' };
+
+      const result = room.game.undoOwn(room.state, seat);
+      if ('error' in result) return result;
+      record(roomId, room, { ...result.state, undoVote: null });
+      return { state: view(room, seat) };
+    },
+
     requestUndo(roomId: string, seat: Seat): Result<BasePublicState> {
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
       const { state } = room;
 
+      if (!allowsUndoVote(room)) return { error: 'Use Undo my last move in this mode' };
       if (state.paused) return { error: 'The game is paused' };
       if (state.pauseVote) return { error: 'A pause vote is in progress' };
       if (state.rematchVote) return { error: 'A rematch vote is in progress' };
       if (room.history.length === 0) return { error: 'Nothing to undo' };
       if (state.undoVote) return { error: 'An undo vote is already in progress' };
       if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
-      if (connectedPlayers(state).length < 2) return { error: 'Not enough players to vote' };
+      if (connectedPlayers(state).length < undoQuorum(room)) return { error: 'Not enough players to vote' };
 
       room.state = {
         ...state,
         undoVote: { requestedBy: seat, votes: { [seat]: true } },
         gameStatus: `${state.playerNames[seat]} wants to undo the last turn`
       };
-      save(roomId, room);
+      save(roomId, room, resolveUndoVote(room)); // a lone player's own vote passes it at once
       return { state: view(room, seat) };
     },
 
@@ -1116,7 +1172,8 @@ export function createGameManager(
       // From the seal, not the live room: presence and status change while paused, and every file must match the seal
       const sealed = openSeal(state.pause.seal, state.pause.shares);
       if (!sealed) return { error: NOT_AVAILABLE };
-      return { file: buildPauseFile(room.game, sealed, seat, state.pause, now) };
+      const images = embedImages(imageIdsOf(room.game, roomStates(sealed)), loadImage);
+      return { file: buildPauseFile(room.game, sealed, seat, state.pause, now, images) };
     },
 
     // An untrusted upload: to its paused room here, else to the resume lobby for its game ID, which restores the room
@@ -1259,8 +1316,32 @@ export function createGameManager(
           )
         };
       });
-      return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now) };
+      const images = embedImages(imageIdsOf(game, roomStates(room)), loadImage);
+      return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now, images) };
     },
+
+    // A picture from a seated player of an existing room, the lobby included; the seat key proves the seat.
+    // It is kept until the room is deleted, or for as long as an archived game shows it
+    uploadImage(gameType: unknown, gameId: unknown, seatKey: unknown, bytes: Buffer): { id: string } | { error: ImageUploadError } {
+      const game = findGame(gameType);
+      const roomId = game && `${game.info.id}/${cleanName(gameId)}`;
+      const room = roomId && rooms.get(roomId);
+      if (!room || !store) return { error: 'no-room' };
+      const { state } = room;
+      const seated = typeof seatKey === 'string' && state.activePlayers.some(seat => {
+        const key = state.seatKeys?.[seat];
+        return key !== undefined && sameSecret(key, seatKey);
+      });
+      if (!seated) return { error: 'not-seated' };
+      const mime = imageMime(bytes);
+      if (!mime || bytes.length > MAX_IMAGE_BYTES) return { error: 'not-an-image' };
+      if (store.countRoomImages(roomId) >= MAX_ROOM_IMAGES) return { error: 'too-many' };
+      const id = newImageId();
+      store.saveImage(id, roomId, mime, bytes); // a failure throws, so no id is handed out for an image that is not there
+      return { id };
+    },
+
+    loadImage,
 
     // Lobbies, then games in progress, with player names only; takes no `this` so it can be passed as a callback
     openGames(): OpenGame[] {

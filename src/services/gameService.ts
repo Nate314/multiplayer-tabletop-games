@@ -102,6 +102,10 @@ class GameService {
     this.send({ type: MESSAGE_TYPES.REQUEST_UNDO });
   }
 
+  undoOwn(): void {
+    this.send({ type: MESSAGE_TYPES.UNDO_OWN });
+  }
+
   voteUndo(approve: boolean): void {
     this.send({ type: MESSAGE_TYPES.VOTE_UNDO, payload: { approve } });
   }

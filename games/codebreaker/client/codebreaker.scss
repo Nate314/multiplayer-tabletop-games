@@ -1,0 +1,560 @@
+[data-game="codebreaker"] {
+  color-scheme: light;
+  --page-bg: #F2EFE9;
+  --text: #22201C;
+  --muted: #625D54;
+  --panel-bg: #FFFFFF;
+  --panel-border: #D8D1C4;
+  --board-bg: #CDB894;
+  --board-edge: #9E875F;
+  --hole: #8F7A55;
+  --hole-bg: rgba(0, 0, 0, 0.12);
+  --row-highlight: #F2B705;
+  --button-bg: #7A4E2D;
+  --button-hover-bg: #633F24;
+  --button-text: #FFFFFF;
+  --status-bg: #EDE5D6;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --key-exact: #1B1A18;
+  --key-color: #FFFFFF;
+  --peg-edge: rgba(0, 0, 0, 0.45);
+  --peg-red: #D32F2F;
+  --peg-blue: #1E63C6;
+  --peg-green: #2E8B3A;
+  --peg-yellow: #F5CF1B;
+  --peg-orange: #EF7D17;
+  --peg-purple: #7B3FA8;
+  --peg-pink: #F06EAA;
+  --peg-cyan: #2CC3D6;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #171513;
+    --text: #EEE9E1;
+    --muted: #ABA396;
+    --panel-bg: #24211D;
+    --panel-border: #3E3932;
+    --board-bg: #4A3D2B;
+    --board-edge: #2E261B;
+    --hole: #A8946F;
+    --hole-bg: rgba(0, 0, 0, 0.3);
+    --row-highlight: #FFC93C;
+    --button-bg: #A86F43;
+    --button-hover-bg: #BD8253;
+    --status-bg: #33302A;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --peg-edge: rgba(0, 0, 0, 0.7);
+  }
+
+  /* Each color's fill, and a symbol ink that stands out on it */
+
+  .cb-color-red { --peg: var(--peg-red); --ink: #FFFFFF; }
+  .cb-color-blue { --peg: var(--peg-blue); --ink: #FFFFFF; }
+  .cb-color-green { --peg: var(--peg-green); --ink: #FFFFFF; }
+  .cb-color-yellow { --peg: var(--peg-yellow); --ink: #22201C; }
+  .cb-color-orange { --peg: var(--peg-orange); --ink: #22201C; }
+  .cb-color-purple { --peg: var(--peg-purple); --ink: #FFFFFF; }
+  .cb-color-pink { --peg: var(--peg-pink); --ink: #22201C; }
+  .cb-color-cyan { --peg: var(--peg-cyan); --ink: #22201C; }
+
+  .cb-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0;
+  }
+
+  .cb-board-area {
+    position: relative;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  /* The board: the code row on top, then ten guess rows */
+
+  .cb-board {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 3px solid var(--board-edge);
+    border-radius: 10px;
+    background: var(--board-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .cb-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 3px 6px;
+    border-radius: 6px;
+  }
+
+  .cb-code-row {
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--board-edge);
+    border-radius: 6px 6px 0 0;
+  }
+
+  .cb-row-last {
+    box-shadow: inset 0 0 0 2px var(--row-highlight);
+  }
+
+  .cb-row-number {
+    flex: 0 0 18px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    opacity: 0.7;
+  }
+
+  .cb-pegs {
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .cb-peg {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: 50%;
+    font: inherit;
+  }
+
+  .cb-peg-filled {
+    border: 1px solid var(--peg-edge);
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.45), transparent 45%), var(--peg);
+    color: var(--ink);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .cb-peg-empty {
+    border: 2px solid var(--hole);
+    background: var(--hole-bg);
+  }
+
+  .cb-peg-hidden {
+    border: 2px solid var(--board-edge);
+    background: var(--board-edge);
+    color: var(--board-bg);
+    font-weight: 700;
+  }
+
+  .cb-peg-symbol {
+    width: 16px;
+    height: 16px;
+    --color-symbol-stroke: transparent;
+  }
+
+  button.cb-peg {
+    cursor: pointer;
+  }
+
+  button.cb-peg:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  button.cb-peg:focus-visible {
+    outline: 3px solid var(--row-highlight);
+    outline-offset: 2px;
+  }
+
+  .cb-pegs-small {
+    gap: 3px;
+  }
+
+  .cb-pegs-small .cb-peg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cb-pegs-small .cb-peg-symbol {
+    width: 11px;
+    height: 11px;
+  }
+
+  /* Answer pegs: two rows of small pegs */
+
+  .cb-answer {
+    flex-shrink: 0;
+  }
+
+  .cb-answer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 12px);
+    gap: 3px;
+  }
+
+  .cb-answer-5 {
+    grid-template-columns: repeat(3, 12px);
+  }
+
+  .cb-key {
+    width: 12px;
+    height: 12px;
+    box-sizing: border-box;
+    border-radius: 50%;
+  }
+
+  .cb-key-exact {
+    border: 1px solid var(--key-color);
+    background: var(--key-exact);
+  }
+
+  .cb-key-color {
+    border: 2px solid var(--key-exact);
+    background: var(--key-color);
+  }
+
+  .cb-key-none {
+    background: var(--hole-bg);
+  }
+
+  /* Together: the guesser's name after the answer pegs. The board grows to fit the name, up to 8em; past
+     that it ends in an ellipsis, with the full name in its title. When the row has less than 4em left
+     the name wraps onto a line of its own below the pegs instead of being squeezed */
+  .cb-board-named .cb-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .cb-guesser {
+    flex: 1 0 4em;
+    min-width: 0;
+    max-width: 8em;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cb-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* The side panel: status, the color picker, Undo and the scores or race */
+
+  .cb-side-panel {
+    display: flex;
+    flex: 0 0 300px;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .cb-status {
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .cb-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .cb-turn {
+    overflow-wrap: anywhere;
+  }
+
+  .cb-your-turn {
+    font-weight: 700;
+    color: var(--button-bg);
+  }
+
+  .cb-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cb-picker-title,
+  .cb-panel-title,
+  .cb-board-title {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .cb-draft {
+    flex-wrap: wrap;
+  }
+
+  .cb-colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cb-colors .cb-peg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cb-picker-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cb-button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cb-button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .cb-button.cb-secondary {
+    border: 1px solid var(--button-bg);
+    background: transparent;
+    color: var(--text);
+  }
+
+  .cb-button.cb-secondary:hover:enabled {
+    background: var(--status-bg);
+  }
+
+  .cb-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .cb-undo {
+    align-self: flex-start;
+  }
+
+  /* Scores, Classic rounds and the race */
+
+  .cb-scores,
+  .cb-race,
+  .cb-rounds {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cb-scores li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .cb-classic-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cb-race-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 2px 10px;
+    align-items: center;
+  }
+
+  .cb-race-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cb-race-count,
+  .cb-race-percent {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .cb-race-broken .cb-race-percent {
+    color: var(--button-bg);
+    font-weight: 700;
+  }
+
+  .cb-race-bar {
+    grid-column: 1 / -1;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--status-bg);
+  }
+
+  .cb-race-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--button-bg);
+  }
+
+  .cb-round-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+  }
+
+  .cb-round-name {
+    flex: 1 1 120px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .cb-round-points {
+    color: var(--muted);
+  }
+
+  .cb-summary-code {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 12px 0 8px;
+  }
+
+  .cb-summary-points {
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .cb-summary-note {
+    margin: 10px 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* History and the spectator table: every board this view holds */
+
+  .cb-history {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .cb-history-boards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    max-width: 100%;
+  }
+
+  .cb-history-board {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .cb-history .cb-race {
+    width: 300px;
+    max-width: 100%;
+  }
+
+  /* Phones and narrow windows: the panel goes below the board, full width. Beside a 300px panel a
+     5 peg Together board would leave its names no room below about 760px */
+
+  @media (max-width: 760px) {
+    .cb-layout {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+      padding: 8px 0;
+    }
+
+    .cb-board-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .cb-side-panel {
+      flex: none;
+      width: 100%;
+    }
+
+    .cb-board {
+      padding: 8px 6px;
+    }
+
+    .cb-row {
+      gap: 6px;
+      padding: 3px 4px;
+    }
+
+    .cb-pegs {
+      gap: 4px;
+    }
+  }
+
+  /* The narrowest phones, where 5 pegs leave no 4em for the name: it always takes its own line, lined
+     up under the pegs */
+
+  @media (max-width: 369px) {
+    .cb-board-named .cb-guesser {
+      flex-basis: 100%;
+      max-width: none;
+      padding-left: 24px;
+      box-sizing: border-box;
+    }
+  }
+}

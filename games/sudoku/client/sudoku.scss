@@ -1,0 +1,347 @@
+[data-game="sudoku"] {
+  color-scheme: light;
+  --page-bg: #EEF2F4;
+  --text: #1C2530;
+  --panel-bg: #FFFFFF;
+  --panel-border: #CAD3DB;
+  --button-bg: #2E6B73;
+  --button-hover-bg: #235258;
+  --button-text: #FFF;
+  --status-bg: #E2ECEE;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --grid-line: #2B3640;
+  --cell-bg: #FFFFFF;
+  --given-text: #1C2530;
+  --entry-text: #2257A8;
+  --note-text: #5A6672;
+  --related-bg: #E6EEF2;
+  --same-digit-bg: #C9DDF2;
+  --selected-bg: #9FC3EA;
+  --wrong-bg: #F8D7D3;
+  --wrong-text: #B3261E;
+  --last-move: #E0A800;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #11171C;
+    --text: #E3EAF0;
+    --panel-bg: #1B242C;
+    --panel-border: #33424F;
+    --button-bg: #3C8790;
+    --button-hover-bg: #4B9DA6;
+    --status-bg: #263540;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --grid-line: #8C9BA8;
+    --cell-bg: #1B242C;
+    --given-text: #E3EAF0;
+    --entry-text: #8CC0FF;
+    --note-text: #A3AFBA;
+    --related-bg: #24313B;
+    --same-digit-bg: #2C4A66;
+    --selected-bg: #3B6690;
+    --wrong-bg: #5A2420;
+    --wrong-text: #FFB4AB;
+    --last-move: #FFD54F;
+  }
+
+  .game-header {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* The grid and the side panel side by side, or stacked when the window is narrow */
+
+  .game-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    max-width: 100%;
+    padding: 16px 0;
+  }
+
+  /* Square, as wide as the column allows, and never taller than most of the window */
+
+  .board-area {
+    width: min(540px, 80vh, 100%);
+  }
+
+  /* Which Race board is on show, when the view holds more than one: chips that wrap on a narrow window */
+
+  .board-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .board-picker button {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  /* Nine cells a side; the thin tracks after every third cell show as the thicker box lines */
+
+  .sudoku-grid {
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) 2px repeat(3, 1fr) 2px repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr) 2px repeat(3, 1fr) 2px repeat(3, 1fr);
+    gap: 1px;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 3px solid var(--grid-line);
+    border-radius: 4px;
+    background: var(--grid-line);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sudoku-grid .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    background: var(--cell-bg);
+    color: var(--entry-text);
+    font-family: inherit;
+    font-size: 6.5cqi;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .sudoku-grid .cell:disabled {
+    cursor: default;
+  }
+
+  .sudoku-grid .cell.given {
+    color: var(--given-text);
+    font-weight: 700;
+  }
+
+  .sudoku-grid .cell.related {
+    background: var(--related-bg);
+  }
+
+  .sudoku-grid .cell.same-digit {
+    background: var(--same-digit-bg);
+  }
+
+  .sudoku-grid .cell.selected {
+    background: var(--selected-bg);
+  }
+
+  .sudoku-grid .cell.wrong {
+    background: var(--wrong-bg);
+    color: var(--wrong-text);
+  }
+
+  .sudoku-grid .cell.last-move {
+    outline: 3px solid var(--last-move);
+    outline-offset: -3px;
+  }
+
+  .sudoku-grid .cell:focus-visible {
+    z-index: 1;
+    outline: 3px solid var(--button-bg);
+    outline-offset: -3px;
+  }
+
+  /* Pencil marks: a 3x3 of small digits */
+
+  .sudoku-grid .notes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
+    color: var(--note-text);
+    /* Readable on a phone: 9px at 320px wide, three to a row still fit a cell there */
+    font-size: clamp(9px, 2.8cqi, 15px);
+    font-weight: 600;
+    place-items: center;
+  }
+
+  /* Side panel */
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+    width: min(320px, 100%);
+    padding: 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    text-align: center;
+  }
+
+  .game-status {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    font-weight: bold;
+  }
+
+  .game-status.game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .sudoku-mode {
+    font-weight: 600;
+  }
+
+  .board-wrong {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--wrong-bg);
+    color: var(--wrong-text);
+    font-weight: bold;
+  }
+
+  .player-list,
+  .race-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .player-list li,
+  .race-progress li {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    overflow-wrap: anywhere;
+  }
+
+  .player-list .player-left {
+    opacity: 0.5;
+  }
+
+  .race-bar {
+    display: block;
+    height: 6px;
+    margin-top: 4px;
+    border-radius: 3px;
+    background: var(--panel-border);
+    overflow: hidden;
+  }
+
+  .race-bar span {
+    display: block;
+    height: 100%;
+    background: var(--button-bg);
+  }
+
+  /* The digit pad: a 3x3 of digits beside the grid, one row of nine under it on a phone */
+
+  .digit-pad {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .digits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .digits button {
+    font-size: 20px;
+  }
+
+  .pad-tools,
+  .sudoku-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .pad-tools button {
+    flex: 1;
+  }
+
+  .side-panel button {
+    padding: 10px 14px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .side-panel button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button[aria-pressed="true"] {
+    border-color: var(--text);
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 480px) {
+    .game-layout {
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .side-panel {
+      padding: 12px;
+    }
+
+    /* The pad comes first in the panel, so it sits right under the grid */
+    .digit-pad {
+      order: -1;
+    }
+
+    .digits {
+      grid-template-columns: repeat(9, 1fr);
+      gap: 4px;
+    }
+
+    .digits button {
+      padding: 10px 0;
+      font-size: 18px;
+    }
+  }
+
+  /* History: a fixed size that the dialog scales to fit */
+
+  .sudoku-history {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 460px;
+  }
+}

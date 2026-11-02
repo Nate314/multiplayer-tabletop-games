@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import gameService from '../services/gameService';
 import { loadSession, saveSession, clearSession, type Session } from '../services/session';
+import { rememberJoinedSeat } from '../services/images';
 import type { JoinLink } from '../services/share.ts';
 import type { BasePublicState, JoinRole, Seat } from '../../shared/types.ts';
 
@@ -106,6 +107,7 @@ export default function useGameConnection(joinLink: JoinLink | null = null) {
       seatKey.current = data.seatKey;
       // Any of a shared device's seat keys opens the history
       setCredential(data.seatKey ?? data.localSeats?.[0]?.seatKey);
+      rememberJoinedSeat(data.gameState.gameId, data.seatKey ?? data.localSeats?.[0]?.seatKey);
       localKeys.current = data.localSeats ?? null;
       setHeldSeats(data.localSeats ?? null);
       // After switching to a player the same socket is seated, so the role is no longer a spectator's

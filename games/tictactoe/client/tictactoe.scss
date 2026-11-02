@@ -1,0 +1,17 @@
+@use './grid' as *;
+@use './page' as *;
+
+[data-game="tictactoe"] {
+  /* Three cells and their two gaps fit a phone: 100vw less the page's 16px gutters and room for a desktop scrollbar */
+  --ttt-cell: min(110px, calc((100vw - 64px) / 3));
+
+  @include ttt-page;
+  @include ttt-grid;
+
+  /* The history dialog's board, a little smaller than the live one */
+
+  .history-board .board {
+    margin: 0 auto;
+    --ttt-cell: min(64px, calc((100vw - 96px) / 3));
+  }
+}

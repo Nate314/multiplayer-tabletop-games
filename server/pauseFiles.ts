@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import type { GameDefinition } from '../shared/gameDefinition.ts';
+import type { EmbeddedImages } from '../shared/gameFile.ts';
 import { PAUSE_FILE_FORMAT, PAUSE_FILE_VERSION, type PauseFile, type PauseRecord } from '../shared/pauseFile.ts';
 import type { BaseGameState, BasePublicState, HistoryStep, Seat } from '../shared/types.ts';
 import { openSeal, shareHash, type SealedRoom } from './pauseSeal.ts';
@@ -33,7 +34,8 @@ export function pausePlainParts(
 }
 
 export function buildPauseFile(
-  game: GameDefinition<any, BasePublicState>, room: SealedRoom, seat: Seat, pause: PauseRecord, pausedAt: Date // eslint-disable-line @typescript-eslint/no-explicit-any
+  game: GameDefinition<any, BasePublicState>, room: SealedRoom, seat: Seat, pause: PauseRecord, pausedAt: Date, // eslint-disable-line @typescript-eslint/no-explicit-any
+  images: EmbeddedImages = {}
 ): PauseFile {
   return {
     format: PAUSE_FILE_FORMAT,
@@ -47,7 +49,9 @@ export function buildPauseFile(
     players: Object.fromEntries(room.state.activePlayers.map(active => [active, room.state.playerNames[active]])),
     ...pausePlainParts(game, room, seat),
     seal: pause.seal,
-    share: pause.shares[seat]
+    share: pause.shares[seat],
+    // Outside the seal, which stays small; the seal's states name the ids, and every file must carry the same bytes
+    ...(Object.keys(images).length > 0 && { images })
   };
 }
 
@@ -74,7 +78,7 @@ export function pauseFilesMismatch(files: PauseFile[], seats: Seat[]): { error: 
 
 const sharedPart = (file: PauseFile) => canonicalJson({
   format: file.format, version: file.version, gameType: file.gameType, gameId: file.gameId,
-  players: file.players, table: file.table, history: file.history, seal: file.seal
+  players: file.players, table: file.table, history: file.history, seal: file.seal, images: file.images
 });
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>

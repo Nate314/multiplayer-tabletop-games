@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import gameService from '../services/gameService';
-import { houseRulesOf, minimumToStart, needsAgreement, rulesOf, type HouseRuleValue, type HouseRulesProposal } from '../../shared/houseRules.ts';
+import { houseRulesOf, minimumToStart, needsAgreement, offeredChoices, rulesOf, type HouseRuleValue, type HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 
@@ -69,7 +69,7 @@ export default function HouseRulesPanel({ game, gameState, playerNumber, error }
             ) : (
               <select id={`house-rule-${rule.id}`} value={String(rules.values[rule.id])} disabled={!isHost}
                 onChange={(e) => setValue(rule.id, rule.choices.find(choice => String(choice.value) === e.target.value)!.value)}>
-                {rule.choices.map(choice => <option key={String(choice.value)} value={String(choice.value)}>{choice.label}</option>)}
+                {offeredChoices(rule, seated, rules.values).map(choice => <option key={String(choice.value)} value={String(choice.value)}>{choice.label}</option>)}
               </select>
             )}
             <label htmlFor={`house-rule-${rule.id}`}>{rule.label}</label>
