@@ -59,10 +59,18 @@ export function resetLobby(state: GameState, random: Random): GameState {
   return { ...state, ...base, solution, objectRooms, currentPlayer: seats[0] ?? null };
 }
 
-// Placeholder until the views task: shows no hand, no shown card and no solution
-export function toPublicState(state: GameState, undoAvailable: boolean): Omit<PublicGameState, 'moveCount'> {
-  const { hands: _hands, seen: _seen, notes: _notes, ...rest } = state;
-  return { ...rest, undoAvailable, solution: null, hand: [], handSizes: {}, seen: [], notes: {} };
+// One seat's view: its own hand, notes and shown cards. faceUp stays public; the solution appears once the game is over
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null = null): Omit<PublicGameState, 'moveCount'> {
+  const { hands, seen, notes, ...rest } = state;
+  return {
+    ...rest,
+    undoAvailable,
+    solution: state.isGameOver ? state.solution : null,
+    hand: viewer === null ? [] : hands[viewer] ?? [],
+    handSizes: Object.fromEntries(Object.entries(hands).map(([seat, cards]) => [seat, cards.length])),
+    seen: seen.filter(entry => entry.from === viewer || entry.to === viewer),
+    notes: viewer === null ? {} : notes[viewer] ?? {}
+  };
 }
 
 export const canAccuse = (state: GameState): Seat[] => state.activePlayers.filter(seat => !state.out.includes(seat));

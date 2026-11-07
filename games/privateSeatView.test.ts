@@ -48,6 +48,10 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
       ]
     }
   ],
+  whodunit: s => [
+    { ...s, seen: [{ suggestion: 0, from: 2, to: 1, card: s.hands[2][0] }], notes: { ...s.notes, 1: { [s.hands[1][0]]: 'no' } } },
+    { ...s, phase: 'showing', suggestions: [{ suspect: 'miss-gull', object: 'boat-oar', room: 'galley', by: 1, passed: [], shownBy: null, awaiting: 2 }] }
+  ],
   codebreaker: s => [
     { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
     {
