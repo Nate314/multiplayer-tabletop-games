@@ -26,7 +26,7 @@ const cellFromPoints = (kind: BoardKind, pts: Point[]): Cell => {
   return [a, b, pts.some((p) => p[0] === a && p[1] === b) ? 0 : 1];
 };
 
-const SYMMETRY: Record<BoardKind, { rotate: (p: Point) => Point; mirror: (p: Point) => Point; turns: number }> = {
+export const SYMMETRY: Record<BoardKind, { rotate: (p: Point) => Point; mirror: (p: Point) => Point; turns: number }> = {
   squares: { rotate: ([x, y]) => [-y, x], mirror: ([x, y]) => [-x, y], turns: 4 },
   triangles: { rotate: ([x, y]) => [-y, x + y], mirror: ([x, y]) => [y, x], turns: 6 }
 };
@@ -55,6 +55,14 @@ export function orientations(kind: BoardKind, shape: Shape): Shape[] {
   }
   return [...seen.values()];
 }
+
+// One step of the board's symmetry, normalized: a right turn (clockwise on screen) or a mirror
+export function transformed(kind: BoardKind, shape: Shape, how: 'rotate' | 'mirror'): Shape {
+  const f = SYMMETRY[kind][how];
+  return normalize(shape.map(c => cellFromPoints(kind, pointList(kind, c).map(f))));
+}
+
+export const sameShape = (a: Shape, b: Shape): boolean => shapeKey(normalize(a)) === shapeKey(normalize(b));
 
 export const canonical = (kind: BoardKind, shape: Shape): string =>
   orientations(kind, shape).map(shapeKey).sort()[0];
