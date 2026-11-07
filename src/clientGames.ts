@@ -47,6 +47,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   farkle: () => import('../games/farkle/client/index.ts').then(m => m.farkleClient),
   go: () => import('../games/go/client/index.ts').then(m => m.goClient),
   gofish: () => import('../games/gofish/client/index.ts').then(m => m.gofishClient),
+  hintgrid: () => import('../games/hintgrid/client/index.ts').then(m => m.hintgridClient),
   hearts: () => import('../games/hearts/client/index.ts').then(m => m.heartsClient),
   holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),
   jenga: () => import('../games/jenga/client/index.ts').then(m => m.loadJengaClient()),

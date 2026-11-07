@@ -1,0 +1,287 @@
+[data-game="hintgrid"] {
+  /* Hint Grid's table theme. Every rule is scoped to data-game="hintgrid", so none of it reaches the landing page or other games. */
+
+  color-scheme: light;
+  --page-bg: #eef1f4;
+  --text: #1f2430;
+  --muted: #5d6676;
+  --panel-bg: #fff;
+  --panel-border: rgba(31, 36, 48, 0.18);
+  --button-bg: #34495e;
+  --button-hover-bg: #26384a;
+  --button-text: #fff;
+  --status-bg: #e1e8ef;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --card-bg: #f4ecd8;
+  --card-text: #2a2418;
+  --red-bg: #c0392b;
+  --blue-bg: #1f5fae;
+  --bystander-bg: #d6cfbd;
+  --trap-bg: #1c1c1c;
+  --up-text: #fff;
+  --bystander-text: #2a2418;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #15181d;
+    --text: #e6e9ee;
+    --muted: #a3acba;
+    --panel-bg: #20252c;
+    --panel-border: rgba(230, 233, 238, 0.18);
+    --button-bg: #4d6a86;
+    --button-hover-bg: #5d7c9b;
+    --status-bg: #28323d;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --card-bg: #3a3626;
+    --card-text: #f1ead3;
+    --red-bg: #d4493a;
+    --blue-bg: #3b7bd0;
+    --bystander-bg: #6f6a58;
+    --trap-bg: #000;
+    --bystander-text: #fff;
+  }
+
+  .hintgrid-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 760px;
+    margin: 0 auto;
+    min-width: 0;
+  }
+
+  .game-info,
+  .team-picker,
+  .clue-line,
+  .clue-form {
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 0;
+  }
+
+  .player-info,
+  .words-left {
+    color: var(--muted);
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 6px 0;
+    background: var(--status-bg);
+    overflow-wrap: anywhere;
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message,
+  .clue-text {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .team-buttons {
+    display: contents;
+  }
+
+  .hintgrid-layout button:not(.hint-card),
+  .history-layout button:not(.hint-card) {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .hintgrid-layout button:not(.hint-card):not(:disabled):hover {
+    background: var(--button-hover-bg);
+  }
+
+  .hintgrid-layout button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .team-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .team-column {
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    text-align: left;
+    min-width: 0;
+
+    h3 {
+      margin: 0 0 4px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .team-red {
+    border-color: var(--red-bg);
+  }
+
+  .team-blue {
+    border-color: var(--blue-bg);
+  }
+
+  .role-tag {
+    font-weight: 700;
+  }
+
+  .team-status {
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+  }
+
+  .clue-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: center;
+    gap: 10px;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+      font-size: 0.85rem;
+      color: var(--muted);
+      min-width: 0;
+    }
+
+    input,
+    select {
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      background: var(--page-bg);
+      color: var(--text);
+      font: inherit;
+      min-width: 0;
+    }
+
+    input {
+      width: min(100%, 14rem);
+    }
+
+    .game-status {
+      flex-basis: 100%;
+      margin: 0;
+    }
+  }
+
+  /* Five columns at every width: the words shrink and wrap inside their cards */
+
+  .hint-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(3px, 1.2vw, 8px);
+    min-width: 0;
+  }
+
+  .hint-card {
+    position: relative;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 44px;
+    aspect-ratio: 4 / 3;
+    padding: 12px 2px 2px;
+    border: 2px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--card-text);
+    font: inherit;
+    font-size: clamp(0.55rem, 2.6vw, 1rem);
+    font-weight: 700;
+    line-height: 1.1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .hint-card[aria-disabled="true"] {
+    cursor: default;
+  }
+
+  .hint-word {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .hint-mark {
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: clamp(0.5rem, 2.2vw, 0.8rem);
+    line-height: 1;
+
+    .color-symbol {
+      width: 0.9em;
+      height: 0.9em;
+    }
+  }
+
+  /* A key mark on a card still face down is only a border, the card itself stays plain */
+  .hint-card.down.kind-red { border-color: var(--red-bg); }
+  .hint-card.down.kind-blue { border-color: var(--blue-bg); }
+  .hint-card.down.kind-bystander { border-style: dashed; }
+  .hint-card.down.kind-trap { border-color: var(--trap-bg); border-width: 4px; }
+
+  .hint-card.up { color: var(--up-text); }
+  .hint-card.up.kind-red { background: var(--red-bg); }
+  .hint-card.up.kind-blue { background: var(--blue-bg); }
+  .hint-card.up.kind-bystander { background: var(--bystander-bg); color: var(--bystander-text); }
+  .hint-card.up.kind-trap { background: var(--trap-bg); }
+
+  .hint-card.last {
+    outline: 3px solid var(--text);
+    outline-offset: 1px;
+  }
+}
