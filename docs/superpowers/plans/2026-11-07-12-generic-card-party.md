@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Wave 1 chunk 3 moves Pictionary's turn, chat, scoring and shared client pieces into `games/guessing/` (Pictionary's `rules.ts` becomes a thin wrapper over `guessGame(config)`, which Charades also uses). The Pictionary rename covers `games/pictionary/` and any player-visible "Pictionary" text in `games/guessing/`; `games/guessing/` itself keeps its name.
+- Wave 1 chunk 3 moves Pictionary's turn, chat, scoring and shared client pieces into `shared/guessing/` (Pictionary's `rules.ts` becomes a thin wrapper over `guessGame(config)`, which Charades also uses). The Pictionary rename covers `games/pictionary/` and any player-visible "Pictionary" text in `shared/guessing/`; `shared/guessing/` itself keeps its name.
 
 - **Names and ids, exactly:** Phase 10 to **Stage Rummy** (`stagerummy`), Pictionary to **Draw and Guess** (`drawandguess`), Rack-O to **In Order** (`inorder`), Rook to **Nest** (`nest`), Skip-Bo to **Spite and Malice** (`spiteandmalice`), UNO to **Rainbow Eights** (`rainboweights`), Yahtzee to **Five Dice** (`fivedice`).
 - **Same rules.** Rules, house rule ids and values, options, state shape and move shapes are unchanged. Rules and manager tests change only in ids, names and player-visible text.

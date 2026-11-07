@@ -4,7 +4,7 @@
 
 **Goal:** Add two traditional party games: Charades (act out a prompt on the group's own cameras while everyone else guesses in the chat) and Fictionary (write fake definitions of a rare real word, then vote for the real one).
 
-**Architecture:** First, Pictionary's turn machine (choosing, guessing, reveal), its chat-as-guessing and its scoring move out of `games/pictionary/` into one module both games import, `games/guessing/`, with Pictionary's behavior unchanged and its existing tests as the proof. Charades is then that module with its own prompts, house rules and words in the texts, and no canvas. Fictionary is a round game with no turns: writing and voting are game actions on a server clock, and the reveal uses `shared/rounds.ts` for Continue. All match guesses with `shared/guess.ts`, keep their content lists server-side, and hide every secret in `toPublicState`, `privateSeatView` and `secretState`.
+**Architecture:** First, Pictionary's turn machine (choosing, guessing, reveal), its chat-as-guessing and its scoring move out of `games/pictionary/` into one module both games import, `shared/guessing/`, with Pictionary's behavior unchanged and its existing tests as the proof. Charades is then that module with its own prompts, house rules and words in the texts, and no canvas. Fictionary is a round game with no turns: writing and voting are game actions on a server clock, and the reveal uses `shared/rounds.ts` for Continue. All match guesses with `shared/guess.ts`, keep their content lists server-side, and hide every secret in `toPublicState`, `privateSeatView` and `secretState`.
 
 **Tech Stack:** TypeScript, React 19, SCSS, `node:test`, Playwright.
 
@@ -14,19 +14,21 @@
 
 ## Global Constraints
 
+- Shared code location (owner's decision): the guessing rules live in `shared/guessing/` and the shared guessing components in `src/components/guessing/`, so nothing under `games/` looks like a game that is not one. `shared/guessing/` imports no React and nothing from `games/` or `src/`; `src/components/guessing/` imports nothing from `games/`.
+
 - Charades: id `charades`, category `'party'`, 2 to 10 players. Fictionary: id `fictionary`, category `'party'`, 3 to 8 players.
 - Charades: "Scoring, phases, chat audience and house rules (time per turn, number of choices, turns per player) copy Pictionary's, and the game sets `ownTurnLimit`." Guesses use the shared guess matching with close-guess hints as in Pictionary. Guessers see the masked prompt (word lengths, as Pictionary's mask does); the actor's screen shows the prompt large.
 - Charades prompt list: "at least 300 actable prompts (actions, animals, jobs, sports, everyday phrases), kept server-side as Pictionary's words are."
 - Pictionary is unchanged by the extraction: every `*.test.ts` under `games/pictionary/`, and `e2e/pictionary.spec.ts`, is byte for byte unchanged and passes. Its player-visible texts, CSS class names and element ids stay as they are.
-- `games/guessing/` imports nothing from `games/pictionary/` or `games/charades/` (wave 2 renames the Pictionary folder; the shared module must not care).
+- `shared/guessing/` imports nothing from `games/pictionary/` or `games/charades/` (wave 2 renames the Pictionary folder; the shared module must not care).
 - Fictionary scoring: "2 points for voting for the real definition; 1 point to an author for each vote their fake gets. If a player's submission matches the real definition closely enough (the shared guess matching on normalized text), they get 3 points and their entry is not shown as a separate choice." Votes are "never their own".
 - Fictionary house rules: "number of words (5, 8 or 10; standard 8) and writing time (60, 90, 120 or 180 s; standard 120). Writing and voting end early once everyone has submitted." No dealer: the game holds the real definition.
 - Fictionary word list: "at least 200 real, rare words with short accurate definitions. Each definition is checked against a dictionary while it is written; a wrong definition is a bug." Definitions are written in this project's own words, never copied from a dictionary.
 - Hidden: "the Charades prompt, Fictionary's real definition and the authors of each definition" never reach a browser that should not see them, including History (`viewer: null`), game files, `lastMove`, `gameStatus`, a table screen and spectators where stated.
 - Undo: Charades turn moves (choose, scoring guess, timeouts) are undoable by vote, as Pictionary's. Fictionary has no turn moves; writing, voting and Continue are game actions and it sets `allowsUndoVote: () => false` (see Task 10).
 - Rules from Wikipedia's [Charades](https://en.wikipedia.org/wiki/Charades) and [Fictionary](https://en.wikipedia.org/wiki/Fictionary) articles; each README lists every difference under "Differences from Wikipedia" in the format of `games/rook/README.md`. Where the spec disagrees with Wikipedia, the spec wins.
-- The commercial names "Balderdash" and "Pictionary" never appear in any file of `games/charades/`, `games/fictionary/` or `games/guessing/` or the two new e2e specs (tests in Tasks 2, 3 and 8 enforce it). No text, name or prompt is copied from a commercial game.
-- Files outside the game folders: the refactor of `games/pictionary/` and the new `games/guessing/` (Task 2); otherwise one-line entries only, in `games/registry.ts`, `games/infos.ts`, `src/clientGames.ts`, `shared/svg/gameIcons.ts`, `shared/categories.test.ts` (the `party` list and the grouped count, 42 today), `games/secretState.test.ts` (`WITH_SECRET`), `games/privateSeatView.test.ts` (`CASES`), plus `e2e/charades.spec.ts` and `e2e/fictionary.spec.ts`. Do NOT edit the root `README.md` game list or count, `e2e/landing.spec.ts` or `docs/architecture.md`; the coordinator does. Nothing else in `src/`, `server/`, `shared/` or `e2e/fixtures.ts`; if a platform or fixture change seems needed, stop and report it.
+- The commercial names "Balderdash" and "Pictionary" never appear in any file of `games/charades/`, `games/fictionary/` or `shared/guessing/` or the two new e2e specs (tests in Tasks 2, 3 and 8 enforce it). No text, name or prompt is copied from a commercial game.
+- Files outside the game folders: the refactor of `games/pictionary/` and the new `shared/guessing/` and `src/components/guessing/` (Task 2); otherwise one-line entries only, in `games/registry.ts`, `games/infos.ts`, `src/clientGames.ts`, `shared/svg/gameIcons.ts`, `shared/categories.test.ts` (the `party` list and the grouped count, 42 today), `games/secretState.test.ts` (`WITH_SECRET`), `games/privateSeatView.test.ts` (`CASES`), plus `e2e/charades.spec.ts` and `e2e/fictionary.spec.ts`. Do NOT edit the root `README.md` game list or count, `e2e/landing.spec.ts` or `docs/architecture.md`; the coordinator does. Nothing else in `src/`, `server/`, `shared/` or `e2e/fixtures.ts`; if a platform or fixture change seems needed, stop and report it.
 - New specs reach header controls (History, Share, Rules, Hide, Pause, Settings, Theme) only through `headerButton(page, name)` from `e2e/fixtures.ts`.
 - No new npm dependency. No em-dashes in code comments, READMEs, FAQs or commit messages.
 - Every commit message ends with these two lines:
@@ -63,13 +65,13 @@
 ### Task 2: Extract the guessing game from Pictionary
 
 **Files:**
-- Create: `games/guessing/types.ts`, `games/guessing/clock.ts`, `games/guessing/turns.ts`, `games/guessing/client/Chat.tsx`, `games/guessing/client/Blanks.tsx`, `games/guessing/client/Scores.tsx`, `games/guessing/client/GameStatus.tsx`
+- Create: `shared/guessing/types.ts`, `shared/guessing/clock.ts`, `shared/guessing/turns.ts`, `src/components/guessing/Chat.tsx`, `src/components/guessing/Blanks.tsx`, `src/components/guessing/Scores.tsx`, `src/components/guessing/GameStatus.tsx`
 - Modify: `games/pictionary/types.ts`, `games/pictionary/clock.ts`, `games/pictionary/rules.ts`, `games/pictionary/client/GameScreen.tsx`, `games/pictionary/client/HistoryBoard.tsx`
 - Delete: `games/pictionary/client/Chat.tsx`, `Blanks.tsx`, `Scores.tsx`, `GameStatus.tsx` (their callers import the shared ones)
-- Test: new `games/guessing/turns.test.ts`; the proof is the unchanged `games/pictionary/*.test.ts`, `games/pictionary/client/*.test.ts`, `games/privateSeatView.test.ts`, `games/secretState.test.ts` and `e2e/pictionary.spec.ts`
+- Test: new `shared/guessing/turns.test.ts`; the proof is the unchanged `games/pictionary/*.test.ts`, `games/pictionary/client/*.test.ts`, `games/privateSeatView.test.ts`, `games/secretState.test.ts` and `e2e/pictionary.spec.ts`
 
 **Interfaces:**
-- Produces (`games/guessing/types.ts`). The field names stay Pictionary's, so Pictionary's tests and saved games read the same; in Charades `drawer` is the actor, `word` the prompt and phase `'drawing'` is acting.
+- Produces (`shared/guessing/types.ts`). The field names stay Pictionary's, so Pictionary's tests and saved games read the same; in Charades `drawer` is the actor, `word` the prompt and phase `'drawing'` is acting.
   ```ts
   type Phase = 'choosing' | 'drawing' | 'reveal';
   type ChatLine = { id: number; kind: 'chat' | 'guessed' | 'close' | 'system'; seat: Seat | null; text: string; audience: 'all' | 'guessed' | Seat };
@@ -87,8 +89,8 @@
   };
   ```
   `games/pictionary/types.ts` keeps exporting `Phase`, `ChatLine`, `LastMove`, `GameState` (`GuessState` plus `strokes` and `nextStrokeId`), `PublicGameState` (`GuessPublic<GameState>`), `Stroke`, `Tool`, `Result`, `Seat`, `UndoVote`.
-- Produces (`games/guessing/clock.ts`): `CHOOSE_MS = 20_000`, `REVEAL_MS = 5_000`, `phaseMs(state, turnSeconds: ChoiceRule<number>)`, `phaseDeadline(state, turnSeconds)`. `games/pictionary/clock.ts` re-exports `CHOOSE_MS` and `REVEAL_MS`, binds `phaseMs` and `phaseDeadline` to its `TURN_SECONDS`, and keeps its canvas constants.
-- Produces (`games/guessing/turns.ts`): `DRAWER_POINTS = 25`, `guesserPoints(msLeft, turnMs)`, and
+- Produces (`shared/guessing/clock.ts`): `CHOOSE_MS = 20_000`, `REVEAL_MS = 5_000`, `phaseMs(state, turnSeconds: ChoiceRule<number>)`, `phaseDeadline(state, turnSeconds)`. `games/pictionary/clock.ts` re-exports `CHOOSE_MS` and `REVEAL_MS`, binds `phaseMs` and `phaseDeadline` to its `TURN_SECONDS`, and keeps its canvas constants.
+- Produces (`shared/guessing/turns.ts`): `DRAWER_POINTS = 25`, `guesserPoints(msLeft, turnMs)`, and
   ```ts
   type GuessConfig<S extends GuessState> = {
     words: readonly string[];
@@ -121,16 +123,16 @@
   - `Scores({ gameState, playerNumber, busyNote })`; Pictionary passes `drawing`.
   - `GameStatus({ gameState, playerNumber, error, deadline, texts })` with `texts: { choose: string; choosing(name: string): string; busy(word: string): string; busyOther(name: string): string; was(word: string): string }`; Pictionary passes its current strings (`Choose a word to draw`, `<name> is choosing a word`, `Draw <word>`, `<name> is drawing`, `The word was <word>`) and `deadline = phaseDeadline(gameState)`.
 
-- [ ] **Step 1: Write the new test** `games/guessing/turns.test.ts`, for what only the config decides (a game built with `guessGame` over `['juggling flamingos', 'knitting a scarf', 'walking on stilts']`, `noun: 'prompt'`, `verb: 'acting'`, Pictionary's rule objects passed in as test fixtures):
+- [ ] **Step 1: Write the new test** `shared/guessing/turns.test.ts`, for what only the config decides (a game built with `guessGame` over `['juggling flamingos', 'knitting a scarf', 'walking on stilts']`, `noun: 'prompt'`, `verb: 'acting'`, Pictionary's rule objects passed in as test fixtures):
   - `'texts use the noun and verb'`: choosing status `Alice is choosing a prompt`; after `choose`, `Alice is acting`; a correct guess's line `Bob guessed the prompt!`; the reveal `The prompt was juggling flamingos`; a bad index `{ error: 'Invalid prompt choice' }`.
   - `'freshTurn runs when guessing starts'`: with `freshTurn: () => ({ marker: 0 })` on a state holding `marker: 5`, `choose` gives `marker === 0`.
-  - `'the module imports no game folder and names no commercial game'`: no file in `games/guessing/` matches `/(pictionary|charades)\//` in an import or `/pictionary|balderdash/i` anywhere.
-- [ ] **Step 2: Run** `node --test games/guessing/turns.test.ts`. Expected: FAIL (module missing).
-- [ ] **Step 3: Move the code.** Cut the turn, chat, scoring, view and standings code from `games/pictionary/rules.ts` into `games/guessing/turns.ts` behind `guessGame`, replacing the hard-coded rules, word list and texts with the config; move the four client components the same way. No behavior change: same statuses, audiences, deadline arithmetic and field order.
-- [ ] **Step 4: Run** `node --test games/guessing/*.test.ts games/pictionary/*.test.ts games/pictionary/client/*.test.ts games/*.test.ts src/games/*.test.ts && npm run typecheck && npm run lint`. Expected: PASS.
+  - `'the module imports no game folder and names no commercial game'`: no file in `shared/guessing/` matches `/(pictionary|charades)\//` in an import or `/pictionary|balderdash/i` anywhere.
+- [ ] **Step 2: Run** `node --test shared/guessing/turns.test.ts`. Expected: FAIL (module missing).
+- [ ] **Step 3: Move the code.** Cut the turn, chat, scoring, view and standings code from `games/pictionary/rules.ts` into `shared/guessing/turns.ts` behind `guessGame`, replacing the hard-coded rules, word list and texts with the config; move the four client components the same way. No behavior change: same statuses, audiences, deadline arithmetic and field order.
+- [ ] **Step 4: Run** `node --test shared/guessing/*.test.ts games/pictionary/*.test.ts games/pictionary/client/*.test.ts games/*.test.ts src/games/*.test.ts && npm run typecheck && npm run lint`. Expected: PASS.
 - [ ] **Step 5: Run** `npx vite build && E2E_SKIP_BUILD=1 E2E_PORT_BASE=8300 npx playwright test --workers=2 e2e/pictionary.spec.ts`. Expected: PASS, as in Task 1 Step 3.
 - [ ] **Step 6: Confirm the proof is untouched:** `git diff --stat -- 'games/pictionary/*.test.ts' 'games/pictionary/client/*.test.ts' e2e/pictionary.spec.ts` prints nothing.
-- [ ] **Step 7: Commit** `Pictionary: move the guessing turn into games/guessing`.
+- [ ] **Step 7: Commit** `Pictionary: move the guessing turn into shared/guessing`.
 
 ### Task 3: Charades options, info, types and prompts
 
@@ -193,7 +195,7 @@ The shared behavior is proven by Pictionary's tests; these cover what Charades' 
 - Test: `games/charades/client/describeMove.test.ts`
 
 **Interfaces:**
-- Consumes: `PublicGameState` (Task 3), `phaseDeadline` from `../clock.ts`, `Chat`, `ChatLines`, `Blanks`, `Scores`, `GameStatus` from `games/guessing/client/` (Task 2), `GameScreenProps`, `ClientGame`, `gameService.makeMove`, `requestUndo`, `voteUndo`, `UndoVote`.
+- Consumes: `PublicGameState` (Task 3), `phaseDeadline` from `../clock.ts`, `Chat`, `ChatLines`, `Blanks`, `Scores`, `GameStatus` from `src/components/guessing/` (Task 2), `GameScreenProps`, `ClientGame`, `gameService.makeMove`, `requestUndo`, `voteUndo`, `UndoVote`.
 - Produces: `charadesClient: ClientGame` with `id`, `Screen`, `HistoryBoard`, `describeMove`, `faq`.
 
 Decisions:
@@ -464,7 +466,7 @@ README decisions (Rules, Controls, Differences from Wikipedia; name the dictiona
 - [ ] **Step 2: Run** `npm run typecheck`. Expected: PASS.
 - [ ] **Step 3: Run** `npm run lint`. Expected: PASS with no warnings.
 - [ ] **Step 4: Run** `npx vite build && E2E_SKIP_BUILD=1 E2E_PORT_BASE=8300 npx playwright test --workers=2 e2e/pictionary.spec.ts e2e/charades.spec.ts e2e/fictionary.spec.ts`. Expected: PASS.
-- [ ] **Step 5: Check the writing:** `git diff origin/party-games-and-polish --stat` touches only the files this plan names, with no Pictionary test file or `e2e/pictionary.spec.ts` among them, and `git grep -nP "\x{2014}" -- games/guessing games/pictionary games/charades games/fictionary e2e/charades.spec.ts e2e/fictionary.spec.ts` prints nothing.
+- [ ] **Step 5: Check the writing:** `git diff origin/party-games-and-polish --stat` touches only the files this plan names, with no Pictionary test file or `e2e/pictionary.spec.ts` among them, and `git grep -nP "\x{2014}" -- shared/guessing games/pictionary games/charades games/fictionary e2e/charades.spec.ts e2e/fictionary.spec.ts` prints nothing.
 - [ ] **Step 6: Push and open the PR:** `git push -u origin game-charades-fictionary`, then `gh pr create --base party-games-and-polish --title "Charades and Fictionary"` with a body that lists both games, their Differences from Wikipedia, the dictionaries used for Fictionary, the one-line registration edits made (for the coordinator's conflict resolution, including the `shared/categories.test.ts` count), and that the root README, `e2e/landing.spec.ts` and `docs/architecture.md` are left to the coordinator. The body ends with:
   ```
   🤖 Generated with [Claude Code](https://claude.com/claude-code)
