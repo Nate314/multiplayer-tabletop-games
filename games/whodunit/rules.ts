@@ -127,12 +127,14 @@ function moveTo(state: GameState, seat: Seat, to: unknown): Result<GameState> {
   return { state: step(next, { type: 'moveTo', playerNumber: seat, to: target }, room ? `${name} entered the ${nameOf(room)}` : `${name} moved`) };
 }
 
-// Each holder clockwise either passes, shows their one match at once, or must choose between several
-function resolveShowing(state: GameState, by: Seat, suggestion: Omit<Suggestion, 'passed' | 'shownBy' | 'awaiting'>): GameState {
+// Each holder clockwise either passes, shows their one match at once, or must choose between several.
+// Holders already in `passed` are not asked again, so a suggestion can carry on after a dismissed shower
+type Asked = Omit<Suggestion, 'passed' | 'shownBy' | 'awaiting'> & { passed?: Seat[] };
+function resolveShowing(state: GameState, by: Seat, suggestion: Asked): GameState {
   const asked: CardId[] = [suggestion.suspect, suggestion.object, suggestion.room];
   const index = state.suggestions.length;
-  const passed: Seat[] = [];
-  for (const holder of holderOrder(state, by)) {
+  const passed: Seat[] = [...(suggestion.passed ?? [])];
+  for (const holder of holderOrder(state, by).filter(seat => !passed.includes(seat))) {
     const matches = state.hands[holder].filter(card => asked.includes(card));
     if (matches.length === 0) { passed.push(holder); continue; }
     const name = state.playerNames[holder];
@@ -238,6 +240,35 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
     default:
       return { error: 'Invalid move' };
   }
+}
+
+export const allowsUndoVote = (state: GameState): boolean => !state.lastMove?.sealed;
+
+// Whose turn has begun: every move past 'start' is the turn holder's, except a show, made for the suggester
+function turnHolder(state: GameState): Seat | null {
+  if (state.phase === 'start' || !state.lastMove) return null;
+  return state.lastMove.type === 'show' ? state.suggestions.at(-1)!.by : state.lastMove.playerNumber;
+}
+
+// A dismissal only (a disconnect holds the seat): their cards go face up, their suspect stays on the board
+export function onPlayerLeft(state: GameState, seat: Seat): GameState {
+  let next: GameState = {
+    ...state,
+    hands: { ...state.hands, [seat]: [] },
+    faceUp: { ...state.faceUp, [seat]: state.hands[seat] },
+    gameStatus: `${state.playerNames[seat]} was dismissed; their cards are face up`
+  };
+  const last = state.suggestions.at(-1);
+  if (last && waitingOn(state).includes(seat)) {
+    next = resolveShowing({ ...next, suggestions: next.suggestions.slice(0, -1) }, last.by, last);
+  }
+  // The platform moved the turn on to the next seat, which may be out, and kept the leaver's phase
+  const current = next.currentPlayer;
+  if (turnHolder(state) === seat || (current !== null && next.out.includes(current))) {
+    const suggestions = last && next.phase === 'showing' ? [...next.suggestions.slice(0, -1), { ...last, awaiting: null }] : next.suggestions;
+    next = nextTurn({ ...next, suggestions }, seat);
+  }
+  return settleEnd(next);
 }
 
 // A note is private and not recorded for undo
