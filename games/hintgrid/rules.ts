@@ -6,7 +6,7 @@ import { shuffle } from '../../shared/shuffle.ts';
 import { rankStandings } from '../../shared/standings.ts';
 import type { Random, Result, Seat, Standing } from '../../shared/types.ts';
 import { TEAM_NAMES, clueGiverOf, dealKey, evenOut, guessersOf, otherTeam, teamsReady } from './teams.ts';
-import type { GameState, Team } from './types.ts';
+import type { GameState, PublicGameState, Team } from './types.ts';
 import { WORDS } from './words.ts';
 
 const TEAMS: Team[] = ['red', 'blue'];
@@ -149,4 +149,26 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
 
 export function finalStandings(state: GameState): Standing[] {
   return rankStandings(state, () => 0, seat => `${TEAM_NAMES[state.roles[seat]?.team ?? 'red']} team`);
+}
+
+type View = Omit<PublicGameState, 'moveCount'>;
+
+function view(state: GameState, undoAvailable: boolean, showKey: boolean): View {
+  const left = { red: wordsLeft(state, 'red'), blue: wordsLeft(state, 'blue') };
+  const key = state.key.map((kind, i) => (showKey || state.isGameOver || state.revealed[i] ? kind : null));
+  return { ...state, key, left, undoAvailable };
+}
+
+// A clue-giver sees the whole key; a guesser, a table screen and History see only the cards turned over (all of it once the game ends)
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): View {
+  return view(state, undoAvailable, viewer !== null && state.roles[viewer]?.clueGiver === true);
+}
+
+// A guesser's key is the table's, so only a clue-giver has anything to add
+export function privateSeatView(state: GameState, seat: Seat): Pick<PublicGameState, 'key'> | Record<string, never> {
+  return state.roles[seat]?.clueGiver ? { key: toPublicState(state, false, seat).key } : {};
+}
+
+export function spectatorState(state: GameState, undoAvailable: boolean, tableScreen: boolean): View {
+  return view(state, undoAvailable, !tableScreen);
 }

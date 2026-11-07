@@ -1,13 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addPlayer, applyMove as platformMove, removePlayer } from '../../shared/seating.ts';
-import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import type { Seat } from '../../shared/types.ts';
-import { hintgridInfo } from './info.ts';
-import { allowsOutOfTurn, applyAction, applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby } from './rules.ts';
+import { hintgrid as game } from './index.ts';
+import { applyAction, createGameState, finalStandings } from './rules.ts';
 import type { CardKind, GameState, Team } from './types.ts';
 
-const game = { info: hintgridInfo, createGameState, resetLobby, applyMove, allowsOutOfTurn, onPlayerLeft } as unknown as GameDefinition<GameState>;
 const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Finn'];
 
 function seat(state: GameState, count: number): GameState {
