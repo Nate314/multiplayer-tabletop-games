@@ -11,25 +11,40 @@ type RulesButtonProps = {
   agreeNeeded?: boolean; // this device still has to agree, so the button is marked and opens on House rules
 };
 
-export default function RulesButton({ game, faq, houseRules, agreeNeeded = false }: RulesButtonProps) {
-  const [open, setOpen] = useState(false);
+// The Rules dialog and what opens it, so the game menu can hold the button while the dialog lives outside the menu
+// eslint-disable-next-line react-refresh/only-export-components -- the hook belongs with its button; fast refresh reloads this file in full
+export function useRulesDialog(game: GameInfo, faq: FaqItem[], houseRules?: ReactNode, agreeNeeded = false): { open: () => void; dialog: ReactNode } {
+  const [isOpen, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
-  const noteId = useId();
+  const dialog = isOpen && (
+    // The game's own styles apply here, even on the landing page
+    <div data-game={game.id}>
+      <RulesDialog game={game} faq={faq} houseRules={houseRules} initialView={agreeNeeded ? 'houseRules' : 'rules'} onClose={close} />
+    </div>
+  );
+  return { open: () => setOpen(true), dialog };
+}
 
+export function RulesTrigger({ agreeNeeded = false, onOpen }: { agreeNeeded?: boolean; onOpen: () => void }) {
+  const noteId = useId();
   return (
     <>
       <button type="button" className="rules-button" data-attention={agreeNeeded ? '' : undefined}
-        aria-describedby={agreeNeeded ? noteId : undefined} onClick={() => setOpen(true)}>
+        aria-describedby={agreeNeeded ? noteId : undefined} onClick={onOpen}>
         Rules
       </button>
       {/* Beside the button, not in it, so the button is still named just Rules; it is out of the header's flow */}
       {agreeNeeded && <span id={noteId} className="rules-attention">House rules need your agreement</span>}
-      {open && (
-        // The game's own styles apply here, even on the landing page
-        <div data-game={game.id}>
-          <RulesDialog game={game} faq={faq} houseRules={houseRules} initialView={agreeNeeded ? 'houseRules' : 'rules'} onClose={close} />
-        </div>
-      )}
+    </>
+  );
+}
+
+export default function RulesButton({ game, faq, houseRules, agreeNeeded = false }: RulesButtonProps) {
+  const rules = useRulesDialog(game, faq, houseRules, agreeNeeded);
+  return (
+    <>
+      <RulesTrigger agreeNeeded={agreeNeeded} onOpen={rules.open} />
+      {rules.dialog}
     </>
   );
 }

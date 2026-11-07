@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { loadBackendUrl, saveBackendUrl } from '../services/urls.ts';
 import useEscapeKey from '../hooks/useEscapeKey';
 import usePreferences, { setPreferences } from '../hooks/usePreferences';
@@ -65,12 +65,7 @@ function ServerSetting() {
   );
 }
 
-type SettingsDialogProps = {
-  onClose: () => void;
-  phoneControls?: ReactNode;
-};
-
-export default function SettingsDialog({ onClose, phoneControls }: SettingsDialogProps) {
+export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   useEscapeKey(onClose);
   const preferences = usePreferences();
 
@@ -78,12 +73,6 @@ export default function SettingsDialog({ onClose, phoneControls }: SettingsDialo
     <div className="overlay" onClick={onClose}>
       <div className="modal settings" role="dialog" aria-label="Settings" onClick={(e) => e.stopPropagation()}>
         <h2>Settings</h2>
-        {phoneControls && (
-          <section className="settings-phone-controls">
-            <h3>Share and theme</h3>
-            {phoneControls}
-          </section>
-        )}
         <section>
           <h3>Sounds</h3>
           <label className="settings-volume">

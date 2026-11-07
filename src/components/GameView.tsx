@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { WatchingContext } from './WatchingContext.ts';
-import RulesButton from './RulesButton';
+import { RulesTrigger, useRulesDialog } from './RulesButton';
 import HistoryButton, { useHistoryDialog } from './HistoryButton';
 import GameOverDialog from './GameOverDialog';
 import { canRematch } from './gameOver.ts';
 import ShareButton from './ShareButton';
 import HideButton from './HideButton';
-import SettingsButton from './SettingsButton';
+import { SettingsTrigger, useSettingsDialog } from './SettingsButton';
+import GameMenu from './GameMenu';
 import GitHubLink from './GitHubLink';
 import ThemeToggle from './ThemeToggle';
 import PresenceBar from './PresenceBar';
@@ -105,9 +106,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const paused = gameState.paused === true;
   const canPause = (playerNumber !== null || localSeats !== null) && gameState.started && !gameState.isGameOver && !paused;
   const pauseBlocked = Boolean(gameState.undoVote || gameState.dismissVote || gameState.rematchVote || gameState.pauseVote) || gameState.disconnected.length > 0;
-  const pauseButton = (close?: () => void) => (
-    <PauseButton disabled={pauseBlocked} onPause={() => { close?.(); gameService.requestPause(); }} />
-  );
+  const rulesDialog = useRulesDialog(game, client.faq, houseRules, agreeNeeded);
+  const settings = useSettingsDialog();
   // A player's credential is its seat key
   const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber], seatKey: credential }]);
 
@@ -117,27 +117,24 @@ export default function GameView({ game, client, gameState, playerNumber, specta
         <header className="game-header">
           <button type="button" className="back-button" onClick={onBack}>Back to games</button>
           <h1>{game.name} <span className="game-header-id">{gameState.gameId}</span></h1>
-          <HistoryButton onOpen={history.open} />
-          <ShareButton game={game} gameId={gameState.gameId} />
-          {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
-          <RulesButton game={game} faq={client.faq} houseRules={houseRules} agreeNeeded={agreeNeeded} />
-          {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} />}
-          {canPause && pauseButton()}
-          {/* Pausing closes Settings, so the vote and the paused screen are not left under it */}
-          <SettingsButton phoneControls={(close) => (
-            <>
-              {canPause && <div className="settings-row settings-pause-row">Pause the game {pauseButton(close)}</div>}
-              <div className="settings-row">Share this game <ShareButton game={game} gameId={gameState.gameId} /></div>
-              <div className="settings-row">Theme <ThemeToggle /></div>
-            </>
-          )} />
-          <GitHubLink />
-          <ThemeToggle />
+          <GameMenu attention={agreeNeeded}>
+            <HistoryButton onOpen={history.open} />
+            <ShareButton game={game} gameId={gameState.gameId} withLabel />
+            {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
+            <RulesTrigger agreeNeeded={agreeNeeded} onOpen={rulesDialog.open} />
+            {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} withLabel />}
+            {canPause && <PauseButton disabled={pauseBlocked} onPause={() => gameService.requestPause()} />}
+            <SettingsTrigger onOpen={settings.open} withLabel />
+            <GitHubLink withLabel />
+            <ThemeToggle withLabel />
+          </GameMenu>
+          {/* In the header, so Hide and the wait for agreement, which dim everything else, leave them alone */}
+          {rulesDialog.dialog}{settings.dialog}
         </header>
         {hidden && (
           <section className="hidden-cover" aria-label="Game hidden">
             <h2>Game hidden</h2>
-            <p>Press the eye button above to show it again.</p>
+            <p>Open the menu (☰) and choose Show to see it again.</p>
           </section>
         )}
         {gameState.isGameOver && closed && !voting && (
