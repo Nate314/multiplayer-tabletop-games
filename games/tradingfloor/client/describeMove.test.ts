@@ -7,6 +7,9 @@ const state = (lastMove: unknown) => ({ playerNames: { 1: 'Alice', 2: 'Bob' }, l
 test('a swap', () => {
   assert.equal(describeMove(state({ type: 'swap', seats: [1, 2], count: 3 })), 'Alice and Bob swapped 3 cards');
 });
+test('a swap of one card says card', () => {
+  assert.equal(describeMove(state({ type: 'swap', seats: [1, 2], count: 1 })), 'Alice and Bob swapped 1 card');
+});
 test('a corner', () => {
   assert.equal(describeMove(state({ type: 'corner', playerNumber: 1, commodity: 'saffron', points: 100, double: false })),
     'Alice cornered Saffron for 100 points');

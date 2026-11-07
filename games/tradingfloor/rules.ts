@@ -7,6 +7,7 @@ import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
+import { plural } from '../../shared/text.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import { BULL_BEAR_PENALTY, COMMODITIES, cornerOf, deal, offerError } from './cards.ts';
 import { tradingfloorInfo } from './info.ts';
@@ -105,7 +106,7 @@ function accept(state: GameState, seat: Seat, id: unknown): Result<GameState> {
     hands: { ...state.hands, [seat]: give(theirs.seat, theirs.cards, seat), [theirs.seat]: give(seat, mine.cards, theirs.seat) },
     offers: state.offers.filter(o => o !== mine && o !== theirs),
     lastMove,
-    gameStatus: `${name(state, seat)} and ${name(state, theirs.seat)} swapped ${count} cards`
+    gameStatus: `${name(state, seat)} and ${name(state, theirs.seat)} swapped ${plural(count, 'card')}`
   } };
 }
 

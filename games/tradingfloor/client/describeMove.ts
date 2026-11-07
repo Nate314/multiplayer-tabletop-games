@@ -1,4 +1,5 @@
 import { pointsText } from '../../../shared/standings.ts';
+import { plural } from '../../../shared/text.ts';
 import { COMMODITIES } from '../cards.ts';
 import type { Card, Corner, PublicGameState } from '../types.ts';
 
@@ -26,5 +27,5 @@ export function describeMove({ lastMove, playerNames }: PublicGameState): string
   if (!lastMove) return '';
   if (lastMove.type === 'corner') return corneredText(playerNames[lastMove.playerNumber], lastMove);
   const [a, b] = lastMove.seats;
-  return `${playerNames[a]} and ${playerNames[b]} swapped ${lastMove.count} cards`;
+  return `${playerNames[a]} and ${playerNames[b]} swapped ${plural(lastMove.count, 'card')}`;
 }

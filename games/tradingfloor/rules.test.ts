@@ -99,6 +99,11 @@ test('accepting swaps the two offers blind and records it', () => {
   assert.equal(after.gameStatus, 'Bob and Alice swapped 3 cards');
 });
 
+test('a swap of one card says card', () => {
+  const state = offer(offer(trading(), 1, 'silver', 1), 2, 'coffee', 1);
+  assert.equal(act(state, 2, { type: 'accept', offer: offerIdOf(state, 1) }).gameStatus, 'Bob and Alice swapped 1 card');
+});
+
 test('accept needs my own open offer of the same count', () => {
   const state = offer(trading(), 1, 'silver', 3);
   const action = { type: 'accept', offer: offerIdOf(state, 1) };
