@@ -1,11 +1,11 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, expect, headerButton, inHouseRules, joinGame, newPlayer, openFaq, test, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openFaq, test, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { GameState } from '../games/categories/types.ts';
 
 // One test per rule, control and difference in games/categories/README.md. Seat 1 is Alice, seat 2 Bob, seat 3 Cara.
 // Each table is patched to the letter B and a known list, so a test knows which answers are valid.
 
-const LIST = ['Animals', 'Fruits', 'Colors', 'Cities', 'Countries', 'Foods', 'Sports', 'Jobs', 'Toys', 'Tools', 'Boys names', 'Flowers'];
+const LIST = ['Animals', 'Fruits', 'Colors', 'Cities', 'Countries', 'Foods', 'Sports', 'Jobs', 'Toys', 'Tools', 'Boys names', 'Birds'];
 
 const inputs = (page: Page) => page.locator('.answer-field input');
 const field = (page: Page, category: string) => page.getByLabel(category, { exact: true });
@@ -217,6 +217,59 @@ test.describe('Categories rules', () => {
     await expect(points(alice, 'Bob')).toHaveText('0');
     await expect(alice.locator('.score-winner')).toHaveCount(1);
     await expect(alice.locator('.score-winner')).toContainText('Alice');
+  });
+
+  test('a dismissed player is dropped from the scoring', async ({ seat }) => {
+    const table = await seated(seat, ['Alice', 'Bob', 'Cara']);
+    await review(table, [{ Fruits: 'Banana' }, {}, { Fruits: 'Banana' }]);
+    const [alice, bob, cara] = table.pages;
+    await expect(tag(alice, 'Fruits', 'Alice')).toHaveText('Duplicate');
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(tag(alice, 'Fruits', 'Alice')).toHaveText('+1');
+    await expect(cell(alice, 'Fruits', 'Cara')).toHaveCount(0);
+  });
+
+  test('Undo is never offered', async ({ seat }) => {
+    const table = await seated(seat, ['Alice', 'Bob']);
+    await review(table, [{ Animals: 'Bear' }, {}]);
+    for (const page of table.pages) await expect(button(page, 'Undo')).toHaveCount(0);
+  });
+
+  test('tied top totals share the win', async ({ seat }) => {
+    const table = await seated(seat, ['Alice', 'Bob'], { houseRules: { rounds: 1 } });
+    await review(table, [{ Animals: 'Bear' }, { Colors: 'Blue' }]);
+    await continueAll(table.pages);
+    await expect(table.pages[0].locator('.score-winner')).toHaveCount(2);
+  });
+
+  test('a leading article is skipped for the letter: The Tiger is valid for T, The Eagle is not', async ({ seat }) => {
+    const table = await seated(seat, ['Alice', 'Bob']);
+    await table.patch({ letter: 'T' });
+    await expect(table.pages[0].getByLabel('Letter T', { exact: true })).toBeVisible();
+    await review(table, [{ Animals: 'The Tiger', Birds: 'The Eagle' }, {}]);
+    await expect(tag(table.pages[0], 'Animals', 'Alice')).toHaveText('+1');
+    await expect(tag(table.pages[0], 'Birds', 'Alice')).toHaveText('Wrong letter');
+  });
+
+  test('an answer is capped at 40 characters', async ({ seat }) => {
+    const table = await seated(seat, ['Alice', 'Bob']);
+    const box = field(table.pages[0], 'Fruits');
+    await expect(box).toHaveAttribute('maxlength', '40');
+    await box.fill('B'.repeat(45));
+    await expect(box).toHaveValue('B'.repeat(40));
+    await expect.poll(() => answerOf(table, 1, 1)).toBe('B'.repeat(40));
+  });
+
+  test('no letter or category repeats in the next round', async ({ seat }) => {
+    const table = await seat('categories', ['Alice', 'Bob']);
+    const before = await table.state<GameState>();
+    for (const page of table.pages) await button(page, 'Done').click();
+    await continueAll(table.pages);
+    await expect(table.pages[0].getByText('Round 2 of 3')).toBeVisible();
+    const after = await table.state<GameState>();
+    expect(after.letter).not.toBe(before.letter);
+    expect(after.list.filter(category => before.list.includes(category))).toEqual([]);
   });
 
   test('the FAQ opens', async ({ seat }) => {
