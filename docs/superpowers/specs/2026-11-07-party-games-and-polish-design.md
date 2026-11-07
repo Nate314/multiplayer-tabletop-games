@@ -22,6 +22,8 @@ Polish:
 - **Snakes and Ladders:** auto-roll; a Roll button that stays put.
 - **UNO:** a target score of 0, meaning one round.
 
+Generic names (wave 2, owner's request): 21 existing games carry a commercial game's trademarked name, and four of them (Monopoly, Ticket to Ride, The Crew and Risk) copy published content such as board names, a map or mission text. Game rules and mechanics are generally not protected; names, art, text and maps are. The owner wants every one of them renamed, ids included, with the same rules. This is a risk reduction, not legal advice.
+
 ## Goals
 
 - Each new game is complete and playable, built the same way as the existing games: a `games/<id>/` folder with `types.ts`, `info.ts`, `options.ts` (when it has house rules), `index.ts`, `rules.ts`, rules tests, a manager test, `README.md` and a `client/` folder (`GameScreen`, `HistoryBoard`, `describeMove`, `faq`, `index.ts`, scoped SCSS, `animateMove` where it fits). Follow the nearest existing game: Pictionary for the party games, Monopoly or Parchisi for Career Path, Chess or Quoridor for Corners, Jigsaw for Trading Floor's anyone-at-any-time actions, and Jenga for Steady Hand's live play.
@@ -78,6 +80,17 @@ One small commit by the coordinator, so three branches do not each move the same
 | 8 | `game-tradingfloor-steadyhand` | Trading Floor, Steady Hand |
 
 Small items are combined to keep the number of agents down (owner's decision). The grouping itself is my call.
+
+**Wave 2** starts only after wave 1 (chunks 1 to 8) is merged into `party-games-and-polish` and passes the full test run, because renaming game folders would collide with wave 1's edits to Azul, UNO and the registration files (owner's suggestion). Wave 2 branches start from the merged `party-games-and-polish`:
+
+| # | Branch | Contents |
+|---|--------|----------|
+| 9 | `generic-landlord-railroutes` | Monopoly and Ticket to Ride: new names, ids and original content, plus the legacy id plumbing |
+| 10 | `generic-missiontricks-conquest` | The Crew and Risk: new names, ids and original content |
+| 11 | `generic-board-tile` | Renames only: Azul, Carcassonne, Catan, Connect Four, Jenga, Parchisi, Quoridor, Rummikub, Scrabble, Splendor |
+| 12 | `generic-card-party` | Renames only: Phase 10, Pictionary, Rack-O, Rook, Skip-Bo, UNO, Yahtzee |
+
+Chunk 9 builds the legacy id plumbing (below) as its first task and opens a separate PR for it, merged before chunks 10 to 12 start, so only one branch writes the shared plumbing (my call).
 
 ## Polish
 
@@ -206,11 +219,65 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - **Live play:** the dragging player's position is checked in their own browser against the slot shapes, and the result (out or buzzed) is sent as the turn move. Everyone else watches the part move live from a throttled stream (at most 20 updates a second), which is not recorded in History. Trusting the player's browser is acceptable for a friends' game (my call).
 - House rule (my call): wall tolerance (Easy, Normal or Hard), which widens or narrows every slot.
 
+## Generic names (wave 2)
+
+### What every renamed game gets
+
+- **A new id and folder.** `git mv games/<old> games/<new>` so history follows, then the new id everywhere: `info.ts`, `games/registry.ts`, `games/infos.ts`, `src/clientGames.ts`, `shared/svg/gameIcons.ts`, `server/assets/registry.ts`, the test lists of every game, `data-game` selectors in SCSS, and `e2e/<old>.spec.ts` renamed to `e2e/<new>.spec.ts`.
+- **A new name, icon and wording.** The player-visible name, landing description, icon, README and FAQ use the new name. The game's README may say once, in its opening, that it plays like the commercial game ("plays like Monopoly"), which is descriptive use; nothing else shows the old name. "Differences from Wikipedia" stays and keeps pointing at the Wikipedia article for the rules.
+- **Art check.** Any drawn art, piece or card design that imitates the commercial game's look is redrawn in the project's own style.
+- **Same rules.** Rules, house rules and options are unchanged, so existing rules tests pass after only the renames.
+- **Old data keeps working** (my call). A single `games/legacyIds.ts` maps each old id to its new id. It is used:
+  - once at server start, to update `game_type` in the stats database (`server/stats/store.ts`);
+  - when loading a pause file, a downloaded game file or an open game saved before the rename;
+  - for old join and share links (`/join/<old id>/...` goes to the new id);
+  - for browser-stored settings keyed by game id (remembered house rules, layout, filters), copied to the new key on first load.
+  Each use has a test. The old ids appear nowhere else in the code.
+- The top-level README game list and count, `e2e/landing.spec.ts` and `docs/architecture.md` are updated by the coordinator after wave 2 merges, as in wave 1.
+
+### New names
+
+All names are my calls; the owner may rename any before the plans are written. Each new id is the name in lower case with no spaces or punctuation.
+
+| Old | New name (id) | Note |
+|-----|---------------|------|
+| Monopoly | **Landlord** (`landlord`) | After Lizzie Magie's public-domain *The Landlord's Game* (1904) |
+| Ticket to Ride | **Rail Routes** (`railroutes`) | |
+| The Crew | **Mission Tricks** (`missiontricks`) | |
+| Risk | **Conquest** (`conquest`) | |
+| Azul | **Tessera** (`tessera`) | |
+| Carcassonne | **Countryside** (`countryside`) | |
+| Catan | **Frontier Isle** (`frontierisle`) | |
+| Connect Four | **Four in a Row** (`fourinarow`) | Generic name |
+| Jenga | **Block Tower** (`blocktower`) | |
+| Parchisi | **Pachisi** (`pachisi`) | The traditional Indian game's name |
+| Quoridor | **Maze Race** (`mazerace`) | |
+| Rummikub | **Rummy Tiles** (`rummytiles`) | |
+| Scrabble | **Letter Grid** (`lettergrid`) | |
+| Splendor | **Gem Merchants** (`gemmerchants`) | |
+| Phase 10 | **Stage Rummy** (`stagerummy`) | |
+| Pictionary | **Sketch** (`sketch`) | |
+| Rack-O | **In Order** (`inorder`) | |
+| Rook | **Raven** (`raven`) | |
+| Skip-Bo | **Spite and Malice** (`spiteandmalice`) | The traditional card game Skip-Bo grew from |
+| UNO | **Color Match** (`colormatch`) | |
+| Yahtzee | **Five Dice** (`fivedice`) | |
+
+### Original content (chunks 9 and 10)
+
+- **Landlord:** a new board with the same structure (40 spaces, the same price, rent, group and space-type pattern) but original street, station and utility names (my call: a fictional city), and two new card decks with original text that keep each card's effect. The two deck names change too (my call: Fortune and Town Fund).
+- **Rail Routes:** an original map, not the published one. Same rules and the same totals (number of routes, colors and lengths, train counts, ticket count and point spread) so the game balances the same way, but a fictional geography with its own city names, route network and tickets (my call: a fictional continent). Ticket scoring is recomputed for the new map and tested.
+- **Mission Tricks:** a newly written mission campaign with the same number of missions and the same mechanics (task counts, task tokens, communication limits, special rules), with original mission titles, story text and task setups. No sentence from the published logbook.
+- **Conquest:** an original map with the same structure (the same number of territories and continents, the same continent bonuses and a comparable adjacency pattern), with original territory and continent names and borders (my call: a fictional world).
+- All four: rules tests are updated where they name spaces, cities, missions or territories; the hidden-information and manager tests still pass.
+
 ## Order of work
 
 1. Coordinator: this document, approval, the shared ground commit, one plan per chunk, all committed to `party-games-and-polish` and pushed.
 2. In parallel: eight agents, one per chunk, each in its own worktree and on its own port, each opening a PR into `party-games-and-polish`.
-3. Coordinator: review and merge every PR into `party-games-and-polish`, resolve the conflicts on the registration lines, update the README game list and count, the `e2e/landing.spec.ts` counts and `docs/architecture.md`, run `npm test`, `npm run typecheck`, `npm run lint` and the full `npm run test:e2e`, play several games in the browser at laptop and phone widths, then open one PR against `master`.
+3. Coordinator: review and merge every wave 1 PR into `party-games-and-polish`, resolve the conflicts on the registration lines, update the README game list and count, the `e2e/landing.spec.ts` counts and `docs/architecture.md`, and run `npm test`, `npm run typecheck`, `npm run lint` and the full `npm run test:e2e`.
+4. Wave 2: chunk 9's legacy id PR first, merged; then the rest of chunk 9 and chunks 10 to 12 in parallel, each opening a PR into `party-games-and-polish`.
+5. Coordinator: merge wave 2 and update the same README, landing and architecture lines. Check that no player-visible text still shows an old name (a grep over `games/`, `src/`, `server/` and `e2e/` for each old name, outside `games/legacyIds.ts` and the one descriptive README line). Run the full test suite again, play several games in the browser at laptop and phone widths, and check that an old link and an old stats row still work. Then open one PR against `master`.
 
 ## Left to the builders
 
