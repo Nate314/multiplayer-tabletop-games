@@ -20,6 +20,9 @@ test('careers and houses have unique ids and sane numbers', () => {
 // Built in two parts so this file does not match itself
 const COMMERCIAL_NAME = 'Game of ' + 'Life';
 const COMMERCIAL = new RegExp(COMMERCIAL_NAME, 'i');
+// The README's one descriptive line and its Wikipedia link are the only other places the name may appear
+const DESCRIPTIVE = `It plays like The ${COMMERCIAL_NAME}, on an original road with original careers, houses and events.`;
+const WIKIPEDIA_LINK = `[Wikipedia's The ${COMMERCIAL_NAME} article](https://en.wikipedia.org/wiki/The_${COMMERCIAL_NAME.replace(/ /g, '_')})`;
 
 function files(path: string): string[] {
   if (!existsSync(path)) return [];
@@ -34,7 +37,7 @@ test('no file of the game names the commercial game', () => {
     const readme = file.endsWith('README.md');
     readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
       if (!COMMERCIAL.test(line)) return;
-      const allowed = readme && (line.includes('wikipedia.org') || line.includes('The Checkered ' + COMMERCIAL_NAME) || /^An? .*(career|race|game)/i.test(line));
+      const allowed = readme && (line === DESCRIPTIVE || line.includes(WIKIPEDIA_LINK) || line.includes('The Checkered ' + COMMERCIAL_NAME));
       assert.ok(allowed, `${file}:${i + 1}: ${line}`);
     });
   }
