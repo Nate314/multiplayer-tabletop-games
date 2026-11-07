@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, RefObject } from 'react';
-import gameService from '../../../src/services/gameService';
-import type { PublicGameState, Seat } from '../types.ts';
+import gameService from '../../services/gameService';
+import type { GuessPublic, GuessState } from '../../../shared/guessing/types.ts';
+import type { Seat } from '../../../shared/types.ts';
 
-type ChatProps = { gameState: PublicGameState; playerNumber: Seat };
+type ChatProps = {
+  gameState: GuessPublic<GuessState>;
+  playerNumber: Seat;
+  inputId: string;
+  className: string;
+  busyPlaceholder: string; // shown to the drawer or actor, whose input is off
+};
 
 // The lines the state holds: the viewer's own view, so a table screen gets only the public ones
-export function ChatLines({ gameState: { chat, playerNames }, listRef }: { gameState: PublicGameState; listRef?: RefObject<HTMLUListElement | null> }) {
+export function ChatLines({ gameState: { chat, playerNames }, listRef }: { gameState: GuessPublic<GuessState>; listRef?: RefObject<HTMLUListElement | null> }) {
   return (
     <ul className="chat-lines" ref={listRef}>
       {chat.map(line => (
@@ -21,7 +28,7 @@ export function ChatLines({ gameState: { chat, playerNames }, listRef }: { gameS
 }
 
 // The chat, which doubles as guessing: the server decides whether a message is a guess, a near miss or just chat
-export default function Chat({ gameState, playerNumber }: ChatProps) {
+export default function Chat({ gameState, playerNumber, inputId, className, busyPlaceholder }: ChatProps) {
   const { chat, phase, drawer, guessed, activePlayers, isGameOver } = gameState;
   const [text, setText] = useState('');
   const listRef = useRef<HTMLUListElement>(null);
@@ -45,17 +52,17 @@ export default function Chat({ gameState, playerNumber }: ChatProps) {
   }
 
   return (
-    <section className="pictionary-chat" aria-label="Chat">
+    <section className={className} aria-label="Chat">
       <ChatLines gameState={gameState} listRef={listRef} />
       <form className="chat-form" onSubmit={submit}>
-        <label className="chat-label" htmlFor="pictionary-chat-input">{label}</label>
+        <label className="chat-label" htmlFor={inputId}>{label}</label>
         <input
-          id="pictionary-chat-input"
+          id={inputId}
           type="text"
           autoComplete="off"
           maxLength={100}
           value={isDrawer ? '' : text}
-          placeholder={isDrawer ? 'You are drawing' : ''}
+          placeholder={isDrawer ? busyPlaceholder : ''}
           disabled={isDrawer || isGameOver}
           onChange={event => setText(event.target.value)}
         />
