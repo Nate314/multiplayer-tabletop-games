@@ -12,7 +12,7 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seeded, NAMES } from '../testStates.ts';
 import type { Color, GameState, Move, PublicGameState } from './types.ts';
 
-// Task 4 builds the real definition; these tests need only what the seating helpers call
+
 const game = {
   info: cornersInfo, createGameState, resetLobby, applyMove: applyRules, onPlayerLeft, toPublicState
 } as unknown as GameDefinition<GameState, PublicGameState>;
