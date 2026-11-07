@@ -54,6 +54,7 @@ const GAME_ICONS: Record<string, () => string> = {
   tickettoride: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 14, rx: 3 }), el('rect', { x: 7.5, y: 6, width: 9, height: 4.5, rx: 1 }),
     pip(9, 14), pip(15, 14), el('path', { d: 'M8 17l-2 4M16 17l2 4' })),
   tictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18M10.5 10.5l3 3M13.5 10.5l-3 3' })),
+  tradingfloor: () => lineIcon(el('path', { d: 'M3 11l6-2 3 10-6 2zM21 11l-6-2-3 10 6 2zM7 6c3-3 7-3 10 0M17 6l-3 .5M17 6l-.5-3M7 6l3 .5M7 6l.5-3' })),
   // A # grid with a small, thinner # in each of its nine boards
   ultimatetictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), el('path', { 'stroke-width': 0.8,
     d: [6, 12, 18].flatMap(x => [6, 12, 18].map(y => `M${x - 1} ${y - 2}v4M${x + 1} ${y - 2}v4M${x - 2} ${y - 1}h4M${x - 2} ${y + 1}h4`)).join('') })),
