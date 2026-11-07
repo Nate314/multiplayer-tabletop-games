@@ -21,7 +21,7 @@ test('the Puzzles group sits after Classic board games and is dropped while empt
 
 test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
-    card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'uno', 'war'],
+    card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
     tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'connectfour', 'mancala', 'naval', 'parchisi', 'quoridor', 'snakesladders', 'tictactoe', 'ultimatetictactoe'],
@@ -33,6 +33,6 @@ test('every registered game has the spec\'s category', () => {
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
   assert.deepEqual(actual, sorted);
   const grouped = groupByCategory(GAMES).flatMap(g => g.games.map(game => game.info.id));
-  assert.equal(grouped.length, 42);
-  assert.equal(new Set(grouped).size, 42);
+  assert.equal(grouped.length, 43);
+  assert.equal(new Set(grouped).size, 43);
 });
