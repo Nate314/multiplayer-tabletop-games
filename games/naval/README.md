@@ -27,6 +27,7 @@ Hide your fleet on a grid and sink the other fleet first, in the traditional pen
 - While a ship is dragged over a square where it fits, the squares it would take are marked
 - Tap a placed ship to pick it, then tap an empty square to move it there; tap it again to put it down
 - Rotate turns the picked ship about its top or left end. With no placed ship picked, it turns the ships in the tray between across and down
+- Remove takes the picked ship off the grid and back to the tray. You can also drag a placed ship back onto the tray
 - Random placement places the whole fleet for you, and Clear takes every ship off the grid
 - Confirm fleet sends your fleet once every ship is placed. Until the other player confirms, your fleet shows with "Waiting for <name>"
 - Your fleet shows your ships and the other player's shots at them; Target shows your shots. A miss, a hit and a sunk ship are marked differently

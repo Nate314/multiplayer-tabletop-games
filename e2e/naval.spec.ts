@@ -294,7 +294,60 @@ test.describe('Naval Battle rules', () => {
   });
 });
 
+// Places the whole fleet in rows A to E from column 1, by dragging, leaving the tray empty but not confirmed
+async function placeFleet(page: Page, touch = false) {
+  for (const [length, row] of [[5, 'A'], [4, 'B'], [3, 'C'], [3, 'D'], [2, 'E']] as const) {
+    await (touch ? touchDrag : drag)(page, trayShip(page, length), square(page, 'Your fleet', `${row}1`));
+  }
+  await expect(shipSquares(page, 'Your fleet')).toHaveCount(17);
+}
+
 test.describe('Naval Battle controls', () => {
+  test('Remove takes the picked ship back to the tray', async ({ seat }) => {
+    const { alice } = await start(seat);
+    await placeFleet(alice);
+    await square(alice, 'Your fleet', 'B2').click();
+    await button(alice, 'Remove').click();
+    await expect(trayShip(alice, 4)).toBeVisible();
+    await expect(shipSquares(alice, 'Your fleet')).toHaveCount(13);
+    await expect(button(alice, 'Confirm fleet')).toBeDisabled();
+    await square(alice, 'Your fleet', 'F1').click();
+    await expectShips(alice, 'Your fleet', [...namesOf(ALICE.filter(ship => ship.length !== 4)), 'F1', 'F2', 'F3', 'F4']);
+  });
+
+  test('Remove is disabled with nothing picked or a tray ship picked', async ({ seat }) => {
+    const { alice } = await start(seat);
+    await expect(button(alice, 'Remove')).toBeDisabled();
+    await trayShip(alice, 5).click();
+    await expect(button(alice, 'Remove')).toBeDisabled();
+  });
+
+  for (const touch of [false, true]) {
+    test(`a placed ship dragged onto the tray goes back to it, even when the tray was empty${touch ? ' (touch)' : ''}`, async ({ seat }) => {
+      const table = await seat('naval', ['Alice', 'Bob'], touch ? { touch: true } : {});
+      const [alice] = table.pages;
+      await button(alice, 'Random placement').click();
+      await expect(shipSquares(alice, 'Your fleet')).toHaveCount(17);
+      await expect(alice.locator('.tray-ship')).toHaveCount(0);
+      await button(alice, 'Clear').click();
+      await placeFleet(alice, touch);
+      await expect(alice.locator('.tray-ship')).toHaveCount(0);
+      await (touch ? touchDrag : drag)(alice, square(alice, 'Your fleet', 'A3'), alice.locator('.ship-tray'));
+      await expect(trayShip(alice, 5)).toBeVisible();
+      await expect(shipSquares(alice, 'Your fleet')).toHaveCount(12);
+    });
+  }
+
+  test('removing is not sent until Confirm fleet', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await placeFleet(alice);
+    await square(alice, 'Your fleet', 'A1').click();
+    await button(alice, 'Remove').click();
+    await expect(trayShip(alice, 5)).toBeVisible();
+    expect((await table.state<{ fleets: Record<number, Ship[]> }>()).fleets[1]).toBeUndefined();
+    await expect(bob.getByText('Waiting for Alice')).toHaveCount(0);
+  });
+
   test('a ship dragged onto the grid lands with its left end on the square under the pointer', async ({ seat }) => {
     const { alice } = await start(seat);
     await drag(alice, trayShip(alice, 5), square(alice, 'Your fleet', 'C2'));

@@ -12,6 +12,7 @@ export const FAQS: FaqItem[] = [
       'tap a ship and then tap a square: its top or left end goes on that square. Ships lie across or down, stay ' +
       'inside the grid and cannot overlap, though they may touch. Tap a placed ship to pick it, then tap an empty ' +
       'square to move it there. Rotate turns the picked ship about its end, or turns the ships still in the tray. ' +
+      'Remove takes the picked ship off the grid and back to the tray. You can also drag a placed ship back onto the tray. ' +
       'Random placement places the whole fleet for you, and Clear starts over. When every ship is placed, press ' +
       'Confirm fleet. A confirmed fleet cannot be changed, and the other player never sees it until the game is over.'
   },

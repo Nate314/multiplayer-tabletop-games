@@ -197,6 +197,7 @@
     justify-content: center;
     gap: 10px;
     min-height: var(--sq);
+    width: 100%; /* an empty tray stays a drop target */
     max-width: calc(var(--sq) * 11);
   }
 
