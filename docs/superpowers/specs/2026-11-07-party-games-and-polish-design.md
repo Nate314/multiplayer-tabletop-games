@@ -20,6 +20,7 @@ Polish:
 - **Azul:** a pause before the scoring screen so the last move can be seen.
 - **Jigsaw:** a house rule that rotates pieces.
 - **Snakes and Ladders:** auto-roll; a Roll button that stays put.
+- **UNO:** a target score of 0, meaning one round.
 
 ## Goals
 
@@ -67,7 +68,7 @@ One small commit by the coordinator, so three branches do not each move the same
 
 | # | Branch | Contents |
 |---|--------|----------|
-| 1 | `polish-header-azul-snakes` | Header menu, Azul pause, Snakes and Ladders auto-roll and Roll button |
+| 1 | `polish-header-azul-snakes-uno` | Header menu, Azul pause, Snakes and Ladders auto-roll and Roll button, UNO one-round target |
 | 2 | `polish-naval-jigsaw` | Naval Battle removal and first-hit rule, Jigsaw rotation |
 | 3 | `game-charades-fictionary` | Charades, Fictionary |
 | 4 | `game-categories-wordspies` | Categories, Word Spies |
@@ -97,6 +98,10 @@ After the move that ends a round, the board stays as it is for **2.5 seconds** b
 
 - **Auto-roll**, copying War's Auto-flip (`games/war/client/GameScreen.tsx`): an "Auto-roll" checkbox for each player, client-only, off on load. When it is on and it is your turn, the game rolls for you after one second. It uses the same guard War uses so a click and the timer cannot both roll.
 - **Steady Roll button:** the button stays in the same spot for the whole game. Give the status box a fixed height (it is always present, empty or not), give the roll panel a fixed layout that never wraps, and cut long names short with an ellipsis. Check at laptop and phone widths.
+
+### UNO
+
+- The Target score house rule gains a **0** choice, labeled "One round" (owner's decision). The game ends when the first round ends, and that round's winner wins. Add the choice through `targetScoreRule` in `games/uno/options.ts`; the label for 0 is set there, so other games' target rules are unchanged. The round summary and game over screens read naturally with it (no "first to 0 points" text).
 
 ### Naval Battle
 
@@ -133,11 +138,11 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 
 ### Categories (`categories`, Party games), 2 to 8 players
 
-- Each round deals a random letter (from a set without the hard letters Q, U, V, X, Y and Z, my call) and a list of 12 categories from a built-in pool of at least 150.
+- Each round deals a random letter, from a set without the hard letters Q, U, V, X, Y and Z (my call), unless the **Hard letters** house rule (toggle, off by default, owner's decision) puts them back in, and a list of 12 categories from a built-in pool of at least 150.
 - Everyone types an answer for each category, starting with that letter, before the timer runs out. Answers are hidden until the timer ends or everyone presses Done.
 - **Review:** answers are shown side by side, category by category. Any player can challenge an answer; the other players vote and a majority rejects it. An answer that does not start with the letter is rejected automatically.
 - Scoring: 1 point for each valid answer no one else gave; duplicates (equal after normalizing, ignoring a leading "a", "an" or "the") score 0. Highest total after the rounds wins.
-- House rules: rounds (1 to 5; standard 3), time (60, 90, 120 or 180 s; standard 120), categories per list (8, 10 or 12; standard 12).
+- Other house rules: rounds (1 to 5; standard 3), time (60, 90, 120 or 180 s; standard 120), categories per list (8, 10 or 12; standard 12).
 
 ### Word Spies (`wordspies`, Party games), 4 to 8 players
 
@@ -156,7 +161,7 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - An **accusation** may be made on your turn, once. If it is wrong, you are out of turns but still show cards. If it is right, you win. If everyone is out, nobody wins and the solution is shown.
 - Each player gets a private notes sheet that the game keeps (ticks and marks per card), saved in their private view so it survives a rejoin.
 - Suggestion results go only to the two players concerned. The solution is in `secretState` until the game ends.
-- **Leaving:** a player who leaves has their cards turned face up for everyone, so the deduction stays sound, and play goes on while two or more players can still accuse (my call: a common house rule).
+- **Leaving:** going Back to games, closing the tab or losing the connection mid-game only holds the seat, as the platform already does, so nothing is revealed and the player rejoins with their cards (owner's concern). Only a player who is actually removed from the game by a dismiss vote has their cards turned face up for everyone, so the deduction stays sound. Play goes on while two or more players can still accuse (my call: a common house rule). An e2e test covers leaving to the game list and rejoining a minute later with nothing revealed.
 
 ### Career Path (`careerpath`, Classic board games), 2 to 6 players
 
@@ -166,6 +171,13 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - Money below zero takes an automatic loan with interest, paid back at retirement.
 - At retirement, houses sell for their card value and children add a bonus. The richest player wins.
 - All job, house and event texts are original. Two house rules (my call): game length (Short or Full path) and starting cash.
+- **House rule "Board"** (choice: Career Path or 1860 Checkered; standard Career Path; owner's decision). The **1860 Checkered** board plays Milton Bradley's public-domain *The Checkered Game of Life* (1860), drawn with this project's own art:
+  - An 8 × 8 checkerboard. Pieces stand on the light squares, which carry the named squares; start is Infancy in the bottom-left corner and the goal is Happy Old Age in the top-right corner, worth 50 points.
+  - A spinner of 1 to 6 (the original teetotum). 1: one square up or down; 2: one square left or right; 3: one square diagonally; 4: one or two squares up or down; 5: one or two squares left or right; 6: one or two squares diagonally. The player chooses among the legal moves.
+  - Named squares send you on (for example Bravery to Honor, School to College, Honesty to Happiness, Industry to Wealth, Gambling to Ruin, Idleness to Disgrace, Crime to Prison) and score points (Wealth 10; Honor, Happiness, College, Success, Fat Office and Congress 5 each). Prison loses a turn.
+  - The square named Suicide in the original is renamed **Despair** (my call) and sends the player back to Infancy with all points lost, rather than out of the game, so nobody sits out the rest of an online session (my call; sources differ).
+  - Win: land on Happy Old Age with at least 100 points counting its 50. Arriving short, keep playing and collect more.
+  - The exact square layout is copied from a public-domain scan of the 1860 board (for example the Smithsonian's or the Library of Congress's); the README cites the scan used and lists anything that could not be read. The 1860 rules on this page come from secondary sources (Wikipedia, thebiggamehunter.com, baldwin-games.com), which disagree in places; the builder settles each disagreement from the scan's printed rules where readable, and lists every choice in the README.
 
 ### Corners (`corners`, Strategy board games), 2 to 4 players
 
@@ -189,7 +201,8 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - An original theme (my call: a robot repair bay). A board of parts sits in narrow, twisting slots.
 - On your turn you pick a part, then drag it out along its slot to the exit with the cursor or a finger. Touching a slot wall buzzes and ends your turn, and the part goes back. A part brought out scores its value. Slots vary in width and length, so harder parts score more.
 - A buzzed part stays in its slot for anyone to try. The game ends when every part is out, and the highest score wins.
-- **Solo** (my call): you have three buzzes. The game ends at the third buzz or when every part is out. Your score is the value of the parts you got out, plus a bonus for each buzz you have left if you cleared the board, so a solo run is a real score attack.
+- **House rule "Buzzes allowed"** (owner's decision): Unlimited, 1, 3 or 5 per player. The standard is 3 with one player and Unlimited with two or more (`standardFor`). A player who has used all their buzzes is out of turns; the game ends when every part is out or nobody has buzzes left.
+- **Solo:** the game is a score attack: your score is the value of the parts you got out, plus a bonus for each buzz you have left if you cleared the board (my call).
 - **Live play:** the dragging player's position is checked in their own browser against the slot shapes, and the result (out or buzzed) is sent as the turn move. Everyone else watches the part move live from a throttled stream (at most 20 updates a second), which is not recorded in History. Trusting the player's browser is acceptable for a friends' game (my call).
 - House rule (my call): wall tolerance (Easy, Normal or Hard), which widens or narrows every slot.
 
