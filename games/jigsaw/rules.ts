@@ -8,14 +8,15 @@ import { seatFields } from '../../shared/spectators.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import { clampToTable, gridOf, homeOf, scatter, snaps } from './cut.ts';
 import { jigsawInfo } from './info.ts';
-import { PIECES_RULE } from './options.ts';
+import { PIECES_RULE, ROTATION_RULE } from './options.ts';
 import { PICTURES, isPictureName } from './pictures.ts';
-import type { Board, GameState, Picture, Piece, PublicGameState, Result, Seat } from './types.ts';
+import type { Board, GameState, Picture, Piece, PublicGameState, Result, Seat, Turns } from './types.ts';
 
 // An action's result, and whether it snapped a piece (the only kind of action that is recorded)
 type Outcome = { state: GameState; snapped: boolean } | { error: string };
 
 const isRace = (state: GameState) => modeOf(state, MODE_RULE) === 'race';
+export const turnsOf = (piece: Piece): Turns => piece.turns ?? 0;
 const loose = (x: number, y: number): Piece => ({ x, y, placed: false, heldBy: null, placedBy: null });
 
 export function createGameState(gameId: string): GameState {
@@ -37,7 +38,12 @@ export function resetLobby(state: GameState, random: Random): GameState {
   const count = houseRule(state, PIECES_RULE);
   const grid = gridOf(count);
   const seed = Math.floor(random() * 2 ** 32);
-  const board: Board = { pieces: scatter(grid, random).map(spot => loose(spot.x, spot.y)) };
+  const spots = scatter(grid, random).map(spot => loose(spot.x, spot.y));
+  // Drawn only with the rule on, so a game without it scatters as it always did
+  const turned = houseRule(state, ROTATION_RULE)
+    ? spots.map(spot => ({ ...spot, turns: Math.floor(random() * 4) as Turns }))
+    : spots;
+  const board: Board = { pieces: turned };
   const race = isRace(state);
   return {
     ...state,
@@ -113,6 +119,19 @@ function pickUp(state: GameState, seat: Seat, value: unknown): Result<GameState>
   return { state: { ...withBoard(state, seat, { pieces }), started: true } };
 }
 
+function turnPiece(state: GameState, seat: Seat, value: unknown): Result<GameState> {
+  if (!houseRule(state, ROTATION_RULE)) return { error: 'Pieces do not turn in this game' };
+  const found = target(state, seat, value);
+  if ('error' in found) return found;
+  const { board, piece } = found;
+  const { placed, heldBy } = board.pieces[piece];
+  if (placed) return { error: 'That piece is locked in place' };
+  if (heldBy !== null && heldBy !== seat) return { error: `${state.playerNames[heldBy]} is holding that piece` };
+  const turns = ((turnsOf(board.pieces[piece]) + 1) % 4) as Turns;
+  const pieces = board.pieces.map((each, index) => index === piece ? { ...each, turns } : each);
+  return { state: { ...withBoard(state, seat, { pieces }), started: true } };
+}
+
 function drop(state: GameState, seat: Seat, input: Record<string, unknown>): Outcome {
   const found = target(state, seat, input.piece);
   if ('error' in found) return found;
@@ -124,9 +143,10 @@ function drop(state: GameState, seat: Seat, input: Record<string, unknown>): Out
   }
   const grid = gridOf(state.count);
   const spot = clampToTable(grid, x, y);
-  const snapped = snaps(grid, piece, spot.x, spot.y);
+  const held = board.pieces[piece];
+  const snapped = turnsOf(held) === 0 && snaps(grid, piece, spot.x, spot.y);
   const home = homeOf(grid, piece);
-  const landed: Piece = snapped ? { ...home, placed: true, heldBy: null, placedBy: seat } : loose(spot.x, spot.y);
+  const landed: Piece = snapped ? { ...home, placed: true, heldBy: null, placedBy: seat } : { ...loose(spot.x, spot.y), ...held.turns === undefined ? {} : { turns: held.turns } };
   const next = withBoard(state, seat, { pieces: board.pieces.map((each, index) => index === piece ? landed : each) });
   if (!snapped) return { state: next, snapped };
 
@@ -157,6 +177,7 @@ function attempt(state: GameState, seat: Seat, action: unknown): Outcome {
   switch (input?.type) {
     case 'setPicture': return unrecorded(setPicture(state, seat, input.picture));
     case 'pickUp': return unrecorded(pickUp(state, seat, input.piece));
+    case 'turn': return unrecorded(turnPiece(state, seat, input.piece));
     case 'drop': return drop(state, seat, input);
     default: return { error: 'Unknown action' };
   }

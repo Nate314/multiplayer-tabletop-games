@@ -169,3 +169,8 @@ test('no view carries more than the photo id', () => {
     assert.equal(text.includes('data:'), false);
   }
 });
+
+test('a Race player sees only their own turns', () => {
+  const state = lobby(['Alice', 'Bob'], { mode: 'race', rotation: true });
+  assert.deepEqual(Object.keys(jigsaw.toPublicState(state, false, 1).boards), ['1']);
+});
