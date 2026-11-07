@@ -1,16 +1,22 @@
 import type { Locator, Page } from '@playwright/test';
 import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, setPreference, test, undo, type Seat } from './fixtures.ts';
-import { PIECES, TRIANGLE_STARTS, cellKey, orientations } from '../games/corners/geometry.ts';
+import { PIECES, TRIANGLE_STARTS, boardCells, cellKey, corners, edgeTouch, orientations, transformed, type Cell } from '../games/corners/geometry.ts';
 
 // One test per rule, control and difference in games/corners/README.md. Seat 1 is Alice, seat 2 Bob, seat 3 Cara.
 // Squares starts: Blue 0,0, Yellow 19,0, Red 19,19, Green 0,19. With two players Alice has Blue and Red, Bob Yellow and Green.
 
-const NAMES = ['Alice', 'Bob', 'Cara'];
+const NAMES = ['Alice', 'Bob', 'Cara', 'Dan'];
 const STARTS = ['0,0,0', '19,0,0', '19,19,0', '0,19,0'];
 const MONO = 0;
 const DOMINO = 1;
 // A piece with 8 orientations, so a turn and a flip each change it
 const SKEW = PIECES.squares.findIndex(shape => shape.length === 5 && orientations('squares', shape).length === 8);
+// A piece whose first orientation covers the cell 0,0 but whose next turn does not, so turning it at the corner drops the preview
+const covers00 = (shape: Cell[]) => shape.some(c => c[0] === 0 && c[1] === 0);
+const DROPPER = PIECES.squares.findIndex(shape => {
+  const first = orientations('squares', shape)[0];
+  return covers00(first) && !covers00(transformed('squares', first, 'rotate'));
+});
 // The straight piece of 5, which fits at a corner both ways
 const STRAIGHT = PIECES.squares.findIndex(shape => shape.length === 5 && (shape.every(c => c[0] === 0) || shape.every(c => c[1] === 0)));
 
@@ -119,6 +125,20 @@ test.describe('Corners rules', () => {
     await turn(alice, 'Alice places Blue');
   });
 
+  test('four players each play one color', async ({ seat }) => {
+    const { pages: [alice, bob, cara, dan] } = await start(seat, 4);
+    for (const [index, name] of ['Alice', 'Bob', 'Cara', 'Dan'].entries()) {
+      await turn(dan, `${name} places ${['Blue', 'Yellow', 'Red', 'Green'][index]}`);
+      await place([alice, bob, cara, dan][index], MONO, STARTS[index]);
+    }
+    await turn(alice, 'Alice places Blue');
+    await expect(totals(dan)).toHaveText('Scores: Alice -88 · Bob -88 · Cara -88 · Dan -88');
+    for (const [index, color] of ['Blue', 'Yellow', 'Red', 'Green'].entries()) {
+      await expect(colorRow(dan, color)).toContainText(NAMES[index]);
+      await expect(colorRow(dan, color)).not.toContainText('shared');
+    }
+  });
+
   test('a first piece must cover the corner, so one off it is not placed', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, 2);
     await piece(alice, DOMINO).click();
@@ -128,6 +148,16 @@ test.describe('Corners rules', () => {
     await expect(button(alice, 'Place')).toBeDisabled();
     await expect(fill(alice)).toHaveCount(0);
     await turn(alice, 'Alice places Blue');
+  });
+
+  test('clicking the picked piece again puts it back, and there is no Pass button', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, 2);
+    await piece(alice, DOMINO).click();
+    await expect(piece(alice, DOMINO)).toHaveAttribute('aria-pressed', 'true');
+    await piece(alice, DOMINO).click();
+    await expect(piece(alice, DOMINO)).toHaveAttribute('aria-pressed', 'false');
+    await expect(button(alice, 'Place')).toBeVisible();
+    await expect(alice.getByRole('button', { name: /pass/i })).toHaveCount(0);
   });
 
   test('a side touch of the same color is refused and a corner touch is placed', async ({ seat }) => {
@@ -183,6 +213,25 @@ test.describe('Corners rules', () => {
     expect(await keys(preview(alice))).toEqual(lying);
   });
 
+  test('turning keeps the preview where the piece still fits and drops it where it does not', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, 2);
+    expect(DROPPER).toBeGreaterThanOrEqual(0);
+    await piece(alice, STRAIGHT).click();
+    await cell(alice, '0,0,0').hover();
+    await expect(preview(alice)).toHaveCount(5);
+    await button(alice, 'Turn right').click();
+    await expect(preview(alice)).toHaveCount(5); // it fits at the corner turned either way
+    await piece(alice, STRAIGHT).click();
+
+    await piece(alice, DROPPER).click();
+    await cell(alice, '0,0,0').hover();
+    await expect(preview(alice).first()).toBeVisible();
+    await button(alice, 'Turn right').click();
+    await expect(preview(alice)).toHaveCount(0);
+    await expect(button(alice, 'Place')).toBeDisabled();
+    await expect(fill(alice)).toHaveCount(0);
+  });
+
   test('the places a piece can go are outlined', async ({ seat }) => {
     const { pages: [alice, bob] } = await start(seat, 2);
     await expect(spots(alice)).toHaveCount(0);
@@ -227,6 +276,25 @@ test.describe('Corners rules', () => {
     await expect(fill(bob, 0)).toHaveCount(2);
     await expect(preview(alice)).toHaveCount(0);
     await turn(alice, 'Bob places Yellow');
+  });
+
+  test('a tie for the top score is a shared win', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat, 2);
+    const all = PIECES.squares.map((_, id) => id);
+    const finished = [...all.slice(1), MONO]; // every piece, the single square last
+    await table.patch({
+      used: { 0: all.filter(id => id !== MONO), 1: finished, 2: finished, 3: finished },
+      placed: [{ color: 0, piece: 5, cells: [[10, 10, 0]] }],
+      turnColor: 0, currentPlayer: 1, lastMove: null
+    });
+    await place(alice, MONO, '9,9,0');
+    for (const page of [alice, bob]) {
+      await expect(gameOver(page)).toContainText('Alice and Bob win');
+      await expect(standing(page, 0)).toContainText('1st');
+      await expect(standing(page, 1)).toContainText('1st');
+      await expect(standing(page, 0)).toContainText('40 points');
+      await expect(standing(page, 1)).toContainText('40 points');
+    }
   });
 
   test('a color with no legal place is skipped and its status line says so', async ({ seat }) => {
@@ -283,15 +351,38 @@ test.describe('Corners on Triangles', () => {
     await piece(alice, MONO).click();
     const up = await keys(spots(alice));
     expect(up).toHaveLength(3);
-    await button(alice, "Turn right").click();
+    await button(alice, 'Turn right').click();
     expect([...up, ...await keys(spots(alice))].sort()).toEqual(starts);
-    await button(alice, "Turn right").click();
-    await cell(alice, "0,0,0").click();
+    await button(alice, 'Turn right').click();
+    await cell(alice, '0,0,0').click();
     await expect(fill(alice)).toHaveCount(0);
     await clickSpot(alice, cell(alice, up[0]));
     await expect(fill(bob, 0)).toHaveCount(1);
     await piece(bob, MONO).click();
     expect(await keys(spots(bob))).toEqual(up.slice(1)); // Yellow takes any start not yet covered
+  });
+
+  test('a corner touching the middle of a straight side of the same color is placed', async ({ seat }) => {
+    const { table, pages: [alice] } = await start(seat, 2, { board: 'triangles' });
+    // Three triangles in a row around one point make a straight side there; a fourth cell touches only that point
+    const point = corners('triangles', [0, 0, 0])[0];
+    const ring = boardCells('triangles').filter(c => corners('triangles', c).includes(point));
+    expect(ring).toHaveLength(6);
+    const a = ring[0];
+    const b = ring.find(c => edgeTouch('triangles', a, c))!;
+    const c = ring.find(x => edgeTouch('triangles', b, x) && cellKey(x) !== cellKey(a))!;
+    const row = [a, b, c];
+    const target = ring.find(x => !row.some(r => cellKey(r) === cellKey(x) || edgeTouch('triangles', r, x)))!;
+    await table.patch({
+      used: { 0: [2], 1: [], 2: [], 3: [] },
+      placed: [{ color: 0, piece: 2, cells: row }],
+      turnColor: 0, currentPlayer: 1
+    });
+    await piece(alice, MONO).click();
+    if (!(await keys(spots(alice))).includes(cellKey(target))) await button(alice, 'Turn right').click();
+    await clickSpot(alice, cell(alice, cellKey(target)));
+    await expect(cell(alice, cellKey(target))).toHaveClass(/corners-c0/);
+    await expect(fill(alice, 0)).toHaveCount(4);
   });
 
   test('the Triangles board uses four colors at every player count', async ({ seat }) => {
@@ -340,6 +431,11 @@ test.describe('Corners table controls', () => {
     await turn(alice, 'Alice places Green (shared)');
     await place(alice, MONO, STARTS[3]);
     await turn(cara, 'Alice places Blue');
+    await placeAnywhere(alice, DOMINO);
+    await placeAnywhere(cara, DOMINO);
+    await turn(alice, 'Cara places Green (shared)'); // the shared color now goes to the other player left
+    await placeAnywhere(cara, DOMINO);
+    await expect(fill(alice, 3)).toHaveCount(3);
     await expect(fill(alice, 1)).toHaveCount(0);
   });
 
@@ -355,6 +451,14 @@ test.describe('Corners table controls', () => {
       await expect(colorRow(alice, color).locator(`.color-symbol-${shape}`)).toHaveCount(1);
     }
     await expect(bob.locator('.color-symbol')).toHaveCount(0);
+  });
+
+  test('Rules at the top of the page opens the rules', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, 2);
+    await (await headerButton(alice, 'Rules')).click();
+    await expect(alice.getByRole('dialog', { name: / rules$/ })).toBeVisible();
+    await alice.keyboard.press('Escape');
+    await expect(alice.getByRole('dialog', { name: / rules$/ })).toHaveCount(0);
   });
 
   test('FAQ at the top of the page covers the colors, placing and scoring', async ({ seat }) => {
