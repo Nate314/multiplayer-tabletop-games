@@ -11,7 +11,7 @@ The owner's group plays online in a Discord call. Who shows up changes from nigh
 Ten games:
 
 - **Party word games:** Charades, Fictionary and Categories. These are traditional public-domain parlor games, built under their traditional names.
-- **Original games in familiar genres:** each has its own name, art and content: Career Path (career race), Whodunit (deduction), Word Spies (team word association), Corners (polyomino territory, square and triangle boards), Trading Floor (open-outcry trading) and Steady Hand (steady-hand cursor game). No name, character, art, card text or board layout is copied from a commercial game. Every name in this document marked "my call" is a placeholder the owner may rename.
+- **Original games in familiar genres:** each has its own name, art and content: Road to Retirement (career race), Whodunit (deduction), Hint Grid (team word association), Corners (polyomino territory, square and triangle boards), Trading Floor (open-outcry trading) and Steady Hand (steady-hand cursor game). No name, character, art, card text or board layout is copied from a commercial game. Every name in this document marked "my call" is a placeholder the owner may rename.
 
 Polish:
 
@@ -26,11 +26,11 @@ Generic names (wave 2, owner's request): 21 existing games carry a commercial ga
 
 ## Goals
 
-- Each new game is complete and playable, built the same way as the existing games: a `games/<id>/` folder with `types.ts`, `info.ts`, `options.ts` (when it has house rules), `index.ts`, `rules.ts`, rules tests, a manager test, `README.md` and a `client/` folder (`GameScreen`, `HistoryBoard`, `describeMove`, `faq`, `index.ts`, scoped SCSS, `animateMove` where it fits). Follow the nearest existing game: Pictionary for the party games, Monopoly or Parchisi for Career Path, Chess or Quoridor for Corners, Jigsaw for Trading Floor's anyone-at-any-time actions, and Jenga for Steady Hand's live play.
+- Each new game is complete and playable, built the same way as the existing games: a `games/<id>/` folder with `types.ts`, `info.ts`, `options.ts` (when it has house rules), `index.ts`, `rules.ts`, rules tests, a manager test, `README.md` and a `client/` folder (`GameScreen`, `HistoryBoard`, `describeMove`, `faq`, `index.ts`, scoped SCSS, `animateMove` where it fits). Follow the nearest existing game: Pictionary for the party games, Monopoly or Parchisi for Road to Retirement, Chess or Quoridor for Corners, Jigsaw for Trading Floor's anyone-at-any-time actions, and Jenga for Steady Hand's live play.
 - Each game works with everything the platform gives a game: seating, rejoin, held seats, dismiss votes, undo votes, the History dialog, game files with "View as", spectators, the table screen, pause and resume, stats, house rules and the turn timer (or `ownTurnLimit` when the game has its own clock, as Pictionary does).
 - **Rules from a reference.** The three traditional games and the genre games are checked against the Wikipedia article for the traditional game or genre (Charades, Fictionary, Categories (game), Blokus, Pit (game), Cluedo, Codenames, The Game of Life, Operation (game)). These are for rules only; no content is taken from them. The README lists every difference under "Differences from Wikipedia" in the format of `games/rook/README.md`. Where this document disagrees with Wikipedia, this document wins and the README lists it.
 - **End-to-end tests** in `e2e/<id>.spec.ts`: one test per rule, control and difference listed in the README, as `e2e/codebreaker.spec.ts` does.
-- **Hidden information stays hidden:** the Charades prompt, Fictionary's real definition and the authors of each definition, Categories answers before reveal, Whodunit cards and the solution, the Word Spies key, Trading Floor hands. All of it goes through `toPublicState`, `privateSeatView` and `secretState`, and `viewer: null` (History) sees none of it until the game reveals it.
+- **Hidden information stays hidden:** the Charades prompt, Fictionary's real definition and the authors of each definition, Categories answers before reveal, Whodunit cards and the solution, the Hint Grid key, Trading Floor hands. All of it goes through `toPublicState`, `privateSeatView` and `secretState`, and `viewer: null` (History) sees none of it until the game reveals it.
 - No new npm dependency.
 
 ## Non-goals
@@ -61,7 +61,7 @@ One small commit by the coordinator, so three branches do not each move the same
 - **Chunks, branches and PRs.** There are eight chunks (below), each with its own agent, its own git worktree and its own branch, started from `party-games-and-polish` after the shared ground and every plan are committed and pushed. Each agent follows its chunk's plan with subagent-driven development and opens a PR into `party-games-and-polish` (not `master`) when done (owner's decision). The coordinator merges them all into `party-games-and-polish`, checks that everything works together, and opens **one PR** against `master` (owner's decision).
 - **Files outside its folders.** A game chunk may add one-line registration entries to `games/registry.ts`, `src/clientGames.ts`, `games/infos.ts`, `shared/svg/gameIcons.ts`, the lists that existing tests keep of every game (`shared/categories.test.ts`, `games/standings.test.ts`, `games/secretState.test.ts`, `games/privateSeatView.test.ts`), `server/assets/registry.ts` if it draws server SVGs, and its own `e2e/<id>.spec.ts`. It does **not** change the README's game list or count, the counts in `e2e/landing.spec.ts`, or `docs/architecture.md`. The coordinator updates those once after the merge, so the numbers do not collide eight ways. Nothing else in `src/`, `server/`, `shared/` or `e2e/fixtures.ts` is touched unless this document says so. If a chunk needs a platform or fixture change not listed here, the agent stops and reports it.
 - **Undo.** Every turn move is undoable by vote, as in other games. Things not bound to a turn (writing an answer, voting, setup choices, Continue between rounds) are game actions. An undo never reveals a secret it did not hide.
-- **Leaving.** Follow the nearest existing game. A game that needs a minimum (Word Spies teams, Fictionary voting) ends when the players left can no longer play, with the scores as they stand.
+- **Leaving.** Follow the nearest existing game. A game that needs a minimum (Hint Grid teams, Fictionary voting) ends when the players left can no longer play, with the scores as they stand.
 - **Tests.** Rules tests cover setup, every move and action type, game end and the hidden-information views. A manager test plays a short game through `createGameManager` with a seeded random. `npm test`, `npm run typecheck`, `npm run lint` and the chunk's e2e specs all pass.
 - **Browser check.** The agent runs the site on its own port and plays in Chrome, one tab per player, through a full game or a forced game end. It checks History and a downloaded game file, and checks the screen at laptop size and at phone width (see the memory note on phone-width checks: use iframes, not window resizing).
 - **Writing.** No em-dashes in READMEs, FAQs, comments or commit messages.
@@ -73,9 +73,9 @@ One small commit by the coordinator, so three branches do not each move the same
 | 1 | `polish-header-azul-snakes-uno` | Header menu, Azul pause, Snakes and Ladders auto-roll and Roll button, UNO one-round target |
 | 2 | `polish-naval-jigsaw` | Naval Battle removal and first-hit rule, Jigsaw rotation |
 | 3 | `game-charades-fictionary` | Charades, Fictionary |
-| 4 | `game-categories-wordspies` | Categories, Word Spies |
+| 4 | `game-categories-hintgrid` | Categories, Hint Grid |
 | 5 | `game-whodunit` | Whodunit |
-| 6 | `game-careerpath` | Career Path |
+| 6 | `game-roadtoretirement` | Road to Retirement |
 | 7 | `game-corners` | Corners (square and triangle) |
 | 8 | `game-tradingfloor-steadyhand` | Trading Floor, Steady Hand |
 
@@ -85,8 +85,8 @@ Small items are combined to keep the number of agents down (owner's decision). T
 
 | # | Branch | Contents |
 |---|--------|----------|
-| 9 | `generic-landlord-railroutes` | Monopoly and Ticket to Ride: new names, ids and original content, plus the legacy id plumbing |
-| 10 | `generic-missiontricks-conquest` | The Crew and Risk: new names, ids and original content |
+| 9 | `generic-streetdeeds-railroutes` | Monopoly and Ticket to Ride: new names, ids and original content, plus the legacy id plumbing |
+| 10 | `generic-missiontricks-territories` | The Crew and Risk: new names, ids and original content |
 | 11 | `generic-board-tile` | Renames only: Azul, Carcassonne, Catan, Connect Four, Jenga, Parchisi, Quoridor, Rummikub, Scrabble, Splendor |
 | 12 | `generic-card-party` | Renames only: Phase 10, Pictionary, Rack-O, Rook, Skip-Bo, UNO, Yahtzee |
 
@@ -157,7 +157,7 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - Scoring: 1 point for each valid answer no one else gave; duplicates (equal after normalizing, ignoring a leading "a", "an" or "the") score 0. Highest total after the rounds wins.
 - Other house rules: rounds (1 to 5; standard 3), time (60, 90, 120 or 180 s; standard 120), categories per list (8, 10 or 12; standard 12).
 
-### Word Spies (`wordspies`, Party games), 4 to 8 players
+### Hint Grid (`hintgrid`, Party games), 4 to 8 players
 
 - Two teams, Red and Blue, each with one clue-giver. In the lobby each player picks a team and a role, and an **Even out** button balances them. The game cannot start until each team has a clue-giver and at least one guesser.
 - A 5 × 5 grid of words from a built-in list of at least 400. The secret key: 9 for the starting team, 8 for the other, 7 bystanders, 1 trap. Clue-givers see the key; guessers do not.
@@ -176,7 +176,7 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - Suggestion results go only to the two players concerned. The solution is in `secretState` until the game ends.
 - **Leaving:** going Back to games, closing the tab or losing the connection mid-game only holds the seat, as the platform already does, so nothing is revealed and the player rejoins with their cards (owner's concern). Only a player who is actually removed from the game by a dismiss vote has their cards turned face up for everyone, so the deduction stays sound. Play goes on while two or more players can still accuse (my call: a common house rule). An e2e test covers leaving to the game list and rejoining a minute later with nothing revealed.
 
-### Career Path (`careerpath`, Classic board games), 2 to 6 players
+### Road to Retirement (`roadtoretirement`, Classic board games), 2 to 6 players
 
 - An original career race on a winding path (my call: about 90 spaces), with a spinner of 1 to 10.
 - **Start fork:** College (costs money, later better jobs) or Straight to work.
@@ -184,7 +184,7 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 - Money below zero takes an automatic loan with interest, paid back at retirement.
 - At retirement, houses sell for their card value and children add a bonus. The richest player wins.
 - All job, house and event texts are original. Two house rules (my call): game length (Short or Full path) and starting cash.
-- **House rule "Board"** (choice: Career Path or 1860 Checkered; standard Career Path; owner's decision). The **1860 Checkered** board plays Milton Bradley's public-domain *The Checkered Game of Life* (1860), drawn with this project's own art:
+- **House rule "Board"** (choice: Road to Retirement or 1860 Checkered; standard Road to Retirement; owner's decision). The **1860 Checkered** board plays Milton Bradley's public-domain *The Checkered Game of Life* (1860), drawn with this project's own art:
   - An 8 × 8 checkerboard. Pieces stand on the light squares, which carry the named squares; start is Infancy in the bottom-left corner and the goal is Happy Old Age in the top-right corner, worth 50 points.
   - A spinner of 1 to 6 (the original teetotum). 1: one square up or down; 2: one square left or right; 3: one square diagonally; 4: one or two squares up or down; 5: one or two squares left or right; 6: one or two squares diagonally. The player chooses among the legal moves.
   - Named squares send you on (for example Bravery to Honor, School to College, Honesty to Happiness, Industry to Wealth, Gambling to Ruin, Idleness to Disgrace, Crime to Prison) and score points (Wealth 10; Honor, Happiness, College, Success, Fat Office and Congress 5 each). Prison loses a turn.
@@ -237,38 +237,38 @@ Player counts, names and content lists are my calls unless marked otherwise. Eve
 
 ### New names
 
-All names are my calls; the owner may rename any before the plans are written. Each new id is the name in lower case with no spaces or punctuation.
+All names are my calls, approved by the owner after a quick web search (2026-11-07) found no game, app or live registration under the same name. That search is not a trademark clearance. Names that failed it and were replaced: Landlord, Conquest, Tessera, Countryside, Frontier Isle, Maze Race, Gem Merchants, Sketch, Raven, Color Match, plus the new games' Career Path and Word Spies. Each new id is the name in lower case with no spaces or punctuation.
 
 | Old | New name (id) | Note |
 |-----|---------------|------|
-| Monopoly | **Landlord** (`landlord`) | After Lizzie Magie's public-domain *The Landlord's Game* (1904) |
+| Monopoly | **Street Deeds** (`streetdeeds`) | |
 | Ticket to Ride | **Rail Routes** (`railroutes`) | |
 | The Crew | **Mission Tricks** (`missiontricks`) | |
-| Risk | **Conquest** (`conquest`) | |
-| Azul | **Tessera** (`tessera`) | |
-| Carcassonne | **Countryside** (`countryside`) | |
-| Catan | **Frontier Isle** (`frontierisle`) | |
+| Risk | **Territories** (`territories`) | |
+| Azul | **Palace Walls** (`palacewalls`) | |
+| Carcassonne | **Roads and Fields** (`roadsandfields`) | |
+| Catan | **Hex Island** (`hexisland`) | |
 | Connect Four | **Four in a Row** (`fourinarow`) | Generic name |
 | Jenga | **Block Tower** (`blocktower`) | |
 | Parchisi | **Pachisi** (`pachisi`) | The traditional Indian game's name |
-| Quoridor | **Maze Race** (`mazerace`) | |
+| Quoridor | **Pawns and Walls** (`pawnsandwalls`) | |
 | Rummikub | **Rummy Tiles** (`rummytiles`) | |
 | Scrabble | **Letter Grid** (`lettergrid`) | |
-| Splendor | **Gem Merchants** (`gemmerchants`) | |
+| Splendor | **Jewel Guild** (`jewelguild`) | |
 | Phase 10 | **Stage Rummy** (`stagerummy`) | |
-| Pictionary | **Sketch** (`sketch`) | |
+| Pictionary | **Draw and Guess** (`drawandguess`) | |
 | Rack-O | **In Order** (`inorder`) | |
-| Rook | **Raven** (`raven`) | |
+| Rook | **Nest** (`nest`) | |
 | Skip-Bo | **Spite and Malice** (`spiteandmalice`) | The traditional card game Skip-Bo grew from |
-| UNO | **Color Match** (`colormatch`) | |
+| UNO | **Rainbow Eights** (`rainboweights`) | |
 | Yahtzee | **Five Dice** (`fivedice`) | |
 
 ### Original content (chunks 9 and 10)
 
-- **Landlord:** a new board with the same structure (40 spaces, the same price, rent, group and space-type pattern) but original street, station and utility names (my call: a fictional city), and two new card decks with original text that keep each card's effect. The two deck names change too (my call: Fortune and Town Fund).
+- **Street Deeds:** a new board with the same structure (40 spaces, the same price, rent, group and space-type pattern) but original street, station and utility names (my call: a fictional city), and two new card decks with original text that keep each card's effect. The two deck names change too (my call: Fortune and Town Fund).
 - **Rail Routes:** an original map, not the published one. Same rules and the same totals (number of routes, colors and lengths, train counts, ticket count and point spread) so the game balances the same way, but a fictional geography with its own city names, route network and tickets (my call: a fictional continent). Ticket scoring is recomputed for the new map and tested.
 - **Mission Tricks:** a newly written mission campaign with the same number of missions and the same mechanics (task counts, task tokens, communication limits, special rules), with original mission titles, story text and task setups. No sentence from the published logbook.
-- **Conquest:** an original map with the same structure (the same number of territories and continents, the same continent bonuses and a comparable adjacency pattern), with original territory and continent names and borders (my call: a fictional world).
+- **Territories:** an original map with the same structure (the same number of territories and continents, the same continent bonuses and a comparable adjacency pattern), with original territory and continent names and borders (my call: a fictional world).
 - All four: rules tests are updated where they name spaces, cities, missions or territories; the hidden-information and manager tests still pass.
 
 ## Order of work
@@ -286,4 +286,4 @@ All names are my calls; the owner may rename any before the plans are written. E
 - Which moves animate, and how.
 - FAQ wording.
 - The content lists themselves (prompts, words, definitions, categories, suspects, rooms, careers, events, commodities, part shapes), within the rules above.
-- Board layouts for Whodunit, Career Path and Steady Hand.
+- Board layouts for Whodunit, Road to Retirement and Steady Hand.
