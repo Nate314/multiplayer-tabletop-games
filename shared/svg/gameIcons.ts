@@ -12,6 +12,7 @@ const GAME_ICONS: Record<string, () => string> = {
     el('path', { d: 'M5.5 4l2 6.5 2-6.5M14.5 4l2 6.5 2-6.5M5.5 20l2-6.5 2 6.5M14.5 20l2-6.5 2 6.5' })),
   carcassonne: () => lineIcon(el('path', { d: 'M4 21V6h3v3h3V6h4v3h3V6h3v15z' }), el('path', { d: 'M10 21v-4a2 2 0 0 1 4 0v4' })),
   catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
+  charades: () => lineIcon(el('circle', { cx: 12, cy: 5, r: 2.5 }), el('path', { d: 'M12 8v7M12 10L6 4M12 10l6-6M12 15l-4 6M12 15l4 6' })),
   checkers: () => lineIcon(el('ellipse', { cx: 12, cy: 8, rx: 8, ry: 3 }), el('path', { d: 'M4 8v4a8 3 0 0 0 16 0V8M4 12v4a8 3 0 0 0 16 0v-4' })),
   chinesecheckers: () => lineIcon(el('path', { d: 'M12 2l2.9 5h5.8l-2.9 5 2.9 5h-5.8L12 22l-2.9-5H3.3l2.9-5-2.9-5h5.8z' }), pip(12, 12, 1.6)),
   chess: () => lineIcon(el('path', { d: 'M12 2v5M9.5 4.5h5M8 10h8l-1.5 8h-5zM6 21h12v-3H6zM8 10a4 3 0 0 1 8 0' })),
