@@ -308,6 +308,33 @@
     }
   }
 
+  /* The turn handle: the player's color ringed in the panel color, so it shows on the felt and on the picture in light and dark */
+  .jigsaw-turn {
+    cursor: pointer;
+    touch-action: none;
+
+    circle {
+      fill: var(--button-bg);
+      stroke: var(--panel-bg);
+      stroke-width: 4;
+    }
+
+    text {
+      fill: var(--button-text);
+      font-family: system-ui, sans-serif;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    &:focus-visible circle {
+      stroke: var(--highlight);
+    }
+
+    &:hover circle {
+      fill: var(--button-hover-bg);
+    }
+  }
+
   .jigsaw-holder {
     font: 600 28px system-ui, sans-serif;
     fill: var(--holder);

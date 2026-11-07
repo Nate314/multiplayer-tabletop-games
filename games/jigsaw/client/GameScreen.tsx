@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
-import { agreementPending, houseRulesOf } from '../../../shared/houseRules.ts';
+import { agreementPending, houseRule, houseRulesOf } from '../../../shared/houseRules.ts';
 import { MODE_RULE, modeOf, playsAtOnce } from '../../../shared/puzzleModes.ts';
 import { jigsawInfo } from '../info.ts';
+import { ROTATION_RULE } from '../options.ts';
 import PicturePicker from './PicturePicker';
 import SidePanel from './SidePanel';
 import Table from './Table';
@@ -22,6 +23,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const board = (mode === 'race' ? gameState.boards[playerNumber] : gameState.board) ?? NO_PIECES;
   const host = houseRulesOf(jigsawInfo, gameState).host;
   const isHost = host === playerNumber;
+  const rotation = houseRule(gameState, ROTATION_RULE);
   const playing = activePlayers.includes(playerNumber) && !isGameOver && !undoVote;
   // Until everyone agrees to the house rules the server refuses a pick-up, so nothing can be lifted
   const canPlay = playing && !(!started && agreementPending(jigsawInfo, gameState));
@@ -42,6 +44,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // The first lift starts play, which ends the lobby; its panel stays until that drag ends, so the table does not jump under the pointer
   const [liftedInLobby, setLiftedInLobby] = useState(false);
   const [landing, setLanding] = useState<(Dragging & { from: Piece }) | null>(null);
+  // The piece this player last pressed: it shows the turn handle. Kept in this browser only
+  const [touched, setTouched] = useState<number | null>(null);
   // A refused drop (or any refusal) lets go of the dropped piece, so no ghost stays where it was let go
   useEffect(() => { if (error) setLanding(null); }, [error]);
 
@@ -54,6 +58,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     positionOf: index => board.pieces[index],
     onLift: piece => {
       setLanding(null);
+      setTouched(piece);
       setLiftedInLobby(!started);
       gameService.sendAction({ type: 'pickUp', piece });
     },
@@ -70,6 +75,31 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   const landed = landing !== null && samePiece(board.pieces[landing.piece], landing.from) ? landing : null;
   const shown = lost ? null : dragging ?? landed;
+  // While a piece is held, R or a right-click turns it
+  const heldPiece = rotation ? dragging?.piece ?? null : null;
+  useEffect(() => {
+    if (heldPiece === null) return;
+    const turn = () => gameService.sendAction({ type: 'turn', piece: heldPiece });
+    function onKey(event: KeyboardEvent) {
+      if (event.key.toLowerCase() !== 'r' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+      if ((event.target as Element | null)?.closest?.('input, textarea, select')) return;
+      turn();
+    }
+    function onMenu(event: MouseEvent) {
+      event.preventDefault();
+      turn();
+    }
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('contextmenu', onMenu);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('contextmenu', onMenu);
+    };
+  }, [heldPiece]);
+  const turnHandle = rotation && touched !== null && canLift(touched)
+    ? { piece: touched, onTurn: () => gameService.sendAction({ type: 'turn', piece: touched }) }
+    : undefined;
+
   const lobbyPanel = !started || (dragging !== null && liftedInLobby);
   const placed = board.pieces.filter(piece => piece.placed).length;
   const undo = playsAtOnce(mode)
@@ -109,6 +139,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               playerNames={playerNames}
               guide={guide}
               drag={{ dragging: shown, canLift, bind }}
+              turnHandle={turnHandle}
             />
           </div>
         </div>

@@ -3,6 +3,7 @@ import { BOARD_X, BOARD_Y, TABLE_H, TABLE_W, edgesOf, gridOf, homeOf, piecePath,
 import { PICTURE_H, PICTURE_W } from '../pictures.ts';
 import PieceShape from './PieceShape';
 import { pictureUrl } from './pictureUrl.ts';
+import { turnsOf } from '../rules.ts';
 import type { Dragging, PiecePointerProps } from './usePieceDrag.ts';
 import type { Board, Picture, Piece, Seat } from '../types.ts';
 
@@ -20,6 +21,7 @@ export type TableProps = {
   highlight?: number | null; // a piece outlined, as History shows the last move
   // Absent for a read-only table
   drag?: { dragging: Dragging | null; canLift(piece: number): boolean; bind(piece: number): PiecePointerProps };
+  turnHandle?: { piece: number; onTurn: () => void }; // the ↻ on the piece this player last touched
 };
 
 // Bottom to top: placed, loose, held by others, held by the viewer
@@ -29,7 +31,7 @@ function layer(piece: Piece, viewer: Seat | null): number {
   return piece.heldBy === viewer ? 3 : 2;
 }
 
-export default function Table({ picture, count, seed, board, viewer, playerNames, guide, highlight, drag }: TableProps) {
+export default function Table({ picture, count, seed, board, viewer, playerNames, guide, highlight, drag, turnHandle }: TableProps) {
   const fillPrefix = `jigsaw${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const url = pictureUrl(picture);
   // The cut changes only with a new seed or piece count, never during a drag
@@ -47,6 +49,12 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
     .map((piece, index) => ({ piece, index, layer: index === dragging?.piece ? 4 : layer(piece, viewer) }))
     .filter(({ index }) => index < cut.length)
     .sort((a, b) => a.layer - b.layer || a.index - b.index);
+  // Where a piece shows: the dragged or landed spot when it has one
+  const shownAt = (index: number) => dragging?.piece === index ? dragging : board.pieces[index];
+  const turning = turnHandle && cut[turnHandle.piece] && board.pieces[turnHandle.piece]
+    ? { ...turnHandle, at: shownAt(turnHandle.piece), cell: cut[turnHandle.piece].grid }
+    : undefined;
+  const handleSize = turning ? Math.min(turning.cell.w, turning.cell.h) : 0;
 
   return (
     <svg className="jigsaw-table" viewBox={`${-PAD} ${-PAD} ${TABLE_W + 2 * PAD} ${TABLE_H + 2 * PAD}`} role="img" aria-label="Puzzle table">
@@ -68,10 +76,11 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
           <PieceShape
             key={index}
             piece={index}
-            x={mine ? dragging.x : piece.x}
-            y={mine ? dragging.y : piece.y}
+            x={shownAt(index).x}
+            y={shownAt(index).y}
             offset={cut[index].offset}
             cell={cut[index].grid}
+            turns={turnsOf(piece)}
             path={cut[index].path}
             fillId={`${fillPrefix}-${index}`}
             url={url}
@@ -83,6 +92,26 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
           />
         );
       })}
+      {turning && (
+        // On top of every piece, at the top right corner of its cell. A press here never starts a drag
+        <g
+          className="jigsaw-turn"
+          role="button"
+          tabIndex={0}
+          aria-label="Turn piece"
+          transform={`translate(${turning.at.x + turning.cell.w},${turning.at.y})`}
+          onPointerDown={event => { event.stopPropagation(); event.preventDefault(); }}
+          onClick={turning.onTurn}
+          onKeyDown={event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            turning.onTurn();
+          }}
+        >
+          <circle r={handleSize / 4} />
+          <text textAnchor="middle" dominantBaseline="central" fontSize={handleSize / 3}>↻</text>
+        </g>
+      )}
     </svg>
   );
 }
