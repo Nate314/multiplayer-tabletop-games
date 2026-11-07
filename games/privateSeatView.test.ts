@@ -48,6 +48,10 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
       ]
     }
   ],
+  categories: s => [
+    { ...s, started: true, phase: 'answering', letter: 'B', list: ['Fruits', 'Animals'], answers: { 1: ['Banana', 'Bat'], 2: ['Berry', ''] } },
+    { ...s, started: true, phase: 'review', letter: 'B', list: ['Fruits', 'Animals'], review: { acknowledged: [] }, answers: { 1: ['Banana', 'Bat'], 2: ['Berry', ''] } }
+  ],
   codebreaker: s => [
     { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
     {

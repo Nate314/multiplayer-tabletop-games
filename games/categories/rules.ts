@@ -5,13 +5,14 @@ import type { RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import type { Random, Result, Seat, Standing } from '../../shared/types.ts';
 import { phaseDeadline } from './clock.ts';
 import { categoriesInfo } from './info.ts';
 import { HARD_LETTERS, LIST_SIZE, ROUNDS, lettersFor } from './options.ts';
 import { POOL } from './pool.ts';
 import { roundPoints, verdicts } from './scoring.ts';
-import type { Challenge, GameState, Review } from './types.ts';
+import type { Challenge, GameState, PublicGameState, Review } from './types.ts';
 
 const MAX_ANSWER = 40;
 
@@ -272,3 +273,20 @@ export function finalStandings(state: GameState): Standing[] {
   const score = (seat: Seat) => state.scores[seat] ?? 0;
   return rankStandings(state, (a, b) => score(b) - score(a), seat => pointsText(score(seat)));
 }
+
+// Answers stay hidden until the review: while answering a seat gets only its own, and `null` (History, a table screen) none
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
+  const { letters: _letters, pool: _pool, answers, ...rest } = state;
+  const open = state.phase === 'review' || state.isGameOver;
+  const checked = open ? verdictsOf(state) : {};
+  return {
+    ...rest,
+    undoAvailable,
+    answers: open ? answers : viewer !== null && answers[viewer] ? { [viewer]: answers[viewer] } : {},
+    verdicts: checked,
+    roundPoints: open ? roundPoints(checked) : {}
+  };
+}
+
+export const privateSeatView = (state: GameState, seat: Seat): Pick<PublicGameState, 'answers'> =>
+  seatFields(toPublicState(state, false, seat), ['answers']);
