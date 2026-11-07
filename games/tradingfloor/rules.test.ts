@@ -112,6 +112,11 @@ test('accept needs my own open offer of the same count', () => {
   assert.equal(refused(state, 1, action), 'That is your own offer');
 });
 
+test('a one-card offer asks for 1 card', () => {
+  const state = offer(offer(trading(), 1, 'silver', 1), 2, 'coffee', 2);
+  assert.equal(refused(state, 2, { type: 'accept', offer: offerIdOf(state, 1) }), 'Your offer must be 1 card');
+});
+
 test('an offer withdrawn and replaced cannot be accepted by its old id', () => {
   let state = offer(trading(), 1, 'silver', 3);
   const oldId = offerIdOf(state, 1);

@@ -96,7 +96,7 @@ function accept(state: GameState, seat: Seat, id: unknown): Result<GameState> {
   const count = theirs.cards.length;
   const mine = state.offers.find(o => o.seat === seat);
   if (!mine) return { error: `Make an offer of ${count} first` };
-  if (mine.cards.length !== count) return { error: `Your offer must be ${count} cards` };
+  if (mine.cards.length !== count) return { error: `Your offer must be ${plural(count, 'card')}` };
   const give = (from: Seat, out: number[], to: Seat) =>
     [...state.hands[to]!.filter(card => !mine.cards.concat(theirs.cards).includes(card.id)),
       ...state.hands[from]!.filter(card => out.includes(card.id))];

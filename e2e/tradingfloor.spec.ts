@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, WebSocketRoute } from '@playwright/test';
 import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, test, watch, type Seat, type SeatOptions } from './fixtures.ts';
 import type { Card, GameState } from '../games/tradingfloor/types.ts';
 
@@ -111,6 +111,17 @@ test.describe('Trading Floor offers and swaps', () => {
     }
   });
 
+  test('there is no bell: trading starts with the first offer', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    expect((await table.state<GameState>()).started).toBe(false);
+    await expect(status(bob)).toHaveText('Cara joined (3/8 players)');
+    await expect(button(bob, 'Corner!')).toBeVisible();
+    await expect(bob.getByRole('button', { name: /bell|start/i })).toHaveCount(0);
+    await offer(alice, 'Alice', [SAFFRON, 1]);
+    await expect(status(bob)).toHaveText('Alice offers 1!');
+    expect((await table.state<GameState>()).started).toBe(true);
+  });
+
   test('an offer is 1 to 4 cards of one commodity', async ({ seat }) => {
     const { alice } = await start(seat);
     await expect(button(alice, 'Offer')).toBeDisabled();
@@ -169,25 +180,35 @@ test.describe('Trading Floor offers and swaps', () => {
   });
 
   test('two accepts of one offer: the first swaps and the other sees Already taken and keeps its cards and offer', async ({ seat }) => {
-    const { table, alice, bob, cara } = await start(seat);
-    await offer(alice, 'Alice', [SAFFRON, 2]);
+    const { alice, bob, cara } = await start(seat);
+    await offer(alice, 'Alice', [SAFFRON, 2]); // the game has started, so a reload keeps Cara's seat
+    // Cara's socket goes through a route that can hold the server's messages, so her page still shows Alice's offer
+    // after Bob's swap, and her Accept reaches the server once the offer is gone
+    let holding = false;
+    const held: (string | Buffer)[] = [];
+    let toCara: WebSocketRoute | undefined;
+    await cara.routeWebSocket(/./, ws => {
+      toCara = ws;
+      ws.connectToServer().onMessage(message => { if (holding) held.push(message); else ws.send(message); });
+    });
+    await cara.reload();
+    await expect(bubbles(cara)).toHaveText(['Alice: 2!']);
     await offer(bob, 'Bob', [SILVER, 2]);
     await offer(cara, 'Cara', [COFFEE, 2]);
-    // Both pages click at the same moment by the shared clock, so neither click waits behind the other's swap
-    const at = Date.now() + 500;
-    await Promise.all([bob, cara].map(page => accept(page, 'Alice', 2).evaluate((element, when) => {
-      setTimeout(() => (element as HTMLElement).click(), when - Date.now());
-    }, at)));
-    await expect(status(alice)).toHaveText(/^(Bob|Cara) and Alice swapped 2 cards$/);
-    const [loserName] = (await table.state<GameState>()).offers.map(o => o.seat === 2 ? 'Bob' : 'Cara');
-    const loser = loserName === 'Bob' ? bob : cara;
-    await expect(status(loser)).toHaveText('Already taken');
-    await expect(status(loser)).not.toHaveClass(/game-status-error/);
-    await expect(bubbles(alice)).toHaveText([`${loserName}: 2!`]);
-    await holds(loser, loserName === 'Bob' ? { [SAFFRON]: 2, [SILVER]: 5, [COFFEE]: 2 } : { [SAFFRON]: 2, [SILVER]: 2, [COFFEE]: 5 });
-    await expect(myHand(loser).locator('.tf-offered')).toHaveCount(2);
+    holding = true;
+    await accept(bob, 'Alice', 2).click();
+    await expect(status(alice)).toHaveText('Bob and Alice swapped 2 cards');
+    await accept(cara, 'Alice', 2).click(); // still enabled: Cara has not heard of the swap
+    await expect.poll(() => held.length).toBeGreaterThan(1); // the swap and the refusal of Cara's accept
+    holding = false;
+    for (const message of held.splice(0)) toCara!.send(message);
+    await expect(status(cara)).toHaveText('Already taken');
+    await expect(status(cara)).not.toHaveClass(/game-status-error/);
+    await expect(bubbles(alice)).toHaveText(['Cara: 2!']);
+    await holds(cara, { [SAFFRON]: 2, [SILVER]: 2, [COFFEE]: 5 });
+    await expect(myHand(cara).locator('.tf-offered')).toHaveCount(2);
     // The quiet line gives way to the status after a few seconds
-    await expect(status(loser)).toHaveText(/swapped 2 cards$/, { timeout: 6000 });
+    await expect(status(cara)).toHaveText('Bob and Alice swapped 2 cards', { timeout: 6000 });
   });
 });
 
