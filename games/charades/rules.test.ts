@@ -55,10 +55,11 @@ test('the actor cannot score by typing the prompt', () => {
 test('each player acts turnsPerPlayer times, then the highest score wins', () => {
   let state = chat(acting({ turnsPerPlayer: 1 }), 2, 'juggling flamingos');
   const actors = [state.drawer];
-  while (!state.isGameOver) {
+  for (let i = 0; i < 20 && !state.isGameOver; i++) {
     state = onDeadline(state, NOW, first);
     if (state.lastMove?.type === 'nextTurn') actors.push(state.lastMove.playerNumber);
   }
+  assert.equal(state.isGameOver, true);
   assert.deepEqual(actors, [1, 2, 3]);
   assert.deepEqual(state.winners, [2]);
   assert.equal(state.gameStatus, `Bob won with ${state.scores[2]} points`);
@@ -71,4 +72,8 @@ test('a guesser and History never see the prompt before the reveal; a spectator 
     assert.equal(JSON.stringify(view).includes('juggling'), false);
   }
   assert.ok(JSON.stringify(spectatorView(charades, state, eve)).includes('juggling'));
+});
+
+test('any action but chat is refused', () => {
+  assert.deepEqual(applyAction(acting(), 1, { type: 'stroke' }, first, NOW), { error: 'Invalid action' });
 });
