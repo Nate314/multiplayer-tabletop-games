@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ServerSvg from '../assets/ServerSvg';
 import { svgUrl } from '../assets/svgCache.ts';
 import { postStats } from './api.ts';
-import { appOrigin } from '../services/urls.ts';
+import { appOrigin, withServer } from '../services/urls.ts';
 
 type Issued = { code: string; expiresAt: number };
 
@@ -53,7 +53,7 @@ export default function LinkPanel() {
     );
   }
 
-  const link = `${appOrigin()}/link/${issued.code}`;
+  const link = withServer(`${appOrigin()}/link/${issued.code}`);
   return (
     <section className="stats-section stats-link">
       <h2 className="lobby-category-heading" tabIndex={-1} ref={heading}>Link another device</h2>

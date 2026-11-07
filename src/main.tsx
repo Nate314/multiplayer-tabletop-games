@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.scss'
 import App from './App.tsx'
 import { installAudioUnlock, loadSounds } from './sound/synth.ts'
-import { appPath, loadBackendUrl, routePath } from './services/urls.ts'
+import { adoptServerParam, appPath, loadBackendUrl, routePath } from './services/urls.ts'
+
+// First, so the worker, sounds and drawings below all use a server given by a shared link
+adoptServerParam()
 
 // Lets the built site install as an app (public/sw.js); left out of dev so Vite's hot reload is never cached.
 // The worker cannot read localStorage, so it is told the server in its URL; a new server re-registers it

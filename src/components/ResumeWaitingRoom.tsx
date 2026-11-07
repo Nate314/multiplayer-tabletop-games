@@ -5,7 +5,7 @@ import useEscapeKey from '../hooks/useEscapeKey';
 import { fetchResumeStatus, RESUME_POLL_MS, sessionForResume } from '../services/pauseFiles.ts';
 import type { Session } from '../services/session.ts';
 import { joinLink } from '../services/share.ts';
-import { appOrigin } from '../services/urls.ts';
+import { appOrigin, withServer } from '../services/urls.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { ResumeStatus, ResumeUpload } from '../../shared/pauseFile.ts';
 
@@ -57,7 +57,7 @@ export default function ResumeWaitingRoom({ game, uploads, onReady, onCancel }: 
         {status.error && <div className="lobby-error" role="alert">{status.error}</div>}
         {lost && <div className="lobby-error" role="alert">{NO_LONGER_WAITING}</div>}
         <ServerSvg
-          url={svgUrl('qr', joinLink(appOrigin(), game.id, gameId))}
+          url={svgUrl('qr', withServer(joinLink(appOrigin(), game.id, gameId)))}
           className="resume-waiting-qr"
           title={`QR code to join ${game.name} ${gameId}`}
         />

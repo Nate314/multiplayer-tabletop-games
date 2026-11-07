@@ -28,8 +28,8 @@ export default function ServerSvg({ url, className, title, inSvg, svgProps }: Se
 
   const classes = ['server-svg', className].filter(Boolean).join(' ');
   const label = title ? { role: 'img', 'aria-label': title } : { 'aria-hidden': true as const };
-  // Safe to inline: the markup only ever comes from this site's own /api/svg, drawn by server code that escapes
-  // every attribute and text it writes
+  // Our server escapes every attribute and text it writes; a server the player pointed this page at could send
+  // anything, so the built page's script policy (vite.config.ts) refuses inline handlers and javascript: URLs
   const inner = markup === undefined ? undefined : { __html: markup };
   const failed = markup === undefined && failedUrl === url && title;
 

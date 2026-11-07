@@ -4,6 +4,7 @@ import { readJson, writeJson } from './storage.ts'
 // as GitHub Pages the page sits under a sub-path (Vite's --base) and the server is set in Settings.
 
 const BACKEND_KEY = 'backendUrl'
+const SERVER_PARAM = 'server'
 const local = () => localStorage
 
 // '' under node (unit tests), where Vite does not fill in import.meta.env
@@ -31,6 +32,22 @@ export function saveBackendUrl(input: string): boolean {
   } catch {
     return false
   }
+}
+
+// A shared link's ?server= becomes this browser's game server (an invalid one is ignored), then leaves the address bar
+export function adoptServerParam(): void {
+  const url = new URL(window.location.href)
+  const server = url.searchParams.get(SERVER_PARAM)
+  if (server === null) return
+  saveBackendUrl(server)
+  url.searchParams.delete(SERVER_PARAM)
+  window.history.replaceState(null, '', url)
+}
+
+// A link to this app for another device, carrying the game server when it is not the page's own
+export function withServer(link: string): string {
+  const backend = loadBackendUrl()
+  return backend ? `${link}?${new URLSearchParams({ [SERVER_PARAM]: backend })}` : link
 }
 
 export const apiUrl = (path: string): string => loadBackendUrl() + path
