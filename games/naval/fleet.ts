@@ -73,7 +73,8 @@ export function randomFleet(random: Random): Ship[] {
 }
 
 function shotResult(shot: Shot): string {
-  return shot.result === 'sunk' ? `sank a ship of length ${shot.sunkLength}` : shot.result;
+  if (shot.result === 'sunk') return `sank a ship of length ${shot.sunkLength}`;
+  return shot.hitLength ? `hit a ship of length ${shot.hitLength}` : shot.result;
 }
 
 export function shotsText(shots: Shot[]): string {

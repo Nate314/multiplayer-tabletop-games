@@ -41,6 +41,12 @@ export const FAQS: FaqItem[] = [
       'you have marked them all. The result of each shot is shown.'
   },
   {
+    question: 'What is Say the length on the first hit?',
+    answer: 'It is a house rule the host can turn on before the game starts. The first hit on a ship tells everyone ' +
+      'its length, such as "hit a ship of length 3". Later hits on the same ship say only "hit", and a sinking is ' +
+      'announced as usual. With Salvo, only the first shot of a turn that lands on a ship names its length.'
+  },
+  {
     question: 'How does undo work?',
     answer: 'Press Undo to ask to undo the last turn\'s shots. They are taken back only if the ' +
       'other player approves. Placing a fleet cannot be undone, and an undo never shows either fleet.'

@@ -6,6 +6,7 @@ Hide your fleet on a grid and sink the other fleet first, in the traditional pen
 
 - Exactly 2 players. The first player to join is seat 1 and fires first
 - **Salvo** (house rule, off by default): each turn, fire one shot per ship you still have afloat. The host turns it on before play starts and both players must agree
+- **Say the length on the first hit** (house rule, off by default): the first hit on a ship tells everyone its length. The host turns it on before play starts and both players must agree
 
 ## Rules
 
@@ -14,6 +15,7 @@ Hide your fleet on a grid and sink the other fleet first, in the traditional pen
 - **Placing.** Both players place their fleets at the same time. A confirmed fleet cannot be changed, and the game refuses a fleet that breaks these rules. Play starts once both fleets are confirmed: "Both fleets are ready. Alice fires first"
 - **Firing.** Players take turns, seat 1 first, firing one shot per turn at a square of the other grid they have not fired at yet
 - **Results.** Each shot is answered: miss, hit, or, when it hits the last square of a ship, hit and sunk with the length named: "Alice fired at B7: sank a ship of length 3". A hit does not give another shot. Which squares a sunk ship covered is not shown, only its length
+- **Say the length on the first hit.** With the house rule on, the first shot ever to land on a ship says "hit a ship of length 3". Later hits on that ship say "hit", and a sinking says "sank a ship of length 3" as usual. In a salvo, only the first of the shots that land on an unhit ship carries the length, and a shot that sinks a ship says the sinking
 - **Salvo.** With the house rule on, a player fires as many shots as they have ships afloat, counted from their own fleet at the start of the turn, all at once. When fewer squares are left to fire at than ships afloat, they fire at all the squares that are left. Each shot's result is shown: "Alice fired at B7, C7 and D7: hit, miss, sank a ship of length 3"
 - **Winning.** The first player to sink every ship of the other fleet wins: "Alice sank every ship. Alice wins!". Both fleets are then shown
 - You see only your own fleet and the result of every shot. The other fleet stays hidden from you, from spectators (unless its owner allows them to see it), from the table screen and from History until the game is over
@@ -48,6 +50,7 @@ These follow the traditional pencil and paper game in [Wikipedia's article on th
 - **Salvo results.** The article also allows telling only how many shots hit. Here each shot's result is shown. When fewer squares are left than ships afloat, you fire at all that are left
 - **Who starts.** The article does not say who fires first. Here seat 1, the first player to join, does
 - **Placing.** Both players place at the same time on screen, with Random placement to place a whole fleet, and the game refuses an illegal fleet instead of trusting the player
+- **Length on the first hit.** The article announces only a sinking. Telling the length on the first hit is a house rule
 - **Other variants.** The article's other variants (a fixed salvo of five shots, shots equal to the largest undamaged ship, not announcing a sinking, moving a ship) are not offered
 - **The end.** Both fleets are shown once the game is over
 - **Resigning, draws and leaving.** The article does not cover them. As in Chess, a player may resign, the players may agree to a draw, and if a player leaves and is dismissed the other player wins

@@ -12,7 +12,7 @@ export type Cell = { row: number; col: number };
 // row, col: the top or left end
 export type Ship = { length: ShipLength; row: number; col: number; orientation: 'across' | 'down' };
 
-export type Shot = { row: number; col: number; result: 'miss' | 'hit' | 'sunk'; sunkLength?: ShipLength };
+export type Shot = { row: number; col: number; result: 'miss' | 'hit' | 'sunk'; sunkLength?: ShipLength; hitLength?: ShipLength };
 
 export type Phase = 'placing' | 'firing';
 

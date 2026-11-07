@@ -19,3 +19,8 @@ test('describes a single shot and a salvo', () => {
 test('describes nothing without a last move', () => {
   assert.equal(describeMove({ lastMove: null, playerNames }), '');
 });
+
+test('describes a first hit with its length', () => {
+  const lastMove: LastMove = { type: 'fire', playerNumber: 1, shots: [{ row: 1, col: 6, result: 'hit', hitLength: 3 }] };
+  assert.equal(describeMove({ lastMove, playerNames }), 'Alice fired at B7: hit a ship of length 3');
+});

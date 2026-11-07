@@ -194,3 +194,21 @@ test('an open draw offer during placement is waited on too', () => {
   if ('error' in offered) assert.fail(offered.error);
   assert.deepEqual(waitingOn(offered.state), [1, 2]);
 });
+
+test('with Say the length on the first hit, the first hit on a ship carries its length and later hits do not', () => {
+  let state = fire(playing({ announceLength: true }), 1, cell(5, 0));
+  assert.deepEqual(state.shots[1][0], { row: 5, col: 0, result: 'hit', hitLength: 5 });
+  assert.equal(state.gameStatus, 'Alice fired at F1: hit a ship of length 5');
+  state = fire(fire(state, 2, empty(0)), 1, cell(5, 1));
+  assert.deepEqual(state.shots[1][1], { row: 5, col: 1, result: 'hit' });
+});
+
+test('a salvo carries the length only on its first shot on each ship, and sinking is unchanged', () => {
+  const state = fire(playing({ salvo: true, announceLength: true }), 1, cell(9, 8), cell(9, 9), cell(5, 0), cell(5, 1), cell(0, 0));
+  assert.deepEqual(state.shots[1].map(shot => shot.hitLength), [2, undefined, 5, undefined, undefined]);
+  assert.deepEqual(state.shots[1][1], { row: 9, col: 9, result: 'sunk', sunkLength: 2 });
+});
+
+test('without the rule a first hit has no length', () => {
+  assert.ok(!('hitLength' in fire(playing(), 1, cell(5, 0)).shots[1][0]));
+});

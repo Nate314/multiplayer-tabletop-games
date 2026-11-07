@@ -46,7 +46,7 @@ async function expectShips(page: Page, label: string, names: string[]) {
   for (const name of names) await expect(square(page, label, name)).toHaveClass(/\bship\b/);
 }
 
-async function start(seat: Seat, houseRules?: { salvo: boolean }) {
+async function start(seat: Seat, houseRules?: { salvo?: boolean; announceLength?: boolean }) {
   const table = await seat('naval', ['Alice', 'Bob'], houseRules ? { houseRules } : {});
   const [alice, bob] = table.pages;
   return { table, alice, bob };
@@ -60,7 +60,7 @@ async function firing(table: Table, shots: { 1?: Shot[]; 2?: Shot[] } = {}) {
   });
 }
 
-async function playing(seat: Seat, houseRules?: { salvo: boolean }) {
+async function playing(seat: Seat, houseRules?: { salvo?: boolean; announceLength?: boolean }) {
   const started = await start(seat, houseRules);
   await firing(started.table);
   await expect(grid(started.alice, 'Target')).toBeVisible();
@@ -145,6 +145,23 @@ test.describe('Naval Battle rules', () => {
     await expect(status(alice)).toHaveText('Both fleets are ready. Alice fires first');
     await square(alice, 'Target', 'A2').click();
     await expect(status(alice)).toHaveText('Alice fired at A2: miss');
+  });
+
+  test('Say the length on the first hit: the first hit names the length, later hits do not, and History shows it', async ({ seat }) => {
+    const { alice, bob } = await playing(seat, { announceLength: true });
+    await square(alice, 'Target', 'F1').click();
+    await expect(status(alice)).toHaveText('Alice fired at F1: hit a ship of length 5');
+    await expect(status(bob)).toHaveText('Alice fired at F1: hit a ship of length 5');
+    await square(bob, 'Target', 'J1').click();
+    await square(alice, 'Target', 'F2').click();
+    await expect(status(alice)).toHaveText('Alice fired at F2: hit');
+    await expect(status(bob)).toHaveText('Alice fired at F2: hit');
+    await button(bob, 'History').click();
+    const history = bob.getByRole('dialog', { name: 'History' });
+    await history.getByRole('slider', { name: 'Step' }).fill('1');
+    await expect(history.locator('.history-move')).toHaveText('Move 1 of 3: Alice fired at F1: hit a ship of length 5');
+    await bob.keyboard.press('Escape');
+    await inHouseRules(bob, dialog => expect(dialog).toContainText('Say the length on the first hitOn (house rule)'));
   });
 
   test('with Salvo each player fires one shot per ship afloat and sees each result', async ({ seat }) => {
