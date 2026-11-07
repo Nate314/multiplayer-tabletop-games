@@ -610,4 +610,39 @@ test.describe('Jigsaw Rotate pieces', () => {
     await handle(alice).tap();
     await expect.poll(() => turnsOn(table, 0)).toBe(1);
   });
+
+  test('a long press with a finger never turns the held piece', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice'], true);
+    const [alice] = table.pages;
+    await lay(table, { board: layout(48, [0]) });
+    await piece(alice, 0).scrollIntoViewIfNeeded();
+    const box = (await piece(alice, 0).boundingBox())!;
+    const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const cdp = await alice.context().newCDPSession(alice);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: at.x + 4, y: at.y }] });
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBe(1);
+    // What Chrome on Android fires after a still finger: a contextmenu from a touch pointer
+    const prevented = await alice.evaluate(() =>
+      !window.dispatchEvent(new PointerEvent('contextmenu', { pointerType: 'touch', bubbles: true, cancelable: true })));
+    expect(prevented).toBe(true);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBeNull();
+    expect(await turnsOn(table, 0)).toBe(0);
+  });
+
+  test('a press on the handle over another piece turns only the touched piece', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice']);
+    const [alice] = table.pages;
+    // Piece 1 lies under the top right corner of piece 0 (in SLOTS[0]), where its handle sits
+    const under = { x: SLOTS[0].x + gridOf(48).w - 20, y: SLOTS[0].y - 60 };
+    const board = layout(48, [0]);
+    board.pieces[1] = { ...loose(under.x, under.y), turns: 2 };
+    await lay(table, { board });
+    await touch(alice, 0);
+    await handle(alice).click();
+    await expect.poll(() => turnsOn(table, 0)).toBe(1);
+    expect((await table.state<GameState>()).board.pieces[1]).toEqual({ ...loose(under.x, under.y), turns: 2 });
+  });
 });

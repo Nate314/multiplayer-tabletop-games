@@ -85,9 +85,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       if ((event.target as Element | null)?.closest?.('input, textarea, select')) return;
       turn();
     }
+    // A long press of a finger fires contextmenu too (touch pointerType): that must never turn the piece
     function onMenu(event: MouseEvent) {
       event.preventDefault();
-      turn();
+      if (!('pointerType' in event) || event.pointerType === 'mouse') turn();
     }
     window.addEventListener('keydown', onKey);
     window.addEventListener('contextmenu', onMenu);
