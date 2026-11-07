@@ -52,9 +52,12 @@ test('a clue and two guesses are history steps and the picks are not', () => {
 test('an approved undo turns a guessed card face down again', () => {
   const manager = started();
   const { guesser, index } = twoGuesses(manager);
+  const before = steps(manager).length;
   ok(manager.requestUndo(ROOM, guesser));
   for (const seat of [1, 2, 3, 4].filter(s => s !== guesser)) manager.voteUndo(ROOM, seat, true);
   assert.equal((manager.rawState(ROOM) as unknown as GameState).revealed[index], false);
+  assert.equal(steps(manager).length, before - 1);
+  assert.equal(keyOf(steps(manager).at(-1))[index], null);
   const other = guesser === 2 ? 4 : 2;
   assert.equal(keyOf(manager.getState(ROOM, other))[index], null);
   assert.equal(keyOf(manager.getState(ROOM, null))[index], null);
@@ -63,9 +66,8 @@ test('an approved undo turns a guessed card face down again', () => {
 test("no history step shows a face-down card's kind", () => {
   const manager = started();
   twoGuesses(manager);
-  const state = manager.rawState(ROOM) as unknown as GameState;
   for (const step of steps(manager)) {
-    const key = keyOf(step);
-    assert.ok(key.every((entry, i) => entry === null || state.revealed[i]), 'a face-down card is named');
+    const shown = step as unknown as PublicGameState;
+    assert.ok(shown.key.every((entry, i) => entry === null || shown.revealed[i]), 'a face-down card is named');
   }
 });

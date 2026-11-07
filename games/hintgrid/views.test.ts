@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { hintgrid } from './index.ts';
 import { privateSeatView, spectatorState, toPublicState } from './rules.ts';
-import { addPlayer } from '../../shared/seating.ts';
+import { addPlayer, applyMove } from '../../shared/seating.ts';
 import { spectatorView } from '../../shared/spectators.ts';
 import type { GameState } from './types.ts';
 
@@ -65,9 +65,25 @@ test('left counts face-down words per team', () => {
 });
 
 test("lastMove and gameStatus never name a face-down card's kind", () => {
-  const state = guessing();
-  const down = state.revealed.indexOf(false);
-  const { lastMove, gameStatus } = toPublicState({ ...state, lastMove: { type: 'guess', playerNumber: 2, index: 0, kind: state.key[0] } }, false, null);
-  assert.ok(lastMove?.type === 'guess' && state.revealed[lastMove.index]);
-  assert.ok(down > 1 && !/trap|bystander/.test(gameStatus));
+  const base = guessing();
+  let state: GameState = { ...base, phase: 'clue', turn: 'red', currentPlayer: 1, revealed: base.key.map(() => false), clue: null, guessesLeft: 0 };
+  const at = (kind: string, skip = -1) => state.key.findIndex((k, i) => k === kind && i !== skip);
+  const red = at('red');
+  const bystander = at('bystander');
+  const blue = at('blue');
+  const steps: [number, object][] = [
+    [1, { type: 'clue', word: 'zzzz', count: 2 }], [2, { type: 'guess', index: red }], [2, { type: 'guess', index: bystander }],
+    [3, { type: 'clue', word: 'yyyy', count: 1 }], [4, { type: 'guess', index: blue }]
+  ];
+  for (const [seat, move] of steps) {
+    const result = applyMove(hintgrid, state, seat, move, first);
+    if ('error' in result) assert.fail(result.error);
+    state = result.state;
+    const { lastMove, gameStatus } = toPublicState(state, false, null);
+    if (lastMove?.type === 'guess') assert.ok(state.revealed[lastMove.index], 'lastMove names a face-down card');
+    const text = JSON.stringify(lastMove) + gameStatus;
+    state.words.forEach((word, i) => assert.ok(state.revealed[i] || !text.includes(word), `names the face-down word ${word}`));
+    assert.ok(!/trap/.test(text) && (state.revealed[bystander] || !/bystander/.test(text)));
+  }
+  assert.equal(state.turn, 'blue');
 });
