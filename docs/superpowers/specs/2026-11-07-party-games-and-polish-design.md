@@ -54,7 +54,7 @@ Generic names (wave 2, owner's request): 21 existing games carry a commercial ga
 One small commit by the coordinator, so three branches do not each move the same file:
 
 - Move guess matching out of `games/pictionary/text.ts` into `shared/guess.ts` (`normalize`, `isCorrect`, `isClose`, `maskOf`), with its tests. Pictionary imports it from there. Behavior is unchanged. Charades, Fictionary and Categories use it.
-- Add a header helper to `e2e/fixtures.ts`, for example `headerButton(page, name)`, that returns a header control by its accessible name, and switch the existing specs to use it for header controls (History, Share, Rules, Hide, Pause, Settings, Theme). For now it just finds the button in the header. Chunk 1 changes only this helper so it opens the ☰ menu first. Every new spec uses the helper for header controls, so no spec breaks when the menu lands (my call).
+- Add `headerButton(page, name): Promise<Locator>` to `e2e/fixtures.ts`, which returns a header control by its accessible name (done: it finds the button in `.game-header`; the fixtures' own Rules clicks use it). Every new spec uses it for header controls (History, Share, Show QR code, Rules, Hide, Pause, Settings, Theme). Chunk 1 changes it to open the ☰ menu first and switches the existing specs over to it, so nothing breaks when the menu lands (my call).
 
 ## Rules for every agent
 
@@ -101,7 +101,8 @@ Chunk 9 builds the legacy id plumbing (below) as its first task and opens a sepa
 - It starts closed. It closes on a second press of ☰, a click or tap outside, Escape, or choosing a control. The button has `aria-expanded` and `aria-controls`; focus moves into the panel when it opens and back to ☰ when Escape closes it.
 - **Phones and desktop behave the same** (owner's decision). Share and Theme live in the menu at every width. The phone-only rows in Settings (`phoneControls` in `SettingsButton`, used by `GameView.tsx`: Pause, Share, Theme) are removed, so Settings shows only what it showed on desktop before. Remove the CSS that existed only to hide or squeeze header buttons on narrow screens.
 - Any badge or state a control shows today (for example the Rules button's agreement prompt, Hide's state) stays visible inside the menu. If a control needs the player's attention while the menu is closed, ☰ shows a small dot (my call).
-- Existing e2e tests reach header controls through the `headerButton` helper from the shared ground. This chunk changes that helper so it opens the menu first, and fixes any existing spec the menu still breaks. Nothing else in `e2e/fixtures.ts`.
+- This chunk changes the `headerButton` helper from the shared ground so it opens the menu first, and switches every existing spec that reaches a header control directly (`page.locator('.game-header').getByRole(...)` or a bare `getByRole('button', { name: 'History' })` and so on) to use it. Nothing else in `e2e/fixtures.ts`.
+- Known before this work: `e2e/houseRules.spec.ts` tests at lines 14 and 51 already fail on `master` (`8593892`) with a closed page. Not caused by this batch; the coordinator looks at them during the final run.
 
 ### Azul
 

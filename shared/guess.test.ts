@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isClose, isCorrect, maskOf, normalize } from './text.ts';
+import { isClose, isCorrect, maskOf, normalize } from './guess.ts';
 
 test('normalize lowercases and drops spaces, hyphens and apostrophes', () => {
   assert.equal(normalize("Jack-in-the-Box's Ice Cream"), 'jackintheboxsicecream');

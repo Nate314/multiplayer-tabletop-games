@@ -159,11 +159,17 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
   await expect(control).toBeChecked({ checked: want });
 }
 
+// A header control (History, Share, Rules, Hide, Pause, Settings, Theme, Show QR code) by its accessible name.
+// Specs reach header controls only through this, so moving them behind a menu changes this helper alone.
+export async function headerButton(page: Page, name: string | RegExp): Promise<Locator> {
+  return page.locator('.game-header').getByRole('button', { name, exact: typeof name === 'string' });
+}
+
 // The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
 // Opens Rules on its House rules tab, unless it is open already, and returns the dialog
 export async function openHouseRules(page: Page) {
   const dialog = page.getByRole('dialog', { name: / rules$/ });
-  if (!await dialog.isVisible()) await page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+  if (!await dialog.isVisible()) await (await headerButton(page, 'Rules')).click();
   const tab = dialog.getByRole('button', { name: 'House rules', exact: true });
   if (await tab.getAttribute('aria-pressed') !== 'true') await tab.click();
   return dialog;
@@ -215,7 +221,7 @@ export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
 
 // Opens Rules from the game view, switches it to the FAQ and returns the dialog
 export async function openFaq(page: Page) {
-  await page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+  await (await headerButton(page, 'Rules')).click();
   const dialog = page.getByRole('dialog', { name: / rules$/ });
   await dialog.getByRole('button', { name: 'FAQ', exact: true }).click();
   return dialog;

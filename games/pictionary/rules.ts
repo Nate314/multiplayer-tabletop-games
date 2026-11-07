@@ -5,7 +5,7 @@ import { shuffle } from '../../shared/shuffle.ts';
 import type { Random, Result, Seat, Standing } from '../../shared/types.ts';
 import { CANVAS_H, CANVAS_W, MAX_POINTS, PALETTE, phaseDeadline, phaseMs } from './clock.ts';
 import { DRAWS_PER_PLAYER, TURN_SECONDS, WORD_CHOICES } from './options.ts';
-import { isClose, isCorrect, maskOf } from './text.ts';
+import { isClose, isCorrect, maskOf } from '../../shared/guess.ts';
 import type { ChatLine, GameState, LastMove, PublicGameState, Stroke, Tool } from './types.ts';
 import { WORDS } from './words.ts';
 
