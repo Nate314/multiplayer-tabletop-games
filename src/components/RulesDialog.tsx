@@ -7,6 +7,7 @@ import { parseMarkdown, type Block } from '../markdown/parseMarkdown.ts';
 import useEscapeKey from '../hooks/useEscapeKey';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 import type { FaqItem } from '../clientGames.ts';
+import { apiUrl } from '../services/urls.ts';
 
 export type RulesView = 'rules' | 'houseRules' | 'faq';
 
@@ -44,7 +45,7 @@ export default function RulesDialog({ game, faq, houseRules, initialView = 'rule
 
   useEffect(() => {
     let current = true;
-    fetch(`/api/rules/${game.id}`)
+    fetch(apiUrl(`/api/rules/${game.id}`))
       .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.text();

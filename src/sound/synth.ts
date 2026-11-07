@@ -1,6 +1,7 @@
 import type { SoundDef, SoundName, SoundNoise, SoundNote } from '../../shared/sounds.ts';
 import { getPreferences } from '../hooks/usePreferences.ts';
 import { audible } from './sounds.ts';
+import { apiUrl } from '../services/urls.ts';
 
 let context: AudioContext | null = null;
 
@@ -26,7 +27,7 @@ let sounds = new Map<SoundName, SoundDef>();
 // Fetched once at startup, so the first sound has no delay; until it arrives, or if it fails, every sound is silent
 export async function loadSounds(): Promise<void> {
   try {
-    const response = await fetch('/api/sound');
+    const response = await fetch(apiUrl('/api/sound'));
     if (!response.ok) return;
     const list = (await response.json()) as SoundDef[];
     sounds = new Map(list.map(sound => [sound.name, sound]));

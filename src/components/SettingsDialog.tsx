@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { loadBackendUrl, saveBackendUrl } from '../services/urls.ts';
 import useEscapeKey from '../hooks/useEscapeKey';
 import usePreferences, { setPreferences } from '../hooks/usePreferences';
 import { SOUNDS } from '../../shared/sounds.ts';
@@ -25,6 +26,41 @@ function NotificationsSetting() {
         Notify me when it is my turn
       </label>
       {support !== 'ready' && <p className="settings-note">{SUPPORT_EXPLANATIONS[support]}</p>}
+    </section>
+  );
+}
+
+// The game server, for a copy of the page hosted apart from it (GitHub Pages). Saving reloads, since the socket,
+// sounds and drawings were all fetched from the old server
+function ServerSetting() {
+  const [text, setText] = useState(loadBackendUrl);
+  const [invalid, setInvalid] = useState(false);
+  return (
+    <section>
+      <h3>Server</h3>
+      <form
+        className="settings-server"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!saveBackendUrl(text)) return setInvalid(true);
+          window.location.reload();
+        }}
+      >
+        <label className="lobby-field">
+          Game server address
+          <input
+            type="url"
+            value={text}
+            onChange={(e) => { setText(e.target.value); setInvalid(false); }}
+            placeholder={window.location.origin}
+            aria-invalid={invalid}
+          />
+        </label>
+        <button type="submit" className="primary-button">Save</button>
+      </form>
+      <p className="settings-note" role={invalid ? 'alert' : undefined}>
+        {invalid ? 'Enter an address starting with http:// or https://' : 'Leave empty to use this site. Saving reloads the page.'}
+      </p>
     </section>
   );
 }
@@ -101,6 +137,7 @@ export default function SettingsDialog({ onClose, phoneControls }: SettingsDialo
           </label>
         </section>
         <NotificationsSetting />
+        <ServerSetting />
         <div className="modal-buttons">
           <button type="button" className="primary-button" onClick={onClose}>Close</button>
         </div>

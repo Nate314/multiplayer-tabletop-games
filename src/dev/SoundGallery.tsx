@@ -4,6 +4,7 @@ import { playSounds, unlockAudio } from '../sound/synth.ts';
 import { plural } from '../../shared/text.ts';
 import ThemeToggle from '../components/ThemeToggle.tsx';
 import './dev.scss';
+import { apiUrl } from '../services/urls.ts';
 
 // Hidden page at /dev/sounds: each game sound with a Play button (it follows the Settings volume and mute)
 export default function SoundGallery() {
@@ -11,7 +12,7 @@ export default function SoundGallery() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch('/api/sound')
+    fetch(apiUrl('/api/sound'))
       .then(response => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
       .then(setSounds, () => setError(true));
   }, []);

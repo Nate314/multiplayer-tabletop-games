@@ -1912,6 +1912,18 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   min-width: 0;
 }
 
+:where([data-game] .settings-server, .lobby .settings-server) {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+:where([data-game] .settings-server .lobby-field, .lobby .settings-server .lobby-field) {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
 /* Share, Pause and the theme toggle, shown here only where the game header is compact and has no room for them */
 :where([data-game] .settings-phone-controls) {
   display: none;

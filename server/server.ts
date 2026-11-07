@@ -7,6 +7,7 @@ import { createGameManager, NOT_AVAILABLE, type Reseat } from './games.ts';
 import { openGameStore } from './store.ts';
 import { createE2eRandom, mountE2eRoutes } from './e2e.ts';
 import { serveClient } from './static.ts';
+import { allowCrossOrigin } from './cors.ts';
 import { mountRulesRoute } from './rules.ts';
 import { mountImageRoutes } from './images.ts';
 import { mountOpenGamesRoute } from './openGames.ts';
@@ -31,6 +32,7 @@ const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data
 const E2E = process.env.E2E === '1'; // test hooks for the Playwright suite; never set on a real server
 
 const app = express();
+allowCrossOrigin(app); // before every /api route
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // real messages are well under 1 KB
 

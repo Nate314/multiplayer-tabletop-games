@@ -3,10 +3,12 @@ import { createRoot } from 'react-dom/client'
 import './index.scss'
 import App from './App.tsx'
 import { installAudioUnlock, loadSounds } from './sound/synth.ts'
+import { appPath, loadBackendUrl, routePath } from './services/urls.ts'
 
-// Lets the built site install as an app (public/sw.js); left out of dev so Vite's hot reload is never cached
+// Lets the built site install as an app (public/sw.js); left out of dev so Vite's hot reload is never cached.
+// The worker cannot read localStorage, so it is told the server in its URL; a new server re-registers it
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {
+  navigator.serviceWorker.register(appPath('/sw.js?') + new URLSearchParams({ api: loadBackendUrl() })).catch(() => {
     // Without it the site still works; it just cannot be installed or opened offline
   })
 }
@@ -21,7 +23,7 @@ const PAGES: Record<string, ReturnType<typeof lazy>> = {
   '/dev/sounds': lazy(() => import('./dev/SoundGallery.tsx')),
   '/stats': StatsPage,
 }
-const { pathname } = window.location
+const pathname = routePath(window.location.pathname)
 const Page = PAGES[pathname] ?? (pathname.startsWith('/link/') ? StatsPage : undefined)
 
 // index.html always contains the #root element

@@ -2,9 +2,12 @@
 // the next reload; the last copy of each is kept so the app shell still opens offline. Games need the server, so
 // the API and the WebSocket are never touched.
 const CACHE = 'tabletop-games-v2';
+// The app's folder ("/" on the game server, a sub-path on a static host) and the game server main.tsx registered with
+const ROOT = self.registration.scope;
+const API = new URL(location.href).searchParams.get('api') || '';
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request('/', { cache: 'no-cache' }))));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request(ROOT, { cache: 'no-cache' }))));
   self.skipWaiting();
 });
 
@@ -29,11 +32,11 @@ self.addEventListener('fetch', event => {
         }
         return response;
       })
-      .catch(() => caches.match(request.mode === 'navigate' ? '/' : request, { ignoreSearch: true })
+      .catch(() => caches.match(request.mode === 'navigate' ? ROOT : request, { ignoreSearch: true })
         .then(cached => cached || Response.error())));
 });
 
-const FALLBACK = { title: 'Something is waiting for you', body: '', tag: 'tabletop-games', url: '/' };
+const FALLBACK = { title: 'Something is waiting for you', body: '', tag: 'tabletop-games', url: ROOT };
 const gameOf = client => new URL(client.url).searchParams.get('game');
 
 // The server decides what is worth saying for this subscription; a window already showing that game needs no alert.
@@ -42,7 +45,7 @@ async function alertsToShow() {
   try {
     const subscription = await self.registration.pushManager.getSubscription();
     if (!subscription) return [FALLBACK];
-    const response = await fetch('/api/push/alerts', {
+    const response = await fetch(API + '/api/push/alerts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint: subscription.endpoint }),
@@ -61,7 +64,7 @@ self.addEventListener('push', event => {
   event.waitUntil((async () => {
     await Promise.all((await alertsToShow()).map(({ title, body, tag, url }) =>
       self.registration.showNotification(title, {
-        body, tag, renotify: true, icon: '/icon-192.png', badge: '/icon-192.png', data: { url, tag },
+        body, tag, renotify: true, icon: ROOT + 'icon-192.png', badge: ROOT + 'icon-192.png', data: { url, tag },
       })));
   })());
 });
@@ -74,6 +77,7 @@ self.addEventListener('notificationclick', event => {
       .filter(client => new URL(client.url).origin === self.location.origin);
     const target = windows.find(client => gameOf(client) === tag) || windows[0];
     if (target) return target.focus();
-    return self.clients.openWindow(url || '/');
+    // The server's links start at "/", which means the app's folder
+    return self.clients.openWindow(new URL((url || '').replace(/^\//, ''), ROOT).href);
   })().catch(() => {}));
 });

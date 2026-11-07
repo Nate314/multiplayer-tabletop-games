@@ -64,6 +64,14 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 
 `run.sh` and `run.ps1` are small stubs. The launcher itself lives in [compose-launcher](https://github.com/Nate314/compose-launcher), which is included here as a git submodule in the `compose-launcher` folder. A plain `git clone` leaves that folder empty, so the first launcher run fetches it with `git submodule update --init compose-launcher`. That step needs network access and a real git clone (a zip download cannot fetch it). To get it up front, clone with `git clone --recurse-submodules`. The port and the printed URL are configured in `run.conf`. Plain `docker compose up --build` does not use the launcher or the submodule.
 
+## Hosting the page on GitHub Pages
+
+`.github/workflows/pages.yml` builds the client on every push to `master` and publishes it to GitHub Pages under `/<repository>/`. Pages only serves files, so the game server runs elsewhere (Docker above, on any host reachable over HTTPS, since a page served over HTTPS cannot open a plain `ws://` socket). Players enter the server's address under Settings > Server. To give every visitor a default, set the repository variable `BACKEND_URL` (Settings > Secrets and variables > Actions > Variables).
+
+One-time setup: Settings > Pages > Build and deployment > Source: GitHub Actions.
+
+The server answers `/api` requests from any origin. No route uses cookies, so this lends other sites no visitor credentials.
+
 ## Development
 
 - `npm test` runs the unit tests
@@ -114,6 +122,7 @@ The gear button in the landing page header and every game header opens Settings.
 - Color-blind symbols adds a symbol next to colors that carry meaning
 - Highlight newly drawn cards marks the cards you just drew
 - Notify me when it is my turn turns notifications on or off (on by default). See Notifications below
+- Server is the address of the game server, such as `https://games.example.com`. Leave it empty when the page comes from the game server itself. Set it when the page is hosted apart from the server, as on GitHub Pages. Saving reloads the page
 - In a game with house rule options, Settings also lists the house rules in use, read only, with each non-standard value marked "(house rule)". This part is the same for every player
 
 ## Notifications

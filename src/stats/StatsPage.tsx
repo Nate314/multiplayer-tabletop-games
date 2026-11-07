@@ -12,6 +12,7 @@ import { filterGames, gameStats, headToHead, peopleStats, type StatsFilter } fro
 import { postStats } from './api.ts';
 import LinkPanel from './LinkPanel.tsx';
 import './stats.scss';
+import { apiUrl, appPath, routePath } from '../services/urls.ts';
 
 type Stats = { games: StatsGame[]; devices: number };
 type Answer = Stats | { cleared: true };
@@ -36,7 +37,7 @@ function settle(answer: Answer): Stats {
 // GETs `/api/<route>/<type>/<id>/<n>` for the archived game with this device's ID, which the server checks against the game's players
 function fetchArchived(route: 'history' | 'game-file', game: StatsGame): Promise<Response> {
   const n = game.archiveId.slice(game.archiveId.lastIndexOf('#') + 1);
-  return fetch(`/api/${route}/${game.gameType}/${encodeURIComponent(game.gameId)}/${n}`, {
+  return fetch(apiUrl(`/api/${route}/${game.gameType}/${encodeURIComponent(game.gameId)}/${n}`), {
     headers: { Authorization: `Bearer ${deviceId()}` }
   });
 }
@@ -187,7 +188,7 @@ function LinkPrompt({ code, onAnswer }: { code: string; onAnswer: (answer: Answe
 
 // The /stats page, and /link/<code>, which asks to link this device first
 export default function StatsPage() {
-  const [code, setCode] = useState(() => linkCodeOf(window.location.pathname));
+  const [code, setCode] = useState(() => linkCodeOf(routePath(window.location.pathname)));
   const [loaded, setLoaded] = useState<Loaded>({ status: 'loading' });
   const [filter, setFilter] = useState<StatsFilter>({ gameType: null, range: 'all' });
   const [shown, setShown] = useState<{ game: StatsGame; history: History } | null>(null);
@@ -204,7 +205,7 @@ export default function StatsPage() {
   }, [code]);
 
   function linked(answer: Answer) {
-    window.history.replaceState(null, '', '/stats');
+    window.history.replaceState(null, '', appPath('/stats'));
     setCode(null);
     setLoaded({ status: 'loaded', ...settle(answer) });
   }
@@ -273,7 +274,7 @@ export default function StatsPage() {
     <div className="lobby stats-page">
       <header className="lobby-header">
         <h1>Stats</h1>
-        <a className="lobby-button stats-back" href="/">Back to games</a>
+        <a className="lobby-button stats-back" href={appPath('/')}>Back to games</a>
         <ThemeToggle />
       </header>
       <main className="lobby-main">{body}</main>
