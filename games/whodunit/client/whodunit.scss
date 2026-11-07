@@ -1,0 +1,440 @@
+[data-game="whodunit"] {
+  /* A seaside hotel: sand corridors, painted rooms. Every rule is scoped to data-game="whodunit". */
+  color-scheme: light;
+  --page-bg: #eef2f4;
+  --text: #1b2630;
+  --muted: #5a6872;
+  --panel-bg: #ffffff;
+  --panel-border: #c9d3da;
+  --corridor: #efe3c8;
+  --corridor-border: #d6c59e;
+  --door: #c98f4a;
+  --room-bg: #d7e7ee;
+  --room-border: #31566b;
+  --button-bg: #1f5f7a;
+  --button-hover-bg: #174a60;
+  --button-text: #ffffff;
+  --status-bg: #e1eaef;
+  --error-bg: #fbe4e1;
+  --error-text: #8a1c12;
+  --target: #f2a900;
+  --highlight: #d9480f;
+  --chip-bg: #fff6df;
+  --chip-text: #5c4300;
+  --wd-card-suspect: #8a2d3b;
+  --wd-card-object: #2e5d2a;
+  --wd-card-room: #1f5f7a;
+  --wd-mark-yes: #2e7d32;
+  --wd-mark-no: #b3261e;
+  --wd-mark-maybe: #a66a00;
+  --wd-suspect-1: #1e4fa3;
+  --wd-suspect-2: #e0605a;
+  --wd-suspect-3: #3a8f6a;
+  --wd-suspect-4: #7d8a92;
+  --wd-suspect-5: #6b8e23;
+  --wd-suspect-6: #8e5bb5;
+  --wd-cell: 32px;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  background: var(--page-bg);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #11181d;
+    --text: #e4ecf0;
+    --muted: #9fb0ba;
+    --panel-bg: #1b252c;
+    --panel-border: #34444e;
+    --corridor: #3b3426;
+    --corridor-border: #554b36;
+    --door: #d9a05c;
+    --room-bg: #1d3340;
+    --room-border: #7fb2cc;
+    --button-bg: #2b7d9f;
+    --button-hover-bg: #3591b6;
+    --status-bg: #22323b;
+    --error-bg: #4a1d18;
+    --error-text: #ffd6d0;
+    --target: #ffc94d;
+    --highlight: #ff8a5c;
+    --chip-bg: #3d3420;
+    --chip-text: #f5e2b0;
+    --wd-card-suspect: #f08a99;
+    --wd-card-object: #8fcf86;
+    --wd-card-room: #7fc4e3;
+    --wd-mark-yes: #81c784;
+    --wd-mark-no: #f2645a;
+    --wd-mark-maybe: #ffb74d;
+  }
+
+  .wd-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 24px;
+  }
+
+  .wd-board-area {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto; // the board keeps 32px squares and scrolls inside its box on a narrow screen
+  }
+
+  .wd-side {
+    flex: 0 0 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  @media (max-width: 719px) {
+    .wd-layout {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .wd-side {
+      flex-basis: auto;
+    }
+  }
+
+  .wd-board {
+    display: grid;
+    width: max-content;
+    margin: 0 auto;
+    padding: 4px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+
+  .wd-square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    background: var(--corridor);
+    border: 1px solid var(--corridor-border);
+    font: inherit;
+  }
+
+  .wd-door {
+    background: color-mix(in srgb, var(--door) 35%, var(--corridor));
+  }
+
+  .wd-room {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    margin: 2px;
+    padding: 6px;
+    background: var(--room-bg);
+    border: 2px solid var(--room-border);
+    border-radius: 6px;
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+  }
+
+  .wd-target {
+    cursor: pointer;
+    outline: 3px solid var(--target);
+    outline-offset: -3px;
+    background: color-mix(in srgb, var(--target) 35%, transparent);
+
+    &:hover,
+    &:focus-visible {
+      outline-width: 4px;
+    }
+  }
+
+  .wd-room.wd-target {
+    background: color-mix(in srgb, var(--target) 25%, var(--room-bg));
+  }
+
+  .wd-highlight {
+    box-shadow: inset 0 0 0 3px var(--highlight);
+  }
+
+  .wd-room-name {
+    font-weight: 700;
+  }
+
+  .wd-passage {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .wd-chips,
+  .wd-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .wd-chip {
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    font-size: 0.7rem;
+  }
+
+  .wd-token {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--wd-token);
+    border: 2px solid var(--text);
+    box-sizing: border-box;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-shadow: 0 0 2px #000;
+  }
+
+  .wd-you,
+  .game-status,
+  .turn-message,
+  .wd-solution,
+  .wd-hand,
+  .wd-show,
+  .wd-picker,
+  .wd-players,
+  .wd-log,
+  .wd-notes {
+    margin: 0;
+    padding: 8px 12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+
+  .game-status {
+    background: var(--status-bg);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .wd-solution {
+    font-weight: 700;
+    border-color: var(--highlight);
+  }
+
+  .wd-heading {
+    margin: 0 0 6px;
+    font-size: 1rem;
+  }
+
+  .wd-dice {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+
+    .dice-die {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .wd-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .wd-button {
+    min-height: 36px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--button-hover-bg);
+    }
+  }
+
+  .wd-quiet {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+
+    &:hover {
+      background: var(--status-bg);
+    }
+  }
+
+  .wd-hint {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .wd-picker p {
+    margin: 0 0 8px;
+  }
+
+  .wd-pick {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+
+    select {
+      min-height: 36px;
+      font: inherit;
+    }
+  }
+
+  .wd-hand-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .wd-card {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 72px;
+    padding: 6px 4px;
+    border: 2px solid currentColor;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  .wd-card-art {
+    width: 36px;
+    height: 36px;
+  }
+
+  .wd-card-name {
+    color: var(--text);
+  }
+
+  .wd-card-suspect {
+    color: var(--wd-card-suspect);
+  }
+
+  .wd-card-object {
+    color: var(--wd-card-object);
+  }
+
+  .wd-card-room {
+    color: var(--wd-card-room);
+  }
+
+  .wd-card-button {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 8px;
+
+    &:hover .wd-card,
+    &:focus-visible .wd-card {
+      outline: 3px solid var(--target);
+    }
+  }
+
+  .wd-players {
+    list-style: none;
+
+    .wd-current {
+      font-weight: 700;
+    }
+  }
+
+  .wd-log ol {
+    margin: 0;
+    padding-left: 20px;
+    text-align: left;
+  }
+
+  .wd-notes-group {
+    h4 {
+      margin: 6px 0 2px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  }
+
+  .wd-note {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .wd-note-known .wd-note-name {
+    color: var(--muted);
+  }
+
+  .wd-note-tag {
+    font-size: 0.75rem;
+  }
+
+  .wd-mark {
+    min-width: 64px;
+    min-height: 32px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: default;
+    }
+  }
+
+  .wd-mark-yes {
+    color: var(--wd-mark-yes);
+    font-weight: 700;
+  }
+
+  .wd-mark-no {
+    color: var(--wd-mark-no);
+    font-weight: 700;
+  }
+
+  .wd-mark-maybe {
+    color: var(--wd-mark-maybe);
+  }
+}
