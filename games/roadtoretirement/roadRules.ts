@@ -14,7 +14,7 @@ export const CHILD_BONUS = 25000;
 export const riskAmount = (spun: number): number => (spun <= 4 ? -20000 : spun <= 7 ? 0 : 50000);
 
 export const spin = (random: Random): number => Math.floor(random() * 10) + 1;
-const money = (amount: number): string => `$${amount.toLocaleString('en-US')}`;
+export const money = (amount: number): string => `${amount < 0 ? '-' : ''}$${Math.abs(amount).toLocaleString('en-US')}`;
 
 // A negative amount is a gain; a shortfall takes as many whole loans as it needs
 export function charge(player: RoadPlayer, amount: number): RoadPlayer {
@@ -71,7 +71,7 @@ function land(turn: Turn, random: Random): void {
       offerCareers(turn, random, true);
       break;
     case 'event':
-      turn.events.push(`landed on an event: ${space.text}`);
+      turn.events.push(`landed on an event: ${space.text!.replace(/\.$/, '')}`); // a clause inside the status line
       pay(turn, -(space.amount ?? 0));
       break;
     case 'house':

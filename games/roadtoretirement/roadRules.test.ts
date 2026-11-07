@@ -111,7 +111,7 @@ test('a payday is paid when passed and when landed on', () => {
   state = play(start, 1, { type: 'spin' }, spins(2));
   const event = ROAD[START_FORK.work + 2];
   assert.equal(player(state, 1).cash, 25000 + SALARY + event.amount!);
-  assert.deepEqual(state.lastMove!.events, ['spun 2', 'collected $35,000 on payday', `landed on an event: ${event.text}`]);
+  assert.deepEqual(state.lastMove!.events, ['spun 2', 'collected $35,000 on payday', `landed on an event: ${event.text!.slice(0, -1)}`]);
 });
 
 test('a stop space stops the move', () => {
@@ -238,7 +238,7 @@ test('retirement counts houses and children and repays loans', () => {
   assert.deepEqual(roadStandings(state), [
     { seat: 1, place: 1, score: '$105,000' },
     { seat: 2, place: 2, score: '$10,000' },
-    { seat: 3, place: 3, score: '$-95,000' }
+    { seat: 3, place: 3, score: '-$95,000' }
   ]);
 });
 
