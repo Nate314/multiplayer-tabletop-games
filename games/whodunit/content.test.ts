@@ -20,7 +20,7 @@ const BANNED = ['Scarlet', 'Mustard', 'White', 'Green', 'Peacock', 'Plum', 'Cand
 
 test('no card uses a name from the commercial game', () => {
   for (const card of CARDS) {
-    for (const word of BANNED) assert.doesNotMatch(nameOf(card), new RegExp(`\b${word}\b`, 'i'), `${nameOf(card)} / ${word}`);
+    for (const word of BANNED) assert.doesNotMatch(nameOf(card), new RegExp(`\\b${word}\\b`, 'i'), `${nameOf(card)} / ${word}`);
   }
 });
 
@@ -31,7 +31,7 @@ function files(path: string): string[] {
 }
 
 test('no file of the game names the commercial game', () => {
-  const bad = [new RegExp(['clu', 'edo'].join(''), 'i'), new RegExp('\b' + ['clu', 'e'].join('') + '\b', 'i')];
+  const bad = [new RegExp(['clu', 'edo'].join(''), 'i'), new RegExp('\\b' + ['clu', 'e'].join('') + '\\b', 'i')];
   for (const file of [...files('games/whodunit'), ...files('e2e/whodunit.spec.ts')]) {
     for (const line of readFileSync(file, 'utf8').split('\n')) {
       if (line.includes('en.wikipedia.org/wiki/')) continue;
