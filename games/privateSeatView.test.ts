@@ -48,6 +48,17 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
       ]
     }
   ],
+  charades: s => [
+    { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['yawning', 'clapping', 'sneezing'] },
+    {
+      ...s, started: true, phase: 'drawing', drawer: 1, word: 'yawning', guessed: [2],
+      chat: [
+        { id: 1, kind: 'guessed', seat: 2, text: 'Bob guessed the prompt', audience: 'all' },
+        { id: 2, kind: 'chat', seat: 2, text: 'easy', audience: 'guessed' },
+        { id: 3, kind: 'close', seat: 1, text: 'So close!', audience: 1 }
+      ]
+    }
+  ],
   codebreaker: s => [
     { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
     {
