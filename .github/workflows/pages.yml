@@ -31,16 +31,17 @@ jobs:
 
       - run: npm ci
 
-      # Pages serves the site under /<repository>/, so every asset and route is built under that path
+      # base_path is '' on a custom domain and /<repository> on <owner>.github.io; every asset and route is built under it
+      - id: pages
+        uses: actions/configure-pages@v5
+
       - name: Build the site
-        run: npm run build -- --base "/${{ github.event.repository.name }}/"
+        run: npm run build -- --base "${{ steps.pages.outputs.base_path }}/"
         env:
           VITE_BACKEND_URL: ${{ vars.BACKEND_URL }}
 
       # Pages has no fallback to index.html, so /join/... and /stats links open the app through its 404 page
       - run: cp dist/index.html dist/404.html
-
-      - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:

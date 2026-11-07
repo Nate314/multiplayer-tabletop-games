@@ -66,11 +66,15 @@ Any arguments are passed straight to `docker compose`, for example `./run.sh dow
 
 ## Hosting the page on GitHub Pages
 
-`.github/workflows/pages.yml` builds the client on every push to `master` and publishes it to GitHub Pages under `/<repository>/`. Pages only serves files, so the game server runs elsewhere (Docker above, on any host reachable over HTTPS, since a page served over HTTPS cannot open a plain `ws://` socket). Players enter the server's address under Settings > Server. To give every visitor a default, set the repository variable `BACKEND_URL` (Settings > Secrets and variables > Actions > Variables).
+`.github/workflows/pages.yml` builds the client on every push to `master` and publishes it to GitHub Pages: under `/<repository>/` on `<owner>.github.io`, or at `/` once a custom domain is set (the build path follows whichever Pages reports). Pages only serves files, so the game server runs elsewhere (Docker above, on any host reachable over HTTPS, since a page served over HTTPS cannot open a plain `ws://` socket).
 
 One-time setup: Settings > Pages > Build and deployment > Source: GitHub Actions.
 
-The server answers `/api` requests from any origin. No route uses cookies, so this lends other sites no visitor credentials.
+For a custom domain such as `games.example.com`: add a DNS `CNAME` record from `games` to `<owner>.github.io`, enter the domain under Settings > Pages > Custom domain, then tick Enforce HTTPS once the check passes.
+
+Players set the game server under Settings > Server, or open a link ending in `?server=https://api.example.com`, which saves that server in their browser. Share and QR links add `?server=` themselves whenever a server is set, so friends land on the same one. To give every visitor a default, set the repository variable `BACKEND_URL` (Settings > Secrets and variables > Actions > Variables).
+
+Because the game server is the player's choice, the built page carries a Content-Security-Policy that refuses inline scripts and event handlers, so drawings from a hostile server cannot run code. The server answers `/api` requests from any origin. No route uses cookies, so this lends other sites no visitor credentials.
 
 ## Development
 
@@ -122,7 +126,7 @@ The gear button in the landing page header and every game header opens Settings.
 - Color-blind symbols adds a symbol next to colors that carry meaning
 - Highlight newly drawn cards marks the cards you just drew
 - Notify me when it is my turn turns notifications on or off (on by default). See Notifications below
-- Server is the address of the game server, such as `https://games.example.com`. Leave it empty when the page comes from the game server itself. Set it when the page is hosted apart from the server, as on GitHub Pages. Saving reloads the page
+- Server is the address of the game server, such as `https://games.example.com`. Leave it empty when the page comes from the game server itself. Set it when the page is hosted apart from the server, as on GitHub Pages, or open a link with `?server=<address>`. Saving reloads the page
 - In a game with house rule options, Settings also lists the house rules in use, read only, with each non-standard value marked "(house rule)". This part is the same for every player
 
 ## Notifications

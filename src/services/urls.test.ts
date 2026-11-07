@@ -1,6 +1,6 @@
 import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { apiUrl, loadBackendUrl, routePath, saveBackendUrl } from './urls.ts'
+import { adoptServerParam, apiUrl, loadBackendUrl, routePath, saveBackendUrl, withServer } from './urls.ts'
 
 const store = new Map<string, string>()
 globalThis.localStorage = {
@@ -36,4 +36,34 @@ test('an empty address goes back to this origin', () => {
 test('routes are read the same at the root', () => {
   assert.equal(routePath('/stats'), '/stats')
   assert.equal(routePath('/'), '/')
+})
+
+test('a shared link carries the server only when one is set', () => {
+  assert.equal(withServer('https://site/join/chess/a'), 'https://site/join/chess/a')
+  saveBackendUrl('https://games.example.com')
+  assert.equal(withServer('https://site/join/chess/a'), 'https://site/join/chess/a?server=https%3A%2F%2Fgames.example.com')
+})
+
+// A stand-in for the page at `href`, recording where replaceState leaves the address bar
+function openPage(href: string) {
+  const page = { href }
+  globalThis.window = {
+    location: page,
+    history: { replaceState: (_s: unknown, _t: string, url: URL) => { page.href = String(url) } },
+  } as unknown as Window & typeof globalThis
+  return page
+}
+
+test('?server= is saved and removed from the address, keeping the rest', () => {
+  const page = openPage('https://site/join/chess/a?server=https%3A%2F%2Fgames.example.com&game=x')
+  adoptServerParam()
+  assert.equal(loadBackendUrl(), 'https://games.example.com')
+  assert.equal(page.href, 'https://site/join/chess/a?game=x')
+})
+
+test('an invalid ?server= keeps the saved server', () => {
+  saveBackendUrl('https://games.example.com')
+  openPage('https://site/?server=javascript%3Aalert(1)')
+  adoptServerParam()
+  assert.equal(loadBackendUrl(), 'https://games.example.com')
 })

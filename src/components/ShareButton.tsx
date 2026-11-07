@@ -3,7 +3,7 @@ import useDismiss from '../hooks/useDismiss.ts';
 import ServerSvg from '../assets/ServerSvg.tsx';
 import { svgUrl } from '../assets/svgCache.ts';
 import { joinLink, shareGame } from '../services/share.ts';
-import { appOrigin } from '../services/urls.ts';
+import { appOrigin, withServer } from '../services/urls.ts';
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 
 const COPIED_MS = 2000;
@@ -27,7 +27,7 @@ export default function ShareButton({ game, gameId }: { game: GameInfo; gameId: 
       setManualUrl(null);
       return;
     }
-    const url = joinLink(appOrigin(), game.id, gameId);
+    const url = withServer(joinLink(appOrigin(), game.id, gameId));
     const result = await shareGame(navigator, { title: `Join ${game.name}`, url });
     if (result === 'copied') setCopied(true);
     if (result === 'manual') setManualUrl(url);
