@@ -10,6 +10,7 @@ import OpenSavedGame from './components/OpenSavedGame'
 import RejoinButton from './components/RejoinButton'
 import ResumeGame from './components/ResumeGame'
 import GitHubLink from './components/GitHubLink'
+import { appPath, routePath } from './services/urls.ts'
 import SettingsButton from './components/SettingsButton'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJoinForm, saveJoinForm } from './services/settings.ts'
@@ -19,7 +20,7 @@ import './App.scss'
 
 function App() {
   // A /join/<game type>/<game ID> address, read once
-  const [link] = useState(() => parseJoinLink(window.location.pathname, GAME_INFOS.map(({ id }) => id)))
+  const [link] = useState(() => parseJoinLink(routePath(window.location.pathname), GAME_INFOS.map(({ id }) => id)))
   const [selectedId, setSelectedId] = useState<string | null>(link?.gameType ?? null)
   // Kept here so the form is still filled in after leaving or a disconnect
   // The last name and game ID used to join, read once
@@ -31,7 +32,7 @@ function App() {
   const { playerNumber, spectatorId, credential, gameState, gameType, error, session, localSeats, join, showSeat, leave, backToGames, dropGame, rejoin, resume } = useGameConnection(link)
   // So a refresh or Back does not reopen the dialog, and a stale ?game= does not make the service worker think this tab shows that game
   useEffect(() => {
-    if (window.location.pathname.startsWith('/join/') || window.location.search) window.history.replaceState(null, '', '/')
+    if (routePath(window.location.pathname).startsWith('/join/') || window.location.search) window.history.replaceState(null, '', appPath('/'))
   }, [])
   const joined = gameState !== null && (playerNumber !== null || spectatorId !== null || localSeats !== null)
   // The game on screen however it was joined: dialog, refresh or rejoin button
@@ -99,7 +100,7 @@ function App() {
           )}
           <OpenSavedGame games={GAME_INFOS} />
           <ResumeGame games={GAME_INFOS} onReady={resume} />
-          <a className="open-saved-game lobby-stats-link" href="/stats">Stats</a>
+          <a className="open-saved-game lobby-stats-link" href={appPath('/stats')}>Stats</a>
         </div>
         <OpenGames
           games={GAME_INFOS}

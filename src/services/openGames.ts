@@ -1,4 +1,5 @@
 import type { OpenGame } from '../../shared/types.ts';
+import { apiUrl } from './urls.ts';
 
 export const OPEN_GAMES_REFRESH_MS = 5000;
 
@@ -10,7 +11,7 @@ const isOpenGame = (game: unknown): game is OpenGame => {
 
 export const fetchOpenGames = async (): Promise<OpenGame[] | 'off' | 'failed'> => {
   try {
-    const response = await fetch('/api/open-games');
+    const response = await fetch(apiUrl('/api/open-games'));
     if (response.status === 404) return 'off';
     if (!response.ok) return 'failed';
     const body = await response.json();

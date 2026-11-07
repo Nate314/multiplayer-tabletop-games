@@ -3,6 +3,7 @@ import type { HouseRulesProposal } from '../../shared/houseRules.ts';
 import type { Reaction } from '../../shared/reactions.ts';
 import type { BasePublicState, Seat } from '../../shared/types.ts';
 import { deviceId } from './device.ts';
+import { socketUrl } from './urls.ts';
 
 type GameJoined = Extract<ServerMessage, { type: typeof MESSAGE_TYPES.GAME_JOINED }>['payload'];
 type Join = Extract<ClientMessage, { type: typeof MESSAGE_TYPES.JOIN_GAME }>;
@@ -29,13 +30,11 @@ class GameService {
   }
 
   // `rejoin` only takes back a held seat, so it never starts a new game; taking one back needs its `seatKey`
-  connect(request: JoinRequest, serverUrl = window.location.host): void {
+  connect(request: JoinRequest): void {
     // Drop any earlier socket, e.g. after a refused join, without reporting a disconnect
     this.disconnect();
 
-    // Use wss:// for https, ws:// for http
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${serverUrl}`);
+    const ws = new WebSocket(socketUrl());
     this.ws = ws;
 
     ws.onopen = () => {

@@ -4,13 +4,14 @@ import { downloadJson } from '../services/download';
 import { gameFileName } from '../../shared/gameFile.ts';
 import type { BasePublicState, HistoryStep } from '../../shared/types.ts';
 import type { ClientGame } from '../clientGames.ts';
+import { apiUrl } from '../services/urls.ts';
 
 // The server opens a game's history and file only to the people in it, who prove it with their seat or spectator key
 const withCredential = (credential: string | undefined): RequestInit => ({ headers: credential ? { Authorization: `Bearer ${credential}` } : {} });
 
 async function fetchHistory(gameType: string, gameId: string, credential: string | undefined): Promise<History> {
   try {
-    const response = await fetch(`/api/history/${gameType}/${encodeURIComponent(gameId)}`, withCredential(credential));
+    const response = await fetch(apiUrl(`/api/history/${gameType}/${encodeURIComponent(gameId)}`), withCredential(credential));
     if (!response.ok) return { status: 'failed' };
     const { steps } = await response.json() as { steps: HistoryStep[] };
     return { status: 'loaded', steps };
@@ -36,7 +37,7 @@ export function useHistoryDialog(gameType: string, gameState: BasePublicState, c
   async function download(): Promise<boolean> {
     const { gameId } = gameState;
     try {
-      const response = await fetch(`/api/game-file/${gameType}/${encodeURIComponent(gameId)}`, withCredential(credential));
+      const response = await fetch(apiUrl(`/api/game-file/${gameType}/${encodeURIComponent(gameId)}`), withCredential(credential));
       if (!response.ok) return false;
       downloadJson(gameFileName(gameType, gameId), await response.json());
       return true;

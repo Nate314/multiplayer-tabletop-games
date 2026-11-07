@@ -1,3 +1,4 @@
+import { apiUrl } from '../services/urls.ts';
 // The markup of every server SVG this page has loaded, by URL. A URL's drawing never changes, so it is kept for the
 // life of the page; a failure is not kept, so the next piece that asks tries again
 const loaded = new Map<string, string>();
@@ -11,7 +12,7 @@ export function subscribeSvgs(listener: () => void): () => void {
 }
 
 export function svgUrl(name: string, ...params: (string | number)[]): string {
-  return ['/api/svg', name, ...params.map(param => encodeURIComponent(String(param)))].join('/');
+  return apiUrl(['/api/svg', name, ...params.map(param => encodeURIComponent(String(param)))].join('/'));
 }
 
 export function cachedSvg(url: string): string | undefined {

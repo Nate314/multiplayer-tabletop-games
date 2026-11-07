@@ -1,0 +1,57 @@
+# Builds the client and publishes dist/ to GitHub Pages. The game server runs elsewhere: set its address in Settings,
+# or give every visitor a default with the repository variable BACKEND_URL (Settings > Secrets and variables > Actions).
+# One-time setup in the repo: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer push waits rather than cancelling one that is under way.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Pages serves the site under /<repository>/, so every asset and route is built under that path
+      - name: Build the site
+        run: npm run build -- --base "/${{ github.event.repository.name }}/"
+        env:
+          VITE_BACKEND_URL: ${{ vars.BACKEND_URL }}
+
+      # Pages has no fallback to index.html, so /join/... and /stats links open the app through its 404 page
+      - run: cp dist/index.html dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

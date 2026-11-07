@@ -4,6 +4,7 @@ import type { GameInfo } from '../../shared/gameDefinition.ts'
 import type { BasePublicState, Seat } from '../../shared/types.ts'
 import usePreferences from '../hooks/usePreferences.ts'
 import gameService from '../services/gameService.ts'
+import { appPath } from '../services/urls.ts'
 import { ALERTS_GRANTED, currentEnv, showAlert, subscribePush } from './support.ts'
 
 const LANDING_TITLE = 'Multiplayer Tabletop Games'
@@ -25,8 +26,8 @@ export default function useTurnAlerts(info: GameInfo, gameState: BasePublicState
 
   // The service worker finds this tab by its ?game= address
   useEffect(() => {
-    window.history.replaceState(null, '', '/?' + new URLSearchParams({ game: roomId }))
-    return () => window.history.replaceState(null, '', '/')
+    window.history.replaceState(null, '', appPath('/?') + new URLSearchParams({ game: roomId }))
+    return () => window.history.replaceState(null, '', appPath('/'))
   }, [roomId])
 
   // The server only refuses these from a spectator, so a device without seats sends nothing

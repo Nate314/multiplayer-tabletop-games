@@ -1,4 +1,5 @@
 import { getPreferences } from '../hooks/usePreferences.ts'
+import { apiUrl, appPath } from '../services/urls.ts'
 
 export type AlertSupport = 'ready' | 'insecure' | 'unsupported' | 'iphoneHomeScreen' | 'blocked'
 type AlertEnv = { isSecureContext: boolean; hasNotification: boolean; permission?: NotificationPermission; userAgent: string; maxTouchPoints: number; standalone: boolean }
@@ -63,7 +64,7 @@ export function sameKey(existing: ArrayBuffer | null, key: Uint8Array): boolean 
 export async function subscribePush(): Promise<string | null> {
   try {
     const registration = await navigator.serviceWorker.ready
-    const { publicKey } = await (await fetch('/api/push/key')).json() as { publicKey: string }
+    const { publicKey } = await (await fetch(apiUrl('/api/push/key'))).json() as { publicKey: string }
     const serverKey = keyBytes(publicKey)
     const existing = await registration.pushManager.getSubscription()
     // A subscription bound to older server keys (after a database reset) only gets 403s
@@ -89,7 +90,7 @@ export function unsubscribePush(): void {
 
 // Through the worker when there is one, since Android refuses new Notification; same tag as a push, so a double shows once
 export function showAlert(title: string, body: string, tag: string): void {
-  const options = { body, tag, icon: '/icon-192.png', badge: '/icon-192.png', data: { url: window.location.href, tag } }
+  const options = { body, tag, icon: appPath('/icon-192.png'), badge: appPath('/icon-192.png'), data: { url: window.location.href, tag } }
   try {
     Promise.resolve(navigator.serviceWorker?.getRegistration())
       .then(registration => {

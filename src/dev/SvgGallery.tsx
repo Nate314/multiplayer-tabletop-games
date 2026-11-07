@@ -3,6 +3,7 @@ import ServerSvg from '../assets/ServerSvg.tsx';
 import { svgUrl } from '../assets/svgCache.ts';
 import ThemeToggle from '../components/ThemeToggle.tsx';
 import './dev.scss';
+import { apiUrl } from '../services/urls.ts';
 
 type Listing = { name: string; params: string[]; samples: string[][] }[];
 
@@ -12,7 +13,7 @@ export default function SvgGallery() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch('/api/svg')
+    fetch(apiUrl('/api/svg'))
       .then(response => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
       .then(setListing, () => setError(true));
   }, []);
