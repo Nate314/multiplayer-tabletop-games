@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How is a round scored?',
-    answer: 'You score 1 point for each valid answer that no one else gave. Answers that are equal once capitals, spaces and punctuation are ignored (and a leading "a", "an" or "the") are duplicates and score 0, so "a dog" matches "Dog" but not "dogs". The highest total after the last round wins; equal totals share the win.'
+    answer: 'You score 1 point for each valid answer that no one else gave. Answers that are equal once capitals, spaces, hyphens and apostrophes are ignored (and a leading "a", "an" or "the") are duplicates and score 0, so "a dog" matches "Dog" but not "dogs". The highest total after the last round wins; equal totals share the win.'
   },
   {
     question: 'How do I challenge an answer?',
@@ -27,6 +27,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens if someone leaves?',
-    answer: 'A player who leaves keeps their seat and can rejoin. If only one player is left, that player wins.'
+    answer: 'A player who drops their connection only holds their seat and can rejoin. A player who is dismissed leaves the round: their answers, the challenges on them and their votes are dropped (so an answer that matched theirs can now score), and the round carries on with the players left. If only one player is left, that player wins.'
   }
 ];

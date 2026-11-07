@@ -9,7 +9,8 @@ const TAGS: Record<Exclude<Verdict, 'empty'>, string> = { valid: '+1', duplicate
 export default function ReviewTable({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat }) {
   const { list, activePlayers, playerNames, answers, verdicts, roundPoints, challenges, review, isGameOver } = gameState;
   const acted = viewer !== 0 && activePlayers.includes(viewer);
-  const waiting = connectedPlayers(gameState).filter(seat => !review?.acknowledged.includes(seat));
+  const owesVote = (seat: Seat) => challenges.some(c => c.verdict === 'open' && c.seat !== seat && c.votes[seat] === undefined);
+  const waiting = activePlayers.filter(seat => owesVote(seat) || (connectedPlayers(gameState).includes(seat) && !review?.acknowledged.includes(seat)));
   const send = (action: Record<string, unknown>) => gameService.sendAction(action);
 
   return (
