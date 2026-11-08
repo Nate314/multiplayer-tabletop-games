@@ -9,7 +9,7 @@ import type { Seat } from '../../../shared/types.ts';
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   return (
     <div className="history-layout">
-      <Blanks mask={gameState.mask} word={gameState.word} className="charades-blanks" />
+      <Blanks mask={gameState.mask} word={gameState.word} label="Prompt" className="charades-blanks" />
       <Scores gameState={gameState} playerNumber={viewer ?? 0} busyNote="acting" />
       {viewer === null && <ChatLines gameState={gameState} />}
     </div>

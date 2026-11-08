@@ -45,7 +45,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         )}
         <div className="charades-main">
           <div className="charades-stage">
-            {acting ? <PromptCard prompt={word} /> : <Blanks mask={gameState.mask} word={word} className="charades-blanks" />}
+            {acting ? <PromptCard prompt={word} /> : <Blanks mask={gameState.mask} word={word} label="Prompt" className="charades-blanks" />}
           </div>
           <div className="charades-side">
             <Scores gameState={gameState} playerNumber={playerNumber} busyNote="acting" />

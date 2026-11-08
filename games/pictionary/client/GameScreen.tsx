@@ -39,7 +39,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
           </div>
         </div>
-        <Blanks mask={gameState.mask} word={gameState.word} className="pictionary-blanks" />
+        <Blanks mask={gameState.mask} word={gameState.word} label="Word" className="pictionary-blanks" />
         {isDrawer && phase === 'choosing' && wordChoices.length > 0 && (
           <div className="word-choices" role="group" aria-label="Choose a word">
             {wordChoices.map((word, index) => (

@@ -62,7 +62,7 @@ test.describe('Charades rules', () => {
     await choices(alice).filter({ hasText: 'blow-drying hair' }).click();
     await expect(card(alice)).toHaveText('blow-drying hair');
     await expect(card(bob)).toHaveCount(0);
-    await expect(blanks(bob)).toHaveAccessibleName('Word: 14 letters');
+    await expect(blanks(bob)).toHaveAccessibleName('Prompt: 14 letters');
     await expect(blanks(bob).locator('.blank-letter')).toHaveCount(14);
     await expect(blanks(bob).locator('.blank-word')).toHaveCount(2);
     await expect(blanks(bob).locator('.blank-hyphen')).toHaveCount(1);
@@ -79,7 +79,7 @@ test.describe('Charades rules', () => {
       await expect(points(page, 'Alice')).toHaveText('25');
     }
     expect(Number(await points(cara, 'Bob').textContent())).toBeGreaterThan(10);
-    await expect(blanks(bob)).toHaveAccessibleName('Word: juggling');
+    await expect(blanks(bob)).toHaveAccessibleName('Prompt: juggling');
   });
 
   test('one letter off shows "So close!" only to the guesser', async ({ seat }) => {
@@ -120,7 +120,7 @@ test.describe('Charades rules', () => {
     for (const page of [alice, bob, cara]) {
       await expect(chatLines(page).filter({ hasText: 'The prompt was juggling' })).toHaveCount(1, { timeout: 2000 });
     }
-    await expect(blanks(bob)).toHaveAccessibleName('Word: juggling');
+    await expect(blanks(bob)).toHaveAccessibleName('Prompt: juggling');
   });
 
   test('when everyone has guessed, the prompt is revealed and the next player chooses', async ({ seat }) => {
@@ -184,7 +184,7 @@ test.describe('Charades rules', () => {
       await expect(points(page, 'Alice')).toHaveText('0');
       await expect(chatLines(page).filter({ hasText: 'Bob guessed the prompt!' })).toHaveCount(0);
     }
-    await expect(blanks(bob)).toHaveAccessibleName('Word: 8 letters');
+    await expect(blanks(bob)).toHaveAccessibleName('Prompt: 8 letters');
     await expect(bob.locator('.chat-label')).toHaveText('Guess');
   });
 
@@ -225,10 +225,10 @@ test.describe('Charades rules', () => {
     const dana = await watch(browser, server, 'charades', table.gameId, 'Dana');
     const tv = await tableScreen(table);
     try {
-      await expect(blanks(dana)).toHaveAccessibleName('Word: juggling');
+      await expect(blanks(dana)).toHaveAccessibleName('Prompt: juggling');
       await expect(chatLines(dana).filter({ hasText: 'jugling: So close!' })).toHaveCount(1);
       await expect(chatLines(dana).filter({ hasText: 'Cara: well acted' })).toHaveCount(1);
-      await expect(blanks(tv)).toHaveAccessibleName('Word: 8 letters');
+      await expect(blanks(tv)).toHaveAccessibleName('Prompt: 8 letters');
       await expect(chatLines(tv).filter({ hasText: 'Cara guessed the prompt!' })).toHaveCount(1);
       await expect(tv.locator('body')).not.toContainText('jugling');
       await expect(tv.locator('body')).not.toContainText('juggling');
@@ -244,7 +244,7 @@ test.describe('Charades rules', () => {
       await (await headerButton(page, 'History')).click();
       const history = page.getByRole('dialog', { name: 'History' });
       await expect(history.locator('.history-move')).toContainText('Alice chose a prompt');
-      await expect(history.locator('.charades-blanks')).toHaveAccessibleName('Word: 8 letters');
+      await expect(history.locator('.charades-blanks')).toHaveAccessibleName('Prompt: 8 letters');
       for (const prompt of CHOICES) await expect(history).not.toContainText(prompt);
       await history.getByRole('button', { name: 'Close' }).click();
     }
