@@ -27,7 +27,7 @@ test('every definition is short and plain', () => {
 });
 
 test('no definition contains its own word', () => {
-  for (const { word, definition } of WORDS) assert.doesNotMatch(definition, new RegExp(`\b${word}`), word);
+  for (const { word, definition } of WORDS) assert.doesNotMatch(definition, new RegExp(`\\b${word}`), word);
 });
 
 test('no client file imports rules.ts or words.ts', () => {
