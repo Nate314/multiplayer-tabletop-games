@@ -21,7 +21,7 @@ export function sideOf(space: number): 'bottom' | 'left' | 'top' | 'right' | 'co
 
 // Short names that fit on a board space
 const SHORT: Record<string, string> = {
-  'Harbor Station': 'Harbor Stn.',
+  'Harbor Station': 'Hbr. Stn.',
   'Willow Street': 'Willow St.',
   'Fennel Street': 'Fennel St.',
   'Copper Street': 'Copper St.',
