@@ -14,7 +14,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
         <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} />
       </div>
-      {letter && phase === 'answering' && !isGameOver && <AnswerSheet key={round} gameState={gameState} playerNumber={playerNumber} />}
+      {letter && phase === 'answering' && !isGameOver && <AnswerSheet key={`${round}:${gameState.list.join("|")}`} gameState={gameState} playerNumber={playerNumber} />}
       {letter && phase === 'review' && <ReviewTable gameState={gameState} viewer={playerNumber} />}
       <Scores gameState={gameState} playerNumber={playerNumber} />
     </div>

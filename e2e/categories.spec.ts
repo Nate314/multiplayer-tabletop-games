@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openFaq, test, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, test, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { GameState } from '../games/categories/types.ts';
 
 // One test per rule, control and difference in games/categories/README.md. Seat 1 is Alice, seat 2 Bob, seat 3 Cara.
@@ -56,6 +56,16 @@ test.describe('Categories rules', () => {
   test('Categories per list sets the number of categories', async ({ seat }) => {
     const table = await seat('categories', ['Alice', 'Bob'], { houseRules: { listSize: 8 } });
     await expect(inputs(table.pages[0])).toHaveCount(8);
+  });
+
+  test('Changing Categories per list after the sheet showed keeps answers storable', async ({ seat }) => {
+    const table = await seat('categories', ['Alice', 'Bob']);
+    await expect(inputs(table.pages[0])).toHaveCount(12);
+    await setHouseRules(table.pages[0], 'categories', { listSize: 8 });
+    await agreeToHouseRules(...table.pages);
+    await expect(inputs(table.pages[0])).toHaveCount(8);
+    await inputs(table.pages[0]).first().fill('Bear');
+    await expect.poll(async () => (await answerOf(table, 1, 0))).toBe('Bear');
   });
 
   test('Hard letters off leaves out Q, U, V, X, Y and Z, on puts them in', async ({ seat }) => {
