@@ -7,14 +7,14 @@ import { cityError, roadSpots, settlementError, settlementSpotError } from './bu
 import { robberVictims } from './dice.ts';
 import { COSTS, covers, total } from './resources.ts';
 import { tradeRatio } from './trades.ts';
-import { catan } from './index.ts';
+import { hexisland } from './index.ts';
 import type { Move, PublicGameState, Resources, Seat } from './types.ts';
 import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'catan/g1';
+const ROOM = 'hexisland/g1';
 const NAMES = ['A', 'B', 'C'];
 const SIX_NAMES = ['A', 'B', 'C', 'D', 'E', 'F'];
 
@@ -31,14 +31,14 @@ function seeded(seed: number): Random {
 
 // Everyone joins and agrees to the house rules, after the first player sets `values` if given
 function gameWith(seed: number, names = NAMES, values?: HouseRuleValues): Manager {
-  const manager = rememberingKeys(createGameManager([catan], seeded(seed)));
-  for (const name of names) manager.join('catan', 'g1', name);
+  const manager = rememberingKeys(createGameManager([hexisland], seeded(seed)));
+  for (const name of names) manager.join('hexisland', 'g1', name);
   if (values) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Catan's
+// The manager is generic over games, so tests narrow the public state to Hex Island's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -132,7 +132,7 @@ test('a rejoin mid-turn shows the same robber to move and the same hand', () => 
   const seat = state.currentPlayer ?? assert.fail('nobody to act');
   const hand = viewOf(manager, seat).hand;
   manager.disconnect(ROOM, seat);
-  const rejoined = manager.join('catan', 'g1', NAMES[seat - 1], true);
+  const rejoined = manager.join('hexisland', 'g1', NAMES[seat - 1], true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.deepEqual(view.pending, { kind: 'robber' });
@@ -161,7 +161,7 @@ test('a seeded game plays to 10 points, and no table step shows a hand', () => {
   assert.equal(state.winners.length, 1);
   assert.ok(state.points[state.winners[0]] >= 10);
 
-  const steps = stepsOf(manager, 'catan') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'hexisland') ?? assert.fail('no history');
   assert.ok(steps.length > 50);
   for (const past of steps) {
     const view = past as unknown as PublicGameState;
@@ -170,7 +170,7 @@ test('a seeded game plays to 10 points, and no table step shows a hand', () => {
     assert.deepEqual(view.myDevCards, []);
     assert.equal(view.steal?.resource ?? null, null);
   }
-  const file = fileOf(manager, 'catan', new Date());
+  const file = fileOf(manager, 'hexisland', new Date());
   assert.ok(file && 'file' in file);
   const seatView = file.file.steps.at(-1)?.views?.[1] as unknown as PublicGameState;
   assert.ok(seatView.hand !== null);
@@ -206,7 +206,7 @@ test('a seeded six-player game plays to 10 points, and no table step shows a han
   assert.equal(state.layout.hexes.length, 30);
   assert.equal(state.winners.length, 1);
   assert.ok(state.points[state.winners[0]] >= 10);
-  const steps = stepsOf(manager, 'catan') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'hexisland') ?? assert.fail('no history');
   assert.ok(steps.length > 50);
   for (const past of steps) {
     const view = past as unknown as PublicGameState;
@@ -222,7 +222,7 @@ test('a seeded six-player game with the special build phase plays to 10 points',
   const state = playUntil(manager, view => view.isGameOver, 12000);
   assert.equal(state.winners.length, 1);
   assert.ok(state.points[state.winners[0]] >= 10);
-  const steps = (stepsOf(manager, 'catan') ?? assert.fail('no history')) as unknown as PublicGameState[];
+  const steps = (stepsOf(manager, 'hexisland') ?? assert.fail('no history')) as unknown as PublicGameState[];
   assert.ok(steps.some(past => past.lastMove?.type === 'passBuild'));
   assert.ok(steps.some(past => past.lastMove !== null && past.lastMove.type.startsWith('build') && past.lastMove.playerNumber !== past.currentPlayer));
 });

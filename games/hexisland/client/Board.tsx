@@ -36,7 +36,7 @@ const onKey = (action: () => void) => (event: KeyboardEvent) => {
   }
 };
 
-// A drawing from games/catan/svg.ts, 40 units square, centered on x, y
+// A drawing from games/hexisland/svg.ts, 40 units square, centered on x, y
 function Drawn({ url, x, y }: { url: string; x: number; y: number }) {
   return <ServerSvg url={url} inSvg svgProps={{ x: x - 20, y: y - 20, width: 40, height: 40 }} />;
 }
@@ -55,14 +55,14 @@ function NumberToken({ number, x, y }: { number: number; x: number; y: number })
   );
 }
 
-const CATAN_PIECES = [
-  ...['wood', 'brick', 'sheep', 'wheat', 'ore', 'desert'].map(terrain => svgUrl('catan-motif', terrain)),
-  ...['settlement', 'city', 'robber'].map(piece => svgUrl('catan-piece', piece)),
+const HEXISLAND_PIECES = [
+  ...['wood', 'brick', 'sheep', 'wheat', 'ore', 'desert'].map(terrain => svgUrl('hexisland-motif', terrain)),
+  ...['settlement', 'city', 'robber'].map(piece => svgUrl('hexisland-piece', piece)),
 ];
 
 // The island: hexes with their number tokens, ports, roads, settlements, cities and the robber, plus clickable targets
 export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex }: BoardProps) {
-  usePreloadSvgs(CATAN_PIECES);
+  usePreloadSvgs(HEXISLAND_PIECES);
   const board = boardOf(gameState.layout);
   const { viewBox, sea } = boardFrame(board);
   const { layout, robber, roads, buildings, playerNames, activePlayers } = gameState;
@@ -82,7 +82,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
         } : {})}>
         <title>{label}</title>
         <polygon points={hexPolygon(board, index)} />
-        <Drawn url={svgUrl('catan-motif', hex.resource ?? 'desert')} x={x} y={y - 30} />
+        <Drawn url={svgUrl('hexisland-motif', hex.resource ?? 'desert')} x={x} y={y - 30} />
         {hex.number !== null && <NumberToken number={hex.number} x={x} y={y + 4} />}
       </g>
     );
@@ -136,7 +136,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
     return (
       <g key={`building-${vertex}`} className={`building ${pieceClass(building.seat)}`} data-anim-key={buildingKey(vertex)}>
         <title>{`${playerNames[building.seat]}'s ${building.city ? 'city' : 'settlement'}`}</title>
-        <Drawn url={svgUrl('catan-piece', building.city ? 'city' : 'settlement')} x={x} y={y} />
+        <Drawn url={svgUrl('hexisland-piece', building.city ? 'city' : 'settlement')} x={x} y={y} />
         {building.city ? symbolAt(building.seat, x - 6, y + 3, BUILDING_SYMBOL) : symbolAt(building.seat, x, y + 2.5, BUILDING_SYMBOL)}
       </g>
     );
@@ -158,7 +158,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
   const robberAt = hexPoint(board, robber);
 
   return (
-    <svg className="catan-board" viewBox={viewBox} role="img" aria-label="The island of Catan">
+    <svg className="hexisland-board" viewBox={viewBox} role="img" aria-label="The Hex Island board">
       <polygon className="sea" points={sea} />
       {ports}
       {items}
@@ -167,7 +167,7 @@ export default function Board({ gameState, targets = {}, onVertex, onEdge, onHex
       {edgeTargets}
       <g className="robber" data-anim-key={robberKey}>
         <title>The robber</title>
-        <Drawn url={svgUrl('catan-piece', 'robber')} x={robberAt.x + 22} y={robberAt.y} />
+        <Drawn url={svgUrl('hexisland-piece', 'robber')} x={robberAt.x + 22} y={robberAt.y} />
       </g>
       {pieces}
       {vertexTargets}

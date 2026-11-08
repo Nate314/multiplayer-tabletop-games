@@ -1,4 +1,4 @@
-// Catan rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
+// Hex Island rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, building.ts, dice.ts, trades.ts, devCards.ts, roads.ts and state.ts.
 import { rankStandings } from '../../shared/standings.ts';
 import { plural } from '../../shared/text.ts';

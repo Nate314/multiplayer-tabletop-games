@@ -1,4 +1,4 @@
-// The house rules of catan, declared apart from the rules so the landing page can list them without loading the rules
+// The house rules of hexisland, declared apart from the rules so the landing page can list them without loading the rules
 import { targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
 
 export const PLAYERS = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
@@ -10,7 +10,7 @@ export const FRIENDLY_ROBBER_RULE: ToggleRule = {
   id: 'friendlyRobber', label: 'Friendly robber: players with 2 points or fewer cannot be robbed', kind: 'toggle', standard: false,
   help: 'The robber may still be moved to their hex, where it blocks production but steals nothing'
 };
-export const CATAN_RULES: HouseRule[] = [POINTS_RULE, FRIENDLY_ROBBER_RULE];
+export const HEXISLAND_RULES: HouseRule[] = [POINTS_RULE, FRIENDLY_ROBBER_RULE];
 
 export const SPECIAL_BUILD: ToggleRule = {
   id: 'specialBuild',

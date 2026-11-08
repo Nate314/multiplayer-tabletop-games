@@ -10,7 +10,7 @@ import type { Seat } from './types.ts';
 
 const info = rulesGame.info;
 const [FAST, GOAL] = info.houseRules as [ToggleRule, ChoiceRule<number>];
-const CATAN = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
+const HEX_ISLAND = { minPlayers: 3, maxPlayers: 6, stretchedPlayers: { min: 2, max: 6 } };
 const UNO = { minPlayers: 2, maxPlayers: 8, stretchedPlayers: { min: 2, max: 10 } };
 
 function lobby(seats: Seat[], patch: Partial<TestState> = {}): TestState {
@@ -170,7 +170,7 @@ test('tableLimit follows Most players and minimumToStart is the stretched minimu
   assert.equal(tableLimit(info, plain), 4);
   assert.equal(tableLimit(info, ok(propose(plain, 1, { maxPlayers: 6 }))), 6);
   assert.equal(tableLimit(info, {}), 4);
-  assert.equal(minimumToStart(CATAN), 2);
+  assert.equal(minimumToStart(HEX_ISLAND), 2);
   assert.equal(minimumToStart(testGame.info), testGame.info.minPlayers);
 });
 
@@ -188,11 +188,11 @@ test('describeHouseRules marks non-standard values and lists a raised table', ()
 });
 
 test('describeHouseRules lists a seat count below the normal minimum', () => {
-  const rules = afterSeatChange(CATAN, undefined, [1, 2]);
-  assert.deepEqual(describeHouseRules(CATAN, rules, 2), [OFF, { label: 'Players', value: '2', standard: false }]);
-  assert.deepEqual(describeHouseRules(CATAN, rules, 3), [OFF]);
+  const rules = afterSeatChange(HEX_ISLAND, undefined, [1, 2]);
+  assert.deepEqual(describeHouseRules(HEX_ISLAND, rules, 2), [OFF, { label: 'Players', value: '2', standard: false }]);
+  assert.deepEqual(describeHouseRules(HEX_ISLAND, rules, 3), [OFF]);
   // Still waiting for players, not a smaller table
-  assert.deepEqual(describeHouseRules(CATAN, afterSeatChange(CATAN, undefined, [1]), 1), [OFF]);
+  assert.deepEqual(describeHouseRules(HEX_ISLAND, afterSeatChange(HEX_ISLAND, undefined, [1]), 1), [OFF]);
   assert.deepEqual(describeHouseRules(UNO, afterSeatChange(UNO, undefined, [1]), 1), [OFF]);
 });
 
@@ -292,6 +292,6 @@ test('describeHouseRules compares against the standard for the seat count', () =
 });
 
 test('rules without standardFor or per-choice offered normalize as before', () => {
-  assert.deepEqual(afterSeatChange(CATAN, undefined, [1, 2, 3]).values, { turnTimer: 0 });
+  assert.deepEqual(afterSeatChange(HEX_ISLAND, undefined, [1, 2, 3]).values, { turnTimer: 0 });
   assert.deepEqual(afterSeatChange(UNO, undefined, [1, 2]).values, { turnTimer: 0 });
 });

@@ -150,7 +150,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       <span className="tray-icon" aria-hidden="true">
         {kind === 'road'
           ? <span className={`tray-road ${seatClass(playerNumber)}`} />
-          : <ServerSvg url={svgUrl('catan-piece', kind)} className={`tray-${kind} ${seatClass(playerNumber)}`} />}
+          : <ServerSvg url={svgUrl('hexisland-piece', kind)} className={`tray-${kind} ${seatClass(playerNumber)}`} />}
       </span>
     ),
     blocked: blockedFor(kind) || undefined
@@ -158,7 +158,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="catan-layout">
+      <div className="hexisland-layout">
         <div className={`${boardAreaClass(boardOf(gameState.layout))}${canBuild ? '' : ' hand-only-board'}`} ref={boardRef}>
           <Board gameState={gameState} targets={targets} onVertex={clickVertex} onEdge={clickEdge} onHex={clickHex} />
           <Dice dice={gameState.dice} />

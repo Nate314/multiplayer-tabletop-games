@@ -118,7 +118,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board-wrap',
     move: async page => { await button(page, 'Pass').click(); }
   },
-  catan: {
+  hexisland: {
     keep: ['.turn-message', '.hand-panel', you('.player-row')],
     hide: [others('.player-row'), '.bank-line'],
     board: '.board-area', // setup: the board is there on your turn to place
@@ -315,15 +315,15 @@ test('History shows the whole table in Hand only', async ({ seat }) => {
   await expect(history.locator('.score-row >> visible=true')).toHaveCount(2);
 });
 
-test('Catan trade offers and Monopoly auctions can be answered out of turn in Hand only', async ({ seat }) => {
-  const catan = await seat('catan', NAMES.slice(0, 3));
+test('Hex Island trade offers and Monopoly auctions can be answered out of turn in Hand only', async ({ seat }) => {
+  const hexisland = await seat('hexisland', NAMES.slice(0, 3));
   const noCards = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
-  await catan.patch({
+  await hexisland.patch({
     started: true, setup: null, rolled: true, turnHolder: 1, currentPlayer: 1,
     trade: { from: 1, to: null, give: { ...noCards, wood: 1 }, get: { ...noCards, ore: 1 }, declined: [] }
   });
-  await tableScreen(catan);
-  const bob = catan.pages[1];
+  await tableScreen(hexisland);
+  const bob = hexisland.pages[1];
   await expect(bob.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(bob.locator('.board-area >> visible=true')).toHaveCount(0);
   await expect(button(bob, 'Accept')).toBeVisible();

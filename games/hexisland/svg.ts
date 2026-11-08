@@ -1,8 +1,8 @@
 import { el, svgDoc, type SvgAsset } from '../../shared/svg/svg.ts';
 
-// Catan's terrain motifs, settlement, city and robber, drawn on the server in a 40 unit box centered on the point
+// Hex Island's terrain motifs, settlement, city and robber, drawn on the server in a 40 unit box centered on the point
 // they stand on. The board places them inside its own SVG, where clicks still reach the hex; the parts carry the
-// classes client/catan.scss colors (motif-*, and the seat color of the building group they sit in)
+// classes client/hexisland.scss colors (motif-*, and the seat color of the building group they sit in)
 
 const at = (dx: number, dy: number) => `${dx},${dy}`;
 
@@ -39,7 +39,7 @@ export function pieceSvg(piece: string): string | null {
   return Object.hasOwn(PIECES, piece) ? box(PIECES[piece]()) : null;
 }
 
-export const CATAN_ASSETS: SvgAsset[] = [
-  { name: 'catan-motif', params: ['terrain'], samples: Object.keys(MOTIFS).map(terrain => [terrain]), render: ([terrain]) => motifSvg(terrain) },
-  { name: 'catan-piece', params: ['piece'], samples: Object.keys(PIECES).map(piece => [piece]), render: ([piece]) => pieceSvg(piece) },
+export const HEXISLAND_ASSETS: SvgAsset[] = [
+  { name: 'hexisland-motif', params: ['terrain'], samples: Object.keys(MOTIFS).map(terrain => [terrain]), render: ([terrain]) => motifSvg(terrain) },
+  { name: 'hexisland-piece', params: ['piece'], samples: Object.keys(PIECES).map(piece => [piece]), render: ([piece]) => pieceSvg(piece) },
 ];

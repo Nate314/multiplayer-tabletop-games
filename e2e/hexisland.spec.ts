@@ -2,17 +2,17 @@ import type { Locator, Page } from '@playwright/test';
 import { headerButton, agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, type Seat, seeTable, setHouseRules, setPreference, type Table, test, undo } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
-} from '../games/catan/board.ts';
-import { DEV_DECK } from '../games/catan/devCards.ts';
-import { COSTS, describeResources } from '../games/catan/resources.ts';
-import { editionFor } from '../games/catan/editions.ts';
-import { settlementSpotError } from '../games/catan/building.ts';
-import { FIVE_SIX_LAYOUT, LAYOUT } from '../games/catan/testing.ts';
-import type { Building, GameState, Resources } from '../games/catan/types.ts';
+} from '../games/hexisland/board.ts';
+import { DEV_DECK } from '../games/hexisland/devCards.ts';
+import { COSTS, describeResources } from '../games/hexisland/resources.ts';
+import { editionFor } from '../games/hexisland/editions.ts';
+import { settlementSpotError } from '../games/hexisland/building.ts';
+import { FIVE_SIX_LAYOUT, LAYOUT } from '../games/hexisland/testing.ts';
+import type { Building, GameState, Resources } from '../games/hexisland/types.ts';
 
-// One test per rule, control and difference in games/catan/README.md. Players join as Alice (seat 1), Bob (seat 2),
+// One test per rule, control and difference in games/hexisland/README.md. Players join as Alice (seat 1), Bob (seat 2),
 // Cara (seat 3) and, for four, Dan (seat 4). Most tests craft a state past setup on the unit tests' fixed board
-// (games/catan/testing.ts): hexes 0-3 forest, 4-7 pasture, 8-11 fields, 12-14 hills, 15-17 mountains and the desert
+// (games/hexisland/testing.ts): hexes 0-3 forest, 4-7 pasture, 8-11 fields, 12-14 hills, 15-17 mountains and the desert
 // at 18, with tokens 2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12 in hex order. Hex 0 is the top left.
 
 const NAMES = ['Alice', 'Bob', 'Cara'];
@@ -79,7 +79,7 @@ async function settle(table: Table, fields: object): Promise<void> {
 const craft = (table: Table, fields: Crafted = {}) => settle(table, craftedState(table.pages.length, fields));
 
 async function start(seat: Seat, fields: Crafted = {}, names = NAMES) {
-  const table = await seat('catan', names);
+  const table = await seat('hexisland', names);
   await craft(table, fields);
   return { table, pages: table.pages };
 }
@@ -163,11 +163,11 @@ async function checkBankShortage(seat: Seat): Promise<void> {
   await expect(bankCount(alice, 'Wood')).toHaveText('Wood 0');
 }
 
-test.describe('Catan rules', () => {
+test.describe('Hex Island rules', () => {
   test('the board has 19 shuffled hexes, 18 number tokens and 9 ports, no 6 or 8 neighbours, and the robber on the desert', async ({ seat }) => {
     const boards: string[] = [];
     for (let game = 0; game < 2; game++) {
-      const page = (await seat('catan', NAMES)).pages[0];
+      const page = (await seat('hexisland', NAMES)).pages[0];
       await expect(page.locator('.hex')).toHaveCount(19);
       for (const [terrain, count] of [['wood', 4], ['sheep', 4], ['wheat', 4], ['brick', 3], ['ore', 3], ['desert', 1]] as const) {
         await expect(page.locator(`.hex.terrain-${terrain}`)).toHaveCount(count);
@@ -195,7 +195,7 @@ test.describe('Catan rules', () => {
   });
 
   test('five players get the 30-hex board, 28 number tokens, 11 ports, two deserts, 24 of each resource and 34 development cards', async ({ seat }) => {
-    const page = (await seat('catan', FIVE)).pages[0];
+    const page = (await seat('hexisland', FIVE)).pages[0];
     await expect(page.locator('.hex')).toHaveCount(30);
     for (const [terrain, count] of [['wood', 6], ['sheep', 6], ['wheat', 6], ['brick', 5], ['ore', 5], ['desert', 2]] as const) {
       await expect(page.locator(`.hex.terrain-${terrain}`)).toHaveCount(count);
@@ -217,7 +217,7 @@ test.describe('Catan rules', () => {
   });
 
   test('six players place in setup order round the table and back, each in their own color', async ({ seat }) => {
-    const table = await seat('catan', SIX);
+    const table = await seat('hexisland', SIX);
     const { setup } = await table.state<GameState>();
     if (!setup) throw new Error('Expected setup');
     expect(setup.order).toHaveLength(12);
@@ -241,11 +241,11 @@ test.describe('Catan rules', () => {
   });
 
   test('a sixth player can join and a seventh cannot', async ({ seat, browser, server }) => {
-    const table = await seat('catan', FIVE);
+    const table = await seat('hexisland', FIVE);
     await table.join('Finn');
     const seventh = await newPlayer(browser, server);
     await seventh.goto('/');
-    await seventh.locator('.lobby-game').filter({ has: seventh.locator('.lobby-game-name', { hasText: /^Catan$/ }) }).click();
+    await seventh.locator('.lobby-game').filter({ has: seventh.locator('.lobby-game-name', { hasText: /^Hex Island$/ }) }).click();
     await seventh.getByLabel('Your name').fill('Gus');
     await seventh.getByLabel('Game ID').fill(table.gameId);
     await seventh.getByRole('button', { name: 'Join', exact: true }).click();
@@ -254,7 +254,7 @@ test.describe('Catan rules', () => {
   });
 
   test('two players can play once both agree to the seat count as a house rule', async ({ seat }) => {
-    const table = await seat('catan', ['Alice', 'Bob'], { agree: false });
+    const table = await seat('hexisland', ['Alice', 'Bob'], { agree: false });
     for (const page of table.pages) {
       await inHouseRules(page, async dialog => {
         await expect(dialog.locator('.house-rules-panel')).toContainText('Players: 2 (house rule)');
@@ -271,10 +271,10 @@ test.describe('Catan rules', () => {
   });
 
   test('a third player can still join a table of two before the first move, and everyone agrees again', async ({ seat, browser, server }) => {
-    const table = await seat('catan', ['Alice', 'Bob']);
+    const table = await seat('hexisland', ['Alice', 'Bob']);
     const cara = await newPlayer(browser, server);
     try {
-      await joinGame(cara, 'catan', table.gameId, 'Cara');
+      await joinGame(cara, 'hexisland', table.gameId, 'Cara');
       for (const page of [...table.pages, cara]) {
         await inHouseRules(page, async dialog => {
           await expect(dialog.locator('.house-rules-list li')).toHaveCount(3);
@@ -288,12 +288,12 @@ test.describe('Catan rules', () => {
   });
 
   test('the highest roll places first after tied players roll again, setup goes 1, 2, 3, 3, 2, 1 and the second settlement takes its resources', async ({ seat, browser, server }) => {
-    const table = await seat('catan', ['Alice', 'Bob']);
+    const table = await seat('hexisland', ['Alice', 'Bob']);
     const cara = await newPlayer(browser, server);
     try {
       // Alice and Bob tie on 12 over Cara's 2, then Bob's 8 beats Alice's 3
       await table.random(...lobbyValues([6, 6, 6, 6, 1, 1, 1, 2, 4, 4]));
-      await joinGame(cara, 'catan', table.gameId, 'Cara');
+      await joinGame(cara, 'hexisland', table.gameId, 'Cara');
       const [alice, bob] = table.pages;
       const everyone = [alice, bob, cara];
       await expect(status(bob)).toHaveText(
@@ -334,7 +334,7 @@ test.describe('Catan rules', () => {
   });
 
   test('no settlement or city may be on an intersection next to another one, in setup or after', async ({ seat }) => {
-    const table = await seat('catan', NAMES);
+    const table = await seat('hexisland', NAMES);
     const { setup } = await table.state<GameState>();
     if (!setup) throw new Error('Expected setup');
     const [first, second] = [table.pages[setup.order[0] - 1], table.pages[setup.order[1] - 1]];
@@ -473,7 +473,7 @@ test.describe('Catan rules', () => {
   });
 
   test('the bank holds 19 of each resource, a short roll pays nobody unless one player is owed, and a trade or Year of Plenty it cannot pay is refused', async ({ seat }) => {
-    const table = await seat('catan', NAMES);
+    const table = await seat('hexisland', NAMES);
     for (const resource of ['Wood', 'Brick', 'Sheep', 'Wheat', 'Ore']) {
       await expect(bankCount(table.pages[0], resource)).toHaveText(`${resource} 19`);
     }
@@ -548,7 +548,7 @@ test.describe('Catan rules', () => {
   });
 
   test('development cards: the deck mix, one a turn even before rolling, not one bought that turn, and what each card does', async ({ seat }) => {
-    const table = await seat('catan', NAMES);
+    const table = await seat('hexisland', NAMES);
     const { devDeck } = await table.state<GameState>();
     const mix = (cards: string[]) => Object.fromEntries(['knight', 'victoryPoint', 'roadBuilding', 'yearOfPlenty', 'monopoly']
       .map(card => [card, cards.filter(each => each === card).length]));
@@ -747,7 +747,7 @@ test.describe('Catan rules', () => {
     await (await headerButton(bob, 'History')).click();
     const downloading = bob.waitForEvent('download');
     await bob.getByRole('dialog', { name: 'History' }).getByRole('button', { name: 'Download game' }).click();
-    const file = testInfo.outputPath('catan-game.json');
+    const file = testInfo.outputPath('hexisland-game.json');
     await (await downloading).saveAs(file);
     const visitor = await newPlayer(browser, server);
     await visitor.goto('/');
@@ -812,7 +812,7 @@ test.describe('Catan rules', () => {
   });
 
   test('a player dismissed during setup has their remaining placements skipped', async ({ seat }) => {
-    const table = await seat('catan', FOUR);
+    const table = await seat('hexisland', FOUR);
     const { setup } = await table.state<GameState>();
     if (!setup) throw new Error('Expected setup');
     const pageOf = (seatNumber: number) => table.pages[seatNumber - 1];
@@ -882,7 +882,7 @@ test.describe('Catan rules', () => {
   test('the host can set a lower target', async ({ seat }) => {
     // Four cities and a settlement are 9 points, and three roads are too few for Longest Road
     const cities = [corner(9, 0), corner(9, 2), corner(9, 4), corner(0, 0)];
-    const table = await seat('catan', NAMES, { houseRules: { targetScore: 8 } });
+    const table = await seat('hexisland', NAMES, { houseRules: { targetScore: 8 } });
     await craft(table, {
       rolled: true, buildings: { ...Object.fromEntries(cities.map(at => [at, city(1)])), [corner(2, 0)]: settlement(1) },
       roads: roadsOf(1, ring(9, 0, 3)), hands: { 1: ROAD }
@@ -897,7 +897,7 @@ test.describe('Catan rules', () => {
 
   test('a player with 2 points is not offered as a victim', async ({ seat }) => {
     // Bob has 1 point and Cara 3, and both have a card and a building on hex 4
-    const table = await seat('catan', NAMES, { houseRules: { friendlyRobber: true } });
+    const table = await seat('hexisland', NAMES, { houseRules: { friendlyRobber: true } });
     await craft(table, {
       rolled: true, dice: [3, 4], pending: { kind: 'robber' }, hands: { 2: { sheep: 1 }, 3: { ore: 1 } },
       buildings: { [corner(4, 0)]: settlement(2), [corner(4, 3)]: city(3), [corner(0, 0)]: settlement(3) }
@@ -910,7 +910,7 @@ test.describe('Catan rules', () => {
   });
 });
 
-test.describe('Catan controls', () => {
+test.describe('Hex Island controls', () => {
   test('the board shows tokens with 6 and 8 in red and dots for their odds, ports, pieces in their colors, the robber, the last roll and faded dead pieces', async ({ seat }) => {
     const { table, pages: [alice, bob, cara, dan] } = await start(seat, {
       roads: roadsOf(1, [ring(9, 0, 1)[0]]), buildings: { [corner(9, 0)]: settlement(1), [corner(0, 0)]: city(2), [corner(17, 3)]: settlement(4) }
@@ -967,7 +967,7 @@ test.describe('Catan controls', () => {
   });
 
   test('clickable places are highlighted: white circles on intersections, dashed white lines on paths and orange outlines on hexes', async ({ seat }) => {
-    const table = await seat('catan', NAMES);
+    const table = await seat('hexisland', NAMES);
     const { setup } = await table.state<GameState>();
     if (!setup) throw new Error('Expected setup');
     const placer = table.pages[setup.order[0] - 1];
@@ -985,7 +985,7 @@ test.describe('Catan controls', () => {
   });
 
   test('in setup you click a highlighted intersection for your settlement, then a highlighted path for its road', async ({ seat }) => {
-    const table = await seat('catan', NAMES);
+    const table = await seat('hexisland', NAMES);
     const { setup, playerNames } = await table.state<GameState>();
     if (!setup) throw new Error('Expected setup');
     const placer = table.pages[setup.order[0] - 1];
@@ -1132,15 +1132,15 @@ test.describe('Catan controls', () => {
   });
 
   test('the special build phase is offered only with five or more seated', async ({ seat }) => {
-    const table = await seat('catan', FOUR, { agree: false });
+    const table = await seat('hexisland', FOUR, { agree: false });
     await expect(table.pages[0].getByLabel('Special build phase')).toHaveCount(0);
     await table.join('Eve');
     await expect(table.pages[0].getByLabel('Special build phase')).not.toBeChecked();
   });
 
   test('with the special build phase on, each other player in turn order gets a build chance, builds or buys without trading or playing cards, and Done building passes it on', async ({ seat }) => {
-    const table = await seat('catan', FIVE, { agree: false });
-    await setHouseRules(table.pages[0], 'catan', { specialBuild: true });
+    const table = await seat('hexisland', FIVE, { agree: false });
+    await setHouseRules(table.pages[0], 'hexisland', { specialBuild: true });
     await agreeToHouseRules(...table.pages);
     const [alice, bob, cara, , eve] = table.pages;
     const bobRoad = edgeBetween(corner(0, 0), corner(0, 1));
@@ -1171,7 +1171,7 @@ test.describe('Catan controls', () => {
   });
 });
 
-test.describe('Catan differences from Wikipedia', () => {
+test.describe('Hex Island differences from Wikipedia', () => {
   test('the resources are called wood, brick, sheep, wheat and ore', async ({ seat }) => {
     const { pages: [alice] } = await start(seat);
     await expect(alice.locator('.hand-panel .resource-name')).toHaveText(['Wood', 'Brick', 'Sheep', 'Wheat', 'Ore']);
@@ -1181,7 +1181,7 @@ test.describe('Catan differences from Wikipedia', () => {
   test('every board is random with 6s and 8s apart, and the ports keep their places while their kinds are shuffled', async ({ seat }) => {
     const ports: { places: string; kinds: string }[] = [];
     for (let game = 0; game < 2; game++) {
-      const page = (await seat('catan', NAMES)).pages[0];
+      const page = (await seat('hexisland', NAMES)).pages[0];
       await expect(page.locator('.hex')).toHaveCount(19);
       expect(redsApart(await hexLabels(page))).toBe(true);
       const markers = page.locator('.port circle');
@@ -1271,7 +1271,7 @@ test.describe('Catan differences from Wikipedia', () => {
   });
 });
 
-test.describe('Catan building tray', () => {
+test.describe('Hex Island building tray', () => {
   const trayPiece = (page: Page, name: RegExp) => page.getByRole('region', { name: 'Your pieces' }).getByRole('button', { name });
   const road = (page: Page) => trayPiece(page, /^Road/);
   const settlementPiece = (page: Page) => trayPiece(page, /^Settlement/);
@@ -1302,8 +1302,8 @@ test.describe('Catan building tray', () => {
   });
 
   test('the tray works during your special build chance, and only then', async ({ seat }) => {
-    const table = await seat('catan', FIVE, { agree: false });
-    await setHouseRules(table.pages[0], 'catan', { specialBuild: true });
+    const table = await seat('hexisland', FIVE, { agree: false });
+    await setHouseRules(table.pages[0], 'hexisland', { specialBuild: true });
     await agreeToHouseRules(...table.pages);
     const [alice, bob, cara] = table.pages;
     const bobRoad = edgeBetween(corner(0, 0), corner(0, 1));

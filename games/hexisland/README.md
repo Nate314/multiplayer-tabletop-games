@@ -1,6 +1,6 @@
-# Catan
+# Hex Island
 
-Settle an island, trade resources and build roads, settlements and cities to reach the points to win (10 unless the host chose another), for 3 to 6 players (2 as a house rule everyone agrees to). The base game, and the 5-6 player extension with 5 or 6.
+Settle an island, trade resources and build roads, settlements and cities to reach the points to win (10 unless the host chose another), for 3 to 6 players (2 as a house rule everyone agrees to). The base game, and the 5-6 player extension with 5 or 6. It plays like Catan.
 
 ## Rules
 
@@ -44,7 +44,7 @@ Settle an island, trade resources and build roads, settlements and cities to rea
 
 ## Differences from Wikipedia
 
-These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Catan) and, where it is silent, the official base game rules from Catan GmbH (the almanac). What remains different:
+These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Catan) and, where it is silent, the official base game rules (the almanac). What remains different:
 
 - **Resource names.** The cards are called wood, brick, sheep, wheat and ore, as the owner named them, rather than the current edition's lumber, brick, wool, grain and ore
 - **Random board, 6s and 8s apart.** Wikipedia describes a random layout, and the rule book also offers a fixed beginner layout and places tokens in a spiral. Here every game is a random layout with the number tokens shuffled freely, drawn again until no 6 or 8 are neighbours (a common table rule). The ports keep the printed frame's positions round the coast and their kinds are shuffled

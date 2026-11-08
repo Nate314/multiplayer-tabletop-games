@@ -1,4 +1,4 @@
-[data-game="catan"] {
+[data-game="hexisland"] {
   color-scheme: light;
   --page-bg: #F4EEDF;
   --text: #2B2418;
@@ -142,7 +142,7 @@
     cursor: pointer;
   }
 
-  .catan-layout {
+  .hexisland-layout {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -176,7 +176,7 @@
 
   /* The board */
 
-  .catan-board {
+  .hexisland-board {
     display: block;
     width: 100%;
     height: auto;
@@ -830,7 +830,7 @@
 
 /* The building tray (src/components/PieceTray.tsx): road, settlement and city drawn in your color, and the drop highlight */
 
-[data-game="catan"] {
+[data-game="hexisland"] {
   .piece-tray {
     margin: 8px 0;
   }
@@ -855,7 +855,7 @@
     background: var(--seat, currentColor); /* the seat class on the icon sets your color */
   }
 
-  /* The settlement and city are the server drawings (games/catan/svg.ts), in your color */
+  /* The settlement and city are the server drawings (games/hexisland/svg.ts), in your color */
   .tray-settlement,
   .tray-city {
     display: block;

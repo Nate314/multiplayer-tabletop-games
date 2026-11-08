@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { afterSeatChange } from '../../shared/houseRules.ts';
 import { boardOf } from './board.ts';
-import { catan } from './index.ts';
+import { hexisland } from './index.ts';
 import { allowsOutOfTurn, onPlayerDisconnected, onPlayerLeft, toPublicState } from './rules.ts';
 import { SPECIAL_BUILD } from './options.ts';
 import { FIVE_SIX_LAYOUT, act, dice, fiveSixGame, holding, move, played } from './testing.ts';
@@ -57,11 +57,11 @@ const passAll = (state: GameState): GameState => {
 test('the rule is offered only with five or more seated', () => {
   assert.equal(SPECIAL_BUILD.offered?.(4, {}), false);
   assert.equal(SPECIAL_BUILD.offered?.(5, {}), true);
-  assert.equal('specialBuild' in afterSeatChange(catan.info, undefined, [1, 2, 3, 4]).values, false);
-  assert.equal(afterSeatChange(catan.info, undefined, [1, 2, 3, 4, 5]).values.specialBuild, false);
-  const five = afterSeatChange(catan.info, undefined, [1, 2, 3, 4, 5]);
+  assert.equal('specialBuild' in afterSeatChange(hexisland.info, undefined, [1, 2, 3, 4]).values, false);
+  assert.equal(afterSeatChange(hexisland.info, undefined, [1, 2, 3, 4, 5]).values.specialBuild, false);
+  const five = afterSeatChange(hexisland.info, undefined, [1, 2, 3, 4, 5]);
   const on = { ...five, values: { specialBuild: true } };
-  assert.equal('specialBuild' in afterSeatChange(catan.info, on, [1, 2, 3, 4]).values, false);
+  assert.equal('specialBuild' in afterSeatChange(hexisland.info, on, [1, 2, 3, 4]).values, false);
 });
 
 test('with the rule off, ending a turn starts the next turn as before', () => {

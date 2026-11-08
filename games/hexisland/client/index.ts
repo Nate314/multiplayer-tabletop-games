@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './catan.scss';
+import './hexisland.scss';
 
-export const catanClient: ClientGame = {
-  id: 'catan',
+export const hexislandClient: ClientGame = {
+  id: 'hexisland',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

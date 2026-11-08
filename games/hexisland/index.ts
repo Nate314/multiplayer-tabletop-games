@@ -5,11 +5,11 @@ import {
   allowsOutOfTurn, applyAction, applyMove, createGameState, finalStandings, onPlayerDisconnected, onPlayerLeft, resetLobby,
   toPublicState, waitingOn
 } from './rules.ts';
-import { catanInfo } from './info.ts';
+import { hexislandInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const catan: GameDefinition<GameState, PublicGameState> = {
-  info: catanInfo,
+export const hexisland: GameDefinition<GameState, PublicGameState> = {
+  info: hexislandInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

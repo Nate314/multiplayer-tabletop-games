@@ -1,4 +1,4 @@
-// Helpers for the Catan tests: a known board, a game past setup, and dice that come up as asked
+// Helpers for the Hex Island tests: a known board, a game past setup, and dice that come up as asked
 import { BASE_BOARD, FIVE_SIX_BOARD, type Board } from './board.ts';
 import { DEV_DECK, FIVE_SIX_DEV_DECK } from './devCards.ts';
 import { applyAction, applyMove, createGameState } from './rules.ts';

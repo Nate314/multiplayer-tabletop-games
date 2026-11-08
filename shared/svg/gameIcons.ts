@@ -13,7 +13,7 @@ const GAME_ICONS: Record<string, () => string> = {
   roadsandfields: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18 }), el('path', { d: 'M3 8a13 13 0 0 1 13 13M3 14a7 7 0 0 1 7 7' })),
   // Three lines beside a large letter
   categories: () => lineIcon(el('path', { d: 'M14 6h7M14 12h7M14 18h7' }), label('B', 7.5, 18, 17)),
-  catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
+  hexisland: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
   charades: () => lineIcon(el('circle', { cx: 12, cy: 5, r: 2.5 }), el('path', { d: 'M12 8v7M12 10L6 4M12 10l6-6M12 15l-4 6M12 15l4 6' })),
   checkers: () => lineIcon(el('ellipse', { cx: 12, cy: 8, rx: 8, ry: 3 }), el('path', { d: 'M4 8v4a8 3 0 0 0 16 0V8M4 12v4a8 3 0 0 0 16 0v-4' })),
   chinesecheckers: () => lineIcon(el('path', { d: 'M12 2l2.9 5h5.8l-2.9 5 2.9 5h-5.8L12 22l-2.9-5H3.3l2.9-5-2.9-5h5.8z' }), pip(12, 12, 1.6)),

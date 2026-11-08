@@ -8,7 +8,7 @@ import { longestRoadOf } from './roads.ts';
 import { createGameState, toPublicState } from './rules.ts';
 import { winningPoints } from './state.ts';
 import { resources, total } from './resources.ts';
-import { catan } from './index.ts';
+import { hexisland } from './index.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { act, acted, dice, game, holding, move, ok, played } from './testing.ts';
 import type { Building, GameState, Seat } from './types.ts';
@@ -32,7 +32,7 @@ const city = (seat: Seat): Building => ({ seat, city: true });
 function lobby(...names: string[]): GameState {
   let state = createGameState('g');
   for (const name of names) {
-    const result = addPlayer(catan, state, name, dice(6, 6, 1, 1, 2, 2, 3, 3));
+    const result = addPlayer(hexisland, state, name, dice(6, 6, 1, 1, 2, 2, 3, 3));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -431,7 +431,7 @@ test('a disconnected player owing a discard has it made for them at random', () 
   state = played({ ...state, disconnected: [3] }, 1, { type: 'roll' }, dice(3, 4));
   assert.deepEqual(state.pending, { kind: 'discard', counts: { 1: 4 } });
   assert.equal(total(state.hands[3]), 4);
-  state = disconnectPlayer(catan, state, 1, dice());
+  state = disconnectPlayer(hexisland, state, 1, dice());
   assert.deepEqual(state.pending, { kind: 'robber' });
   assert.equal(total(state.hands[1]), 5);
 });
@@ -455,7 +455,7 @@ test('dismissed player mid-turn', () => {
   const discarding = { ...withHands, rolled: true, pending: { kind: 'discard' as const, counts: { 3: 4 } } };
 
   // Cara leaves owing a discard: the robber moves on
-  const caraGone = removePlayer(catan, { ...discarding, disconnected: [3] }, 3);
+  const caraGone = removePlayer(hexisland, { ...discarding, disconnected: [3] }, 3);
   assert.deepEqual(caraGone.pending, { kind: 'robber' });
   assert.equal(caraGone.bank.sheep, 19);
   assert.deepEqual(caraGone.buildings[corner(4, 0)], settlement(3));
@@ -463,7 +463,7 @@ test('dismissed player mid-turn', () => {
 
   // Bob leaves on his turn: his cards go back, the next player's turn begins, and his Largest Army is set aside
   const offered = ok(act({ ...withHands, pending: null }, 2, { type: 'offerTrade', to: null, give: { wood: 1 }, get: { sheep: 1 } }));
-  const bobGone = removePlayer(catan, { ...offered, disconnected: [2] }, 2);
+  const bobGone = removePlayer(hexisland, { ...offered, disconnected: [2] }, 2);
   assert.equal(bobGone.turnHolder, 3);
   assert.equal(bobGone.currentPlayer, 3);
   assert.equal(bobGone.rolled, false);
@@ -477,7 +477,7 @@ test('dismissed player mid-turn', () => {
 
   // Down to two players the game ends and the leader wins
   const three = game({ buildings: { [corner(9, 0)]: city(2), [corner(4, 0)]: settlement(3) }, disconnected: [1] });
-  const ended = removePlayer(catan, three, 1);
+  const ended = removePlayer(hexisland, three, 1);
   assert.equal(ended.isGameOver, true);
   assert.deepEqual(ended.winners, [2]);
   assert.match(ended.gameStatus, /Bob wins with 2 points/);
@@ -489,7 +489,7 @@ test('a player dismissed during setup loses their placements and setup goes on',
   state = played(state, 1, { type: 'placeSettlement', vertex: corner(9, 0) });
   state = played(state, 1, { type: 'placeRoad', edge: edgeBetween(corner(9, 0), corner(9, 1)) });
   state = played(state, 2, { type: 'placeSettlement', vertex: corner(0, 0) });
-  state = removePlayer(catan, { ...state, disconnected: [2] }, 2);
+  state = removePlayer(hexisland, { ...state, disconnected: [2] }, 2);
   assert.deepEqual(state.setup, { order: [1, 3, 4, 4, 3, 1], step: 1, settlement: null });
   assert.equal(state.currentPlayer, 3);
   assert.deepEqual(state.buildings[corner(0, 0)], settlement(2));
@@ -497,7 +497,7 @@ test('a player dismissed during setup loses their placements and setup goes on',
 
 test('a trade offer to a player who disconnects is dropped', () => {
   const offered = acted(holding(rolled(), 1, { wood: 1 }), 1, { type: 'offerTrade', to: 2, give: { wood: 1 }, get: { ore: 1 } });
-  const state = catan.onPlayerDisconnected?.({ ...offered, disconnected: [2] }, 2, dice()) ?? assert.fail('no hook');
+  const state = hexisland.onPlayerDisconnected?.({ ...offered, disconnected: [2] }, 2, dice()) ?? assert.fail('no hook');
   assert.equal(state.trade, null);
 });
 

@@ -18,17 +18,17 @@ function scriptsAndStyles(page: Page): string[] {
 const openDialog = (page: Page, name: string) =>
   page.locator('.lobby-game', { has: page.locator('.lobby-game-name', { hasText: new RegExp(`^${name}$`) }) }).click();
 
-test('the landing page and a chess game download only chess, and opening Catan downloads Catan', async ({ browser, server }) => {
+test('the landing page and a chess game download only chess, and opening Hex Island downloads Hex Island', async ({ browser, server }) => {
   const page = await newPlayer(browser, server);
   const urls = scriptsAndStyles(page);
   await joinGame(page, 'chess', 'lazy', 'Alice');
   expect(urls.some(url => url.includes('/chess-'))).toBe(true);
-  expect(urls.filter(url => url.includes('catan'))).toEqual([]);
+  expect(urls.filter(url => url.includes('hexisland'))).toEqual([]);
   await page.getByRole('button', { name: 'Back to games' }).click();
-  await openDialog(page, 'Catan');
+  await openDialog(page, 'Hex Island');
   await expect(page.getByRole('button', { name: 'Rules' })).toBeVisible();
-  expect(urls.some(url => /\/catan-.*\.js$/.test(url))).toBe(true);
-  expect(urls.some(url => /\/catan-.*\.css$/.test(url))).toBe(true);
+  expect(urls.some(url => /\/hexisland-.*\.js$/.test(url))).toBe(true);
+  expect(urls.some(url => /\/hexisland-.*\.css$/.test(url))).toBe(true);
 });
 
 test('the landing page and a chess game never download Jenga or its libraries', async ({ browser, server }) => {

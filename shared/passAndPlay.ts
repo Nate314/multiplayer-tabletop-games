@@ -4,7 +4,7 @@ import type { BaseGameState, Seat } from './types.ts';
 
 // Every seat the table waits on: the game's out-of-turn waits (or else the turn) and open votes, a rematch vote included. A spectator's hand request is
 // left out: answering it is optional, so it must never keep one player's hand on a shared device past their turn.
-// An out-of-turn choice (a Catan discard, a trade answer) comes before the turn, so a shared device hands over one player at a time.
+// An out-of-turn choice (a Hex Island discard, a trade answer) comes before the turn, so a shared device hands over one player at a time.
 export function seatsToAct(game: Pick<GameDefinition, 'waitingOn'>, state: BaseGameState): Seat[] {
   const outOfTurn = state.isGameOver ? [] : game.waitingOn?.(state) ?? []; // a finished game waits only on votes
   const turn = outOfTurn.length > 0 || state.isGameOver || state.currentPlayer === null ? [] : [state.currentPlayer];

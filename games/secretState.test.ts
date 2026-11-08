@@ -4,7 +4,7 @@ import { GAMES } from './registry.ts';
 import { dealt } from './testStates.ts';
 
 const WITH_SECRET = [
-  'palacewalls', 'roadsandfields', 'catan', 'charades', 'categories', 'codebreaker', 'sudoku', 'dominoes', 'euchre', 'fictionary', 'gofish', 'hintgrid', 'holdem', 'jenga', 'monopoly', 'phase10', 'pictionary',
+  'palacewalls', 'roadsandfields', 'hexisland', 'charades', 'categories', 'codebreaker', 'sudoku', 'dominoes', 'euchre', 'fictionary', 'gofish', 'hintgrid', 'holdem', 'jenga', 'monopoly', 'phase10', 'pictionary',
   'racko', 'risk', 'rook', 'rummikub', 'scrabble', 'skipbo', 'splendor', 'thecrew', 'tickettoride', 'uno', 'war', 'whodunit'
 ];
 

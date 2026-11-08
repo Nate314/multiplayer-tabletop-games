@@ -22,7 +22,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   ],
   gofish: s => [{ ...s, lastMove: { asker: 1, fished: 'other' }, fishedCard: s.hands[1][0] }],
   racko: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
-  catan: s => [{
+  hexisland: s => [{
     ...s,
     steal: { thief: 1, victim: 2, resource: 'wood' },
     turnHolder: 1,

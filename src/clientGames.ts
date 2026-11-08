@@ -36,7 +36,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   backgammon: () => import('../games/backgammon/client/index.ts').then(m => m.backgammonClient),
   roadsandfields: () => import('../games/roadsandfields/client/index.ts').then(m => m.roadsandfieldsClient),
   categories: () => import('../games/categories/client/index.ts').then(m => m.categoriesClient),
-  catan: () => import('../games/catan/client/index.ts').then(m => m.catanClient),
+  hexisland: () => import('../games/hexisland/client/index.ts').then(m => m.hexislandClient),
   charades: () => import('../games/charades/client/index.ts').then(m => m.charadesClient),
   checkers: () => import('../games/checkers/client/index.ts').then(m => m.checkersClient),
   chinesecheckers: () => import('../games/chinesecheckers/client/index.ts').then(m => m.chinesecheckersClient),
