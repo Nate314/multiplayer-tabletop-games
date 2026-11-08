@@ -51,7 +51,7 @@ const alerts = createAlerts({ store: pushStore, keys: loadVapidKeys(pushStore), 
 const e2eRandom = E2E ? createE2eRandom() : null;
 const stats = openStatsStore(DATABASE_PATH);
 const gameStore = openGameStore(DATABASE_PATH);
-renameLegacyGames(stats, gameStore);
+renameLegacyGames(stats, gameStore, pushStore);
 const manager = createGameManager(GAMES, e2eRandom?.random ?? Math.random, gameStore, {
   changed: broadcast,
   onGameFinished: result => {
