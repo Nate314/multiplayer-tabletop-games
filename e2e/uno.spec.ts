@@ -499,6 +499,8 @@ test.describe('UNO rules', () => {
     await play(pages[0], 'red 7');
     await expect(gameOver(pages[1]).getByRole('heading', { level: 2 })).toHaveText('Alice wins');
     await expect(scoring(pages[1])).toHaveCount(0);
+    await expect(gameOver(pages[1])).toContainText('One round: first to go out wins');
+    await expect(gameOver(pages[1])).not.toContainText(/first to 0 points/i);
     await gameOver(pages[1]).getByRole('button', { name: 'See the table' }).click();
     await inHouseRules(pages[1], dialog => expect(dialog).toContainText('Target scoreOne round (house rule)'));
   });
