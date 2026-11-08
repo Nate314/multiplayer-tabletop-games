@@ -12,6 +12,10 @@
   .corners-c2 { --piece: var(--corners-red); }
   .corners-c3 { --piece: var(--corners-green); }
 
+  /* White is about 2:1 on Yellow, so its symbols take dark ink */
+  .corners-c1 .corners-symbol,
+  .corners-c1 .corners-swatch-symbol { color: #15191E; }
+
   .corners-layout {
     display: flex;
     align-items: flex-start;

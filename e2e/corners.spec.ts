@@ -463,6 +463,17 @@ test.describe('Corners table controls', () => {
     await expect(bob.locator('.color-symbol')).toHaveCount(0);
   });
 
+  test('The Yellow symbol is dark ink, not white', async ({ seat }) => {
+    const { pages: [alice, bob] } = await start(seat, 2);
+    await place(alice, MONO, STARTS[0]);
+    await place(bob, MONO, STARTS[1]);
+    await setPreference(alice, 'Color-blind symbols', true);
+    const symbol = cell(alice, STARTS[1]).locator('.color-symbol-star');
+    await expect(symbol).toHaveCount(1);
+    await expect(symbol).not.toHaveCSS('color', 'rgb(255, 255, 255)');
+    await expect(colorRow(alice, 'Yellow').locator('.color-symbol-star')).not.toHaveCSS('color', 'rgb(255, 255, 255)');
+  });
+
   test('Rules at the top of the page opens the rules', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, 2);
     await (await headerButton(alice, 'Rules')).click();
