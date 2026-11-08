@@ -1,6 +1,7 @@
 import { asRecord } from './messages.ts';
 import { gameFileName, isEmbeddedImages, type EmbeddedImages } from './gameFile.ts';
 import { MAX_NAME_LENGTH } from './types.ts';
+import { currentId, keepsSaves, LEGACY_IDS, type LegacyIds } from '../games/legacyIds.ts';
 import type { BasePublicState, HistoryStep, Seat } from './types.ts';
 
 export const PAUSE_FILE_FORMAT = 'multiplayer-tabletop-games-pause';
@@ -83,7 +84,9 @@ function isPauseFile(value: unknown): value is PauseFile {
 }
 
 // The upload is untrusted text: every field is checked and nothing throws
-export function parsePauseFile(text: string, knownGameTypes: readonly string[]): { file: PauseFile } | { error: string } {
+export function parsePauseFile(
+  text: string, knownGameTypes: readonly string[], legacy: LegacyIds = LEGACY_IDS
+): { file: PauseFile } | { error: string } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -91,6 +94,10 @@ export function parsePauseFile(text: string, knownGameTypes: readonly string[]):
     return { error: NOT_A_PAUSE_FILE };
   }
   if (!isPauseFile(parsed)) return { error: NOT_A_PAUSE_FILE };
-  if (!knownGameTypes.includes(parsed.gameType)) return { error: UNKNOWN_GAME };
-  return { file: parsed };
+  if (!keepsSaves(parsed.gameType, legacy)) {
+    return { error: 'This pause file is from before this game got its new map and cannot be resumed' };
+  }
+  const gameType = currentId(parsed.gameType, legacy);
+  if (!knownGameTypes.includes(gameType)) return { error: UNKNOWN_GAME };
+  return { file: { ...parsed, gameType } };
 }
