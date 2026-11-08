@@ -5,6 +5,7 @@ import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { seeded } from '../testStates.ts';
 import { PARTS } from './board.ts';
 import { steadyhand } from './index.ts';
+import { SOLO_BONUS } from './options.ts';
 import type { GameState, PublicGameState, Seat } from './types.ts';
 import type { Result } from '../../shared/types.ts';
 
@@ -33,6 +34,7 @@ test('drags are never History steps; out and buzz are', () => {
   const steps = stepsOf(manager, 'steadyhand')!;
   assert.equal(steps.length, 2);
   // The start step is the first move's before snapshot, which still holds the last streamed position (the platform's cost, see constraints)
+  assert.deepEqual((steps[0] as unknown as PublicGameState).live, { seat: 1, part: 0, at: [79, 200] });
   assert.ok(steps.slice(1).every(step => (step as unknown as PublicGameState).live === null));
 });
 
@@ -60,5 +62,5 @@ test('one player plays solo and the game ends with the bonus', () => {
   const total = PARTS.reduce((sum, p) => sum + p.value, 0);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
-  assert.equal(state.scores[1], total + 3 * 10);
+  assert.equal(state.scores[1], total + 3 * SOLO_BONUS);
 });
