@@ -583,7 +583,7 @@ test.describe('Jigsaw Rotate pieces', () => {
     await expect.poll(() => turnsOn(table, 0)).toBe(1);
     await place(alice, 1);
     await expect(placedCount(alice)).toHaveText('1 of 48 placed');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history.getByRole('slider', { name: 'Step' })).toHaveAttribute('max', '1');
     await expect(history.locator('.history-move')).toContainText('Alice placed a piece (1 of 48)');

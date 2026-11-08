@@ -156,7 +156,7 @@ test.describe('Naval Battle rules', () => {
     await square(alice, 'Target', 'F2').click();
     await expect(status(alice)).toHaveText('Alice fired at F2: hit');
     await expect(status(bob)).toHaveText('Alice fired at F2: hit');
-    await button(bob, 'History').click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await history.getByRole('slider', { name: 'Step' }).fill('1');
     await expect(history.locator('.history-move')).toHaveText('Move 1 of 3: Alice fired at F1: hit a ship of length 5');
