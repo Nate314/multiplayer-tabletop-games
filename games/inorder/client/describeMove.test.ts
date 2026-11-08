@@ -15,14 +15,14 @@ test('describes draws from each pile, naming only the discard', () => {
   );
 });
 
-test('describes placing, discarding and calling Rack-O', () => {
+test('describes placing, discarding and calling In Order', () => {
   assert.equal(
     describe({ playerNumber: 1, type: 'place', slot: 0, from: 'discard', replaced: 31, rackO: false }),
     'Alice put the card from the discard pile in slot 1 and discarded the 31'
   );
   assert.equal(
     describe({ playerNumber: 2, type: 'place', slot: 9, from: 'deck', replaced: 4, rackO: true }),
-    'Bob put the card from the draw pile in slot 10 and discarded the 4, calling Rack-O!'
+    'Bob put the card from the draw pile in slot 10 and discarded the 4, calling In Order!'
   );
   assert.equal(describe({ playerNumber: 1, type: 'discard', card: 40 }), 'Alice discarded the 40');
   assert.equal(describe(null), '');

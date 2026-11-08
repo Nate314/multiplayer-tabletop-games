@@ -6,10 +6,10 @@ import { plural } from '../../../shared/text.ts';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './racko.scss';
+import './inorder.scss';
 
-export const rackoClient: ClientGame = {
-  id: 'racko',
+export const inorderClient: ClientGame = {
+  id: 'inorder',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

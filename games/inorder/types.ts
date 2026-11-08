@@ -22,13 +22,13 @@ export type Action = { type: 'acknowledgeRound' };
 export type LastMove =
   | { playerNumber: Seat; type: 'draw'; from: 'deck'; reshuffled: boolean }
   | { playerNumber: Seat; type: 'draw'; from: 'discard'; card: Card }
-  | { playerNumber: Seat; type: 'place'; slot: number; from: Pile; replaced: Card; rackO: boolean }
+  | { playerNumber: Seat; type: 'place'; slot: number; from: Pile; replaced: Card; rackO: boolean } // saved games store this name; kept from before the rename so older files load
   | { playerNumber: Seat; type: 'discard'; card: Card };
 
 // How one round went. Racks are shown face up here, because the round is over.
 export type RoundSummary = {
   round: number;
-  caller: Seat; // the player who called Rack-O
+  caller: Seat; // the player who called In Order
   points: Record<Seat, number>; // scored this round
   racks: Record<Seat, Card[]>;
   acknowledged: Seat[]; // the next round waits for every connected player

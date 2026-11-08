@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Put the ten cards in your rack in ascending order, lowest in slot 1 and highest in slot 10. The first player to do it calls Rack-O and ends the round. The first player to reach the target score (500 unless the host chose another) wins the game.'
+    answer: 'Put the ten cards in your rack in ascending order, lowest in slot 1 and highest in slot 10. The first player to do it calls In Order and ends the round. The first player to reach the target score (500 unless the host chose another) wins the game.'
   },
   {
     question: 'What is in the deck?',
@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How is a round scored?',
-    answer: 'The player who calls Rack-O scores 75 points. Every other player scores 5 points for each card in ascending order counting from slot 1, stopping where the order breaks. A scoring screen shows every rack, and the next round is dealt once every connected player has pressed Continue.'
+    answer: 'The player who calls In Order scores 75 points. Every other player scores 5 points for each card in ascending order counting from slot 1, stopping where the order breaks. A scoring screen shows every rack, and the next round is dealt once every connected player has pressed Continue.'
   },
   {
     question: 'What if the draw pile runs out?',

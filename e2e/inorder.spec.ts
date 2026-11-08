@@ -1,15 +1,15 @@
 import type { Page } from '@playwright/test';
 import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type SeatOptions } from './fixtures.ts';
-import type { GameState } from '../games/racko/types.ts';
+import type { GameState } from '../games/inorder/types.ts';
 
-// One test per rule, control and difference in games/racko/README.md. Seat 1 is Alice, 2 Bob, 3 Cara.
+// One test per rule, control and difference in games/inorder/README.md. Seat 1 is Alice, 2 Bob, 3 Cara.
 
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => from + index);
 // Alice's rack is 1 to 10 with a 50 in slot 5; the discard top is 5 and the draw pile ends in 40
 const NEARLY = { racks: { 1: [1, 2, 3, 4, 50, 6, 7, 8, 9, 10], 2: range(11, 20) }, drawPile: [60, 40], discardPile: [30, 5] };
 
 async function start(seat: Seat, names = ['Alice', 'Bob'], fields: object = NEARLY, options?: SeatOptions) {
-  const table = await seat('racko', names, options);
+  const table = await seat('inorder', names, options);
   if (Object.keys(fields).length > 0) await table.patch({ scores: Object.fromEntries(names.map((_, index) => [index + 1, 0])), ...fields });
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
@@ -23,7 +23,7 @@ const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring'
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const myRack = (page: Page) => page.getByRole('region', { name: 'Your rack' });
 
-test.describe('Rack-O rules', () => {
+test.describe('In Order rules', () => {
   test('the deck is 40, 50 or 60 cards for two, three or four players, ten to each rack, one card face up', async ({ seat }) => {
     for (const names of [['Alice', 'Bob'], ['Alice', 'Bob', 'Cara'], ['Alice', 'Bob', 'Cara', 'Dan']]) {
       const { table, alice } = await start(seat, names, {});
@@ -89,13 +89,13 @@ test.describe('Rack-O rules', () => {
     await expect(myRack(alice).locator('.tile')).toHaveCount(10);
   });
 
-  test('an ascending rack calls Rack-O, scores 75 and shows every rack; the others score 5 a card in order', async ({ seat }) => {
+  test('an ascending rack calls In Order, scores 75 and shows every rack; the others score 5 a card in order', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await discardPile(alice).click();
     await slot(alice, 5).click();
     for (const page of [alice, bob]) {
       await expect(scoring(page)).toContainText('Round 1 scoring');
-      await expect(scoring(page)).toContainText('Alice called Rack-O and scores 75 points');
+      await expect(scoring(page)).toContainText('Alice called In Order and scores 75 points');
       await expect(scoring(page).locator('.summary-seat').nth(0)).toContainText('75 pts');
       await expect(scoring(page).locator('.summary-seat').nth(1)).toContainText('50 pts');
       await expect(scoring(page).locator('.summary-seat').nth(1).locator('.tile')).toHaveCount(10);
@@ -161,7 +161,7 @@ test.describe('Rack-O rules', () => {
       await expect(gameOver(page).getByRole('heading', { name: 'Round 1 scoring' })).toBeVisible();
       await expect(gameOver(page).locator('.game-over-meta')).toContainText('1 round');
       await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('500 pts');
-      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('Rack-O');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('In Order');
       await expect(scoring(page)).toHaveCount(0);
     }
     await gameOver(bob).getByRole('button', { name: 'See the table' }).click();
@@ -192,13 +192,13 @@ test.describe('Rack-O rules', () => {
       await expect(gameOver(page).getByRole('heading', { level: 2 })).toHaveText('Alice wins');
       await expect(gameOver(page).locator('.summary-target')).toHaveText('First to 250 points wins');
       await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-points')).toHaveText('250 pts');
-      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('Rack-O');
+      await expect(gameOver(page).locator('.summary-seat', { hasText: 'Alice' }).locator('.summary-reason')).toContainText('In Order');
     }
     await expect(bob.locator('.turn-message')).toHaveText('Game over');
   });
 });
 
-test.describe('Rack-O controls and platform', () => {
+test.describe('In Order controls and platform', () => {
   test('cards slide where they went, and nothing animates with reduced motion', async ({ seat }) => {
     const animated = await start(seat, ['Alice', 'Bob'], NEARLY, { motion: true });
     const animations = (page: Page) => page.evaluate(() => document.getAnimations().length);

@@ -26,7 +26,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: Summary; ga
               <YouTag when={seat === viewer} />
             </span>
             <span className="summary-points">{scores[seat]} pts</span>
-            <span className="summary-reason">{seat === summary.caller ? 'Rack-O' : 'In order from slot 1'}: +{summary.points[seat]}</span>
+            <span className="summary-reason">{seat === summary.caller ? 'In Order' : 'In order from slot 1'}: +{summary.points[seat]}</span>
             <span className="summary-rack">
               {summary.racks[seat].map((card, slot) => <Tile key={slot} card={card} small />)}
             </span>
@@ -47,7 +47,7 @@ export default function RoundSummary({ summary, gameState, playerNumber, onConti
       label="Round scoring"
       title={`Round ${summary.round} scoring`}
       gameState={gameState}
-      result={`${playerNames[summary.caller]} called Rack-O and scores ${summary.points[summary.caller]} points`}
+      result={`${playerNames[summary.caller]} called In Order and scores ${summary.points[summary.caller]} points`}
       acknowledged={summary.acknowledged}
       playerNumber={playerNumber}
       onContinue={onContinue}

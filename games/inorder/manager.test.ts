@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
-import { racko } from './index.ts';
+import { inorder } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'racko/g1';
+const ROOM = 'inorder/g1';
 
 // A repeatable random, so every run deals the same cards
 function seeded(seed: number): () => number {
@@ -20,13 +20,13 @@ function seeded(seed: number): () => number {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([racko], seeded(42)));
-  for (const name of names) manager.join('racko', 'g1', name);
+  const manager = rememberingKeys(createGameManager([inorder], seeded(42)));
+  for (const name of names) manager.join('inorder', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Rack-O's
+// The manager is generic over games, so tests narrow the public state to In Order's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -57,7 +57,7 @@ test('each player sees only their own rack, and the history sees none', () => {
   }
 
   for (let turns = 0; turns < 6; turns++) playTurn(manager);
-  const history = stepsOf(manager, 'racko') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'inorder') as unknown as PublicGameState[];
   assert.equal(history.length, 13);
   for (const past of history) assert.deepEqual(past.myRack, []);
 });
@@ -72,7 +72,7 @@ test('a rejoin mid-turn shows the card that was drawn from the deck', () => {
 
   manager.disconnect(ROOM, 1);
   assert.deepEqual(viewOf(manager, null).disconnected, [1]);
-  const rejoined = manager.join('racko', 'g1', 'A', true);
+  const rejoined = manager.join('inorder', 'g1', 'A', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   assert.equal(rejoined.seat, 1);
   const after = rejoined.state as PublicGameState;
@@ -111,7 +111,7 @@ test('dismissing the player whose turn it is hands the turn on', () => {
 test('a round ends, Continue deals the next, and the scoring screen needs every player', () => {
   const manager = gameWith('A', 'B');
   let state = viewOf(manager, null);
-  // Swap cards in slot order until someone calls Rack-O (a few hundred turns at most)
+  // Swap cards in slot order until someone calls In Order (a few hundred turns at most)
   for (let turns = 0; turns < 2000 && !state.roundSummary; turns++) {
     const seat = state.currentPlayer as Seat;
     const view = viewOf(manager, seat);

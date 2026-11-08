@@ -50,7 +50,7 @@ function nearlyDone(): GameState {
   };
 }
 
-const callRackO = () => move(move(nearlyDone(), 1, { type: 'draw', from: 'discard' }), 1, { type: 'place', slot: 4 });
+const callInOrder = () => move(move(nearlyDone(), 1, { type: 'draw', from: 'discard' }), 1, { type: 'place', slot: 4 });
 
 test('deck size per player count follows the article', () => {
   // Wikipedia, Game play: 2 players use cards 1 to 40, 3 players 1 to 50, 4 players the whole 60-card deck
@@ -101,13 +101,13 @@ test('a card taken from the discard pile must be placed', () => {
   assert.deepEqual(discarded.racks[1], state.racks[1]);
 });
 
-test('an ascending rack calls Rack-O and ends the round', () => {
-  const done = callRackO();
+test('an ascending rack calls In Order and ends the round', () => {
+  const done = callInOrder();
   assert.deepEqual(done.racks[1], range(1, 10));
   assert.equal(done.roundSummary?.caller, 1);
   assert.equal(done.currentPlayer, null);
   assert.equal(done.lastMove?.type === 'place' && done.lastMove.rackO, true);
-  assert.match(done.gameStatus, /Rack-O/);
+  assert.match(done.gameStatus, /In Order/);
   assert.equal(done.isGameOver, false);
   // A rack that is not in order does not end the round
   const miss = move(move(nearlyDone(), 1, { type: 'draw', from: 'discard' }), 1, { type: 'place', slot: 0 });
@@ -120,7 +120,7 @@ test('round scoring follows the article', () => {
   assert.equal(roundPoints([5, 4, 3, 2, 1, 6, 7, 8, 9, 10]), 5);
   assert.equal(roundPoints([1, 2, 3, 9, 4, 5, 6, 7, 8, 10]), 20);
   assert.equal(roundPoints([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 50);
-  const done = callRackO();
+  const done = callInOrder();
   // Seat 2 holds 11 to 20 in order, so every card counts
   assert.deepEqual(done.roundSummary?.points, { 1: 75, 2: 50 });
   assert.deepEqual(done.scores, { 1: 75, 2: 50 });
@@ -162,7 +162,7 @@ test("the game ends at the article's target score", () => {
 });
 
 test('Continue deals the next round once every connected player has pressed it', () => {
-  const done = callRackO();
+  const done = callInOrder();
   const act = (state: GameState, seat: Seat) => ok(applyAction(state, seat, { type: 'acknowledgeRound' }, seeded(3)));
   const first = act(done, 1);
   assert.deepEqual(first.roundSummary?.acknowledged, [1]);
@@ -228,7 +228,7 @@ test('dismissed player mid-turn', () => {
   assert.equal(other.held?.by, 1);
 
   // Leaving at the scoring screen can complete the Continue
-  const pressed = ok(applyAction(callRackO(), 1, { type: 'acknowledgeRound' }, seeded(1)));
+  const pressed = ok(applyAction(callInOrder(), 1, { type: 'acknowledgeRound' }, seeded(1)));
   assert.equal(onPlayerLeft({ ...pressed, activePlayers: [1] }, 2, seeded(1)).round, 2);
 });
 
@@ -264,7 +264,7 @@ test('table view hides hands', () => {
   }
   assert.ok(views > 20);
   // The scoring screen shows the finished racks
-  assert.deepEqual((toPublicState(callRackO(), false, null) as PublicGameState).roundSummary?.racks[2], range(11, 20));
+  assert.deepEqual((toPublicState(callInOrder(), false, null) as PublicGameState).roundSummary?.racks[2], range(11, 20));
 });
 
 test('undo reshuffles', () => {

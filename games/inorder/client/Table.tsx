@@ -28,7 +28,7 @@ export default function Table({ gameState, viewer, onDraw, onPlace, onDiscard }:
   const canPlace = onPlace !== undefined && myHeld !== null;
 
   return (
-    <div className="racko-table">
+    <div className="inorder-table">
       <div className="piles">
         <div className="pile">
           <span className="pile-name">Draw pile</span>

@@ -1,5 +1,5 @@
-[data-game="racko"] {
-  /* Rack-O's table theme. Every rule is scoped to data-game="racko", so none of it reaches the landing page or other games. */
+[data-game="inorder"] {
+  /* In Order's table theme. Every rule is scoped to data-game="inorder", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   color: var(--text);
@@ -48,7 +48,7 @@
   }
 
   .game-screen,
-  .racko-history {
+  .inorder-history {
     display: flex;
     flex-direction: column;
     align-items: center;

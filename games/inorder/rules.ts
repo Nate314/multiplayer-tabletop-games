@@ -1,4 +1,4 @@
-// Rack-O rules shared by the browser (move text) and the server (validation).
+// In Order rules shared by the browser (move text) and the server (validation).
 // Source: https://en.wikipedia.org/wiki/Rack-O, and the default target score of 500 from the official rules.
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { viewHand } from '../../shared/hands.ts';
@@ -13,7 +13,7 @@ import type { Card, GameState, LastMove, Move, Pile, PublicGameState, Result, Ro
 import { TARGET_RULE } from './options.ts';
 
 export const RACK_SIZE = 10;
-export const RACKO_POINTS = 75;
+export const IN_ORDER_POINTS = 75;
 export const CARD_POINTS = 5;
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
@@ -28,7 +28,7 @@ export function isAscending(rack: Card[]): boolean {
   return rack.every((card, slot) => slot === 0 || card > rack[slot - 1]);
 }
 
-// What a player who did not call Rack-O scores: 5 for each card in ascending order from slot 1, stopping where it breaks
+// What a player who did not call In Order scores: 5 for each card in ascending order from slot 1, stopping where it breaks
 export function roundPoints(rack: Card[]): number {
   let run = 0;
   while (run < rack.length && (run === 0 || rack[run] > rack[run - 1])) run++;
@@ -56,7 +56,7 @@ export function moveText(lastMove: LastMove, playerNames: Record<Seat, string>):
     case 'place': {
       const source = lastMove.from === 'discard' ? 'the discard pile' : 'the draw pile';
       const text = `${name} put the card from ${source} in slot ${lastMove.slot + 1} and discarded the ${lastMove.replaced}`;
-      return lastMove.rackO ? `${text}, calling Rack-O!` : text;
+      return lastMove.rackO ? `${text}, calling In Order!` : text;
     }
     case 'discard':
       return `${name} discarded the ${lastMove.card}`;
@@ -179,11 +179,11 @@ function discard(state: GameState, seat: Seat): Result<GameState> {
   return { state: endTurn({ ...state, discardPile: [...state.discardPile, held.card] }, seat, { playerNumber: seat, type: 'discard', card: held.card }) };
 }
 
-// The player who called Rack-O scores 75 and the others 5 per card in order. The first to the target score wins; the higher total
+// The player who called In Order scores 75 and the others 5 per card in order. The first to the target score wins; the higher total
 // wins if several pass it in the same round, and equal totals share.
 function endRound(state: GameState, caller: Seat, lastMove: LastMove): GameState {
   const points: Record<Seat, number> = Object.fromEntries(state.activePlayers.map(seat =>
-    [seat, seat === caller ? RACKO_POINTS : roundPoints(state.racks[seat])]));
+    [seat, seat === caller ? IN_ORDER_POINTS : roundPoints(state.racks[seat])]));
   const scores = Object.fromEntries(state.activePlayers.map(seat => [seat, state.scores[seat] + points[seat]]));
   const roundSummary: RoundSummary = { round: state.round, caller, points, racks: state.racks, acknowledged: [] };
   const top = Math.max(...Object.values(scores));
@@ -191,8 +191,8 @@ function endRound(state: GameState, caller: Seat, lastMove: LastMove): GameState
   const winners = over ? state.activePlayers.filter(seat => scores[seat] === top) : [];
   const name = state.playerNames[caller];
   const status = over
-    ? `${name} called Rack-O! ${winners.map(seat => state.playerNames[seat]).join(' and ')} ${winners.length > 1 ? 'win' : 'wins'} with ${top} points`
-    : `${name} called Rack-O and scores ${RACKO_POINTS} points. Waiting for everyone to continue.`;
+    ? `${name} called In Order! ${winners.map(seat => state.playerNames[seat]).join(' and ')} ${winners.length > 1 ? 'win' : 'wins'} with ${top} points`
+    : `${name} called In Order and scores ${IN_ORDER_POINTS} points. Waiting for everyone to continue.`;
   return { ...state, held: null, scores, roundSummary, currentPlayer: null, lastMove, isGameOver: over, winners, gameStatus: status };
 }
 
@@ -201,10 +201,10 @@ function place(state: GameState, seat: Seat, slot: number): Result<GameState> {
   if (!held) return { error: 'Draw a card first' };
   const replaced = state.racks[seat][slot];
   const rack = state.racks[seat].map((card, index) => (index === slot ? held.card : card));
-  const rackO = isAscending(rack);
-  const lastMove: LastMove = { playerNumber: seat, type: 'place', slot, from: held.from, replaced, rackO };
+  const calledInOrder = isAscending(rack);
+  const lastMove: LastMove = { playerNumber: seat, type: 'place', slot, from: held.from, replaced, rackO: calledInOrder };
   const next: GameState = { ...state, racks: { ...state.racks, [seat]: rack }, discardPile: [...state.discardPile, replaced] };
-  return { state: rackO ? endRound(next, seat, lastMove) : endTurn(next, seat, lastMove) };
+  return { state: calledInOrder ? endRound(next, seat, lastMove) : endTurn(next, seat, lastMove) };
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {

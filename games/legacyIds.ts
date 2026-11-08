@@ -6,6 +6,7 @@ export type LegacyIds = Readonly<Record<string, LegacyId>>;
 export const LEGACY_IDS: LegacyIds = {
   phase10: { id: 'stagerummy', keepsSaves: true },
   pictionary: { id: 'drawandguess', keepsSaves: true },
+  racko: { id: 'inorder', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

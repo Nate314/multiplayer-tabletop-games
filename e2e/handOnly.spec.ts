@@ -95,7 +95,7 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Discard here on pile 1 and end your turn').click();
     }
   },
-  racko: {
+  inorder: {
     keep: ['.my-rack', '.turn-message', '.piles .pile'],
     hide: ['.other-racks'],
     move: async page => { await button(page, /^Draw pile/).click(); }

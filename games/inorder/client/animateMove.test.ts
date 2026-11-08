@@ -59,7 +59,7 @@ test('discarding a card from the draw pile slides it from the holding spot to th
   }
 });
 
-test('a swap that calls Rack-O and ends the round slides like any swap', () => {
+test('a swap that calls In Order and ends the round slides like any swap', () => {
   const held = after(game(), { type: 'draw', from: 'discard' });
   const next = after(held, { type: 'place', slot: 4 });
   assert.ok(next.roundSummary);

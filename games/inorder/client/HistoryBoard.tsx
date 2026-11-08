@@ -6,7 +6,7 @@ import type { Seat } from '../../../shared/types.ts';
 // Nothing is clickable.
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   return (
-    <div className="racko-history">
+    <div className="inorder-history">
       <Table gameState={gameState} viewer={viewer} />
     </div>
   );
