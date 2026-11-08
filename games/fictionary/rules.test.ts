@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fictionaryInfo } from './info.ts';
 import {
-  applyAction, applyMove, createGameState, deadline, onDeadline, onPlayerLeft, resetLobby, waitingOn
+  applyAction, applyMove, createGameState, deadline, onDeadline, onPlayerLeft, recordsAction, resetLobby, waitingOn
 } from './rules.ts';
 import { addPlayer, removePlayer } from '../../shared/seating.ts';
 import { withRules } from '../../server/testing.ts';
@@ -229,4 +229,48 @@ test('status and lastMove never hold the real definition or an author before the
     assert.equal(json.includes('cross guard'), false, json);
     for (const text of texts) assert.equal(json.includes(text), false, json);
   }
+});
+
+const SWORD = 'either arm of the cross guard of a sword';
+
+test('a vote whose only legal choice is the real one is skipped', () => {
+  // Alice and Bob matched; Cara, the only voter, wrote the only fake
+  const state = write(write(write(writing(), 1, SWORD), 2, SWORD), 3, 'a small bird');
+  assert.equal(state.phase, 'reveal');
+  assert.deepEqual(state.roundPoints, { 1: 3, 2: 3, 3: 0 });
+});
+
+test('every voter matched skips voting', () => {
+  const state = write(write(write(writing(), 1, SWORD), 2, SWORD), 3, 'Either arm of the cross-guard of a sword.');
+  assert.deepEqual(state.matched, [1, 2, 3]);
+  assert.equal(state.phase, 'reveal');
+  assert.deepEqual(state.roundPoints, { 1: 3, 2: 3, 3: 3 });
+});
+
+test('a write during voting is refused as over, whatever its length', () => {
+  assert.deepEqual(applyAction(voting(), 1, { type: 'write', text: 'x'.repeat(151) }, first, NOW), { error: 'Writing is over' });
+});
+
+test('a leave during the reveal that makes everyone ready falls due at once', () => {
+  let state = onDeadline(writing(['Alice', 'Bob', 'Cara', 'Dan']), NOW + 120_000, first);
+  state = cont(cont(cont(state, 1), 2), 3);
+  assert.equal(deadline(state), null);
+  state = removePlayer(fictionary, state, 4, first);
+  assert.equal(deadline(state), 0);
+  state = onDeadline(state, NOW + 1, first);
+  assert.equal(state.round, 2);
+  assert.equal(state.phaseStartedAt, NOW + 1);
+  // With nobody connected nothing falls due, so the words do not run on with nobody there
+  const empty = { ...onDeadline(writing(), NOW + 120_000, first), disconnected: [1, 2, 3] };
+  assert.equal(deadline(empty), null);
+});
+
+test('recordsAction: known actions once the clock runs, until the game ends', () => {
+  const state = writing();
+  assert.equal(recordsAction(state, 1, { type: 'write', text: 'a bird' }), true);
+  assert.equal(recordsAction(state, 1, { type: 'continue' }), true);
+  assert.equal(recordsAction(state, 1, { type: 'chat', text: 'hi' }), false);
+  assert.equal(recordsAction(state, 1, null), false);
+  assert.equal(recordsAction(lobby(['Alice', 'Bob', 'Cara']), 1, { type: 'write', text: 'a bird' }), false);
+  assert.equal(recordsAction({ ...state, isGameOver: true }, 1, { type: 'vote', choice: 0 }), false);
 });

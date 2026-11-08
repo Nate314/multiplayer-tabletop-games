@@ -2,7 +2,7 @@
 import { houseRule, minimumToStart } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, awaiting, everyoneReady, type RoundAccess } from '../../shared/rounds.ts';
-import { baseGameState } from '../../shared/seating.ts';
+import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import type { Random, Result, Seat, Standing } from '../../shared/types.ts';
@@ -22,13 +22,13 @@ const ROUND: RoundAccess<GameState, Reveal> = {
   noun: 'word'
 };
 
-const fresh = {
+const fresh = () => ({
   submissions: {}, matched: [], choices: [], votes: {}, roundPoints: {}, reveal: null
-} satisfies Partial<GameState>;
+}) satisfies Partial<GameState>;
 
 export function createGameState(gameId: string): GameState {
   return {
-    ...baseGameState(gameId), ...fresh,
+    ...baseGameState(gameId), ...fresh(),
     phase: 'writing', deck: [], round: 1, word: '', definition: '', phaseStartedAt: null, scores: {}, lastMove: null
   };
 }
@@ -37,7 +37,7 @@ export function createGameState(gameId: string): GameState {
 export function resetLobby(state: GameState, random: Random): GameState {
   const deck = shuffle(WORDS, random).slice(0, houseRule(state, WORD_COUNT));
   return {
-    ...state, ...fresh, ...deck[0],
+    ...state, ...fresh(), ...deck[0],
     phase: 'writing', deck, round: 1, phaseStartedAt: null, currentPlayer: null,
     scores: Object.fromEntries(state.activePlayers.map(seat => [seat, 0])), lastMove: null
   };
@@ -95,8 +95,9 @@ function closeWriting(state: GameState, now: number, random: Random): GameState 
   }
   const choices = shuffle([...fakes, { text: state.definition, authors: [], real: true }], random);
   const closed: GameState = { ...state, matched, choices, lastMove: { type: 'closeWriting', reason } };
-  // One choice would hand out free points, so the reveal follows at once
-  if (fakes.length === 0 || voters(closed).length === 0) return revealRound(closed);
+  // A vote where every voter's only legal choice is the real one hands out free points, so the reveal follows at once
+  // (this covers no fakes and no voters too)
+  if (voters(closed).every(seat => fakes.every(fake => fake.authors.includes(seat)))) return revealRound(closed);
   const knew = matched.length ? ` (${names(state, matched)} wrote the real one)` : '';
   return { ...closed, phase: 'voting', phaseStartedAt: now, gameStatus: `Vote for the real definition${knew}` };
 }
@@ -105,15 +106,15 @@ function nextWord(state: GameState, now: number): GameState {
   const round = state.round + 1;
   const entry = state.deck[round - 1];
   return {
-    ...state, ...fresh, ...entry, round, phase: 'writing', phaseStartedAt: now,
+    ...state, ...fresh(), ...entry, round, phase: 'writing', phaseStartedAt: now,
     lastMove: { type: 'nextWord', round }, gameStatus: `Write a definition of ${entry.word}`
   };
 }
 
 function writeAction(state: GameState, seat: Seat, text: unknown, now: number, random: Random): Result<GameState> {
+  if (state.phase !== 'writing') return { error: 'Writing is over' };
   const trimmed = typeof text === 'string' ? text.trim() : '';
   if (trimmed.length < 1 || trimmed.length > MAX_DEFINITION) return { error: `Definitions are 1 to ${MAX_DEFINITION} characters` };
-  if (state.phase !== 'writing') return { error: 'Writing is over' };
   const next: GameState = {
     ...state, submissions: { ...state.submissions, [seat]: trimmed },
     lastMove: { type: 'write', playerNumber: seat }, gameStatus: `${state.playerNames[seat]} wrote a definition`
@@ -157,7 +158,8 @@ export const allowsUndoVote = (): boolean => false;
 // closes it on the server clock
 export function deadline(state: GameState): number | null {
   if (state.isGameOver || state.phaseStartedAt === null) return null;
-  if (state.phase === 'reveal') return everyoneReady(state, ROUND) ? 0 : null;
+  // With nobody connected everyoneReady holds at once, and the words would run on with nobody there
+  if (state.phase === 'reveal') return connectedPlayers(state).length > 0 && everyoneReady(state, ROUND) ? 0 : null;
   if ((state.phase === 'writing' && allWritten(state)) || (state.phase === 'voting' && allVoted(state))) return 0;
   return phaseDeadline(state);
 }
