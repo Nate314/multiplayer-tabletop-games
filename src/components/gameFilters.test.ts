@@ -77,6 +77,6 @@ test('every registered game is shown with the default filters', () => {
 
 test('seven players lists the seventeen games that seat seven, two of them only as a house rule', () => {
   const games = arrangeGames(GAMES, { ...DEFAULT_FILTERS, players: 7, sort: 'name' })[0].games;
-  assert.deepEqual(games.map(g => g.info.name), ['Categories', 'Charades', 'Farkle', 'Fictionary', 'Hint Grid', 'Jenga', 'Jigsaw', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', 'Steady Hand', 'Sudoku', "Texas Hold'em", 'Trading Floor', 'UNO', 'Yahtzee']);
+  assert.deepEqual(games.map(g => g.info.name), ['Categories', 'Charades', 'Farkle', 'Fictionary', 'Hint Grid', 'Jenga', 'Jigsaw', 'Phase 10', 'Pictionary', 'Rook', 'Steady Hand', 'Street Deeds', 'Sudoku', "Texas Hold'em", 'Trading Floor', 'UNO', 'Yahtzee']);
   assert.deepEqual(games.filter(g => needsHouseRule(g.info, 7)).map(g => g.info.name), ['Phase 10', 'Rook']);
 });

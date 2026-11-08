@@ -3,7 +3,10 @@
 export type LegacyId = { id: string; keepsSaves: boolean };
 export type LegacyIds = Readonly<Record<string, LegacyId>>;
 
-export const LEGACY_IDS: LegacyIds = {};
+export const LEGACY_IDS: LegacyIds = {
+  monopoly: { id: 'streetdeeds', keepsSaves: true },
+  tickettoride: { id: 'railroutes', keepsSaves: false }
+};
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {
   return Object.hasOwn(legacy, id) ? legacy[id].id : id;

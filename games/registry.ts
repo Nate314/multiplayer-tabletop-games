@@ -14,7 +14,7 @@ import { backgammon } from './backgammon/index.ts';
 import { catan } from './catan/index.ts';
 import { charades } from './charades/index.ts';
 import { mancala } from './mancala/index.ts';
-import { monopoly } from './monopoly/index.ts';
+import { streetdeeds } from './streetdeeds/index.ts';
 import { naval } from './naval/index.ts';
 import { parchisi } from './parchisi/index.ts';
 import { scrabble } from './scrabble/index.ts';
@@ -42,7 +42,7 @@ import { sudoku } from './sudoku/index.ts';
 import { farkle } from './farkle/index.ts';
 import { fictionary } from './fictionary/index.ts';
 import { holdem } from './holdem/index.ts';
-import { tickettoride } from './tickettoride/index.ts';
+import { railroutes } from './railroutes/index.ts';
 import { tradingfloor } from './tradingfloor/index.ts';
 import { dominoes } from './dominoes/index.ts';
 import { whodunit } from './whodunit/index.ts';
@@ -54,6 +54,6 @@ import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 // Registry order, alphabetical by name; the landing page groups them by category. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  azul, backgammon, carcassonne, catan, charades, checkers, chinesecheckers, chess, categories, codebreaker, connectfour, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, jenga, jigsaw, mancala, monopoly, naval, parchisi, phase10, pictionary,
-  quoridor, racko, roadtoretirement, risk, rook, rummikub, scrabble, skipbo, snakesladders, spades, splendor, steadyhand, sudoku, holdem, thecrew, tictactoe, tickettoride, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
+  azul, backgammon, carcassonne, catan, charades, checkers, chinesecheckers, chess, categories, codebreaker, connectfour, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, jenga, jigsaw, mancala, naval, parchisi, phase10, pictionary,
+  quoridor, racko, railroutes, roadtoretirement, risk, rook, rummikub, scrabble, skipbo, snakesladders, spades, splendor, steadyhand, streetdeeds, sudoku, holdem, thecrew, tictactoe, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
 ];

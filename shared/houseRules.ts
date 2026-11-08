@@ -8,7 +8,7 @@ export type PlayerRange = { min: number; max: number };
 
 type HouseRuleBase = {
   id: string; // key in HouseRuleValues, unique within the game
-  label: string; // form and dialog label, e.g. 'Free Parking jackpot'
+  label: string; // form and dialog label, e.g. 'Town Square jackpot'
   help?: string; // one line under the control
   // Offered at this seat count and with these other values; omitted means always offered
   offered?(seats: number, values: HouseRuleValues): boolean;

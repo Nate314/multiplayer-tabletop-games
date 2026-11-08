@@ -56,3 +56,36 @@ test('a seat keeps only its newest three endpoints', () => {
   assert.deepEqual(store.endpoints('hearts/a', 2), ['e9']);
   store.close();
 });
+
+test('renameGameType moves subscriptions of an old game, once', () => {
+  const store = openPushStore(':memory:');
+  store.add('oldgame/g1', 0, 'e1');
+  store.add('oldgame/g1', 1, 'e2');
+  store.add('chess/g1', 0, 'e3');
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 2);
+  assert.deepEqual(store.endpoints('newgame/g1', 0), ['e1']);
+  assert.deepEqual(store.endpoints('newgame/g1', 1), ['e2']);
+  assert.deepEqual(store.roomIds().sort(), ['chess/g1', 'newgame/g1']);
+  assert.deepEqual(store.endpoints('chess/g1', 0), ['e3']);
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+  store.close();
+});
+
+test('renameGameType leaves a subscription whose new room id is taken', () => {
+  const store = openPushStore(':memory:');
+  store.add('oldgame/g1', 0, 'e1');
+  store.add('newgame/g1', 1, 'e2');
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+  assert.deepEqual(store.endpoints('oldgame/g1', 0), ['e1']);
+  assert.deepEqual(store.endpoints('newgame/g1', 1), ['e2']);
+  assert.deepEqual(store.endpoints('newgame/g1', 0), []);
+  store.close();
+});
+
+test('renameGameType matches the old id as a whole prefix', () => {
+  const store = openPushStore(':memory:');
+  store.add('oldgamex/g1', 0, 'e1');
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+  assert.deepEqual(store.endpoints('oldgamex/g1', 0), ['e1']);
+  store.close();
+});

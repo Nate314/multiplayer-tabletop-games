@@ -32,3 +32,13 @@ test('every legacy entry points at a registered game and no old id is still regi
     assert.ok(!Object.hasOwn(LEGACY_IDS, id), `${old} chains through ${id}`);
   }
 });
+
+test('monopoly is now Street Deeds and its saves still fit', () => {
+  assert.equal(currentId('monopoly'), 'streetdeeds');
+  assert.equal(keepsSaves('monopoly'), true);
+});
+
+test('tickettoride is now Rail Routes and its saves are refused', () => {
+  assert.equal(currentId('tickettoride'), 'railroutes');
+  assert.equal(keepsSaves('tickettoride'), false);
+});
