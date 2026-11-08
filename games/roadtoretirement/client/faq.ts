@@ -94,5 +94,11 @@ export const FAQS: FaqItem[] = [
     question: 'What happens if someone leaves?',
     answer: 'Their token leaves the board and their turns are skipped. On the road, the game ends once everyone ' +
       'still playing has retired.'
+  },
+  {
+    question: 'Can I tell the players apart without seeing color?',
+    answer: 'Yes. Players are red, blue, green, yellow, purple and orange in seat order. Turn on Color-blind ' +
+      'symbols in Settings and each token, piece and player list dot shows its shape in place of the initial: ' +
+      'red circle, blue square, green triangle, yellow star, purple cross, orange hexagon.'
   }
 ];

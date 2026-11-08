@@ -1,7 +1,7 @@
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { FINISH, LADDERS, SNAKES, cellOf } from '../board.ts';
 import { tokenKey } from './animateMove.ts';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { centerOf, stackOffset } from './geometry.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -83,7 +83,7 @@ function Token({ seat, name, square, index, count }: TokenProps) {
       <g transform={`translate(${center.x + dx} ${center.y + dy})`}>
         <circle className="sl-token-disc" r={radius} />
         <ColorSymbol
-          color={SEAT_SYMBOLS[seat]}
+          color={SEAT_SYMBOL_COLORS[seat]}
           className="sl-token-symbol"
           svgProps={{ x: -symbol / 2, y: -symbol / 2, width: symbol, height: symbol, style: { width: symbol, height: symbol } }}
         />

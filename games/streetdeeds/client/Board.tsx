@@ -1,5 +1,5 @@
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { BOARD, HOTEL, JAIL, ownable } from '../board.ts';
 import { DECKS, DECK_NAMES } from '../cards.ts';
 import { freeParkingJackpot } from '../options.ts';
@@ -36,7 +36,7 @@ function Token({ seat, name }: { seat: Seat; name: string }) {
   return (
     <span className={`token ${seatClass(seat)}`} data-anim-key={tokenKey(seat)} title={name}>
       <ServerSvg url={DISC_URL} className="piece-art" />
-      <ColorSymbol color={SEAT_SYMBOLS[seat]} className="token-symbol" />
+      <ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="token-symbol" />
       <span className="token-initial">{name.slice(0, 1).toUpperCase()}</span>
     </span>
   );

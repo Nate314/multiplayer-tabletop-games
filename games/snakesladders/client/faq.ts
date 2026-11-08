@@ -38,6 +38,6 @@ export const FAQS: FaqItem[] = [
   {
     question: 'Can I tell the colors apart without seeing color?',
     answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue ' +
-      'square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens and the player list show it.'
+      'square, green triangle, yellow star, purple cross, orange hexagon. Tokens and the player list show it.'
   }
 ];

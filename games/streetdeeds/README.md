@@ -40,7 +40,7 @@ Buy, trade and build on properties, charge rent, and bankrupt every other player
 - Click Undo to ask everyone to undo the last move
 - With a table screen connected, on Hand only (the default) the event log and the other players are hidden, and the board shows only on your turn
 - Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
-- With Color-blind symbols on in Settings, each token shows the shape of its color in place of its initial: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens on the board and in the player list show it; the brown and slate tokens of the seventh and eighth players show their initial as usual
+- With Color-blind symbols on in Settings, each token shows the shape of its color in place of its initial: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon, cyan pentagon, pink heart. Tokens on the board and in the player list show it
 
 ## Differences from Wikipedia
 

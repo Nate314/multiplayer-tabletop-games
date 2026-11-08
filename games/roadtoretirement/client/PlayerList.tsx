@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import YouTag from '../../../src/components/YouTag.tsx';
 import { pointsText } from '../../../shared/standings.ts';
 import { plural } from '../../../shared/text.ts';
@@ -41,7 +43,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
         return (
           <div key={seat} className={classNames.join(' ')} data-seat={seat}>
             <div className="player-line">
-              <span className={`player-dot seat${seat}`} aria-hidden="true" />
+              <span className={`player-dot seat${seat}`} aria-hidden="true"><ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="dot-symbol" /></span>
               <span className="player-name">
                 {playerNames[seat]}
                 <YouTag when={seat === viewer} />

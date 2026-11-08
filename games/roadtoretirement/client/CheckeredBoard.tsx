@@ -1,3 +1,5 @@
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { GOAL_POINTS, SQUARES, cellOf, isLight, type Square } from '../checkered.ts';
 import type { Cell, Move, PublicGameState, Seat } from '../types.ts';
 import { pieceKey } from './animateMove.ts';
@@ -60,7 +62,8 @@ export default function CheckeredBoard({ gameState, canMove, onMove, highlight }
               <span className="pieces">
                 {here.map(({ seat }) => (
                   <span key={seat} className={`piece seat${seat}`} data-anim-key={pieceKey(seat)} title={gameState.playerNames[seat]}>
-                    {gameState.playerNames[seat]?.slice(0, 1).toUpperCase()}
+                    <ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="piece-symbol" />
+                    <span className="piece-initial">{gameState.playerNames[seat]?.slice(0, 1).toUpperCase()}</span>
                   </span>
                 ))}
               </span>
