@@ -124,6 +124,14 @@ test.describe('Fictionary rules', () => {
       await expect(choice(page, 'swrd')).toHaveCount(0);
       await expect(status(page)).toHaveText('Vote for the real definition (Cara wrote the real one)');
     }
+    await choice(alice, 'a pointed hat').click();
+    await choice(bob, 'a small bird').click();
+    for (const page of [alice, bob, cara]) {
+      await expect(row(page, QUILLON.definition)).toContainText('Real definition, also written by Cara');
+      await expect(roundPoints(page, 'Cara')).toContainText('+3');
+      await expect(roundPoints(page, 'Alice')).toContainText('+1');
+      await expect(roundPoints(page, 'Bob')).toContainText('+1');
+    }
   });
 
   test('identical fakes show once, credited to both authors', async ({ seat }) => {
@@ -131,27 +139,26 @@ test.describe('Fictionary rules', () => {
     for (const page of [alice, bob, cara]) await expect(choices(page)).toHaveCount(3);
     await expect(choice(bob, 'small bird')).toBeDisabled();
     await expect(choice(alice, 'small bird')).toBeDisabled();
-    await choice(alice, QUILLON.definition).click();
-    await choice(bob, QUILLON.definition).click();
+    await choice(alice, 'a pointed hat').click();
+    await choice(bob, 'a pointed hat').click();
     await choice(cara, 'small bird').click();
     await expect(row(cara, 'small bird')).toContainText('Written by Alice, Bob');
-    await expect(roundPoints(cara, 'Alice')).toContainText('+3');
-    await expect(roundPoints(cara, 'Bob')).toContainText('+3');
-    await expect(roundPoints(cara, 'Cara')).toContainText('+0');
+    await expect(roundPoints(cara, 'Alice')).toContainText('+1'); // Cara's one vote scores for both authors
+    await expect(roundPoints(cara, 'Bob')).toContainText('+1');
+    await expect(roundPoints(cara, 'Cara')).toContainText('+2');
   });
 
-  test('votes score 2 for the real one, 1 to a fake\'s author, and 3 for writing the real one', async ({ seat }) => {
-    const { alice, bob, cara } = await voting(seat, ['a small bird', 'a pointed hat', MATCH]);
+  test("votes score 2 for the real one and 1 to a fake's author", async ({ seat }) => {
+    const { alice, bob, cara } = await voting(seat);
     await choice(alice, QUILLON.definition).click();
     await choice(bob, 'a small bird').click();
+    await choice(cara, 'a pointed hat').click();
     for (const page of [alice, bob, cara]) {
-      await expect(roundPoints(page, 'Alice')).toContainText('+3'); // 2 for the vote, 1 from Bob
-      await expect(roundPoints(page, 'Bob')).toContainText('+0');
-      await expect(roundPoints(page, 'Cara')).toContainText('+3');
-      await expect(row(page, QUILLON.definition)).toContainText('Real definition, also written by Cara');
+      await expect(roundPoints(page, 'Alice')).toContainText('+3'); // 2 for her vote, 1 from Bob's
+      await expect(roundPoints(page, 'Bob')).toContainText('+1'); // Cara's vote
+      await expect(roundPoints(page, 'Cara')).toContainText('+0');
     }
-    await expect(points(alice, 'Alice')).toHaveText('3');
-    await expect(points(alice, 'Cara')).toHaveText('3');
+    for (const [name, total] of [['Alice', '3'], ['Bob', '1'], ['Cara', '0']]) await expect(points(alice, name)).toHaveText(total);
   });
 
   test('the reveal lists authors and voters, and Continue starts word 2', async ({ seat }) => {
@@ -185,14 +192,15 @@ test.describe('Fictionary rules', () => {
     await expect(round(alice)).toContainText('Round 5 of 5');
     await write(alice, 'a small bird');
     await write(bob, 'a pointed hat');
-    await write(cara, MATCH);
+    await write(cara, 'a kind of soup');
     await choice(alice, QUILLON.definition).click();
     await choice(bob, 'a small bird').click();
+    await choice(cara, 'a pointed hat').click();
     for (const page of [alice, bob, cara]) {
       const over = page.getByRole('dialog', { name: 'Game over' });
       await expect(over).toBeVisible();
       await expect(over).toContainText('Round 5: quillon');
-      await expect(status(page)).toHaveText('Alice and Cara won with 3 points');
+      await expect(status(page)).toHaveText('Alice won with 3 points');
     }
   });
 
@@ -302,6 +310,7 @@ test.describe('Fictionary rules', () => {
       await expect(page.getByRole('dialog', { name: 'Game over' })).toBeVisible();
       await expect(status(page)).toHaveText('Not enough players left: Alice and Bob won with 0 points');
       await expect(turn(page)).toHaveText('Game over');
+      await expect(page.getByRole('radio').and(page.locator(':enabled'))).toHaveCount(0);
     }
   });
 

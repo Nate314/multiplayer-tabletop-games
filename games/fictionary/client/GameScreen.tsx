@@ -9,15 +9,15 @@ import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
-  const { phase, reveal, activePlayers, round, word } = gameState;
+  const { phase, reveal, activePlayers, round, word, isGameOver } = gameState;
   // The last word sets no reveal, so it has no Continue dialog: its rows show on the game-over screen instead
   const dialog = phase === 'reveal' && reveal !== null && activePlayers.includes(playerNumber);
 
   return (
     <div className="fictionary-layout">
       <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} />
-      {phase === 'writing' && <WritingPanel gameState={gameState} playerNumber={playerNumber} />}
-      {phase === 'voting' && <VotingPanel gameState={gameState} playerNumber={playerNumber} />}
+      {phase === 'writing' && !isGameOver && <WritingPanel gameState={gameState} playerNumber={playerNumber} />}
+      {phase === 'voting' && !isGameOver && <VotingPanel gameState={gameState} playerNumber={playerNumber} />}
       {phase === 'reveal' && !dialog && <RevealRows gameState={gameState} viewer={playerNumber} />}
       <Scores gameState={gameState} viewer={playerNumber} />
       {dialog && (
