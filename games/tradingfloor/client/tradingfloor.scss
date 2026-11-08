@@ -170,6 +170,7 @@
 
   .tf-group {
     display: flex;
+    max-width: 100%;
   }
 
   .tf-hand-card {
@@ -182,6 +183,12 @@
     color: inherit;
     font: inherit;
     transition: transform 0.12s ease;
+    /* In a narrow container the fan overlaps more (the card face spills over the next card) instead of scrolling */
+    min-width: 14px;
+  }
+
+  .tf-hand-card:last-child {
+    flex-shrink: 0;
   }
 
   .tf-hand-card + .tf-hand-card {

@@ -1,4 +1,4 @@
-import type { Page, WebSocketRoute } from '@playwright/test';
+import type { Locator, Page, WebSocketRoute } from '@playwright/test';
 import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, test, watch, type Seat, type SeatOptions } from './fixtures.ts';
 import type { Card, GameState } from '../games/tradingfloor/types.ts';
 
@@ -231,6 +231,17 @@ test.describe('Trading Floor corners and rounds', () => {
       await expect(bubbles(page)).toHaveCount(0); // open offers are dropped
     }
     await expect(gameOver(alice)).toHaveCount(0);
+  });
+
+  test('a group of 9 fits at 320 px, in the hand and in the round summary', async ({ seat }) => {
+    const { alice } = await start(seat, CORNERED);
+    await alice.setViewportSize({ width: 320, height: 700 });
+    const fits = (scope: Locator) => scope.locator('.tf-groups').evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
+    await expect(card(alice, SAFFRON).first()).toBeVisible();
+    expect(await fits(myHand(alice))).toBe(true);
+    await button(alice, 'Corner!').click();
+    await expect(scoring(alice)).toBeVisible();
+    expect(await fits(scoring(alice))).toBe(true);
   });
 
   test('Continue waits for everyone and then deals the next round', async ({ seat }) => {
