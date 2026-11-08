@@ -1,6 +1,7 @@
 import YouTag from '../../../src/components/YouTag.tsx';
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { plural } from '../../../shared/text.ts';
+import { phaseLabel } from '../rules.ts';
 import { seatOrder } from './seatOrder.ts';
 import type { HandSummary as Summary, PublicGameState, Seat } from '../types.ts';
 
@@ -26,7 +27,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: Summary; ga
               <YouTag when={seat === viewer} />
             </span>
             <span className="summary-phase">
-              {phase === 0 ? 'No phase laid down' : completed ? `Phase ${phase} done` : `Phase ${phase} not done`}
+              {phase === 0 ? 'No phase laid down' : completed ? `${phaseLabel(phase)} done` : `${phaseLabel(phase)} not done`}
             </span>
             <span className="summary-reason">{plural(cardsLeft, 'card')} left: +{points}</span>
             <span className="summary-points">{scoreAfter} pts</span>

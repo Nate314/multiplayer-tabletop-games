@@ -97,7 +97,7 @@ test.describe('Stage Rummy rules', () => {
     await expect(seatOf(alice, 'Alice')).toContainText(`Phase 1: ${names[0]}`);
     for (const [index, name] of names.entries()) {
       await table.patch({ phases: { 1: index + 1, 2: 1 } });
-      await expect(seatOf(alice, 'Alice')).toContainText(`Phase ${index + 1}: ${name}`);
+      await expect(seatOf(alice, 'Alice')).toContainText(`${index === 9 ? 'Last phase' : `Phase ${index + 1}`}: ${name}`);
     }
   });
 
@@ -345,7 +345,7 @@ test.describe('Stage Rummy rules', () => {
     await expect(seatOf(cara, 'Cara')).toContainText('not in the tiebreaker');
     await expect(handRegion(cara)).toContainText('Your hand (0)');
     await expect(handRegion(alice)).toContainText('Your hand (10)');
-    await expect(seatOf(cara, 'Alice')).toContainText('Phase 10');
+    await expect(seatOf(cara, 'Alice')).toContainText('Last phase');
 
     // Still tied after the tiebreaker: it is played again, scored the same way
     await deal(table, {

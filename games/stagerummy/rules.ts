@@ -60,6 +60,11 @@ export function requirementName({ kind, size }: Requirement): string {
   return kind === 'color' ? `${size} cards of one color` : `a ${kind} of ${size}`;
 }
 
+// 'Phase 3'; the tenth reads 'Last phase'
+export const phaseLabel = (phase: number): string => (phase === LAST_PHASE ? 'Last phase' : `Phase ${phase}`);
+// 'phase 3' or 'the last phase', for the middle of a sentence
+const phaseRef = (phase: number): string => (phase === LAST_PHASE ? 'the last phase' : `phase ${phase}`);
+
 // e.g. '1 set of 3 + 1 run of 4'; phases with two equal parts read '2 sets of 3'
 export function phaseName(phase: number): string {
   const parts = phaseRequirements(phase);
@@ -227,7 +232,7 @@ export function moveText(lastMove: LastMove, playerNames: Record<Seat, string>):
         ? `${name} drew from the pile`
         : `${name} took the ${cardName(lastMove.card)} from the discard pile`;
     case 'layDown':
-      return `${name} laid down phase ${lastMove.phase}`;
+      return `${name} laid down ${phaseRef(lastMove.phase)}`;
     case 'hit': {
       const owner = lastMove.owner === lastMove.playerNumber ? 'their own' : `${playerNames[lastMove.owner]}'s`;
       const cards = lastMove.count === 1 ? '1 card' : `${lastMove.count} cards`;
@@ -522,10 +527,10 @@ function chosenPhase(state: GameState, seat: Seat, named: number | undefined): R
     return named === LAST_PHASE || (named === undefined && !anyOrder(state)) ? { state: LAST_PHASE } : { error: 'The tiebreaker hand is the last phase' };
   }
   if (!anyOrder(state)) {
-    return named === undefined || named === allowed[0] ? { state: allowed[0] } : { error: `Phase ${allowed[0]} is your next phase` };
+    return named === undefined || named === allowed[0] ? { state: allowed[0] } : { error: `${phaseLabel(allowed[0])} is your next phase` };
   }
   if (named === undefined || named < 1 || named > LAST_PHASE) return { error: 'Choose which phase to lay down' };
-  return allowed.includes(named) ? { state: named } : { error: `You have already completed phase ${named}` };
+  return allowed.includes(named) ? { state: named } : { error: `You have already completed ${phaseRef(named)}` };
 }
 
 function layDown(state: GameState, seat: Seat, groupIds: number[][], named: number | undefined): Result<GameState> {
@@ -534,7 +539,7 @@ function layDown(state: GameState, seat: Seat, groupIds: number[][], named: numb
   if ('error' in chosen) return chosen;
   const phase = chosen.state;
   const requirements = phaseRequirements(phase);
-  if (groupIds.length !== requirements.length) return { error: `Phase ${phase} needs ${phaseName(phase)}` };
+  if (groupIds.length !== requirements.length) return { error: `${phaseLabel(phase)} needs ${phaseName(phase)}` };
   const taken = takeCards(state.hands[seat], groupIds.flat());
   if (!taken) return { error: 'Those cards are not in your hand' };
 
@@ -621,7 +626,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
 export function finalStandings(state: GameState): Standing[] {
   const phase = (seat: Seat) => state.phases[seat] ?? 1;
   const points = (seat: Seat) => state.scores[seat] ?? 0;
-  const progress = (seat: Seat) => (phase(seat) > LAST_PHASE ? 'All phases' : `Phase ${phase(seat)}`);
+  const progress = (seat: Seat) => (phase(seat) > LAST_PHASE ? 'All phases' : phaseLabel(phase(seat)));
   return rankStandings(state, (a, b) => phase(b) - phase(a) || points(a) - points(b), seat => `${progress(seat)}, ${pointsText(points(seat))}`);
 }
 

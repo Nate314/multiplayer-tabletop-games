@@ -2,7 +2,7 @@ import YouTag from '../../../src/components/YouTag.tsx';
 import CardView from './CardView';
 import { cardKey } from './animateMove.ts';
 import { seatKey } from '../../../src/animation/animKeys.ts';
-import { LAST_PHASE, anyOrder, handPlayers, phaseName, phasesDoneOf, runValue } from '../rules.ts';
+import { LAST_PHASE, anyOrder, handPlayers, phaseLabel, phaseName, phasesDoneOf, runValue } from '../rules.ts';
 import type { Group, LastMove, PublicGameState, Seat } from '../types.ts';
 
 type TableProps = {
@@ -35,7 +35,7 @@ function highlighted(lastMove: LastMove | null, groups: Group[]): number[] {
 function progress(gameState: PublicGameState, seat: Seat): string {
   const { phases, tiebreak } = gameState;
   if (!anyOrder(gameState) || tiebreak.includes(seat)) {
-    return phases[seat] > LAST_PHASE ? 'All phases done' : `Phase ${phases[seat]}: ${phaseName(phases[seat])}`;
+    return phases[seat] > LAST_PHASE ? 'All phases done' : `${phaseLabel(phases[seat])}: ${phaseName(phases[seat])}`;
   }
   const done = phasesDoneOf(gameState, seat);
   if (done.length === LAST_PHASE) return 'All phases done';
