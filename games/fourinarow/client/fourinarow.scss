@@ -12,11 +12,11 @@
   --error-text: #8A1C12;
   --danger-bg: #B3261E;
   --danger-hover-bg: #8C1D18;
-  --frame: #2B7A6B;
-  --board-blue: #1F5BC4;
+  --frame: #1B5247;
+  --board-face: #2B7A6B;
   --hole: #E8EEF7;
   --last-move: #FFD54F;
-  --winning: #66BB6A;
+  --winning: #FFFFFF;
   --player1: #D32F2F;
   --player1-edge: #8E1B1B;
   --player2: #FBC02D;
@@ -43,8 +43,8 @@
     --status-bg: #2A3550;
     --error-bg: #4A1D18;
     --error-text: #FFD6D0;
-    --frame: #3A9C88;
-    --board-blue: #1A4A9E;
+    --frame: #266B5D;
+    --board-face: #3A9C88;
     --hole: #121722;
   }
 
@@ -73,7 +73,7 @@
     width: fit-content;
     border: 6px solid var(--frame);
     border-radius: 8px;
-    background: var(--board-blue);
+    background: var(--board-face);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   }
 
