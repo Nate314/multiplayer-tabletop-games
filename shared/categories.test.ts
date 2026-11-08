@@ -21,18 +21,18 @@ test('the Puzzles group sits after Classic board games and is dropped while empt
 
 test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
-    card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'uno', 'war'],
+    card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
     tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'connectfour', 'mancala', 'naval', 'parchisi', 'quoridor', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
     strategy: ['catan', 'corners', 'go', 'monopoly', 'risk', 'splendor', 'tickettoride'],
-    party: ['categories', 'hintgrid', 'jenga', 'pictionary']
+    party: ['categories', 'hintgrid', 'jenga', 'pictionary', 'steadyhand']
   };
   const actual = Object.fromEntries(Object.keys(expected).map(c => [c, GAMES.filter(g => g.info.category === c).map(g => g.info.id).sort()]));
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
   assert.deepEqual(actual, sorted);
   const grouped = groupByCategory(GAMES).flatMap(g => g.games.map(game => game.info.id));
-  assert.equal(grouped.length, 47);
-  assert.equal(new Set(grouped).size, 47);
+  assert.equal(grouped.length, 49);
+  assert.equal(new Set(grouped).size, 49);
 });

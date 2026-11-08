@@ -55,11 +55,13 @@ const GAME_ICONS: Record<string, () => string> = {
   snakesladders: () => lineIcon(el('path', { d: 'M5 21V3M10 21V3M5 8h5M5 13h5M5 18h5' }), el('path', { d: 'M20 3c-4 2 0 5-3 8s1 6-3 10' })),
   spades: () => lineIcon(solid('path', { d: 'M12 2C9 6 4 9 4 13a4 4 0 0 0 7 2.6L10 21h4l-1-5.4A4 4 0 0 0 20 13c0-4-5-7-8-11z' })),
   splendor: () => lineIcon(el('path', { d: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M8 9l4 12 4-12' })),
+  steadyhand: () => lineIcon(el('path', { d: 'M3 20h6v-6H5V8h8V4h8' }), el('circle', { cx: 3.5, cy: 20, r: 2 })),
   sudoku: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), label('5', 12, 14.5, 6)),
   thecrew: rocketIcon,
   tickettoride: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 14, rx: 3 }), el('rect', { x: 7.5, y: 6, width: 9, height: 4.5, rx: 1 }),
     pip(9, 14), pip(15, 14), el('path', { d: 'M8 17l-2 4M16 17l2 4' })),
   tictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18M10.5 10.5l3 3M13.5 10.5l-3 3' })),
+  tradingfloor: () => lineIcon(el('path', { d: 'M3 11l6-2 3 10-6 2zM21 11l-6-2-3 10 6 2zM7 6c3-3 7-3 10 0M17 6l-3 .5M17 6l-.5-3M7 6l3 .5M7 6l.5-3' })),
   // A # grid with a small, thinner # in each of its nine boards
   ultimatetictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), el('path', { 'stroke-width': 0.8,
     d: [6, 12, 18].flatMap(x => [6, 12, 18].map(y => `M${x - 1} ${y - 2}v4M${x + 1} ${y - 2}v4M${x - 2} ${y - 1}h4M${x - 2} ${y + 1}h4`)).join('') })),
