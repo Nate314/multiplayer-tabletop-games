@@ -2,7 +2,8 @@ import ServerSvg from '../../../src/assets/ServerSvg.tsx';
 import { svgUrl } from '../../../src/assets/svgCache.ts';
 import { BORDERS, CONTINENTS, TERRITORIES } from '../map.ts';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { CONTINENT_LABELS, MAP_HEIGHT, MAP_WIDTH, SEAT_SYMBOLS, TERRITORY_RADIUS, seatClass, territoryKey } from './layout.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
+import { CONTINENT_LABELS, MAP_HEIGHT, MAP_WIDTH, TERRITORY_RADIUS, seatClass, territoryKey } from './layout.ts';
 import type { PublicGameState } from '../types.ts';
 
 type WorldMapProps = {
@@ -56,7 +57,7 @@ export default function WorldMap({ gameState, source = null, target = null, targ
             <title>{label}</title>
             <circle className="disc" cx={x} cy={y} r={TERRITORY_RADIUS} />
             <text className="army-count" x={x} y={y}>{count}</text>
-            <ColorSymbol color={owner ? SEAT_SYMBOLS[owner] : null} className="disc-symbol"
+            <ColorSymbol color={owner ? SEAT_SYMBOL_COLORS[owner] : null} className="disc-symbol"
               svgProps={{ x: x - SYMBOL_SIZE / 2, y: y + 7, width: SYMBOL_SIZE, height: SYMBOL_SIZE }} />
             <text className="territory-name" x={x} y={y + TERRITORY_RADIUS + 11}>{name}</text>
             {added > 0 && (

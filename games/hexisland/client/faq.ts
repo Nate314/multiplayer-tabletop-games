@@ -10,7 +10,7 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What changes with five or six players?',
     answer: 'The 5-6 player extension is played: a bigger island of 30 hexes with two deserts, 28 number tokens, 11 ' +
-      'harbors, 24 cards of each resource in the bank and 34 development cards. White and green join the other ' +
+      'harbors, 24 cards of each resource in the bank and 34 development cards. Purple and orange join the other ' +
       'colors. The island is chosen when the lobby resets, so it changes back if a player leaves before the first move.'
   },
   {
@@ -94,7 +94,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, orange hexagon, purple cross, white ring, green triangle. Settlements, cities, the middle of each road and the player list show it.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon. Settlements, cities, the middle of each road and the player list show it.'
   },
   {
     question: 'Can the rules be changed?',

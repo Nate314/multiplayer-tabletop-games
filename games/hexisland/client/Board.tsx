@@ -1,8 +1,9 @@
 import type { KeyboardEvent, ReactNode } from 'react';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { boardOf, pips } from '../board.ts';
 import {
-  RESOURCE_LABELS, SEAT_SYMBOLS, TERRAIN_LABELS, boardFrame, buildingKey, edgeEnds, hexPoint, hexPolygon, portLabel, portPoint, roadKey,
+  RESOURCE_LABELS, TERRAIN_LABELS, boardFrame, buildingKey, edgeEnds, hexPoint, hexPolygon, portLabel, portPoint, roadKey,
   robberKey, seatClass, vertexPoint
 } from './layout.ts';
 import type { PublicGameState, Resource, Seat } from '../types.ts';
@@ -26,7 +27,7 @@ const BUILDING_SYMBOL = 11; // fills a settlement's body or a city's tower
 
 // A color symbol centered on a point of the drawing; the nested svg needs its size as attributes
 function symbolAt(seat: Seat, x: number, y: number, size: number) {
-  return <ColorSymbol color={SEAT_SYMBOLS[seat]} svgProps={{ x: x - size / 2, y: y - size / 2, width: size, height: size }} />;
+  return <ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} svgProps={{ x: x - size / 2, y: y - size / 2, width: size, height: size }} />;
 }
 
 const onKey = (action: () => void) => (event: KeyboardEvent) => {
