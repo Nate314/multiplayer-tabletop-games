@@ -2,6 +2,10 @@
 // value follows length over width. Slots keep apart, so even the Easy walls never let a part cut a corner.
 import type { Part } from './types.ts';
 
+// The board's viewBox; the server refuses a point outside it
+export const BAY_WIDTH = 1000;
+export const BAY_HEIGHT = 640;
+
 export const PART_RADIUS = 10;
 export const EXIT_RADIUS = 14;
 

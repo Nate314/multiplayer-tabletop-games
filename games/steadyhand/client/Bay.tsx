@@ -1,7 +1,6 @@
 import type { PointerEvent } from 'react';
 import { pointsText } from '../../../shared/standings.ts';
-import { EXIT_RADIUS, PARTS } from '../board.ts';
-import { BAY_HEIGHT, BAY_WIDTH } from './liveDrag.ts';
+import { BAY_HEIGHT, BAY_WIDTH, EXIT_RADIUS, PARTS } from '../board.ts';
 import PartArt from './PartArt';
 import type { GameState, Point } from '../types.ts';
 

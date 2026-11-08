@@ -1,11 +1,8 @@
 // The dragger's side of the live drag: throttling, the wall check and what each viewer draws
 import { SIMULATION_TICK_MS } from '../../../shared/gameDefinition.ts';
+import { BAY_HEIGHT, BAY_WIDTH } from '../board.ts';
 import { checkStep } from '../geometry.ts';
 import type { Live, Part, Point, Seat } from '../types.ts';
-
-// The board's viewBox; the server refuses a point outside it
-export const BAY_WIDTH = 1000;
-export const BAY_HEIGHT = 640;
 
 const clamp = (n: number, max: number) => Math.max(0, Math.min(max, n));
 

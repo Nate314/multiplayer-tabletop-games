@@ -1,5 +1,5 @@
-import type { Page } from '@playwright/test';
-import { expect, headerButton, inHouseRules, openFaq, test, undo, type Seat, type SeatOptions } from './fixtures.ts';
+import type { Locator, Page } from '@playwright/test';
+import { expect, headerButton, inHouseRules, openFaq, tableScreen, test, undo, watch, type Seat, type SeatOptions } from './fixtures.ts';
 import { PARTS } from '../games/steadyhand/board.ts';
 import type { GameState, Point } from '../games/steadyhand/types.ts';
 
@@ -19,13 +19,15 @@ async function start(seat: Seat, names = ['Alice', 'Bob'], options?: SeatOptions
   return { table, alice, bob };
 }
 
-const bay = (page: Page) => page.getByRole('img', { name: 'Repair bay' });
+// A page, or a dialog on it that draws its own bay
+type Scope = Page | Locator;
+const bay = (scope: Scope) => scope.getByRole('img', { name: 'Repair bay' });
 const status = (page: Page) => page.locator('.game-status');
 const turn = (page: Page) => page.locator('.sh-turn');
 const seatRow = (page: Page, name: string) => page.locator('.sh-seat', { hasText: name });
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 // The first part drawn in the bay, the Bolt while it is in its slot
-const bolt = (page: Page) => bay(page).locator('.sh-part').first();
+const bolt = (scope: Scope) => bay(scope).locator('.sh-part').first();
 
 // Board point to screen point through the bay's current matrix
 async function toScreen(page: Page): Promise<(p: Point) => { x: number; y: number }> {
@@ -79,7 +81,7 @@ async function fingerDrag(page: Page, route: Point[]): Promise<void> {
 }
 
 // Where a page draws the Bolt, read from its inline transform (the computed one glides between streamed positions)
-const drawnAt = (page: Page) => bolt(page).evaluate(g => {
+const drawnAt = (scope: Scope) => bolt(scope).evaluate(g => {
   const [, x, y] = (g as SVGGElement).style.transform.match(/translate\(([^,]+)px, ([^)]+)px\)/)!;
   return [parseFloat(x), parseFloat(y)];
 });
@@ -155,6 +157,28 @@ test.describe('Steady Hand turns', () => {
     await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-move')).toHaveText('Move 1 of 1: Alice brought out the Bolt for 8 points');
+    // The start step is the move's before snapshot, which still holds the last streamed position; the Bolt is drawn at rest
+    await history.getByRole('slider', { name: 'Step' }).fill('0');
+    await expect.poll(() => drawnAt(history)).toEqual(near(BOLT[0]));
+    await expect(bolt(history)).not.toHaveClass(/sh-part-watched/);
+  });
+
+  test('a spectator and the table screen watch the part move during the drag', async ({ seat, browser, server }) => {
+    const { table, alice, bob } = await start(seat);
+    // The table screen draws the board once the game has started
+    await drag(alice, GEAR);
+    await expect(status(bob)).toHaveText('Alice brought out the Gear for 15 points');
+    const carol = await watch(browser, server, 'steadyhand', table.gameId, 'Carol');
+    const tv = await tableScreen(table);
+    await drag(bob, [BOLT[0], [50, 200]], false);
+    for (const page of [carol, tv]) {
+      await expect.poll(() => drawnAt(page)).toEqual(near([50, 200]));
+      await expect(bolt(page)).toHaveClass(/sh-part-watched/);
+    }
+    await moveAlong(bob, [[50, 200], [50, 160]]);
+    for (const page of [carol, tv]) await expect.poll(() => drawnAt(page)).toEqual(near([50, 160]));
+    await bob.mouse.up();
+    for (const page of [carol, tv]) await expect.poll(() => drawnAt(page)).toEqual(near(BOLT[0]));
   });
 
   test('with 1 buzz allowed, a player out of buzzes is skipped and the game ends when nobody has any', async ({ seat }) => {

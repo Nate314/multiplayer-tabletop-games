@@ -32,7 +32,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const canDrag = myTurn && !undoVote && !dismissVote && !(!started && agreementPending(steadyhandInfo, gameState));
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber);
   const factor = TOLERANCE[houseRule(gameState, TOLERANCE_RULE)];
-  const [local, setLocal] = useState<Point | null>(null);
+  // The part this browser holds and where its pointer has it, drawn without waiting for the echo
+  const [local, setLocal] = useState<{ part: number; at: Point } | null>(null);
   const [shaking, setShaking] = useState(false);
   const hold = useRef<Hold | null>(null);
   // Pointer callbacks fire between renders, so they read the newest values
@@ -83,7 +84,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       return;
     }
     held.last = at;
-    setLocal(at);
+    setLocal({ part: held.part.id, at });
     const now = performance.now();
     if (shouldSend(held.sentAt, now)) {
       send(held, at);
@@ -144,12 +145,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         window.removeEventListener('blur', blurred);
       }
     };
-    setLocal(rest);
+    setLocal({ part: part.id, at: rest });
     gameService.sendAction({ type: 'pick', part: part.id });
   };
 
-  const at = drawnPosition(live, playerNumber, local);
-  const held: Held | null = live && at ? { part: live.part, at, watched: live.seat !== playerNumber } : null;
+  // A live part from this seat is ignored: it is an echo, or stale from a part this browser already let go
+  const watchedAt = drawnPosition(live, playerNumber, null);
+  const held: Held | null = local ? { ...local, watched: false } : live && watchedAt ? { part: live.part, at: watchedAt, watched: true } : null;
 
   return (
     <div className="sh-screen">

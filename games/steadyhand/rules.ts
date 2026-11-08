@@ -5,14 +5,10 @@ import { asRecord } from '../../shared/messages.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import type { Standing } from '../../shared/types.ts';
-import { PARTS } from './board.ts';
+import { BAY_HEIGHT, BAY_WIDTH, PARTS } from './board.ts';
 import { steadyhandInfo } from './info.ts';
 import { BUZZES_RULE, SOLO_BONUS } from './options.ts';
 import type { GameState, Point, PublicGameState, Result, Seat } from './types.ts';
-
-// The board's viewBox is 0 0 1000 640
-const WIDTH = 1000;
-const HEIGHT = 640;
 
 // Null under Unlimited
 export function buzzesLeft(state: GameState, seat: Seat): number | null {
@@ -36,7 +32,7 @@ export function resetLobby(state: GameState): GameState {
 
 const isPoint = (value: unknown): value is Point =>
   Array.isArray(value) && value.length === 2 && value.every(n => typeof n === 'number' && Number.isFinite(n))
-  && value[0] >= 0 && value[0] <= WIDTH && value[1] >= 0 && value[1] <= HEIGHT;
+  && value[0] >= 0 && value[0] <= BAY_WIDTH && value[1] >= 0 && value[1] <= BAY_HEIGHT;
 
 const partOf = (id: unknown) => PARTS.find(p => p.id === id);
 
