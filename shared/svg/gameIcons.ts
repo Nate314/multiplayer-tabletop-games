@@ -25,6 +25,7 @@ const GAME_ICONS: Record<string, () => string> = {
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),
     el('rect', { x: 10, y: 4, width: 10, height: 14, rx: 1.5, transform: 'rotate(10 15 11)' }), label('J', 15, 14, 7)),
   farkle: () => lineIcon(el('path', { d: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z' })),
+  fictionary: () => lineIcon(el('path', { d: 'M12 6c-2-1.5-5-2-9-1.5v14c4-.5 7 0 9 1.5 2-1.5 5-2 9-1.5v-14c-4-.5-7 0-9 1.5zM12 6v14' }), el('path', { d: 'M5.5 9.5a1.75 1.75 0 1 1 2.2 1.7c-.4.2-.7.5-.7 1v.8' }), pip(7, 15.2, 0.8)),
   go: () => lineIcon(el('path', { d: 'M4 8h16M4 16h16M8 4v16M16 4v16' }), solid('circle', { cx: 8, cy: 8, r: 2.5 }), el('circle', { cx: 16, cy: 16, r: 2.5 })),
   gofish: () => lineIcon(el('path', { d: 'M6 12c2.5-3.5 6-5 9-5s6 2.5 7 5c-1 2.5-4 5-7 5s-6.5-1.5-9-5zM6 12L2 8v8z' }), pip(17, 11, 0.9)),
   hearts: () => lineIcon(solid('path', { d: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z' })),
