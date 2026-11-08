@@ -60,6 +60,7 @@ const GAME_ICONS: Record<string, () => string> = {
     d: [6, 12, 18].flatMap(x => [6, 12, 18].map(y => `M${x - 1} ${y - 2}v4M${x + 1} ${y - 2}v4M${x - 2} ${y - 1}h4M${x - 2} ${y + 1}h4`)).join('') })),
   uno: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), el('ellipse', { cx: 12, cy: 12, rx: 3.5, ry: 6.5, transform: 'rotate(30 12 12)' })),
   war: () => lineIcon(el('path', { d: 'M4 4l11 11M20 4L9 15M12.5 17.5l5-5M6.5 12.5l5 5M16 16l4 4M8 16l-4 4' })),
+  whodunit: () => lineIcon(el('circle', { cx: 10, cy: 10, r: 6.5 }), el('path', { d: 'M14.8 14.8L21 21M7.5 10a2 2 0 1 1 4 0 2 2 0 0 1-4 0zM11.5 10h2.5v2M13 10v1.5' })),
   yahtzee: () => lineIcon(el('rect', { x: 3, y: 10, width: 10, height: 10, rx: 2 }), pip(6, 13), pip(10, 17),
     el('rect', { x: 12, y: 3, width: 9, height: 9, rx: 2 }), pip(14.5, 5.5), pip(16.5, 7.5), pip(18.5, 9.5)),
 };
