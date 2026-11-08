@@ -1,7 +1,7 @@
-// The page the guessing games share: theme tokens, the layout around the components in this folder, and their markup.
-// Each game includes it inside its own [data-game] scope. $game prefixes the game's layout classes, $panel is its
-// main panel beside the scores and chat, $choices holds the choice buttons, and below $phone the chat goes under the panel.
-@mixin guessing-page($game, $panel, $choices, $phone) {
+// Smaller parts of the guessing page, for a page that has no chat to include on their own
+
+// The theme tokens and the page background, shared by every guessing-style page
+@mixin guessing-theme {
   color-scheme: light;
   --page-bg: #e9eef5;
   --text: #1f2633;
@@ -53,29 +53,10 @@
     padding: 0 16px 24px;
     background: var(--page-bg);
   }
+}
 
-  .game-header {
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  .#{$game}-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  .game-info,
-  .#{$game}-side > *,
-  #{$panel} {
-    box-sizing: border-box;
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    border-radius: 10px;
-  }
-
+// The status panel text: player line, status line, turn message and timer
+@mixin guessing-status {
   .game-info {
     padding: 10px 16px;
     text-align: center;
@@ -114,7 +95,10 @@
     font-variant-numeric: tabular-nums;
     font-weight: 700;
   }
+}
 
+// The layout's buttons, inside .$game-layout
+@mixin guessing-buttons($game) {
   .#{$game}-layout button {
     padding: 8px 14px;
     border: none;
@@ -134,6 +118,90 @@
     opacity: 0.45;
     cursor: default;
   }
+}
+
+// The score list
+@mixin guessing-scores {
+  .score-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+  }
+
+  .score-current {
+    border-color: var(--button-bg);
+  }
+
+  .score-guessed {
+    background: var(--guessed-bg);
+  }
+
+  .score-winner {
+    border-color: var(--highlight);
+  }
+
+  .score-left {
+    opacity: 0.55;
+  }
+
+  .score-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+
+  .score-note {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .score-points {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// The page the guessing games share: theme tokens, the layout around the components in this folder, and their markup.
+// Each game includes it inside its own [data-game] scope. $game prefixes the game's layout classes, $panel is its
+// main panel beside the scores and chat, $choices holds the choice buttons, and below $phone the chat goes under the panel.
+@mixin guessing-page($game, $panel, $choices, $phone) {
+  @include guessing-theme;
+
+  .game-header {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .#{$game}-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-info,
+  .#{$game}-side > *,
+  #{$panel} {
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+  }
+
+  @include guessing-status;
+
+  @include guessing-buttons($game);
 
   .action-buttons {
     display: flex;
@@ -206,53 +274,7 @@
     min-width: 0;
   }
 
-  .score-list {
-    list-style: none;
-    margin: 0;
-    padding: 6px;
-  }
-
-  .score-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    border: 2px solid transparent;
-  }
-
-  .score-current {
-    border-color: var(--button-bg);
-  }
-
-  .score-guessed {
-    background: var(--guessed-bg);
-  }
-
-  .score-winner {
-    border-color: var(--highlight);
-  }
-
-  .score-left {
-    opacity: 0.55;
-  }
-
-  .score-name {
-    flex: 1;
-    min-width: 0;
-    overflow-wrap: anywhere;
-    font-weight: 600;
-  }
-
-  .score-note {
-    color: var(--muted);
-    font-size: 0.85rem;
-  }
-
-  .score-points {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
+  @include guessing-scores;
 
   .#{$game}-chat {
     display: flex;

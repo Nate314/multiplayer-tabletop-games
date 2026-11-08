@@ -10,7 +10,7 @@ import type { PublicGameState } from '../types.ts';
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const { phase, reveal, activePlayers, round, word } = gameState;
-  // The last word sets no reveal, so it has no Continue: its rows are the game-over screen's
+  // The last word sets no reveal, so it has no Continue dialog: its rows show on the game-over screen instead
   const dialog = phase === 'reveal' && reveal !== null && activePlayers.includes(playerNumber);
 
   return (

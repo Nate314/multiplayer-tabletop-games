@@ -21,10 +21,10 @@ export default function RevealRows({ gameState, viewer }: { gameState: PublicGam
           </li>
         ))}
       </ul>
-      <ul className="fictionary-points" aria-label="Points this word">
+      <ul className="score-list" aria-label="Points this word">
         {Object.keys(roundPoints).map(Number).map(seat => (
-          <li key={seat}>
-            <span>{playerNames[seat]}<YouTag when={seat === viewer} /></span>
+          <li key={seat} className="score-row">
+            <span className="score-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
             <span className="score-points">+{roundPoints[seat]}</span>
           </li>
         ))}

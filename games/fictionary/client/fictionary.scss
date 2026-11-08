@@ -1,66 +1,17 @@
+@use '../../../src/components/guessing/guessing' as *;
+
 [data-game="fictionary"] {
-  /* Fictionary's page: one column, every rule scoped here so none of it reaches the landing page or other games */
-  color-scheme: light;
-  --page-bg: #f3efe6;
-  --text: #2a241c;
-  --muted: #6b6152;
-  --panel-bg: #ffffff;
-  --panel-border: rgba(42, 36, 28, 0.15);
-  --button-bg: #6a3fa0;
-  --button-hover-bg: #57328a;
-  --button-text: #ffffff;
-  --choice-bg: #f7f3fb;
-  --picked: #e8a200;
-  --real-bg: #ddf3e0;
-  --real-text: #1f6b32;
-  --status-bg: #ece4f5;
-  --error-bg: #fbe3e1;
-  --error-text: #8c1d13;
-  --platform-page-bg: var(--page-bg);
-  --platform-text: var(--text);
-  --platform-button-bg: var(--button-bg);
-  --platform-button-hover-bg: var(--button-hover-bg);
-  --platform-button-text: var(--button-text);
-  --platform-panel-bg: var(--panel-bg);
-  --platform-panel-text: var(--text);
-  color: var(--text);
+  /* Fictionary's page: the guessing games' theme, status panel, buttons and scores, without their chat, in one column.
+   Every rule is scoped here, so none of it reaches the landing page or other games. */
+  @include guessing-theme;
 
-  :root[data-theme="dark"] & {
-    color-scheme: dark;
-    --page-bg: #17141c;
-    --text: #ece6f2;
-    --muted: #a69cb3;
-    --panel-bg: #231f2a;
-    --panel-border: rgba(236, 230, 242, 0.14);
-    --button-bg: #8a5fc4;
-    --button-hover-bg: #9c74d0;
-    --choice-bg: #2d2836;
-    --picked: #ffc029;
-    --real-bg: #1f3d27;
-    --real-text: #a8e6b4;
-    --status-bg: #322a40;
-    --error-bg: #4a1f1b;
-    --error-text: #ffd5d0;
-  }
-
-  &.game-root {
-    min-height: 100vh;
-    box-sizing: border-box;
-    padding: 0 16px 24px;
-    background: var(--page-bg);
-  }
-
-  .game-header {
+  // The header keeps the platform's width: its buttons do not fit in 720 px once the game has started
+  .fictionary-layout {
     max-width: 720px;
     margin: 0 auto;
-  }
-
-  .fictionary-layout {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-width: 720px;
-    margin: 0 auto;
   }
 
   .game-info,
@@ -74,8 +25,12 @@
     background: var(--panel-bg);
   }
 
-  .game-info {
-    text-align: center;
+  @include guessing-status;
+  @include guessing-buttons(fictionary);
+  @include guessing-scores;
+
+  .game-status {
+    overflow-wrap: break-word;
   }
 
   .fictionary-word {
@@ -95,52 +50,8 @@
     color: var(--muted);
   }
 
-  .turn-timer {
-    padding: 2px 10px;
-    border-radius: 4px;
-    background: var(--button-bg);
-    color: var(--button-text);
-    font-size: 1.15rem;
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-  }
-
-  .game-status {
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    background: var(--status-bg);
-    overflow-wrap: break-word;
-  }
-
-  .game-status-error {
-    background: var(--error-bg);
-    color: var(--error-text);
-  }
-
-  .turn-message {
-    font-weight: 600;
-  }
-
   .fictionary-layout button {
     min-height: 44px;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    background: var(--button-bg);
-    color: var(--button-text);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .fictionary-layout button:not(:disabled):hover {
-    background: var(--button-hover-bg);
-  }
-
-  .fictionary-layout button:disabled {
-    opacity: 0.45;
-    cursor: default;
   }
 
   .fictionary-write {
@@ -158,7 +69,7 @@
       padding: 8px 10px;
       border: 1px solid var(--panel-border);
       border-radius: 6px;
-      background: var(--choice-bg);
+      background: var(--page-bg);
       color: var(--text);
       font: inherit;
       resize: vertical;
@@ -200,7 +111,7 @@
     padding: 10px 14px;
     border: 2px solid var(--panel-border);
     border-radius: 8px;
-    background: var(--choice-bg);
+    background: var(--page-bg);
     color: var(--text);
     text-align: left;
     overflow-wrap: break-word;
@@ -208,21 +119,28 @@
 
   // After the layout's buttons, so a choice keeps its own look at the same specificity
   .fictionary-layout button.fictionary-choice {
-    background: var(--choice-bg);
-    color: var(--text);
     border: 2px solid var(--panel-border);
+    background: var(--page-bg);
+    color: var(--text);
     font-weight: 400;
   }
 
   .fictionary-layout button.fictionary-choice:not(:disabled):hover {
-    background: var(--choice-bg);
     border-color: var(--button-bg);
+    background: var(--page-bg);
+  }
+
+  // The viewer's own fake: muted and dashed rather than faded, so its Yours tag stays readable
+  .fictionary-layout button.fictionary-choice:disabled {
+    border-style: dashed;
+    color: var(--muted);
+    opacity: 1;
   }
 
   .fictionary-layout button.fictionary-picked,
   .fictionary-layout button.fictionary-picked:not(:disabled):hover {
-    border-color: var(--picked);
-    box-shadow: inset 0 0 0 1px var(--picked);
+    border-color: var(--highlight);
+    box-shadow: inset 0 0 0 1px var(--highlight);
   }
 
   .fictionary-tag {
@@ -236,8 +154,8 @@
   }
 
   .fictionary-real {
-    border-color: var(--real-text);
-    background: var(--real-bg);
+    border-color: var(--guessed-text);
+    background: var(--guessed-bg);
   }
 
   .fictionary-by {
@@ -246,37 +164,12 @@
   }
 
   .fictionary-real .fictionary-text + .fictionary-by {
-    color: var(--real-text);
+    color: var(--guessed-text);
     font-weight: 600;
   }
 
-  /* Points this word and the totals: name on the left, points on the right */
-
-  .fictionary-points,
-  .score-list {
-    margin: 12px 0 0;
-    padding: 0;
-    list-style: none;
-
-    li {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 4px 0;
-    }
-  }
-
-  .fictionary-layout > .score-list {
-    margin: 0;
-  }
-
-  .score-points {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-  }
-
-  .score-winner {
-    font-weight: 700;
+  .fictionary-reveal .score-list {
+    margin-top: 12px;
   }
 
   .round-summary .fictionary-reveal {
