@@ -7,7 +7,8 @@ export type { Result, Seat } from '../../shared/types.ts';
 
 export type Solution = { suspect: SuspectId; object: ObjectId; room: RoomId };
 export type Mark = 'yes' | 'no' | 'maybe';
-export type Suggestion = Solution & { by: Seat; passed: Seat[]; shownBy: Seat | null; awaiting: Seat | null }; // awaiting: who must show now
+// awaiting: who must show now; endedBy: the suggester was dismissed while a card was being chosen
+export type Suggestion = Solution & { by: Seat; passed: Seat[]; shownBy: Seat | null; awaiting: Seat | null; endedBy?: 'dismissal' };
 export type Seen = { suggestion: number; from: Seat; to: Seat; card: CardId }; // suggestion indexes into suggestions
 export type Accusation = Solution & { by: Seat; correct: boolean };
 export type Phase = 'start' | 'move' | 'room' | 'showing' | 'end';

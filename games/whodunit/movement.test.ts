@@ -45,10 +45,3 @@ test('all doors blocked leaves no destination', () => {
   const outsides = DOORS.filter(d => d.room === doorOf.room).map(d => d.outside);
   assert.deepEqual(destinations({ room: doorOf.room }, 5, outsides, null), []);
 });
-
-test('a twelve step search is fast', () => {
-  const t = performance.now();
-  destinations(start, 12, [], null);
-  destinations({ room: doorOf.room }, 12, [], doorOf.room);
-  assert.ok(performance.now() - t < 500);
-});

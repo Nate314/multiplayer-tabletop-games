@@ -36,6 +36,7 @@ test('a suggestion says who showed, without the card', () => {
   assert.equal(describeMove(state({ type: 'suggest', playerNumber: 1 }, { suggestions: [suggestion({ awaiting: 2 })] })), said);
   assert.equal(describeMove(state({ type: 'suggest', playerNumber: 1, sealed: true }, { suggestions: [suggestion({ shownBy: 2 })] })), `${said}. Bob showed Alice a card`);
   assert.equal(describeMove(state({ type: 'suggest', playerNumber: 1 }, { suggestions: [suggestion({ passed: [2, 3] })] })), `${said}. Nobody could show Alice a card`);
+  assert.equal(describeMove(state({ type: 'suggest', playerNumber: 1 }, { suggestions: [suggestion({ endedBy: 'dismissal' })] })), `${said}. Alice was dismissed before a card was shown`);
 });
 
 test('a chosen card shown names both players', () => {

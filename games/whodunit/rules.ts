@@ -273,7 +273,8 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   // The platform moved the turn on to the next seat, which may be out, and kept the leaver's phase
   const current = next.currentPlayer;
   if (turnHolder(state) === seat || (current !== null && next.out.includes(current))) {
-    const suggestions = last && next.phase === 'showing' ? [...next.suggestions.slice(0, -1), { ...last, awaiting: null }] : next.suggestions;
+    const open = next.phase === 'showing' ? next.suggestions.at(-1) : undefined;
+    const suggestions = open ? [...next.suggestions.slice(0, -1), { ...open, awaiting: null, endedBy: 'dismissal' as const }] : next.suggestions;
     next = nextTurn({ ...next, suggestions }, seat);
   }
   return settleEnd(next);

@@ -8,7 +8,9 @@ import type { Seat } from '../../../shared/types.ts';
 // their own hand and the cards they saw or showed appear; viewer null sees neither. Nothing is clickable.
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   const { lastMove, positions, suspectOf, hand, faceUp, playerNames } = gameState;
-  const highlight = lastMove ? positions[suspectOf[lastMove.playerNumber]] ?? null : null;
+  // a show is made for the suggester, so their token is the one that just acted
+  const mover = lastMove?.type === 'show' ? gameState.suggestions.at(-1)!.by : lastMove?.playerNumber;
+  const highlight = mover !== undefined ? positions[suspectOf[mover]] ?? null : null;
   return (
     <div className="wd-layout">
       <div className="wd-board-area">

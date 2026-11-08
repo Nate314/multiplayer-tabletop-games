@@ -15,7 +15,8 @@ export default function SuggestionLog({ gameState, viewer }: { gameState: Public
           const card = seen.find(entry => entry.suggestion === index)?.card;
           const passed = s.passed.length > 0 ? `${s.passed.map(who).join(', ')} could not show. ` : '';
           const outcome = s.shownBy !== null ? `${who(s.shownBy)} showed a card${card ? `: ${nameOf(card)}` : ''}`
-            : s.awaiting !== null ? `${who(s.awaiting)} is choosing a card` : 'Nobody could show a card';
+            : s.awaiting !== null ? `${who(s.awaiting)} is choosing a card`
+            : s.endedBy === 'dismissal' ? `${who(s.by)} was dismissed before a card was shown` : 'Nobody could show a card';
           return <li key={index}>{who(s.by)} suggested {trio(s)}. {passed}{outcome}</li>;
         })}
       </ol>

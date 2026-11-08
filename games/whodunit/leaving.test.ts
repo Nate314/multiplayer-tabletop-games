@@ -111,5 +111,23 @@ test('dismissing the suggester while a card is chosen ends the showing', () => {
   assert.equal(next.currentPlayer, 2);
   assert.equal(next.phase, 'start');
   assert.equal(next.suggestions[0].awaiting, null);
+  assert.equal(next.suggestions[0].shownBy, null);
+  assert.equal(next.suggestions[0].endedBy, 'dismissal');
   assert.deepEqual(waitingOn(next), []);
+});
+
+test('a suggestion nobody could answer is not marked as ended by a dismissal', () => {
+  const nobody = { 1: [], 2: ['salt-spa'], 3: ['harpoon'], 4: ['chart-room'] } as GameState['hands'];
+  assert.equal(ok(play(started(nobody), 1, SUGGEST)).suggestions[0].endedBy, undefined);
+});
+
+test('dismissing the next player keeps the turn and later skips them', () => {
+  const next = removePlayer(whodunit, started(), 2);
+  assert.equal(next.currentPlayer, 1);
+  assert.equal(next.phase, 'room');
+  assert.equal(next.isGameOver, false);
+  const ended = ok(play(next, 1, { type: 'endTurn' }));
+  assert.equal(ended.currentPlayer, 3);
+  assert.equal(ended.phase, 'start');
+  assert.equal(ended.isGameOver, false);
 });

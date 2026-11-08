@@ -43,11 +43,10 @@ These follow the classic rules in [Wikipedia's Cluedo article](https://en.wikipe
 - **Movement.** Here the move is exactly the roll, with early entry to a room through a door, no square twice in one move, and squares holding another token blocked. The article is silent on these points
 - **Stay put.** When the roll leads nowhere the player stays put. A player in a room whose doors are all blocked may still make a suggestion there
 - **No revisits.** A room you started the turn in cannot be entered again on the same move
-- **Who starts.** The first seat starts and turns go in seat order. The article does not say how the first player is chosen
+- **Who starts.** The article has older versions start with a fixed suspect and modern versions with the highest roll. Here seat 1 always starts and turns go in seat order
 - **The deal.** The 18 remaining cards are dealt one at a time from seat 1, so some hands are a card larger with 4 or 5 players. Seat 1 gets the extra cards first
-- **One matching card.** A single matching card is shown at once, with no prompt, and a player with several chooses which
-- **Objects move too.** The suggested object is moved into the room along with the suspect, and stays there
+- **One matching card.** A single matching card is shown at once, with no prompt, and only a player with several chooses which. So everyone learns whether the holder had one match or several, since only several bring up a choice
 - **Notes.** The game keeps the notes sheet for each player, private to them, in place of a paper sheet
 - **Leaving.** The article does not cover a player leaving. Here leaving holds the seat and reveals nothing, and a dismissed player's cards go face up for everyone
-- **End of play.** A wrong accusation puts the player out of turns, but they still show cards. The last player still able to accuse wins at once, which the article does not cover. If every player is out, nobody wins and the answer is shown
+- **End of play.** As in the article, a wrong accusation puts the player out of turns but they still show cards, and the last player still able to accuse wins. Here a dismissal can leave nobody able to accuse: then nobody wins and the answer is shown
 - **Undo.** The article does not cover undoing. Here the table can vote to undo a move, except right after a card was shown or an accusation. Notes taken after an undone move are undone with it

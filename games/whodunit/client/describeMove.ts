@@ -21,6 +21,7 @@ export function describeMove({ lastMove, playerNames, suspectOf, positions, sugg
     case 'suggest': {
       const said = `${name} suggested ${trio(suggestion!)}`;
       if (suggestion!.shownBy !== null) return `${said}. ${playerNames[suggestion!.shownBy]} showed ${name} a card`;
+      if (suggestion!.endedBy === 'dismissal') return `${said}. ${name} was dismissed before a card was shown`;
       return suggestion!.awaiting === null ? `${said}. Nobody could show ${name} a card` : said;
     }
     case 'show': return `${name} showed ${playerNames[suggestion!.by]} a card`;
