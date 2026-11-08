@@ -46,10 +46,10 @@ function Turn({ gameState, isMyTurn }: { gameState: PublicGameState; isMyTurn: b
           />
         </div>
       )}
-      <div className="yz-rolls">{rollsLeft} of {ROLLS_PER_TURN} rolls left</div>
+      <div className="fivedice-rolls">{rollsLeft} of {ROLLS_PER_TURN} rolls left</div>
       <button
         type="button"
-        className="yz-button"
+        className="fivedice-button"
         disabled={!isMyTurn || rollsLeft === 0 || (rolled && hold.every(Boolean))}
         onClick={() => makeMove({ type: 'roll', hold: rolled ? hold : noHold() })}
       >
@@ -76,9 +76,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             <div className={error ? 'game-status game-status-error' : 'game-status'}>{error || gameStatus}</div>
           )}
           <div className="turn-message">{turnMessage(gameState, playerNumber)}</div>
-          <div className="yz-turn">
+          <div className="fivedice-turn">
             {!isGameOver && <Turn key={moveCount} gameState={gameState} isMyTurn={isMyTurn} />}
-            <button type="button" className="yz-button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
+            <button type="button" className="fivedice-button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
           </div>
         </div>
         <ScoreSheet gameState={gameState} viewer={playerNumber} onScore={canScore ? category => makeMove({ type: 'score', category }) : undefined} />

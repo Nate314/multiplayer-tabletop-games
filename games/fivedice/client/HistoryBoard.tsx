@@ -9,7 +9,7 @@ import type { Seat } from '../../../shared/types.ts';
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   const { lastMove, held, playerNames } = gameState;
   return (
-    <div className="yz-table">
+    <div className="fivedice-table">
       {lastMove && (
         <div data-anim-key={DICE_KEY}>
           <Dice values={lastMove.dice} selected={lastMove.type === 'roll' ? held : []} label={`${playerNames[lastMove.playerNumber]}'s dice`} animKeyPrefix="die" />

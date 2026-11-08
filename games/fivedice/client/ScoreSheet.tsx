@@ -20,14 +20,14 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
   const cell = (seat: Seat, category: Category) => {
     const sheet = sheets[seat];
     const animKey = cellKey(seat, category);
-    const className = (scored?.playerNumber === seat && scored.category === category ? 'yz-cell yz-cell-last' : 'yz-cell') + away(seat);
+    const className = (scored?.playerNumber === seat && scored.category === category ? 'fivedice-cell fivedice-cell-last' : 'fivedice-cell') + away(seat);
     if (sheet[category] !== undefined) return <td key={seat} className={className} data-anim-key={animKey}>{sheet[category]}</td>;
     if (onScore && seat === viewer) {
       const points = scoreFor(dice, category, sheet);
       const allowed = allowedCategories(dice, sheet).includes(category);
       return (
         <td key={seat} className={className} data-anim-key={animKey}>
-          <button type="button" className="yz-option" disabled={!allowed} aria-label={`Score ${points} in ${CATEGORY_LABELS[category]}`} onClick={() => onScore(category)}>
+          <button type="button" className="fivedice-option" disabled={!allowed} aria-label={`Score ${points} in ${CATEGORY_LABELS[category]}`} onClick={() => onScore(category)}>
             {points}
           </button>
         </td>
@@ -43,7 +43,7 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
     </tr>
   );
   const totalOf = (seat: Seat) => totals(sheets[seat], yahtzeeBonuses[seat]);
-  const sumRow = (label: string, value: (seat: Seat) => number, className = 'yz-sum') => (
+  const sumRow = (label: string, value: (seat: Seat) => number, className = 'fivedice-sum') => (
     <tr className={className}>
       <th scope="row">{label}</th>
       {activePlayers.map(seat => <td key={seat} className={away(seat).trim() || undefined}>{value(seat)}</td>)}
@@ -51,17 +51,17 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
   );
 
   return (
-    <div className="yz-sheet-wrap">
-      <table className="yz-sheet">
-        <caption className="yz-visually-hidden">Score sheet</caption>
+    <div className="fivedice-sheet-wrap">
+      <table className="fivedice-sheet">
+        <caption className="fivedice-visually-hidden">Score sheet</caption>
         <thead>
           <tr>
-            <th scope="col"><span className="yz-visually-hidden">Box</span></th>
+            <th scope="col"><span className="fivedice-visually-hidden">Box</span></th>
             {activePlayers.map(seat => {
-              const classes = ['yz-player'];
+              const classes = ['fivedice-player'];
               if (seat !== viewer) classes.push('hand-only-hide');
-              if (seat === currentPlayer) classes.push('yz-player-current');
-              if (isGameOver && winners.includes(seat)) classes.push('yz-player-winner');
+              if (seat === currentPlayer) classes.push('fivedice-player-current');
+              if (isGameOver && winners.includes(seat)) classes.push('fivedice-player-winner');
               return (
                 <th key={seat} scope="col" className={classes.join(' ')}>
                   {playerNames[seat]}<YouTag when={seat === viewer} />
@@ -75,8 +75,8 @@ export default function ScoreSheet({ gameState, viewer, onScore, showLastMove = 
           {sumRow('Upper total', seat => totalOf(seat).upper)}
           {sumRow(`Bonus (${UPPER_BONUS_AT}+)`, seat => totalOf(seat).upperBonus)}
           {LOWER.map(row)}
-          {sumRow('Yahtzee bonus', seat => totalOf(seat).yahtzeeBonus)}
-          {sumRow('Total', seat => totalOf(seat).total, 'yz-sum yz-total')}
+          {sumRow('Five of a Kind bonus', seat => totalOf(seat).fiveOfAKindBonus)}
+          {sumRow('Total', seat => totalOf(seat).total, 'fivedice-sum fivedice-total')}
         </tbody>
       </table>
     </div>

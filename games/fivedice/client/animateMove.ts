@@ -21,7 +21,7 @@ export function scoreSlide({ lastMove }: PublicGameState): [string, string] | nu
 // so the points fly as a copy outside the sheet and land on the box
 function pointsLabel(points: number): HTMLElement {
   const label = document.createElement('span');
-  label.className = 'yz-flying-points';
+  label.className = 'fivedice-flying-points';
   label.setAttribute('aria-hidden', 'true');
   label.textContent = String(points);
   return label;

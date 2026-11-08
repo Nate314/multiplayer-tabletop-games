@@ -1,5 +1,5 @@
-[data-game="yahtzee"] {
-  /* Yahtzee's green baize table. Every rule is scoped to data-game="yahtzee", so none of it reaches the landing page or other games.
+[data-game="fivedice"] {
+  /* Five Dice's green baize table. Every rule is scoped to data-game="fivedice", so none of it reaches the landing page or other games.
    The header, FAQ dialog and vote panels use the platform defaults, rethemed through the --platform-* variables. */
 
   color-scheme: light;
@@ -49,7 +49,7 @@
   }
 }
 
-.game-root[data-game="yahtzee"] {
+.game-root[data-game="fivedice"] {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 0 16px 32px;
@@ -57,7 +57,7 @@
   background: radial-gradient(circle at 50% 30%, var(--baize), var(--baize-dark)) fixed;
 }
 
-[data-game="yahtzee"] {
+[data-game="fivedice"] {
   .game-header {
     max-width: 900px;
     margin: 0 auto;
@@ -74,7 +74,7 @@
   }
 
   .game-info,
-  .yz-sheet-wrap {
+  .fivedice-sheet-wrap {
     box-sizing: border-box;
     width: 100%;
     background: var(--panel-bg);
@@ -111,7 +111,7 @@
 
   /* The dice, the rolls left and the buttons, wrapping on a narrow window */
 
-  .yz-turn {
+  .fivedice-turn {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -120,16 +120,16 @@
     margin-top: 12px;
   }
 
-  .yz-turn .dice-row {
+  .fivedice-turn .dice-row {
     justify-content: center;
   }
 
-  .yz-rolls {
+  .fivedice-rolls {
     color: var(--muted);
     font-weight: 600;
   }
 
-  .yz-button,
+  .fivedice-button,
   .undo-vote-actions button {
     padding: 8px 18px;
     border: none;
@@ -141,23 +141,23 @@
     cursor: pointer;
   }
 
-  .yz-button:not(:disabled):hover,
+  .fivedice-button:not(:disabled):hover,
   .undo-vote-actions button:hover {
     background: var(--button-hover-bg);
   }
 
-  .yz-button:disabled {
+  .fivedice-button:disabled {
     opacity: 0.45;
     cursor: default;
   }
 
   /* The score sheet scrolls sideways inside its panel when many players do not fit */
 
-  .yz-sheet-wrap {
+  .fivedice-sheet-wrap {
     overflow-x: auto;
   }
 
-  .yz-table {
+  .fivedice-table {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -167,24 +167,24 @@
     color: var(--text);
   }
 
-  .yz-table .dice-row {
+  .fivedice-table .dice-row {
     justify-content: center;
   }
 
-  .yz-sheet {
+  .fivedice-sheet {
     width: 100%;
     border-collapse: collapse;
     font-variant-numeric: tabular-nums;
   }
 
-  .yz-sheet th,
-  .yz-sheet td {
+  .fivedice-sheet th,
+  .fivedice-sheet td {
     padding: 5px 10px;
     border-bottom: 1px solid var(--panel-border);
     text-align: center;
   }
 
-  .yz-sheet tbody th {
+  .fivedice-sheet tbody th {
     position: sticky;
     left: 0;
     background: var(--panel-bg);
@@ -193,25 +193,25 @@
     white-space: nowrap;
   }
 
-  .yz-player {
+  .fivedice-player {
     white-space: nowrap;
     border-bottom: 3px solid transparent;
   }
 
-  .yz-sheet th.yz-player-current {
+  .fivedice-sheet th.fivedice-player-current {
     border-bottom-color: var(--current);
   }
 
-  .yz-sheet th.yz-player-winner {
+  .fivedice-sheet th.fivedice-player-winner {
     background: color-mix(in srgb, var(--winner) 55%, var(--panel-bg));
   }
 
-  .yz-cell {
+  .fivedice-cell {
     min-width: 56px;
     height: 36px;
   }
 
-  .yz-cell-last {
+  .fivedice-cell-last {
     outline: 3px solid var(--current);
     outline-offset: -3px;
     font-weight: 700;
@@ -219,7 +219,7 @@
 
   /* The points that fly from the dice to the box they were written in (the animation sizes it like the box) */
 
-  .yz-flying-points {
+  .fivedice-flying-points {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -232,7 +232,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .yz-option {
+  .fivedice-option {
     min-width: 44px;
     padding: 4px 8px;
     border: 1px solid var(--option-text);
@@ -244,25 +244,25 @@
     cursor: pointer;
   }
 
-  .yz-option:disabled {
+  .fivedice-option:disabled {
     opacity: 0.4;
     cursor: default;
   }
 
-  .yz-sum td,
-  .yz-sum th {
+  .fivedice-sum td,
+  .fivedice-sum th {
     color: var(--muted);
     font-size: 0.9rem;
   }
 
-  .yz-total td,
-  .yz-total th {
+  .fivedice-total td,
+  .fivedice-total th {
     color: var(--text);
     font-size: 1.05rem;
     font-weight: 700;
   }
 
-  .yz-visually-hidden {
+  .fivedice-visually-hidden {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -276,12 +276,12 @@
   }
 
   @media (max-width: 900px) {
-    .yz-sheet th,
-    .yz-sheet td {
+    .fivedice-sheet th,
+    .fivedice-sheet td {
       padding: 4px 6px;
     }
 
-    .yz-cell {
+    .fivedice-cell {
       min-width: 44px;
     }
   }

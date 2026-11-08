@@ -38,7 +38,7 @@ test('a draw says Draw', async ({ seat }) => {
 });
 
 test("scores show in the game's own terms", async ({ seat }) => {
-  const table = await seat('yahtzee', ['Alice', 'Bob']);
+  const table = await seat('fivedice', ['Alice', 'Bob']);
   const [alice] = table.pages;
   await table.patch({
     sheets: { 1: { chance: 30 }, 2: { chance: 20 } }, isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!'

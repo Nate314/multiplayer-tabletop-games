@@ -2,14 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, fileOf } from '../../server/testing.ts';
-import { yahtzee } from './index.ts';
+import { fivedice } from './index.ts';
 import { allowedCategories } from './rules.ts';
 import type { PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'yahtzee/g1';
+const ROOM = 'fivedice/g1';
 const NONE = [false, false, false, false, false];
 
 // Each value is one die face, read in order and then repeated
@@ -19,8 +19,8 @@ function dice(...faces: number[]): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([yahtzee], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
-  for (const name of names) manager.join('yahtzee', 'g1', name);
+  const manager = rememberingKeys(createGameManager([fivedice], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
+  for (const name of names) manager.join('fivedice', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -42,7 +42,7 @@ test('a game of two plays all 13 rounds to a winner', () => {
   assert.equal(state.isGameOver, true);
   assert.ok(state.winners.length >= 1);
   assert.equal(Object.keys(state.sheets[1]).length, 13);
-  const file = fileOf(manager, 'yahtzee', new Date(0));
+  const file = fileOf(manager, 'fivedice', new Date(0));
   if (!file || 'error' in file) assert.fail('expected a game file');
 });
 
@@ -51,7 +51,7 @@ test('a rejoin mid-turn shows the dice, the held flags and the rolls left', () =
   ok(manager.move(ROOM, 1, { type: 'roll', hold: NONE }));
   const rolled = ok(manager.move(ROOM, 1, { type: 'roll', hold: [true, true, false, false, false] }));
   manager.disconnect(ROOM, 1);
-  const rejoined = manager.join('yahtzee', 'g1', 'Alice', true);
+  const rejoined = manager.join('fivedice', 'g1', 'Alice', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.deepEqual(view.dice, rolled.dice);
@@ -84,10 +84,10 @@ test('dismissing the player to move hands the turn on', () => {
 });
 
 test('a full game at 10 players', () => {
-  const manager = rememberingKeys(createGameManager([yahtzee], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
-  manager.join('yahtzee', 'g1', 'P1');
+  const manager = rememberingKeys(createGameManager([fivedice], dice(1, 2, 3, 4, 5, 6, 6, 6, 2, 3)));
+  manager.join('fivedice', 'g1', 'P1');
   ok(manager.setHouseRules(ROOM, 1, { values: {}, maxPlayers: 10 }));
-  for (let seat = 2; seat <= 10; seat++) manager.join('yahtzee', 'g1', `P${seat}`);
+  for (let seat = 2; seat <= 10; seat++) manager.join('fivedice', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = manager.getState(ROOM, null) as PublicGameState;
   assert.equal(state.activePlayers.length, 10);

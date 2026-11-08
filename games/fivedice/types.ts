@@ -6,7 +6,9 @@ import type { Seat } from '../../shared/types.ts';
 
 export type Category =
   | 'ones' | 'twos' | 'threes' | 'fours' | 'fives' | 'sixes'
-  | 'threeKind' | 'fourKind' | 'fullHouse' | 'smallStraight' | 'largeStraight' | 'yahtzee' | 'chance';
+  | 'threeKind' | 'fourKind' | 'fullHouse' | 'smallStraight' | 'largeStraight'
+  // saved games store this name; kept from before the rename so older files load
+  | 'yahtzee' | 'chance'; // 'yahtzee' is the Five of a Kind box
 
 // The boxes a player has filled, with the points written in each (0 is a scratched box)
 export type Sheet = Partial<Record<Category, number>>;
@@ -26,7 +28,8 @@ export type GameState = BaseGameState & {
   held: boolean[]; // the dice kept in the latest roll; empty before the first roll
   rollsLeft: number; // 3 at the start of a turn
   sheets: Record<Seat, Sheet>;
-  yahtzeeBonuses: Record<Seat, number>; // extra Yahtzees rolled after a 50 in the Yahtzee box, 100 points each
+  // saved games store this name; kept from before the rename so older files load
+  yahtzeeBonuses: Record<Seat, number>; // extra Five of a Kind rolls after a 50 in the Five of a Kind box, 100 points each
   lastMove: LastMove | null;
 };
 

@@ -238,9 +238,9 @@ const HAND_ONLY: Record<string, Row> = {
     hide: ['.farkle-score.hand-only-hide'],
     move: async page => { await button(page, 'Roll').click(); }
   },
-  yahtzee: {
-    keep: ['.turn-message', '.yz-turn', '.yz-sheet', '.yz-total td:not(.hand-only-hide)'],
-    hide: ['.yz-player.hand-only-hide'],
+  fivedice: {
+    keep: ['.turn-message', '.fivedice-turn', '.fivedice-sheet', '.fivedice-total td:not(.hand-only-hide)'],
+    hide: ['.fivedice-player.hand-only-hide'],
     move: async page => { await button(page, /^Roll/).click(); }
   },
   drawandguess: {

@@ -54,10 +54,10 @@ test('games: played count and the median length in whole minutes', () => {
 
 test('games: a high score only where the winner always holds the largest score', () => {
   const hearts = [game('hearts', day(1), [['Ann', 1, '12'], ['Bo', 2, '80']]), game('hearts', day(2), [['Ann', 1, '20'], ['Bo', 2, '101']])];
-  const yahtzee = [game('yahtzee', day(1), [['Ann', 1, '250'], ['Bo', 2, '200']]), game('yahtzee', day(2), [['Ann', 2, '180 points'], ['Bo', 1, '301 points']])];
-  const stats = gameStats([...hearts, ...yahtzee, ...games]);
+  const fivedice = [game('fivedice', day(1), [['Ann', 1, '250'], ['Bo', 2, '200']]), game('fivedice', day(2), [['Ann', 2, '180 points'], ['Bo', 1, '301 points']])];
+  const stats = gameStats([...hearts, ...fivedice, ...games]);
   assert.equal(stats.find(s => s.gameType === 'hearts')?.highScore, undefined);
-  assert.deepEqual(stats.find(s => s.gameType === 'yahtzee')?.highScore, { score: 301, name: 'Bo' });
+  assert.deepEqual(stats.find(s => s.gameType === 'fivedice')?.highScore, { score: 301, name: 'Bo' });
   assert.equal(stats.find(s => s.gameType === 'connectfour')?.highScore, undefined);
 });
 

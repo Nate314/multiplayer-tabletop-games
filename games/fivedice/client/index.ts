@@ -4,10 +4,10 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './yahtzee.scss';
+import './fivedice.scss';
 
-export const yahtzeeClient: ClientGame = {
-  id: 'yahtzee',
+export const fivediceClient: ClientGame = {
+  id: 'fivedice',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

@@ -2,7 +2,7 @@ import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CATEGORIES, allowedCategories, createGameState, scoreFor, totals } from './rules.ts';
-import { yahtzee } from './index.ts';
+import { fivedice } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Random, Result } from '../../shared/types.ts';
 import type { Category, GameState, Sheet } from './types.ts';
@@ -24,7 +24,7 @@ function ok(result: Result<GameState>): GameState {
 function lobby(...names: string[]): GameState {
   let state = createGameState('g');
   for (const name of names) {
-    const result = addPlayer(yahtzee, state, name, dice(1));
+    const result = addPlayer(fivedice, state, name, dice(1));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -37,7 +37,7 @@ function turn(sheet: Sheet, faces: number[], rollsLeft = 2): GameState {
   return { ...base, started: true, dice: faces, held: NONE, rollsLeft, sheets: { 1: sheet, 2: {} } };
 }
 
-const play = (state: GameState, seat: number, move: unknown, random: Random = dice(1)) => applyMove(yahtzee, state, seat, move, random);
+const play = (state: GameState, seat: number, move: unknown, random: Random = dice(1)) => applyMove(fivedice, state, seat, move, random);
 const score = (state: GameState, seat: number, category: Category) => ok(play(state, seat, { type: 'score', category }));
 const roll = (state: GameState, hold: boolean[], ...faces: number[]) => ok(play(state, state.currentPlayer ?? 0, { type: 'roll', hold }, dice(...faces)));
 
@@ -108,7 +108,7 @@ test('straights may carry a spare die and five of a kind is no full house', () =
 
 test('the upper bonus is 35 at 63 or more', () => {
   const upper = (sixes: number): Sheet => ({ ones: 3, twos: 6, threes: 9, fours: 12, fives: 15, sixes });
-  assert.deepEqual(totals(upper(18)), { upper: 63, upperBonus: 35, lower: 0, yahtzeeBonus: 0, total: 98 });
+  assert.deepEqual(totals(upper(18)), { upper: 63, upperBonus: 35, lower: 0, fiveOfAKindBonus: 0, total: 98 });
   assert.equal(totals(upper(12)).upperBonus, 0);
   assert.equal(totals(upper(12)).total, 57);
   assert.equal(totals(upper(24)).upperBonus, 35);
@@ -117,16 +117,16 @@ test('the upper bonus is 35 at 63 or more', () => {
   assert.equal(totals(state.sheets[1]).total, 98);
 });
 
-test('a second Yahtzee gives 100 and follows the Joker rule', () => {
+test('a second Five of a Kind gives 100 and follows the Joker rule', () => {
   const sixes = [6, 6, 6, 6, 6];
   // Joker: the matching upper box first, and the 100 bonus
   assert.deepEqual(allowedCategories(sixes, { yahtzee: 50 }), ['sixes']);
   const state = score(turn({ yahtzee: 50 }, sixes), 1, 'sixes');
   assert.equal(state.sheets[1].sixes, 30);
   assert.equal(state.yahtzeeBonuses[1], 1);
-  assert.equal(totals(state.sheets[1], 1).yahtzeeBonus, 100);
+  assert.equal(totals(state.sheets[1], 1).fiveOfAKindBonus, 100);
   assert.equal(totals(state.sheets[1], 1).total, 50 + 30 + 100);
-  assert.deepEqual(play(turn({ yahtzee: 50 }, sixes), 1, { type: 'score', category: 'chance' }), { error: 'Joker rule: score the Yahtzee in Sixes' });
+  assert.deepEqual(play(turn({ yahtzee: 50 }, sixes), 1, { type: 'score', category: 'chance' }), { error: 'Joker rule: score the Five of a Kind in Sixes' });
 
   // Matching upper box filled: any open lower box, with full house and straights at full value
   const lowerOpen: Sheet = { yahtzee: 50, sixes: 12 };
@@ -134,7 +134,7 @@ test('a second Yahtzee gives 100 and follows the Joker rule', () => {
   assert.equal(scoreFor(sixes, 'fullHouse', lowerOpen), 25);
   assert.equal(scoreFor(sixes, 'smallStraight', lowerOpen), 30);
   assert.equal(scoreFor(sixes, 'largeStraight', lowerOpen), 40);
-  assert.deepEqual(play(turn(lowerOpen, sixes), 1, { type: 'score', category: 'ones' }), { error: 'Joker rule: score the Yahtzee in a lower box' });
+  assert.deepEqual(play(turn(lowerOpen, sixes), 1, { type: 'score', category: 'ones' }), { error: 'Joker rule: score the Five of a Kind in a lower box' });
   const straight = score(turn(lowerOpen, sixes), 1, 'largeStraight');
   assert.equal(straight.sheets[1].largeStraight, 40);
   assert.equal(straight.yahtzeeBonuses[1], 1);
@@ -144,11 +144,11 @@ test('a second Yahtzee gives 100 and follows the Joker rule', () => {
   assert.deepEqual(allowedCategories(sixes, lowerFull), ['ones', 'twos', 'threes', 'fours', 'fives']);
   assert.equal(scoreFor(sixes, 'ones', lowerFull), 0);
 
-  // A scratched Yahtzee box pays no bonus, but the Joker rule still applies
+  // A scratched Five of a Kind box pays no bonus, but the Joker rule still applies
   assert.equal(score(turn({ yahtzee: 0 }, sixes), 1, 'sixes').yahtzeeBonuses[1], 0);
   assert.deepEqual(allowedCategories(sixes, { yahtzee: 0 }), ['sixes']);
 
-  // The first Yahtzee is no Joker: any open box, and no bonus
+  // The first Five of a Kind is no Joker: any open box, and no bonus
   assert.deepEqual(allowedCategories(sixes, {}), CATEGORIES);
   assert.equal(score(turn({}, sixes), 1, 'yahtzee').yahtzeeBonuses[1], 0);
 });
@@ -214,7 +214,7 @@ test('dismissed player mid-turn', () => {
   let state = score(roll(lobby('Alice', 'Bob', 'Cara'), NONE, 1, 2, 3, 4, 5), 1, 'chance');
   state = roll(state, NONE, 6, 6, 6, 6, 5);
   assert.equal(state.rollsLeft, 2);
-  const dismissed = removePlayer(yahtzee, disconnectPlayer(yahtzee, state, 2), 2);
+  const dismissed = removePlayer(fivedice, disconnectPlayer(fivedice, state, 2), 2);
   assert.equal(dismissed.currentPlayer, 3);
   assert.deepEqual(dismissed.dice, []);
   assert.equal(dismissed.rollsLeft, 3);
@@ -224,7 +224,7 @@ test('dismissed player mid-turn', () => {
   const done: GameState = { ...lobby('Alice', 'Bob', 'Cara'), started: true, currentPlayer: 2, sheets: {
     1: { ...nearlyFull(1), chance: 1 }, 2: nearlyFull(0), 3: { ...nearlyFull(2), chance: 2 }
   } };
-  const left = removePlayer(yahtzee, done, 2);
+  const left = removePlayer(fivedice, done, 2);
   assert.equal(left.isGameOver, true);
   assert.deepEqual(left.winners, [3]);
 });
@@ -235,14 +235,14 @@ test('table view hides hands', () => {
   const random = dice(3, 1, 4, 1, 5, 2, 6, 5);
   for (let moves = 0; moves < 26; moves++) {
     const seat = state.currentPlayer ?? assert.fail('nobody to play');
-    const views = [null, 1, 2].map(viewer => JSON.stringify(yahtzee.toPublicState(state, false, viewer)));
+    const views = [null, 1, 2].map(viewer => JSON.stringify(fivedice.toPublicState(state, false, viewer)));
     assert.equal(new Set(views).size, 1);
     assert.equal(views[0].includes('seatKeys'), false);
     state = state.dice.length === 0 ? ok(play(state, seat, ROLL, random)) : score(state, seat, allowedCategories(state.dice, state.sheets[seat])[0]);
   }
 });
 
-test('finalStandings ranks by the grand total with the Yahtzee bonuses', () => {
+test('finalStandings ranks by the grand total with the Five of a Kind bonuses', () => {
   const state: GameState = {
     ...createGameState('t'), activePlayers: [1, 2, 3], isGameOver: true, winners: [1],
     sheets: { 1: { chance: 30 }, 2: { chance: 20 }, 3: { chance: 20 } }, yahtzeeBonuses: { 1: 1, 2: 0, 3: 0 }

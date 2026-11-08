@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DICE_KEY, cellKey, scoreSlide, tumbling } from './animateMove.ts';
 import { createGameState, toPublicState } from '../rules.ts';
-import { yahtzee } from '../index.ts';
+import { fivedice } from '../index.ts';
 import { addPlayer, applyMove } from '../../../shared/seating.ts';
 import type { Random } from '../../../shared/types.ts';
 import type { GameState, PublicGameState } from '../types.ts';
@@ -18,7 +18,7 @@ const NONE = [false, false, false, false, false];
 function lobby(): GameState {
   let state = createGameState('g');
   for (const name of ['Alice', 'Bob']) {
-    const result = addPlayer(yahtzee, state, name, dice(1));
+    const result = addPlayer(fivedice, state, name, dice(1));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -26,7 +26,7 @@ function lobby(): GameState {
 }
 
 function after(state: GameState, move: unknown, random: Random = dice(1, 2, 3, 4, 5)): GameState {
-  const result = applyMove(yahtzee, state, state.currentPlayer ?? 1, move, random);
+  const result = applyMove(fivedice, state, state.currentPlayer ?? 1, move, random);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }

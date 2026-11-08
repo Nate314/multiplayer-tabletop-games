@@ -1,14 +1,14 @@
 import type { Page } from '@playwright/test';
 import { dismiss, expect, leave, openFaq, test, undo, type Seat, headerButton } from './fixtures.ts';
-import { CATEGORIES } from '../games/yahtzee/rules.ts';
-import type { Sheet } from '../games/yahtzee/types.ts';
+import { CATEGORIES } from '../games/fivedice/rules.ts';
+import type { Sheet } from '../games/fivedice/types.ts';
 
-// One test per rule, control and difference in games/yahtzee/README.md. Seat 1 is Alice and seat 2 is Bob.
+// One test per rule, control and difference in games/fivedice/README.md. Seat 1 is Alice and seat 2 is Bob.
 
 const NONE = [false, false, false, false, false];
 
 async function start(seat: Seat, names = ['Alice', 'Bob'], motion = false) {
-  const table = await seat('yahtzee', names, { motion });
+  const table = await seat('fivedice', names, { motion });
   const [alice, bob] = table.pages;
   // Crafts the dice on the table, as if the player to move had already rolled
   const rolled = (dice: number[], rollsLeft = 2) => table.patch({ dice, held: NONE, rollsLeft, lastMove: null });
@@ -20,9 +20,9 @@ const rollButton = (page: Page) => page.getByRole('button', { name: /^Roll/ });
 const die = (page: Page, index: number) => page.getByRole('button', { name: new RegExp(`^die ${index + 1}: `) });
 const option = (page: Page, points: number, label: string) => page.getByRole('button', { name: `Score ${points} in ${label}`, exact: true });
 const status = (page: Page) => page.locator('.game-status');
-const rolls = (page: Page) => page.locator('.yz-rolls');
-const totalRow = (page: Page) => page.locator('.yz-total td');
-const faces = (page: Page) => page.locator('.yz-turn .dice-die').evaluateAll(
+const rolls = (page: Page) => page.locator('.fivedice-rolls');
+const totalRow = (page: Page) => page.locator('.fivedice-total td');
+const faces = (page: Page) => page.locator('.fivedice-turn .dice-die').evaluateAll(
   elements => elements.map(element => Number(element.getAttribute('aria-label')?.split(': ')[1]))
 );
 
@@ -30,7 +30,7 @@ const faces = (page: Page) => page.locator('.yz-turn .dice-die').evaluateAll(
 const sheetWithout = (points: number, ...open: string[]): Sheet =>
   Object.fromEntries(CATEGORIES.filter(category => !open.includes(category)).map(category => [category, points]));
 
-test.describe('Yahtzee rules', () => {
+test.describe('Five Dice rules', () => {
   test('a turn is up to three rolls, then a score', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await expect(rolls(alice)).toHaveText('3 of 3 rolls left');
@@ -75,25 +75,25 @@ test.describe('Yahtzee rules', () => {
     const { alice, bob, rolled } = await start(seat);
     await rolled([2, 2, 5, 5, 5]);
     for (const [points, label] of [[0, 'Ones'], [4, 'Twos'], [15, 'Fives'], [19, 'Three of a kind'], [0, 'Four of a kind'], [25, 'Full house'],
-      [0, 'Small straight'], [0, 'Large straight'], [0, 'Yahtzee'], [19, 'Chance']] as const) {
+      [0, 'Small straight'], [0, 'Large straight'], [0, 'Five of a Kind'], [19, 'Chance']] as const) {
       await expect(option(alice, points, label)).toBeVisible();
     }
     // Only the player to move is offered the boxes
-    await expect(bob.locator('.yz-option')).toHaveCount(0);
+    await expect(bob.locator('.fivedice-option')).toHaveCount(0);
     await option(alice, 25, 'Full house').click();
     await expect(status(bob)).toHaveText('Alice scored 25 points in Full house');
     await expect(totalRow(bob).first()).toHaveText('25');
     await expect(alice.locator('.turn-message')).toContainText("Bob's turn");
-    await expect(alice.locator('.yz-option')).toHaveCount(0);
+    await expect(alice.locator('.fivedice-option')).toHaveCount(0);
   });
 
-  test('straights score 30 and 40 and Yahtzee 50', async ({ seat }) => {
+  test('straights score 30 and 40 and Five of a Kind 50', async ({ seat }) => {
     const { alice, rolled } = await start(seat);
     await rolled([2, 3, 4, 5, 6]);
     await expect(option(alice, 30, 'Small straight')).toBeVisible();
     await expect(option(alice, 40, 'Large straight')).toBeVisible();
     await rolled([3, 3, 3, 3, 3]);
-    await expect(option(alice, 50, 'Yahtzee')).toBeVisible();
+    await expect(option(alice, 50, 'Five of a Kind')).toBeVisible();
   });
 
   test('the upper bonus is 35 at 63 or more', async ({ seat }) => {
@@ -108,17 +108,17 @@ test.describe('Yahtzee rules', () => {
     await expect(totalRow(bob).nth(1)).toHaveText('40');
   });
 
-  test('a second Yahtzee gives 100 and follows the Joker rule', async ({ seat }) => {
+  test('a second Five of a Kind gives 100 and follows the Joker rule', async ({ seat }) => {
     const { alice, bob, rolled, sheets } = await start(seat);
     await sheets({ yahtzee: 50 }, {});
     await rolled([6, 6, 6, 6, 6]);
     // The matching upper box is the only one open to click
-    await expect(alice.locator('.yz-option:enabled')).toHaveCount(1);
+    await expect(alice.locator('.fivedice-option:enabled')).toHaveCount(1);
     await expect(option(alice, 30, 'Sixes')).toBeEnabled();
     await expect(option(alice, 30, 'Chance')).toBeDisabled();
     await option(alice, 30, 'Sixes').click();
-    await expect(status(bob)).toHaveText('Alice scored 30 points in Sixes and a 100 point Yahtzee bonus');
-    await expect(alice.locator('tr', { hasText: 'Yahtzee bonus' }).locator('td').first()).toHaveText('100');
+    await expect(status(bob)).toHaveText('Alice scored 30 points in Sixes and a 100 point Five of a Kind bonus');
+    await expect(alice.locator('tr', { hasText: 'Five of a Kind bonus' }).locator('td').first()).toHaveText('100');
     await expect(totalRow(alice).first()).toHaveText('180');
   });
 
@@ -138,12 +138,12 @@ test.describe('Yahtzee rules', () => {
     const { alice, rolled, sheets } = await start(seat);
     await sheets({ yahtzee: 50, sixes: 12, threeKind: 1, fourKind: 1, fullHouse: 1, smallStraight: 1, largeStraight: 1, chance: 1 }, {});
     await rolled([6, 6, 6, 6, 6]);
-    await expect(alice.locator('.yz-option:enabled')).toHaveCount(5);
+    await expect(alice.locator('.fivedice-option:enabled')).toHaveCount(5);
     await option(alice, 0, 'Ones').click();
-    await expect(status(alice)).toHaveText('Alice scored 0 points in Ones and a 100 point Yahtzee bonus');
+    await expect(status(alice)).toHaveText('Alice scored 0 points in Ones and a 100 point Five of a Kind bonus');
   });
 
-  test('a scratched Yahtzee box pays no bonus', async ({ seat }) => {
+  test('a scratched Five of a Kind box pays no bonus', async ({ seat }) => {
     const { alice, rolled, sheets } = await start(seat);
     await sheets({ yahtzee: 0 }, {});
     await rolled([4, 4, 4, 4, 4]);
@@ -155,10 +155,10 @@ test.describe('Yahtzee rules', () => {
     const { alice, rolled, sheets } = await start(seat);
     await sheets({ chance: 20 }, {});
     await rolled([1, 2, 3, 5, 6]);
-    await expect(alice.locator('.yz-option', { hasText: /./ })).not.toHaveCount(0);
+    await expect(alice.locator('.fivedice-option', { hasText: /./ })).not.toHaveCount(0);
     await expect(alice.getByRole('button', { name: /in Chance$/ })).toHaveCount(0);
-    await option(alice, 0, 'Yahtzee').click();
-    await expect(status(alice)).toHaveText('Alice scored 0 points in Yahtzee');
+    await option(alice, 0, 'Five of a Kind').click();
+    await expect(status(alice)).toHaveText('Alice scored 0 points in Five of a Kind');
     await expect(totalRow(alice).first()).toHaveText('20');
   });
 
@@ -174,8 +174,8 @@ test.describe('Yahtzee rules', () => {
       await expect(page.locator('.turn-message')).toHaveText('Game over: Alice won');
       await expect(rollButton(page)).toHaveCount(0);
     }
-    await expect(alice.locator('.yz-player-winner')).toHaveText('Alice (you)');
-    await expect(bob.locator('.yz-player-winner')).toHaveCount(1);
+    await expect(alice.locator('.fivedice-player-winner')).toHaveText('Alice (you)');
+    await expect(bob.locator('.fivedice-player-winner')).toHaveCount(1);
   });
 
   test('equal totals share the win', async ({ seat }) => {
@@ -186,7 +186,7 @@ test.describe('Yahtzee rules', () => {
     await rolled([2, 2, 2, 2, 2]);
     await option(bob, 10, 'Chance').click();
     await expect(alice.locator('.turn-message')).toHaveText('Game over: Alice and Bob won');
-    await expect(alice.locator('.yz-player-winner')).toHaveCount(2);
+    await expect(alice.locator('.fivedice-player-winner')).toHaveCount(2);
   });
 
   test('clicking Undo asks the other player to undo the last roll', async ({ seat }) => {
@@ -230,9 +230,9 @@ test.describe('Yahtzee rules', () => {
     await expect.poll(async () => (await running(animated.bob, 'die-1')) > 0 && (await running(animated.bob, 'die-0')) === 0).toBe(true);
 
     await option(animated.alice, 25, 'Chance').click();
-    await expect.poll(() => animated.bob.locator('.yz-flying-points').count()).toBe(1);
-    await expect(animated.bob.locator('.yz-flying-points')).toHaveText('25');
-    await expect(animated.bob.locator('.yz-flying-points')).toHaveCount(0);
+    await expect.poll(() => animated.bob.locator('.fivedice-flying-points').count()).toBe(1);
+    await expect(animated.bob.locator('.fivedice-flying-points')).toHaveText('25');
+    await expect(animated.bob.locator('.fivedice-flying-points')).toHaveCount(0);
     await expect(animated.bob.locator('[data-anim-key="cell-1-chance"]')).toHaveText('25');
 
     const still = await start(seat);
@@ -249,9 +249,9 @@ test.describe('Yahtzee rules', () => {
     await sheets(sheetWithout(0, 'chance'), sheetWithout(0));
     await rolled([1, 1, 1, 1, 6]);
     await option(alice, 10, 'Chance').click();
-    await expect.poll(() => bob.locator('.yz-flying-points').count()).toBe(1);
+    await expect.poll(() => bob.locator('.fivedice-flying-points').count()).toBe(1);
     await expect(bob.locator('.turn-message')).toHaveText('Game over: Alice won');
-    await expect(bob.locator('.yz-flying-points')).toHaveCount(0);
+    await expect(bob.locator('.fivedice-flying-points')).toHaveCount(0);
     await expect(bob.locator('[data-anim-key="cell-1-chance"]')).toHaveText('10');
   });
 
@@ -263,7 +263,7 @@ test.describe('Yahtzee rules', () => {
     await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toHaveText('Move 2 of 2: Alice scored 15 points in Chance');
-    await expect(dialog.locator('.yz-cell-last')).toHaveText('15');
+    await expect(dialog.locator('.fivedice-cell-last')).toHaveText('15');
     await dialog.getByRole('slider', { name: 'Step' }).fill('1');
     await expect(dialog.locator('.history-move')).toHaveText('Move 1 of 2: Alice rolled 1 2 3 4 5, 2 rolls left');
     await expect(dialog.getByRole('img', { name: 'die 5: 5' })).toBeVisible();
@@ -278,10 +278,10 @@ test.describe('Yahtzee rules', () => {
   });
 });
 
-test.describe('Yahtzee differences from Wikipedia', () => {
+test.describe('Five Dice differences from Wikipedia', () => {
   test('a third player joins and gets a column of their own', async ({ seat }) => {
     const { table, alice } = await start(seat, ['Alice', 'Bob', 'Cara']);
-    await expect(alice.locator('.yz-player')).toHaveCount(3);
+    await expect(alice.locator('.fivedice-player')).toHaveCount(3);
     expect(table.pages).toHaveLength(3);
   });
 
@@ -289,13 +289,13 @@ test.describe('Yahtzee differences from Wikipedia', () => {
     const { alice, bob, table } = await start(seat, ['Alice', 'Bob', 'Cara']);
     const cara = table.pages[2];
     await rollButton(alice).click();
-    await option(alice, 0, 'Yahtzee').click();
+    await option(alice, 0, 'Five of a Kind').click();
     await rollButton(bob).click();
     await leave(bob);
     await dismiss('Bob', alice, cara);
     await expect(cara.locator('.turn-message')).toContainText('Your turn: roll the dice');
     await expect(rolls(cara)).toHaveText('3 of 3 rolls left');
-    await expect(cara.locator('.yz-player')).toHaveCount(2);
+    await expect(cara.locator('.fivedice-player')).toHaveCount(2);
   });
 
   test('dismissing the last player still to play ends the game', async ({ seat }) => {
@@ -309,10 +309,10 @@ test.describe('Yahtzee differences from Wikipedia', () => {
   });
 });
 
-test.describe('Yahtzee house rules', () => {
+test.describe('Five Dice house rules', () => {
   test('10 players can join with Most players raised', async ({ seat }) => {
     const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
-    const table = await seat('yahtzee', names, { maxPlayers: 10 });
+    const table = await seat('fivedice', names, { maxPlayers: 10 });
     expect(table.pages).toHaveLength(10);
     expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(10);
     for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
