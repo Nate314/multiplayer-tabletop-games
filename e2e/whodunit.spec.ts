@@ -149,6 +149,26 @@ test.describe('Whodunit rules', () => {
     await expect(button(alice, 'Suggest')).toBeVisible();
   });
 
+  test('a room the move started in cannot be entered again on that move', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await place(table, { 'commodore-brine': { room: 'boathouse' } });
+    await table.dice(4, 4); // far enough to loop out of one Boathouse door and back in by the other
+    await button(alice, 'Roll').click();
+    await expect(alice.getByRole('button', { name: 'Move to Grand Foyer' })).toBeVisible();
+    await expect(alice.getByRole('button', { name: 'Move to Boathouse' })).toHaveCount(0);
+  });
+
+  test('with four players the deal is uneven: seats 1 and 2 hold one card more', async ({ seat }) => {
+    const table = await seat('whodunit', ['Alice', 'Bob', 'Cara', 'Dan']);
+    const state = await table.state<GameState>();
+    expect([1, 2, 3, 4].map(n => state.hands[n].length)).toEqual([5, 5, 4, 4]);
+    for (const [index, page] of table.pages.entries()) {
+      await expect(hand(page)).toHaveText(names(state.hands[index + 1]));
+      await expect(page.getByRole('list', { name: 'Players' }).getByRole('listitem')).toContainText(
+        [': 5 cards', ': 5 cards', ': 4 cards', ': 4 cards']);
+    }
+  });
+
   test('a secret passage takes the player to the room at its other end instead of rolling', async ({ seat }) => {
     const { table, alice, cara } = await start(seat);
     await place(table, { 'commodore-brine': { room: 'boathouse' } });
@@ -298,6 +318,29 @@ test.describe('Whodunit leaving, undo and history', () => {
     await expect(alice.getByRole('region', { name: 'Notes' }).getByText('(face up)')).toHaveCount(6);
   });
 
+  test('dismissing the player a suggestion waits on passes it to the next holder clockwise', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await place(table, { 'commodore-brine': { room: 'chart-room' } }, { phase: 'room' });
+    await suggest(alice, 'Miss Gull', 'Boat Oar');
+    await expect(showPrompt(bob).getByRole('button')).toHaveCount(2);
+    await leave(bob);
+    await dismiss('Bob', alice, cara);
+    await expect(cardsIn(alice, "Bob's cards, face up")).toHaveText(names(HANDS[2]));
+    await expect(log(alice)).toHaveText('You suggested Miss Gull with the Boat Oar in the Chart Room. Cara showed a card: Chart Room');
+    await expect(button(alice, 'End turn')).toBeVisible();
+  });
+
+  test('dismissing the player whose turn it is passes the turn on', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await begin(table, alice);
+    await leave(alice);
+    await dismiss('Alice', bob, cara);
+    await expect(cardsIn(bob, "Alice's cards, face up")).toHaveText(names(HANDS[1]));
+    await expect(bob.locator('.turn-message')).toHaveText('Your turn');
+    await expect(button(bob, 'Roll')).toBeVisible();
+    await expect(cara.locator('.turn-message')).toHaveText("Bob's turn");
+  });
+
   test('Undo is offered after a roll and gone right after a shown card or an accusation', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
     await expect(button(alice, 'Undo')).toHaveCount(0);
@@ -329,6 +372,7 @@ test.describe('Whodunit leaving, undo and history', () => {
   });
 
   test('History shows neither a hand nor a shown card', async ({ seat }) => {
+    test.slow(); // a loaded machine can take over 30 s to seat three browsers
     const { table, alice, bob } = await start(seat);
     const bodies: string[] = [];
     bob.on('response', response => { if (response.url().includes('/api/')) response.text().then(text => bodies.push(text), () => {}); });
