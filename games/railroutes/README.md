@@ -1,4 +1,4 @@
-# Ticket to Ride
+# Rail Routes
 
 Collect train cards, claim railway routes across the USA and connect your destination tickets, for 2 to 5 players.
 

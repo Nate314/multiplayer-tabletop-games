@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { tickettorideInfo } from './info.ts';
+import { railroutesInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const tickettoride: GameDefinition<GameState, PublicGameState> = {
-  info: tickettorideInfo,
+export const railroutes: GameDefinition<GameState, PublicGameState> = {
+  info: railroutesInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

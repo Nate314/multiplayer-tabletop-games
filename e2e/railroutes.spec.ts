@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import { CITIES, ROUTES, TICKETS } from '../games/tickettoride/map.ts';
-import type { Card, GameState, Hand, PlayerState } from '../games/tickettoride/types.ts';
+import { dismiss, expect, leave, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { CITIES, ROUTES, TICKETS } from '../games/railroutes/map.ts';
+import type { Card, GameState, Hand, PlayerState } from '../games/railroutes/types.ts';
 
-// One test per rule and control in games/tickettoride/README.md. Most tests seat the players through the join dialog,
+// One test per rule and control in games/railroutes/README.md. Most tests seat the players through the join dialog,
 // then patch in a game already in play with known cards, so every draw and claim has a known outcome.
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'];
@@ -34,7 +34,7 @@ function playersOf(count: number, players: Players = {}): Record<number, PlayerS
 
 // Seats `count` players, then patches in a game in play: Alice to move, a deck of plain red cards and five other colors up
 async function start(seat: Seat, count = 2, overrides: Partial<GameState> = {}, players: Players = {}) {
-  const table = await seat('tickettoride', NAMES.slice(0, count));
+  const table = await seat('railroutes', NAMES.slice(0, count));
   await table.patch(playState(count, overrides, players));
   await expect(table.pages[0].locator('.turn-message')).toHaveText(overrides.lastTurns ? 'Last round: Your turn' : 'Your turn');
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1], cara: table.pages[2] };
@@ -42,7 +42,7 @@ async function start(seat: Seat, count = 2, overrides: Partial<GameState> = {}, 
 
 // The start of a game in play where someone other than Alice may be to move
 async function startOn(seat: Seat, count: number, overrides: Partial<GameState>, players: Players = {}) {
-  const table = await seat('tickettoride', NAMES.slice(0, count));
+  const table = await seat('railroutes', NAMES.slice(0, count));
   await table.patch(playState(count, overrides, players));
   const mover = table.pages[(overrides.currentPlayer ?? 1) - 1];
   await expect(turn(mover)).toHaveText(overrides.lastTurns ? 'Last round: Your turn' : 'Your turn');
@@ -133,9 +133,9 @@ const EL_PASO_SANTA_FE = routeId('El Paso', 'Santa Fe'); // 2 gray
 const DENVER_EL_PASO_TICKET = 6; // 4 points
 const BOSTON_MIAMI_TICKET = 0;   // 12 points
 
-test.describe('Ticket to Ride rules', () => {
+test.describe('Rail Routes rules', () => {
   test('the USA map has 36 cities and 100 tracks over 78 pairs, 110 train cards, 30 tickets and 45 trains each', async ({ seat }) => {
-    const table = await seat('tickettoride', ['Alice', 'Bob']);
+    const table = await seat('railroutes', ['Alice', 'Bob']);
     const [alice] = table.pages;
     await expect(alice.locator('.map .city')).toHaveCount(36);
     await expect(alice.locator('.map g.track')).toHaveCount(100);
@@ -169,7 +169,7 @@ test.describe('Ticket to Ride rules', () => {
   });
 
   test('setup deals 4 cards and 3 tickets, turns 5 up, each keeps 2 or 3 in seat order, then play goes up the seats', async ({ seat }) => {
-    const table = await seat('tickettoride', ['Alice', 'Bob', 'Cara']);
+    const table = await seat('railroutes', ['Alice', 'Bob', 'Cara']);
     const [alice, bob, cara] = table.pages;
     await expect(market(alice).locator('.card-button')).toHaveCount(5);
     await expect(alice.locator('.hand .card-count')).not.toHaveCount(0);
@@ -515,7 +515,7 @@ test.describe('Ticket to Ride rules', () => {
   });
 });
 
-test.describe('Ticket to Ride controls', () => {
+test.describe('Rail Routes controls', () => {
   test('with Color-blind symbols on, train cards and open colored routes show a shape; locomotives and gray routes show none', async ({ seat }) => {
     const { alice } = await start(seat, 2, { faceUp: ['locomotive', 'green', 'yellow', 'black', 'white'] }, { 1: { hand: { red: 1, blue: 1, pink: 1, orange: 1, locomotive: 1 } } });
     await expect(alice.locator('.color-symbol')).toHaveCount(0);
@@ -581,7 +581,7 @@ test.describe('Ticket to Ride controls', () => {
   });
 
   test('clicking the ticket deck draws tickets, ticked ones are kept with Keep, and first tickets show before your turn', async ({ seat }) => {
-    const table = await seat('tickettoride', ['Alice', 'Bob']);
+    const table = await seat('railroutes', ['Alice', 'Bob']);
     const [alice, bob] = table.pages;
     await expect(checkboxes(bob)).toHaveCount(3);
     await expect(keepButton(bob)).toBeDisabled();
@@ -723,9 +723,9 @@ test.describe('Ticket to Ride controls', () => {
   });
 });
 
-test.describe('Ticket to Ride differences from Wikipedia', () => {
+test.describe('Rail Routes differences from Wikipedia', () => {
   test('first tickets are chosen one player after another, each choice can be undone, and an offer shows before your turn', async ({ seat }) => {
-    const table = await seat('tickettoride', ['Alice', 'Bob']);
+    const table = await seat('railroutes', ['Alice', 'Bob']);
     const [alice, bob] = table.pages;
     await expect(checkboxes(bob)).toHaveCount(3);
     await expect(keepButton(bob)).toBeDisabled();
@@ -738,7 +738,7 @@ test.describe('Ticket to Ride differences from Wikipedia', () => {
   });
 
   test('the first seat goes first', async ({ seat }) => {
-    const table = await seat('tickettoride', ['Alice', 'Bob']);
+    const table = await seat('railroutes', ['Alice', 'Bob']);
     const [alice, bob] = table.pages;
     await keepFirstTickets([alice, bob]);
     await expect(turn(alice)).toHaveText('Your turn');
@@ -797,4 +797,14 @@ test.describe('Ticket to Ride differences from Wikipedia', () => {
     await pickRoute(alice, routeId('Phoenix', 'Santa Fe')); // 3 gray: 2 red and 1 locomotive is the fewest
     await expect(claimButtons(alice)).toHaveText(['Claim with 2 red and 1 locomotive']);
   });
+});
+
+test('an old tickettoride join link opens Rail Routes', async ({ browser, server }) => {
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto('/join/tickettoride/old-link-game');
+  const dialog = visitor.getByRole('dialog', { name: 'Join Rail Routes' });
+  await expect(dialog.getByLabel('Game ID')).toHaveValue('old-link-game');
+  await dialog.getByLabel('Your name').fill('Alice');
+  await dialog.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(visitor.locator('[data-game="railroutes"]').first()).toBeVisible();
 });

@@ -134,7 +134,7 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Place all').click();
     }
   },
-  tickettoride: {
+  railroutes: {
     keep: ['.turn-message', '.hand-panel', '.ticket-choice', you('.player-row')], // the ticket choice is open before your turn
     hide: [others('.player-row')],
     board: '.map-frame',

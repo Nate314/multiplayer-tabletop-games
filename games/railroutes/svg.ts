@@ -2,7 +2,7 @@ import { el, svgDoc, type SvgAsset } from '../../shared/svg/svg.ts';
 import { MAP_HEIGHT, MAP_LEFT, MAP_WIDTH } from './map.ts';
 
 // The map's sea and land, drawn on the server; routes and cities on top stay in the client, where they can be
-// clicked. The classes are the ones client/tickettoride.scss colors; the fills are only its defaults, for the gallery
+// clicked. The classes are the ones client/railroutes.scss colors; the fills are only its defaults, for the gallery
 
 // A rough outline of the United States and the southern edge of Canada, in map coordinates (this site's own drawing)
 const LAND_OUTLINE =
@@ -22,4 +22,4 @@ export function landSvg(): string {
     el('polygon', { class: 'land usa', points: LAND_OUTLINE, fill: '#efe3c2' }));
 }
 
-export const TICKETTORIDE_ASSETS: SvgAsset[] = [{ name: 'tickettoride-land', params: [], samples: [], render: landSvg }];
+export const RAILROUTES_ASSETS: SvgAsset[] = [{ name: 'railroutes-land', params: [], samples: [], render: landSvg }];

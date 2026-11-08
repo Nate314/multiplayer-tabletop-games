@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './tickettoride.scss';
+import './railroutes.scss';
 
-export const tickettorideClient: ClientGame = {
-  id: 'tickettoride',
+export const railroutesClient: ClientGame = {
+  id: 'railroutes',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

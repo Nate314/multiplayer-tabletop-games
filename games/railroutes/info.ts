@@ -1,10 +1,10 @@
-// The landing page's view of tickettoride: loaded eagerly by the browser, so it imports no rules code
+// The landing page's view of railroutes: loaded eagerly by the browser, so it imports no rules code
 import type { GameInfo } from '../../shared/gameDefinition.ts';
 
-export const tickettorideInfo: GameInfo = {
-  id: 'tickettoride',
+export const railroutesInfo: GameInfo = {
+  id: 'railroutes',
   category: 'strategy',
-  name: 'Ticket to Ride',
+  name: 'Rail Routes',
   description: 'Collect train cards, claim railway routes across the USA and connect your destination tickets',
   minPlayers: 2,
   maxPlayers: 5

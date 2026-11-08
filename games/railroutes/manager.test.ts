@@ -3,21 +3,21 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { anyMove, seeded } from './testing.ts';
-import { tickettoride } from './index.ts';
+import { railroutes } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'tickettoride/g1';
+const ROOM = 'railroutes/g1';
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([tickettoride], seeded(seed)));
-  for (const name of names) manager.join('tickettoride', 'g1', name);
+  const manager = rememberingKeys(createGameManager([railroutes], seeded(seed)));
+  for (const name of names) manager.join('railroutes', 'g1', name);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Ticket to Ride's
+// The manager is generic over games, so tests narrow the public state to Rail Routes's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -45,7 +45,7 @@ test('a seeded game plays from the first tickets to the final scoring, and no st
   const best = Math.max(...Object.values(state.final).map(score => score.total));
   assert.ok(state.winners.every(seat => state.final?.[seat].total === best));
 
-  const steps = stepsOf(manager, 'tickettoride') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'railroutes') ?? assert.fail('no history');
   assert.ok(steps.length > 20);
   for (const past of steps as unknown as PublicGameState[]) {
     assert.equal('deck' in past, false);
@@ -56,7 +56,7 @@ test('a seeded game plays from the first tickets to the final scoring, and no st
       if (!past.isGameOver) assert.equal(player.tickets, null);
     }
   }
-  const file = fileOf(manager, 'tickettoride', new Date());
+  const file = fileOf(manager, 'railroutes', new Date());
   assert.ok(file && 'file' in file);
 });
 
@@ -68,7 +68,7 @@ test('a rejoin mid-turn shows the same half-drawn turn and the same ticket choic
   const before = viewOf(manager, 1);
   assert.equal(before.drawing, 1);
   manager.disconnect(ROOM, 1);
-  const rejoined = manager.join('tickettoride', 'g1', 'A', true);
+  const rejoined = manager.join('railroutes', 'g1', 'A', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.equal(view.drawing, 1);
@@ -81,7 +81,7 @@ test('a rejoin mid-turn shows the same half-drawn turn and the same ticket choic
   assert.equal(offered.players[2].offeredCount, 3);
   const mine = viewOf(manager, 2).players[2].offered ?? assert.fail('no offer');
   manager.disconnect(ROOM, 2);
-  const back = manager.join('tickettoride', 'g1', 'B', true);
+  const back = manager.join('railroutes', 'g1', 'B', true);
   if ('error' in back) assert.fail(back.error);
   assert.deepEqual((back.state as PublicGameState).players[2].offered, mine);
   assert.equal(viewOf(manager, 1).players[2].offered, null);

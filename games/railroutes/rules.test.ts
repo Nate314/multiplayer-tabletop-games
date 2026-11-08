@@ -7,7 +7,7 @@ import { applyMove, paymentOptions, toPublicState } from './rules.ts';
 import { finalScores, longestPath, rankWinners, routePoints, ticketDone } from './scoring.ts';
 import { anyMove, game, hand, move, played, routeBetween, seatedGame, seeded } from './testing.ts';
 import { removePlayer } from '../../shared/seating.ts';
-import { tickettoride } from './index.ts';
+import { railroutes } from './index.ts';
 import type { Card, FinalScore, GameState, PublicGameState, Seat } from './types.ts';
 
 const total = (state: GameState) =>
@@ -308,7 +308,7 @@ test('a player dismissed halfway through drawing cards: the next player starts a
   assert.equal(state.drawing, 1);
   const routeId = routeBetween('Denver', 'Santa Fe').id;
   state = owning(state, 1, routeId);
-  state = removePlayer(tickettoride, state, 1, seeded(3));
+  state = removePlayer(railroutes, state, 1, seeded(3));
   assert.deepEqual(state.activePlayers, [2, 3]);
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.drawing, null);
@@ -322,7 +322,7 @@ test('a player dismissed halfway through drawing cards: the next player starts a
 
 test('a player dismissed while choosing tickets returns them under the deck', () => {
   let state = played(game(), 1, { type: 'drawTickets' });
-  state = removePlayer(tickettoride, state, 1, seeded(3));
+  state = removePlayer(railroutes, state, 1, seeded(3));
   assert.equal(state.players[1].offered, null);
   assert.deepEqual(state.ticketDeck.slice(-3), [9, 10, 11]);
   assert.equal(state.ticketDeck.length, 21);
@@ -334,7 +334,7 @@ test('a player dismissed during the first ticket choice hands the choice to the 
   let state = seatedGame(3);
   state = played(state, 1, { type: 'keepTickets', tickets: state.players[1].offered });
   state = { ...state, started: true };
-  state = removePlayer(tickettoride, state, 2, seeded(3));
+  state = removePlayer(railroutes, state, 2, seeded(3));
   assert.equal(state.currentPlayer, 3);
   assert.equal(state.phase, 'setup');
   state = played(state, 3, { type: 'keepTickets', tickets: state.players[3].offered?.slice(0, 2) });
@@ -345,10 +345,10 @@ test('a player dismissed during the first ticket choice hands the choice to the 
 
 test('a dismissal during the last round ends the game when it was the final turn, without the dismissed player', () => {
   const state = game({ lastTurns: [2], currentPlayer: 2 });
-  const ended = removePlayer(tickettoride, state, 2, seeded(3));
+  const ended = removePlayer(railroutes, state, 2, seeded(3));
   assert.equal(ended.isGameOver, true);
   assert.deepEqual(Object.keys(ended.final ?? {}).map(Number), [1, 3]);
-  const waiting = removePlayer(tickettoride, game({ lastTurns: [3, 1], currentPlayer: 2 }), 3, seeded(3));
+  const waiting = removePlayer(railroutes, game({ lastTurns: [3, 1], currentPlayer: 2 }), 3, seeded(3));
   assert.deepEqual(waiting.lastTurns, [1]);
   assert.equal(waiting.isGameOver, false);
 });

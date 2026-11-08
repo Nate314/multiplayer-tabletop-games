@@ -1,9 +1,9 @@
-// Helpers for the Ticket to Ride tests: seeded deals, a game already in play with known cards, and a simple player
+// Helpers for the Rail Routes tests: seeded deals, a game already in play with known cards, and a simple player
 import { addPlayer, applyMove as platformMove } from '../../shared/seating.ts';
 import { emptyHand } from './cards.ts';
 import { CITIES, ROUTES } from './map.ts';
 import { canAct, canDrawCard, claimError, createGameState, paymentOptions } from './rules.ts';
-import { tickettoride } from './index.ts';
+import { railroutes } from './index.ts';
 import type { Card, GameState, Hand, Move, PlayerState, PublicGameState, Random, Result, Seat } from './types.ts';
 
 // The same deal on every run
@@ -24,7 +24,7 @@ export function ok(result: Result<GameState>): GameState {
 
 // Through the platform's turn checks, as the server plays it
 export const move = (state: GameState, seat: Seat, value: unknown, random: Random = seeded(9)) =>
-  platformMove(tickettoride, state, seat, value, random);
+  platformMove(railroutes, state, seat, value, random);
 
 export const played = (state: GameState, seat: Seat, value: unknown, random: Random = seeded(9)) => ok(move(state, seat, value, random));
 
@@ -33,7 +33,7 @@ export function seatedGame(count: number, seed = 1): GameState {
   const random = seeded(seed);
   let state = createGameState('g1');
   for (let i = 0; i < count; i++) {
-    const result = addPlayer(tickettoride, state, ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'][i], random);
+    const result = addPlayer(railroutes, state, ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'][i], random);
     if ('error' in result) throw new Error(result.error);
     state = result.state;
   }
