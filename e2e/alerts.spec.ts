@@ -65,54 +65,54 @@ async function watch(browser: Browser, server: { url: string }, gameType: string
 
 test.describe('Turn alerts', () => {
   test('the tab title follows the lobby, the turn and a vote', async ({ seat }) => {
-    const table = await seat('connectfour', ['Alice'], { agree: false });
+    const table = await seat('fourinarow', ['Alice'], { agree: false });
     const [alice] = table.pages;
-    await expect(alice).toHaveTitle('Connect Four · 1 of 2 players');
+    await expect(alice).toHaveTitle('Four in a Row · 1 of 2 players');
     const bob = await table.join('Bob');
-    await expect(bob).toHaveTitle('Connect Four · 2 of 2 players');
-    await expect(alice).toHaveTitle('● Your turn · Connect Four · 2 of 2 players');
+    await expect(bob).toHaveTitle('Four in a Row · 2 of 2 players');
+    await expect(alice).toHaveTitle('● Your turn · Four in a Row · 2 of 2 players');
     await drop(alice, 1);
-    await expect(bob).toHaveTitle('● Your turn · Connect Four · 2 players');
-    await expect(alice).toHaveTitle('Connect Four · 2 players');
+    await expect(bob).toHaveTitle('● Your turn · Four in a Row · 2 players');
+    await expect(alice).toHaveTitle('Four in a Row · 2 players');
     await alice.getByRole('button', { name: 'Undo' }).click();
-    await expect(bob).toHaveTitle('● Vote · Connect Four · 2 players');
+    await expect(bob).toHaveTitle('● Vote · Four in a Row · 2 players');
   });
 
   test('a spectator gets the plain title and no notifications', async ({ seat, browser, server }) => {
-    const table = await seat('connectfour', ['Alice', 'Bob']);
+    const table = await seat('fourinarow', ['Alice', 'Bob']);
     const [alice, bob] = table.pages;
-    const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+    const dana = await watch(browser, server, 'fourinarow', table.gameId, 'Dana');
     const tv = await tableScreen(table);
     await setHidden(dana, true);
     await drop(alice, 1);
     await drop(bob, 2);
     await alice.getByRole('button', { name: 'Undo' }).click();
-    await expect(bob).toHaveTitle('● Vote · Connect Four · 2 players');
-    for (const page of [dana, tv]) await expect(page).toHaveTitle('Connect Four · 2 players');
+    await expect(bob).toHaveTitle('● Vote · Four in a Row · 2 players');
+    for (const page of [dana, tv]) await expect(page).toHaveTitle('Four in a Row · 2 players');
     expect(await shown(dana)).toEqual([]);
   });
 
   test('back to games restores the site title', async ({ seat }) => {
-    const { pages: [alice], gameId } = await seat('connectfour', ['Alice', 'Bob']);
-    await expect(alice).toHaveURL(`/?game=connectfour%2F${gameId}`);
+    const { pages: [alice], gameId } = await seat('fourinarow', ['Alice', 'Bob']);
+    await expect(alice).toHaveURL(`/?game=fourinarow%2F${gameId}`);
     await alice.getByRole('button', { name: 'Back to games' }).click();
     await expect(alice).toHaveTitle('Multiplayer Tabletop Games');
     await expect(alice).toHaveURL('/');
   });
 
   test('a hidden page shows one notification when it becomes your turn and none while visible', async ({ seat, browser, server }) => {
-    const table = await seat('connectfour', ['Alice']);
+    const table = await seat('fourinarow', ['Alice']);
     const [alice] = table.pages;
     const bob = await newPlayer(browser, server);
     await record(bob);
-    await joinGame(bob, 'connectfour', table.gameId, 'Bob');
+    await joinGame(bob, 'fourinarow', table.gameId, 'Bob');
     await setHidden(bob, true);
     await drop(alice, 1);
-    await expect.poll(() => shown(bob)).toEqual([{ title: 'Your turn', body: `Connect Four · ${table.gameId}` }]);
+    await expect.poll(() => shown(bob)).toEqual([{ title: 'Your turn', body: `Four in a Row · ${table.gameId}` }]);
     await setHidden(bob, false);
     await drop(bob, 2);
     await drop(alice, 3);
-    await expect(bob).toHaveTitle('● Your turn · Connect Four · 2 players');
+    await expect(bob).toHaveTitle('● Your turn · Four in a Row · 2 players');
     expect(await shown(bob)).toHaveLength(1);
   });
 
@@ -121,7 +121,7 @@ test.describe('Turn alerts', () => {
     await record(alice, 'default');
     await alice.goto('/');
     expect(await alice.evaluate(() => (window as unknown as Recorded).__asked)).toBe(0); // the landing page never asks
-    await alice.locator('.lobby-game', { hasText: 'Connect Four' }).click();
+    await alice.locator('.lobby-game', { hasText: 'Four in a Row' }).click();
     await alice.getByLabel('Your name').fill('Alice');
     await alice.getByLabel('Game ID').fill('alerts-ask');
     await alice.getByRole('button', { name: 'Join', exact: true }).click();
@@ -152,13 +152,13 @@ test.describe('Turn alerts', () => {
   });
 
   test('a shared device names the player whose turn it is', async ({ seat, browser, server }) => {
-    const table = await seat('connectfour', [], { agree: false });
+    const table = await seat('fourinarow', [], { agree: false });
     const device = await newPlayer(browser, server);
     await record(device);
-    await joinPassAndPlay(device, 'connectfour', table.gameId, ['Ann', 'Bo']);
+    await joinPassAndPlay(device, 'fourinarow', table.gameId, ['Ann', 'Bo']);
     await setHidden(device, true);
     await drop(device, 1);
-    await expect.poll(() => shown(device)).toEqual([{ title: 'Your turn, Bo', body: `Connect Four · ${table.gameId}` }]);
-    await expect(device).toHaveTitle('● Your turn · Connect Four · 2 players');
+    await expect.poll(() => shown(device)).toEqual([{ title: 'Your turn, Bo', body: `Four in a Row · ${table.gameId}` }]);
+    await expect(device).toHaveTitle('● Your turn · Four in a Row · 2 players');
   });
 });

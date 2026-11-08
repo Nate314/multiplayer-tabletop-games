@@ -928,7 +928,7 @@ test("loading holds every seat without running the game's disconnect hook", () =
   manager.join('test', 'g1', 'B');
   ok(manager.move(ROOM, 1, tick));
 
-  // Azul, Uno and Phase 10 deal the next round from this hook once nobody is waiting
+  // Palace Walls, Uno and Phase 10 deal the next round from this hook once nobody is waiting
   const withHook = { ...testGame, onPlayerDisconnected: (state: TestState) => ({ ...state, gameStatus: 'hook ran' }) };
   const restarted = rememberingKeys(createGameManager([withHook], seededRandom, store), keys);
   assert.deepEqual(current(restarted).disconnected, [1, 2]);

@@ -16,7 +16,7 @@ async function finished(seat: Seat, gameType: string, names: string[]) {
 }
 
 test('Rematch opens a vote and everyone joining starts a new lobby at the same link', async ({ seat }) => {
-  const table = await finished(seat, 'connectfour', ['Alice', 'Bob']);
+  const table = await finished(seat, 'fourinarow', ['Alice', 'Bob']);
   const [alice, bob] = table.pages;
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
   await expect(gameOver(bob).locator('.rematch-vote')).toContainText('Alice wants a rematch');
@@ -90,11 +90,11 @@ test('a silent player cannot hold up a Remove, and can be removed too', async ({
 });
 
 test('a spectator keeps watching and cannot vote', async ({ seat, browser, server }) => {
-  const table = await finished(seat, 'connectfour', ['Alice', 'Bob']);
+  const table = await finished(seat, 'fourinarow', ['Alice', 'Bob']);
   const [alice, bob] = table.pages;
   const dana = await newPlayer(browser, server);
   await dana.goto('/');
-  await dana.locator('.lobby-game', { hasText: nameOf('connectfour') }).click();
+  await dana.locator('.lobby-game', { hasText: nameOf('fourinarow') }).click();
   await dana.getByRole('button', { name: 'Spectator' }).click();
   await dana.getByLabel('Your name').fill('Dana');
   await dana.getByLabel('Game ID').fill(table.gameId);

@@ -5,7 +5,17 @@ export type LegacyIds = Readonly<Record<string, LegacyId>>;
 
 export const LEGACY_IDS: LegacyIds = {
   monopoly: { id: 'streetdeeds', keepsSaves: true },
-  tickettoride: { id: 'railroutes', keepsSaves: false }
+  tickettoride: { id: 'railroutes', keepsSaves: false },
+  azul: { id: 'palacewalls', keepsSaves: true },
+  carcassonne: { id: 'roadsandfields', keepsSaves: true },
+  catan: { id: 'hexisland', keepsSaves: true },
+  connectfour: { id: 'fourinarow', keepsSaves: true },
+  jenga: { id: 'blocktower', keepsSaves: true },
+  parchisi: { id: 'pachisi', keepsSaves: true },
+  quoridor: { id: 'pawnsandwalls', keepsSaves: true },
+  rummikub: { id: 'rummytiles', keepsSaves: true },
+  scrabble: { id: 'lettergrid', keepsSaves: true },
+  splendor: { id: 'jewelguild', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

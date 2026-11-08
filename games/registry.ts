@@ -1,23 +1,23 @@
 import type { GameDefinition } from '../shared/gameDefinition.ts';
-import { quoridor } from './quoridor/index.ts';
-import { rummikub } from './rummikub/index.ts';
-import { azul } from './azul/index.ts';
-import { carcassonne } from './carcassonne/index.ts';
+import { pawnsandwalls } from './pawnsandwalls/index.ts';
+import { rummytiles } from './rummytiles/index.ts';
+import { palacewalls } from './palacewalls/index.ts';
+import { roadsandfields } from './roadsandfields/index.ts';
 import { chess } from './chess/index.ts';
 import { checkers } from './checkers/index.ts';
 import { chinesecheckers } from './chinesecheckers/index.ts';
 import { codebreaker } from './codebreaker/index.ts';
-import { connectfour } from './connectfour/index.ts';
+import { fourinarow } from './fourinarow/index.ts';
 import { corners } from './corners/index.ts';
 import { euchre } from './euchre/index.ts';
 import { backgammon } from './backgammon/index.ts';
-import { catan } from './catan/index.ts';
+import { hexisland } from './hexisland/index.ts';
 import { charades } from './charades/index.ts';
 import { mancala } from './mancala/index.ts';
 import { streetdeeds } from './streetdeeds/index.ts';
 import { naval } from './naval/index.ts';
-import { parchisi } from './parchisi/index.ts';
-import { scrabble } from './scrabble/index.ts';
+import { pachisi } from './pachisi/index.ts';
+import { lettergrid } from './lettergrid/index.ts';
 import { uno } from './uno/index.ts';
 import { phase10 } from './phase10/index.ts';
 import { categories } from './categories/index.ts';
@@ -28,7 +28,7 @@ import { snakesladders } from './snakesladders/index.ts';
 import { gofish } from './gofish/index.ts';
 import { hearts } from './hearts/index.ts';
 import { hintgrid } from './hintgrid/index.ts';
-import { jenga } from './jenga/index.ts';
+import { blocktower } from './blocktower/index.ts';
 import { jigsaw } from './jigsaw/index.ts';
 import { war } from './war/index.ts';
 import { risk } from './risk/index.ts';
@@ -36,7 +36,7 @@ import { racko } from './racko/index.ts';
 import { roadtoretirement } from './roadtoretirement/index.ts';
 import { rook } from './rook/index.ts';
 import { spades } from './spades/index.ts';
-import { splendor } from './splendor/index.ts';
+import { jewelguild } from './jewelguild/index.ts';
 import { steadyhand } from './steadyhand/index.ts';
 import { sudoku } from './sudoku/index.ts';
 import { farkle } from './farkle/index.ts';
@@ -54,6 +54,6 @@ import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 // Registry order, alphabetical by name; the landing page groups them by category. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  azul, backgammon, carcassonne, catan, charades, checkers, chinesecheckers, chess, categories, codebreaker, connectfour, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, jenga, jigsaw, mancala, naval, parchisi, phase10, pictionary,
-  quoridor, racko, railroutes, roadtoretirement, risk, rook, rummikub, scrabble, skipbo, snakesladders, spades, splendor, steadyhand, streetdeeds, sudoku, holdem, thecrew, tictactoe, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
+  palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, streetdeeds, naval, pachisi, phase10, pictionary,
+  pawnsandwalls, racko, roadtoretirement, risk, rook, rummytiles, lettergrid, skipbo, snakesladders, spades, jewelguild, steadyhand, sudoku, holdem, thecrew, tictactoe, railroutes, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
 ];

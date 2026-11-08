@@ -7,16 +7,16 @@ import { QR_ASSETS } from '../../shared/svg/qr.ts';
 import { PLAYING_CARD_ASSETS } from '../../shared/svg/playingCards.ts';
 import { DISC_ASSETS } from '../../shared/svg/disc.ts';
 import { CARD_ART_ASSETS } from '../../shared/svg/cardArt.ts';
-import { CARCASSONNE_ASSETS } from '../../games/carcassonne/svg.ts';
+import { ROADSANDFIELDS_ASSETS } from '../../games/roadsandfields/svg.ts';
 import { RISK_ASSETS } from '../../games/risk/svg.ts';
 import { RAILROUTES_ASSETS } from '../../games/railroutes/svg.ts';
-import { QUORIDOR_ASSETS } from '../../games/quoridor/svg.ts';
-import { AZUL_ASSETS } from '../../games/azul/svg.ts';
+import { PAWNSANDWALLS_ASSETS } from '../../games/pawnsandwalls/svg.ts';
+import { PALACEWALLS_ASSETS } from '../../games/palacewalls/svg.ts';
 import { CHESS_ASSETS } from '../../games/chess/svg.ts';
 import { CHECKERS_ASSETS } from '../../games/checkers/svg.ts';
 import { UNO_ASSETS } from '../../games/uno/svg.ts';
 import { DOMINOES_ASSETS } from '../../games/dominoes/svg.ts';
-import { CATAN_ASSETS } from '../../games/catan/svg.ts';
+import { HEXISLAND_ASSETS } from '../../games/hexisland/svg.ts';
 import { STREETDEEDS_ASSETS } from '../../games/streetdeeds/svg.ts';
 import { JIGSAW_ASSETS } from '../../games/jigsaw/svg.ts';
 import { WHODUNIT_ASSETS } from '../../games/whodunit/svg.ts';
@@ -34,16 +34,16 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...PLAYING_CARD_ASSETS,
   ...DISC_ASSETS,
   ...CARD_ART_ASSETS,
-  ...CARCASSONNE_ASSETS,
+  ...ROADSANDFIELDS_ASSETS,
   ...RISK_ASSETS,
   ...RAILROUTES_ASSETS,
-  ...QUORIDOR_ASSETS,
-  ...AZUL_ASSETS,
+  ...PAWNSANDWALLS_ASSETS,
+  ...PALACEWALLS_ASSETS,
   ...CHESS_ASSETS,
   ...CHECKERS_ASSETS,
   ...UNO_ASSETS,
   ...DOMINOES_ASSETS,
-  ...CATAN_ASSETS,
+  ...HEXISLAND_ASSETS,
   ...STREETDEEDS_ASSETS,
   ...JIGSAW_ASSETS,
   ...WHODUNIT_ASSETS,

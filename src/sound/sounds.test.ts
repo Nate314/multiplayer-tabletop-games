@@ -24,7 +24,7 @@ test('a roll rattles instead of clicking', () => {
   for (const type of ['roll', 'attack', 'blitz'])
     assert.deepEqual(soundsFor(state(), state({ moveCount: 4, lastMove: { type } }), 1), ['dice']);
 });
-test("Parchisi's automatic roll after a move clicks and rattles", () => {
+test("Pachisi's automatic roll after a move clicks and rattles", () => {
   const before = state({ dice: [{ value: 3, used: true }, { value: 5, used: true }] });
   const after = state({ moveCount: 4, dice: [{ value: 2, used: false }, { value: 6, used: false }] });
   assert.deepEqual(soundsFor(before, after, 1), ['move', 'dice']);

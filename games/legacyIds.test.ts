@@ -42,3 +42,13 @@ test('tickettoride is now Rail Routes and its saves are refused', () => {
   assert.equal(currentId('tickettoride'), 'railroutes');
   assert.equal(keepsSaves('tickettoride'), false);
 });
+
+// Chunk 11's renames: every old id points at its renamed game, and no old id is still registered
+const CHUNK_11: Record<string, string> = { azul: 'palacewalls', carcassonne: 'roadsandfields', catan: 'hexisland', connectfour: 'fourinarow', jenga: 'blocktower', parchisi: 'pachisi', quoridor: 'pawnsandwalls', rummikub: 'rummytiles', scrabble: 'lettergrid', splendor: 'jewelguild' };
+test('chunk 11 old ids map to their renamed games', () => {
+  for (const [old, id] of Object.entries(CHUNK_11)) {
+    assert.deepEqual(LEGACY_IDS[old], { id, keepsSaves: true }, old);
+    assert.ok(GAMES.some(game => game.info.id === id), id);
+    assert.ok(!GAMES.some(game => game.info.id === old), old);
+  }
+});

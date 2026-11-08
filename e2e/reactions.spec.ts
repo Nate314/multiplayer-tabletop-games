@@ -7,7 +7,7 @@ const nameButton = (page: Page, name: string) => page.locator('.presence-bar').g
 const picker = (page: Page, name: string) => page.getByRole('dialog', { name: `React to ${name}` });
 
 async function setUp(seat: Seat) {
-  const { pages: [ann, bo] } = await seat('connectfour', ['Ann', 'Bo']);
+  const { pages: [ann, bo] } = await seat('fourinarow', ['Ann', 'Bo']);
   await ann.getByRole('button', { name: 'Drop in column 1' }).click();
   await expect(nameButton(bo, 'Ann')).toBeEnabled();
   return [ann, bo];

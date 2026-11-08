@@ -22,7 +22,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   ],
   gofish: s => [{ ...s, lastMove: { asker: 1, fished: 'other' }, fishedCard: s.hands[1][0] }],
   racko: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
-  catan: s => [{
+  hexisland: s => [{
     ...s,
     steal: { thief: 1, victim: 2, resource: 'wood' },
     turnHolder: 1,
@@ -30,7 +30,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     boughtThisTurn: ['victoryPoint']
   }],
   risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
-  splendor: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
+  jewelguild: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
   railroutes: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
   tradingfloor: s => [{ ...s, offers: [{ id: 1, seat: 1, cards: s.hands[1].slice(0, 2).map((c: { id: number }) => c.id) }], nextOfferId: 2 }],
   naval: s => [

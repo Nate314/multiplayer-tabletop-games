@@ -23,11 +23,11 @@ test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
     card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
-    tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
-    classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'connectfour', 'mancala', 'naval', 'parchisi', 'quoridor', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
+    tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid'],
+    classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'pachisi', 'pawnsandwalls', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
-    strategy: ['catan', 'corners', 'go', 'streetdeeds', 'risk', 'splendor', 'railroutes'],
-    party: ['charades', 'fictionary', 'categories', 'hintgrid', 'jenga', 'pictionary', 'steadyhand']
+    strategy: ['hexisland', 'corners', 'go', 'streetdeeds', 'risk', 'jewelguild', 'railroutes'],
+    party: ['charades', 'fictionary', 'categories', 'hintgrid', 'blocktower', 'pictionary', 'steadyhand']
   };
   const actual = Object.fromEntries(Object.keys(expected).map(c => [c, GAMES.filter(g => g.info.category === c).map(g => g.info.id).sort()]));
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
