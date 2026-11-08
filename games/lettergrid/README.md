@@ -4,7 +4,7 @@ Build crossing words from your letter tiles on the premium-square board. It play
 
 ## Rules
 
-- Standard English Letter Grid for two to four players: a 15x15 board with double and triple letter and word squares (the center star is a double word), and the standard 100 tiles with their usual values, including two blanks worth 0
+- The standard English game for two to four players: a 15x15 board with double and triple letter and word squares (the center star is a double word), and the standard 100 tiles with their usual values, including two blanks worth 0
 - **Who goes first.** Each player draws a tile, and the one closest to A goes first; a blank beats every letter, and tied players draw again. The tiles go back in the bag before the racks are dealt, and the status line shows the draw. It is redone whenever someone joins or leaves before the first move. Play passes in seat order
 - Everyone holds 7 tiles and draws back up to 7 after each play
 - On your turn, play tiles, exchange tiles, or pass
