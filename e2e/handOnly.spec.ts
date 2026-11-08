@@ -100,7 +100,7 @@ const HAND_ONLY: Record<string, Row> = {
     hide: ['.other-racks'],
     move: async page => { await button(page, /^Draw pile/).click(); }
   },
-  rummikub: {
+  rummytiles: {
     keep: ['.rk-rack-area', '.rk-turn-message', '.rk-turn-buttons', you('.rk-player')],
     hide: [others('.rk-player'), '.rk-pool'],
     board: '.rk-table',

@@ -13,7 +13,7 @@ import {
   tileOf,
   toPublicState
 } from './rules.ts';
-import { rummikub } from './index.ts';
+import { rummytiles } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import type { GameState, Move, Result, Seat, Table, TileColor } from './types.ts';
@@ -31,7 +31,7 @@ function t(color: TileColor, value: number, copy = 0): number {
 function lobby(...names: string[]): GameState {
   let state = createGameState('g1');
   for (const name of names) {
-    const result = addPlayer(rummikub, state, name, first);
+    const result = addPlayer(rummytiles, state, name, first);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -64,7 +64,7 @@ function ok(result: Result<GameState>): GameState {
 }
 
 function move(state: GameState, seat: Seat, input: Move | unknown): Result<GameState> {
-  return applyMove(rummikub, state, seat, input, first);
+  return applyMove(rummytiles, state, seat, input, first);
 }
 
 function play(state: GameState, seat: Seat, table: Table): Result<GameState> {
@@ -105,7 +105,7 @@ test('the highest tile drawn goes first and tied players draw again', () => {
   const last = () => 0.999;
   let other = createGameState('g2');
   for (const name of ['A', 'B']) {
-    const result = addPlayer(rummikub, other, name, last);
+    const result = addPlayer(rummytiles, other, name, last);
     if ('error' in result) assert.fail(result.error);
     other = result.state;
   }
@@ -525,7 +525,7 @@ test('invalid moves', () => {
 test('dismissed player mid-turn', () => {
   const racks = { 1: [t('red', 1)], 2: [t('orange', 5), t('orange', 6)], 3: [t('blue', 13)] };
   const state: GameState = { ...game(racks, [], [1, 2, 3]), currentPlayer: 2 };
-  const after = removePlayer(rummikub, state, 2, first);
+  const after = removePlayer(rummytiles, state, 2, first);
   assert.deepEqual(after.activePlayers, [1, 3]);
   assert.equal(after.currentPlayer, 3);
   assert.equal(after.racks[2], undefined);
@@ -535,13 +535,13 @@ test('dismissed player mid-turn', () => {
 
   // With the pool empty, the dismissed player's tiles refill it and the count of passes starts again
   const passing: GameState = { ...state, pool: [], emptyPoolPasses: 1 };
-  const refilled = removePlayer(rummikub, passing, 2, first);
+  const refilled = removePlayer(rummytiles, passing, 2, first);
   assert.equal(refilled.isGameOver, false);
   assert.equal(refilled.emptyPoolPasses, 0);
   assert.equal(refilled.pool.length, 2);
 
   // The last player left wins
-  const alone = removePlayer(rummikub, game({ 1: [t('red', 1)], 2: [t('orange', 5)] }), 1, first);
+  const alone = removePlayer(rummytiles, game({ 1: [t('red', 1)], 2: [t('orange', 5)] }), 1, first);
   assert.equal(alone.isGameOver, true);
   assert.deepEqual(alone.winners, [2]);
 });

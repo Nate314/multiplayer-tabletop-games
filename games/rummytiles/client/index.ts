@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import { animateMove } from './animateMove.ts';
-import './rummikub.scss';
+import './rummytiles.scss';
 
-export const rummikubClient: ClientGame = {
-  id: 'rummikub',
+export const rummytilesClient: ClientGame = {
+  id: 'rummytiles',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

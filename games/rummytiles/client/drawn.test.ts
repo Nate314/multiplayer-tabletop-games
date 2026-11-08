@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { drawnStep } from './drawn.ts';
 import { COLORS, createGameState, fullPool, toPublicState } from '../rules.ts';
-import { rummikub } from '../index.ts';
+import { rummytiles } from '../index.ts';
 import { applyMove } from '../../../shared/seating.ts';
 import type { GameState, PublicGameState, Result, Seat, TileColor } from '../types.ts';
 
@@ -27,7 +27,7 @@ function game(): GameState {
 }
 
 function after(state: GameState, seat: Seat, made: object): GameState {
-  const result: Result<GameState> = applyMove(rummikub, state, seat, made, () => 0);
+  const result: Result<GameState> = applyMove(rummytiles, state, seat, made, () => 0);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }

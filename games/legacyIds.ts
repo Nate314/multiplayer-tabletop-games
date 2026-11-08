@@ -11,6 +11,7 @@ export const LEGACY_IDS: LegacyIds = {
   jenga: { id: 'blocktower', keepsSaves: true },
   parchisi: { id: 'pachisi', keepsSaves: true },
   quoridor: { id: 'pawnsandwalls', keepsSaves: true },
+  rummikub: { id: 'rummytiles', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

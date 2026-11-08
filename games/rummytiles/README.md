@@ -1,6 +1,6 @@
-# Rummikub
+# Rummy Tiles
 
-Lay down sets and runs of numbered tiles, rearrange the table, and be the first to empty your rack, for 2 to 4 players.
+Lay down sets and runs of numbered tiles, rearrange the table, and be the first to empty your rack, for 2 to 4 players. It plays like Rummikub.
 
 ## Rules
 

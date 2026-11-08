@@ -1,6 +1,6 @@
 import type { GameDefinition } from '../shared/gameDefinition.ts';
 import { pawnsandwalls } from './pawnsandwalls/index.ts';
-import { rummikub } from './rummikub/index.ts';
+import { rummytiles } from './rummytiles/index.ts';
 import { palacewalls } from './palacewalls/index.ts';
 import { roadsandfields } from './roadsandfields/index.ts';
 import { chess } from './chess/index.ts';
@@ -55,5 +55,5 @@ import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
   palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, monopoly, naval, pachisi, phase10, pictionary,
-  pawnsandwalls, racko, roadtoretirement, risk, rook, rummikub, scrabble, skipbo, snakesladders, spades, splendor, steadyhand, sudoku, holdem, thecrew, tictactoe, tickettoride, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
+  pawnsandwalls, racko, roadtoretirement, risk, rook, rummytiles, scrabble, skipbo, snakesladders, spades, splendor, steadyhand, sudoku, holdem, thecrew, tictactoe, tickettoride, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
 ];

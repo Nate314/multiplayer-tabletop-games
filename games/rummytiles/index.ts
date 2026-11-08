@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { rummikubInfo } from './info.ts';
+import { rummytilesInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const rummikub: GameDefinition<GameState, PublicGameState> = {
-  info: rummikubInfo,
+export const rummytiles: GameDefinition<GameState, PublicGameState> = {
+  info: rummytilesInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

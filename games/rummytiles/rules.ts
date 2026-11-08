@@ -1,4 +1,4 @@
-// Rummikub rules shared by the browser (group checks and the play preview) and the server (validation).
+// Rummy Tiles rules shared by the browser (group checks and the play preview) and the server (validation).
 // A play is the whole table as it should be at the end of the turn; the server works out which rack tiles it adds.
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';

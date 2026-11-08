@@ -19,7 +19,7 @@ export default function Tile({ id, standsFor, highlighted, drawn }: TileProps) {
   return (
     <span className={classes.filter(Boolean).join(' ')} data-anim-key={tileKey(id)} title={title}>
       <ServerSvg url={cardArtUrl('solid')} className="piece-art" />
-      {tile.kind === 'joker' ? <span aria-hidden="true">☺</span> : (
+      {tile.kind === 'joker' ? <span aria-hidden="true">★</span> : (
         <>
           <ColorSymbol color={tile.color} className="rk-symbol" />
           {tile.value}

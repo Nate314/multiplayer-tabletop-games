@@ -1,5 +1,5 @@
-[data-game="rummikub"] {
-  /* Rummikub's felt table and cream tiles. Every rule is scoped to data-game="rummikub", so none of it reaches the landing page or other games. */
+[data-game="rummytiles"] {
+  /* Rummy Tiles's felt table and cream tiles. Every rule is scoped to data-game="rummytiles", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   --page-bg: #e4ebe6;
@@ -62,11 +62,11 @@
   }
 }
 
-.game-root[data-game="rummikub"] {
+.game-root[data-game="rummytiles"] {
   background: var(--page-bg);
 }
 
-[data-game="rummikub"] {
+[data-game="rummytiles"] {
   .game-header {
     max-width: 1200px;
     margin: 0 auto;
@@ -553,17 +553,17 @@
 }
 
 @media (max-width: 480px) {
-  .game-root[data-game="rummikub"] {
+  .game-root[data-game="rummytiles"] {
     padding: 0 8px 16px;
   }
 
-  [data-game="rummikub"] .rk-tile {
+  [data-game="rummytiles"] .rk-tile {
     width: 30px;
     height: 42px;
     font-size: 1.05rem;
   }
 
-  [data-game="rummikub"] .rk-table {
+  [data-game="rummytiles"] .rk-table {
     padding: 8px;
     border-width: 4px;
   }

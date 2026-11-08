@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
-import { rummikub } from './index.ts';
+import { rummytiles } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'rummikub/g1';
+const ROOM = 'rummytiles/g1';
 const DRAW = { type: 'draw' };
 
 // A repeatable random, so every run deals the same tiles
@@ -21,13 +21,13 @@ function seeded(seed: number): () => number {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([rummikub], seeded(7)));
-  for (const name of names) manager.join('rummikub', 'g1', name);
+  const manager = rememberingKeys(createGameManager([rummytiles], seeded(7)));
+  for (const name of names) manager.join('rummytiles', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Rummikub's
+// The manager is generic over games, so tests narrow the public state to Rummy Tiles's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -84,7 +84,7 @@ test('a rejoin mid-turn shows the same table, rack and turn', () => {
 
   manager.disconnect(ROOM, waiting);
   assert.deepEqual(viewOf(manager, null).disconnected, [waiting]);
-  const rejoined = manager.join('rummikub', 'g1', before.playerNames[waiting], true);
+  const rejoined = manager.join('rummytiles', 'g1', before.playerNames[waiting], true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const after = viewOf(manager, waiting);
   assert.deepEqual(after.rack, before.rack);
@@ -128,7 +128,7 @@ test('a dismissed player puts their tiles back, and the history and game file hi
   const ended = ok(manager.requestDismiss(ROOM, stay, leave));
   assert.equal(ended.isGameOver, true);
 
-  const steps = stepsOf(manager, 'rummikub') as unknown as PublicGameState[] | null;
+  const steps = stepsOf(manager, 'rummytiles') as unknown as PublicGameState[] | null;
   assert.ok(steps && steps.length >= 5);
   for (const step of steps) {
     assert.deepEqual(step.rack, []);
@@ -136,7 +136,7 @@ test('a dismissed player puts their tiles back, and the history and game file hi
     assert.equal('pool' in step, false);
   }
 
-  const file = fileOf(manager, 'rummikub', new Date(0));
+  const file = fileOf(manager, 'rummytiles', new Date(0));
   assert.ok(file && 'file' in file);
   const views = file.file.steps[1].views as unknown as Record<Seat, PublicGameState> | undefined;
   assert.ok(views);

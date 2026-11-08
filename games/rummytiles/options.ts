@@ -1,4 +1,4 @@
-// The house rules of rummikub, declared apart from the rules so the landing page can list them without loading the rules
+// The house rules of rummytiles, declared apart from the rules so the landing page can list them without loading the rules
 import type { HouseRule, ToggleRule } from '../../shared/houseRules.ts';
 
 export const FREE_JOKERS_RULE: ToggleRule = {
@@ -9,4 +9,4 @@ export const ADD_ON_FIRST_MELD_RULE: ToggleRule = {
   id: 'addOnFirstMeld', label: 'Add to melds on your first turn', kind: 'toggle', standard: false,
   help: 'After laying 30 points in new groups, you may also add rack tiles to the groups on the table.'
 };
-export const RUMMIKUB_RULES: HouseRule[] = [FREE_JOKERS_RULE, ADD_ON_FIRST_MELD_RULE];
+export const RUMMYTILES_RULES: HouseRule[] = [FREE_JOKERS_RULE, ADD_ON_FIRST_MELD_RULE];

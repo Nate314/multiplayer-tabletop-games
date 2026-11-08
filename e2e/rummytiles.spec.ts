@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, leave, lift, openFaq, openHouseRules, type Seat, type SeatOptions, setPreference, test, touchDrag, undo } from './fixtures.ts';
-import { COLORS, JOKERS, tileName } from '../games/rummikub/rules.ts';
-import type { GameState, TileColor } from '../games/rummikub/types.ts';
+import { COLORS, JOKERS, tileName } from '../games/rummytiles/rules.ts';
+import type { GameState, TileColor } from '../games/rummytiles/types.ts';
 
-// One test per rule and control in games/rummikub/README.md. Tiles are ids, as on the server: t('red', 5) is the
+// One test per rule and control in games/rummytiles/README.md. Tiles are ids, as on the server: t('red', 5) is the
 // first red 5, t('red', 5, 1) its twin, and J1 and J2 the jokers. A page names each tile like "red 5" or "a joker".
 
 const [J1, J2] = JOKERS;
@@ -18,7 +18,7 @@ type Setup = Partial<Pick<GameState, 'table' | 'pool' | 'melded' | 'currentPlaye
 
 // Seats the players, then sets up a game in progress on Alice's turn. Nobody has melded unless `melded` says so.
 async function start(seat: Seat, setup: Setup = {}, names = ['Alice', 'Bob'], options: SeatOptions = {}) {
-  const table = await seat('rummikub', names, options);
+  const table = await seat('rummytiles', names, options);
   const { racks, ...rest } = setup;
   const patch: Record<string, unknown> = { started: true, currentPlayer: 1, ...rest };
   // The patch replaces the whole of `racks`, so the racks not named keep the tiles they were dealt
@@ -61,9 +61,9 @@ async function lay(page: Page, ...ids: number[]) {
   }
 }
 
-test.describe('Rummikub rules', () => {
+test.describe('Rummy Tiles rules', () => {
   test('106 tiles: 1 to 13 in black, blue, orange and red, two of each, and two jokers', async ({ seat }) => {
-    const fresh = await seat('rummikub', ['Cara', 'Dan']);
+    const fresh = await seat('rummytiles', ['Cara', 'Dan']);
     await expect(rackHeader(fresh.pages[0])).toHaveText('Your rack (14)');
     await expect(pool(fresh.pages[0])).toHaveText('Tiles in the pool: 78');
     const state = await fresh.state<GameState>();
@@ -74,13 +74,13 @@ test.describe('Rummikub rules', () => {
       racks: { 1: [t('black', 1), t('black', 1, 1), t('blue', 1), t('orange', 1), t('red', 1), t('red', 13), J1, J2] }
     });
     const tiles = rackArea(alice).locator('.rk-tile');
-    await expect(tiles).toHaveText(['1', '1', '1', '1', '1', '13', '☺', '☺']);
+    await expect(tiles).toHaveText(['1', '1', '1', '1', '1', '13', '★', '★']);
     const classes = await tiles.evaluateAll(elements => elements.map(e => e.className.replace('rk-tile ', '')));
     expect(classes).toEqual(['rk-black', 'rk-black', 'rk-blue', 'rk-orange', 'rk-red', 'rk-red', 'rk-joker', 'rk-joker']);
   });
 
   test('the highest draw goes first, a joker counts lowest, ties draw again, then 14 tiles each and play in seat order', async ({ seat }) => {
-    const first = await seat('rummikub', ['Alice']);
+    const first = await seat('rummytiles', ['Alice']);
     const [alice] = first.pages;
     // Alice draws the black 13, then Bob the black 5
     await first.random(12.5 / 106, 4.5 / 105);
@@ -417,7 +417,7 @@ test.describe('Rummikub rules', () => {
   });
 });
 
-test.describe('Rummikub controls', () => {
+test.describe('Rummy Tiles controls', () => {
   test('with Color-blind symbols on, every colored tile shows its color shape and a joker shows none', async ({ seat }) => {
     const { alice } = await start(seat, { racks: { 1: [t('black', 3), t('blue', 3), t('orange', 3), t('red', 3), J1] } });
     await expect(alice.locator('.color-symbol')).toHaveCount(0);
@@ -754,7 +754,7 @@ test.describe('Rummikub controls', () => {
   });
 });
 
-test.describe('Rummikub differences from Wikipedia', () => {
+test.describe('Rummy Tiles differences from Wikipedia', () => {
   test('the game is one round: once someone goes out it is over, with its scores shown', async ({ seat }) => {
     const { alice, bob } = await start(seat, { melded: [1, 2], racks: { 1: [t('red', 1), t('red', 2), t('red', 3)], 2: [t('blue', 13)] } });
     await lay(alice, t('red', 1), t('red', 2), t('red', 3));
@@ -777,7 +777,7 @@ test.describe('Rummikub differences from Wikipedia', () => {
   });
 
   test('drawing for the first turn: a joker counts lowest', async ({ seat }) => {
-    const first = await seat('rummikub', ['Alice']);
+    const first = await seat('rummytiles', ['Alice']);
     // Alice draws the last tile, a joker, and Bob the black 1
     await first.random(105.5 / 106, 0);
     await first.join('Bob');
