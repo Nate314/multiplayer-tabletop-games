@@ -104,6 +104,13 @@ test('identical fakes become one choice with both authors', () => {
   assert.equal(state.roundPoints[3], 3);
 });
 
+test('fakes are shown in the style of the word list: lowercase, no closing period', () => {
+  const state = write(write(write(writing(), 1, 'A Small Bird.'), 2, 'a kind of pastry'), 3, '...');
+  assert.notEqual(indexOf(state, 'a small bird'), -1);
+  assert.notEqual(indexOf(state, '...'), -1); // nothing left to style keeps the text as typed
+  assert.equal(state.submissions[1], 'A Small Bird.');
+});
+
 test('scoring: 2 for the real one, 1 per vote to each author', () => {
   let state = voting();
   state = vote(vote(state, 1, realIndex(state)), 2, realIndex(state));

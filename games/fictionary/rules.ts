@@ -88,8 +88,10 @@ function closeWriting(state: GameState, now: number, random: Random): GameState 
   const matched = state.activePlayers.filter(seat => matchesDefinition(state.submissions[seat] ?? '', state.definition));
   const fakes: Choice[] = [];
   for (const seat of state.activePlayers) {
-    const text = state.submissions[seat];
-    if (text === undefined || matched.includes(seat)) continue;
+    const raw = state.submissions[seat];
+    if (raw === undefined || matched.includes(seat)) continue;
+    // In the word list's style (lowercase, no closing period), so the real one cannot be spotted by its look
+    const text = raw.toLowerCase().replace(/[.\s]+$/, '') || raw;
     const same = fakes.find(choice => sameText(choice.text, text));
     if (same) same.authors.push(seat);
     else fakes.push({ text, authors: [seat], real: false });
