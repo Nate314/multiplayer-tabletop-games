@@ -25,6 +25,24 @@
   --piece-tray-border-default: #d9d9d4;
   --piece-tray-text-default: #1d1d1b;
   --piece-tray-selected-default: #2d6a4f;
+  /* The shared seat palette (shared/seatColors.ts): seat N is --seat-color-N in every pawn-and-piece game.
+     Light fills like yellow need --seat-stroke-N as an outline to read on a light board */
+  --seat-color-1: #d1242f; /* red */
+  --seat-color-2: #1f63d1; /* blue */
+  --seat-color-3: #1f8a3c; /* green */
+  --seat-color-4: #f2c200; /* yellow */
+  --seat-color-5: #8240c9; /* purple */
+  --seat-color-6: #e86a10; /* orange */
+  --seat-color-7: #0fa3b8; /* cyan */
+  --seat-color-8: #e0499b; /* pink */
+  --seat-stroke-1: #7a1218;
+  --seat-stroke-2: #0f3a80;
+  --seat-stroke-3: #0f5122;
+  --seat-stroke-4: #7a5c00;
+  --seat-stroke-5: #4a1f7a;
+  --seat-stroke-6: #8a3a05;
+  --seat-stroke-7: #075f6b;
+  --seat-stroke-8: #85215a;
 }
 
 :root[data-theme="dark"] {
@@ -52,6 +70,15 @@
   --piece-tray-border-default: #3a3a38;
   --piece-tray-text-default: #ededea;
   --piece-tray-selected-default: #4ba67d;
+  /* Brighter seat fills for dark boards; the strokes stay the same */
+  --seat-color-1: #f0524f; /* red */
+  --seat-color-2: #4d8ff5; /* blue */
+  --seat-color-3: #3fbf62; /* green */
+  --seat-color-4: #f7d23d; /* yellow */
+  --seat-color-5: #b07cf0; /* purple */
+  --seat-color-6: #f78b38; /* orange */
+  --seat-color-7: #33d1e0; /* cyan */
+  --seat-color-8: #f57dc0; /* pink */
 }
 
 /* Browsers that support AccentColor (Firefox, Safari, recent Chrome) show the OS accent as the browser exposes it; older ones keep the green above. color-mix is checked too so hover never stays green */
