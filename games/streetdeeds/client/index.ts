@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './monopoly.scss';
+import './streetdeeds.scss';
 
-export const monopolyClient: ClientGame = {
-  id: 'monopoly',
+export const streetdeedsClient: ClientGame = {
+  id: 'streetdeeds',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

@@ -1,4 +1,4 @@
-# Monopoly
+# Street Deeds
 
 Buy, trade and build on properties, charge rent, and bankrupt every other player, for 2 to 8 players.
 

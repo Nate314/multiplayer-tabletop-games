@@ -1,4 +1,4 @@
-// Monopoly rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
+// Street Deeds rules: the game's hooks for the platform, reading untrusted moves and actions, and the public view.
 // The rules themselves live in board.ts, cards.ts, movement.ts, buildings.ts, auctions.ts, trades.ts and bankruptcy.ts.
 import { rankStandings } from '../../shared/standings.ts';
 import type { Standing } from '../../shared/types.ts';
@@ -11,13 +11,13 @@ import { bid, closeAuctionIfDone, nextAuction, passBid, startAuction, stillBiddi
 import { declareBankruptcy, goBankrupt } from './bankruptcy.ts';
 import { build, liftMortgages, mortgage, sellBuilding, unmortgage } from './buildings.ts';
 import { giveCash, settleDebts } from './money.ts';
-import { auctionsOn, MONOPOLY_RULES } from './options.ts';
+import { auctionsOn, STREETDEEDS_RULES } from './options.ts';
 import { leaveJail, payFine, returnJailCards, roll, rollDice } from './movement.ts';
 import { LOG_SIZE, checkGameOver, inGame, money, nameOf, nextInGame, note, startTurn, syncTurn } from './state.ts';
 import { answerTrade, cancelTrade, dropTradesOf, offerTrade, parseSide } from './trades.ts';
 import type { DeckName, GameState, LastMove, Move, PublicGameState, Random, Result, Seat } from './types.ts';
 
-export { MONOPOLY_RULES };
+export { STREETDEEDS_RULES };
 
 const MAX_ROLL_OFFS = 100; // ties roll again; the cap only guards against a broken random
 

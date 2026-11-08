@@ -17,7 +17,7 @@ import { CHECKERS_ASSETS } from '../../games/checkers/svg.ts';
 import { UNO_ASSETS } from '../../games/uno/svg.ts';
 import { DOMINOES_ASSETS } from '../../games/dominoes/svg.ts';
 import { CATAN_ASSETS } from '../../games/catan/svg.ts';
-import { MONOPOLY_ASSETS } from '../../games/monopoly/svg.ts';
+import { STREETDEEDS_ASSETS } from '../../games/streetdeeds/svg.ts';
 import { JIGSAW_ASSETS } from '../../games/jigsaw/svg.ts';
 import { WHODUNIT_ASSETS } from '../../games/whodunit/svg.ts';
 
@@ -44,7 +44,7 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...UNO_ASSETS,
   ...DOMINOES_ASSETS,
   ...CATAN_ASSETS,
-  ...MONOPOLY_ASSETS,
+  ...STREETDEEDS_ASSETS,
   ...JIGSAW_ASSETS,
   ...WHODUNIT_ASSETS,
 ];

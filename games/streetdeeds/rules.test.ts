@@ -5,7 +5,7 @@ import { BOARD, ownable } from './board.ts';
 import { housesLeft, hotelsLeft } from './buildings.ts';
 import { jailCardIndex } from './cards.ts';
 import { createGameState } from './rules.ts';
-import { monopoly } from './index.ts';
+import { streetdeeds } from './index.ts';
 import { addPlayer, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { act, acted, dice, game, houseRules, move, played } from './testing.ts';
 import type { GameState } from './types.ts';
@@ -17,7 +17,7 @@ const totalCash = (state: GameState) => Object.values(state.cash).reduce((sum, c
 function lobby(...names: string[]): GameState {
   let state = createGameState('g');
   for (const name of names) {
-    const result = addPlayer(monopoly, state, name, dice(6, 6, 1, 1, 2, 2));
+    const result = addPlayer(streetdeeds, state, name, dice(6, 6, 1, 1, 2, 2));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -124,7 +124,7 @@ test('an auction does not wait on a disconnected player', () => {
   state = acted(state, 2, { type: 'bid', amount: 10 });
   state = acted(state, 1, { type: 'passBid' });
   assert.notEqual(state.auction, null); // Cara has not passed yet
-  state = disconnectPlayer(monopoly, state, 3);
+  state = disconnectPlayer(streetdeeds, state, 3);
   assert.equal(state.auction, null);
   assert.equal(state.owners[3], 2);
 });
@@ -441,7 +441,7 @@ test('invalid moves', () => {
 test('dismissed player mid-turn', () => {
   // Bob is deciding whether to buy, owns two properties and holds the high bid nowhere
   let state = game({ currentPlayer: 2, turnHolder: 2, canRoll: false, pendingBuy: 6, positions: { 1: 0, 2: 6, 3: 0 }, owners: ownedBy(2, [1, 3]) });
-  state = removePlayer(monopoly, state, 2);
+  state = removePlayer(streetdeeds, state, 2);
   assert.deepEqual(state.activePlayers, [1, 3]);
   assert.equal(state.pendingBuy, null);
   assert.equal(state.turnHolder, 3);
@@ -456,7 +456,7 @@ test('dismissed player mid-turn', () => {
     auction: { space: 9, highBid: 40, highBidder: 3, passed: [2] },
     trade: { from: 2, to: 3, give: { properties: [], cash: 5, jailCards: 0 }, get: { properties: [], cash: 0, jailCards: 0 } }
   });
-  const gone = removePlayer(monopoly, owing, 3);
+  const gone = removePlayer(streetdeeds, owing, 3);
   assert.deepEqual(gone.debts, []);
   assert.equal(gone.trade, null);
   assert.deepEqual(gone.auction, { space: 9, highBid: 0, highBidder: null, passed: [] });
@@ -470,7 +470,7 @@ test('a dismissed debtor goes bankrupt to the player they owe', () => {
     cash: { 1: 1500, 2: 1500, 3: 20 },
     currentPlayer: 3
   });
-  const gone = removePlayer(monopoly, owing, 3);
+  const gone = removePlayer(streetdeeds, owing, 3);
   assert.equal(gone.owners[39], 1);
   assert.equal(gone.cash[1], 1520);
   assert.equal(gone.auction, null);
@@ -478,14 +478,14 @@ test('a dismissed debtor goes bankrupt to the player they owe', () => {
 
 test('an open trade from or to a player who disconnects is dropped', () => {
   const offered = acted(game({ owners: { 1: 1 } }), 1, { type: 'offerTrade', to: 3, give: { properties: [1], cash: 0, jailCards: 0 }, get: { properties: [], cash: 50, jailCards: 0 } });
-  assert.equal(disconnectPlayer(monopoly, offered, 3).trade, null);
-  assert.notEqual(disconnectPlayer(monopoly, offered, 2).trade, null);
+  assert.equal(disconnectPlayer(streetdeeds, offered, 3).trade, null);
+  assert.notEqual(disconnectPlayer(streetdeeds, offered, 2).trade, null);
 });
 
 test('table view hides only the deck order', () => {
   const state = game();
   for (const viewer of [null, 1, 2]) {
-    const view = monopoly.toPublicState(state, false, viewer);
+    const view = streetdeeds.toPublicState(state, false, viewer);
     assert.equal('decks' in view, false);
     assert.deepEqual(view.deckCounts, { chance: 16, chest: 16 });
     assert.deepEqual(view.cash, state.cash);

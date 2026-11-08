@@ -1,10 +1,10 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import { BOARD, ownable } from '../games/monopoly/board.ts';
-import { DECKS } from '../games/monopoly/cards.ts';
-import type { DeckName, GameState } from '../games/monopoly/types.ts';
+import { dismiss, expect, leave, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { BOARD, ownable } from '../games/streetdeeds/board.ts';
+import { DECKS } from '../games/streetdeeds/cards.ts';
+import type { DeckName, GameState } from '../games/streetdeeds/types.ts';
 
-// One test per rule and control in games/monopoly/README.md, and per bullet of its Differences from Wikipedia.
+// One test per rule and control in games/streetdeeds/README.md, and per bullet of its Differences from Wikipedia.
 // Seats are Alice (1), Bob (2), Cara (3) and Dan (4). Each test crafts the table through the test hooks, then plays
 // in the browser: Alice usually has the turn, and the dice are queued right before the click that rolls them.
 
@@ -81,7 +81,7 @@ async function prepare(table: Table, fields: Fields = {}): Promise<Game> {
 }
 
 async function start(seat: Seat, count = 2, fields: Fields = {}): Promise<Game> {
-  return prepare(await seat('monopoly', NAMES.slice(0, count)), fields);
+  return prepare(await seat('streetdeeds', NAMES.slice(0, count)), fields);
 }
 
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
@@ -126,9 +126,9 @@ async function declareBankruptcy(page: Page) {
   await button(page, 'Confirm bankruptcy').click();
 }
 
-test.describe('Monopoly rules', () => {
+test.describe('Street Deeds rules', () => {
   test('the standard board and its prices, rents and mortgages, with 16 shuffled cards in each deck', async ({ seat }) => {
-    const table = await seat('monopoly', ['Alice', 'Bob']);
+    const table = await seat('streetdeeds', ['Alice', 'Bob']);
     const shuffled = await table.state<GameState>();
     for (const deck of ['chance', 'chest'] as const) expect([...shuffled.decks[deck]].sort((a, b) => a - b)).toEqual(inOrder());
     expect(shuffled.decks.chance.join() !== inOrder().join() || shuffled.decks.chest.join() !== inOrder().join()).toBe(true);
@@ -171,7 +171,7 @@ test.describe('Monopoly rules', () => {
   });
 
   test('everyone starts with $1500 on GO, the highest roll goes first, ties roll again, then turns go up the seats', async ({ seat }) => {
-    const first = await seat('monopoly', ['Alice', 'Bob']);
+    const first = await seat('streetdeeds', ['Alice', 'Bob']);
     // Cara's join reshuffles both decks (30 numbers), then everyone rolls: Alice and Bob tie on 7, then Bob rolls higher
     await first.random(...Array(30).fill(0), ...faces(3, 4, 5, 2, 1, 1, 1, 2, 6, 5));
     const cara = await first.join('Cara');
@@ -500,7 +500,7 @@ test.describe('Monopoly rules', () => {
   });
 
   test('the Free Parking pot is shown and collected', async ({ seat }) => {
-    const table = await seat('monopoly', ['Alice', 'Bob'], { houseRules: { freeParkingJackpot: true } });
+    const table = await seat('streetdeeds', ['Alice', 'Bob'], { houseRules: { freeParkingJackpot: true } });
     const game = await prepare(table);
     const [alice, bob] = game.pages;
     const pot = (page: Page) => space(page, 20).locator('.space-pot');
@@ -854,7 +854,7 @@ test.describe('Monopoly rules', () => {
   });
 });
 
-test.describe('Monopoly controls', () => {
+test.describe('Street Deeds controls', () => {
   test('with Color-blind symbols on, each token and player list token shows the shape of its color: red circle, blue square, green triangle', async ({ seat }) => {
     const game = await start(seat, 3);
     const [alice, bob] = game.pages;
@@ -1033,7 +1033,7 @@ test.describe('Monopoly controls', () => {
   });
 });
 
-test.describe('Monopoly differences from Wikipedia', () => {
+test.describe('Street Deeds differences from Wikipedia', () => {
   test('rent is collected for the owner on landing, without them asking', async ({ seat }) => {
     const game = await start(seat);
     const [alice] = game.pages;
@@ -1188,4 +1188,14 @@ test.describe('Monopoly differences from Wikipedia', () => {
     await expect(cash(alice, 'Bob')).toHaveText('$1505');
     await expect(row(alice, 'Cara').locator('.player-status')).toHaveText('bankrupt');
   });
+});
+
+test('an old monopoly join link opens Street Deeds', async ({ browser, server }) => {
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto('/join/monopoly/old-link-game');
+  const dialog = visitor.getByRole('dialog', { name: 'Join Street Deeds' });
+  await expect(dialog.getByLabel('Game ID')).toHaveValue('old-link-game');
+  await dialog.getByLabel('Your name').fill('Alice');
+  await dialog.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(visitor.locator('[data-game="streetdeeds"]').first()).toBeVisible();
 });

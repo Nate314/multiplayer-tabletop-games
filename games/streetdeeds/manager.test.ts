@@ -5,13 +5,13 @@ import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing
 import { ownable, streetAt } from './board.ts';
 import { buildError, mortgageError, sellError } from './buildings.ts';
 import { inGame } from './state.ts';
-import { monopoly } from './index.ts';
+import { streetdeeds } from './index.ts';
 import type { PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'monopoly/g1';
+const ROOM = 'streetdeeds/g1';
 
 // The same rolls on every run
 function seeded(seed: number): Random {
@@ -25,13 +25,13 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([monopoly], seeded(seed)));
-  for (const name of names) manager.join('monopoly', 'g1', name);
+  const manager = rememberingKeys(createGameManager([streetdeeds], seeded(seed)));
+  for (const name of names) manager.join('streetdeeds', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Monopoly's
+// The manager is generic over games, so tests narrow the public state to Street Deeds's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -87,7 +87,7 @@ test('a rejoin mid-turn shows the same pending buy', () => {
   const pending = state.pendingBuy ?? assert.fail('nobody landed on a property');
   const seat = state.currentPlayer ?? assert.fail('nobody to act');
   manager.disconnect(ROOM, seat);
-  const rejoined = manager.join('monopoly', 'g1', seat === 1 ? 'A' : 'B', true);
+  const rejoined = manager.join('streetdeeds', 'g1', seat === 1 ? 'A' : 'B', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.equal(view.pendingBuy, pending);
@@ -119,13 +119,13 @@ test('a seeded game plays to one player left, and no step shows the deck order',
   assert.equal(state.winners.length, 1);
   assert.equal(state.bankrupt.length, 2);
 
-  const steps = stepsOf(manager, 'monopoly') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'streetdeeds') ?? assert.fail('no history');
   assert.ok(steps.length > 10);
   for (const past of steps) {
     assert.equal('decks' in past, false);
     assert.equal(typeof (past as unknown as PublicGameState).deckCounts.chance, 'number');
   }
-  const file = fileOf(manager, 'monopoly', new Date());
+  const file = fileOf(manager, 'streetdeeds', new Date());
   assert.ok(file && 'file' in file);
 });
 

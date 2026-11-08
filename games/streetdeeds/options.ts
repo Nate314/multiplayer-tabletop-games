@@ -1,4 +1,4 @@
-// The house rules of Monopoly, read from the table state by the rules and the board
+// The house rules of Street Deeds, read from the table state by the rules and the board
 import { houseRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
 import type { BaseGameState } from '../../shared/types.ts';
 
@@ -15,7 +15,7 @@ const AUCTIONS: ToggleRule = {
   help: 'Off: a declined property stays with the bank, and a bankrupt player\'s properties go back to it'
 };
 
-export const MONOPOLY_RULES: HouseRule[] = [JACKPOT, GO_BONUS, AUCTIONS];
+export const STREETDEEDS_RULES: HouseRule[] = [JACKPOT, GO_BONUS, AUCTIONS];
 
 type Holder = Pick<BaseGameState, 'houseRules'>;
 export const freeParkingJackpot = (state: Holder): boolean => houseRule(state, JACKPOT);

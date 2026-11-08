@@ -17,7 +17,7 @@ type BoardProps = {
   highlight?: number | null; // the space the last move ended on
 };
 
-// The kinds games/monopoly/svg.ts draws a picture for
+// The kinds games/streetdeeds/svg.ts draws a picture for
 const ICONS = new Set(['railroad', 'chance', 'chest', 'tax', 'go', 'parking', 'goToJail', 'jail']);
 
 function iconFor(space: number): string | null {
@@ -63,7 +63,7 @@ function Space({ space, gameState, selected, onSelect, highlight }: BoardProps &
         </span>
       )}
       <span className="space-name">{shortName(space)}</span>
-      {iconFor(space) && <ServerSvg url={svgUrl('monopoly-space', iconFor(space)!)} className="space-icon" />}
+      {iconFor(space) && <ServerSvg url={svgUrl('streetdeeds-space', iconFor(space)!)} className="space-icon" />}
       {property && owner === undefined && <span className="space-price">${property.price}</span>}
       {target.kind === 'tax' && <span className="space-price">${target.amount}</span>}
       {target.kind === 'parking' && freeParkingJackpot(gameState) && (
@@ -104,7 +104,7 @@ export default function Board(props: BoardProps) {
     <div className="board">
       {BOARD.map((_, space) => <Space key={space} space={space} {...props} />)}
       <div className="board-center">
-        <div className="board-title">MONOPOLY</div>
+        <div className="board-title">STREETDEEDS</div>
         <Dice dice={dice} />
         {drawnCard && (
           <div className={`drawn-card deck-${drawnCard.deck}`} aria-live="polite">

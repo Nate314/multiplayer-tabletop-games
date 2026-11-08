@@ -16,8 +16,8 @@ const SPACE_ICONS: Record<string, () => string> = {
   electric: () => lineIcon(el('path', { d: 'M9 18h6M10 21h4M8.5 14.5A6 6 0 1 1 15.5 14.5c-.8.7-1.5 1.7-1.5 3.5h-4c0-1.8-.7-2.8-1.5-3.5z' })),
 };
 
-export const MONOPOLY_ASSETS: SvgAsset[] = [{
-  name: 'monopoly-space',
+export const STREETDEEDS_ASSETS: SvgAsset[] = [{
+  name: 'streetdeeds-space',
   params: ['kind'],
   samples: Object.keys(SPACE_ICONS).map(kind => [kind]),
   render: ([kind]) => (Object.hasOwn(SPACE_ICONS, kind) ? SPACE_ICONS[kind]() : null),

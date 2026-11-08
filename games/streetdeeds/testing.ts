@@ -1,4 +1,4 @@
-// Helpers for the Monopoly tests: a game under way with known decks, and dice that come up as asked
+// Helpers for the Street Deeds tests: a game under way with known decks, and dice that come up as asked
 import { applyAction, applyMove, createGameState } from './rules.ts';
 import type { GameState, Random, Result, Seat } from './types.ts';
 

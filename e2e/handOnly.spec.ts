@@ -149,7 +149,7 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Take gems').click();
     }
   },
-  monopoly: {
+  streetdeeds: {
     keep: ['.turn-message', '.turn-panel', you('.player-row')],
     hide: [others('.player-row')],
     board: '.board-area',
@@ -315,7 +315,7 @@ test('History shows the whole table in Hand only', async ({ seat }) => {
   await expect(history.locator('.score-row >> visible=true')).toHaveCount(2);
 });
 
-test('Catan trade offers and Monopoly auctions can be answered out of turn in Hand only', async ({ seat }) => {
+test('Catan trade offers and Street Deeds auctions can be answered out of turn in Hand only', async ({ seat }) => {
   const catan = await seat('catan', NAMES.slice(0, 3));
   const noCards = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
   await catan.patch({
@@ -329,14 +329,14 @@ test('Catan trade offers and Monopoly auctions can be answered out of turn in Ha
   await expect(button(bob, 'Accept')).toBeVisible();
   await expect(button(bob, 'Decline')).toBeVisible();
 
-  const monopoly = await seat('monopoly', NAMES.slice(0, 2));
-  await tableScreen(monopoly);
-  const first = (await monopoly.state<{ currentPlayer: number }>()).currentPlayer; // the roll-off picks who starts
-  const roller = monopoly.pages[first - 1];
-  await monopoly.dice(1, 2); // Baltic Avenue, which the roller declines
+  const streetdeeds = await seat('streetdeeds', NAMES.slice(0, 2));
+  await tableScreen(streetdeeds);
+  const first = (await streetdeeds.state<{ currentPlayer: number }>()).currentPlayer; // the roll-off picks who starts
+  const roller = streetdeeds.pages[first - 1];
+  await streetdeeds.dice(1, 2); // Baltic Avenue, which the roller declines
   await button(roller, 'Roll the dice').click();
   await button(roller, 'Decline and auction').click();
-  const other = monopoly.pages[2 - first];
+  const other = streetdeeds.pages[2 - first];
   await expect(other.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(other.locator('.board-area >> visible=true')).toHaveCount(0);
   await expect(other.getByRole('region', { name: 'Auction' })).toBeVisible();
