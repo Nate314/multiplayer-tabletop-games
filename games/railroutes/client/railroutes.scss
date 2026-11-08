@@ -67,26 +67,31 @@
   .seat1 {
     --seat: var(--seat-color-1);
     --seat-stroke: var(--seat-stroke-1);
+    --seat-ink: var(--seat-ink-1);
   }
 
   .seat2 {
     --seat: var(--seat-color-2);
     --seat-stroke: var(--seat-stroke-2);
+    --seat-ink: var(--seat-ink-2);
   }
 
   .seat3 {
     --seat: var(--seat-color-3);
     --seat-stroke: var(--seat-stroke-3);
+    --seat-ink: var(--seat-ink-3);
   }
 
   .seat4 {
     --seat: var(--seat-color-4);
     --seat-stroke: var(--seat-stroke-4);
+    --seat-ink: var(--seat-ink-4);
   }
 
   .seat5 {
     --seat: var(--seat-color-5);
     --seat-stroke: var(--seat-stroke-5);
+    --seat-ink: var(--seat-ink-5);
   }
 
   button {
@@ -239,14 +244,10 @@
     fill: #ffffff;
   }
 
-  /* A claimed route shows its owner's shape, dark on the yellow seat */
+  /* A claimed route shows its owner's shape in the seat's ink */
 
   .track.owned .color-symbol {
-    color: var(--card-ink-light);
-  }
-
-  .track.owned.seat4 .color-symbol {
-    color: var(--card-ink-dark);
+    color: var(--seat-ink);
   }
 
   .track.closed {

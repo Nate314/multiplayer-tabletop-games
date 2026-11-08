@@ -72,21 +72,12 @@
     --unclaimed: #3A3A3A;
   }
 
-  /* Seat N is the shared palette's --seat-color-N */
+  /* Seat N is the shared palette's --seat-color-N, with --seat-ink-N for the count and symbol drawn on it */
   @for $n from 1 through 6 {
     .seat#{$n} {
       --seat: var(--seat-color-#{$n});
-      --seat-text: #FFFFFF;
+      --seat-text: var(--seat-ink-#{$n});
     }
-  }
-
-  .seat4 {
-    --seat-text: #1A1A1A;
-  }
-
-  /* The dark theme's brighter seat colors all read best under dark text */
-  :root[data-theme="dark"] & :is(.seat1, .seat2, .seat3, .seat4, .seat5, .seat6) {
-    --seat-text: #1A1A1A;
   }
 
   .seat-neutral {

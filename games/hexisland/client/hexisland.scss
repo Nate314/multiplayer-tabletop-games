@@ -65,19 +65,12 @@
     --desert: #BFAA74;
   }
 
-  /* Seat N is the shared palette's --seat-color-N; ink is the color-blind symbol drawn on it */
+  /* Seat N is the shared palette's --seat-color-N, with --seat-ink-N for the color-blind symbol drawn on it */
   @for $n from 1 through 6 {
     .seat#{$n} {
       --seat: var(--seat-color-#{$n});
-      --seat-ink: #FFFFFF;
+      --seat-ink: var(--seat-ink-#{$n});
     }
-  }
-
-  /* Yellow and orange are light enough for dark ink, and so is every dark theme seat color */
-  .seat4,
-  .seat6,
-  :root[data-theme="dark"] & :is(.seat1, .seat2, .seat3, .seat4, .seat5, .seat6) {
-    --seat-ink: #1A140C;
   }
 
   .res-wood {

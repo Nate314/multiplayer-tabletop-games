@@ -304,13 +304,17 @@
   }
 
   .cc-meeple-symbol {
-    color: #FFFFFF;
     pointer-events: none;
   }
 
-  /* Dark on the yellow seat, where white would not read */
+  @for $n from 1 through 5 {
+    .cc-symbol-seat#{$n} {
+      color: var(--seat-ink-#{$n});
+    }
+  }
+
+  /* A lighter outline round the dark ink on yellow */
   .cc-symbol-seat4 {
-    color: var(--seat-stroke-4);
     --color-symbol-stroke: rgba(0, 0, 0, 0.35);
   }
 

@@ -421,18 +421,19 @@
   .pawn.player1 {
     --disc-fill: var(--seat-color-1);
     --disc-edge: var(--seat-stroke-1);
+    color: var(--seat-ink-1);
   }
 
   .pawn.player2 {
     --disc-fill: var(--seat-color-2);
     --disc-edge: var(--seat-stroke-2);
+    color: var(--seat-ink-2);
   }
 
   .pawn-symbol {
     width: 14px;
     height: 14px;
     flex: none;
-    color: #FFFFFF;
   }
 
   .wall-overlay {
@@ -564,18 +565,18 @@
   .pawn.player3 {
     --disc-fill: var(--seat-color-3);
     --disc-edge: var(--seat-stroke-3);
+    color: var(--seat-ink-3);
   }
 
   .pawn.player4 {
     --disc-fill: var(--seat-color-4);
     --disc-edge: var(--seat-stroke-4);
+    color: var(--seat-ink-4);
   }
 
-  /* Dark ink on the light yellow pawn and dot, as on Hex Island */
+  /* The shadow only lifts white ink; dark ink goes without */
   .pawn.player4,
-  .pawn.player4 .pawn-symbol,
-  .goal-dot.player4 .dot-symbol {
-    color: var(--seat-stroke-4);
+  :root[data-theme="dark"] & .pawn {
     text-shadow: none;
   }
 
@@ -619,27 +620,30 @@
   .dot-symbol {
     width: 12px;
     height: 12px;
-    color: #FFFFFF;
   }
 
   .goal-dot.player1 {
     background: var(--seat-color-1);
     border: 1px solid var(--seat-stroke-1);
+    color: var(--seat-ink-1);
   }
 
   .goal-dot.player2 {
     background: var(--seat-color-2);
     border: 1px solid var(--seat-stroke-2);
+    color: var(--seat-ink-2);
   }
 
   .goal-dot.player3 {
     background: var(--seat-color-3);
     border: 1px solid var(--seat-stroke-3);
+    color: var(--seat-ink-3);
   }
 
   .goal-dot.player4 {
     background: var(--seat-color-4);
     border: 1px solid var(--seat-stroke-4);
+    color: var(--seat-ink-4);
   }
 
   .undo-vote {

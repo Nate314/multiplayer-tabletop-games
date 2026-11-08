@@ -43,6 +43,15 @@
   --seat-stroke-6: #8a3a05;
   --seat-stroke-7: #075f6b;
   --seat-stroke-8: #85215a;
+  /* Ink for a symbol or letter drawn on seat N's piece: white, but the dark stroke on light yellow */
+  --seat-ink-1: #FFFFFF;
+  --seat-ink-2: #FFFFFF;
+  --seat-ink-3: #FFFFFF;
+  --seat-ink-4: var(--seat-stroke-4);
+  --seat-ink-5: #FFFFFF;
+  --seat-ink-6: #FFFFFF;
+  --seat-ink-7: #FFFFFF;
+  --seat-ink-8: #FFFFFF;
 }
 
 :root[data-theme="dark"] {
@@ -79,6 +88,15 @@
   --seat-color-6: #f78b38; /* orange */
   --seat-color-7: #33d1e0; /* cyan */
   --seat-color-8: #f57dc0; /* pink */
+  /* The brighter dark fills read better under the dark stroke as ink */
+  --seat-ink-1: var(--seat-stroke-1);
+  --seat-ink-2: var(--seat-stroke-2);
+  --seat-ink-3: var(--seat-stroke-3);
+  --seat-ink-4: var(--seat-stroke-4);
+  --seat-ink-5: var(--seat-stroke-5);
+  --seat-ink-6: var(--seat-stroke-6);
+  --seat-ink-7: var(--seat-stroke-7);
+  --seat-ink-8: var(--seat-stroke-8);
 }
 
 /* Browsers that support AccentColor (Firefox, Safari, recent Chrome) show the OS accent as the browser exposes it; older ones keep the green above. color-mix is checked too so hover never stays green */

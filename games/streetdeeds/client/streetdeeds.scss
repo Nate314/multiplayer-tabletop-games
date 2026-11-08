@@ -55,26 +55,16 @@
     --danger: #F2645A;
     --die-bg: #E8F0E6;
     --die-pip: #141A15;
-
-    /* The brighter dark-theme fills read better with the dark stroke as ink */
-    .token,
-    .owner-tag {
-      --seat-ink: var(--seat-edge);
-    }
   }
 
-  /* Seat N wears the shared palette (src/App.scss); white ink would not read on yellow */
+  /* Seat N wears the shared palette and its symbol ink (src/App.scss) */
 
   @for $n from 1 through 8 {
     .seat#{$n} {
       --seat: var(--seat-color-#{$n});
       --seat-edge: var(--seat-stroke-#{$n});
-      --seat-ink: #FFFFFF;
+      --seat-ink: var(--seat-ink-#{$n});
     }
-  }
-
-  .seat4 {
-    --seat-ink: var(--seat-edge);
   }
 
   .group-brown {

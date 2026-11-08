@@ -19,7 +19,6 @@
   --glow: #FFB300;
   --path: #1F2933;
   --last-move: #1F2933;
-  --symbol-ink: #FFFFFF;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -48,7 +47,6 @@
     --glow: #FFD54F;
     --path: #F2F4F6;
     --last-move: #F2F4F6;
-    --symbol-ink: #15191E;
   }
 
   /* Each seat's color, read by its marbles, its tinted points and its player dot */
@@ -57,12 +55,8 @@
     .player#{$seat} {
       --seat: var(--seat-color-#{$seat});
       --seat-stroke: var(--seat-stroke-#{$seat});
+      --symbol-ink: var(--seat-ink-#{$seat});
     }
-  }
-
-  /* Dark ink on the light yellow seat, as on Hex Island */
-  .player4 {
-    --symbol-ink: var(--seat-stroke-4);
   }
 
   /* The board beside the side panel, or above it on a phone */

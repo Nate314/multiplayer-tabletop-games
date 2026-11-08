@@ -65,26 +65,17 @@
     --light-square: #D8C9A5;
     --dark-square: #4A2D1A;
     --arrow: #8E2418;
-
-    /* The brighter dark-theme fills read better with the dark stroke as ink */
-    .token,
-    .piece,
-    .player-dot {
-      --seat-ink: var(--seat-edge);
-    }
   }
 
-  /* Seat N wears the shared palette (src/App.scss); white ink would not read on yellow */
+  /* Seat N wears the shared palette and its symbol ink (src/App.scss) */
 
   @for $n from 1 through 6 {
     .seat#{$n} {
       --seat: var(--seat-color-#{$n});
       --seat-edge: var(--seat-stroke-#{$n});
-      --seat-ink: #FFFFFF;
+      --seat-ink: var(--seat-ink-#{$n});
     }
   }
-
-  .seat4 { --seat-ink: var(--seat-edge); }
 
   /* Board and side panel side by side; stacked below 1024px, and the road drawn top to bottom below 720px */
 
