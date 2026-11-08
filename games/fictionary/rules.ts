@@ -4,13 +4,14 @@ import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, awaiting, everyoneReady, type RoundAccess } from '../../shared/rounds.ts';
 import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
+import { seatFields } from '../../shared/spectators.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import type { Random, Result, Seat, Standing } from '../../shared/types.ts';
 import { phaseDeadline } from './clock.ts';
 import { fictionaryInfo } from './info.ts';
 import { matchesDefinition, sameText } from './matching.ts';
 import { WORD_COUNT } from './options.ts';
-import type { Choice, GameState, Reveal } from './types.ts';
+import type { Choice, GameState, PublicGameState, Reveal } from './types.ts';
 import { WORDS } from './words.ts';
 
 const MAX_DEFINITION = 150;
@@ -197,4 +198,30 @@ export function waitingOn(state: GameState): Seat[] {
 
 export function finalStandings(state: GameState): Standing[] {
   return rankStandings(state, (a, b) => (state.scores[b] ?? 0) - (state.scores[a] ?? 0), seat => pointsText(state.scores[seat] ?? 0));
+}
+
+const seatsWith = (record: Partial<Record<Seat, unknown>>): Seat[] => Object.keys(record).map(Number);
+
+// Until the reveal a viewer sees only choice texts, its own submission and vote, and who has written or voted;
+// `null` is the history and the table screen
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
+  const { deck: _deck, definition, submissions, choices, votes, ...rest } = state;
+  const open = state.phase === 'reveal' || state.isGameOver;
+  const ownChoice = viewer === null ? -1 : choices.findIndex(choice => choice.authors.includes(viewer));
+  return {
+    ...rest,
+    undoAvailable,
+    definition: open ? definition : null,
+    written: seatsWith(submissions),
+    submission: viewer === null ? null : submissions[viewer] ?? null,
+    choices: open ? choices : choices.map(({ text }) => ({ text })),
+    ownChoice: ownChoice < 0 ? null : ownChoice,
+    voted: seatsWith(votes),
+    myVote: viewer === null ? null : votes[viewer] ?? null,
+    votes: open ? votes : {}
+  };
+}
+
+export function privateSeatView(state: GameState, seat: Seat): Pick<PublicGameState, 'submission' | 'ownChoice' | 'myVote'> {
+  return seatFields(toPublicState(state, false, seat), ['submission', 'ownChoice', 'myVote']);
 }

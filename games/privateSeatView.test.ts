@@ -59,6 +59,17 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
       ]
     }
   ],
+  fictionary: s => [
+    { ...s, started: true, phaseStartedAt: 1, submissions: { 1: 'a small bird', 2: 'a kind of pastry' } },
+    {
+      ...s, started: true, phaseStartedAt: 1, phase: 'voting', submissions: { 1: 'a small bird', 2: 'a kind of pastry', 3: 'a river boat' },
+      choices: [
+        { text: 'a kind of pastry', authors: [2], real: false }, { text: s.definition, authors: [], real: true },
+        { text: 'a small bird', authors: [1], real: false }, { text: 'a river boat', authors: [3], real: false }
+      ],
+      votes: { 2: 1 }
+    }
+  ],
   codebreaker: s => [
     { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
     {
