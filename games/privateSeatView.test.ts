@@ -15,7 +15,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   hearts: s => [{ ...s, passes: { 1: s.hands[1].slice(0, 3) } }],
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
   rook: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
-  thecrew: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
+  missiontricks: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
   uno: s => [
     { ...s, currentPlayer: 1, drawnCard: s.hands[1][0] },
     { ...s, revealed: { to: 2, of: 1, hand: s.hands[1] } }

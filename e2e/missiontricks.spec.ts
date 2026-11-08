@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import type { Card, GameState, OrderToken, Task } from '../games/thecrew/types.ts';
+import { dismiss, expect, leave, newPlayer, openFaq, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import type { Card, GameState, OrderToken, Task } from '../games/missiontricks/types.ts';
 
-// One test per rule, control and difference in games/thecrew/README.md. Seats join in order: Alice 1, Bob 2, Cara 3
+// One test per rule, control and difference in games/missiontricks/README.md. Seats join in order: Alice 1, Bob 2, Cara 3
 // (Dan 4 and Eve 5 where a test needs them). Crafted states make Alice the commander, so she leads, and play runs
 // Alice, Bob, Cara.
 
@@ -16,7 +16,7 @@ const task = (card: Card, owner: number | null, token: OrderToken | null = null)
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'];
 
 async function start(seat: Seat, count = 3): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('thecrew', NAMES.slice(0, count));
+  const table = await seat('missiontricks', NAMES.slice(0, count));
   return { table, pages: table.pages };
 }
 
@@ -275,9 +275,9 @@ test.describe('The Crew rules', () => {
   });
 
   test('any seated player chooses the starting mission before the first move; it is kept across joins and shown to everyone', async ({ seat }) => {
-    const table = await seat('thecrew', ['Alice', 'Bob']);
+    const table = await seat('missiontricks', ['Alice', 'Bob']);
     const [alice, bob] = table.pages;
-    await expect(turn(alice)).toHaveText('The Crew needs 3 to 5 players (2 seated)');
+    await expect(turn(alice)).toHaveText('Mission Tricks needs 3 to 5 players (2 seated)');
     await bob.getByLabel('Starting mission').selectOption('8');
     await expect(status(alice)).toHaveText('Bob chose mission 8');
     await expect(alice.getByLabel('Starting mission')).toHaveValue('8');
@@ -561,4 +561,13 @@ test.describe('The Crew controls', () => {
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Who is the commander?');
   });
+});
+
+test('an old thecrew join link opens Mission Tricks', async ({ browser, server }) => {
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto(`/join/thecrew/oldlink-${Date.now()}`);
+  const dialog = visitor.getByRole('dialog', { name: 'Join Mission Tricks' });
+  await dialog.getByLabel('Your name').fill('Alice');
+  await dialog.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(visitor.locator('[data-game="missiontricks"]')).toBeVisible();
 });

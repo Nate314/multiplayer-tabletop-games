@@ -74,7 +74,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   splendor: () => import('../games/splendor/client/index.ts').then(m => m.splendorClient),
   steadyhand: () => import('../games/steadyhand/client/index.ts').then(m => m.steadyhandClient),
   sudoku: () => import('../games/sudoku/client/index.ts').then(m => m.sudokuClient),
-  thecrew: () => import('../games/thecrew/client/index.ts').then(m => m.thecrewClient),
+  missiontricks: () => import('../games/missiontricks/client/index.ts').then(m => m.missiontricksClient),
   tickettoride: () => import('../games/tickettoride/client/index.ts').then(m => m.tickettorideClient),
   tictactoe: () => import('../games/tictactoe/client/index.ts').then(m => m.tictactoeClient),
   tradingfloor: () => import('../games/tradingfloor/client/index.ts').then(m => m.tradingfloorClient),

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDeck, cardName, createGameState, dealMission, describeMove, totalTricks, toPublicState, trueTokens } from './rules.ts';
 import { MISSIONS } from './missions.ts';
-import { thecrew } from './index.ts';
+import { missiontricks } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, GameState, OrderToken, PublicGameState, Result, Rule, Task } from './types.ts';
@@ -28,7 +28,7 @@ const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'];
 function lobby(count = 4): GameState {
   let state = createGameState('g');
   for (const name of NAMES.slice(0, count)) {
-    const result = addPlayer(thecrew, state, name, seeded(7));
+    const result = addPlayer(missiontricks, state, name, seeded(7));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -41,9 +41,9 @@ function ok(result: Result<GameState>): GameState {
 }
 
 // Moves through the platform, which checks the turn first; actions go straight to the game
-const move = (state: GameState, seat: number, m: unknown, random: Random = seeded(3)) => applyMove(thecrew, state, seat, m, random);
+const move = (state: GameState, seat: number, m: unknown, random: Random = seeded(3)) => applyMove(missiontricks, state, seat, m, random);
 const act = (state: GameState, seat: number, a: unknown, random: Random = seeded(3)) =>
-  thecrew.applyAction?.(state, seat, a, random, 0) ?? assert.fail('no actions');
+  missiontricks.applyAction?.(state, seat, a, random, 0) ?? assert.fail('no actions');
 const task = (card: Card, owner: number | null, token: OrderToken | null = null): Task => ({ card, token, owner, done: false });
 
 // A mission under way with four players: Alice is commander and leads. Mission 1's rules unless `mission` says otherwise.
@@ -258,7 +258,7 @@ test('an only card is communicated as only, not as highest or lowest', () => {
 test('undo reshuffles', () => {
   // A commander's decision: undoing it puts other face-down tasks on the table, so the crew cannot learn them
   const decision = dealMission({ ...lobby(4), mission: 20, startMission: 20 }, seeded(1));
-  const undone = thecrew.onUndo?.(decision, seeded(9)) ?? assert.fail('no onUndo');
+  const undone = missiontricks.onUndo?.(decision, seeded(9)) ?? assert.fail('no onUndo');
   assert.equal(undone.tasks.length, 2);
   assert.notDeepEqual(undone.tasks.map(t => cardName(t.card)), decision.tasks.map(t => cardName(t.card)));
   for (const t of undone.tasks) assert.ok(!decision.tasks.some(old => cardName(old.card) === cardName(t.card)));
@@ -266,7 +266,7 @@ test('undo reshuffles', () => {
   // A distribution: the task on show and those already handed out stay, the face-down rest is redrawn, tokens kept by place
   let dealt = dealMission({ ...lobby(4), mission: 36, startMission: 36 }, seeded(1));
   dealt = ok(move({ ...dealt, commander: 1, currentPlayer: 1 }, 1, { type: 'assignTask', seat: 2 }));
-  const again = thecrew.onUndo?.(dealt, seeded(9)) ?? assert.fail('no onUndo');
+  const again = missiontricks.onUndo?.(dealt, seeded(9)) ?? assert.fail('no onUndo');
   assert.deepEqual(again.tasks.slice(0, 2), dealt.tasks.slice(0, 2));
   assert.deepEqual(again.tasks.map(t => t.token), dealt.tasks.map(t => t.token));
   const names = again.tasks.map(t => cardName(t.card));
@@ -275,7 +275,7 @@ test('undo reshuffles', () => {
 
   // Anywhere else nothing face down is left, so nothing changes
   const playing = game();
-  assert.equal(thecrew.onUndo?.(playing, seeded(9)), playing);
+  assert.equal(missiontricks.onUndo?.(playing, seeded(9)), playing);
 });
 
 test('a dead spot shows no token, and a disruption holds communication off until its trick', () => {
@@ -322,7 +322,7 @@ test('success deals the next mission and failure retries it with the attempt cou
 test('the next mission does not wait for disconnected players', () => {
   let state = playAll(game(), [p(9), p(1), p(5), p(3)]);
   for (const seat of [1, 2, 3]) state = ok(act(state, seat, { type: 'acknowledgeRound' }));
-  state = disconnectPlayer(thecrew, state, 4, seeded(1));
+  state = disconnectPlayer(missiontricks, state, 4, seeded(1));
   assert.equal(state.mission, 2);
 });
 
@@ -371,13 +371,13 @@ test('the end vote ends the game naming the last mission done', () => {
   for (const seat of [1, 2, 3, 4]) partial = ok(act(partial, seat, { type: 'acknowledgeRound' }));
   assert.deepEqual(partial.endVotes, {});
   const none = ok(act(playAll(game({ tasks: [task(p(1), 2)] }), [p(9), p(1), p(5), p(3)]), 1, { type: 'voteEnd', yes: true }));
-  const ended = disconnectPlayer(thecrew, ok(act(ok(act(none, 2, { type: 'voteEnd', yes: true })), 3, { type: 'voteEnd', yes: true })), 4, seeded(1));
+  const ended = disconnectPlayer(missiontricks, ok(act(ok(act(none, 2, { type: 'voteEnd', yes: true })), 3, { type: 'voteEnd', yes: true })), 4, seeded(1));
   assert.equal(ended.isGameOver, true);
   assert.equal(ended.gameStatus, 'The crew ended the game before completing a mission');
 });
 
 test('a player leaving ends the game', () => {
-  const state = removePlayer(thecrew, game({ lastCompleted: 4 }), 3, seeded(1));
+  const state = removePlayer(missiontricks, game({ lastCompleted: 4 }), 3, seeded(1));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1, 2, 4]);
   assert.equal(state.currentPlayer, null);
@@ -391,7 +391,7 @@ test('lobby choice is kept across joins and refused after the first move', () =>
   state = ok(act(state, 2, { type: 'chooseMission', mission: 8 }));
   assert.equal(state.startMission, 8);
   assert.equal(state.gameStatus, 'Bob chose mission 8');
-  const joined = addPlayer(thecrew, state, 'Cara', seeded(1));
+  const joined = addPlayer(missiontricks, state, 'Cara', seeded(1));
   if ('error' in joined) assert.fail(joined.error);
   state = joined.state;
   assert.equal(state.mission, 8);
@@ -642,7 +642,7 @@ test('the distress signal: everyone passes a card the same way, and the mission 
   assert.deepEqual(move(state, 1, { type: 'play', card: p(9) }), { error: 'Wait for everyone to pass a card' });
   assert.deepEqual(act(state, 1, { type: 'passCard', card: r(4) }), { error: 'Rockets are never passed' });
   state = ok(act(state, 1, { type: 'passCard', card: b(1) }));
-  assert.deepEqual(thecrew.waitingOn?.(state), [2, 3, 4]);
+  assert.deepEqual(missiontricks.waitingOn?.(state), [2, 3, 4]);
   assert.deepEqual(act(state, 1, { type: 'passCard', card: p(9) }), { error: 'You have already passed a card' });
   // Each sees only their own pass
   assert.deepEqual(toPublicState(state, false, 1).distress, { direction: 'left', passed: [1], mine: b(1) });
@@ -709,13 +709,13 @@ test('dismissed player mid-turn', () => {
   // Dismissed while choosing a task on their own turn, and while the crew waits for their distress pass
   const choosing = dealMission({ ...lobby(4), mission: 4, startMission: 4 }, seeded(1));
   const commander = choosing.commander ?? assert.fail();
-  const gone = removePlayer(thecrew, disconnectPlayer(thecrew, { ...choosing, started: true }, commander, seeded(1)), commander, seeded(1));
+  const gone = removePlayer(missiontricks, disconnectPlayer(missiontricks, { ...choosing, started: true }, commander, seeded(1)), commander, seeded(1));
   assert.equal(gone.isGameOver, true);
   assert.equal(gone.currentPlayer, null);
 
   let passing = ok(move(game(), 1, { type: 'distress', direction: 'right' }));
   passing = ok(act(passing, 1, { type: 'passCard', card: b(1) }));
-  const ended = removePlayer(thecrew, disconnectPlayer(thecrew, passing, 2, seeded(1)), 2, seeded(1));
+  const ended = removePlayer(missiontricks, disconnectPlayer(missiontricks, passing, 2, seeded(1)), 2, seeded(1));
   assert.equal(ended.isGameOver, true);
   assert.deepEqual(move(ended, 1, { type: 'play', card: p(9) }), { error: 'The game is over' });
   assert.deepEqual(act(ended, 3, { type: 'passCard', card: b(3) }), { error: 'The game is over' });

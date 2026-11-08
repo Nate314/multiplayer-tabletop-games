@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './thecrew.scss';
+import './missiontricks.scss';
 
-export const thecrewClient: ClientGame = {
-  id: 'thecrew',
+export const missiontricksClient: ClientGame = {
+  id: 'missiontricks',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

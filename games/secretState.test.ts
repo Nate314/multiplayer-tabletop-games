@@ -5,7 +5,7 @@ import { dealt } from './testStates.ts';
 
 const WITH_SECRET = [
   'azul', 'carcassonne', 'catan', 'charades', 'categories', 'codebreaker', 'sudoku', 'dominoes', 'euchre', 'fictionary', 'gofish', 'hintgrid', 'holdem', 'jenga', 'monopoly', 'phase10', 'pictionary',
-  'racko', 'risk', 'rook', 'rummikub', 'scrabble', 'skipbo', 'splendor', 'thecrew', 'tickettoride', 'uno', 'war', 'whodunit'
+  'racko', 'risk', 'rook', 'rummikub', 'scrabble', 'skipbo', 'splendor', 'missiontricks', 'tickettoride', 'uno', 'war', 'whodunit'
 ];
 
 const isEmpty = (value: unknown) => Array.isArray(value) ? value.length === 0
@@ -15,8 +15,8 @@ it('exactly the games with a secret declare one', () => {
   assert.deepEqual(GAMES.filter(g => g.secretState).map(g => g.info.id).sort(), [...WITH_SECRET].sort());
 });
 
-it('thecrew hides the face-down tasks of a distribution', () => {
-  const crew = GAMES.find(g => g.info.id === 'thecrew')!;
+it('missiontricks hides the face-down tasks of a distribution', () => {
+  const crew = GAMES.find(g => g.info.id === 'missiontricks')!;
   const state = dealt(crew);
   const tasks = [{ card: { suit: 'blue', value: 1 } }, { card: { suit: 'pink', value: 2 } }, { card: { suit: 'green', value: 3 } }]
     .map(t => ({ ...t, token: null, owner: null, done: false }));

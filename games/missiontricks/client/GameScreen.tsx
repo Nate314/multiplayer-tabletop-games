@@ -115,7 +115,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   let turn = '';
   if (isGameOver) turn = 'Game over';
-  else if (!seated) turn = `The Crew needs 3 to 5 players (${activePlayers.length} seated)`;
+  else if (!seated) turn = `Mission Tricks needs 3 to 5 players (${activePlayers.length} seated)`;
   else if (phase === 'missionOver') turn = 'The mission is over';
   else if (phase === 'distress') turn = 'Everyone passes a card';
   else if (currentPlayer !== null) {

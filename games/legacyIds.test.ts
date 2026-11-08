@@ -32,3 +32,8 @@ test('every legacy entry points at a registered game and no old id is still regi
     assert.ok(!Object.hasOwn(LEGACY_IDS, id), `${old} chains through ${id}`);
   }
 });
+
+test('thecrew is now Mission Tricks and its saves still fit', () => {
+  assert.equal(currentId('thecrew'), 'missiontricks');
+  assert.equal(keepsSaves('thecrew'), true);
+});

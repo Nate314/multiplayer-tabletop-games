@@ -1,11 +1,11 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { applyAction, applyMove, createGameState, faceDownTasks, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, toPublicState, waitingOn } from './rules.ts';
-import { thecrewInfo } from './info.ts';
+import { missiontricksInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const thecrew: GameDefinition<GameState, PublicGameState> = {
-  info: thecrewInfo,
+export const missiontricks: GameDefinition<GameState, PublicGameState> = {
+  info: missiontricksInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

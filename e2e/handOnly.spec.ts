@@ -46,7 +46,7 @@ const HAND_ONLY: Record<string, Row> = {
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }
   },
-  thecrew: {
+  missiontricks: {
     keep: ['.hand', '.turn-message', you('.seat'), '.task-pool'], // the open tasks and your own tasks are your goal
     hide: [others('.seat'), '.trick'],
     move: async page => { await button(page, /^Take task/).first().click(); }

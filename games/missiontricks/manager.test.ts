@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { canPlayCard, trueTokens } from './rules.ts';
-import { thecrew } from './index.ts';
+import { missiontricks } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'thecrew/g1';
+const ROOM = 'missiontricks/g1';
 const NAMES = ['A', 'B', 'C', 'D'];
 
 function seeded(seed: number): Random {
@@ -23,8 +23,8 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([thecrew], seeded(1)));
-  for (const name of names) manager.join('thecrew', 'g1', name);
+  const manager = rememberingKeys(createGameManager([missiontricks], seeded(1)));
+  for (const name of names) manager.join('missiontricks', 'g1', name);
   return manager;
 }
 
@@ -61,12 +61,12 @@ test('moves wait for three players, and joining closes after the first move', ()
   assert.deepEqual(manager.move(ROOM, 1, { type: 'takeTask', task: 0 }), { error: 'Waiting for more players' });
   assert.equal(viewOf(manager, 1).hand.length, 0);
   ok(manager.action(ROOM, 1, { type: 'chooseMission', mission: 3 }));
-  manager.join('thecrew', 'g1', 'C');
+  manager.join('missiontricks', 'g1', 'C');
   const view = viewOf(manager, 1);
   assert.equal(view.mission, 3);
   assert.ok(view.hand.length >= 13);
   step(manager);
-  assert.equal('error' in manager.join('thecrew', 'g1', 'D'), true);
+  assert.equal('error' in manager.join('missiontricks', 'g1', 'D'), true);
   assert.ok('error' in manager.action(ROOM, 1, { type: 'chooseMission', mission: 4 }));
 });
 
@@ -78,7 +78,7 @@ test('a short game: each player sees only their own hand, the table sees none', 
   views.forEach((view, index) => assert.equal(view.hand.length, view.handCounts[index + 1]));
   assert.notDeepEqual(views[0].hand, views[1].hand);
 
-  const history = stepsOf(manager, 'thecrew') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'missiontricks') as unknown as PublicGameState[];
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
     for (const key of ['hands', 'tricks']) assert.equal(key in state, false);
@@ -101,7 +101,7 @@ test('a rejoin mid-turn shows the same half-finished trick, hand and communicati
   assert.equal(before.trick.length, 2);
   manager.disconnect(ROOM, seat);
   assert.deepEqual(viewOf(manager, null).disconnected, [seat]);
-  const back = manager.join('thecrew', 'g1', NAMES[seat - 1], true);
+  const back = manager.join('missiontricks', 'g1', NAMES[seat - 1], true);
   if ('error' in back) assert.fail(back.error);
   const after = back.state as PublicGameState;
   assert.deepEqual(after.hand, before.hand);
@@ -134,7 +134,7 @@ test('missions follow one another, and the end vote ends the game with a game fi
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1, 2, 3, 4]);
   assert.equal(state.gameStatus, 'The crew ended the game. Last mission completed: 2');
-  const file = fileOf(manager, 'thecrew', new Date());
+  const file = fileOf(manager, 'missiontricks', new Date());
   assert.ok(file && 'file' in file);
 });
 
