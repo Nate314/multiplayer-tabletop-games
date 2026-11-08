@@ -14,6 +14,7 @@ const GAME_ICONS: Record<string, () => string> = {
   // Three lines beside a large letter
   categories: () => lineIcon(el('path', { d: 'M14 6h7M14 12h7M14 18h7' }), label('B', 7.5, 18, 17)),
   catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
+  charades: () => lineIcon(el('circle', { cx: 12, cy: 5, r: 2.5 }), el('path', { d: 'M12 8v7M12 10L6 4M12 10l6-6M12 15l-4 6M12 15l4 6' })),
   checkers: () => lineIcon(el('ellipse', { cx: 12, cy: 8, rx: 8, ry: 3 }), el('path', { d: 'M4 8v4a8 3 0 0 0 16 0V8M4 12v4a8 3 0 0 0 16 0v-4' })),
   chinesecheckers: () => lineIcon(el('path', { d: 'M12 2l2.9 5h5.8l-2.9 5 2.9 5h-5.8L12 22l-2.9-5H3.3l2.9-5-2.9-5h5.8z' }), pip(12, 12, 1.6)),
   chess: () => lineIcon(el('path', { d: 'M12 2v5M9.5 4.5h5M8 10h8l-1.5 8h-5zM6 21h12v-3H6zM8 10a4 3 0 0 1 8 0' })),
@@ -27,6 +28,7 @@ const GAME_ICONS: Record<string, () => string> = {
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),
     el('rect', { x: 10, y: 4, width: 10, height: 14, rx: 1.5, transform: 'rotate(10 15 11)' }), label('J', 15, 14, 7)),
   farkle: () => lineIcon(el('path', { d: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z' })),
+  fictionary: () => lineIcon(el('path', { d: 'M12 6c-2-1.5-5-2-9-1.5v14c4-.5 7 0 9 1.5 2-1.5 5-2 9-1.5v-14c-4-.5-7 0-9 1.5zM12 6v14' }), el('path', { d: 'M5.5 9.5a1.75 1.75 0 1 1 2.2 1.7c-.4.2-.7.5-.7 1v.8' }), pip(7, 15.2, 0.8)),
   go: () => lineIcon(el('path', { d: 'M4 8h16M4 16h16M8 4v16M16 4v16' }), solid('circle', { cx: 8, cy: 8, r: 2.5 }), el('circle', { cx: 16, cy: 16, r: 2.5 })),
   gofish: () => lineIcon(el('path', { d: 'M6 12c2.5-3.5 6-5 9-5s6 2.5 7 5c-1 2.5-4 5-7 5s-6.5-1.5-9-5zM6 12L2 8v8z' }), pip(17, 11, 0.9)),
   // A 3 by 3 grid of squares, two filled

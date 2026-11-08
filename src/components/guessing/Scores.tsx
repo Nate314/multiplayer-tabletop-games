@@ -1,13 +1,15 @@
-import YouTag from '../../../src/components/YouTag.tsx';
-import type { PublicGameState, Seat } from '../types.ts';
+import YouTag from '../YouTag.tsx';
+import type { GuessPublic, GuessState } from '../../../shared/guessing/types.ts';
+import type { Seat } from '../../../shared/types.ts';
 
 type ScoresProps = {
-  gameState: PublicGameState;
+  gameState: GuessPublic<GuessState>;
   playerNumber: Seat; // 0 for the history, which has no "you"
+  busyNote: string; // beside the drawer or actor
 };
 
-// Every player's score, who is drawing and who has guessed this word
-export default function Scores({ gameState, playerNumber }: ScoresProps) {
+// Every player's score, whose turn it is and who has guessed this word
+export default function Scores({ gameState, playerNumber, busyNote }: ScoresProps) {
   const { playerNames, scores, activePlayers, drawer, guessed, winners, phase, isGameOver } = gameState;
   const seats = Object.keys(playerNames).map(Number).sort((a, b) => a - b);
   const turnOn = !isGameOver && phase !== 'choosing';
@@ -24,7 +26,7 @@ export default function Scores({ gameState, playerNumber }: ScoresProps) {
           hasLeft ? 'score-left' : '',
           seat !== playerNumber ? 'hand-only-hide' : ''
         ];
-        const note = drawer === seat && !isGameOver ? 'drawing' : turnOn && guessed.includes(seat) ? 'guessed' : '';
+        const note = drawer === seat && !isGameOver ? busyNote : turnOn && guessed.includes(seat) ? 'guessed' : '';
         return (
           <li key={seat} className={classes.filter(Boolean).join(' ')}>
             <span className="score-name">

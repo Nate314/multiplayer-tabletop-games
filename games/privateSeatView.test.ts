@@ -62,6 +62,28 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     roles: { 1: { team: 'red', clueGiver: true }, 2: { team: 'red', clueGiver: false }, 3: { team: 'blue', clueGiver: true }, 4: { team: 'blue', clueGiver: false } },
     revealed: s.revealed.map((_: boolean, i: number) => i < 2)
   }],
+  charades: s => [
+    { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['yawning', 'clapping', 'sneezing'] },
+    {
+      ...s, started: true, phase: 'drawing', drawer: 1, word: 'yawning', guessed: [2],
+      chat: [
+        { id: 1, kind: 'guessed', seat: 2, text: 'Bob guessed the prompt', audience: 'all' },
+        { id: 2, kind: 'chat', seat: 2, text: 'easy', audience: 'guessed' },
+        { id: 3, kind: 'close', seat: 1, text: 'So close!', audience: 1 }
+      ]
+    }
+  ],
+  fictionary: s => [
+    { ...s, started: true, phaseStartedAt: 1, submissions: { 1: 'a small bird', 2: 'a kind of pastry' } },
+    {
+      ...s, started: true, phaseStartedAt: 1, phase: 'voting', submissions: { 1: 'a small bird', 2: 'a kind of pastry', 3: 'a river boat' },
+      choices: [
+        { text: 'a kind of pastry', authors: [2], real: false }, { text: s.definition, authors: [], real: true },
+        { text: 'a small bird', authors: [1], real: false }, { text: 'a river boat', authors: [3], real: false }
+      ],
+      votes: { 2: 1 }
+    }
+  ],
   codebreaker: s => [
     { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
     {

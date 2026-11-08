@@ -1,0 +1,38 @@
+@use '../../../src/components/guessing/guessing' as *;
+
+[data-game="charades"] {
+  /* Charades' stage theme. Every rule is scoped to data-game="charades", so none of it reaches the landing page or other games. */
+  @include guessing-page(charades, '.charades-stage', '.prompt-choices', 640px);
+
+  .charades-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    padding: 24px 16px;
+  }
+
+  /* The actor's prompt: large, and wrapping by word rather than mid-word on a phone */
+  .charades-prompt {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1.15;
+    text-align: center;
+    overflow-wrap: break-word; // breaks a word only when it alone is wider than the card
+    hyphens: none;
+  }
+
+  @media (max-width: 640px) {
+    .charades-stage {
+      min-height: 0;
+    }
+
+    .charades-stage:empty {
+      display: none;
+    }
+
+    .charades-prompt {
+      font-size: 2rem;
+    }
+  }
+}

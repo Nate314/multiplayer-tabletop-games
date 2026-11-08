@@ -12,6 +12,7 @@ import { corners } from './corners/index.ts';
 import { euchre } from './euchre/index.ts';
 import { backgammon } from './backgammon/index.ts';
 import { catan } from './catan/index.ts';
+import { charades } from './charades/index.ts';
 import { mancala } from './mancala/index.ts';
 import { monopoly } from './monopoly/index.ts';
 import { naval } from './naval/index.ts';
@@ -39,6 +40,7 @@ import { splendor } from './splendor/index.ts';
 import { steadyhand } from './steadyhand/index.ts';
 import { sudoku } from './sudoku/index.ts';
 import { farkle } from './farkle/index.ts';
+import { fictionary } from './fictionary/index.ts';
 import { holdem } from './holdem/index.ts';
 import { tickettoride } from './tickettoride/index.ts';
 import { tradingfloor } from './tradingfloor/index.ts';
@@ -52,6 +54,6 @@ import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 // Registry order, alphabetical by name; the landing page groups them by category. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  azul, backgammon, carcassonne, catan, checkers, chinesecheckers, chess, categories, codebreaker, connectfour, corners, dominoes, euchre, farkle, go, gofish, hearts, hintgrid, jenga, jigsaw, mancala, monopoly, naval, parchisi, phase10, pictionary,
+  azul, backgammon, carcassonne, catan, charades, checkers, chinesecheckers, chess, categories, codebreaker, connectfour, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, jenga, jigsaw, mancala, monopoly, naval, parchisi, phase10, pictionary,
   quoridor, racko, roadtoretirement, risk, rook, rummikub, scrabble, skipbo, snakesladders, spades, splendor, steadyhand, sudoku, holdem, thecrew, tictactoe, tickettoride, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
 ];

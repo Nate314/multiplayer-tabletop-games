@@ -1,15 +1,25 @@
 import { useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import UndoVote from '../../../src/components/UndoVote';
-import Blanks from './Blanks';
+import Blanks from '../../../src/components/guessing/Blanks';
+import Chat from '../../../src/components/guessing/Chat';
+import GameStatus from '../../../src/components/guessing/GameStatus';
+import Scores from '../../../src/components/guessing/Scores';
+import type { GuessTexts } from '../../../src/components/guessing/GameStatus';
 import Canvas from './Canvas';
-import Chat from './Chat';
-import GameStatus from './GameStatus';
-import Scores from './Scores';
 import Toolbar from './Toolbar';
+import { phaseDeadline } from '../clock.ts';
 import type { Pen } from './Canvas';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
+
+const TEXTS: GuessTexts = {
+  choose: 'Choose a word to draw',
+  choosing: name => `${name} is choosing a word`,
+  busy: word => `Draw ${word}`,
+  busyOther: name => `${name} is drawing`,
+  was: word => `The word was ${word}`
+};
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const { activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable, phase, drawer, wordChoices, strokes } = gameState;
@@ -24,12 +34,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       <div className="pictionary-layout">
         <div className="game-info">
           <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
-          <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} />
+          <GameStatus gameState={gameState} playerNumber={playerNumber} error={error} deadline={phaseDeadline(gameState)} texts={TEXTS} />
           <div className="action-buttons">
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
           </div>
         </div>
-        <Blanks mask={gameState.mask} word={gameState.word} />
+        <Blanks mask={gameState.mask} word={gameState.word} label="Word" className="pictionary-blanks" />
         {isDrawer && phase === 'choosing' && wordChoices.length > 0 && (
           <div className="word-choices" role="group" aria-label="Choose a word">
             {wordChoices.map((word, index) => (
@@ -45,8 +55,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             {drawing && <Toolbar pen={pen} onChange={setPen} canUndo={strokes.length > 0} />}
           </div>
           <div className="pictionary-side">
-            <Scores gameState={gameState} playerNumber={playerNumber} />
-            <Chat gameState={gameState} playerNumber={playerNumber} />
+            <Scores gameState={gameState} playerNumber={playerNumber} busyNote="drawing" />
+            <Chat gameState={gameState} playerNumber={playerNumber} inputId="pictionary-chat-input" className="pictionary-chat" busyPlaceholder="You are drawing" />
           </div>
         </div>
       </div>
