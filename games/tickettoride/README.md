@@ -34,7 +34,7 @@ Collect train cards, claim railway routes across the USA and connect your destin
 - Click Undo to ask everyone to undo the last move
 - With Color-blind symbols on in Settings, each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows the shape of its owner instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too
 - With a table screen connected, on Hand only (the default) the other players are hidden, and the map and the train card market show only on your turn
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

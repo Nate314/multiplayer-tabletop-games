@@ -30,7 +30,7 @@ Each player sees their own point at the bottom of the board.
 - Click the picked marble again to start over, or click another of your marbles to choose that one instead
 - A line follows the path built so far, and a faint line shows the last move. The board is dimmed when it is not your turn
 - Click Undo to ask everyone to take back the last move
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon. Marbles and the player list show it
 
 ## Differences from Wikipedia

@@ -23,7 +23,7 @@ Steer each part out of its twisting slot in a robot repair bay without touching 
 - Parts already out are listed under "Out of the bay" with their value and who brought them out
 - Click Undo to ask the table to take back the last turn; everyone else votes on it
 - History shows the bay after each turn, with the part moved highlighted and the spot of a buzz marked
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide
 
 ## Differences from Wikipedia
 

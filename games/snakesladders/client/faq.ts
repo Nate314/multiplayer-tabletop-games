@@ -32,8 +32,8 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What do Undo and History do?',
     answer: 'Undo asks everyone to take back the last roll; it happens only if every player still in the game ' +
-      'approves. An undone roll is rolled again fresh, so the die may show a different number. History, at the ' +
-      'top of the page, steps through every roll so far, with the squares the token left and reached outlined.'
+      'approves. An undone roll is rolled again fresh, so the die may show a different number. History, in the ' +
+      '☰ menu, steps through every roll so far, with the squares the token left and reached outlined.'
   },
   {
     question: 'Can I tell the colors apart without seeing color?',

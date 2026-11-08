@@ -25,7 +25,7 @@ Place polyomino pieces so that your pieces touch only at corners, and cover the 
 - The panel shows whose turn it is and which color they place, each color's owner and score, and each player's total. A color that has gone out is marked
 - Click Undo to ask everyone to undo the last move
 - Turn on Color-blind symbols in Settings to show a shape on every placed piece: Blue square, Yellow star, Red circle, Green triangle
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

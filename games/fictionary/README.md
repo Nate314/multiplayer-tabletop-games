@@ -24,7 +24,7 @@ Write a believable fake definition of a rare word, then spot the real one among 
 - Type your fake in the box labelled Your definition and click Submit. To change it, type a new one and click Update
 - Click the definition you think is real. Click another one to change your vote
 - After each reveal, click Continue
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

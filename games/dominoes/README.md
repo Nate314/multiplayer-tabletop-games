@@ -39,7 +39,7 @@ Match tile ends to build a line that branches at doubles (or a single line, by h
 - After each round, read the scoring screen and click Continue; the last round's scoring is on the game-over screen
 - Click Undo to ask everyone to undo the last move
 - With a table screen connected, on Hand only (the default) the other players, the boneyard and the line ends are hidden, and the board shows only on your turn
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

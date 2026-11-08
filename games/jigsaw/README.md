@@ -29,7 +29,7 @@ One to eight players. The host picks the picture. The host is the first player s
 - Below the picture: how many pieces of your table are placed, then in Together each player's placed count, or in a Race each player's percentage
 - Undo (Solo) or Undo my last move (Together and Race) sits below the counts
 - History shows each placed piece, outlined, with who placed it and how many were placed by then
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide
 
 ## Differences from Wikipedia
 

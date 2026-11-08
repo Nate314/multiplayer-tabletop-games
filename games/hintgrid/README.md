@@ -23,7 +23,7 @@ Two teams, Red and Blue, race to find their words on a grid of 25 from one-word 
 - **Guesser.** On your team's turn, after the clue, click a word to turn it over, and click End guessing to stop early
 - **The table.** Shows the clue, the guesses left and the words left for each team. The last word turned over is outlined
 - **Undo.** Click Undo to ask everyone to undo the last move
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

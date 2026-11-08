@@ -30,7 +30,7 @@ Players are seated in join order, each with a token of their own color: Player 1
 - The last roll's starting square has a dashed outline and its final square a solid one. Tokens sharing a square are drawn side by side inside it
 - The player list shows each player's square, with the player on turn highlighted
 - Click Undo to ask everyone to undo the last roll; it happens only if every player still in the game approves
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 - With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens and the player list show it
 
 ## Differences from Wikipedia

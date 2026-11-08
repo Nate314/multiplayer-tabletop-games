@@ -87,8 +87,8 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What do Undo and History do?',
     answer: 'Undo asks everyone to take back the last move; it happens only if every player still in the game ' +
-      'approves. A move played again after an undo spins again, so it may land somewhere else. History, at the ' +
-      'top of the page, steps through every move so far with the mover\'s space outlined.'
+      'approves. A move played again after an undo spins again, so it may land somewhere else. History, in the ' +
+      '☰ menu, steps through every move so far with the mover\'s space outlined.'
   },
   {
     question: 'What happens if someone leaves?',

@@ -26,7 +26,7 @@ Build piles from 1 to 12 with your hand, your stock and your discard piles, and 
 - With Highlight newly drawn cards on in Settings (the default), the cards dealt to you are outlined, at the start of your turn and when an emptied hand is refilled, until your discard ends the turn
 - Click Undo to ask everyone to undo the last move
 - With a table screen connected, on Hand only (the default) the other players are hidden, and the building piles show only on your turn
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

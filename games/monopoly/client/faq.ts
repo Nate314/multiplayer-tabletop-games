@@ -86,7 +86,7 @@ export const FAQS: FaqItem[] = [
     question: 'What do Undo and History do?',
     answer: 'Undo asks everyone to take back the last move; it happens only if every player still in the game approves. ' +
       'Bids, trades and their answers are not moves, so an undo goes back past them too, and a roll played again may ' +
-      'come up differently. History, at the top of the page, steps through every move so far.'
+      'come up differently. History, in the ☰ menu, steps through every move so far.'
   },
   {
     question: 'What happens if someone leaves?',

@@ -43,8 +43,8 @@ It plays like The Game of Life, on an original road with original careers, house
 - On the 1860 board the squares the spin allows are highlighted; click one to move there
 - The Players list shows each player's cash, loans, career and salary, degree, houses and family on the road, or points on the 1860 board, and marks the winner, a player who left and a player who loses their next turn
 - Click Undo to ask everyone to undo the last move
-- Click History at the top of the page to step through every move, with the mover's space or square outlined
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose History to step through every move, with the mover's space or square outlined
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

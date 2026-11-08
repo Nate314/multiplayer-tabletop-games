@@ -47,7 +47,7 @@ Before the first move the host picks the rules and both players must agree. They
 - Click Undo to ask your opponent to undo the last move
 - With the clock on, each player's time shows beside their name in the side panel, and the running one is highlighted. In your last 10 seconds a tick plays each second (Timer warnings in Settings)
 - With a table screen connected, on Hand only (the default) the captured pieces are hidden and the board shows only on your turn
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

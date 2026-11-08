@@ -23,7 +23,7 @@ Roll five dice up to three times a turn and fill every scoring box on your sheet
 - The score sheet has a column per player, with the player on the move marked, an upper section subtotal and bonus, the Yahtzee bonus and each player's total
 - Click Undo to ask the other players to undo the last move
 - With a table screen connected, on Hand only (the default) the other players' columns are hidden
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

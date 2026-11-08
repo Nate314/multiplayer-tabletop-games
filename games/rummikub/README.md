@@ -36,7 +36,7 @@ Before the first move the host picks the rules and every player must agree. They
 - With Color-blind symbols on in Settings, each color also shows its shape: black diamond, blue square, orange hexagon, red circle. Each numbered tile shows it in its top left corner; jokers have no color
 - With Highlight newly drawn cards on in Settings (the default), the tile you draw is outlined in your rack until your move on your next turn, and follows the tile when you rearrange the rack
 - With a table screen connected, on Hand only (the default) the other players and the pool are hidden, and the table shows only on your turn
-- Click Undo to ask everyone to undo the last move, and Rules at the top of the page for these rules, and FAQ in it for a short guide
+- Click Undo to ask everyone to undo the last move, and open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide
 
 ## Differences from Wikipedia
 

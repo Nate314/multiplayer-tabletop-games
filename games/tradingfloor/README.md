@@ -27,7 +27,7 @@ Trade cards blind with everyone at once until you hold all 9 of one commodity, t
 - After a corner, read the round scoring and click Continue; the last round's scoring is on the game-over screen
 - History shows each swap and corner, with who moved highlighted, and no player's hand
 - A spectator sees the floor, the card counts and the offers' counts, but no hand
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide
 
 ## Differences from Wikipedia
 

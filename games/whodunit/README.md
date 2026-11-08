@@ -32,7 +32,7 @@ Move through a seaside hotel, make suggestions and be first to name who did it, 
 - The Suggestions list names the card you saw or showed; other suggestions show who could not show, and who showed a card
 - Click a mark on the Notes sheet to cycle blank, yes, no and maybe. Notes stay when you reload the page
 - Click Undo to ask everyone to undo the last move. The button is not shown right after a card was shown or an accusation
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

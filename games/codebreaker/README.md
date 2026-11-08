@@ -27,7 +27,7 @@ Work out a hidden row of colored pegs from the answer pegs each guess earns, for
 - In Race the side panel shows each other player's guess count and progress, or Broken once they break the code
 - Click Undo (Classic and Solo) or Undo my last move (Together and Race) to take back a guess, as in Rules
 - With Color-blind symbols on in Settings, every peg shows a shape for its color
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

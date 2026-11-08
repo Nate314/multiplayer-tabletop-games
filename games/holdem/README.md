@@ -28,7 +28,7 @@ No-limit Texas Hold'em with play chips: two private cards each, five shared card
 - After a hand, read the result and click Continue. Click Vote to end the game to vote, and click again to take your vote back
 - Click Undo to ask everyone to undo the last move
 - With a table screen connected, on Hand only (the default) the other seats and the community cards are hidden
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

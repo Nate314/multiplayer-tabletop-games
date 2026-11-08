@@ -38,7 +38,7 @@ Hide your fleet on a grid and sink the other fleet first, in the traditional pen
 - Click Resign and then Confirm resign to resign; click Keep playing to change your mind. Click Offer draw to offer a draw; Accept draw and Decline appear for the other player
 - Click Undo to ask the other player to undo the last turn's shots
 - History shows both grids after each turn, with the turn's shots marked, and the other fleet only once the game is over
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

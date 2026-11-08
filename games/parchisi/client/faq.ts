@@ -82,8 +82,8 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What do Undo and History do?',
     answer: 'Undo asks everyone to take back the last move; it happens only if every player still in the game ' +
-      'approves. An undone move that ended a turn may roll different dice when it is played again. History, at ' +
-      'the top of the page, steps through every move so far with the moved pawn\'s squares outlined.'
+      'approves. An undone move that ended a turn may roll different dice when it is played again. History, in ' +
+      'the ☰ menu, steps through every move so far with the moved pawn\'s squares outlined.'
   },
   {
     question: 'What happens if someone leaves?',

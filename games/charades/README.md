@@ -26,7 +26,7 @@ Act out a prompt on camera while everyone else races to guess it in the chat, fo
 - The actor clicks one of the offered prompts to start acting
 - Everyone else types guesses in the chat box and presses Enter
 - Click Undo to ask the other players to undo the last move
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

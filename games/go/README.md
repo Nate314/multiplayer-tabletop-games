@@ -31,7 +31,7 @@ The first player to join plays black and moves first; the second plays white. No
 - Click Resign and then Confirm resign to resign, at any time; click Keep playing to change your mind
 - Click Undo to ask your opponent to undo the last move
 - History shows each move, the board after it with that stone ringed, and the final count
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

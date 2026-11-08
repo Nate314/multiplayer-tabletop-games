@@ -27,7 +27,7 @@ Draw a word while everyone else races to guess it in the chat, for 2 to 10 playe
 - Everyone else types guesses in the chat box and presses Enter
 - Click Undo to ask the other players to undo the last move
 - With a table screen connected, on Hand only (the default) the other players' scores are hidden, and the paper shows only on your turn (when you draw)
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from the board game
 

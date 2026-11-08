@@ -32,7 +32,7 @@ Collect gems, buy development cards and attract nobles to reach the prestige to 
 - Click Undo to ask everyone to undo the last move
 - With Color-blind symbols on in Settings, each gem color also shows its shape: white ring, blue square, green triangle, red circle, black diamond, gold star. Gem tokens, card bonuses and card costs show it
 - With a table screen connected, on Hand only (the default) the other players are hidden, and the table shows only on your turn
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 
