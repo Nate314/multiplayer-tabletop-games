@@ -953,8 +953,8 @@ test.describe('Hex Island controls', () => {
     await setPreference(alice, 'Color-blind symbols', true);
     await expect(piece(alice, "Alice's settlement").locator('.color-symbol-circle')).toHaveCount(1);
     await expect(piece(alice, "Bob's city").locator('.color-symbol-square')).toHaveCount(1);
-    await expect(piece(alice, "Cara's settlement").locator('.color-symbol-hexagon')).toHaveCount(1);
-    await expect(piece(alice, "Dan's settlement").locator('.color-symbol-cross')).toHaveCount(1);
+    await expect(piece(alice, "Cara's settlement").locator('.color-symbol-triangle')).toHaveCount(1);
+    await expect(piece(alice, "Dan's settlement").locator('.color-symbol-star')).toHaveCount(1);
     await expect(alice.locator('.road-symbol.seat1 .color-symbol-circle')).toHaveCount(1);
     await expect(alice.locator('.road-symbol.seat2 .color-symbol-square')).toHaveCount(1);
     await expect(alice.locator('.road-symbol.seat3 .color-symbol-triangle')).toHaveCount(1);
