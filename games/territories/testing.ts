@@ -11,7 +11,7 @@ export function ownership(seat: Seat, others: Record<string, Seat | null> = {}):
   return Object.fromEntries(IDS.map(id => [id, id in others ? others[id] : seat]));
 }
 
-// Three players in their first turn, Alice to place 3 armies. The map is dealt in turn (Alaska to Alice, the next to
+// Three players in their first turn, Alice to place 3 armies. The map is dealt in turn (Frostcape to Alice, the next to
 // Bob, then Cara and so on) with 3 armies each, and the deck is in card order.
 export function game(overrides: Partial<GameState> = {}): GameState {
   return {
@@ -34,13 +34,13 @@ export function game(overrides: Partial<GameState> = {}): GameState {
   };
 }
 
-// The same with Dan in seat 4, holding Japan, so a dismissal still leaves three players
+// The same with Dan in seat 4, holding Silkfen, so a dismissal still leaves three players
 export function fourPlayers(overrides: Partial<GameState> = {}): GameState {
   const base = game();
   return game({
     activePlayers: [1, 2, 3, 4],
     playerNames: { ...base.playerNames, 4: 'Dan' },
-    owners: { ...base.owners, japan: 4 },
+    owners: { ...base.owners, silkfen: 4 },
     setupLeft: { ...base.setupLeft, 4: 0 },
     hands: { ...base.hands, 4: [] },
     ...overrides

@@ -4,7 +4,7 @@ import type { BaseGameState, BasePublicState } from '../../shared/types.ts';
 export type { Random, Result, Seat } from '../../shared/types.ts';
 import type { Seat } from '../../shared/types.ts';
 
-export type ContinentId = 'northAmerica' | 'southAmerica' | 'europe' | 'africa' | 'asia' | 'australia';
+export type ContinentId = 'westmarch' | 'sunreach' | 'highvale' | 'amberveld' | 'eastwild' | 'coralIsles';
 
 export type Continent = { id: ContinentId; name: string; bonus: number };
 

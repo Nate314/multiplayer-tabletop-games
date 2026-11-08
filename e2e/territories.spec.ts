@@ -2,11 +2,12 @@ import type { Page } from '@playwright/test';
 import { headerButton, dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/territories/map.ts';
 import { game, ownership } from '../games/territories/testing.ts';
+import { LEGACY_IDS } from '../games/legacyIds.ts';
 import type { ContinentId, GameState } from '../games/territories/types.ts';
 
 // One test per rule, control and difference in games/territories/README.md. Alice, Bob and Cara sit in seats 1, 2 and 3.
-// Most tests patch in the unit tests' map: the territories are dealt in map order (Alaska to Alice, Northwest Territory
-// to Bob, Greenland to Cara, Alberta to Alice and so on) with 3 armies each, and the deck is in card order. Card n
+// Most tests patch in the unit tests' map: the territories are dealt in map order (Frostcape to Alice, Pinewatch
+// to Bob, Dustgate to Cara, Elkmoor to Alice and so on) with 3 armies each, and the deck is in card order. Card n
 // shows territory n, with the symbols in turn (infantry, cavalry, artillery), and cards 42 and 43 are the wilds.
 
 type Seat = (gameType: string, names: string[]) => Promise<Table>;
@@ -99,14 +100,14 @@ test.describe('Territories rules', () => {
     const { table, alice } = await start(seat);
     await expect(alice.locator('.territory')).toHaveCount(42);
     await expect(alice.locator('.continent-label')).toHaveText([
-      'North America +5', 'South America +2', 'Europe +5', 'Africa +3', 'Asia +7', 'Australia +2'
+      'Westmarch +5', 'Sunreach +2', 'Highvale +5', 'Amberveld +3', 'Eastwild +7', 'Coral Isles +2'
     ]);
     await expect(alice.locator('.border')).toHaveCount(83);
 
     // Holding exactly one whole continent shows its territory count and adds its bonus to the next turn
     const continents: [ContinentId, string, number, number][] = [
-      ['northAmerica', 'N. America', 9, 5], ['southAmerica', 'S. America', 4, 2], ['europe', 'Europe', 7, 5],
-      ['africa', 'Africa', 6, 3], ['asia', 'Asia', 12, 7], ['australia', 'Australia', 4, 2]
+      ['westmarch', 'Westmarch', 9, 5], ['sunreach', 'Sunreach', 4, 2], ['highvale', 'Highvale', 7, 5],
+      ['amberveld', 'Amberveld', 6, 3], ['eastwild', 'Eastwild', 12, 7], ['coralIsles', 'Coral Isles', 4, 2]
     ];
     for (const [id, chip, count, bonus] of continents) {
       await table.patch(crafted({ owners: ownership(2, Object.fromEntries(territoriesOf(id).map(territory => [territory, 1]))) }));
@@ -117,7 +118,7 @@ test.describe('Territories rules', () => {
     }
 
     // The named borders: Alice's territory can attack across each one
-    const pairs = [['alaska', 'kamchatka'], ['brazil', 'northAfrica'], ['greenland', 'iceland'], ['eastAfrica', 'middleEast'], ['siam', 'indonesia']];
+    const pairs = [['frostcape', 'dawnspire'], ['gullskerry', 'windhold'], ['glassbay', 'brightshore'], ['tidewell', 'saffronCoast'], ['rainhollow', 'reefwatch']];
     await table.patch(attacking({ owners: ownership(2, Object.fromEntries(pairs.map(([from]) => [from, 1]))) }));
     for (const [from, to] of pairs) {
       await disc(alice, from).click();
@@ -196,24 +197,24 @@ test.describe('Territories rules', () => {
 
   test('reinforce: a third of your territories, at least 3, plus whole continents, placed in one go or a few at a time', async ({ seat }) => {
     const { table, alice, cara } = await start(seat);
-    // 17 territories with South America: 5 + 2. Cara ends her turn, and Alice's begins
-    const seventeen = [...territoriesOf('southAmerica'), ...territoriesOf('asia').filter(id => id !== 'siam'), 'egypt', 'congo'];
+    // 17 territories with Sunreach: 5 + 2. Cara ends her turn, and Alice's begins
+    const seventeen = [...territoriesOf('sunreach'), ...territoriesOf('eastwild').filter(id => id !== 'ashvale'), 'cinderpeak', 'sunfall'];
     await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, owners: ownership(3, Object.fromEntries(seventeen.map(id => [id, 1]))) }));
     await button(cara, 'End turn').click();
     await expect(alice.locator('.armies-left')).toHaveText('7 of 7 armies left to place');
 
-    await disc(alice, 'venezuela').click();
+    await disc(alice, 'glassbay').click();
     await button(alice, 'Place').click();
-    await expect(armiesOn(alice, 'venezuela')).toHaveText('4');
+    await expect(armiesOn(alice, 'glassbay')).toHaveText('4');
     await expect(alice.locator('.armies-left')).toHaveText('6 of 6 armies left to place');
     await button(alice, 'All').click();
-    await disc(alice, 'peru').click();
+    await disc(alice, 'saltmarsh').click();
     await button(alice, 'Place and attack').click();
-    await expect(armiesOn(alice, 'peru')).toHaveText('9');
+    await expect(armiesOn(alice, 'saltmarsh')).toHaveText('9');
     await expect(panelTitle(alice)).toHaveText('Attack');
 
     // Two territories still get 3
-    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, owners: ownership(3, { alaska: 1, peru: 1 }) }));
+    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, owners: ownership(3, { frostcape: 1, saltmarsh: 1 }) }));
     await button(cara, 'End turn').click();
     await expect(alice.locator('.armies-left')).toHaveText('3 of 3 armies left to place');
   });
@@ -223,18 +224,18 @@ test.describe('Territories rules', () => {
     await table.patch(crafted());
     await expect(tray(alice, 3)).toBeEnabled();
     await alice.evaluate(() => window.scrollTo(0, 0)); // the lobby panel is gone, which leaves the page scrolled past the tray
-    await drag(alice, tray(alice, 3), disc(alice, 'alaska'));
-    await expect(land(alice, 'alaska').locator('.draft-badge')).toHaveText('+1');
+    await drag(alice, tray(alice, 3), disc(alice, 'frostcape'));
+    await expect(land(alice, 'frostcape').locator('.draft-badge')).toHaveText('+1');
     await expect(tray(alice, 2)).toBeVisible();
     await expect(alice.locator('.armies-left')).toHaveText('2 of 3 armies left to place');
 
     await button(alice, 'All').click();
-    await drag(alice, tray(alice, 2), disc(alice, 'alberta'));
-    await expect(land(alice, 'alberta').locator('.draft-badge')).toHaveText('+2');
+    await drag(alice, tray(alice, 2), disc(alice, 'elkmoor'));
+    await expect(land(alice, 'elkmoor').locator('.draft-badge')).toHaveText('+2');
     await expect(tray(alice, 0)).toBeDisabled();
     await button(alice, 'Place and attack').click();
-    await expect(armiesOn(alice, 'alaska')).toHaveText('4');
-    await expect(armiesOn(alice, 'alberta')).toHaveText('5');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('4');
+    await expect(armiesOn(alice, 'elkmoor')).toHaveText('5');
   });
 
   test('armies dropped on an enemy territory go back', async ({ seat }) => {
@@ -242,7 +243,7 @@ test.describe('Territories rules', () => {
     await table.patch(crafted());
     await lift(alice, tray(alice, 3));
     await expect(alice.locator('.drag-ghost')).toBeVisible();
-    const enemy = await disc(alice, 'northwestTerritory').boundingBox();
+    const enemy = await disc(alice, 'pinewatch').boundingBox();
     await alice.mouse.move(enemy!.x + enemy!.width / 2, enemy!.y + enemy!.height / 2, { steps: 6 });
     await alice.mouse.up();
     await expect(alice.locator('.drag-ghost')).toHaveCount(0);
@@ -268,7 +269,7 @@ test.describe('Territories rules', () => {
 
   test('card sets: three alike, one of each, or two with a wild', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    // Alaska and Alberta (infantry), Northwest Territory (cavalry), Greenland (artillery), Western United States (infantry), a wild
+    // Frostcape and Elkmoor (infantry), Pinewatch (cavalry), Dustgate (artillery), Gullskerry (infantry), a wild
     await table.patch(crafted({ hands: { 1: [0, 1, 2, 3, 6, WILD], 2: [], 3: [] } }));
     const tradeButton = alice.getByRole('button', { name: /^Trade for/ });
     const pick = async (...texts: string[]) => {
@@ -276,14 +277,14 @@ test.describe('Territories rules', () => {
       while (await picked.count() > 0) await picked.first().click();
       for (const text of texts) await card(alice, text).click();
     };
-    await pick('Alaska', 'Alberta', 'Northwest Territory');
+    await pick('Frostcape', 'Elkmoor', 'Pinewatch');
     await expect(tradeButton).toBeDisabled();
     await expect(alice.locator('.trade-row .note')).toHaveText('Not a set');
-    await pick('Alaska', 'Alberta', 'Western United States');
+    await pick('Frostcape', 'Elkmoor', 'Gullskerry');
     await expect(tradeButton).toBeEnabled();
-    await pick('Alaska', 'Northwest Territory', 'Greenland');
+    await pick('Frostcape', 'Pinewatch', 'Dustgate');
     await expect(tradeButton).toBeEnabled();
-    await pick('Alaska', 'Northwest Territory', 'Wild');
+    await pick('Frostcape', 'Pinewatch', 'Wild');
     await expect(tradeButton).toBeEnabled();
   });
 
@@ -294,33 +295,33 @@ test.describe('Territories rules', () => {
       await expect(alice.locator('.deck-line')).toContainText(`Next set: ${value} armies`);
     }
 
-    // Six infantry, all on Alice's territories: Alaska, Alberta, Western United States, Venezuela, Argentina, Great Britain
+    // Six infantry, all on Alice's territories: Frostcape, Elkmoor, Gullskerry, Glass Bay, Thornwood, Greyridge
     await table.patch(crafted({ tradeCount: 5, hands: { 1: [0, 3, 6, 9, 12, 15], 2: [], 3: [] } }));
     await expect(panel(alice)).toContainText('You hold 6 cards: trade a set below before placing.');
     await expect(button(alice, 'Place')).toHaveCount(0);
-    await trade(alice, 'Alaska', 'Alberta', 'Western United States');
-    await expect(armiesOn(alice, 'alaska')).toHaveText('5');
-    await expect(armiesOn(alice, 'alberta')).toHaveText('3');
+    await trade(alice, 'Frostcape', 'Elkmoor', 'Gullskerry');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('5');
+    await expect(armiesOn(alice, 'elkmoor')).toHaveText('3');
     await expect(alice.locator('.armies-left')).toHaveText('18 of 18 armies left to place');
     await expect(alice.getByRole('button', { name: /^Trade for/ })).toHaveText('Trade for 20 armies');
 
-    await trade(alice, 'Venezuela', 'Argentina', 'Great Britain');
+    await trade(alice, 'Glass Bay', 'Thornwood', 'Greyridge');
     await expect(alice.locator('.armies-left')).toHaveText('38 of 38 armies left to place');
-    await expect(armiesOn(alice, 'venezuela')).toHaveText('3'); // no second bonus this turn
+    await expect(armiesOn(alice, 'glassbay')).toHaveText('3'); // no second bonus this turn
   });
 
   test('attack: from 2 or more armies into a bordering enemy, dice up to one fewer than the armies, highest pairs compared, ties to the defender', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alberta: 1 }) }));
-    await expect(land(alice, 'alaska')).toHaveClass(/selectable/);
-    await expect(land(alice, 'alberta')).not.toHaveClass(/selectable/);
+    await table.patch(attacking({ armies: armiesWith({ elkmoor: 1 }) }));
+    await expect(land(alice, 'frostcape')).toHaveClass(/selectable/);
+    await expect(land(alice, 'elkmoor')).not.toHaveClass(/selectable/);
 
-    await disc(alice, 'alaska').click();
-    await expect(land(alice, 'kamchatka')).toHaveClass(/can-target/);
-    await expect(land(alice, 'northwestTerritory')).toHaveClass(/can-target/);
-    await expect(land(alice, 'alberta')).not.toHaveClass(/can-target/); // her own
-    await expect(land(alice, 'greenland')).not.toHaveClass(/can-target/); // not a neighbor
-    await disc(alice, 'kamchatka').click();
+    await disc(alice, 'frostcape').click();
+    await expect(land(alice, 'dawnspire')).toHaveClass(/can-target/);
+    await expect(land(alice, 'pinewatch')).toHaveClass(/can-target/);
+    await expect(land(alice, 'elkmoor')).not.toHaveClass(/can-target/); // her own
+    await expect(land(alice, 'dustgate')).not.toHaveClass(/can-target/); // not a neighbor
+    await disc(alice, 'dawnspire').click();
     await expect(alice.getByRole('group', { name: 'Dice' }).getByRole('button')).toHaveText(['1', '2']); // 3 armies
 
     // 5, 3 against 5, 4: a tie and a loss, both the attacker's
@@ -329,17 +330,17 @@ test.describe('Territories rules', () => {
     await expect.poll(() => diceShown(alice, 'attack')).toEqual(['5', '3']);
     expect(await diceShown(alice, 'defend')).toEqual(['5', '4']);
     await expect(battle(alice).locator('.battle-lost')).toHaveText(['lost 2', 'lost 0']);
-    await expect(armiesOn(alice, 'alaska')).toHaveText('1');
-    await expect(armiesOn(alice, 'kamchatka')).toHaveText('3');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('1');
+    await expect(armiesOn(alice, 'dawnspire')).toHaveText('3');
 
-    // 6, 2, 1 against 5, 1 from Alberta's 4 armies: the defender loses both
-    await table.patch(attacking({ armies: armiesWith({ alberta: 4 }) }));
-    await expect(armiesOn(alice, 'alberta')).toHaveText('4');
-    await choose(alice, 'alberta', 'northwestTerritory');
+    // 6, 2, 1 against 5, 1 from Elkmoor's 4 armies: the defender loses both
+    await table.patch(attacking({ armies: armiesWith({ elkmoor: 4 }) }));
+    await expect(armiesOn(alice, 'elkmoor')).toHaveText('4');
+    await choose(alice, 'elkmoor', 'pinewatch');
     await table.dice(6, 2, 1, 5, 1);
     await rollDice(alice, 3);
     await expect(battle(alice).locator('.battle-lost')).toHaveText(['lost 0', 'lost 2']);
-    await expect(armiesOn(alice, 'northwestTerritory')).toHaveText('1');
+    await expect(armiesOn(alice, 'pinewatch')).toHaveText('1');
 
     // A single defending army rolls 1 die
     await table.dice(6, 1, 1, 6);
@@ -350,58 +351,58 @@ test.describe('Territories rules', () => {
 
   test('blitz attacks with the most dice until the territory falls or 1 army is left', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 4, kamchatka: 5 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 4, dawnspire: 5 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     // 3 dice against 2, all ties, then 1 die against 2
     await table.dice(1, 1, 1, 1, 1, 1, 1, 1);
     await button(alice, 'Blitz').click();
     await expect(battle(alice)).toContainText('(blitz, 2 rolls, last roll shown)');
     await expect(battle(alice).locator('.battle-lost')).toHaveText(['lost 3', 'lost 0']);
-    await expect(armiesOn(alice, 'alaska')).toHaveText('1');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('1');
     await expect(panelTitle(alice)).toHaveText('Attack');
 
-    await table.patch(attacking({ armies: armiesWith({ alberta: 10, northwestTerritory: 2 }) }));
-    await expect(armiesOn(alice, 'alberta')).toHaveText('10');
-    await choose(alice, 'alberta', 'northwestTerritory');
+    await table.patch(attacking({ armies: armiesWith({ elkmoor: 10, pinewatch: 2 }) }));
+    await expect(armiesOn(alice, 'elkmoor')).toHaveText('10');
+    await choose(alice, 'elkmoor', 'pinewatch');
     await table.dice(6, 6, 6, 1, 1);
     await button(alice, 'Blitz').click();
-    await expect(battle(alice)).toContainText('Northwest Territory was captured');
-    await expect(panelTitle(alice)).toHaveText('Move into Northwest Territory');
+    await expect(battle(alice)).toContainText('Pinewatch was captured');
+    await expect(panelTitle(alice)).toHaveText('Move into Pinewatch');
   });
 
   test('capture: move in at least as many armies as the dice rolled, leaving at least one behind', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 5, kamchatka: 1 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 5, dawnspire: 1 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await alice.getByRole('group', { name: 'Dice' }).getByRole('button', { name: '2', exact: true }).click();
     await table.dice(6, 6, 1);
     await rollDice(alice, 2);
-    await expect(panelTitle(alice)).toHaveText('Move into Kamchatka');
+    await expect(panelTitle(alice)).toHaveText('Move into Dawnspire');
     await expect(slider(alice)).toHaveAttribute('min', '2');
     await expect(slider(alice)).toHaveAttribute('max', '4');
     await slider(alice).fill('2');
     await button(alice, 'Move 2').click();
-    await expect(land(alice, 'kamchatka')).toHaveAttribute('aria-label', 'Kamchatka: Alice, 2 armies');
-    await expect(armiesOn(alice, 'alaska')).toHaveText('3');
+    await expect(land(alice, 'dawnspire')).toHaveAttribute('aria-label', 'Dawnspire: Alice, 2 armies');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('3');
     await expect(panelTitle(alice)).toHaveText('Attack');
   });
 
   test('fortify: one move through your own connected territories, leaving one behind, ends the turn; so does End turn', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    // Alice holds North America but Greenland, and Iceland beyond it
-    const owners = ownership(2, Object.fromEntries([...territoriesOf('northAmerica').filter(id => id !== 'greenland'), 'iceland'].map(id => [id, 1])));
+    // Alice holds Westmarch but Dustgate, and Oakheart beyond it
+    const owners = ownership(2, Object.fromEntries([...territoriesOf('westmarch').filter(id => id !== 'dustgate'), 'oakheart'].map(id => [id, 1])));
     await table.patch(attacking({ owners }));
     await button(alice, 'Stop attacking and fortify').click();
     await expect(panelTitle(alice)).toHaveText('Fortify');
-    await disc(alice, 'alaska').click();
-    await expect(land(alice, 'quebec')).toHaveClass(/can-target/); // through Alberta and Ontario
-    await expect(land(alice, 'iceland')).not.toHaveClass(/can-target/);
-    await expect(land(alice, 'kamchatka')).not.toHaveClass(/can-target/);
-    await disc(alice, 'quebec').click();
+    await disc(alice, 'frostcape').click();
+    await expect(land(alice, 'stonebridge')).toHaveClass(/can-target/); // through Elkmoor
+    await expect(land(alice, 'oakheart')).not.toHaveClass(/can-target/);
+    await expect(land(alice, 'dawnspire')).not.toHaveClass(/can-target/);
+    await disc(alice, 'stonebridge').click();
     await expect(slider(alice)).toHaveAttribute('max', '2');
     await button(alice, 'Move 2 and end turn').click();
-    await expect(armiesOn(alice, 'alaska')).toHaveText('1');
-    await expect(armiesOn(alice, 'quebec')).toHaveText('5');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('1');
+    await expect(armiesOn(alice, 'stonebridge')).toHaveText('5');
     await expect(turn(bob)).toHaveText('Your turn');
 
     await table.patch(attacking({ owners }));
@@ -411,30 +412,30 @@ test.describe('Territories rules', () => {
 
   test('earning cards: a turn with a capture ends with one card drawn, and a turn without none', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 5, kamchatka: 1 }) }));
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 5, dawnspire: 1 }) }));
     await button(alice, 'End turn').click();
     await expect(turn(bob)).toHaveText('Your turn');
     await expect(alice.locator('.card-hand .panel-title')).toHaveText('Your cards (0)');
 
-    await table.patch(attacking({ armies: armiesWith({ alaska: 5, kamchatka: 1 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 5, dawnspire: 1 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 6, 1);
     await rollDice(alice, 3);
     await button(alice, 'Move 4').click();
     await button(alice, 'End turn').click();
     await expect(alice.locator('.card-hand .panel-title')).toHaveText('Your cards (1)');
-    await expect(card(alice, 'Alaska')).toHaveCount(1); // the top card of the ordered deck
+    await expect(card(alice, 'Frostcape')).toHaveCount(1); // the top card of the ordered deck
     await expect(playerRow(bob, 'Alice').locator('.player-stats')).toContainText('1 card');
   });
 
   test('elimination: the player who took the last territory takes the cards, and with 6 or more trades down to 4 at once, places them and attacks on', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await table.patch(attacking({
-      owners: ownership(1, { kamchatka: 2, greenland: 3 }),
-      armies: armiesWith({ alaska: 6, kamchatka: 1 }),
+      owners: ownership(1, { dawnspire: 2, dustgate: 3 }),
+      armies: armiesWith({ frostcape: 6, dawnspire: 1 }),
       hands: { 1: [0, 3], 2: [6, 9, 12, WILD], 3: [] }
     }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 6, 1);
     await rollDice(alice, 3);
     await expect(playerRow(alice, 'Bob').locator('.player-status')).toHaveText('eliminated');
@@ -444,32 +445,32 @@ test.describe('Territories rules', () => {
     await button(alice, 'Move 5').click();
     await expect(panelTitle(alice)).toHaveText('Trade the cards you took');
     await expect(panel(alice)).toContainText('You hold 6 cards: trade a set below before placing.');
-    await trade(alice, 'Alaska', 'Alberta', 'Western United States');
+    await trade(alice, 'Frostcape', 'Elkmoor', 'Gullskerry');
     await expect(cards(alice)).toHaveCount(3);
     await expect(alice.getByRole('button', { name: /^Trade for/ })).toHaveCount(0); // 4 or fewer: no more trading
     await expect(alice.locator('.armies-left')).toHaveText('4 of 4 armies left to place');
     await button(alice, 'All').click();
-    await disc(alice, 'kamchatka').click();
+    await disc(alice, 'dawnspire').click();
     await button(alice, 'Place and attack').click();
-    await expect(armiesOn(alice, 'kamchatka')).toHaveText('9');
+    await expect(armiesOn(alice, 'dawnspire')).toHaveText('9');
     await expect(panelTitle(alice)).toHaveText('Attack');
   });
 
   test('winning: control all 42 territories, or be the only player left holding any', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    await table.patch(attacking({ owners: ownership(1, { kamchatka: 2 }), armies: armiesWith({ alaska: 4, kamchatka: 1 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ owners: ownership(1, { dawnspire: 2 }), armies: armiesWith({ frostcape: 4, dawnspire: 1 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 1);
     await rollDice(alice, 2);
     await expect(turn(bob)).toHaveText('Game over: Alice wins');
     await expect(bob.locator('.game-status')).toContainText('Alice wins: they control the whole world');
 
-    // Cara is out and Greenland is neutral: taking Bob's last territory leaves Alice the only one holding any
+    // Cara is out and Dustgate is neutral: taking Bob's last territory leaves Alice the only one holding any
     const other = await start(seat);
     await other.table.patch(attacking({
-      owners: ownership(1, { kamchatka: 2, greenland: null }), eliminated: [3], armies: armiesWith({ alaska: 4, kamchatka: 1 })
+      owners: ownership(1, { dawnspire: 2, dustgate: null }), eliminated: [3], armies: armiesWith({ frostcape: 4, dawnspire: 1 })
     }));
-    await choose(other.alice, 'alaska', 'kamchatka');
+    await choose(other.alice, 'frostcape', 'dawnspire');
     await other.table.dice(6, 6, 1);
     await rollDice(other.alice, 2);
     await expect(turn(other.bob)).toHaveText('Game over: Alice wins');
@@ -481,14 +482,14 @@ test.describe('Territories rules', () => {
     await table.patch(crafted({ hands: { 1: [0, 3, 6], 2: [1], 3: [] } }));
     await expect(cards(alice)).toHaveCount(3);
     await expect(cards(bob)).toHaveCount(1);
-    await expect(card(bob, 'Northwest Territory')).toHaveCount(1);
-    await expect(bob.locator('.territories-card', { hasText: 'Alaska' })).toHaveCount(0);
+    await expect(card(bob, 'Pinewatch')).toHaveCount(1);
+    await expect(bob.locator('.territories-card', { hasText: 'Frostcape' })).toHaveCount(0);
     await expect(playerRow(bob, 'Alice').locator('.player-stats')).toContainText('3 cards');
     await expect(bob.locator('.deck-line')).toHaveText('Next set: 4 armies. Cards in the deck: 44'); // a count, not the order
 
-    await trade(alice, 'Alaska', 'Alberta', 'Western United States');
-    await expect(events(bob).first()).toHaveText('Alice put 2 more armies on Alaska, shown on a traded card');
-    await expect(events(bob).nth(1)).toHaveText('Alice traded Alaska (infantry), Alberta (infantry), Western United States (infantry) for 4 armies');
+    await trade(alice, 'Frostcape', 'Elkmoor', 'Gullskerry');
+    await expect(events(bob).first()).toHaveText('Alice put 2 more armies on Frostcape, shown on a traded card');
+    await expect(events(bob).nth(1)).toHaveText('Alice traded Frostcape (infantry), Elkmoor (infantry), Gullskerry (infantry) for 4 armies');
 
     await table.patch({ hands: { 1: [9], 2: [1], 3: [] } });
     await (await headerButton(bob, 'History')).click();
@@ -500,8 +501,8 @@ test.describe('Territories rules', () => {
 
   test('hidden: a saved game viewed as a player shows that player\'s cards, and the table view shows none', async ({ seat, visitor }) => {
     const { table, alice } = await start(seat);
-    await table.patch(attacking({ owners: ownership(1, { kamchatka: 2 }), armies: armiesWith({ alaska: 4, kamchatka: 1 }), hands: { 1: [0, 3], 2: [1], 3: [2] } }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ owners: ownership(1, { dawnspire: 2 }), armies: armiesWith({ frostcape: 4, dawnspire: 1 }), hands: { 1: [0, 3], 2: [1], 3: [2] } }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 1);
     await rollDice(alice, 2);
     await expect(turn(alice)).toHaveText('Game over: Alice wins');
@@ -524,7 +525,7 @@ test.describe('Territories rules', () => {
     await expect(saved.locator('.territories-card')).toHaveCount(3);
     await saved.getByLabel('View as').selectOption({ label: 'Cara' });
     await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Cara');
-    await expect(saved.locator('.territories-card')).toHaveText([/Greenland/]);
+    await expect(saved.locator('.territories-card')).toHaveText([/Dustgate/]);
     await saved.getByLabel('View as').selectOption({ label: 'Table only' });
     await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Table only');
     await expect(saved.locator('.territories-card')).toHaveCount(0);
@@ -532,14 +533,14 @@ test.describe('Territories rules', () => {
 
   test('dismissed on their turn: the territories turn neutral (grey) with their armies, the cards are discarded, the next player starts, and two play on', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
-    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, armies: armiesWith({ greenland: 4 }), hands: { 1: [], 2: [], 3: [7, 8] } }));
+    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, armies: armiesWith({ dustgate: 4 }), hands: { 1: [], 2: [], 3: [7, 8] } }));
     await expect(playerRow(alice, 'Cara').locator('.player-stats')).toContainText('2 cards');
     await leave(cara);
     await dismiss('Cara', alice, bob);
 
-    await expect(land(alice, 'greenland')).toHaveAttribute('aria-label', 'Greenland: neutral, 4 armies');
-    await expect(land(alice, 'greenland')).toHaveClass(/seat-neutral/);
-    const [red, green, blue] = (await rgb(alice, '[data-anim-key="territory-greenland"] .disc')).match(/\d+/g)!.map(Number);
+    await expect(land(alice, 'dustgate')).toHaveAttribute('aria-label', 'Dustgate: neutral, 4 armies');
+    await expect(land(alice, 'dustgate')).toHaveClass(/seat-neutral/);
+    const [red, green, blue] = (await rgb(alice, '[data-anim-key="territory-dustgate"] .disc')).match(/\d+/g)!.map(Number);
     expect(red === green && green === blue).toBe(true);
     await expect(playerRow(alice, 'Cara').locator('.player-status')).toHaveText('left');
     await expect(playerRow(alice, 'Cara').locator('.player-stats')).toContainText('0 cards');
@@ -553,19 +554,19 @@ test.describe('Territories rules', () => {
 
   test('neutral armies never attack or move and count for nobody, but defend with the usual dice and can be captured', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 5, kamchatka: 2 }) }));
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 5, dawnspire: 2 }) }));
     await leave(cara);
     await dismiss('Cara', alice, bob);
-    await expect(land(alice, 'kamchatka')).toHaveAttribute('aria-label', 'Kamchatka: neutral, 2 armies');
+    await expect(land(alice, 'dawnspire')).toHaveAttribute('aria-label', 'Dawnspire: neutral, 2 armies');
     await expect(panelTitle(alice)).toHaveText('Attack'); // Alice's turn goes on
     await expect(playerRow(alice, 'Neutral').locator('.player-stats')).not.toContainText('a turn');
 
-    await choose(alice, 'alaska', 'kamchatka');
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 6, 1, 1);
     await rollDice(alice, 3);
     await expect.poll(() => diceShown(alice, 'defend')).toEqual(['1', '1']);
     await expect(battle(alice).locator('.battle-who')).toHaveText(['Alice', 'Neutral']);
-    await expect(battle(alice)).toContainText('Kamchatka was captured');
+    await expect(battle(alice)).toContainText('Dawnspire was captured');
     await button(alice, 'Move 4').click();
     await button(alice, 'End turn').click();
     // Neutral never takes a turn: Bob, then Alice again
@@ -593,21 +594,21 @@ test.describe('Territories rules', () => {
 
   test('dismissed while moving into a captured territory: the dice they rolled move in first', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 5, kamchatka: 1 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 5, dawnspire: 1 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 6, 1);
     await rollDice(alice, 3);
-    await expect(panelTitle(alice)).toHaveText('Move into Kamchatka');
+    await expect(panelTitle(alice)).toHaveText('Move into Dawnspire');
     await leave(alice);
     await dismiss('Alice', bob, cara);
-    await expect(land(bob, 'kamchatka')).toHaveAttribute('aria-label', 'Kamchatka: neutral, 3 armies');
-    await expect(land(bob, 'alaska')).toHaveAttribute('aria-label', 'Alaska: neutral, 2 armies');
+    await expect(land(bob, 'dawnspire')).toHaveAttribute('aria-label', 'Dawnspire: neutral, 3 armies');
+    await expect(land(bob, 'frostcape')).toHaveAttribute('aria-label', 'Frostcape: neutral, 2 armies');
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
   test('an eliminated player has no armies tray', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    await table.patch(attacking({ owners: ownership(1, { greenland: 3 }), eliminated: [2] }));
+    await table.patch(attacking({ owners: ownership(1, { dustgate: 3 }), eliminated: [2] }));
     await expect(playerRow(alice, 'Bob').locator('.player-status')).toHaveText('eliminated');
     await expect(alice.getByRole('region', { name: 'Your armies' })).toBeVisible();
     await expect(bob.getByRole('region', { name: 'Your armies' })).toHaveCount(0);
@@ -615,7 +616,7 @@ test.describe('Territories rules', () => {
 
   test('dismissed: the game ends when only one player still holds territory', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
-    await table.patch(attacking({ owners: ownership(1, { greenland: 3 }), eliminated: [2] }));
+    await table.patch(attacking({ owners: ownership(1, { dustgate: 3 }), eliminated: [2] }));
     await leave(cara);
     await dismiss('Cara', alice, bob);
     await expect(turn(alice)).toHaveText('Game over: Alice wins');
@@ -623,42 +624,42 @@ test.describe('Territories rules', () => {
 
   test('undo needs every player\'s approval, and an attack played again rolls new dice', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 4 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 4 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(1, 1, 1, 6, 6);
     await rollDice(alice, 3);
-    await expect(armiesOn(alice, 'alaska')).toHaveText('2');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('2');
 
     await alice.getByRole('button', { name: 'Undo' }).click();
     await bob.getByRole('button', { name: 'Decline' }).click();
-    await expect(armiesOn(alice, 'alaska')).toHaveText('2');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('2');
 
     await alice.getByRole('button', { name: 'Undo' }).click();
     await bob.getByRole('button', { name: 'Approve' }).click();
     await expect(cara.getByRole('button', { name: 'Approve' })).toBeVisible();
-    await expect(armiesOn(alice, 'alaska')).toHaveText('2'); // Cara has not approved yet
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('2'); // Cara has not approved yet
     await cara.getByRole('button', { name: 'Approve' }).click();
-    await expect(armiesOn(alice, 'alaska')).toHaveText('4');
-    await expect(armiesOn(alice, 'kamchatka')).toHaveText('3');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('4');
+    await expect(armiesOn(alice, 'dawnspire')).toHaveText('3');
 
-    await choose(alice, 'alaska', 'kamchatka');
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 6, 1, 1);
     await rollDice(alice, 3);
-    await expect(armiesOn(alice, 'kamchatka')).toHaveText('1');
-    await expect(armiesOn(alice, 'alaska')).toHaveText('4');
+    await expect(armiesOn(alice, 'dawnspire')).toHaveText('1');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('4');
   });
 });
 
 test.describe('Territories controls', () => {
-  test('each territory is a disc in its owner\'s color with its army count, borders are lines and sea lanes dashed, and Alaska\'s lane runs off both edges', async ({ seat }) => {
+  test('each territory is a disc in its owner\'s color with its army count, borders are lines and sea lanes dashed, and Frostcape\'s lane runs off both edges', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(crafted({ armies: armiesWith({ alaska: 7 }) }));
-    await expect(armiesOn(alice, 'alaska')).toHaveText('7');
-    await expect(land(alice, 'alaska')).toHaveAttribute('aria-label', 'Alaska: Alice, 7 armies');
-    const aliceColor = await rgb(alice, '[data-anim-key="territory-alaska"] .disc');
+    await table.patch(crafted({ armies: armiesWith({ frostcape: 7 }) }));
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('7');
+    await expect(land(alice, 'frostcape')).toHaveAttribute('aria-label', 'Frostcape: Alice, 7 armies');
+    const aliceColor = await rgb(alice, '[data-anim-key="territory-frostcape"] .disc');
     expect(aliceColor).toBe(await rgb(alice, '.player-row:has(.player-name:text-matches("^Alice")) .swatch'));
-    expect(await rgb(alice, '[data-anim-key="territory-alberta"] .disc')).toBe(aliceColor);
-    expect(await rgb(alice, '[data-anim-key="territory-northwestTerritory"] .disc')).not.toBe(aliceColor);
+    expect(await rgb(alice, '[data-anim-key="territory-elkmoor"] .disc')).toBe(aliceColor);
+    expect(await rgb(alice, '[data-anim-key="territory-pinewatch"] .disc')).not.toBe(aliceColor);
 
     const dashes = (selector: string) => alice.locator(selector).evaluateAll(lines => [...new Set(lines.map(line => getComputedStyle(line).strokeDasharray))]);
     expect(await dashes('line.border:not(.sea-lane)')).toEqual(['none']);
@@ -674,14 +675,14 @@ test.describe('Territories controls', () => {
 
   test('with Color-blind symbols on, each owned territory disc and player list swatch shows a shape for its owner and neutral ones show none', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(crafted({ owners: { ...game().owners, greenland: null } }));
-    await expect(land(alice, 'greenland')).toHaveClass(/seat-neutral/);
+    await table.patch(crafted({ owners: { ...game().owners, dustgate: null } }));
+    await expect(land(alice, 'dustgate')).toHaveClass(/seat-neutral/);
     await expect(alice.locator('.color-symbol')).toHaveCount(0);
     await setPreference(alice, 'Color-blind symbols', true);
-    await expect(land(alice, 'alaska').locator('.color-symbol-circle')).toHaveCount(1);
-    await expect(land(alice, 'northwestTerritory').locator('.color-symbol-square')).toHaveCount(1);
-    await expect(land(alice, 'alberta').locator('.color-symbol-circle')).toHaveCount(1);
-    await expect(land(alice, 'greenland').locator('.color-symbol')).toHaveCount(0);
+    await expect(land(alice, 'frostcape').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'pinewatch').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(land(alice, 'elkmoor').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'dustgate').locator('.color-symbol')).toHaveCount(0);
     await expect(playerRow(alice, 'Alice').locator('.color-symbol-circle')).toHaveCount(1);
     await expect(playerRow(alice, 'Bob').locator('.color-symbol-square')).toHaveCount(1);
     await expect(playerRow(alice, 'Cara').locator('.color-symbol-triangle')).toHaveCount(1);
@@ -705,32 +706,32 @@ test.describe('Territories controls', () => {
     await expect(alice.locator('.armies-left')).toHaveText('7 of 7 armies left to place');
     await button(alice, '5').click();
     await expect(button(alice, '5')).toHaveAttribute('aria-pressed', 'true');
-    await disc(alice, 'alaska').click();
-    await expect(land(alice, 'alaska').locator('.draft-badge')).toHaveText('+5');
+    await disc(alice, 'frostcape').click();
+    await expect(land(alice, 'frostcape').locator('.draft-badge')).toHaveText('+5');
     await button(alice, '1').click();
-    await disc(alice, 'alberta').click();
-    await expect(alice.locator('.draft-list li span')).toHaveText(['5 on Alaska', '1 on Alberta']);
+    await disc(alice, 'elkmoor').click();
+    await expect(alice.locator('.draft-list li span')).toHaveText(['5 on Frostcape', '1 on Elkmoor']);
     await expect(alice.locator('.armies-left')).toHaveText('1 of 7 armies left to place');
-    await alice.getByRole('button', { name: 'Take one back from Alaska' }).click();
-    await expect(alice.locator('.draft-list li span')).toHaveText(['4 on Alaska', '1 on Alberta']);
+    await alice.getByRole('button', { name: 'Take one back from Frostcape' }).click();
+    await expect(alice.locator('.draft-list li span')).toHaveText(['4 on Frostcape', '1 on Elkmoor']);
     await button(alice, 'All').click();
-    await disc(alice, 'westernUnitedStates').click();
-    await expect(land(alice, 'westernUnitedStates').locator('.draft-badge')).toHaveText('+2');
+    await disc(alice, 'gullskerry').click();
+    await expect(land(alice, 'gullskerry').locator('.draft-badge')).toHaveText('+2');
     await expect(alice.locator('.armies-left')).toHaveText('0 of 7 armies left to place');
-    await expect(land(alice, 'quebec')).not.toHaveClass(/selectable/);
+    await expect(land(alice, 'stonebridge')).not.toHaveClass(/selectable/);
     await button(alice, 'Place and attack').click();
-    await expect(armiesOn(alice, 'alaska')).toHaveText('7');
-    await expect(armiesOn(alice, 'alberta')).toHaveText('4');
-    await expect(armiesOn(alice, 'westernUnitedStates')).toHaveText('5');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('7');
+    await expect(armiesOn(alice, 'elkmoor')).toHaveText('4');
+    await expect(armiesOn(alice, 'gullskerry')).toHaveText('5');
   });
 
   test('attacking: click an outlined territory, then a highlighted enemy, choose dice and Roll or Blitz; the choice stays and everyone sees the dice', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 4, alberta: 1 }) }));
-    await expect(land(alice, 'alaska')).toHaveClass(/selectable/);
-    await expect(land(alice, 'alberta')).not.toHaveClass(/selectable/);
-    await choose(alice, 'alaska', 'kamchatka');
-    await expect(panel(alice)).toContainText('Alaska (4) attacks Kamchatka (3).');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 4, elkmoor: 1 }) }));
+    await expect(land(alice, 'frostcape')).toHaveClass(/selectable/);
+    await expect(land(alice, 'elkmoor')).not.toHaveClass(/selectable/);
+    await choose(alice, 'frostcape', 'dawnspire');
+    await expect(panel(alice)).toContainText('Frostcape (4) attacks Dawnspire (3).');
     await expect(button(alice, 'Blitz')).toBeVisible();
     const one = alice.getByRole('group', { name: 'Dice' }).getByRole('button', { name: '1', exact: true });
     await one.click();
@@ -738,42 +739,42 @@ test.describe('Territories controls', () => {
 
     await table.dice(6, 1, 1);
     await button(alice, 'Roll 1 die').click();
-    await expect(armiesOn(alice, 'kamchatka')).toHaveText('2');
-    await expect(panel(alice)).toContainText('Alaska (4) attacks Kamchatka (2).');
+    await expect(armiesOn(alice, 'dawnspire')).toHaveText('2');
+    await expect(panel(alice)).toContainText('Frostcape (4) attacks Dawnspire (2).');
     await expect(button(alice, 'Roll 1 die')).toBeVisible();
-    await expect(land(alice, 'alaska')).toHaveClass(/\bsource\b/);
-    await expect(land(alice, 'kamchatka')).toHaveClass(/\btarget\b/);
+    await expect(land(alice, 'frostcape')).toHaveClass(/\bsource\b/);
+    await expect(land(alice, 'dawnspire')).toHaveClass(/\btarget\b/);
 
-    await expect(battle(bob)).toContainText('Alaska attacked Kamchatka');
+    await expect(battle(bob)).toContainText('Frostcape attacked Dawnspire');
     await expect.poll(() => diceShown(bob, 'attack')).toEqual(['6']);
     expect(await diceShown(bob, 'defend')).toEqual(['1', '1']);
   });
 
   test('after a capture, choose the armies with the slider and click Move', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 8, kamchatka: 1 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 8, dawnspire: 1 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 6, 1);
     await rollDice(alice, 3);
     await expect(button(alice, 'Move 7')).toBeVisible();
     await slider(alice).fill('5');
     await expect(alice.locator('.army-slider output')).toHaveText('5');
-    await expect(panel(alice)).toContainText('3 stay in Alaska');
+    await expect(panel(alice)).toContainText('3 stay in Frostcape');
     await button(alice, 'Move 5').click();
-    await expect(armiesOn(alice, 'kamchatka')).toHaveText('5');
-    await expect(armiesOn(alice, 'alaska')).toHaveText('3');
+    await expect(armiesOn(alice, 'dawnspire')).toHaveText('5');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('3');
   });
 
   test('Stop attacking and fortify, pick two territories, choose the armies with the slider and Move to end the turn, or End turn', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    const owners = ownership(2, { alaska: 1, alberta: 1, ontario: 1 });
-    await table.patch(attacking({ owners, armies: armiesWith({ alaska: 6 }) }));
+    const owners = ownership(2, { frostcape: 1, elkmoor: 1, copperfield: 1 });
+    await table.patch(attacking({ owners, armies: armiesWith({ frostcape: 6 }) }));
     await button(alice, 'Stop attacking and fortify').click();
-    await choose(alice, 'alaska', 'ontario');
+    await choose(alice, 'frostcape', 'copperfield');
     await slider(alice).fill('1');
     await button(alice, 'Move 1 and end turn').click();
-    await expect(armiesOn(alice, 'ontario')).toHaveText('4');
-    await expect(armiesOn(alice, 'alaska')).toHaveText('5');
+    await expect(armiesOn(alice, 'copperfield')).toHaveText('4');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('5');
     await expect(turn(bob)).toHaveText('Your turn');
 
     await table.patch(attacking({ owners }));
@@ -786,9 +787,9 @@ test.describe('Territories controls', () => {
     const { table, alice } = await start(seat);
     await table.patch(crafted({ hands: { 1: [0, 1, 2, WILD], 2: [], 3: [] } }));
     await expect(alice.locator('.card-hand .card-symbol')).toHaveText(['I', 'C', 'A', 'W']);
-    await expect(alice.locator('.card-hand .card-territory')).toHaveText(['Alaska', 'Northwest Territory', 'Greenland', 'Wild']);
+    await expect(alice.locator('.card-hand .card-territory')).toHaveText(['Frostcape', 'Pinewatch', 'Dustgate', 'Wild']);
     await expect(alice.locator('.card-hand .card-kind')).toHaveText(['infantry, yours', 'cavalry', 'artillery', 'wild']);
-    await trade(alice, 'Alaska', 'Northwest Territory', 'Greenland');
+    await trade(alice, 'Frostcape', 'Pinewatch', 'Dustgate');
     await expect(cards(alice)).toHaveCount(1);
     await expect(alice.locator('.armies-left')).toHaveText('7 of 7 armies left to place'); // 3 and a set of 4
   });
@@ -797,22 +798,22 @@ test.describe('Territories controls', () => {
     const { table, alice } = await start(seat);
     const base = game();
     await table.patch(crafted({
-      owners: { ...base.owners, indonesia: 1, westernAustralia: 1, easternAustralia: 1 },
+      owners: { ...base.owners, driftwood: 1, reefwatch: 1, turtleback: 1 },
       hands: { 1: [0, 3], 2: [1], 3: [] },
       tradeCount: 2,
       deck: ALL_CARDS.slice(10),
       log: ['An older event']
     }));
     const stats = playerRow(alice, 'Alice').locator('.player-stats span');
-    await expect(stats).toHaveText(['17 territories', '51 armies', '2 cards', '+7 a turn']); // 5 for 17, 2 for Australia
-    await expect(playerRow(alice, 'Alice').locator('.chip')).toHaveText(['Australia']);
+    await expect(stats).toHaveText(['17 territories', '51 armies', '2 cards', '+7 a turn']); // 5 for 17, 2 for Coral Isles
+    await expect(playerRow(alice, 'Alice').locator('.chip')).toHaveText(['Coral Isles']);
     await expect(playerRow(alice, 'Bob').locator('.player-stats span')).toHaveText(['13 territories', '39 armies', '1 card', '+4 a turn']);
     await expect(alice.locator('.deck-line')).toHaveText('Next set: 8 armies. Cards in the deck: 34');
 
     await button(alice, 'All').click();
-    await disc(alice, 'alaska').click();
+    await disc(alice, 'frostcape').click();
     await button(alice, 'Place and attack').click();
-    await expect(events(alice)).toHaveText(['Alice placed 3 on Alaska', 'An older event']);
+    await expect(events(alice)).toHaveText(['Alice placed 3 on Frostcape', 'An older event']);
   });
 
   test('clicking Undo asks everyone to undo the last move', async ({ seat }) => {
@@ -820,7 +821,7 @@ test.describe('Territories controls', () => {
     await table.patch(crafted());
     await expect(button(alice, 'Undo')).toBeDisabled(); // nothing to undo yet
     await button(alice, 'All').click();
-    await disc(alice, 'alaska').click();
+    await disc(alice, 'frostcape').click();
     await button(alice, 'Place and attack').click();
     await button(alice, 'Undo').click();
     await expect(bob.getByRole('button', { name: 'Approve' })).toBeVisible();
@@ -867,7 +868,7 @@ test.describe('Territories differences from Wikipedia', () => {
     await table.patch(attacking());
     await expect(panel(cara)).toHaveText('Waiting for Alice to attack');
     await expect(cara.getByRole('group', { name: 'Dice' })).toHaveCount(0);
-    await choose(alice, 'alaska', 'kamchatka');
+    await choose(alice, 'frostcape', 'dawnspire');
     await alice.getByRole('group', { name: 'Dice' }).getByRole('button', { name: '1', exact: true }).click();
     await table.dice(1, 6, 6);
     await button(alice, 'Roll 1 die').click();
@@ -876,32 +877,32 @@ test.describe('Territories differences from Wikipedia', () => {
 
   test('Blitz repeats attacks with the most dice, each roll still random', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await table.patch(attacking({ armies: armiesWith({ alaska: 5, kamchatka: 2 }) }));
-    await choose(alice, 'alaska', 'kamchatka');
+    await table.patch(attacking({ armies: armiesWith({ frostcape: 5, dawnspire: 2 }) }));
+    await choose(alice, 'frostcape', 'dawnspire');
     await expect(button(alice, 'Blitz')).toHaveAttribute('title', 'Attack with the most dice until the territory falls or 1 army is left');
     // First roll: 3 dice lose 2 on ties; second: 2 dice (3 armies left) win both
     await table.dice(1, 1, 1, 1, 1, 6, 6, 1, 1);
     await button(alice, 'Blitz').click();
     await expect(battle(alice)).toContainText('(blitz, 2 rolls, last roll shown)');
     expect(await diceShown(alice, 'attack')).toEqual(['6', '6']);
-    await expect(panelTitle(alice)).toHaveText('Move into Kamchatka');
+    await expect(panelTitle(alice)).toHaveText('Move into Dawnspire');
   });
 
   test('card symbols are assigned in turn around the map', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await table.patch(crafted({ hands: { 1: [0, 1, 2, 3, 4], 2: [], 3: [] } }));
-    await expect(alice.locator('.card-hand .card-territory')).toHaveText(['Alaska', 'Northwest Territory', 'Greenland', 'Alberta', 'Ontario']);
+    await expect(alice.locator('.card-hand .card-territory')).toHaveText(['Frostcape', 'Pinewatch', 'Dustgate', 'Elkmoor', 'Copperfield']);
     await expect(alice.locator('.card-hand .card-symbol')).toHaveText(['I', 'C', 'A', 'I', 'C']);
   });
 
   test('the 2 bonus armies go to the first card in the set that shows a territory you hold, once a turn', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    // Alberta, Alaska and Western United States are all Alice's; Alberta is picked first
+    // Elkmoor, Frostcape and Gullskerry are all Alice's; Elkmoor is picked first
     await table.patch(crafted({ hands: { 1: [0, 3, 6], 2: [], 3: [] } }));
-    await trade(alice, 'Alberta', 'Alaska', 'Western United States');
-    await expect(armiesOn(alice, 'alberta')).toHaveText('5');
-    await expect(armiesOn(alice, 'alaska')).toHaveText('3');
-    await expect(armiesOn(alice, 'westernUnitedStates')).toHaveText('3');
+    await trade(alice, 'Elkmoor', 'Frostcape', 'Gullskerry');
+    await expect(armiesOn(alice, 'elkmoor')).toHaveText('5');
+    await expect(armiesOn(alice, 'frostcape')).toHaveText('3');
+    await expect(armiesOn(alice, 'gullskerry')).toHaveText('3');
   });
 
   test('trading is done only while placing armies', async ({ seat }) => {
@@ -915,9 +916,9 @@ test.describe('Territories differences from Wikipedia', () => {
 
   test('fortify may move armies through any chain of your own territories', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    const chain = ['alaska', 'alberta', 'westernUnitedStates', 'easternUnitedStates', 'quebec'];
+    const chain = ['frostcape', 'elkmoor', 'gullskerry', 'harrowgate', 'stonebridge'];
     await table.patch(attacking({ phase: 'fortify', owners: ownership(2, Object.fromEntries(chain.map(id => [id, 1]))) }));
-    await disc(alice, 'alaska').click();
+    await disc(alice, 'frostcape').click();
     for (const id of chain.slice(1)) await expect(land(alice, id)).toHaveClass(/can-target/);
     await expect(alice.locator('.territory.can-target')).toHaveCount(4);
   });
@@ -933,15 +934,15 @@ test.describe('Territories differences from Wikipedia', () => {
   test('the only player left holding territory wins, even with neutral territories on the map', async ({ seat }) => {
     const { table, alice, bob, cara } = await start(seat);
     // Cara leaves first; then Alice takes Bob's last territory, with Cara's neutral ones still standing
-    await table.patch(attacking({ owners: ownership(1, { kamchatka: 2, greenland: 3, iceland: 3 }), armies: armiesWith({ alaska: 4, kamchatka: 1 }) }));
+    await table.patch(attacking({ owners: ownership(1, { dawnspire: 2, dustgate: 3, oakheart: 3 }), armies: armiesWith({ frostcape: 4, dawnspire: 1 }) }));
     await leave(cara);
     await dismiss('Cara', alice, bob);
-    await expect(land(alice, 'greenland')).toHaveClass(/seat-neutral/);
-    await choose(alice, 'alaska', 'kamchatka');
+    await expect(land(alice, 'dustgate')).toHaveClass(/seat-neutral/);
+    await choose(alice, 'frostcape', 'dawnspire');
     await table.dice(6, 6, 1);
     await rollDice(alice, 2);
     await expect(turn(bob)).toHaveText('Game over: Alice wins');
-    await expect(land(bob, 'greenland')).toHaveClass(/seat-neutral/);
+    await expect(land(bob, 'dustgate')).toHaveClass(/seat-neutral/);
   });
 
   test('leaving: a dismissed player\'s territories turn neutral, their cards are discarded, and play goes on with 2', async ({ seat }) => {
@@ -949,7 +950,7 @@ test.describe('Territories differences from Wikipedia', () => {
     await table.patch(attacking({ hands: { 1: [], 2: [], 3: [5, 8] } }));
     await leave(cara);
     await dismiss('Cara', alice, bob);
-    await expect(land(alice, 'greenland')).toHaveAttribute('aria-label', 'Greenland: neutral, 3 armies');
+    await expect(land(alice, 'dustgate')).toHaveAttribute('aria-label', 'Dustgate: neutral, 3 armies');
     await expect(playerRow(alice, 'Cara').locator('.player-stats')).toContainText('0 cards');
     expect((await table.state<GameState>()).discard).toEqual([5, 8]);
     await button(alice, 'End turn').click();
@@ -957,9 +958,10 @@ test.describe('Territories differences from Wikipedia', () => {
   });
 });
 
-test('an old risk join link opens Territories', async ({ browser, server }) => {
+test('a join link with the old game id opens Territories', async ({ browser, server }) => {
+  const oldId = Object.keys(LEGACY_IDS).find(id => LEGACY_IDS[id].id === 'territories')!;
   const visitor = await newPlayer(browser, server);
-  await visitor.goto(`/join/risk/oldlink-${Date.now()}`);
+  await visitor.goto(`/join/${oldId}/oldlink-${Date.now()}`);
   const dialog = visitor.getByRole('dialog', { name: 'Join Territories' });
   await dialog.getByLabel('Your name').fill('Alice');
   await dialog.getByRole('button', { name: 'Join', exact: true }).click();

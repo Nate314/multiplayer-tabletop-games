@@ -1,10 +1,12 @@
-# Risk
+# Territories
 
-Raise armies, roll for battles and conquer the world, for 3 to 6 players.
+Plays like [Risk](https://en.wikipedia.org/wiki/Risk_(game)), on its own world map.
+
+Raise armies, roll for battles and conquer the world of Calderra, for 3 to 6 players.
 
 ## Rules
 
-- **The map.** The classic world of 42 territories in six continents, with the bonus for holding a whole continent: North America 5 (9 territories), South America 2 (4), Europe 5 (7), Africa 3 (6), Asia 7 (12) and Australia 2 (4). Territories that touch, or are joined by a sea lane, border each other: 83 borders in all, among them Alaska and Kamchatka across the edge of the map, Brazil and North Africa, Greenland and Iceland, East Africa and the Middle East, and Siam and Indonesia
+- **The map.** The world of Calderra: 42 territories in six continents, with the bonus for holding a whole continent: Westmarch 5 (9 territories), Sunreach 2 (4), Highvale 5 (7), Amberveld 3 (6), Eastwild 7 (12) and the Coral Isles 2 (4). Territories that touch, or are joined by a sea lane, border each other: 83 borders in all, among them Frostcape and Dawnspire across the edge of the map, Gullskerry and Windhold, Glass Bay and Brightshore, Tidewell and Saffron Coast, and the one way into the Coral Isles, from Rainhollow to Reefwatch
 - **Cards.** 42 territory cards, each showing a territory and a symbol (infantry, cavalry or artillery, 14 of each), and 2 wild cards, shuffled into one deck. When it runs out the traded cards are shuffled into a new deck
 - **Setup.** Each player has 35 armies with 3 players, 30 with 4, 25 with 5 and 20 with 6. A player is drawn at random to go first. The territories are dealt out at random, one at a time from the first player around the table, with one army on each, so the first players may get one more territory than the rest. Then, in turn order, each player places all their remaining starting armies on their own territories in one move. The first player then takes the first turn, and turns go up through the seats
 - **Reinforce.** A turn starts with new armies: the number of territories you hold divided by 3, rounded down, at least 3, plus the bonus of every continent you hold whole, plus any card sets you trade. Place them on your own territories, in one go or a few at a time
@@ -21,7 +23,7 @@ Raise armies, roll for battles and conquer the world, for 3 to 6 players.
 
 ## Controls
 
-- The map shows each territory as a disc in its owner's color with its army count, every border as a line and every sea lane as a dashed line. Alaska and Kamchatka's lane runs off the left and right edges of the map. On a narrow window the map scrolls sideways in its own box
+- The map shows each territory as a disc in its owner's color with its army count, every border as a line and every sea lane as a dashed line. Frostcape and Dawnspire's lane runs off the left and right edges of the map. On a narrow window the map scrolls sideways in its own box
 - With a table screen connected, on Hand only (the default) the battle, the event log and the other players are hidden, and the map shows only on your turn
 - The side panel shows what you can do now. While placing armies, click your territories: each click adds 1, 5 or all that are left, as chosen with the buttons, and -1 takes one back. Click Place (or Place all in the setup). You can also drag from the Your armies tray at the top of the side panel onto one of your territories: a drop adds the same number a click would, and Place still sends it. Tapping the tray piece does nothing more, as your territories are already lit
 - Attacking, click one of your territories (outlined ones can attack), then a highlighted enemy territory next to it. Choose 1 to 3 dice and click Roll, or Blitz. The source and target stay chosen between rolls. The last battle's dice are shown below the panel for everyone
@@ -35,8 +37,9 @@ Raise armies, roll for battles and conquer the world, for 3 to 6 players.
 
 ## Differences from Wikipedia
 
-These follow the rules described on [Wikipedia](https://en.wikipedia.org/wiki/Risk_(game)) and, where it is silent, the official Hasbro rules. What remains different:
+These follow the rules in the Wikipedia article linked above and, where it is silent, the publisher's rules. What remains different:
 
+- **Map.** An original world with the published map's structure: six continents of 9, 4, 7, 6, 12 and 4 territories with bonuses 5, 2, 5, 3, 7 and 2, and 83 borders.
 - **Dealing the territories.** The rules have players claim territories one at a time, placing one army each turn, before placing the rest one at a time. Here the territories are dealt at random with one army each, and each player places all their remaining starting armies in a single move, which is much faster online
 - **Who goes first** is drawn at random instead of by rolling a die
 - **The defender always rolls the most dice allowed** (2, or 1 with a single army). The rules let the defender choose to roll one die; here the attacker never waits for a defender who is away

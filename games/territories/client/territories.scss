@@ -8,12 +8,12 @@
   --sea: #BFD9EA;
   --sea-line: #4F7FA3;
   --land-line: #5C5446;
-  --land-na: #E6D3A3;
-  --land-sa: #D9B98B;
-  --land-eu: #C9D3A4;
-  --land-af: #E3C08E;
-  --land-as: #BFD0A0;
-  --land-au: #DDBFA6;
+  --land-westmarch: #E6D3A3;
+  --land-sunreach: #D9B98B;
+  --land-highvale: #C9D3A4;
+  --land-amberveld: #E3C08E;
+  --land-eastwild: #BFD0A0;
+  --land-coralIsles: #DDBFA6;
   --label: #3A3328;
   --button-bg: #8A2E1F;
   --button-hover-bg: #6F2418;
@@ -58,12 +58,12 @@
     --sea: #1C3446;
     --sea-line: #7FB2D6;
     --land-line: #CFC4AE;
-    --land-na: #5A4E33;
-    --land-sa: #5C4630;
-    --land-eu: #48522F;
-    --land-af: #604A2C;
-    --land-as: #3F4C30;
-    --land-au: #5B4436;
+    --land-westmarch: #5A4E33;
+    --land-sunreach: #5C4630;
+    --land-highvale: #48522F;
+    --land-amberveld: #604A2C;
+    --land-eastwild: #3F4C30;
+    --land-coralIsles: #5B4436;
     --label: #E8DFC9;
     --button-bg: #B5442F;
     --button-hover-bg: #CB5540;
@@ -168,34 +168,34 @@
     opacity: 0.85;
   }
 
-  .continent-northAmerica .land {
-    fill: var(--land-na);
-    stroke: var(--land-na);
+  .continent-westmarch .land {
+    fill: var(--land-westmarch);
+    stroke: var(--land-westmarch);
   }
 
-  .continent-southAmerica .land {
-    fill: var(--land-sa);
-    stroke: var(--land-sa);
+  .continent-sunreach .land {
+    fill: var(--land-sunreach);
+    stroke: var(--land-sunreach);
   }
 
-  .continent-europe .land {
-    fill: var(--land-eu);
-    stroke: var(--land-eu);
+  .continent-highvale .land {
+    fill: var(--land-highvale);
+    stroke: var(--land-highvale);
   }
 
-  .continent-africa .land {
-    fill: var(--land-af);
-    stroke: var(--land-af);
+  .continent-amberveld .land {
+    fill: var(--land-amberveld);
+    stroke: var(--land-amberveld);
   }
 
-  .continent-asia .land {
-    fill: var(--land-as);
-    stroke: var(--land-as);
+  .continent-eastwild .land {
+    fill: var(--land-eastwild);
+    stroke: var(--land-eastwild);
   }
 
-  .continent-australia .land {
-    fill: var(--land-au);
-    stroke: var(--land-au);
+  .continent-coralIsles .land {
+    fill: var(--land-coralIsles);
+    stroke: var(--land-coralIsles);
   }
 
   .continent-label {

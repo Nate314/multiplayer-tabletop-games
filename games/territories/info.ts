@@ -5,7 +5,7 @@ export const territoriesInfo: GameInfo = {
   id: 'territories',
   category: 'strategy',
   name: 'Territories',
-  description: 'Raise armies, roll for battles and conquer all 42 territories of the world',
+  description: 'Raise armies, roll for battles and conquer all 42 territories',
   minPlayers: 3,
   maxPlayers: 6
 };

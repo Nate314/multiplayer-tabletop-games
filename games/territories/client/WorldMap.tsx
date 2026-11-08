@@ -2,7 +2,7 @@ import ServerSvg from '../../../src/assets/ServerSvg.tsx';
 import { svgUrl } from '../../../src/assets/svgCache.ts';
 import { BORDERS, CONTINENTS, TERRITORIES } from '../map.ts';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { CONTINENT_LABELS, MAP_HEIGHT, MAP_WIDTH, SEAT_SYMBOLS, TERRITORY_RADIUS, seatClass, shortName, territoryKey } from './layout.ts';
+import { CONTINENT_LABELS, MAP_HEIGHT, MAP_WIDTH, SEAT_SYMBOLS, TERRITORY_RADIUS, seatClass, territoryKey } from './layout.ts';
 import type { PublicGameState } from '../types.ts';
 
 type WorldMapProps = {
@@ -21,7 +21,7 @@ const SYMBOL_SIZE = 9; // under the army count, inside the disc
 const byId = new Map(TERRITORIES.map(territory => [territory.id, territory]));
 
 // The world: continents as soft land shapes, every border as a line (dashed across the sea), and each territory as a
-// disc in its owner's color with its army count. Alaska and Kamchatka meet across the edge of the map.
+// disc in its owner's color with its army count. Dawnspire and Frostcape meet across the edge of the map.
 export default function WorldMap({ gameState, source = null, target = null, targets = [], highlight = [], draft = {}, canSelect, onSelect }: WorldMapProps) {
   const { owners, armies, playerNames } = gameState;
   return (
@@ -33,7 +33,7 @@ export default function WorldMap({ gameState, source = null, target = null, targ
       {BORDERS.map(({ a, b, sea }) => {
         const from = byId.get(a)!;
         const to = byId.get(b)!;
-        if (a === 'kamchatka' && b === 'alaska') {
+        if (a === 'dawnspire' && b === 'frostcape') {
           return (
             <g key={`${a}-${b}`} className="border sea-lane">
               <line x1={from.x} y1={from.y} x2={MAP_WIDTH} y2={from.y - 6} />
@@ -66,7 +66,7 @@ export default function WorldMap({ gameState, source = null, target = null, targ
             <text className="army-count" x={x} y={y}>{count}</text>
             <ColorSymbol color={owner ? SEAT_SYMBOLS[owner] : null} className="disc-symbol"
               svgProps={{ x: x - SYMBOL_SIZE / 2, y: y + 7, width: SYMBOL_SIZE, height: SYMBOL_SIZE }} />
-            <text className="territory-name" x={x} y={y + TERRITORY_RADIUS + 11}>{shortName(id)}</text>
+            <text className="territory-name" x={x} y={y + TERRITORY_RADIUS + 11}>{name}</text>
             {added > 0 && (
               <g className="draft-badge">
                 <circle cx={x + TERRITORY_RADIUS - 2} cy={y - TERRITORY_RADIUS + 2} r={10} />

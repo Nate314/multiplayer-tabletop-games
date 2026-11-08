@@ -1,5 +1,5 @@
-// Where things go on the drawn map (the land itself is games/territories/svg.ts): labels, short territory names and seat colors
-import { TERRITORIES } from '../map.ts';
+// Where things go on the drawn map (the land itself is games/territories/svg.ts): labels and seat colors
+import { CONTINENTS } from '../map.ts';
 import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import type { ContinentId, Seat } from '../types.ts';
 
@@ -22,32 +22,14 @@ type Point = { x: number; y: number };
 
 // Each continent's name and bonus sits in the sea next to it
 export const CONTINENT_LABELS: Record<ContinentId, Point> = {
-  northAmerica: { x: 70, y: 345 },
-  southAmerica: { x: 150, y: 520 },
-  europe: { x: 470, y: 22 },
-  africa: { x: 420, y: 560 },
-  asia: { x: 680, y: 22 },
-  australia: { x: 740, y: 600 }
+  westmarch: { x: 95, y: 336 },
+  sunreach: { x: 105, y: 588 },
+  highvale: { x: 500, y: 38 },
+  amberveld: { x: 470, y: 598 },
+  eastwild: { x: 660, y: 18 },
+  coralIsles: { x: 860, y: 598 }
 };
-
-// Names that fit under a territory on the map; the full name is its tooltip
-const SHORT: Record<string, string> = {
-  northwestTerritory: 'NW Territory',
-  westernUnitedStates: 'W. United States',
-  easternUnitedStates: 'E. United States',
-  centralAmerica: 'C. America',
-  northernEurope: 'N. Europe',
-  westernEurope: 'W. Europe',
-  southernEurope: 'S. Europe',
-  greatBritain: 'Gt. Britain',
-  westernAustralia: 'W. Australia',
-  easternAustralia: 'E. Australia'
-};
-
-export function shortName(id: string): string {
-  return SHORT[id] ?? TERRITORIES.find(territory => territory.id === id)?.name ?? id;
-}
 
 export function continentShort(id: ContinentId): string {
-  return { northAmerica: 'N. America', southAmerica: 'S. America', europe: 'Europe', africa: 'Africa', asia: 'Asia', australia: 'Australia' }[id];
+  return CONTINENTS.find(continent => continent.id === id)!.name;
 }

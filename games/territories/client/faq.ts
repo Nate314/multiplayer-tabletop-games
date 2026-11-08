@@ -26,7 +26,7 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How do attacks work?',
     answer: 'Click one of your territories with at least 2 armies, then a highlighted enemy territory next to it (lines on ' +
-      'the map are borders, dashed ones cross the sea; Alaska and Kamchatka meet across the edge). Choose 1 to 3 dice, ' +
+      'the map are borders, dashed ones cross the sea; Frostcape and Dawnspire meet across the edge). Choose 1 to 3 dice, ' +
       'never more than your armies there minus one, and roll. The defender always rolls as many dice as allowed: 2, or 1 ' +
       'with a single army. The highest dice are compared in pairs, each loses one army for the other side, and ties go to ' +
       'the defender. Blitz rolls the most dice again and again until the territory falls or you have 1 army left.'
