@@ -1,16 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BOARD, GROUPS, JAIL, groupSpaces, ownable, unmortgageCost } from './board.ts';
-import { CHANCE, COMMUNITY_CHEST } from './cards.ts';
+import { CHANCE, COMMUNITY_CHEST, DECK_NAMES } from './cards.ts';
 import type { Space } from './types.ts';
 
-test('the board has the 40 standard US spaces', () => {
+test('the board has 40 spaces in the standard pattern', () => {
   assert.equal(BOARD.length, 40);
-  assert.equal(BOARD[0].name, 'GO');
+  assert.equal(BOARD[0].name, 'Start');
   assert.equal(BOARD[JAIL].kind, 'jail');
   assert.equal(BOARD[20].kind, 'parking');
   assert.equal(BOARD[30].kind, 'goToJail');
-  assert.equal(BOARD[39].name, 'Boardwalk');
+  assert.equal(BOARD[39].name, 'Skyline Crescent');
   const kinds = (kind: string) => BOARD.filter(space => space.kind === kind).length;
   assert.equal(kinds('street'), 22);
   assert.equal(kinds('railroad'), 4);
@@ -39,8 +39,8 @@ test('color groups have two or three streets', () => {
 });
 
 test('lifting a mortgage costs the mortgage plus 10%, rounded up', () => {
-  assert.equal(unmortgageCost(1), 33); // Mediterranean, $30
-  assert.equal(unmortgageCost(37), 193); // Park Place, $175
+  assert.equal(unmortgageCost(1), 33); // Tanner Row, $30
+  assert.equal(unmortgageCost(37), 193); // Summit Rise, $175
   assert.equal(unmortgageCost(39), 220);
 });
 
@@ -125,4 +125,42 @@ test('every space and card keeps its rules when the names change', () => {
     '{"type":"collect","amount":10}',
     '{"type":"collect","amount":100}'
   ]);
+});
+
+// The names on the board this one replaced, kept only to check none comes back
+const OLD_NAMES = [
+  'GO', 'Mediterranean Avenue', 'Community Chest', 'Baltic Avenue', 'Reading Railroad', 'Oriental Avenue', 'Chance',
+  'Vermont Avenue', 'Connecticut Avenue', 'St. Charles Place', 'Electric Company', 'States Avenue', 'Virginia Avenue',
+  'Pennsylvania Railroad', 'St. James Place', 'Tennessee Avenue', 'New York Avenue', 'Free Parking', 'Kentucky Avenue',
+  'Indiana Avenue', 'Illinois Avenue', 'B. & O. Railroad', 'Atlantic Avenue', 'Ventnor Avenue', 'Water Works',
+  'Marvin Gardens', 'Pacific Avenue', 'North Carolina Avenue', 'Pennsylvania Avenue', 'Short Line', 'Park Place', 'Boardwalk'
+];
+
+test('the board is a fictional city', () => {
+  assert.equal(BOARD[0].name, 'Start');
+  assert.equal(BOARD[10].name, 'Jail');
+  assert.equal(BOARD[20].name, 'Town Square');
+  assert.equal(BOARD[30].name, 'Go to Jail');
+  for (const space of BOARD) assert.ok(!OLD_NAMES.includes(space.name), space.name);
+  const names = BOARD.filter(space => space.kind !== 'card').map(space => space.name);
+  assert.equal(new Set(names).size, names.length);
+});
+
+test('the decks are Fortune and Town Fund', () => {
+  assert.deepEqual(DECK_NAMES, { chance: 'Fortune', chest: 'Town Fund' });
+  for (const space of BOARD) {
+    if (space.kind === 'card') assert.equal(space.name, space.deck === 'chance' ? 'Fortune' : 'Town Fund');
+  }
+  for (const card of [...CHANCE, ...COMMUNITY_CHEST]) {
+    for (const old of [...OLD_NAMES.filter(name => name !== 'GO'), 'Get Out of Jail Free', 'Railroad']) {
+      assert.ok(!card.text.includes(old), `${card.text} names ${old}`);
+    }
+    assert.doesNotMatch(card.text, /\bGO\b/);
+  }
+});
+
+test('every card text names the space it moves to', () => {
+  for (const card of [...CHANCE, ...COMMUNITY_CHEST]) {
+    if (card.effect.type === 'advance') assert.ok(card.text.includes(BOARD[card.effect.to].name), card.text);
+  }
 });

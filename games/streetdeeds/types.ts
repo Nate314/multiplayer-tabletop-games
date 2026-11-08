@@ -8,7 +8,7 @@ export type ColorGroup = 'brown' | 'lightBlue' | 'pink' | 'orange' | 'red' | 'ye
 
 export type DeckName = 'chance' | 'chest';
 
-// One of the 40 board spaces, numbered 0 (GO) to 39 (Boardwalk) in the direction of play
+// One of the 40 board spaces, numbered 0 (Start) to 39 (Skyline Crescent) in the direction of play
 export type Space =
   | { kind: 'street'; name: string; group: ColorGroup; price: number; mortgage: number; houseCost: number; rents: number[] }
   | { kind: 'railroad' | 'utility'; name: string; price: number; mortgage: number }
@@ -20,7 +20,7 @@ export type OwnableSpace = Extract<Space, { price: number }>;
 
 // What a card does when it is drawn
 export type CardEffect =
-  | { type: 'advance'; to: number } // collect $200 when passing GO
+  | { type: 'advance'; to: number } // collect $200 when passing Start
   | { type: 'nearest'; kind: 'railroad' | 'utility' } // owned: double railroad rent, or ten times a new roll
   | { type: 'back'; spaces: number }
   | { type: 'goToJail' }
@@ -69,7 +69,7 @@ export type Action =
   | { type: 'answerTrade'; accept: boolean }
   | { type: 'cancelTrade' };
 
-// The move that produced a state and what followed from it, e.g. ['rolled 3 and 4', 'moved to Chance']
+// The move that produced a state and what followed from it, e.g. ['rolled 3 and 4', 'moved to Fortune']
 export type LastMove = { type: Move['type']; playerNumber: Seat; events: string[] };
 
 export type DrawnCard = { deck: DeckName; index: number; seat: Seat };
@@ -79,7 +79,7 @@ export type GameState = BaseGameState & {
   cash: Record<Seat, number>;
   positions: Record<Seat, number>;
   jailed: Record<Seat, number>; // a seat in jail, with how many rolls for doubles it has failed
-  jailCards: Record<Seat, DeckName[]>; // Get Out of Jail Free cards held, by the deck they go back to
+  jailCards: Record<Seat, DeckName[]>; // Jail passes held, by the deck they go back to
   bankrupt: Seat[];
   owners: Record<number, Seat>; // space to owner; a space with no entry belongs to the bank
   buildings: Record<number, number>; // 1 to 4 houses, 5 is a hotel
@@ -91,7 +91,7 @@ export type GameState = BaseGameState & {
   dice: [number, number] | null; // the most recent roll
   pendingBuy: number | null; // the space the turn holder may buy, or decline to start an auction
   auction: Auction | null;
-  freeParkingPot: number; // cash on Free Parking with the jackpot rule on; missing (read as 0) in games saved earlier
+  freeParkingPot: number; // cash on Town Square with the jackpot rule on; missing (read as 0) in games saved earlier
   auctionQueue: number[]; // spaces of a player bankrupt to the bank, auctioned one after another
   debts: Debt[];
   trade: Trade | null; // one open offer at a time

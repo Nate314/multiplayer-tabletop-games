@@ -16,7 +16,7 @@ const EMPTY: TradeSide = { properties: [], cash: 0, jailCards: 0 };
 function describeSide(side: TradeSide): string {
   const parts = side.properties.map(space => BOARD[space].name);
   if (side.cash > 0) parts.push(`$${side.cash}`);
-  if (side.jailCards > 0) parts.push(`${side.jailCards} Get Out of Jail Free card${side.jailCards > 1 ? 's' : ''}`);
+  if (side.jailCards > 0) parts.push(`${side.jailCards} Jail pass${side.jailCards > 1 ? 'es' : ''}`);
   return parts.length > 0 ? parts.join(', ') : 'nothing';
 }
 

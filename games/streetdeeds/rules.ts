@@ -72,7 +72,7 @@ function rollOff(state: GameState, random: Random): { first: Seat; status: strin
   return { first, status: `Highest roll goes first: ${rounds.join('; tie: ')}. ${nameOf(state, first)} goes first` };
 }
 
-// Before the first move everyone has $1500 on GO with fresh decks, and once two are seated the roll-off picks who starts
+// Before the first move everyone has $1500 on Start with fresh decks, and once two are seated the roll-off picks who starts
 export function resetLobby(state: GameState, random: Random): GameState {
   const players = state.activePlayers;
   const each = <T>(value: () => T): Record<Seat, T> => Object.fromEntries(players.map(seat => [seat, value()]));
@@ -181,14 +181,14 @@ function payJailFine(state: GameState, seat: Seat): Result<GameState> {
 
 function playJailCard(state: GameState, seat: Seat): Result<GameState> {
   const [card, ...rest] = state.jailCards[seat] ?? [];
-  const error = jailError(state, seat) ?? (card === undefined ? 'You have no Get Out of Jail Free card' : null);
+  const error = jailError(state, seat) ?? (card === undefined ? 'You have no Jail pass' : null);
   if (error) return { error };
   const used: GameState = {
     ...leaveJail(state, seat),
     jailCards: { ...state.jailCards, [seat]: rest },
     decks: returnJailCards(state.decks, [card])
   };
-  return { state: note(used, `${nameOf(state, seat)} used a Get Out of Jail Free card`) };
+  return { state: note(used, `${nameOf(state, seat)} used a Jail pass`) };
 }
 
 function endTurn(state: GameState, seat: Seat): Result<GameState> {

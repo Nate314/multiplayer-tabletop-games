@@ -24,7 +24,7 @@ function lobby(...names: string[]): GameState {
   return state;
 }
 
-test('each player starts with $1500 on GO, and the highest roll goes first', () => {
+test('each player starts with $1500 on Start, and the highest roll goes first', () => {
   const state = lobby('Alice', 'Bob', 'Cara');
   assert.deepEqual(state.cash, { 1: 1500, 2: 1500, 3: 1500 });
   assert.deepEqual(state.positions, { 1: 0, 2: 0, 3: 0 });
@@ -76,7 +76,7 @@ test('jail: pay $50, card, or doubles; pay on the third failed roll', () => {
   assert.equal(1 in freed.jailed, false);
   assert.deepEqual(freed.jailCards[1], []);
   assert.equal(freed.decks.chance.at(-1), jailCardIndex('chance'));
-  assert.deepEqual(move(jailed, 1, { type: 'useJailCard' }), { error: 'You have no Get Out of Jail Free card' });
+  assert.deepEqual(move(jailed, 1, { type: 'useJailCard' }), { error: 'You have no Jail pass' });
 
   const doubles = played(jailed, 1, { type: 'roll' }, dice(2, 2));
   assert.equal(1 in doubles.jailed, false);
@@ -136,7 +136,7 @@ test('an auction nobody bids in leaves the property with the bank', () => {
   assert.equal(state.owners[3], undefined);
 });
 
-test('a monopoly doubles unimproved rent', () => {
+test('a whole group doubles unimproved rent', () => {
   const roll = (overrides: Partial<GameState>) => played(game(overrides), 1, { type: 'roll' }, dice(1, 2));
   assert.equal(roll({ owners: { 3: 2 } }).cash[1], 1496);
   const whole = roll({ owners: { 1: 2, 3: 2 } });
@@ -245,7 +245,7 @@ test('a trade moves property, cash and jail cards only when both agree', () => {
   assert.equal(withdrawn.trade, null);
   const built = game({ owners: ownedBy(1, [1, 3]), buildings: { 3: 1 } });
   assert.deepEqual(act(built, 1, { ...offer, give: { properties: [1], cash: 0, jailCards: 0 } }),
-    { error: "Sell the buildings in Mediterranean Avenue's color group before trading it" });
+    { error: "Sell the buildings in Tanner Row's color group before trading it" });
 });
 
 test('whoever receives a mortgaged property lifts it at once for 110%, or pays 10% and keeps it', () => {
@@ -258,7 +258,7 @@ test('whoever receives a mortgaged property lifts it at once for 110%, or pays 1
   assert.deepEqual(move(state, 3, { type: 'liftMortgages', spaces: [9] }), { error: 'You did not just receive that property' });
   assert.equal('error' in move(state, 3, { type: 'liftMortgages', spaces: 'all' }), true);
   state = played(state, 3, { type: 'liftMortgages', spaces: [5] });
-  assert.equal(state.cash[3], 1490 - 110 - 5); // Reading lifted for $110, Oriental kept for $5
+  assert.equal(state.cash[3], 1490 - 110 - 5); // Harbor Station lifted for $110, Willow Street kept for $5
   assert.deepEqual(state.mortgaged, [6]);
   assert.equal(state.currentPlayer, 1);
 });
@@ -275,7 +275,7 @@ test('a trade is refused when a receiver cannot pay the interest on a mortgaged 
 });
 
 test('a debt waits for the debtor, who may mortgage to pay it', () => {
-  // Community Chest on top: "It is your birthday", and Cara has only $5
+  // Town Fund on top: the birthday party, and Cara has only $5
   const start = game({
     owners: { 39: 3 },
     cash: { 1: 1500, 2: 1500, 3: 5 },
@@ -284,7 +284,7 @@ test('a debt waits for the debtor, who may mortgage to pay it', () => {
   let state = played(start, 1, { type: 'roll' }, dice(1, 1));
   assert.equal(state.cash[1], 1510);
   assert.equal(state.currentPlayer, 3);
-  assert.deepEqual(state.debts, [{ debtor: 3, creditor: 1, amount: 10, reason: 'Community Chest' }]);
+  assert.deepEqual(state.debts, [{ debtor: 3, creditor: 1, amount: 10, reason: 'Town Fund' }]);
   assert.deepEqual(move(state, 3, { type: 'roll' }), { error: 'Pay what you owe first: sell buildings, mortgage, trade, or declare bankruptcy' });
   state = played(state, 3, { type: 'mortgage', space: 39 });
   assert.deepEqual(state.debts, []);
@@ -299,11 +299,11 @@ test('cards move, pay and collect', () => {
     const rest = Array.from({ length: 16 }, (_, i) => i).filter(i => i !== index);
     return game({ positions: { 1: 4, 2: 0, 3: 0 }, decks: { chance: [index, ...rest], chest: [] }, ...overrides });
   };
-  const boardwalk = played(chanceFirst(0), 1, { type: 'roll' }, dice(1, 2));
-  assert.equal(boardwalk.positions[1], 39);
-  assert.equal(boardwalk.pendingBuy, 39);
-  assert.equal(boardwalk.decks.chance.at(-1), 0);
-  assert.deepEqual(boardwalk.drawnCard, { deck: 'chance', index: 0, seat: 1 });
+  const skyline = played(chanceFirst(0), 1, { type: 'roll' }, dice(1, 2));
+  assert.equal(skyline.positions[1], 39);
+  assert.equal(skyline.pendingBuy, 39);
+  assert.equal(skyline.decks.chance.at(-1), 0);
+  assert.deepEqual(skyline.drawnCard, { deck: 'chance', index: 0, seat: 1 });
 
   const railroad = played(chanceFirst(4, { owners: { 15: 2 } }), 1, { type: 'roll' }, dice(1, 2));
   assert.equal(railroad.positions[1], 15);
@@ -328,7 +328,7 @@ test('cards move, pay and collect', () => {
   assert.equal(repairs.cash[1], 1500 - 100 - 4 * 25);
 });
 
-test('a Go to Jail card or space pays nothing for passing GO', () => {
+test('a Go to Jail card or space pays nothing for passing Start', () => {
   const card = played(game({ positions: { 1: 33, 2: 0, 3: 0 }, decks: { chance: [10], chest: [] } }), 1, { type: 'roll' }, dice(1, 2));
   assert.equal(card.positions[1], 10);
   assert.equal(card.jailed[1], 0);
@@ -338,7 +338,7 @@ test('a Go to Jail card or space pays nothing for passing GO', () => {
   assert.equal(space.jailed[1], 0);
 });
 
-test('no Free Parking money', () => {
+test('no Town Square money', () => {
   let state = played(game(), 1, { type: 'roll' }, dice(1, 3)); // Income Tax
   assert.equal(totalCash(state), 4500 - 200);
   state = played(state, 1, { type: 'endTurn' });
@@ -370,7 +370,7 @@ test('bankrupt to a player hands over everything; to the bank, properties are au
     jailCards: { 1: ['chest'], 2: [], 3: [] }
   });
   let state = played(broke, 1, { type: 'roll' }, dice(1, 3));
-  assert.deepEqual(state.debts, [{ debtor: 1, creditor: 2, amount: 2000, reason: 'rent for Boardwalk' }]);
+  assert.deepEqual(state.debts, [{ debtor: 1, creditor: 2, amount: 2000, reason: 'rent for Skyline Crescent' }]);
   state = played(state, 1, { type: 'declareBankruptcy' });
   assert.deepEqual(state.bankrupt, [1]);
   assert.equal(state.cash[1], 0);
@@ -451,7 +451,7 @@ test('dismissed player mid-turn', () => {
 
   // Cara owes Alice and holds the high bid when she is dismissed
   const owing = game({
-    debts: [{ debtor: 3, creditor: 1, amount: 10, reason: 'Community Chest' }],
+    debts: [{ debtor: 3, creditor: 1, amount: 10, reason: 'Town Fund' }],
     currentPlayer: 3,
     auction: { space: 9, highBid: 40, highBidder: 3, passed: [2] },
     trade: { from: 2, to: 3, give: { properties: [], cash: 5, jailCards: 0 }, get: { properties: [], cash: 0, jailCards: 0 } }
@@ -466,7 +466,7 @@ test('dismissed player mid-turn', () => {
 test('a dismissed debtor goes bankrupt to the player they owe', () => {
   const owing = game({
     owners: { 39: 3 },
-    debts: [{ debtor: 3, creditor: 1, amount: 500, reason: 'rent for Boardwalk' }],
+    debts: [{ debtor: 3, creditor: 1, amount: 500, reason: 'rent for Skyline Crescent' }],
     cash: { 1: 1500, 2: 1500, 3: 20 },
     currentPlayer: 3
   });
@@ -501,9 +501,9 @@ test('taxes, card fees and the jail fine go into the pot with the jackpot on', (
   assert.equal(state.cash[1], 1300);
   assert.equal(state.freeParkingPot, 200);
 
-  // Community Chest "Doctor's fee. Pay $50" is the third card
+  // Town Fund "Dentist's bill. Pay $50" is the third card
   const chest = game({ ...JACKPOT, positions: { 1: 0, 2: 0, 3: 0 }, decks: { chance: game().decks.chance, chest: [2, ...game().decks.chest.filter(i => i !== 2)] } });
-  state = played(chest, 1, { type: 'roll' }, dice(1, 1)); // lands on Community Chest at 2
+  state = played(chest, 1, { type: 'roll' }, dice(1, 1)); // lands on Town Fund at 2
   assert.equal(state.cash[1], 1450);
   assert.equal(state.freeParkingPot, 50);
 
@@ -513,21 +513,21 @@ test('taxes, card fees and the jail fine go into the pot with the jackpot on', (
 
   const poor = played(game({ ...JACKPOT, positions: { 1: 2, 2: 0, 3: 0 }, cash: { 1: 100, 2: 1500, 3: 1500 } }), 1, { type: 'roll' }, dice(1, 1));
   assert.deepEqual(poor.debts, [{ debtor: 1, creditor: null, amount: 200, reason: 'Income Tax', toPot: true }]);
-  assert.ok(poor.log.includes('Alice owes Free Parking $200 (Income Tax)'), poor.log.join(' | '));
+  assert.ok(poor.log.includes('Alice owes Town Square $200 (Income Tax)'), poor.log.join(' | '));
   const mortgaged = game({ ...JACKPOT, cash: { 1: 180, 2: 1500, 3: 1500 }, owners: { 1: 1 }, debts: poor.debts });
   const raised = played({ ...mortgaged, currentPlayer: 1 }, 1, { type: 'mortgage', space: 1 });
   assert.equal(raised.freeParkingPot, 200);
-  assert.ok(raised.log.includes('Alice paid Free Parking $200 (Income Tax)'), raised.log.join(' | '));
+  assert.ok(raised.log.includes('Alice paid Town Square $200 (Income Tax)'), raised.log.join(' | '));
 });
 
-test('landing on Free Parking collects the pot', () => {
+test('landing on Town Square collects the pot', () => {
   const state = played(game({ ...JACKPOT, freeParkingPot: 340, positions: { 1: 18, 2: 0, 3: 0 } }), 1, { type: 'roll' }, dice(1, 1));
   assert.equal(state.positions[1], 20);
   assert.equal(state.cash[1], 1840);
   assert.equal(state.freeParkingPot, 0);
 });
 
-test('with the jackpot off Free Parking pays nothing and taxes go to the bank', () => {
+test('with the jackpot off Town Square pays nothing and taxes go to the bank', () => {
   const taxed = played(game({ positions: { 1: 2, 2: 0, 3: 0 } }), 1, { type: 'roll' }, dice(1, 1));
   assert.equal(taxed.cash[1], 1300);
   assert.equal(taxed.freeParkingPot ?? 0, 0);
@@ -535,12 +535,12 @@ test('with the jackpot off Free Parking pays nothing and taxes go to the bank', 
   assert.equal(parked.cash[1], 1500);
 });
 
-test('landing exactly on GO pays $400 with the rule on and $200 off', () => {
+test('landing exactly on Start pays $400 with the rule on and $200 off', () => {
   const on = { houseRules: houseRules({ goBonus: true }) };
   const roll = (fields: Partial<GameState>) => played(game({ positions: { 1: 35, 2: 0, 3: 0 }, ...fields }), 1, { type: 'roll' }, dice(2, 3));
   assert.equal(roll(on).cash[1], 1900);
   assert.equal(roll({}).cash[1], 1700);
-  // Chance "Advance to GO" is the second card
+  // Fortune "Head back to Start" is the second card
   const card = (fields: Partial<GameState>) => {
     const base = game({ positions: { 1: 4, 2: 0, 3: 0 }, ...fields });
     return played({ ...base, decks: { ...base.decks, chance: [1, ...base.decks.chance.filter(i => i !== 1)] } }, 1, { type: 'roll' }, dice(1, 2));
@@ -549,7 +549,7 @@ test('landing exactly on GO pays $400 with the rule on and $200 off', () => {
   assert.equal(card({}).cash[1], 1700);
 });
 
-test('passing GO still pays $200 with the rule on', () => {
+test('passing Start still pays $200 with the rule on', () => {
   const state = played(game({ houseRules: houseRules({ goBonus: true }), positions: { 1: 38, 2: 0, 3: 0 } }), 1, { type: 'roll' }, dice(2, 3));
   assert.equal(state.positions[1], 3);
   assert.equal(state.cash[1], 1700);
@@ -578,7 +578,7 @@ test('with auctions off a bankrupt player\'s properties return to the bank unown
     owners: { ...ownedBy(1, [1, 3, 5]), ...ownedBy(2, [37, 39]) },
     mortgaged: [5]
   });
-  let state = played(broke, 1, { type: 'roll' }, dice(1, 3)); // Boardwalk rent
+  let state = played(broke, 1, { type: 'roll' }, dice(1, 3)); // Skyline Crescent rent
   state = played(state, 1, { type: 'declareBankruptcy' }); // owes player 2, who takes them
   assert.deepEqual([1, 3, 5].map(space => state.owners[space]), [2, 2, 2]);
 

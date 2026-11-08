@@ -1,7 +1,7 @@
 import { BOARD } from '../board.ts';
 import type { Seat } from '../types.ts';
 
-// Where a space sits on the 11 by 11 grid: GO bottom right, then left along the bottom, up the left side,
+// Where a space sits on the 11 by 11 grid: Start bottom right, then left along the bottom, up the left side,
 // right along the top and down the right side
 export function gridPosition(space: number): { row: number; column: number } {
   if (space <= 10) return { row: 11, column: 11 - space };
@@ -21,38 +21,28 @@ export function sideOf(space: number): 'bottom' | 'left' | 'top' | 'right' | 'co
 
 // Short names that fit on a board space
 const SHORT: Record<string, string> = {
-  'Mediterranean Avenue': 'Mediterranean',
-  'Community Chest': 'Chest',
-  'Baltic Avenue': 'Baltic',
-  'Reading Railroad': 'Reading RR',
-  'Oriental Avenue': 'Oriental',
-  'Vermont Avenue': 'Vermont',
-  'Connecticut Avenue': 'Connecticut',
-  'St. Charles Place': 'St. Charles',
-  'Electric Company': 'Electric Co.',
-  'States Avenue': 'States',
-  'Virginia Avenue': 'Virginia',
-  'Pennsylvania Railroad': 'Penn. RR',
-  'St. James Place': 'St. James',
-  'Tennessee Avenue': 'Tennessee',
-  'New York Avenue': 'New York',
-  'Free Parking': 'Free Parking',
-  'Kentucky Avenue': 'Kentucky',
-  'Indiana Avenue': 'Indiana',
-  'Illinois Avenue': 'Illinois',
-  'B. & O. Railroad': 'B. & O. RR',
-  'Atlantic Avenue': 'Atlantic',
-  'Ventnor Avenue': 'Ventnor',
-  'Water Works': 'Water Works',
-  'Marvin Gardens': 'Marvin Gdns',
-  'Go to Jail': 'Go to Jail',
-  'Pacific Avenue': 'Pacific',
-  'North Carolina Avenue': 'N. Carolina',
-  'Pennsylvania Avenue': 'Pennsylvania',
-  'Short Line': 'Short Line',
-  'Park Place': 'Park Place',
-  'Luxury Tax': 'Luxury Tax',
-  'Income Tax': 'Income Tax'
+  'Harbor Station': 'Harbor Stn.',
+  'Willow Street': 'Willow St.',
+  'Fennel Street': 'Fennel St.',
+  'Copper Street': 'Copper St.',
+  'Orchard Road': 'Orchard Rd.',
+  'Quarry Road': 'Quarry Rd.',
+  'Market Station': 'Market Stn.',
+  'Belfry Place': 'Belfry Pl.',
+  'Chapel Place': 'Chapel Pl.',
+  'Mercer Place': 'Mercer Pl.',
+  'Juniper Avenue': 'Juniper Ave.',
+  'Sterling Avenue': 'Sterling Ave.',
+  'Regent Avenue': 'Regent Ave.',
+  'Union Station': 'Union Stn.',
+  'Amber Terrace': 'Amber Ter.',
+  'Linden Terrace': 'Linden Ter.',
+  'Hawthorn Gardens': 'Hawthorn Gdns',
+  'Kingsley Drive': 'Kingsley Dr.',
+  'Ashcombe Drive': 'Ashcombe Dr.',
+  'Galloway Drive': 'Galloway Dr.',
+  'Ridge Station': 'Ridge Stn.',
+  'Skyline Crescent': 'Skyline Cres.'
 };
 
 export function shortName(space: number): string {

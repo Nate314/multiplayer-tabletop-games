@@ -13,9 +13,9 @@ export function addToPot(state: GameState, amount: number): GameState {
   return { ...state, freeParkingPot: potOf(state) + amount };
 }
 
-// Who a debt is paid to, as the log names it: a player, the bank, or the Free Parking pot
+// Who a debt is paid to, as the log names it: a player, the bank, or the Town Square pot
 function payee(state: GameState, debt: Debt): string {
-  return debt.toPot ? 'Free Parking' : nameOf(state, debt.creditor);
+  return debt.toPot ? 'Town Square' : nameOf(state, debt.creditor);
 }
 
 function transfer(state: GameState, debt: Debt): GameState {
@@ -39,7 +39,7 @@ export function settleDebts(state: GameState): GameState {
 }
 
 // `debtor` owes `amount` to `creditor` (null for the bank), paid now if the queue ahead of it allows
-// With `toPot` a payment to the bank goes to the Free Parking pot instead
+// With `toPot` a payment to the bank goes to the Town Square pot instead
 export function charge(state: GameState, debtor: Seat, creditor: Seat | null, amount: number, reason: string, toPot = false): GameState {
   if (amount <= 0) return state;
   const debt: Debt = toPot && creditor === null ? { debtor, creditor, amount, reason, toPot: true } : { debtor, creditor, amount, reason };

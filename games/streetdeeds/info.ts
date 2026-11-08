@@ -6,7 +6,7 @@ export const streetdeedsInfo: GameInfo = {
   id: 'streetdeeds',
   category: 'strategy',
   name: 'Street Deeds',
-  description: 'Buy, trade and build on properties and bankrupt every other player',
+  description: 'Buy up a city street by street, build, trade and bankrupt every other player',
   minPlayers: 2,
   maxPlayers: 8,
   houseRules: STREETDEEDS_RULES

@@ -58,7 +58,7 @@ export function sendToJail(state: GameState, seat: Seat): GameState {
   }, `${nameOf(state, seat)} went to Jail`);
 }
 
-// Used or forfeited Get Out of Jail Free cards go to the bottom of the decks they came from
+// Used or forfeited Jail passes go to the bottom of the decks they came from
 export function returnJailCards(decks: GameState['decks'], held: DeckName[]): GameState['decks'] {
   const next = { ...decks };
   for (const deck of held) next[deck] = [...next[deck], jailCardIndex(deck)];
@@ -76,13 +76,13 @@ export function leaveJail(state: GameState, seat: Seat): GameState {
   return { ...state, jailed };
 }
 
-// Moves forward to `to`, collecting $200 for passing or landing on GO ($400 for landing exactly on it with that rule)
+// Moves forward to `to`, collecting $200 for passing or landing on Start ($400 for landing exactly on it with that rule)
 function moveTo(state: GameState, seat: Seat, to: number): GameState {
   const from = state.positions[seat];
   const moved = note({ ...state, positions: { ...state.positions, [seat]: to } }, `${nameOf(state, seat)} moved to ${BOARD[to].name}`);
   if (to > from) return moved;
   const salary = to === 0 && goBonus(state) ? GO_BONUS_SALARY : GO_SALARY;
-  return note(giveCash(moved, seat, salary), `${nameOf(state, seat)} ${to === 0 ? 'landed on' : 'passed'} GO and collected ${money(salary)}`);
+  return note(giveCash(moved, seat, salary), `${nameOf(state, seat)} ${to === 0 ? 'landed on' : 'passed'} Start and collected ${money(salary)}`);
 }
 
 function nearest(from: number, kind: 'railroad' | 'utility'): number {
@@ -98,7 +98,7 @@ function buildingCounts(state: GameState, seat: Seat): { houses: number; hotels:
   };
 }
 
-// The top card is shown, then goes to the bottom of its deck; a Get Out of Jail Free card is kept instead
+// The top card is shown, then goes to the bottom of its deck; a Jail pass is kept instead
 function drawCard(state: GameState, seat: Seat, deck: DeckName, random: Random): GameState {
   const [index, ...rest] = state.decks[deck];
   if (index === undefined) return state; // both jail cards held and nothing else: unreachable with 16 cards
@@ -147,7 +147,7 @@ function drawCard(state: GameState, seat: Seat, deck: DeckName, random: Random):
 function collectPot(state: GameState, seat: Seat): GameState {
   const pot = potOf(state);
   if (pot === 0) return state;
-  return note(giveCash({ ...state, freeParkingPot: 0 }, seat, pot), `${nameOf(state, seat)} collected ${money(pot)} from Free Parking`);
+  return note(giveCash({ ...state, freeParkingPot: 0 }, seat, pot), `${nameOf(state, seat)} collected ${money(pot)} from Town Square`);
 }
 
 // What happens on the space `seat` now stands on

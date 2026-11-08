@@ -67,7 +67,7 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
                     <span key={space} className={chipClass(space, mortgaged.includes(space))} title={title}>{shortName(space)}</span>
                   );
                 })}
-                {cards > 0 && <span className="chip chip-card" title="Get Out of Jail Free">Jail card{cards > 1 ? ` x${cards}` : ''}</span>}
+                {cards > 0 && <span className="chip chip-card" title="Jail pass">Jail card{cards > 1 ? ` x${cards}` : ''}</span>}
               </div>
             )}
           </div>

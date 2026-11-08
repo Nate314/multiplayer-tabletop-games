@@ -1,5 +1,5 @@
 // Bankruptcy. Owing a player: buildings are sold to the bank at half price, then the creditor takes all cash,
-// properties (lifting each mortgaged one for 110% or keeping it for 10%) and Get Out of Jail Free cards. Owing the bank, or leaving
+// properties (lifting each mortgaged one for 110% or keeping it for 10%) and Jail passes. Owing the bank, or leaving
 // the game: buildings go back to the bank, jail cards to the bottom of their decks, and every property is auctioned unmortgaged.
 import { dropBidder, nextAuction } from './auctions.ts';
 import { receiveProperties, sellAllBuildings } from './buildings.ts';

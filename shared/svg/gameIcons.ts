@@ -41,7 +41,8 @@ const GAME_ICONS: Record<string, () => string> = {
   jigsaw: () => lineIcon(el('path', { d: 'M4 8h4a2.2 2.2 0 1 1 4 0h4v4a2.2 2.2 0 1 1 0 4v4H4z' })),
   mancala: () => lineIcon(el('rect', { x: 2, y: 7, width: 20, height: 10, rx: 5 }),
     ...[8.5, 12, 15.5].flatMap(x => [el('circle', { cx: x, cy: 10.2, r: 1.2 }), el('circle', { cx: x, cy: 13.8, r: 1.2 })])),
-  streetdeeds: () => lineIcon(el('path', { d: 'M3 18c0 1.5 4 2.5 9 2.5s9-1 9-2.5M6 18.5V6c0-1 2.7-2 6-2s6 1 6 2v12.5M6 14c2 .7 4 1 6 1s4-.3 6-1' })),
+  // A house with a key
+  streetdeeds: () => lineIcon(el('path', { d: 'M3 11.5 12 4l9 7.5M5.5 9.5V20H12M18.5 9.5V13M17 16.5h4.5V19M19.5 16.5V18.5' }), el('circle', { cx: 14.5, cy: 16.5, r: 2.5 })),
   naval: () => lineIcon(el('path', { d: 'M2 15h20l-3 5H5z' }), el('path', { d: 'M12 15V3l6 9h-6' })),
   parchisi: () => lineIcon(el('path', { d: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z' }), el('path', { d: 'M12 9l3 3-3 3-3-3z' })),
   phase10: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 18, rx: 2 }), label('10', 12, 15.5, 9)),

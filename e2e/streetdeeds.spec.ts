@@ -33,7 +33,7 @@ type Game = {
 
 let tableSet = 0;
 
-// A fresh game under way: everyone on GO with $1500, nothing owned, both decks in printed order, Alice to roll
+// A fresh game under way: everyone on Start with $1500, nothing owned, both decks in printed order, Alice to roll
 function fresh(count: number): Fields {
   return {
     started: true,
@@ -90,13 +90,13 @@ const row = (page: Page, name: string) => players(page).locator('.player-row', {
 const cash = (page: Page, name: string) => row(page, name).locator('.player-cash');
 const space = (page: Page, index: number) => page.locator('.board > .space').nth(index);
 const token = (page: Page, index: number, name: string) => space(page, index).locator(`.token[title="${name}"]`);
-const deed = (page: Page, index: number) => page.getByRole('region', { name: `${BOARD[index].name} title deed` });
+const deed = (page: Page, index: number) => page.getByRole('region', { name: `${BOARD[index].name} deed` });
 const turnPanel = (page: Page) => page.locator('.turn-panel');
 const auction = (page: Page) => page.getByRole('region', { name: 'Auction' });
 const events = (page: Page) => page.getByRole('region', { name: 'Recent events' });
 const status = (page: Page) => page.locator('.game-status');
 
-// Opens the Title Deed of `index` by clicking it on the board
+// Opens the deed of `index` by clicking it on the board
 async function openDeed(page: Page, index: number) {
   await space(page, index).click();
   await expect(deed(page, index)).toBeVisible();
@@ -140,18 +140,18 @@ test.describe('Street Deeds rules', () => {
     await expect(space(alice, 1).locator('.space-price')).toHaveText('$60');
     await expect(space(alice, 39).locator('.space-price')).toHaveText('$400');
     await expect(space(alice, 4).locator('.space-price')).toHaveText('$200');
-    const boardwalk = await openDeed(alice, 39);
+    const skyline = await openDeed(alice, 39);
     for (const rent of ['$50', '$200', '$600', '$1400', '$1700', '$2000']) {
-      await expect(boardwalk.locator('.deed-rents')).toContainText(rent);
+      await expect(skyline.locator('.deed-rents')).toContainText(rent);
     }
-    await expect(boardwalk).toContainText('Mortgage value $200; lifting it costs $220');
-    await expect(alice.getByText('Cards left: Chance 16, Community Chest 16')).toBeVisible();
+    await expect(skyline).toContainText('Mortgage value $200; lifting it costs $220');
+    await expect(alice.getByText('Cards left: Fortune 16, Town Fund 16')).toBeVisible();
   });
 
   test('a drawn card goes under its deck, and a kept jail card goes back under it once used', async ({ seat }) => {
     const game = await start(seat);
     const [alice] = game.pages;
-    // Chance on top is the $50 dividend
+    // Fortune on top is the $50 ferry payout
     await game.land(33, [1, 2], { decks: { chance: topped(7), chest: inOrder() } });
     await expect(alice.locator('.drawn-card-text')).toHaveText(DECKS.chance[7].text);
     const drawn = await game.table.state<GameState>();
@@ -159,18 +159,18 @@ test.describe('Street Deeds rules', () => {
     expect(drawn.decks.chance.at(-1)).toBe(7);
 
     await game.land(33, [1, 2], { decks: { chance: topped(8), chest: inOrder() } });
-    await expect(alice.getByText('Cards left: Chance 15, Community Chest 16')).toBeVisible();
+    await expect(alice.getByText('Cards left: Fortune 15, Town Fund 16')).toBeVisible();
     await expect(row(alice, 'Alice').locator('.chip-card')).toHaveText('Jail card');
     expect((await game.table.state<GameState>()).decks.chance).not.toContain(8);
 
     await game.sync({ positions: { 1: 10, 2: 0 }, jailed: { 1: 0 }, canRoll: true, turnHolder: 1, currentPlayer: 1 });
     await button(alice, 'Use jail card').click();
-    await expect(alice.getByText('Cards left: Chance 16, Community Chest 16')).toBeVisible();
+    await expect(alice.getByText('Cards left: Fortune 16, Town Fund 16')).toBeVisible();
     await expect(row(alice, 'Alice').locator('.chip-card')).toHaveCount(0);
     expect((await game.table.state<GameState>()).decks.chance.at(-1)).toBe(8);
   });
 
-  test('everyone starts with $1500 on GO, the highest roll goes first, ties roll again, then turns go up the seats', async ({ seat }) => {
+  test('everyone starts with $1500 on Start, the highest roll goes first, ties roll again, then turns go up the seats', async ({ seat }) => {
     const first = await seat('streetdeeds', ['Alice', 'Bob']);
     // Cara's join reshuffles both decks (30 numbers), then everyone rolls: Alice and Bob tie on 7, then Bob rolls higher
     await first.random(...Array(30).fill(0), ...faces(3, 4, 5, 2, 1, 1, 1, 2, 6, 5));
@@ -193,7 +193,7 @@ test.describe('Street Deeds rules', () => {
     }
   });
 
-  test('a roll moves by the total, and passing or landing on GO collects $200', async ({ seat }) => {
+  test('a roll moves by the total, and passing or landing on Start collects $200', async ({ seat }) => {
     const game = await start(seat);
     const [alice] = game.pages;
     await game.land(38, [2, 3]);
@@ -228,12 +228,12 @@ test.describe('Street Deeds rules', () => {
     const game = await start(seat);
     const [alice, bob] = game.pages;
     await game.land(0, [1, 2]);
-    await button(alice, 'Buy Baltic Avenue for $60').click();
+    await button(alice, 'Buy Cinder Lane for $60').click();
     await expect(space(bob, 3).locator('.owner-tag')).toHaveText('Alice');
     await expectCash(game, [1440, 1500], bob);
 
     await game.land(0, [1, 2], { cash: cashOf([50, 1500]) });
-    await expect(button(alice, 'Buy Baltic Avenue for $60')).toBeDisabled();
+    await expect(button(alice, 'Buy Cinder Lane for $60')).toBeDisabled();
     await expect(button(alice, 'Decline and auction')).toBeEnabled();
   });
 
@@ -243,7 +243,7 @@ test.describe('Street Deeds rules', () => {
     await game.land(0, [1, 2]);
     await button(alice, 'Decline and auction').click();
     for (const page of game.pages) {
-      await expect(auction(page)).toContainText('Auction: Baltic Avenue');
+      await expect(auction(page)).toContainText('Auction: Cinder Lane');
       await expect(auction(page)).toContainText('Still bidding: Alice, Bob, Cara');
     }
     await button(bob, '$10').click();
@@ -265,7 +265,7 @@ test.describe('Street Deeds rules', () => {
     await expect(auction(alice)).toHaveCount(0);
     await expect(space(cara, 3).locator('.owner-tag')).toHaveText('Bob');
     await expectCash(game, [1500, 1470, 1500], cara);
-    await expect(events(cara)).toContainText('Bob won Baltic Avenue for $30');
+    await expect(events(cara)).toContainText('Bob won Cinder Lane for $30');
   });
 
   test('if nobody bids, the bank keeps the property', async ({ seat }) => {
@@ -275,14 +275,14 @@ test.describe('Street Deeds rules', () => {
     await button(alice, 'Decline and auction').click();
     for (const page of game.pages) await button(page, 'Pass').click();
     await expect(auction(alice)).toHaveCount(0);
-    await expect(events(alice)).toContainText('Nobody bid, so Baltic Avenue stays with the bank');
+    await expect(events(alice)).toContainText('Nobody bid, so Cinder Lane stays with the bank');
     await expect(space(alice, 3).locator('.space-price')).toHaveText('$60');
   });
 
   test('rent is paid on landing: doubled for a whole group, by the deed with buildings, by count for railroads and utilities', async ({ seat }) => {
     const game = await start(seat);
     const [alice] = game.pages;
-    // From GO, 1 and 2 reach Baltic Avenue (rent $4)
+    // From Start, 1 and 2 reach Cinder Lane (rent $4)
     const cases: [Fields, number][] = [
       [{ owners: { 3: 2 } }, 4],
       [{ owners: { 1: 2, 3: 2 } }, 8],
@@ -296,16 +296,16 @@ test.describe('Street Deeds rules', () => {
       await game.land(0, [1, 2], fields);
       await expect(token(alice, 3, 'Alice')).toBeVisible();
       await expectCash(game, [1500 - rent, 1500 + rent]);
-      if (rent === 0) await expect(events(alice)).toContainText('Baltic Avenue is mortgaged, so no rent is due');
+      if (rent === 0) await expect(events(alice)).toContainText('Cinder Lane is mortgaged, so no rent is due');
     }
 
-    // 2 and 3 reach Reading Railroad
+    // 2 and 3 reach Harbor Station
     const railroads = [5, 15, 25, 35];
     for (const [owned, rent] of [[1, 25], [2, 50], [3, 100], [4, 200]]) {
       await game.land(0, [2, 3], { owners: ownedBy(2, railroads.slice(0, owned)) });
       await expectCash(game, [1500 - rent, 1500 + rent]);
     }
-    // From Reading Railroad, 3 and 4 reach Electric Company
+    // From Harbor Station, 3 and 4 reach Power House
     await game.land(5, [3, 4], { owners: { 12: 2 } });
     await expectCash(game, [1500 - 28, 1500 + 28]);
     await game.land(5, [3, 4], { owners: { 12: 2, 28: 2 } });
@@ -315,13 +315,13 @@ test.describe('Street Deeds rules', () => {
   test('with a whole unmortgaged group you build houses at its house cost, evenly', async ({ seat }) => {
     const game = await start(seat, 2, { owners: ownedBy(1, [1, 3]) });
     const [alice, bob] = game.pages;
-    const mediterranean = await openDeed(alice, 1);
+    const tannerRow = await openDeed(alice, 1);
     await button(alice, 'Build house').click();
     await expect(space(bob, 1).locator('.house')).toHaveCount(1);
     await expectCash(game, [1450, 1500]);
     await expect(button(alice, 'Build house')).toBeDisabled();
     await expect(button(alice, 'Build house')).toHaveAttribute('title', 'Build evenly: the other streets of the group need a house first');
-    await mediterranean.getByRole('button', { name: 'Close the title deed' }).click();
+    await tannerRow.getByRole('button', { name: 'Close the deed' }).click();
     await openDeed(alice, 3);
     await button(alice, 'Build house').click();
     await expect(space(alice, 3).locator('.house')).toHaveCount(1);
@@ -433,11 +433,11 @@ test.describe('Street Deeds rules', () => {
     }
   }
 
-  test('every Chance card does what it says', async ({ seat }) => {
+  test('every Fortune card does what it says', async ({ seat }) => {
     test.setTimeout(120_000);
     const game = await start(seat, 3);
     const [alice] = game.pages;
-    // From 33, 1 and 2 reach Chance at 36. Bob owns Reading Railroad and Electric Company
+    // From 33, 1 and 2 reach Fortune at 36. Bob owns Harbor Station and Power House
     const repairs = { owners: { ...ownedBy(1, [1, 3]), 5: 2, 12: 2 }, buildings: { 1: 5, 3: 4 } };
     await playCards(game, 'chance', [
       { index: 0, cash: [1500, 1500, 1500], at: 39 },
@@ -458,13 +458,13 @@ test.describe('Street Deeds rules', () => {
       { index: 15, cash: [1650, 1500, 1500], at: 36 }
     ], 33, { owners: { 5: 2, 12: 2 } });
     await game.land(33, [1, 2], { owners: { 5: 2, 12: 2 }, decks: { chance: topped(0), chest: inOrder() } });
-    await expect(button(alice, 'Buy Boardwalk for $400')).toBeVisible();
+    await expect(button(alice, 'Buy Skyline Crescent for $400')).toBeVisible();
   });
 
-  test('every Community Chest card does what it says', async ({ seat }) => {
+  test('every Town Fund card does what it says', async ({ seat }) => {
     test.setTimeout(120_000);
     const game = await start(seat, 3);
-    // From 14, 1 and 2 reach Community Chest at 17
+    // From 14, 1 and 2 reach Town Fund at 17
     const repairs = { owners: ownedBy(1, [1, 3]), buildings: { 1: 5, 3: 4 } };
     await playCards(game, 'chest', [
       { index: 0, cash: [1700, 1500, 1500], at: 0 },
@@ -486,7 +486,7 @@ test.describe('Street Deeds rules', () => {
     ], 14, {});
   });
 
-  test('Income Tax is $200 and Luxury Tax $100 to the bank, and Free Parking pays nothing', async ({ seat }) => {
+  test('Income Tax is $200 and Luxury Tax $100 to the bank, and Town Square pays nothing', async ({ seat }) => {
     const game = await start(seat);
     const [alice] = game.pages;
     await game.land(0, [1, 3]);
@@ -499,7 +499,7 @@ test.describe('Street Deeds rules', () => {
     await expectCash(game, [1500, 1500]);
   });
 
-  test('the Free Parking pot is shown and collected', async ({ seat }) => {
+  test('the Town Square pot is shown and collected', async ({ seat }) => {
     const table = await seat('streetdeeds', ['Alice', 'Bob'], { houseRules: { freeParkingJackpot: true } });
     const game = await prepare(table);
     const [alice, bob] = game.pages;
@@ -510,13 +510,13 @@ test.describe('Street Deeds rules', () => {
     await expectCash(game, [1300, 1500]);
     for (const page of [alice, bob]) await expect(pot(page)).toHaveText('Pot $200');
 
-    await game.land(18, [1, 1]); // Free Parking takes the whole pot
+    await game.land(18, [1, 1]); // Town Square takes the whole pot
     await expect(token(alice, 20, 'Alice')).toBeVisible();
     await expectCash(game, [1700, 1500]);
     for (const page of [alice, bob]) await expect(pot(page)).toHaveText('Pot $0');
   });
 
-  test('Go to Jail, a Go to Jail card and a third doubles all jail you, collecting nothing for passing GO', async ({ seat }) => {
+  test('Go to Jail, a Go to Jail card and a third doubles all jail you, collecting nothing for passing Start', async ({ seat }) => {
     const game = await start(seat);
     const [alice] = game.pages;
     const inJail = alice.locator('.in-jail .token[title="Alice"]');
@@ -582,7 +582,7 @@ test.describe('Street Deeds rules', () => {
   test('in Jail you still collect rent, build, trade and bid', async ({ seat }) => {
     const game = await start(seat);
     const [alice, bob] = game.pages;
-    // Bob lands on Alice's Baltic Avenue while she sits in Jail
+    // Bob lands on Alice's Cinder Lane while she sits in Jail
     await game.sync({ positions: { 1: 10, 2: 0 }, jailed: { 1: 0 }, owners: ownedBy(1, [1, 3]), turnHolder: 2, currentPlayer: 2 });
     await game.table.dice(1, 2);
     await button(bob, 'Roll the dice').click();
@@ -611,11 +611,11 @@ test.describe('Street Deeds rules', () => {
     await cara.getByLabel('With').selectOption({ label: 'Bob' });
     const bobGives = cara.getByRole('group', { name: 'Bob gives' });
     await expect(bobGives.getByRole('checkbox')).toHaveCount(1);
-    await expect(bobGives.getByLabel('Reading Railroad')).toBeVisible();
+    await expect(bobGives.getByLabel('Harbor Station')).toBeVisible();
     await button(cara, 'Cancel').click();
 
-    await offerTrade(cara, 'Bob', { cash: 100, jailCards: 1 }, { properties: ['Reading Railroad'] });
-    await expect(bob.locator('.trade-summary')).toHaveText('Cara gives $100, 1 Get Out of Jail Free card to Bob for Reading Railroad.');
+    await offerTrade(cara, 'Bob', { cash: 100, jailCards: 1 }, { properties: ['Harbor Station'] });
+    await expect(bob.locator('.trade-summary')).toHaveText('Cara gives $100, 1 Jail pass to Bob for Harbor Station.');
     await expectCash(game, [1500, 1500, 1500], alice);
     await expect(space(alice, 5).locator('.owner-tag')).toHaveText('Bob');
 
@@ -629,7 +629,7 @@ test.describe('Street Deeds rules', () => {
   test('a trade is refused if a receiver could not pay the 10% interest on mortgaged property', async ({ seat }) => {
     const game = await start(seat, 3, { owners: { 5: 2 }, mortgaged: [5], cash: cashOf([1500, 1500, 0]) });
     const [, bob, cara] = game.pages;
-    await offerTrade(bob, 'Cara', { properties: ['Reading Railroad (mortgaged)'] });
+    await offerTrade(bob, 'Cara', { properties: ['Harbor Station (mortgaged)'] });
     await expect(status(bob)).toHaveText('Cara could not pay the 10% interest on the mortgaged property');
     await expect(cara.getByRole('region', { name: 'Trade offer' })).toHaveCount(0);
   });
@@ -637,7 +637,7 @@ test.describe('Street Deeds rules', () => {
   test('an offer from or to a player who disconnects is dropped', async ({ seat }) => {
     const game = await start(seat, 3, { owners: { 1: 1 } });
     const [alice, bob, cara] = game.pages;
-    await offerTrade(alice, 'Bob', { properties: ['Mediterranean Avenue'] }, { cash: 50 });
+    await offerTrade(alice, 'Bob', { properties: ['Tanner Row'] }, { cash: 50 });
     await expect(cara.getByRole('region', { name: 'Trade offer' })).toBeVisible();
     await leave(bob);
     await expect(cara.getByRole('region', { name: 'Trade offer' })).toHaveCount(0);
@@ -649,14 +649,14 @@ test.describe('Street Deeds rules', () => {
   test('whoever receives mortgaged property lifts each mortgage for 110% or keeps it for 10%, and the game waits', async ({ seat }) => {
     const game = await start(seat, 3, { owners: ownedBy(2, [5, 6]), mortgaged: [5, 6] });
     const [alice, bob, cara] = game.pages;
-    await offerTrade(bob, 'Cara', { properties: ['Reading Railroad (mortgaged)', 'Oriental Avenue (mortgaged)'] }, { cash: 10 });
+    await offerTrade(bob, 'Cara', { properties: ['Harbor Station (mortgaged)', 'Willow Street (mortgaged)'] }, { cash: 10 });
     await button(cara, 'Accept').click();
     await expect(turnPanel(cara)).toContainText('Mortgaged property received');
     await expect(turnPanel(alice)).toHaveText('Waiting for Cara to lift or keep the mortgages received');
     await expect(button(alice, 'Roll the dice')).toHaveCount(0);
 
     await expect(button(cara, 'Pay $15')).toBeVisible(); // $10 and $5 to keep both
-    await cara.getByLabel('Lift Reading Railroad now for $110 (keeping it costs $10)').check();
+    await cara.getByLabel('Lift Harbor Station now for $110 (keeping it costs $10)').check();
     await button(cara, 'Pay $115').click();
     await expectCash(game, [1500, 1510, 1490 - 115], alice);
     await expect(space(alice, 5).locator('.owner-tag')).toHaveText('Cara');
@@ -674,7 +674,7 @@ test.describe('Street Deeds rules', () => {
       cash: cashOf([1500, 5, 5]),
       decks: { chance: inOrder(), chest: topped(8) }
     });
-    await expect(turnPanel(bob)).toContainText('You owe Alice $10 (Community Chest) and have $5.');
+    await expect(turnPanel(bob)).toContainText('You owe Alice $10 (Town Fund) and have $5.');
     await expect(turnPanel(alice)).toHaveText('Waiting for Bob to pay');
     await expect(turnPanel(cara)).toHaveText('Waiting for Bob to pay');
     await openDeed(bob, 39);
@@ -682,7 +682,7 @@ test.describe('Street Deeds rules', () => {
     await button(bob, 'Mortgage').click();
     await expectCash(game, [1510, 195, 5], alice);
 
-    await expect(turnPanel(cara)).toContainText('You owe Alice $10 (Community Chest) and have $5.');
+    await expect(turnPanel(cara)).toContainText('You owe Alice $10 (Town Fund) and have $5.');
     await expect(turnPanel(alice)).toHaveText('Waiting for Cara to pay');
     await openDeed(cara, 31);
     await button(cara, 'Mortgage').click();
@@ -693,7 +693,7 @@ test.describe('Street Deeds rules', () => {
   test('bankrupt to a player: buildings sell at half price and they take the cash, properties and jail cards', async ({ seat }) => {
     const game = await start(seat, 3);
     const [alice, bob] = game.pages;
-    // Bob's Boardwalk hotel charges $2000
+    // Bob's Skyline Crescent hotel charges $2000
     await game.land(35, [1, 3], {
       cash: cashOf([10, 1500, 1500]),
       owners: { ...ownedBy(1, [1, 3, 5]), ...ownedBy(2, [37, 39]) },
@@ -701,7 +701,7 @@ test.describe('Street Deeds rules', () => {
       mortgaged: [5],
       jailCards: { 1: ['chest'], 2: [], 3: [] }
     });
-    await expect(turnPanel(alice)).toContainText('You owe Bob $2000 (rent for Boardwalk)');
+    await expect(turnPanel(alice)).toContainText('You owe Bob $2000 (rent for Skyline Crescent)');
     await button(alice, 'Declare bankruptcy').click();
     await expect(turnPanel(alice)).toContainText('Give everything to Bob?');
     await button(alice, 'Confirm bankruptcy').click();
@@ -732,15 +732,15 @@ test.describe('Street Deeds rules', () => {
     await expect(turnPanel(alice)).toContainText('Give everything to the bank?');
     await button(alice, 'Confirm bankruptcy').click();
 
-    await expect(auction(bob)).toContainText('Auction: Mediterranean Avenue');
+    await expect(auction(bob)).toContainText('Auction: Tanner Row');
     await expect(auction(bob)).toContainText('Still bidding: Bob, Cara');
     await expect(auction(alice).getByRole('button')).toHaveCount(0);
-    await expect(bob.getByText('Cards left: Chance 16, Community Chest 16')).toBeVisible();
+    await expect(bob.getByText('Cards left: Fortune 16, Town Fund 16')).toBeVisible();
     await expect(space(bob, 6).locator('.house')).toHaveCount(0);
     await button(bob, '$1').click();
     await button(cara, 'Pass').click();
     await expect(space(cara, 1).locator('.owner-tag')).toHaveText('Bob');
-    await expect(auction(cara)).toContainText('Auction: Oriental Avenue');
+    await expect(auction(cara)).toContainText('Auction: Willow Street');
   });
 
   test('on your turn you may declare bankruptcy without a debt, to the bank, to leave the game', async ({ seat }) => {
@@ -750,7 +750,7 @@ test.describe('Street Deeds rules', () => {
     await expect(turnPanel(alice)).toContainText('Leave the game and give your properties to the bank for auction?');
     await button(alice, 'Confirm bankruptcy').click();
     await expect(row(bob, 'Alice').locator('.player-status')).toHaveText('bankrupt');
-    await expect(auction(bob)).toContainText('Auction: Mediterranean Avenue');
+    await expect(auction(bob)).toContainText('Auction: Tanner Row');
     await expect(bob.locator('.turn-message')).toHaveText('Your turn');
   });
 
@@ -773,11 +773,11 @@ test.describe('Street Deeds rules', () => {
     });
     const [, bob] = game.pages;
     await expect(cash(bob, 'Alice')).toHaveText('$1234');
-    await expect(row(bob, 'Alice').getByRole('button', { name: 'Mediterranean Avenue' })).toBeVisible();
-    await expect(row(bob, 'Alice').getByRole('button', { name: 'Reading Railroad (mortgaged)' })).toBeVisible();
+    await expect(row(bob, 'Alice').getByRole('button', { name: 'Tanner Row' })).toBeVisible();
+    await expect(row(bob, 'Alice').getByRole('button', { name: 'Harbor Station (mortgaged)' })).toBeVisible();
     await expect(row(bob, 'Alice').locator('.chip-card')).toHaveText('Jail card');
     // Only how many cards are left shows, never which card is next
-    await expect(bob.getByText('Cards left: Chance 16, Community Chest 15')).toBeVisible();
+    await expect(bob.getByText('Cards left: Fortune 16, Town Fund 15')).toBeVisible();
     await expect(bob.locator('.drawn-card')).toHaveCount(0);
     for (const card of [...DECKS.chance, ...DECKS.chest]) await expect(bob.getByText(card.text)).toHaveCount(0);
   });
@@ -786,7 +786,7 @@ test.describe('Street Deeds rules', () => {
     const game = await start(seat, 3, {
       owners: { 39: 3 },
       cash: cashOf([1500, 1500, 20]),
-      debts: [{ debtor: 3, creditor: 1, amount: 500, reason: 'rent for Boardwalk' }],
+      debts: [{ debtor: 3, creditor: 1, amount: 500, reason: 'rent for Skyline Crescent' }],
       currentPlayer: 3
     });
     const [alice, bob, cara] = game.pages;
@@ -806,7 +806,7 @@ test.describe('Street Deeds rules', () => {
       turnHolder: 2,
       currentPlayer: 3,
       canRoll: true,
-      debts: [{ debtor: 3, creditor: 2, amount: 10, reason: 'Community Chest' }],
+      debts: [{ debtor: 3, creditor: 2, amount: 10, reason: 'Town Fund' }],
       trade: { from: 2, to: 1, give: { properties: [1], cash: 0, jailCards: 0 }, get: { properties: [], cash: 50, jailCards: 0 } }
     });
     const [alice, bob, cara] = game.pages;
@@ -814,7 +814,7 @@ test.describe('Street Deeds rules', () => {
     await leave(bob);
     await expect(alice.getByRole('region', { name: 'Trade offer' })).toHaveCount(0);
     await dismiss('Bob', alice, cara);
-    await expect(auction(cara)).toContainText('Auction: Mediterranean Avenue');
+    await expect(auction(cara)).toContainText('Auction: Tanner Row');
     await expect(auction(cara)).toContainText('Still bidding: Alice, Cara');
     await expect(cara.locator('.turn-message')).toHaveText('Your turn');
     await expect(turnPanel(cara)).not.toContainText('You owe');
@@ -877,9 +877,9 @@ test.describe('Street Deeds controls', () => {
     await expect(turnPanel(bob)).toHaveText('Waiting for Alice');
     await game.table.dice(3, 3);
     await button(alice, 'Roll the dice').click();
-    await expect(button(alice, 'Buy Oriental Avenue for $100')).toBeVisible();
+    await expect(button(alice, 'Buy Willow Street for $100')).toBeVisible();
     await expect(button(alice, 'Decline and auction')).toBeVisible();
-    await button(alice, 'Buy Oriental Avenue for $100').click();
+    await button(alice, 'Buy Willow Street for $100').click();
     await game.table.dice(1, 3);
     await button(alice, 'Doubles: roll again').click();
     await expect(token(alice, 10, 'Alice')).toBeVisible(); // just visiting
@@ -893,22 +893,22 @@ test.describe('Street Deeds controls', () => {
     await expect(turnPanel(alice)).toContainText('You owe the bank $200 (Income Tax) and have $100.');
   });
 
-  test('clicking a property or its chip opens its Title Deed, whose greyed out buttons explain why', async ({ seat }) => {
+  test('clicking a property or its chip opens its deed, whose greyed out buttons explain why', async ({ seat }) => {
     const game = await start(seat, 2, { owners: { ...ownedBy(1, [1, 3]), 37: 1 } });
     const [alice, bob] = game.pages;
-    const mediterranean = await openDeed(alice, 1);
-    await expect(mediterranean).toContainText('Owned by Alice');
+    const tannerRow = await openDeed(alice, 1);
+    await expect(tannerRow).toContainText('Owned by Alice');
     await expect(button(alice, 'Build house')).toBeEnabled();
     await expect(button(alice, 'Sell building')).toBeDisabled();
     await expect(button(alice, 'Sell building')).toHaveAttribute('title', 'You have no buildings there');
     await button(alice, 'Mortgage').click();
     await expect(button(alice, 'Lift mortgage')).toBeEnabled();
     await expect(button(alice, 'Build house')).toHaveAttribute('title', 'Lift every mortgage in the group before building');
-    await mediterranean.getByRole('button', { name: 'Close the title deed' }).click();
-    await expect(mediterranean).toHaveCount(0);
+    await tannerRow.getByRole('button', { name: 'Close the deed' }).click();
+    await expect(tannerRow).toHaveCount(0);
 
     // The chip in the player list opens it too; another player sees the deed without the buttons
-    await row(bob, 'Alice').getByRole('button', { name: 'Park Place' }).click();
+    await row(bob, 'Alice').getByRole('button', { name: 'Summit Rise' }).click();
     await expect(deed(bob, 37)).toContainText('Owned by Alice');
     await expect(deed(bob, 37).getByRole('button')).toHaveCount(1); // just Close
 
@@ -942,9 +942,9 @@ test.describe('Street Deeds controls', () => {
   test('Propose a trade, choose a player, tick what each side gives, Send offer, then Accept, Decline or Withdraw', async ({ seat }) => {
     const game = await start(seat, 3, { owners: { 1: 1, 5: 3 }, jailCards: { 1: ['chance'], 2: [], 3: [] } });
     const [alice, bob, cara] = game.pages;
-    const offer = async () => offerTrade(alice, 'Cara', { properties: ['Mediterranean Avenue'], cash: 100, jailCards: 1 }, { properties: ['Reading Railroad'] });
+    const offer = async () => offerTrade(alice, 'Cara', { properties: ['Tanner Row'], cash: 100, jailCards: 1 }, { properties: ['Harbor Station'] });
     await offer();
-    const summary = 'Alice gives Mediterranean Avenue, $100, 1 Get Out of Jail Free card to Cara for Reading Railroad.';
+    const summary = 'Alice gives Tanner Row, $100, 1 Jail pass to Cara for Harbor Station.';
     await expect(cara.locator('.trade-summary')).toHaveText(summary);
     await expect(button(cara, 'Accept')).toBeVisible();
     await expect(button(cara, 'Decline')).toBeVisible();
@@ -1002,12 +1002,12 @@ test.describe('Street Deeds controls', () => {
     await expect(token(bob, 10, 'Cara')).toBeVisible();
     await expect(bob.locator('.in-jail .token[title="Cara"]')).toHaveCount(0); // just visiting
     await expect(bob.getByRole('img', { name: 'Last roll: 1 and 2' })).toBeVisible();
-    await expect(bob.locator('.drawn-card')).toContainText('Chance (Alice)');
-    await expect(bob.locator('.drawn-card-text')).toHaveText('Bank pays you dividend of $50');
+    await expect(bob.locator('.drawn-card')).toContainText('Fortune (Alice)');
+    await expect(bob.locator('.drawn-card-text')).toHaveText('Your shares in the harbor ferry pay out. Collect $50');
 
     await expect(cash(alice, 'Bob')).toHaveText('$1500');
     await expect(row(alice, 'Alice').getByRole('button')).toHaveCount(2);
-    await expect(row(alice, 'Bob').getByRole('button', { name: 'Boardwalk (mortgaged)' })).toBeVisible();
+    await expect(row(alice, 'Bob').getByRole('button', { name: 'Skyline Crescent (mortgaged)' })).toBeVisible();
     await expect(row(alice, 'Bob').locator('.chip-card')).toHaveText('Jail card');
     await expect(events(alice).locator('li')).toHaveText(['Newest event', 'Older event']);
   });
@@ -1027,7 +1027,7 @@ test.describe('Street Deeds controls', () => {
   test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
     const game = await start(seat);
     const faq = await openFaq(game.pages[0]);
-    await expect(faq).toContainText('Free Parking is just a resting place');
+    await expect(faq).toContainText('Town Square is just a resting place');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
   });
@@ -1038,7 +1038,7 @@ test.describe('Street Deeds differences from Wikipedia', () => {
     const game = await start(seat);
     const [alice] = game.pages;
     await game.land(0, [1, 2], { owners: { 3: 2 } });
-    await expect(events(alice)).toContainText('Alice paid Bob $4 (rent for Baltic Avenue)');
+    await expect(events(alice)).toContainText('Alice paid Bob $4 (rent for Cinder Lane)');
     await expectCash(game, [1496, 1504]);
   });
 
@@ -1137,7 +1137,7 @@ test.describe('Street Deeds differences from Wikipedia', () => {
   test('debts are paid in order, and bankruptcy to the first creditor drops the other debts', async ({ seat }) => {
     const game = await start(seat, 4);
     const [alice, bob, cara] = game.pages;
-    // Chairman of the Board: Alice pays $50 to each of three players with $60
+    // Chair of the town council: Alice pays $50 to each of three players with $60
     await game.land(4, [1, 2], { cash: cashOf([60, 1500, 1500, 1500]), decks: { chance: topped(14), chest: inOrder() } });
     await expectCash(game, [10, 1550, 1500, 1500], bob);
     await expect(turnPanel(alice)).toContainText('You owe Cara $50');
@@ -1152,11 +1152,11 @@ test.describe('Street Deeds differences from Wikipedia', () => {
     const [alice, bob] = game.pages;
     await expect(button(bob, 'Declare bankruptcy')).toHaveCount(0);
     await declareBankruptcy(alice);
-    await expect(auction(bob)).toContainText('Auction: Mediterranean Avenue');
+    await expect(auction(bob)).toContainText('Auction: Tanner Row');
     await expect(cash(bob, 'Alice')).toHaveText('$0');
   });
 
-  test('the third failed roll in Jail pays the $50 fine even with a Get Out of Jail Free card', async ({ seat }) => {
+  test('the third failed roll in Jail pays the $50 fine even with a Jail pass', async ({ seat }) => {
     const game = await start(seat, 2, {
       positions: { 1: 10, 2: 0 },
       jailed: { 1: 2 },
@@ -1177,7 +1177,7 @@ test.describe('Street Deeds differences from Wikipedia', () => {
       owners: { 1: 3 },
       cash: cashOf([1500, 1500, 5]),
       currentPlayer: 3,
-      debts: [{ debtor: 3, creditor: 2, amount: 10, reason: 'Community Chest' }],
+      debts: [{ debtor: 3, creditor: 2, amount: 10, reason: 'Town Fund' }],
       trade: { from: 3, to: 1, give: { properties: [1], cash: 0, jailCards: 0 }, get: { properties: [], cash: 50, jailCards: 0 } }
     });
     const [alice, bob, cara] = game.pages;

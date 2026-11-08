@@ -333,7 +333,7 @@ test('Catan trade offers and Street Deeds auctions can be answered out of turn i
   await tableScreen(streetdeeds);
   const first = (await streetdeeds.state<{ currentPlayer: number }>()).currentPlayer; // the roll-off picks who starts
   const roller = streetdeeds.pages[first - 1];
-  await streetdeeds.dice(1, 2); // Baltic Avenue, which the roller declines
+  await streetdeeds.dice(1, 2); // Cinder Lane, which the roller declines
   await button(roller, 'Roll the dice').click();
   await button(roller, 'Decline and auction').click();
   const other = streetdeeds.pages[2 - first];

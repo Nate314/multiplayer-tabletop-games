@@ -9,14 +9,14 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What is the goal?',
-    answer: 'Everyone starts on GO with $1500. Buy properties, charge rent, build houses and hotels, and be the last ' +
+    answer: 'Everyone starts on the Start space with $1500. Buy properties, charge rent, build houses and hotels, and be the last ' +
       'player left when everyone else is bankrupt.'
   },
   {
     question: 'How does a turn go?',
     answer: 'Click Roll the dice. Your token moves by the total and the space you land on takes effect at once: rent and ' +
-      'taxes are paid for you, and a Chance or Community Chest card is drawn and shown in the middle of the board. Passing ' +
-      'or landing on GO pays $200. Doubles roll again; three doubles in a row send you straight to Jail. When you are done ' +
+      'taxes are paid for you, and a Fortune or Town Fund card is drawn and shown in the middle of the board. Passing ' +
+      'or landing on Start pays $200. Doubles roll again; three doubles in a row send you straight to Jail. When you are done ' +
       'building or mortgaging, click End turn.'
   },
   {
@@ -29,14 +29,14 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How is rent worked out?',
-    answer: 'A street charges the rent on its Title Deed, doubled while its owner has the whole color group and it has no ' +
-      'houses (even if another street of the group is mortgaged). Houses and hotels raise it. Railroads charge $25, $50, ' +
+    answer: 'A street charges the rent on its deed, doubled while its owner has the whole color group and it has no ' +
+      'houses (even if another street of the group is mortgaged). Houses and hotels raise it. Stations charge $25, $50, ' +
       '$100 or $200 for one to four owned, and utilities 4 times the dice, or 10 times with both. Mortgaged property ' +
-      'charges nothing. Click any property on the board, or a chip in the player list, to see its Title Deed.'
+      'charges nothing. Click any property on the board, or a chip in the player list, to see its deed.'
   },
   {
     question: 'How do I build?',
-    answer: 'On your turn, with every street of a color group and none of it mortgaged, open a street\'s Title Deed and ' +
+    answer: 'On your turn, with every street of a color group and none of it mortgaged, open a street\'s deed and ' +
       'click Build house. Build evenly: a street may not get a second house before every street of the group has one. ' +
       'After four houses comes a hotel, which gives the four houses back to the bank. The bank has 32 houses and 12 ' +
       'hotels; when they run out nobody can build. Sell buildings back for half their cost, also evenly. A hotel sells ' +
@@ -44,20 +44,20 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do mortgages work?',
-    answer: 'Open a property\'s Title Deed and click Mortgage to get its mortgage value, half its price. A street can ' +
+    answer: 'Open a property\'s deed and click Mortgage to get its mortgage value, half its price. A street can ' +
       'only be mortgaged when its color group has no buildings. Lifting the mortgage costs the mortgage value plus 10%.'
   },
   {
     question: 'How does Jail work?',
     answer: 'You go to Jail by landing on Go to Jail, drawing a Go to Jail card, or rolling three doubles in a row, and ' +
-      'you do not collect $200. At the start of your turn in Jail, pay $50, use a Get Out of Jail Free card, or roll for ' +
+      'you do not collect $200. At the start of your turn in Jail, pay $50, use a Jail pass, or roll for ' +
       'doubles. Doubles let you out and move you, without another roll. After a third failed roll you pay $50 and move by ' +
       'that roll. In Jail you still collect rent, build, trade and bid.'
   },
   {
     question: 'How do I trade?',
     answer: 'Click Propose a trade, choose a player, and tick what each side gives: properties (none in a color group ' +
-      'with buildings), cash and Get Out of Jail Free cards. Any player may trade at any time, one offer at a time. ' +
+      'with buildings), cash and Jail passes. Any player may trade at any time, one offer at a time. ' +
       'Nothing moves until the other player clicks Accept. Whoever receives a mortgaged property chooses for each one: ' +
       'lift the mortgage now for its value plus 10%, or pay the 10% now and keep it mortgaged. An offer is refused if ' +
       'the receiver could not pay that 10%, and an offer from or to a player who disconnects is dropped.'
@@ -71,14 +71,14 @@ export const FAQS: FaqItem[] = [
       'unowned. You may also declare bankruptcy on your turn to leave the game; your properties then go the same way.'
   },
   {
-    question: 'Is there Free Parking money?',
-    answer: 'Not unless the house rules turn on the Free Parking jackpot. By default, as in the official rules, Free Parking is ' +
-      'just a resting place, and taxes and fees go to the bank. With the jackpot on, the taxes, the Chance and Community ' +
-      'Chest payments to the bank and the $50 Jail fine go into a pot shown on Free Parking, and landing there takes all of it.'
+    question: 'Is there Town Square money?',
+    answer: 'Not unless the house rules turn on the Town Square jackpot. By default, as in the standard rules, Town Square is ' +
+      'just a resting place, and taxes and fees go to the bank. With the jackpot on, the taxes, the Fortune and Town Fund ' +
+      'card payments to the bank and the $50 Jail fine go into a pot shown on Town Square, and landing there takes all of it.'
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before the first roll the host can turn on the Free Parking jackpot, turn on $400 for landing exactly on GO (passing GO ' +
+    answer: 'Before the first roll the host can turn on the Town Square jackpot, turn on $400 for landing exactly on Start (passing Start ' +
       'still pays $200), and turn auctions off, when a declined property stays with the bank and the properties of ' +
       'a bankrupt player go back to it unowned. Everyone has to agree before play starts.'
   },

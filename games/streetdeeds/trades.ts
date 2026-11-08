@@ -1,5 +1,5 @@
 // Trades between any two players at any time: properties without buildings in their color group, cash and
-// Get Out of Jail Free cards. One offer is open at a time; it happens only when the other player accepts.
+// Jail passes. One offer is open at a time; it happens only when the other player accepts.
 // Whoever receives a mortgaged property then lifts the mortgage at once for 110%, or pays 10% and keeps it.
 import { BOARD, isSpace, ownable } from './board.ts';
 import { groupHasBuildings, interestOn, receiveProperties } from './buildings.ts';
@@ -29,7 +29,7 @@ function sideError(state: GameState, seat: Seat, side: TradeSide): string | null
     if (groupHasBuildings(state, space)) return `Sell the buildings in ${BOARD[space].name}'s color group before trading it`;
   }
   if (side.cash > (state.cash[seat] ?? 0)) return `${name} does not have ${money(side.cash)}`;
-  if (side.jailCards > (state.jailCards[seat] ?? []).length) return `${name} does not have that many Get Out of Jail Free cards`;
+  if (side.jailCards > (state.jailCards[seat] ?? []).length) return `${name} does not have that many Jail passes`;
   return null;
 }
 

@@ -4,7 +4,7 @@ import type { GameState, Random, Result, Seat } from './types.ts';
 
 const inOrder = () => Array.from({ length: 16 }, (_, index) => index);
 
-// Three players on GO with $1500 each, Alice to roll, both decks in printed order
+// Three players on Start with $1500 each, Alice to roll, both decks in printed order
 export function game(overrides: Partial<GameState> = {}): GameState {
   return {
     ...createGameState('g'),

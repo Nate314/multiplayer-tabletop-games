@@ -1,7 +1,7 @@
 import { el, type SvgAsset } from '../../shared/svg/svg.ts';
 import { lineIcon, solid } from '../../shared/svg/icons.ts';
 
-// The picture on each corner, railroad, utility, tax and card space, in currentColor
+// The picture on each corner, station, utility, tax and card space, in currentColor
 const SPACE_ICONS: Record<string, () => string> = {
   railroad: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 14, rx: 3 }), el('rect', { x: 7.5, y: 6, width: 9, height: 4.5, rx: 1 }),
     solid('circle', { cx: 9, cy: 14, r: 1.1 }), solid('circle', { cx: 15, cy: 14, r: 1.1 }), el('path', { d: 'M8 17l-2 4M16 17l2 4' })),

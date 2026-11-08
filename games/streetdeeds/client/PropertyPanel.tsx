@@ -33,7 +33,7 @@ function Rents({ space }: { space: number }) {
       <table className="deed-rents">
         <tbody>
           {RAILROAD_RENTS.map((rent, index) => (
-            <tr key={index}><td>{index + 1} railroad{index > 0 ? 's' : ''} owned</td><td>${rent}</td></tr>
+            <tr key={index}><td>{index + 1} station{index > 0 ? 's' : ''} owned</td><td>${rent}</td></tr>
           ))}
         </tbody>
       </table>
@@ -50,7 +50,7 @@ function Rents({ space }: { space: number }) {
   );
 }
 
-// A Title Deed for the chosen property, with the owner's building and mortgage buttons
+// A deed for the chosen property, with the owner's building and mortgage buttons
 export default function PropertyPanel({ gameState, space, playerNumber, canManage, onMove, onClose }: PropertyPanelProps) {
   const property = ownable(space);
   if (!property) return null;
@@ -69,10 +69,10 @@ export default function PropertyPanel({ gameState, space, playerNumber, canManag
   );
 
   return (
-    <section className="panel deed" aria-label={`${property.name} title deed`}>
+    <section className="panel deed" aria-label={`${property.name} deed`}>
       <div className={`deed-header ${target.kind === 'street' ? `group-${target.group}` : 'deed-plain'}`}>
         <span className="deed-name">{property.name}</span>
-        <button type="button" className="deed-close" onClick={onClose} aria-label="Close the title deed">×</button>
+        <button type="button" className="deed-close" onClick={onClose} aria-label="Close the deed">×</button>
       </div>
       <div className="deed-owner">
         {owner === undefined ? `For sale by the bank: $${property.price}` : `Owned by ${playerNames[owner]}`}

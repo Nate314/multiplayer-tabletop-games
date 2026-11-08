@@ -395,15 +395,14 @@
     min-width: 0;
   }
 
+  /* The game's name, level, in the page's heading font and the game's own green */
   .board-title {
-    padding: 0.6cqw 3cqw;
-    background: #D62828;
-    color: #FFFFFF;
     margin-bottom: 2cqw;
-    font-size: 6cqw;
-    font-weight: 800;
-    letter-spacing: 0.4cqw;
-    transform: rotate(-12deg);
+    color: var(--button-bg);
+    font: inherit;
+    font-size: 5cqw;
+    font-weight: 700;
+    line-height: 1.2;
   }
 
   .dice {

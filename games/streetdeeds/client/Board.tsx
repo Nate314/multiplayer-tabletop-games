@@ -22,7 +22,7 @@ const ICONS = new Set(['railroad', 'chance', 'chest', 'tax', 'go', 'parking', 'g
 
 function iconFor(space: number): string | null {
   const target = BOARD[space];
-  if (target.kind === 'utility') return target.name === 'Water Works' ? 'water' : 'electric';
+  if (target.kind === 'utility') return target.name === 'Reservoir' ? 'water' : 'electric';
   const kind = target.kind === 'card' ? target.deck : target.kind;
   return ICONS.has(kind) ? kind : null;
 }
@@ -104,7 +104,7 @@ export default function Board(props: BoardProps) {
     <div className="board">
       {BOARD.map((_, space) => <Space key={space} space={space} {...props} />)}
       <div className="board-center">
-        <div className="board-title">STREETDEEDS</div>
+        <div className="board-title">Street Deeds</div>
         <Dice dice={dice} />
         {drawnCard && (
           <div className={`drawn-card deck-${drawnCard.deck}`} aria-live="polite">
@@ -112,7 +112,7 @@ export default function Board(props: BoardProps) {
             <div className="drawn-card-text">{DECKS[drawnCard.deck][drawnCard.index].text}</div>
           </div>
         )}
-        <div className="deck-counts">Cards left: Chance {deckCounts.chance}, Community Chest {deckCounts.chest}</div>
+        <div className="deck-counts">Cards left: Fortune {deckCounts.chance}, Town Fund {deckCounts.chest}</div>
       </div>
     </div>
   );

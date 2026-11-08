@@ -3,12 +3,12 @@ import { houseRule, type HouseRule, type ToggleRule } from '../../shared/houseRu
 import type { BaseGameState } from '../../shared/types.ts';
 
 const JACKPOT: ToggleRule = {
-  id: 'freeParkingJackpot', label: 'Free Parking jackpot', kind: 'toggle', standard: false,
-  help: 'Taxes, card fees and the Jail fine go to a pot that whoever lands on Free Parking takes'
+  id: 'freeParkingJackpot', label: 'Town Square jackpot', kind: 'toggle', standard: false,
+  help: 'Taxes, card fees and the Jail fine go to a pot that whoever lands on Town Square takes'
 };
 const GO_BONUS: ToggleRule = {
-  id: 'goBonus', label: '$400 for landing exactly on GO', kind: 'toggle', standard: false,
-  help: 'Landing exactly on GO pays $400 in all, passing it still pays $200'
+  id: 'goBonus', label: '$400 for landing exactly on Start', kind: 'toggle', standard: false,
+  help: 'Landing exactly on Start pays $400 in all, passing it still pays $200'
 };
 const AUCTIONS: ToggleRule = {
   id: 'auctions', label: 'Auctions', kind: 'toggle', standard: true,
