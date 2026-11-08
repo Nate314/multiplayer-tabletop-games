@@ -17,7 +17,7 @@ type TileProps = {
   drawn?: boolean;
 };
 
-// A In Order card: its number on a color that runs through the rainbow, so a rack in order reads as a gradient
+// An In Order card: its number on a color that runs through the rainbow, so a rack in order reads as a gradient
 export default function Tile({ card, small = false, selected = false, label, onClick, disabled = false, animKey, drawn = false }: TileProps) {
   const classes = ['tile'];
   if (card === undefined) classes.push('tile-back');

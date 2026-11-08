@@ -7,7 +7,8 @@ import { describeMove } from './describeMove.ts';
 import './spiteandmalice.scss';
 
 export const spiteandmaliceClient: ClientGame = {
-  id: 'spiteandmalice',  Screen: GameScreen,
+  id: 'spiteandmalice',
+  Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,
   describeMove,
