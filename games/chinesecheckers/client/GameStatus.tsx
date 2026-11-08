@@ -1,7 +1,7 @@
 import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
-import { MARBLE_COUNT, SEAT_COLORS, cannotStart, marblesHome } from '../rules.ts';
+import { SEAT_SYMBOL_COLORS, seatColorName } from '../../../src/components/seatColors.ts';
+import { MARBLE_COUNT, cannotStart, marblesHome } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type GameStatusProps = {
@@ -38,8 +38,8 @@ export default function GameStatus({ gameState, playerNumber, isMyTurn, error }:
           const classNames = [seat === currentPlayer ? 'current' : '', inGame ? '' : 'player-left'];
           return (
             <li key={seat} className={classNames.join(' ').trim()}>
-              <span className={`player-dot player${seat}`} title={SEAT_COLORS[seat]}>
-                <ColorSymbol color={SEAT_SYMBOLS[seat]} className="dot-symbol" />
+              <span className={`player-dot player${seat}`} title={seatColorName(seat)}>
+                <ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="dot-symbol" />
               </span>
               <span className="player-name">
                 {playerNames[seat]}<YouTag when={seat === playerNumber} />

@@ -1,8 +1,7 @@
 import type { CSSProperties, KeyboardEvent } from 'react';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import { HOLES, holeKey, opposite, parseHole, pointOf } from '../board.ts';
-import { SEAT_COLORS } from '../rules.ts';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS, seatColorName, seatColorVar } from '../../../src/components/seatColors.ts';
 import { VIEW_BOX, holeXY, turnsFor } from './geometry.ts';
 import { holeAnimKey } from './animateMove.ts';
 import { includesHole } from './selection.ts';
@@ -46,7 +45,7 @@ export default function Board({ gameState, viewer, dimmed, path, movable, target
     const target = viewerPoint !== undefined && opposite(viewerPoint) === point ? ' my-target' : '';
     return start + target;
   }
-  const style = viewerPoint === undefined ? undefined : ({ '--viewer': `var(--player${viewer})` } as CSSProperties);
+  const style = viewer === null || viewerPoint === undefined ? undefined : ({ '--viewer': seatColorVar(viewer) } as CSSProperties);
 
   return (
     <svg className={`board hand-only-board${dimmed ? ' dimmed' : ''}`} viewBox={VIEW_BOX} style={style} role="group" aria-label="Chinese Checkers board">
@@ -87,12 +86,12 @@ export default function Board({ gameState, viewer, dimmed, path, movable, target
             key={key}
             className={classNames.join(' ')}
             data-marble={key}
-            aria-label={`${SEAT_COLORS[seat]} marble`}
+            aria-label={`${seatColorName(seat)} marble`}
             {...(canMove ? { role: 'button', tabIndex: 0, onKeyDown: onKey(() => onHoleClick(hole)) } : { role: 'img' })}
           >
             <circle cx={x} cy={y} r={MARBLE_RADIUS} />
             <ColorSymbol
-              color={SEAT_SYMBOLS[seat]}
+              color={SEAT_SYMBOL_COLORS[seat]}
               className="marble-symbol"
               svgProps={{ x: x - SYMBOL_SIZE / 2, y: y - SYMBOL_SIZE / 2, width: SYMBOL_SIZE, height: SYMBOL_SIZE, style: { width: SYMBOL_SIZE, height: SYMBOL_SIZE } }}
             />
