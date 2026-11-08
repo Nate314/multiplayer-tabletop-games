@@ -7,6 +7,7 @@ import {
   targetScore, toPublicState
 } from './rules.ts';
 import { uno } from './index.ts';
+import { TARGET_RULE } from './options.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
 import type { Card, Color, GameState, Result, Value } from './types.ts';
@@ -572,6 +573,29 @@ test('the game ends at the chosen target', () => {
   assert.equal(finish(239, 250).isGameOver, false);
   assert.equal(finish(240, 500).isGameOver, false);
   assert.equal(targetScore({}), 500);
+});
+
+test('One round ends the game when the first round ends', () => {
+  const over = ok(play(withHand(1, [red('7')], { houseRules: withRules({ targetScore: 0 }) }), 1, red('7')));
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [1]);
+});
+
+test('One round ends the game even when going out scores 0', () => {
+  const state = withHand(1, [red('7')], {
+    hands: { ...game().hands, 1: [red('7')], 2: [blue('0')], 3: [blue('0')] }, houseRules: withRules({ targetScore: 0 })
+  });
+  const over = ok(play(state, 1, red('7')));
+  assert.equal(over.isGameOver, true);
+  assert.deepEqual(over.winners, [1]);
+  assert.equal(over.scores[1], 0);
+});
+
+test('the target choices are One round, 250, 500 and 1,000, standard 500', () => {
+  assert.deepEqual(TARGET_RULE.choices, [
+    { value: 0, label: 'One round' }, { value: 250, label: '250' }, { value: 500, label: '500' }, { value: 1000, label: '1,000' }
+  ]);
+  assert.equal(TARGET_RULE.standard, 500);
 });
 
 // House rules: stacking, 7-0 and draw until you can play

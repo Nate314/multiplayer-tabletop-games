@@ -33,7 +33,11 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
 
   return (
     <div className="table">
-      <div className="round">Round {roundNumber}: first to {targetScore(gameState).toLocaleString('en-US')} points wins</div>
+      <div className="round">
+        {targetScore(gameState) === 0
+          ? 'One round: first to go out wins'
+          : `Round ${roundNumber}: first to ${targetScore(gameState).toLocaleString('en-US')} points wins`}
+      </div>
       <div className="direction">
         Direction: <span className="direction-arrow" aria-hidden="true">{arrow}</span> {direction === 1 ? 'in seat order' : 'reversed'}
       </div>
