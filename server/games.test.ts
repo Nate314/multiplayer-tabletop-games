@@ -928,7 +928,7 @@ test("loading holds every seat without running the game's disconnect hook", () =
   manager.join('test', 'g1', 'B');
   ok(manager.move(ROOM, 1, tick));
 
-  // Azul, Uno and Phase 10 deal the next round from this hook once nobody is waiting
+  // Azul, Uno and Stage Rummy deal the next round from this hook once nobody is waiting
   const withHook = { ...testGame, onPlayerDisconnected: (state: TestState) => ({ ...state, gameStatus: 'hook ran' }) };
   const restarted = rememberingKeys(createGameManager([withHook], seededRandom, store), keys);
   assert.deepEqual(current(restarted).disconnected, [1, 2]);
@@ -995,7 +995,7 @@ test('an undo past a dismissal runs the game hook for the dismissed player again
 });
 
 test('an undo that ends the game again keeps the ending in the status', () => {
-  // The re-run hook ends the game, as Phase 10 does when a tiebreak loses all but one player
+  // The re-run hook ends the game, as Stage Rummy does when a tiebreak loses all but one player
   const endsOnLeave = {
     ...testGame,
     onPlayerLeft: (state: TestState) => ({ ...state, isGameOver: true, currentPlayer: null, winners: [3], gameStatus: 'C wins!' })

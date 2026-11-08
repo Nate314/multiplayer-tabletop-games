@@ -2,14 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
-import { phase10 } from './index.ts';
+import { stagerummy } from './index.ts';
 import { buildGroup, hasLaidDown, layablePhases, phaseRequirements } from './rules.ts';
 import type { Card, PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'phase10/g1';
+const ROOM = 'stagerummy/g1';
 const drawPile = { type: 'draw', source: 'pile' };
 
 // A repeatable random, so every run deals the same cards
@@ -22,13 +22,13 @@ function seeded(seed: number): () => number {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([phase10], seeded(42)));
-  for (const name of names) manager.join('phase10', 'g1', name);
+  const manager = rememberingKeys(createGameManager([stagerummy], seeded(42)));
+  for (const name of names) manager.join('stagerummy', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Phase 10's
+// The manager is generic over games, so tests narrow the public state to Stage Rummy's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -65,7 +65,7 @@ test('each player sees only their own hand, and the history sees no hand', () =>
   }
 
   playTurn(manager, 1);
-  const history = stepsOf(manager, 'phase10');
+  const history = stepsOf(manager, 'stagerummy');
   assert.ok(history);
   assert.equal(history.length, 3);
   for (const step of history as unknown as PublicGameState[]) {
@@ -175,10 +175,10 @@ function laidTurn(manager: Manager, seat: Seat): PublicGameState {
 }
 
 test('a full game at 8 players is dealt ten cards each and plays to a winner', () => {
-  const manager = rememberingKeys(createGameManager([phase10], seeded(5)));
-  manager.join('phase10', 'g1', 'P1');
+  const manager = rememberingKeys(createGameManager([stagerummy], seeded(5)));
+  manager.join('stagerummy', 'g1', 'P1');
   ok(manager.setHouseRules(ROOM, 1, { values: { anyOrder: true }, maxPlayers: 8 }));
-  for (let seat = 2; seat <= 8; seat++) manager.join('phase10', 'g1', `P${seat}`);
+  for (let seat = 2; seat <= 8; seat++) manager.join('stagerummy', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = viewOf(manager, null);
   assert.equal(state.activePlayers.length, 8);

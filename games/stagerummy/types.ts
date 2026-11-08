@@ -60,12 +60,12 @@ export type GameState = BaseGameState & {
   drawPile: Card[];                // drawn from the end
   discardPile: Card[];             // the last card is on top
   groups: Group[];                 // in the order they were laid down
-  phases: Record<Seat, number>;    // the phase each player is on; 11 once phase 10 is done (with any order, the lowest not completed)
+  phases: Record<Seat, number>;    // the phase each player is on; 11 once the last phase is done (with any order, the lowest not completed)
   phasesDone: Record<Seat, number[]>; // phases completed; saves from before "Phases in any order" lack it, so derive it from phases
   laidPhase: Record<Seat, number>; // the phase each player laid down this hand; saves from before lack it
   scores: Record<Seat, number>;
   skipped: Seat[];                 // players who lose their next turn
-  tiebreak: Seat[];                // the tied players replaying phase 10 in a tiebreaker hand; empty otherwise
+  tiebreak: Seat[];                // the tied players replaying the last phase in a tiebreaker hand; empty otherwise
   drawnBy: Seat | null;            // the current player once they have drawn this turn
   lastMove: LastMove | null;
   handSummary: HandSummary | null;

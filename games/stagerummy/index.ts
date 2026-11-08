@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyAction, applyMove, createGameState, finalStandings, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState, waitingOn } from './rules.ts';
-import { phase10Info } from './info.ts';
+import { stagerummyInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const phase10: GameDefinition<GameState, PublicGameState> = {
-  info: phase10Info,
+export const stagerummy: GameDefinition<GameState, PublicGameState> = {
+  info: stagerummyInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

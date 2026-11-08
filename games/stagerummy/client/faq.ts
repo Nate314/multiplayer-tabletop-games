@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'Complete the ten phases in order, one per hand at most. The game ends after a hand in which someone completes phase 10. Among the players who completed it, the lowest score wins. If that score is tied, the tied players play a tiebreaker hand of phase 10 on their own, decided the same way.'
+    answer: 'Complete the ten phases in order, one per hand at most. The game ends after a hand in which someone completes the last phase. Among the players who completed it, the lowest score wins. If that score is tied, the tied players play a tiebreaker hand of the last phase on their own, decided the same way.'
   },
   {
     question: 'What are the ten phases?',
@@ -67,7 +67,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can the rules be changed?',
-    answer: 'Before play starts the host can turn on "Phases in any order". Then each hand you choose which phase to lay down, any phase you have not completed yet, instead of the next one in order. Completing all ten finishes the game, with the same lowest-score win and tiebreaker hand of phase 10. Everyone has to agree before play starts, and the rules cannot change afterwards. The host can also set Most players to as many as 8 instead of 6.'
+    answer: 'Before play starts the host can turn on "Phases in any order". Then each hand you choose which phase to lay down, any phase you have not completed yet, instead of the next one in order. Completing all ten finishes the game, with the same lowest-score win and tiebreaker hand of the last phase. Everyone has to agree before play starts, and the rules cannot change afterwards. The host can also set Most players to as many as 8 instead of 6.'
   },
   {
     question: 'What happens if someone leaves?',

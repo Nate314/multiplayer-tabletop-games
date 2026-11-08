@@ -41,7 +41,7 @@ export function RoundRows({ summary, gameState, viewer }: { summary: Summary; ga
 export default function HandSummary({ summary, gameState, playerNumber, onContinue }: HandSummaryProps) {
   const { playerNames, tiebreak } = gameState;
   const tied = tiebreak.map(seat => playerNames[seat]).join(' and ');
-  const result = `${playerNames[summary.wentOut]} went out${tiebreak.length > 0 ? `. Tiebreaker next: ${tied} attempt phase 10 again` : ''}`;
+  const result = `${playerNames[summary.wentOut]} went out${tiebreak.length > 0 ? `. Tiebreaker next: ${tied} attempt the last phase again` : ''}`;
 
   return (
     <RoundSummaryDialog

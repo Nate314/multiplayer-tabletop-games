@@ -6,10 +6,10 @@ import { plural } from '../../../shared/text.ts';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
-import './phase10.scss';
+import './stagerummy.scss';
 
-export const phase10Client: ClientGame = {
-  id: 'phase10',
+export const stagerummyClient: ClientGame = {
+  id: 'stagerummy',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

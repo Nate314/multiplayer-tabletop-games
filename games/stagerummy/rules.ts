@@ -1,4 +1,4 @@
-// Phase 10 rules shared by the browser (phase names, what a selection makes) and the server (validation).
+// Stage Rummy rules shared by the browser (phase names, what a selection makes) and the server (validation).
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, mapSeats, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
@@ -187,7 +187,7 @@ export function phasesDoneOf(state: Pick<GameState, 'houseRules' | 'phases' | 'p
   return Array.from({ length: Math.min(state.phases[seat] - 1, LAST_PHASE) }, (_, index) => index + 1);
 }
 
-// The phases a player may lay down now: their next one, any one not completed, or in a tiebreaker only phase 10
+// The phases a player may lay down now: their next one, any one not completed, or in a tiebreaker only the last phase
 export function layablePhases(state: Pick<GameState, 'houseRules' | 'phases' | 'phasesDone' | 'tiebreak'>, seat: Seat): number[] {
   if (state.tiebreak.includes(seat)) return [LAST_PHASE];
   if (!anyOrder(state)) return [state.phases[seat]];
@@ -359,8 +359,8 @@ function takeCards(hand: Card[], ids: number[]): { taken: Card[]; rest: Card[] }
 }
 
 // Scores the hand once someone has gone out. Everyone who laid down moves on a phase.
-// The game ends after a hand in which someone completed phase 10: the lowest score among them wins.
-// If that score is shared, the tied players play a tiebreaker hand, attempting phase 10 again.
+// The game ends after a hand in which someone completed the last phase: the lowest score among them wins.
+// If that score is shared, the tied players play a tiebreaker hand, attempting the last phase again.
 function endHand(state: GameState, wentOut: Seat): GameState {
   const seats = Object.fromEntries(handPlayers(state).map((seat): [Seat, SeatSummary] => {
     const cards = state.hands[seat] ?? [];
@@ -397,7 +397,7 @@ function endHand(state: GameState, wentOut: Seat): GameState {
       ...scored,
       tiebreak: winners,
       phases: { ...phases, ...Object.fromEntries(winners.map(seat => [seat, LAST_PHASE])) },
-      gameStatus: `${names} tie with ${best} points, so they play a tiebreaker hand of phase 10. Waiting for everyone to continue.`
+      gameStatus: `${names} tie with ${best} points, so they play a tiebreaker hand of the last phase. Waiting for everyone to continue.`
     };
   }
   return { ...scored, isGameOver: true, winners, gameStatus: `${state.playerNames[winners[0]]} wins with ${best} points!` };
@@ -519,7 +519,7 @@ function chosenPhase(state: GameState, seat: Seat, named: number | undefined): R
   const allowed = layablePhases(state, seat);
   if (state.tiebreak.includes(seat)) {
     // Without the rule a layDown names no phase, as before
-    return named === LAST_PHASE || (named === undefined && !anyOrder(state)) ? { state: LAST_PHASE } : { error: 'The tiebreaker hand is phase 10' };
+    return named === LAST_PHASE || (named === undefined && !anyOrder(state)) ? { state: LAST_PHASE } : { error: 'The tiebreaker hand is the last phase' };
   }
   if (!anyOrder(state)) {
     return named === undefined || named === allowed[0] ? { state: allowed[0] } : { error: `Phase ${allowed[0]} is your next phase` };

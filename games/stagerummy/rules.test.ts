@@ -15,7 +15,7 @@ import {
   resetLobby,
   onPlayerLeft
 } from './rules.ts';
-import { phase10 } from './index.ts';
+import { stagerummy } from './index.ts';
 import { applyMove, removePlayer } from '../../shared/seating.ts';
 import { withRules } from '../../server/testing.ts';
 import type { Card, CardColor, GameState, Group, Result } from './types.ts';
@@ -60,7 +60,7 @@ function game(overrides: Partial<GameState> = {}): GameState {
 }
 
 const move = (state: GameState, seat: number, input: unknown, random = seeded(1)) =>
-  applyMove(phase10, state, seat, input, random);
+  applyMove(stagerummy, state, seat, input, random);
 const drawPile = { type: 'draw', source: 'pile' };
 const drawDiscard = { type: 'draw', source: 'discard' };
 const discardOf = (card: Card, skipSeat: number | null = null) => ({ type: 'discard', card: card.id, skip: skipSeat });
@@ -405,7 +405,7 @@ test('a disconnected or departed player is not waited for', () => {
   assert.equal(both.handNumber, 2);
 });
 
-test('the game ends after a hand in which someone completes phase 10; the lowest score among them wins', () => {
+test('the game ends after a hand in which someone completes the last phase; the lowest score among them wins', () => {
   const { state, last } = aboutToGoOut({ 1: 10, 2: 10 });
   const ended = ok(move(state, 1, discardOf(last)));
   assert.equal(ended.isGameOver, true);
@@ -413,15 +413,15 @@ test('the game ends after a hand in which someone completes phase 10; the lowest
   assert.equal(ended.gameStatus, 'Alice wins with 10 points!');
   assert.deepEqual(acknowledgeHand(ended, 1), { error: 'Nothing to continue' });
 
-  // Bob also completed phase 10 and has the lower score
+  // Bob also completed the last phase and has the lower score
   const bobs: Group = { owner: 2, kind: 'set', value: 1, cards: [num(1), num(1), num(1)] };
   const both = ok(move({ ...state, groups: [...state.groups, bobs], hands: { 1: [last], 2: [] }, scores: { 1: 30, 2: 20 } }, 1, discardOf(last)));
   assert.deepEqual(both.winners, [2]);
 
 });
 
-// Alice, Bob and Cy: Alice goes out on phase 10 with Bob, tying him on 20 points; Cy is far behind
-function tiedOnPhase10() {
+// Alice, Bob and Cy: Alice goes out on the last phase with Bob, tying him on 20 points; Cy is far behind
+function tiedOnLastPhase() {
   const last = num(9);
   const state = game({
     activePlayers: [1, 2, 3],
@@ -439,13 +439,13 @@ function tiedOnPhase10() {
   return ok(move(state, 1, discardOf(last)));
 }
 
-test('a tie for the lowest score on phase 10 is settled by a tiebreaker hand of phase 10', () => {
-  const tied = tiedOnPhase10();
+test('a tie for the lowest score on the last phase is settled by a tiebreaker hand of the last phase', () => {
+  const tied = tiedOnLastPhase();
   assert.equal(tied.isGameOver, false);
   assert.deepEqual(tied.winners, []);
   assert.deepEqual(tied.tiebreak, [1, 2]);
   assert.deepEqual(tied.phases, { 1: 10, 2: 10, 3: 4 });
-  assert.equal(tied.gameStatus, 'Alice and Bob tie with 20 points, so they play a tiebreaker hand of phase 10. Waiting for everyone to continue.');
+  assert.equal(tied.gameStatus, 'Alice and Bob tie with 20 points, so they play a tiebreaker hand of the last phase. Waiting for everyone to continue.');
 
   // Only the tied players are dealt in, and the turn passes between them alone
   const all = [1, 2, 3].reduce((state, seat) => ok(acknowledgeHand(state, seat, seeded(4))), tied);
@@ -461,8 +461,8 @@ test('a tie for the lowest score on phase 10 is settled by a tiebreaker hand of 
   assert.equal(ok(move(drawn, 2, discardOf(card))).currentPlayer, 1);
 });
 
-test('in the tiebreaker the tied player who completes phase 10 wins; otherwise another tiebreaker follows', () => {
-  const tied = tiedOnPhase10();
+test('in the tiebreaker the tied player who completes the last phase wins; otherwise another tiebreaker follows', () => {
+  const tied = tiedOnLastPhase();
   // Bob discards his last card in the tiebreaker hand
   const bobGoesOut = (groups: Group[], aliceHand: Card[]) => {
     const last = num(9);
@@ -497,13 +497,13 @@ test('a player dismissed on their turn passes it on past a player due to be skip
     currentPlayer: 2, activePlayers: [1, 2, 3], playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cy' },
     hands: { 1: [num(1)], 2: [num(2)], 3: [num(3)] }, phases: { 1: 1, 2: 1, 3: 1 }, scores: { 1: 0, 2: 0, 3: 0 }, skipped: [3]
   });
-  const next = removePlayer(phase10, state, 2, seeded(3));
+  const next = removePlayer(stagerummy, state, 2, seeded(3));
   assert.equal(next.currentPlayer, 1);
   assert.deepEqual(next.skipped, []);
 });
 
 test('if all but one tied player leaves, the one left wins the tiebreaker', () => {
-  const tied = tiedOnPhase10();
+  const tied = tiedOnLastPhase();
   const left = onPlayerLeft({ ...tied, activePlayers: [1, 3] }, 2, seeded(3));
   assert.equal(left.isGameOver, true);
   assert.deepEqual(left.winners, [1]);
@@ -648,7 +648,7 @@ test('the game ends when a player has completed all ten', () => {
   assert.deepEqual(out.phasesDone[1], ALL_TEN);
 });
 
-test('players tied on the lowest score after finishing all ten play a tiebreaker hand of phase 10', () => {
+test('players tied on the lowest score after finishing all ten play a tiebreaker hand of the last phase', () => {
   const { state, run, spare } = holdingRun({
     phasesDone: { 1: without(5), 2: without(5) },
     phases: { 1: 5, 2: 5 },
@@ -663,7 +663,7 @@ test('players tied on the lowest score after finishing all ten play a tiebreaker
   assert.deepEqual(ended.phases, { 1: 10, 2: 10 });
 });
 
-test('in a tiebreaker only phase 10 may be laid down, even with any order', () => {
+test('in a tiebreaker only the last phase may be laid down, even with any order', () => {
   const five = [num(1), num(1, 'blue'), num(1, 'green'), num(1, 'yellow'), num(1, 'red')];
   const three = [num(2), num(2, 'blue'), num(2, 'green')];
   const state = game({
@@ -674,7 +674,7 @@ test('in a tiebreaker only phase 10 may be laid down, even with any order', () =
     phasesDone: { 1: ALL_TEN, 2: ALL_TEN },
     hands: { 1: [...five, ...three, num(9)], 2: [num(4)] }
   });
-  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five)] }), { error: 'The tiebreaker hand is phase 10' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five)] }), { error: 'The tiebreaker hand is the last phase' });
   const laid = ok(move(state, 1, { type: 'layDown', phase: 10, groups: [ids(five), ids(three)] }));
   assert.deepEqual(laid.laidPhase, { 1: 10 });
 });
@@ -720,7 +720,7 @@ test('with the rule off a tiebreaker layDown needs no phase, and a stray phase f
   const laid = ok(move(state, 1, { type: 'layDown', groups: [ids(five), ids(three)] }));
   assert.deepEqual(laid.laidPhase, { 1: 10 });
   ok(move(state, 1, { type: 'layDown', phase: null, groups: [ids(five), ids(three)] }));
-  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five), ids(three)] }), { error: 'The tiebreaker hand is phase 10' });
+  assert.deepEqual(move(state, 1, { type: 'layDown', phase: 4, groups: [ids(five), ids(three)] }), { error: 'The tiebreaker hand is the last phase' });
 });
 
 test('finalStandings ranks by phase, then by the lowest score', () => {

@@ -75,7 +75,7 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.player')],
     move: async page => { await button(page, 'Draw').click(); }
   },
-  phase10: {
+  stagerummy: {
     keep: ['.my-hand', '.turn-message', '.piles', you('.seat')],
     hide: [others('.seat') + ' .seat-details'],
     board: '.table .groups', // Bob's laid set, which Alice can hit

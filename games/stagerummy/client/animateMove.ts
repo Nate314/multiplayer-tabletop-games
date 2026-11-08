@@ -17,14 +17,14 @@ export type Ghost = { card: Card | null; from: string; to: string };
 
 // slides are [from key, to key]: the element at the to key slides in from where the from key was.
 // A ghost is a copy of a card that went to a seat, where no card of it is shown.
-export type Phase10Plan = { slides: [string, string][]; ghosts: Ghost[]; flash: string | null };
+export type StageRummyPlan = { slides: [string, string][]; ghosts: Ghost[]; flash: string | null };
 
-const NOTHING: Phase10Plan = { slides: [], ghosts: [], flash: null };
+const NOTHING: StageRummyPlan = { slides: [], ghosts: [], flash: null };
 
 // "Mine" is told from the viewer's own hand, so no viewer is needed
 const has = (cards: Card[], id: number) => cards.some(card => card.id === id);
 
-export function plan(previous: PublicGameState, next: PublicGameState): Phase10Plan {
+export function plan(previous: PublicGameState, next: PublicGameState): StageRummyPlan {
   const { lastMove } = next;
   if (!lastMove) return NOTHING;
   const seat = seatKey(lastMove.playerNumber);

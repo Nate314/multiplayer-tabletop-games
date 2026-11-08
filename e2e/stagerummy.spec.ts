@@ -1,16 +1,16 @@
 import type { Page } from '@playwright/test';
 import { dismiss, expect, ghostsSeen, leave, recordGhosts, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table, headerButton } from './fixtures.ts';
-import { createDeck } from '../games/phase10/rules.ts';
-import type { Card, CardColor, GameState, Group } from '../games/phase10/types.ts';
+import { createDeck } from '../games/stagerummy/rules.ts';
+import type { Card, CardColor, GameState, Group } from '../games/stagerummy/types.ts';
 
-// One test per rule and control in games/phase10/README.md. Seat 1 (Alice) goes first unless the opening discard is a
+// One test per rule and control in games/stagerummy/README.md. Seat 1 (Alice) goes first unless the opening discard is a
 // Skip. Most tests deal crafted hands; every card not in a hand, a group or the discard pile goes to the draw pile.
 
 const NAMES = ['Alice', 'Bob', 'Cara'];
 const COLORS: CardColor[] = ['red', 'blue', 'green', 'yellow'];
 
 async function start(seat: SeatFixture, players = 2, options?: SeatOptions) {
-  const table = await seat('phase10', NAMES.slice(0, players), options);
+  const table = await seat('stagerummy', NAMES.slice(0, players), options);
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -68,7 +68,7 @@ const UNSHUFFLED = Array.from({ length: 107 }, (_, step) => (107 - step + 0.5) /
 
 const tenCards = (color: CardColor, copy = 0) => Array.from({ length: 10 }, (_, index) => n(index + 1, color, copy));
 
-test.describe('Phase 10 rules', () => {
+test.describe('Stage Rummy rules', () => {
   test('108 cards: 1 to 12 in four colors twice each, 8 Wilds and 4 Skips; 10 cards each and one starts the discard pile', async ({ seat }) => {
     const { table, alice } = await start(seat);
     const state = await table.state<GameState>();
@@ -220,7 +220,7 @@ test.describe('Phase 10 rules', () => {
   });
 
   test('a Skip turned up to start the discard pile skips the first player', async ({ seat }) => {
-    const first = await seat('phase10', ['Alice']);
+    const first = await seat('stagerummy', ['Alice']);
     // The deal shuffles the deck when Bob joins: from the last position down, swap with a chosen one. Keep every card
     // in place but move the first Skip (position 104) to position 20, the card that starts the discard pile.
     const values: number[] = [];
@@ -286,14 +286,14 @@ test.describe('Phase 10 rules', () => {
     await expect(summaryOf(bob, 'Bob')).toContainText('1 card left: +5');
   });
 
-  test('the game ends after a hand in which someone completes phase 10, and the lowest score among them wins', async ({ seat }) => {
+  test('the game ends after a hand in which someone completes the last phase, and the lowest score among them wins', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat, 3);
     const fives = [n(5, 'red'), n(5, 'blue'), n(5, 'green'), n(5, 'yellow'), n(5, 'red', 1)];
     const nines = [n(9, 'red'), n(9, 'blue'), n(9, 'green'), n(9, 'yellow'), n(9, 'red', 1)];
     await deal(table, {
       hands: { 1: [n(6, 'red')], 2: [n(1, 'red')], 3: [n(2, 'red')] },
       phases: { 1: 10, 2: 10, 3: 9 },
-      scores: { 1: 50, 2: 10, 3: 0 }, // Cara is lowest but has not completed phase 10
+      scores: { 1: 50, 2: 10, 3: 0 }, // Cara is lowest but has not completed the last phase
       groups: [
         setOf(1, 5, fives), setOf(1, 8, [n(8, 'red'), n(8, 'blue'), n(8, 'green')]),
         setOf(2, 9, nines), setOf(2, 10, [n(10, 'red'), n(10, 'blue'), n(10, 'green')])
@@ -318,7 +318,7 @@ test.describe('Phase 10 rules', () => {
     await expect(seatOf(cara, 'Alice')).toContainText('All phases done');
   });
 
-  test('a tied lowest score is played off in tiebreaker hands of phase 10, and if all but one leave, that one wins', async ({ seat }) => {
+  test('a tied lowest score is played off in tiebreaker hands of the last phase, and if all but one leave, that one wins', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat, 3);
     const groups = [
       setOf(1, 5, [n(5, 'red'), n(5, 'blue'), n(5, 'green'), n(5, 'yellow'), n(5, 'red', 1)]),
@@ -337,8 +337,8 @@ test.describe('Phase 10 rules', () => {
     await drawPile(alice).click();
     await select(alice, 'yellow 5', 'blue 5');
     await group(alice, 'Set of 5s').getByRole('button', { name: 'Hit here' }).click();
-    await expect(scoring(cara).locator('.summary-result')).toHaveText('Alice went out. Tiebreaker next: Alice and Bob attempt phase 10 again');
-    await expect(cara.locator('.game-status')).toContainText('Alice and Bob tie with 20 points, so they play a tiebreaker hand of phase 10');
+    await expect(scoring(cara).locator('.summary-result')).toHaveText('Alice went out. Tiebreaker next: Alice and Bob attempt the last phase again');
+    await expect(cara.locator('.game-status')).toContainText('Alice and Bob tie with 20 points, so they play a tiebreaker hand of the last phase');
     for (const page of [alice, bob, cara]) await scoring(page).getByRole('button', { name: 'Continue' }).click();
 
     await expect(turnMessage(cara)).toHaveText(/^Tiebreaker hand 2: /);
@@ -435,7 +435,7 @@ test.describe('Phase 10 rules', () => {
   });
 });
 
-test.describe('Phase 10 controls', () => {
+test.describe('Stage Rummy controls', () => {
   test('with Color-blind symbols on, every number card shows its color shape, in the hand and in the History', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await deal(table, { hands: { 1: [n(3, 'red'), n(4, 'blue'), n(5, 'green'), n(6, 'yellow'), wild(0)], 2: tenCards('red', 1) } });
@@ -656,7 +656,7 @@ test.describe('Phase 10 controls', () => {
   });
 });
 
-test.describe('Phase 10 house rules', () => {
+test.describe('Stage Rummy house rules', () => {
   test('laying down a later phase first', async ({ seat }) => {
     const { table, alice, bob } = await start(seat, 2, { houseRules: { anyOrder: true } });
     await deal(table, {
@@ -703,10 +703,10 @@ test.describe('Phase 10 house rules', () => {
   });
 });
 
-test.describe('Phase 10 house rules', () => {
+test.describe('Stage Rummy house rules', () => {
   test('8 players can join with Most players raised', async ({ seat }) => {
     const names = Array.from({ length: 8 }, (_, index) => `Player${index + 1}`);
-    const table = await seat('phase10', names, { maxPlayers: 8 });
+    const table = await seat('stagerummy', names, { maxPlayers: 8 });
     expect(table.pages).toHaveLength(8);
     expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(8);
     for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);
