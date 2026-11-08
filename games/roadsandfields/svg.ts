@@ -3,8 +3,8 @@ import { TILES } from './tiles.ts';
 import { SPOTS } from './spots.ts';
 import type { Side, TileType } from './types.ts';
 
-// Carcassonne's tiles and meeples, drawn on the server. The parts carry the cc-* classes that
-// client/carcassonne.scss colors, so the theme still paints them once inlined
+// Roads and Fields' tiles and meeples, drawn on the server. The parts carry the cc-* classes that
+// client/roadsandfields.scss colors, so the theme still paints them once inlined
 
 const MIDS: Record<Side, [number, number]> = { 0: [50, 0], 1: [100, 50], 2: [50, 100], 3: [0, 50] };
 
@@ -83,15 +83,15 @@ export function meepleSvg(seat: string, pose: string): string | null {
 
 const TILE_TYPES = Object.keys(TILES);
 
-export const CARCASSONNE_ASSETS: SvgAsset[] = [
+export const ROADSANDFIELDS_ASSETS: SvgAsset[] = [
   {
-    name: 'carcassonne-tile',
+    name: 'roadsandfields-tile',
     params: ['tile type', 'quarter turns'],
     samples: [...TILE_TYPES.map(type => [type, '0']), ['D', '1'], ['F', '2'], ['S', '3']],
     render: ([type, turns]) => tileSvg(type, turns),
   },
   {
-    name: 'carcassonne-meeple',
+    name: 'roadsandfields-meeple',
     params: ['seat', 'pose'],
     samples: [...['1', '2', '3', '4', '5'].map(seat => [seat, 'standing']), ['1', 'lying']],
     render: ([seat, pose]) => meepleSvg(seat, pose),

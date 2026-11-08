@@ -1,6 +1,6 @@
-// Helpers for the Carcassonne tests: a game under way with a chosen board and draw pile
+// Helpers for the Roads and Fields tests: a game under way with a chosen board and draw pile
 import { applyMove as play } from '../../shared/seating.ts';
-import { carcassonne } from './index.ts';
+import { roadsandfields } from './index.ts';
 import { createGameState } from './rules.ts';
 import type { FeatureRef, GameState, Meeple, Placement, Result, Seat, TileType } from './types.ts';
 
@@ -34,7 +34,7 @@ export function ok(result: Result<GameState>): GameState {
 }
 
 // Through the platform's turn checks, as the server applies a move
-export const move = (state: GameState, seat: Seat, value: unknown) => play(carcassonne, state, seat, value, () => 0);
+export const move = (state: GameState, seat: Seat, value: unknown) => play(roadsandfields, state, seat, value, () => 0);
 
 // The error a move is refused with, or null when it is accepted
 export function refused(state: GameState, seat: Seat, value: unknown): string | null {

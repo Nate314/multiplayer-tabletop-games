@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './carcassonne.scss';
+import './roadsandfields.scss';
 
-export const carcassonneClient: ClientGame = {
-  id: 'carcassonne',
+export const roadsandfieldsClient: ClientGame = {
+  id: 'roadsandfields',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

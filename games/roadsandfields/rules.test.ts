@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import { meeplesOnBoard, placementOptions, tileFeatures } from './board.ts';
-import { carcassonne } from './index.ts';
+import { roadsandfields } from './index.ts';
 import { createGameState, meepleError, toPublicState } from './rules.ts';
 import { at, game, move, ok, played, refused, START, turn } from './testing.ts';
 import type { FeatureRef, GameState, Random, Seat } from './types.ts';
@@ -17,7 +17,7 @@ const meeple = (seat: Seat, feature: FeatureRef) => ({ seat, feature });
 function lobby(random: Random, ...names: string[]): GameState {
   let state = createGameState('g1');
   for (const name of names) {
-    const result = addPlayer(carcassonne, state, name, random);
+    const result = addPlayer(roadsandfields, state, name, random);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -222,7 +222,7 @@ test('invalid moves are refused and change nothing', () => {
 });
 
 test('dismissed player mid-turn: before placing, the next player places the same tile', () => {
-  const after = removePlayer(carcassonne, game(), 1, () => 0);
+  const after = removePlayer(roadsandfields, game(), 1, () => 0);
   assert.deepEqual(after.activePlayers, [2, 3]);
   assert.equal(after.currentPlayer, 2);
   assert.equal(after.currentTile, 'E');
@@ -232,7 +232,7 @@ test('dismissed player mid-turn: before placing, the next player places the same
 
 test('dismissed player mid-turn: after placing, the turn ends without a meeple and the next tile is drawn', () => {
   const placed = played(sharedCity(), 3, { type: 'place', x: 0, y: -2, rotation: 2 });
-  const after = removePlayer(carcassonne, placed, 3, () => 0);
+  const after = removePlayer(roadsandfields, placed, 3, () => 0);
   assert.equal(after.placed, false);
   assert.equal(after.currentPlayer, 1);
   assert.equal(after.currentTile, 'U');
@@ -242,7 +242,7 @@ test('dismissed player mid-turn: after placing, the turn ends without a meeple a
 });
 
 test('a dismissed player\'s meeples count for nobody but still hold their feature', () => {
-  const state = removePlayer(carcassonne, sharedCity(), 1, () => 0); // Alice leaves; Bob and Alice share the city
+  const state = removePlayer(roadsandfields, sharedCity(), 1, () => 0); // Alice leaves; Bob and Alice share the city
   assert.equal(state.currentPlayer, 3);
   const after = turn(state, 3, 0, -2, 2);
   assert.equal(after.scores[2], 6);
@@ -250,7 +250,7 @@ test('a dismissed player\'s meeples count for nobody but still hold their featur
   assert.equal(meeplesOnBoard(after.board, 1), 0);
 
   // A feature holding only a dismissed player's meeple stays taken
-  const held = removePlayer(carcassonne, game({ board: [START, at(1, 0, 'U', 1, meeple(1, ROAD))], currentPlayer: 2, currentTile: 'U' }), 1, () => 0);
+  const held = removePlayer(roadsandfields, game({ board: [START, at(1, 0, 'U', 1, meeple(1, ROAD))], currentPlayer: 2, currentTile: 'U' }), 1, () => 0);
   const placed = played(held, 2, { type: 'place', x: -1, y: 0, rotation: 1 });
   assert.equal(refused(placed, 2, { type: 'meeple', feature: ROAD }), 'That feature already has a meeple on it');
 });
@@ -270,9 +270,9 @@ function seeded(seed: number): Random {
 function botTurn(state: GameState): GameState {
   const seat = state.currentPlayer!;
   const [option] = placementOptions(state.board, state.currentTile!);
-  const placed = ok(applyMove(carcassonne, state, seat, { type: 'place', x: option.x, y: option.y, rotation: option.rotations[0] }));
+  const placed = ok(applyMove(roadsandfields, state, seat, { type: 'place', x: option.x, y: option.y, rotation: option.rotations[0] }));
   const feature = tileFeatures(placed.currentTile!).find(ref => meepleError(placed, seat, ref) === null) ?? null;
-  return ok(applyMove(carcassonne, placed, seat, { type: 'meeple', feature }));
+  return ok(applyMove(roadsandfields, placed, seat, { type: 'meeple', feature }));
 }
 
 test('table view hides the draw order over every step of a game', () => {

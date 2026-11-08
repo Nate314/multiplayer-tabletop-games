@@ -1,4 +1,4 @@
-// Carcassonne rules: the game's hooks for the platform, reading untrusted moves, and the public view.
+// Roads and Fields rules: the game's hooks for the platform, reading untrusted moves, and the public view.
 // A turn is two moves: place the drawn tile, then place a meeple on it or none. Scoring follows the second move,
 // so a half-finished turn (the tile down, the meeple not yet chosen) lives in the state and survives a refresh.
 // Placement and features live in board.ts, the scores in scoring.ts and the tiles in tiles.ts.

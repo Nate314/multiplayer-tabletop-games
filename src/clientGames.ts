@@ -34,7 +34,7 @@ export type ClientGame = {
 export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   palacewalls: () => import('../games/palacewalls/client/index.ts').then(m => m.palacewallsClient),
   backgammon: () => import('../games/backgammon/client/index.ts').then(m => m.backgammonClient),
-  carcassonne: () => import('../games/carcassonne/client/index.ts').then(m => m.carcassonneClient),
+  roadsandfields: () => import('../games/roadsandfields/client/index.ts').then(m => m.roadsandfieldsClient),
   categories: () => import('../games/categories/client/index.ts').then(m => m.categoriesClient),
   catan: () => import('../games/catan/client/index.ts').then(m => m.catanClient),
   charades: () => import('../games/charades/client/index.ts').then(m => m.charadesClient),

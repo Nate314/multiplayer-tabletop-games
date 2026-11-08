@@ -10,7 +10,7 @@ const GAME_ICONS: Record<string, () => string> = {
   palacewalls: () => lineIcon(el('rect', { x: 3, y: 3, width: 5, height: 5 }), el('rect', { x: 9.5, y: 3, width: 5, height: 5 }), el('rect', { x: 16, y: 3, width: 5, height: 5 }), el('rect', { x: 3, y: 9.5, width: 5, height: 5 }), el('rect', { x: 16, y: 9.5, width: 5, height: 5 }), el('rect', { x: 3, y: 16, width: 5, height: 5 }), el('rect', { x: 9.5, y: 16, width: 5, height: 5 }), el('rect', { x: 16, y: 16, width: 5, height: 5 }), solid('rect', { x: 9.5, y: 9.5, width: 5, height: 5 })),
   backgammon: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 1.5 }),
     el('path', { d: 'M5.5 4l2 6.5 2-6.5M14.5 4l2 6.5 2-6.5M5.5 20l2-6.5 2 6.5M14.5 20l2-6.5 2 6.5' })),
-  carcassonne: () => lineIcon(el('path', { d: 'M4 21V6h3v3h3V6h4v3h3V6h3v15z' }), el('path', { d: 'M10 21v-4a2 2 0 0 1 4 0v4' })),
+  roadsandfields: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18 }), el('path', { d: 'M3 8a13 13 0 0 1 13 13M3 14a7 7 0 0 1 7 7' })),
   // Three lines beside a large letter
   categories: () => lineIcon(el('path', { d: 'M14 6h7M14 12h7M14 18h7' }), label('B', 7.5, 18, 17)),
   catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),

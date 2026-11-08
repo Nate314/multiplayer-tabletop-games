@@ -7,7 +7,7 @@ import { QR_ASSETS } from '../../shared/svg/qr.ts';
 import { PLAYING_CARD_ASSETS } from '../../shared/svg/playingCards.ts';
 import { DISC_ASSETS } from '../../shared/svg/disc.ts';
 import { CARD_ART_ASSETS } from '../../shared/svg/cardArt.ts';
-import { CARCASSONNE_ASSETS } from '../../games/carcassonne/svg.ts';
+import { ROADSANDFIELDS_ASSETS } from '../../games/roadsandfields/svg.ts';
 import { RISK_ASSETS } from '../../games/risk/svg.ts';
 import { TICKETTORIDE_ASSETS } from '../../games/tickettoride/svg.ts';
 import { QUORIDOR_ASSETS } from '../../games/quoridor/svg.ts';
@@ -34,7 +34,7 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...PLAYING_CARD_ASSETS,
   ...DISC_ASSETS,
   ...CARD_ART_ASSETS,
-  ...CARCASSONNE_ASSETS,
+  ...ROADSANDFIELDS_ASSETS,
   ...RISK_ASSETS,
   ...TICKETTORIDE_ASSETS,
   ...QUORIDOR_ASSETS,

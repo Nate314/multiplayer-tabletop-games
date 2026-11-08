@@ -1,10 +1,10 @@
 import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, leave, lift, nameOf, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import { at, START } from '../games/carcassonne/testing.ts';
-import { TILES, TILE_TYPES } from '../games/carcassonne/tiles.ts';
-import type { FeatureKind, GameState, Meeple } from '../games/carcassonne/types.ts';
+import { at, START } from '../games/roadsandfields/testing.ts';
+import { TILES, TILE_TYPES } from '../games/roadsandfields/tiles.ts';
+import type { FeatureKind, GameState, Meeple } from '../games/roadsandfields/types.ts';
 
-// One test per rule and control in games/carcassonne/README.md. Seats are filled in join order: Alice is seat 1, Bob 2,
+// One test per rule and control in games/roadsandfields/README.md. Seats are filled in join order: Alice is seat 1, Bob 2,
 // Cara 3. The start tile (D) sits at column 0, row 0 with its city to the north, its road running east to west and a
 // field to the south. Tests lay out the board, the tile to place and the draw pile (drawn from its end).
 
@@ -48,7 +48,7 @@ async function anyTurn(page: Page) {
 }
 
 async function start(seat: Seat, count = 2, motion = false) {
-  const table = await seat('carcassonne', NAMES.slice(0, count), { motion });
+  const table = await seat('roadsandfields', NAMES.slice(0, count), { motion });
   const [alice, bob, cara] = table.pages;
   return { table, alice, bob, cara };
 }
@@ -56,7 +56,7 @@ async function start(seat: Seat, count = 2, motion = false) {
 // Two road ends (three-way junctions) west and east of the start tile, with a gap at column 1 for a straight road
 const ROAD_GAP = (west: Meeple | null, east: Meeple | null) => [START, at(-1, 0, 'W', 0, west), at(2, 0, 'W', 0, east)];
 
-test.describe('Carcassonne rules', () => {
+test.describe('Roads and Fields rules', () => {
   test('the 72 base tiles in their published counts: the start tile on the board and the other 71 face down', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await expect(board(alice)).toHaveAttribute('aria-label', 'Board with 1 tiles');
@@ -305,7 +305,7 @@ test.describe('Carcassonne rules', () => {
   });
 });
 
-test.describe('Carcassonne controls', () => {
+test.describe('Roads and Fields controls', () => {
   test('with Color-blind symbols on, meeples and the player list show the shape of their color: red circle, blue square, yellow star', async ({ seat }) => {
     const { table, alice, bob } = await start(seat, 3);
     await craft(table, { board: [START, at(-1, 0, 'W', 0, on(1, 'road')), at(2, 0, 'W', 0, on(2, 'road')), at(0, 1, 'D', 0, on(3, 'field'))], currentTile: 'U', drawPile: ['U', 'U'] });
@@ -495,12 +495,12 @@ test.describe('Carcassonne controls', () => {
   });
 });
 
-test.describe('Carcassonne differences from Wikipedia', () => {
+test.describe('Roads and Fields differences from Wikipedia', () => {
   test('base game only: no sixth player', async ({ seat, browser, server }) => {
     const { table } = await start(seat, 5);
     const sixth = await newPlayer(browser, server);
     await sixth.goto('/');
-    await sixth.locator('.lobby-game').filter({ has: sixth.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf('carcassonne')}$`) }) }).click();
+    await sixth.locator('.lobby-game').filter({ has: sixth.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf('roadsandfields')}$`) }) }).click();
     await sixth.getByLabel('Your name').fill('Fay');
     await sixth.getByLabel('Game ID').fill(table.gameId);
     await sixth.getByRole('button', { name: 'Join', exact: true }).click();

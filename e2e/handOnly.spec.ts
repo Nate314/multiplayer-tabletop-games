@@ -155,7 +155,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board-area',
     move: async page => { await button(page, 'Roll the dice').click(); }
   },
-  carcassonne: {
+  roadsandfields: {
     keep: ['.cc-turn-message', '.cc-turn', you('.cc-player')],
     hide: [others('.cc-player')],
     board: '.cc-board-area',

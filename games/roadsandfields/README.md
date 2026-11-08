@@ -1,6 +1,6 @@
-# Carcassonne
+# Roads and Fields
 
-Lay land tiles to build a countryside of cities, roads, monasteries and fields, and claim them with your meeples, for 2 to 5 players.
+Lay land tiles to build a countryside of cities, roads, monasteries and fields, and claim them with your meeples, for 2 to 5 players. It plays like Carcassonne.
 
 ## Rules
 

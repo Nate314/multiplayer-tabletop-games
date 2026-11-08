@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { carcassonneInfo } from './info.ts';
+import { roadsandfieldsInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const carcassonne: GameDefinition<GameState, PublicGameState> = {
-  info: carcassonneInfo,
+export const roadsandfields: GameDefinition<GameState, PublicGameState> = {
+  info: roadsandfieldsInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

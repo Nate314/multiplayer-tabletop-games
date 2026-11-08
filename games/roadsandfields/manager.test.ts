@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { placementOptions, tileFeatures } from './board.ts';
-import { carcassonne } from './index.ts';
+import { roadsandfields } from './index.ts';
 import { meepleError } from './rules.ts';
 import type { PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'carcassonne/g1';
+const ROOM = 'roadsandfields/g1';
 
 // The same draws on every run
 function seeded(seed: number): Random {
@@ -24,12 +24,12 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([carcassonne], seeded(seed)));
-  for (const name of names) manager.join('carcassonne', 'g1', name);
+  const manager = rememberingKeys(createGameManager([roadsandfields], seeded(seed)));
+  for (const name of names) manager.join('roadsandfields', 'g1', name);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Carcassonne's
+// The manager is generic over games, so tests narrow the public state to Roads and Fields'
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -60,7 +60,7 @@ test('a rejoin mid-turn shows the placed tile still waiting for its meeple', () 
   assert.equal(placed.placed, true);
   const seat = placed.currentPlayer ?? assert.fail('nobody to act');
   manager.disconnect(ROOM, seat);
-  const rejoined = manager.join('carcassonne', 'g1', seat === 1 ? 'A' : 'B', true);
+  const rejoined = manager.join('roadsandfields', 'g1', seat === 1 ? 'A' : 'B', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.equal(view.placed, true);
@@ -93,13 +93,13 @@ test('a seeded game plays to the last tile, and no step shows the draw order', (
   assert.notEqual(state.finalScores, null);
   assert.ok(state.winners.length > 0);
 
-  const steps = stepsOf(manager, 'carcassonne') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'roadsandfields') ?? assert.fail('no history');
   assert.ok(steps.length > 100);
   for (const past of steps) {
     assert.equal('drawPile' in past, false);
     assert.equal(typeof (past as unknown as PublicGameState).tilesLeft, 'number');
   }
-  const file = fileOf(manager, 'carcassonne', new Date());
+  const file = fileOf(manager, 'roadsandfields', new Date());
   assert.ok(file && 'file' in file);
   assert.equal(JSON.stringify(file).includes('drawPile'), false);
 });
