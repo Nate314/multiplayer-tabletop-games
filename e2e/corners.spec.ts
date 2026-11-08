@@ -71,6 +71,11 @@ const lastPiece = (left: number) => ({
 });
 
 test.describe('Corners rules', () => {
+  test('tray pieces have a thin outline', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, 2);
+    await expect.poll(() => alice.locator('.corners-piece-shape polygon').first().evaluate(el => parseFloat(getComputedStyle(el).strokeWidth))).toBeLessThan(0.1);
+  });
+
   test('Squares is the standard Board and Triangles is offered', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, 2);
     await expect(board(alice)).toHaveClass(/corners-squares/);
@@ -383,6 +388,11 @@ test.describe('Corners on Triangles', () => {
     await clickSpot(alice, cell(alice, cellKey(target)));
     await expect(cell(alice, cellKey(target))).toHaveClass(/corners-c0/);
     await expect(fill(alice, 0)).toHaveCount(4);
+  });
+
+  test('tray pieces have a thin outline', async ({ seat }) => {
+    const { pages: [alice] } = await start(seat, 2, { board: 'triangles' });
+    await expect.poll(() => alice.locator('.corners-piece-shape polygon').first().evaluate(el => parseFloat(getComputedStyle(el).strokeWidth))).toBeLessThan(0.1);
   });
 
   test('the Triangles board uses four colors at every player count', async ({ seat }) => {
