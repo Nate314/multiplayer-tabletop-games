@@ -1,4 +1,4 @@
-// The house rules of pictionary, declared apart from the rules so the landing page can list them without loading the rules
+// The house rules of drawandguess, declared apart from the rules so the landing page can list them without loading the rules
 import { type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 
 export const TURN_SECONDS: ChoiceRule<30 | 60 | 90 | 120 | 180> = {
@@ -29,4 +29,4 @@ export const DRAWS_PER_PLAYER: ChoiceRule<1 | 2 | 3 | 4 | 5> = {
     { value: 5, label: '5 draws' }
   ]
 };
-export const PICTIONARY_RULES: HouseRule[] = [TURN_SECONDS, WORD_CHOICES, DRAWS_PER_PLAYER];
+export const DRAWANDGUESS_RULES: HouseRule[] = [TURN_SECONDS, WORD_CHOICES, DRAWS_PER_PLAYER];

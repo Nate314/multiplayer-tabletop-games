@@ -6,7 +6,7 @@ import { agreeAll, rememberingKeys, withRules } from '../../server/testing.ts';
 import { addPlayer, applyMove } from '../../shared/seating.ts';
 import type { Result } from '../../shared/types.ts';
 import { BRUSH_SIZES, CANVAS_H, CANVAS_W, MAX_POINTS, PALETTE } from './clock.ts';
-import { pictionary } from './index.ts';
+import { drawandguess } from './index.ts';
 import { applyAction, createGameState, onDeadline } from './rules.ts';
 import type { GameState } from './types.ts';
 
@@ -20,8 +20,8 @@ function ok(result: Result<GameState>): GameState {
 
 function drawing(): GameState {
   let state: GameState = { ...createGameState('g'), houseRules: withRules({}) };
-  for (const name of ['Alice', 'Bob', 'Cara']) state = ok(addPlayer(pictionary, state, name, first));
-  return ok(applyMove(pictionary, { ...state, wordChoices: ['castle', 'apple', 'tree'] }, 1, { type: 'choose', index: 0 }, first, NOW));
+  for (const name of ['Alice', 'Bob', 'Cara']) state = ok(addPlayer(drawandguess, state, name, first));
+  return ok(applyMove(drawandguess, { ...state, wordChoices: ['castle', 'apple', 'tree'] }, 1, { type: 'choose', index: 0 }, first, NOW));
 }
 
 const act = (state: GameState, seat: number, action: unknown) => applyAction(state, seat, action, first, NOW);
@@ -92,19 +92,19 @@ test('a new turn starts with a blank canvas', () => {
   const next = onDeadline(reveal, NOW + 2, first);
   assert.equal(next.phase, 'choosing');
   assert.deepEqual(next.strokes, []);
-  const again = ok(applyMove(pictionary, next, 2, { type: 'choose', index: 0 }, first, NOW));
+  const again = ok(applyMove(drawandguess, next, 2, { type: 'choose', index: 0 }, first, NOW));
   assert.deepEqual(again.strokes, []);
 });
 
 test('strokes are not moves', (t: TestContext) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
-  const manager = rememberingKeys(createGameManager([pictionary], first, undefined, { now: () => 1_000_000 }));
-  for (const name of ['A', 'B', 'C']) manager.join('pictionary', 'g1', name);
-  agreeAll(manager, 'pictionary/g1');
-  assert.ok(!('error' in manager.move('pictionary/g1', 1, { type: 'choose', index: 0 })));
-  const moves = () => manager.getState('pictionary/g1', 1)?.moveCount;
+  const manager = rememberingKeys(createGameManager([drawandguess], first, undefined, { now: () => 1_000_000 }));
+  for (const name of ['A', 'B', 'C']) manager.join('drawandguess', 'g1', name);
+  agreeAll(manager, 'drawandguess/g1');
+  assert.ok(!('error' in manager.move('drawandguess/g1', 1, { type: 'choose', index: 0 })));
+  const moves = () => manager.getState('drawandguess/g1', 1)?.moveCount;
   const before = moves();
-  for (let i = 0; i < 10; i++) assert.ok(!('error' in manager.action('pictionary/g1', 1, line([i, i]))));
+  for (let i = 0; i < 10; i++) assert.ok(!('error' in manager.action('drawandguess/g1', 1, line([i, i]))));
   assert.equal(moves(), before);
-  assert.equal((manager.rawState('pictionary/g1') as unknown as GameState).strokes.length, 10);
+  assert.equal((manager.rawState('drawandguess/g1') as unknown as GameState).strokes.length, 10);
 });

@@ -45,7 +45,7 @@ const GAME_ICONS: Record<string, () => string> = {
   naval: () => lineIcon(el('path', { d: 'M2 15h20l-3 5H5z' }), el('path', { d: 'M12 15V3l6 9h-6' })),
   parchisi: () => lineIcon(el('path', { d: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z' }), el('path', { d: 'M12 9l3 3-3 3-3-3z' })),
   stagerummy: () => lineIcon(el('path', { d: 'M3 21v-5h6v-5h6V6h6v15z' })),
-  pictionary: () => lineIcon(el('path', { d: 'M3 21l3.5-1 11-11-2.5-2.5-11 11zM14 5.5l2.5 2.5M3 15c2-3 4 1 6-2' })),
+  drawandguess: () => lineIcon(el('path', { d: 'M3 21l3.5-1 11-11-2.5-2.5-11 11zM14 5.5l2.5 2.5M3 15c2-3 4 1 6-2' })),
   quoridor: () => lineIcon(el('circle', { cx: 12, cy: 6, r: 3 }), el('path', { d: 'M9.5 11h5l1.5 7H8zM6 21h12v-3H6z' })),
   racko: () => lineIcon(el('path', { d: 'M4 21v-5M9 21v-9M14 21v-13M19 21V3' })),
   risk: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('ellipse', { cx: 12, cy: 12, rx: 4, ry: 9 }), el('path', { d: 'M3 12h18' })),

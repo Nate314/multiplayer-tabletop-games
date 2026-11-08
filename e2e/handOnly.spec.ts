@@ -243,10 +243,10 @@ const HAND_ONLY: Record<string, Row> = {
     hide: ['.yz-player.hand-only-hide'],
     move: async page => { await button(page, /^Roll/).click(); }
   },
-  pictionary: {
-    keep: ['.turn-message', '.pictionary-chat', '#pictionary-chat-input', you('.score-row')],
+  drawandguess: {
+    keep: ['.turn-message', '.drawandguess-chat', '#drawandguess-chat-input', you('.score-row')],
     hide: [others('.score-row')],
-    board: '.pictionary-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
+    board: '.drawandguess-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
     move: async page => { await page.getByRole('group', { name: 'Choose a word' }).getByRole('button').first().click(); }
   },
   jenga: {

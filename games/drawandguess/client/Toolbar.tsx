@@ -9,7 +9,7 @@ type ToolbarProps = { pen: Pen; onChange: (pen: Pen) => void; canUndo: boolean }
 // The drawer's colors, brush sizes and tools; picking a color while erasing goes back to the pen
 export default function Toolbar({ pen, onChange, canUndo }: ToolbarProps) {
   return (
-    <div className="pictionary-toolbar" role="toolbar" aria-label="Drawing tools">
+    <div className="drawandguess-toolbar" role="toolbar" aria-label="Drawing tools">
       <div className="tool-group">
         {PALETTE.map((color, index) => (
           <button

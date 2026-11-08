@@ -1,17 +1,17 @@
 @use '../../../src/components/guessing/guessing' as *;
 
-[data-game="pictionary"] {
-  /* Pictionary's sketchbook theme. Every rule is scoped to data-game="pictionary", so none of it reaches the landing page or other games.
+[data-game="drawandguess"] {
+  /* Draw and Guess's sketchbook theme. Every rule is scoped to data-game="drawandguess", so none of it reaches the landing page or other games.
    The drawing paper is white in both themes, since the drawing's colors are fixed. */
-  @include guessing-page(pictionary, '.pictionary-paper', '.word-choices', 480px);
+  @include guessing-page(drawandguess, '.drawandguess-paper', '.word-choices', 480px);
 
   /* The paper and toolbar */
 
-  .pictionary-paper {
+  .drawandguess-paper {
     padding: 8px;
   }
 
-  .pictionary-canvas {
+  .drawandguess-canvas {
     display: block;
     width: 100%;
     height: auto;
@@ -21,12 +21,12 @@
   }
 
   // A finger draws instead of scrolling the page
-  .pictionary-canvas-drawing {
+  .drawandguess-canvas-drawing {
     touch-action: none;
     cursor: crosshair;
   }
 
-  .pictionary-toolbar {
+  .drawandguess-toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 16px;
@@ -44,7 +44,7 @@
     }
   }
 
-  .pictionary-toolbar .tool-swatch {
+  .drawandguess-toolbar .tool-swatch {
     width: 28px;
     height: 28px;
     padding: 0;
@@ -52,7 +52,7 @@
     border-radius: 50%;
   }
 
-  .pictionary-toolbar .tool-size {
+  .drawandguess-toolbar .tool-size {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -68,7 +68,7 @@
   }
 
   @media (max-width: 480px) {
-    .pictionary-toolbar .tool-swatch {
+    .drawandguess-toolbar .tool-swatch {
       width: 26px;
       height: 26px;
     }

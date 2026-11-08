@@ -3,18 +3,18 @@ import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
-import { pictionary } from './index.ts';
+import { drawandguess } from './index.ts';
 import type { GameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
 
-const ROOM = 'pictionary/g1';
+const ROOM = 'drawandguess/g1';
 const first = () => 0;
 
 function table(t: TestContext) {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const clock = { now: 1_000_000 };
-  const manager = rememberingKeys(createGameManager([pictionary], first, undefined, { now: () => clock.now }));
-  for (const name of ['A', 'B', 'C']) manager.join('pictionary', 'g1', name);
+  const manager = rememberingKeys(createGameManager([drawandguess], first, undefined, { now: () => clock.now }));
+  for (const name of ['A', 'B', 'C']) manager.join('drawandguess', 'g1', name);
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, { type: 'choose', index: 0 }));
   const raw = () => manager.rawState(ROOM) as unknown as GameState;
@@ -99,7 +99,7 @@ test('the history the server shows never carries the word or a guessed-only line
   ok(manager.action(ROOM, 2, { type: 'chat', text: word }));
   ok(manager.action(ROOM, 2, { type: 'chat', text: 'secret banter' }));
   assert.equal(raw().chat.some(line => line.text === 'secret banter'), true);
-  const shown = JSON.stringify(stepsOf(manager, 'pictionary'));
+  const shown = JSON.stringify(stepsOf(manager, 'drawandguess'));
   assert.equal(shown.includes('secret banter'), false);
   assert.equal(shown.includes(word), false);
 });

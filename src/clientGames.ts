@@ -60,7 +60,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   naval: () => import('../games/naval/client/index.ts').then(m => m.navalClient),
   parchisi: () => import('../games/parchisi/client/index.ts').then(m => m.parchisiClient),
   stagerummy: () => import('../games/stagerummy/client/index.ts').then(m => m.stagerummyClient),
-  pictionary: () => import('../games/pictionary/client/index.ts').then(m => m.pictionaryClient),
+  drawandguess: () => import('../games/drawandguess/client/index.ts').then(m => m.drawandguessClient),
   quoridor: () => import('../games/quoridor/client/index.ts').then(m => m.quoridorClient),
   racko: () => import('../games/racko/client/index.ts').then(m => m.rackoClient),
   risk: () => import('../games/risk/client/index.ts').then(m => m.riskClient),

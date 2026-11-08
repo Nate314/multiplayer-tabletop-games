@@ -128,7 +128,7 @@ export default function Canvas({ strokes, pen, nextStrokeId = 1, error = null }:
   return (
     <canvas
       ref={canvasRef}
-      className={pen ? 'pictionary-canvas pictionary-canvas-drawing' : 'pictionary-canvas'}
+      className={pen ? 'drawandguess-canvas drawandguess-canvas-drawing' : 'drawandguess-canvas'}
       width={CANVAS_W}
       height={CANVAS_H}
       role="img"

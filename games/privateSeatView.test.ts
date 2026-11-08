@@ -38,7 +38,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     { ...s, started: true, phase: 'firing', currentPlayer: 1, fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS },
     { ...s, started: true, phase: 'firing', currentPlayer: null, isGameOver: true, winners: [1], fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS }
   ],
-  pictionary: s => [
+  drawandguess: s => [
     { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['cat', 'dog', 'owl'] },
     {
       ...s, started: true, phase: 'drawing', drawer: 1, word: 'cat', guessed: [2],
@@ -163,8 +163,8 @@ for (const game of GAMES) {
   });
 }
 
-test('a Pictionary spectator sees the word being drawn, and a table screen sees only the blanks', () => {
-  const game = GAMES.find(candidate => candidate.info.id === 'pictionary')!;
+test('a Draw and Guess spectator sees the word being drawn, and a table screen sees only the blanks', () => {
+  const game = GAMES.find(candidate => candidate.info.id === 'drawandguess')!;
   const s: Loose = { ...dealt(game), started: true, phase: 'drawing', drawer: 1, word: 'cat' };
   assert.equal((spectatorView(game, s, EVE) as Loose).word, 'cat');
   assert.equal((spectatorView(game, s, { ...EVE, tableScreen: true }) as Loose).word, null);

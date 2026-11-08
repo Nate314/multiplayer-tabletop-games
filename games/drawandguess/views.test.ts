@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pictionary } from './index.ts';
+import { drawandguess } from './index.ts';
 import { applyAction, createGameState, finalStandings, onDeadline, privateSeatView, spectatorState, toPublicState } from './rules.ts';
 import { addPlayer, applyMove } from '../../shared/seating.ts';
 import { spectatorView } from '../../shared/spectators.ts';
@@ -20,12 +20,12 @@ function ok(result: Result<GameState>): GameState {
 // Alice (seat 1) choosing from the distinctive words, with Bob, Cara and Dan guessing
 function choosing(): GameState {
   let state: GameState = { ...createGameState('g'), houseRules: withRules({}) };
-  for (const name of ['Alice', 'Bob', 'Cara', 'Dan']) state = ok(addPlayer(pictionary, state, name, first));
+  for (const name of ['Alice', 'Bob', 'Cara', 'Dan']) state = ok(addPlayer(drawandguess, state, name, first));
   return { ...state, wordChoices: [...WORDS], deck: [...WORDS] };
 }
 
 // Alice drawing "xylophone" from NOW
-const drawing = () => ok(applyMove(pictionary, choosing(), 1, { type: 'choose', index: 0 }, first, NOW));
+const drawing = () => ok(applyMove(drawandguess, choosing(), 1, { type: 'choose', index: 0 }, first, NOW));
 const say = (state: GameState, seat: Seat, text: string) => applyAction(state, seat, { type: 'chat', text }, first, NOW + 1_000);
 const chat = (state: GameState, seat: Seat, text: string) => ok(say(state, seat, text));
 const texts = (view: { chat: { text: string }[] }) => view.chat.map(line => line.text);
@@ -127,15 +127,15 @@ test('a spectator sees a near-miss line addressed to one seat; a table screen ne
   assert.equal(texts(spectatorState(state, false, true)).includes('xylophon: So close!'), false);
 });
 
-test('pictionary: the table screen sees blanks and public chat only', () => {
+test('drawandguess: the table screen sees blanks and public chat only', () => {
   const start = choosing();
-  const apple = ok(applyMove(pictionary, { ...start, wordChoices: ['red apple', 'quokka', 'zeppelin'] }, 1, { type: 'choose', index: 0 }, first, NOW));
+  const apple = ok(applyMove(drawandguess, { ...start, wordChoices: ['red apple', 'quokka', 'zeppelin'] }, 1, { type: 'choose', index: 0 }, first, NOW));
   const state = chat(chat(chat(apple, 3, 'a piano'), 2, 'red apple'), 2, 'guessed line');
   assert.equal(state.chat.some(line => line.audience === 'guessed' && line.text === 'guessed line'), true);
-  const screen = JSON.stringify(spectatorView(pictionary, state, { id: 't', name: 'Table screen', tableScreen: true, allowedSeats: [] }));
+  const screen = JSON.stringify(spectatorView(drawandguess, state, { id: 't', name: 'Table screen', tableScreen: true, allowedSeats: [] }));
   assert.equal(screen.includes('red apple') || screen.includes('guessed line'), false);
   assert.ok(screen.includes('___ _____') && screen.includes('a piano'));
-  assert.ok(JSON.stringify(spectatorView(pictionary, state, { id: 's', name: 'Eve', tableScreen: false, allowedSeats: [] })).includes('red apple'));
+  assert.ok(JSON.stringify(spectatorView(drawandguess, state, { id: 's', name: 'Eve', tableScreen: false, allowedSeats: [] })).includes('red apple'));
 });
 
 // Before any chat; once there is chat, `chat` is the seat's whole chat, so laying it over the null view gives the seat's view

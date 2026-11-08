@@ -4,11 +4,11 @@ import {
   applyAction, applyMove, createGameState, deadline, finalStandings, onDeadline, onPlayerLeft, privateSeatView, recordsAction,
   resetLobby, resumeClock, spectatorState, toPublicState
 } from './rules.ts';
-import { pictionaryInfo } from './info.ts';
+import { drawandguessInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const pictionary: GameDefinition<GameState, PublicGameState> = {
-  info: pictionaryInfo,
+export const drawandguess: GameDefinition<GameState, PublicGameState> = {
+  info: drawandguessInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pictionary } from './index.ts';
+import { drawandguess } from './index.ts';
 import { CHOOSE_MS, REVEAL_MS } from './clock.ts';
 import { DRAWER_POINTS, applyAction, createGameState, deadline, guesserPoints, onDeadline, recordsAction, resumeClock } from './rules.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
@@ -21,7 +21,7 @@ function ok(result: Result<GameState>): GameState {
 function lobby(names: string[], values: HouseRuleValues = {}): GameState {
   let state: GameState = { ...createGameState('g'), houseRules: withRules(values) };
   for (const name of names) {
-    const result = addPlayer(pictionary, state, name, first);
+    const result = addPlayer(drawandguess, state, name, first);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -31,7 +31,7 @@ function lobby(names: string[], values: HouseRuleValues = {}): GameState {
 // Alice (seat 1) drawing "castle" from NOW, with Bob and Cara guessing
 function drawing(names = ['Alice', 'Bob', 'Cara']): GameState {
   const state = { ...lobby(names), wordChoices: ['castle', 'apple', 'tree'] };
-  return ok(applyMove(pictionary, state, 1, { type: 'choose', index: 0 }, first, NOW));
+  return ok(applyMove(drawandguess, state, 1, { type: 'choose', index: 0 }, first, NOW));
 }
 
 const chat = (state: GameState, seat: number, text: string, now = NOW) => ok(applyAction(state, seat, { type: 'chat', text }, first, now));
@@ -61,10 +61,10 @@ test('choosing a word starts the drawing and the clock', () => {
 
 test('only the drawer may choose, and only while choosing', () => {
   const state = lobby(['Alice', 'Bob']);
-  assert.deepEqual(applyMove(pictionary, state, 2, { type: 'choose', index: 0 }, first, NOW), { error: 'Not your turn' });
-  assert.ok('error' in applyMove(pictionary, state, 1, { type: 'choose', index: 3 }, first, NOW));
-  assert.ok('error' in applyMove(pictionary, state, 1, { type: 'nonsense' }, first, NOW));
-  assert.ok('error' in applyMove(pictionary, drawing(), 1, { type: 'choose', index: 0 }, first, NOW));
+  assert.deepEqual(applyMove(drawandguess, state, 2, { type: 'choose', index: 0 }, first, NOW), { error: 'Not your turn' });
+  assert.ok('error' in applyMove(drawandguess, state, 1, { type: 'choose', index: 3 }, first, NOW));
+  assert.ok('error' in applyMove(drawandguess, state, 1, { type: 'nonsense' }, first, NOW));
+  assert.ok('error' in applyMove(drawandguess, drawing(), 1, { type: 'choose', index: 0 }, first, NOW));
 });
 
 test('time running out reveals the word', () => {
@@ -155,21 +155,21 @@ test('a wrong guess is a chat line and scores nothing', () => {
 });
 
 test('the drawer leaving mid-turn reveals the word', () => {
-  const state = removePlayer(pictionary, drawing(), 1, first);
+  const state = removePlayer(drawandguess, drawing(), 1, first);
   assert.equal(state.phase, 'reveal');
   assert.deepEqual(state.lastMove, { type: 'reveal', word: 'castle', reason: 'drawerLeft' });
   assert.equal(onDeadline(state, NOW, first).currentPlayer, 2);
 });
 
 test('a guesser leaving when everyone left has guessed ends the drawing at once, with the reveal timed from then', () => {
-  const left = removePlayer(pictionary, chat(drawing(), 2, 'castle'), 3, first);
+  const left = removePlayer(drawandguess, chat(drawing(), 2, 'castle'), 3, first);
   assert.equal(left.phase, 'drawing');
   assert.ok((deadline(left) ?? Infinity) <= NOW);
   const state = onDeadline(left, NOW + 7_000, first);
   assert.equal(state.phase, 'reveal');
   assert.equal(state.phaseStartedAt, NOW + 7_000);
   assert.deepEqual(state.lastMove, { type: 'reveal', word: 'castle', reason: 'allGuessed' });
-  assert.equal(removePlayer(pictionary, drawing(['A', 'B', 'C', 'D']), 3, first).phaseStartedAt, NOW);
+  assert.equal(removePlayer(drawandguess, drawing(['A', 'B', 'C', 'D']), 3, first).phaseStartedAt, NOW);
 });
 
 test('a drawing deadline after the drawer left reveals with the drawerLeft reason', () => {

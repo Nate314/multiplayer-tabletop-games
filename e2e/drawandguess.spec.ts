@@ -1,8 +1,8 @@
 import type { Locator, Page } from '@playwright/test';
 import { agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, test, touchDrag, undo, headerButton } from './fixtures.ts';
-import type { GameState } from '../games/pictionary/types.ts';
+import type { GameState } from '../games/drawandguess/types.ts';
 
-// One test per rule and control in games/pictionary/README.md. Alice (seat 1) draws first; Bob and Cara guess.
+// One test per rule and control in games/drawandguess/README.md. Alice (seat 1) draws first; Bob and Cara guess.
 // Each table's first choices are xylophone, quokka and zeppelin, so a test knows the word.
 
 const CHOICES = ['xylophone', 'quokka', 'zeppelin'];
@@ -12,18 +12,18 @@ const status = (page: Page) => page.locator('.game-status');
 const timer = (page: Page) => page.getByRole('timer', { name: 'Time left' });
 const canvas = (page: Page) => page.getByRole('img', { name: 'Drawing' });
 const choices = (page: Page) => page.getByRole('group', { name: 'Choose a word' }).getByRole('button');
-const chatLines = (page: Page) => page.locator('.pictionary-chat .chat-line');
+const chatLines = (page: Page) => page.locator('.drawandguess-chat .chat-line');
 const points = (page: Page, name: string) => page.locator('.score-row', { hasText: name }).locator('.score-points');
 const tool = (page: Page, name: string) => page.getByRole('toolbar', { name: 'Drawing tools' }).getByRole('button', { name, exact: true });
 
 async function say(page: Page, text: string) {
-  await page.locator('#pictionary-chat-input').fill(text);
-  await page.locator('#pictionary-chat-input').press('Enter');
+  await page.locator('#drawandguess-chat-input').fill(text);
+  await page.locator('#drawandguess-chat-input').press('Enter');
 }
 
 // Seats Alice, Bob and Cara with the known choices offered to Alice
 async function seated(seat: Seat, options?: SeatOptions) {
-  const table = await seat('pictionary', ['Alice', 'Bob', 'Cara'], options);
+  const table = await seat('drawandguess', ['Alice', 'Bob', 'Cara'], options);
   await table.patch({ wordChoices: CHOICES, deck: ['apple', 'banana', 'castle', 'dragon', 'ladder', 'rocket'] });
   const [alice, bob, cara] = table.pages;
   await expect(choices(alice)).toHaveText(CHOICES);
@@ -47,7 +47,7 @@ function pixel(locator: Locator, x: number, y: number) {
 
 const isInked = async (locator: Locator, x: number, y: number) => (await pixel(locator, x, y)).slice(0, 3).some(channel => channel < 200);
 
-test.describe('Pictionary rules', () => {
+test.describe('Draw and Guess rules', () => {
   test('the drawer picks one of the offered words', async ({ seat }) => {
     const { alice, bob } = await seated(seat);
     await expect(choices(alice)).toHaveCount(3);
@@ -59,18 +59,18 @@ test.describe('Pictionary rules', () => {
   });
 
   test('house rules offer more word choices', async ({ seat }) => {
-    const { pages: [alice] } = await seat('pictionary', ['Alice', 'Bob', 'Cara'], { houseRules: { wordChoices: 5 } });
+    const { pages: [alice] } = await seat('drawandguess', ['Alice', 'Bob', 'Cara'], { houseRules: { wordChoices: 5 } });
     await expect(choices(alice)).toHaveCount(5);
   });
 
   test('guessers see blanks with spaces and hyphens', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
-    const blanks = bob.locator('.pictionary-blanks');
+    const blanks = bob.locator('.drawandguess-blanks');
     await table.patch({ word: 'ice cream' });
     await expect(blanks.locator('.blank-letter')).toHaveCount(8);
     await expect(blanks.locator('.blank-word')).toHaveCount(2);
     await expect(blanks).toHaveAccessibleName('Word: 8 letters');
-    await expect(alice.locator('.pictionary-blanks')).toHaveAccessibleName('Word: ice cream');
+    await expect(alice.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: ice cream');
     await table.patch({ word: 't-shirt' });
     await expect(blanks.locator('.blank-hyphen')).toHaveCount(1);
     await expect(blanks.locator('.blank-letter')).toHaveCount(6);
@@ -86,7 +86,7 @@ test.describe('Pictionary rules', () => {
       await expect(points(page, 'Alice')).toHaveText('25');
     }
     expect(Number(await points(cara, 'Bob').textContent())).toBeGreaterThan(10);
-    await expect(bob.locator('.pictionary-blanks')).toHaveAccessibleName('Word: xylophone');
+    await expect(bob.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: xylophone');
   });
 
   test('one letter off shows "So close!" only to the guesser', async ({ seat }) => {
@@ -103,7 +103,7 @@ test.describe('Pictionary rules', () => {
 
   test('players who guessed chat only with each other', async ({ seat }) => {
     const { alice, bob, cara } = await start(seat);
-    await expect(alice.locator('#pictionary-chat-input')).toBeDisabled();
+    await expect(alice.locator('#drawandguess-chat-input')).toBeDisabled();
     await say(bob, 'xylophone');
     await say(bob, 'nice drawing');
     for (const page of [alice, bob]) {
@@ -133,22 +133,22 @@ test.describe('Pictionary rules', () => {
     for (const page of [alice, bob, cara]) {
       await expect(chatLines(page).filter({ hasText: 'The word was xylophone' })).toHaveCount(1, { timeout: 2000 });
     }
-    await expect(bob.locator('.pictionary-blanks')).toHaveAccessibleName('Word: xylophone');
+    await expect(bob.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: xylophone');
   });
 
   test('the word never reaches a guesser before they guess', async ({ seat, browser, server }) => {
     test.slow(); // three hand-made joins and a History load
     // Bob joins by hand, so his page records from before he joins
-    const table = await seat('pictionary', ['Alice'], { agree: false });
+    const table = await seat('drawandguess', ['Alice'], { agree: false });
     const [alice] = table.pages;
     const bob = await newPlayer(browser, server);
     const frames: string[] = [];
     const bodies: string[] = [];
     bob.on('websocket', ws => ws.on('framereceived', frame => frames.push(String(frame.payload))));
     bob.on('response', response => { if (response.url().includes('/api/')) response.text().then(text => bodies.push(text), () => {}); });
-    await joinGame(bob, 'pictionary', table.gameId, 'Bob');
+    await joinGame(bob, 'drawandguess', table.gameId, 'Bob');
     const cara = await newPlayer(browser, server);
-    await joinGame(cara, 'pictionary', table.gameId, 'Cara');
+    await joinGame(cara, 'drawandguess', table.gameId, 'Cara');
     for (const page of [alice, bob, cara]) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(3));
     await agreeToHouseRules(alice, bob, cara);
     await table.patch({ wordChoices: CHOICES });
@@ -284,7 +284,7 @@ test.describe('Pictionary rules', () => {
       await expect(points(page, 'Alice')).toHaveText('0');
       await expect(chatLines(page).filter({ hasText: 'Bob guessed the word!' })).toHaveCount(0);
     }
-    await expect(bob.locator('.pictionary-blanks')).toHaveAccessibleName('Word: 9 letters');
+    await expect(bob.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: 9 letters');
     await expect(bob.locator('.chat-label')).toHaveText('Guess');
   });
 
