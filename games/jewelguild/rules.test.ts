@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
 import { CARDS, GEMS, NOBLES, gems } from './cards.ts';
 import { bonuses, createGameState, winningPrestige, payment, prestige, toPublicState } from './rules.ts';
-import { splendor } from './index.ts';
+import { jewelguild } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { GameState, Gem, Level, PlayerState, Result, Tokens } from './types.ts';
 
@@ -23,7 +23,7 @@ function seatedGame(count: number, seed = 1): GameState {
   const random = seeded(seed);
   let state = createGameState('g1');
   for (let i = 0; i < count; i++) {
-    const result = addPlayer(splendor, state, `P${i + 1}`, random);
+    const result = addPlayer(jewelguild, state, `P${i + 1}`, random);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -36,7 +36,7 @@ function ok(result: Result<GameState>): GameState {
 }
 
 function move(state: GameState, seat: number, input: unknown): GameState {
-  return ok(applyMove(splendor, state, seat, input, seeded(9)));
+  return ok(applyMove(jewelguild, state, seat, input, seeded(9)));
 }
 
 function tokens(partial: Partial<Tokens> = {}): Tokens {
@@ -106,8 +106,8 @@ test('take three different colors, or fewer only when fewer colors remain', () =
   assert.deepEqual(state.players[1].tokens, tokens({ white: 1, blue: 1, green: 1 }));
   assert.equal(state.supply.white, 3);
   assert.equal(state.currentPlayer, 2);
-  assert.ok('error' in applyMove(splendor, state, 2, { type: 'takeThree', colors: ['red', 'black'] }, Math.random));
-  assert.ok('error' in applyMove(splendor, state, 2, { type: 'takeThree', colors: ['red', 'red', 'black'] }, Math.random));
+  assert.ok('error' in applyMove(jewelguild, state, 2, { type: 'takeThree', colors: ['red', 'black'] }, Math.random));
+  assert.ok('error' in applyMove(jewelguild, state, 2, { type: 'takeThree', colors: ['red', 'red', 'black'] }, Math.random));
 
   const scarce = { ...state, supply: tokens({ red: 2, black: 1, gold: 5 }) };
   const taken = move(scarce, 2, { type: 'takeThree', colors: ['red', 'black'] });
@@ -119,9 +119,9 @@ test('take two needs 4 left of that color', () => {
   state = move(state, 1, { type: 'takeTwo', color: 'red' });
   assert.equal(state.players[1].tokens.red, 2);
   assert.equal(state.supply.red, 2);
-  const result = applyMove(splendor, state, 2, { type: 'takeTwo', color: 'red' }, Math.random);
+  const result = applyMove(jewelguild, state, 2, { type: 'takeTwo', color: 'red' }, Math.random);
   assert.deepEqual(result, { error: 'Taking two needs at least 4 of that color left' });
-  assert.ok('error' in applyMove(splendor, state, 2, { type: 'takeTwo', color: 'gold' }, Math.random));
+  assert.ok('error' in applyMove(jewelguild, state, 2, { type: 'takeTwo', color: 'gold' }, Math.random));
 });
 
 test('reserve gives a gold when any is left and caps at 3 reserved', () => {
@@ -146,7 +146,7 @@ test('reserve gives a gold when any is left and caps at 3 reserved', () => {
 
   const full = withPlayer(state, 1, { reserved: [0, 1, 2].map(card => ({ card, fromDeck: false })) });
   assert.deepEqual(
-    applyMove(splendor, full, 1, { type: 'reserve', source: { kind: 'deck', level: 1 } }, Math.random),
+    applyMove(jewelguild, full, 1, { type: 'reserve', source: { kind: 'deck', level: 1 } }, Math.random),
     { error: 'You already have 3 reserved cards' }
   );
 });
@@ -177,7 +177,7 @@ test('a reserved card is bought from the reserve, and a card you cannot afford i
   const card = state.players[1].reserved[0].card;
   state = move(state, 2, { type: 'takeTwo', color: 'red' });
   assert.deepEqual(
-    applyMove(splendor, state, 1, { type: 'buy', source: { kind: 'market', level: 3, slot: 0 } }, Math.random),
+    applyMove(jewelguild, state, 1, { type: 'buy', source: { kind: 'market', level: 3, slot: 0 } }, Math.random),
     { error: 'You cannot afford that card' }
   );
   state = withPlayer(state, 1, { tokens: tokens({ white: 4, blue: 4, green: 4, red: 4, black: 4 }) });
@@ -193,14 +193,14 @@ test('over 10 tokens returns down to 10 before the turn passes', () => {
   assert.deepEqual(state.pending, { kind: 'returnTokens', count: 2 });
   assert.equal(state.currentPlayer, 1);
   assert.deepEqual(
-    applyMove(splendor, state, 1, { type: 'takeTwo', color: 'green' }, Math.random),
+    applyMove(jewelguild, state, 1, { type: 'takeTwo', color: 'green' }, Math.random),
     { error: 'Return tokens down to 10 first' }
   );
   assert.deepEqual(
-    applyMove(splendor, state, 1, { type: 'returnTokens', tokens: { white: 1 } }, Math.random),
+    applyMove(jewelguild, state, 1, { type: 'returnTokens', tokens: { white: 1 } }, Math.random),
     { error: 'Return exactly 2 tokens' }
   );
-  assert.ok('error' in applyMove(splendor, state, 1, { type: 'returnTokens', tokens: { gold: 2 } }, Math.random));
+  assert.ok('error' in applyMove(jewelguild, state, 1, { type: 'returnTokens', tokens: { gold: 2 } }, Math.random));
   const supplyWhite = state.supply.white;
   state = move(state, 1, { type: 'returnTokens', tokens: { white: 1, black: 1 } });
   assert.equal(sum(state.players[1].tokens), 10);
@@ -217,7 +217,7 @@ test('a qualifying noble visits at the end of the turn, one per turn, chosen whe
   state = move(state, 1, { type: 'takeThree', colors: ['red', 'black', 'white'] });
   assert.deepEqual(state.pending, { kind: 'chooseNoble', nobles: [6, 2] });
   assert.equal(state.currentPlayer, 1);
-  assert.ok('error' in applyMove(splendor, state, 1, { type: 'chooseNoble', noble: 0 }, Math.random));
+  assert.ok('error' in applyMove(jewelguild, state, 1, { type: 'chooseNoble', noble: 0 }, Math.random));
   state = move(state, 1, { type: 'chooseNoble', noble: 2 });
   assert.deepEqual(state.players[1].nobles, [2]);
   assert.deepEqual(state.nobles, [6, 0]);
@@ -268,7 +268,7 @@ test('a tie on prestige and cards goes to fewest reserved, then is shared', () =
 
 test('a player with no legal action may pass, and only then', () => {
   let state = seatedGame(2);
-  assert.deepEqual(applyMove(splendor, state, 1, { type: 'pass' }, Math.random), { error: 'You can still take an action' });
+  assert.deepEqual(applyMove(jewelguild, state, 1, { type: 'pass' }, Math.random), { error: 'You can still take an action' });
   state = {
     ...state,
     supply: tokens(),
@@ -286,11 +286,11 @@ test('an empty deck leaves its slot empty and cannot be reserved from', () => {
   state = move(state, 1, { type: 'reserve', source: { kind: 'market', level: 3, slot: 1 } });
   assert.equal(state.market[3][1], null);
   assert.deepEqual(
-    applyMove(splendor, state, 2, { type: 'reserve', source: { kind: 'deck', level: 3 } }, Math.random),
+    applyMove(jewelguild, state, 2, { type: 'reserve', source: { kind: 'deck', level: 3 } }, Math.random),
     { error: 'That deck is empty' }
   );
   assert.deepEqual(
-    applyMove(splendor, state, 2, { type: 'buy', source: { kind: 'market', level: 3, slot: 1 } }, Math.random),
+    applyMove(jewelguild, state, 2, { type: 'buy', source: { kind: 'market', level: 3, slot: 1 } }, Math.random),
     { error: 'There is no card there' }
   );
 });
@@ -314,7 +314,7 @@ test('invalid moves', () => {
     { type: 'chooseNoble', noble: 0 }
   ];
   for (const input of bad) {
-    const result = applyMove(splendor, state, 1, input, Math.random);
+    const result = applyMove(jewelguild, state, 1, input, Math.random);
     assert.ok('error' in result, `expected an error for ${JSON.stringify(input)}`);
   }
   const pending: GameState = { ...withPlayer(state, 1, { tokens: tokens({ red: 4, blue: 4, green: 3 }) }), pending: { kind: 'returnTokens', count: 1 } };
@@ -325,10 +325,10 @@ test('invalid moves', () => {
     { type: 'returnTokens', tokens: { pink: 1 } },
     { type: 'returnTokens', tokens: null }
   ]) {
-    assert.ok('error' in applyMove(splendor, pending, 1, input, Math.random), JSON.stringify(input));
+    assert.ok('error' in applyMove(jewelguild, pending, 1, input, Math.random), JSON.stringify(input));
   }
-  assert.deepEqual(applyMove(splendor, state, 2, { type: 'takeTwo', color: 'red' }, Math.random), { error: 'Not your turn' });
-  assert.deepEqual(applyMove(splendor, state, 5, { type: 'takeTwo', color: 'red' }, Math.random), { error: 'Not your turn' });
+  assert.deepEqual(applyMove(jewelguild, state, 2, { type: 'takeTwo', color: 'red' }, Math.random), { error: 'Not your turn' });
+  assert.deepEqual(applyMove(jewelguild, state, 5, { type: 'takeTwo', color: 'red' }, Math.random), { error: 'Not your turn' });
 });
 
 test('dismissed player mid-turn: the pending step is dropped, their tokens go back and play moves on', () => {
@@ -338,7 +338,7 @@ test('dismissed player mid-turn: the pending step is dropped, their tokens go ba
   assert.equal(state.pending?.kind, 'returnTokens');
   const supplyBefore = state.supply;
   const held = state.players[2].tokens;
-  state = removePlayer(splendor, state, 2, seeded(3));
+  state = removePlayer(jewelguild, state, 2, seeded(3));
   assert.equal(state.pending, null);
   assert.equal(state.currentPlayer, 3);
   assert.deepEqual(state.activePlayers, [1, 3]);
@@ -353,7 +353,7 @@ test('dismissing the last player of a final round ends the game', () => {
   state = move(state, 1, { type: 'takeThree', colors: ['white', 'blue', 'green'] });
   assert.equal(state.finalRound, true);
   state = move(state, 2, { type: 'takeThree', colors: ['white', 'blue', 'green'] });
-  state = removePlayer(splendor, state, 3, seeded(3));
+  state = removePlayer(jewelguild, state, 3, seeded(3));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
 });

@@ -1,10 +1,10 @@
 import type { Locator, Page } from '@playwright/test';
 import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import { CARDS, GEMS, NOBLES } from '../games/splendor/cards.ts';
-import type { GameState, Gem, Level, PlayerState, Reserved, Token, Tokens } from '../games/splendor/types.ts';
+import { CARDS, GEMS, NOBLES } from '../games/jewelguild/cards.ts';
+import type { GameState, Gem, Level, PlayerState, Reserved, Token, Tokens } from '../games/jewelguild/types.ts';
 
-// One test per rule and control in games/splendor/README.md. Seats are filled in join order: Alice is seat 1, Bob 2,
-// Cara 3 and Dan 4. Card ids are places in the published list in games/splendor/cards.ts: level 1 is 0-39, level 2
+// One test per rule and control in games/jewelguild/README.md. Seats are filled in join order: Alice is seat 1, Bob 2,
+// Cara 3 and Dan 4. Card ids are places in the published list in games/jewelguild/cards.ts: level 1 is 0-39, level 2
 // 40-69 and level 3 70-89. Tests lay out the market, the nobles and each player's holdings so the numbers are known.
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan'];
@@ -109,12 +109,12 @@ async function takeGems(page: Page, ...gems: Gem[]) {
 }
 
 async function start(seat: Seat, count = 2, motion = false) {
-  const table = await seat('splendor', NAMES.slice(0, count), { motion });
+  const table = await seat('jewelguild', NAMES.slice(0, count), { motion });
   const [alice, bob, cara, dan] = table.pages;
   return { table, alice, bob, cara, dan };
 }
 
-test.describe('Splendor rules', () => {
+test.describe('Jewel Guild rules', () => {
   test('components: 7 gems a color with 4 players, 5 with 3 and 4 with 2, 5 gold, 90 cards in three levels, nobles worth 3', async ({ seat }) => {
     for (const [count, each] of [[2, 4], [3, 5], [4, 7]]) {
       const { alice } = await start(seat, count);
@@ -477,7 +477,7 @@ test.describe('Splendor rules', () => {
   });
 
   test('the host can set a lower prestige to win', async ({ seat }) => {
-    const table = await seat('splendor', NAMES.slice(0, 2), { houseRules: { targetScore: 10 } });
+    const table = await seat('jewelguild', NAMES.slice(0, 2), { houseRules: { targetScore: 10 } });
     const [alice, bob] = table.pages;
     // Bob holds 10 prestige (cards 73 and 77) and ends the round
     await craft(table, { ...fresh(2, { owned: [73, 77] }), players: players(2, { 2: { cards: [73, 77] } }) });
@@ -488,7 +488,7 @@ test.describe('Splendor rules', () => {
   });
 });
 
-test.describe('Splendor controls', () => {
+test.describe('Jewel Guild controls', () => {
   test('with Color-blind symbols on, gem tokens, card bonuses and card costs show a shape, and gold a star', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await craft(table, fresh(2, { faceUp: { 1: [0] } }));
@@ -690,7 +690,7 @@ test.describe('Splendor controls', () => {
   });
 });
 
-test.describe('Splendor differences from Wikipedia', () => {
+test.describe('Jewel Guild differences from Wikipedia', () => {
   test('2 players use 4 gems of each color and 3 players use 5', async ({ seat }) => {
     const two = await start(seat, 2);
     await expectSupply(two.alice, { white: 4, red: 4 });

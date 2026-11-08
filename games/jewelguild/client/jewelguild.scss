@@ -1,5 +1,5 @@
-[data-game="splendor"] {
-  /* Splendor's jewel-box theme. Every rule is scoped to data-game="splendor", so none of it reaches the landing page or other games. */
+[data-game="jewelguild"] {
+  /* Jewel Guild's jewel-box theme. Every rule is scoped to data-game="jewelguild", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   color: var(--text);
@@ -57,7 +57,7 @@
 
 /* Page: the background, with the header and the game in a centered column */
 
-.game-root[data-game="splendor"] {
+.game-root[data-game="jewelguild"] {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 0 16px 32px;
@@ -65,7 +65,7 @@
   background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
 }
 
-[data-game="splendor"] {
+[data-game="jewelguild"] {
   .game-header {
     display: flex;
     align-items: center;

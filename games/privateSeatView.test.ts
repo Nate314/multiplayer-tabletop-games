@@ -30,7 +30,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     boughtThisTurn: ['victoryPoint']
   }],
   risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
-  splendor: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
+  jewelguild: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
   tickettoride: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
   tradingfloor: s => [{ ...s, offers: [{ id: 1, seat: 1, cards: s.hands[1].slice(0, 2).map((c: { id: number }) => c.id) }], nextOfferId: 2 }],
   naval: s => [

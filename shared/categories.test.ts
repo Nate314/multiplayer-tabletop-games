@@ -26,7 +26,7 @@ test('every registered game has the spec\'s category', () => {
     tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'pachisi', 'pawnsandwalls', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
-    strategy: ['hexisland', 'corners', 'go', 'monopoly', 'risk', 'splendor', 'tickettoride'],
+    strategy: ['hexisland', 'corners', 'go', 'monopoly', 'risk', 'jewelguild', 'tickettoride'],
     party: ['charades', 'fictionary', 'categories', 'hintgrid', 'blocktower', 'pictionary', 'steadyhand']
   };
   const actual = Object.fromEntries(Object.keys(expected).map(c => [c, GAMES.filter(g => g.info.category === c).map(g => g.info.id).sort()]));

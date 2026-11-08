@@ -1,6 +1,6 @@
-# Splendor
+# Jewel Guild
 
-Collect gems, buy development cards and attract nobles to reach the prestige to win (15 unless the host chose another), for 2 to 4 players.
+Collect gems, buy development cards and attract nobles to reach the prestige to win (15 unless the host chose another), for 2 to 4 players. It plays like Splendor.
 
 ## Rules
 

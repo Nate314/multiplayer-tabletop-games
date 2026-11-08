@@ -13,6 +13,7 @@ export const LEGACY_IDS: LegacyIds = {
   quoridor: { id: 'pawnsandwalls', keepsSaves: true },
   rummikub: { id: 'rummytiles', keepsSaves: true },
   scrabble: { id: 'lettergrid', keepsSaves: true },
+  splendor: { id: 'jewelguild', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

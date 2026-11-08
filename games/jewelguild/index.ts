@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffleEach } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { splendorInfo } from './info.ts';
+import { jewelguildInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const splendor: GameDefinition<GameState, PublicGameState> = {
-  info: splendorInfo,
+export const jewelguild: GameDefinition<GameState, PublicGameState> = {
+  info: jewelguildInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

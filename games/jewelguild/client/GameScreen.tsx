@@ -7,12 +7,12 @@ import PlayerPanel from './PlayerPanel';
 import Table from './Table';
 import TurnPanel from './TurnPanel';
 import { toggleGem } from './selection.ts';
-import { splendorInfo } from '../info.ts';
+import { jewelguildInfo } from '../info.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Selection } from './selection.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
 
-const MAX_PLAYERS = splendorInfo.maxPlayers;
+const MAX_PLAYERS = jewelguildInfo.maxPlayers;
 
 function turnMessage(state: PublicGameState, playerNumber: Seat): string {
   const { currentPlayer, playerNames, activePlayers, started, isGameOver, finalRound } = state;

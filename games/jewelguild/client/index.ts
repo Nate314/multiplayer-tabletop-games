@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './splendor.scss';
+import './jewelguild.scss';
 
-export const splendorClient: ClientGame = {
-  id: 'splendor',
+export const jewelguildClient: ClientGame = {
+  id: 'jewelguild',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

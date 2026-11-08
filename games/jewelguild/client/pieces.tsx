@@ -1,4 +1,4 @@
-// The small pieces every Splendor view draws: gem tokens, development cards and nobles
+// The small pieces every Jewel Guild view draws: gem tokens, development cards and nobles
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import { CARDS, GEMS, NOBLES } from '../cards.ts';

@@ -4,13 +4,13 @@ import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { CARDS, GEMS, LEVELS } from './cards.ts';
 import { TOKENS, payment, prestige, takeThreeCount, tokenTotal } from './rules.ts';
-import { splendor } from './index.ts';
+import { jewelguild } from './index.ts';
 import type { Move, PublicGameState, Token, Tokens } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'splendor/g1';
+const ROOM = 'jewelguild/g1';
 
 // The same deal on every run
 function seeded(seed: number): Random {
@@ -24,8 +24,8 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([splendor], seeded(1)));
-  for (const name of names) manager.join('splendor', 'g1', name);
+  const manager = rememberingKeys(createGameManager([jewelguild], seeded(1)));
+  for (const name of names) manager.join('jewelguild', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -120,7 +120,7 @@ test('a rejoin mid-turn shows the same unfinished token return', () => {
   const before = viewOf(manager, seat);
 
   manager.disconnect(ROOM, seat);
-  const rejoined = manager.join('splendor', 'g1', seat === 1 ? 'A' : 'B', true);
+  const rejoined = manager.join('jewelguild', 'g1', seat === 1 ? 'A' : 'B', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.equal(rejoined.seat, seat);
@@ -138,7 +138,7 @@ test('the history and every other seat never see a card reserved from a deck', (
   const mine = viewOf(manager, 1).players[1].reserved[0];
   assert.notEqual(mine.card, null);
   assert.deepEqual(viewOf(manager, 2).players[1].reserved, [{ level: 3, card: null }]);
-  for (const past of stepsOf(manager, 'splendor') as unknown as PublicGameState[]) {
+  for (const past of stepsOf(manager, 'jewelguild') as unknown as PublicGameState[]) {
     assert.equal('decks' in past, false);
     for (const player of Object.values(past.players)) assert.ok(player.reserved.every(held => held.card === null));
   }

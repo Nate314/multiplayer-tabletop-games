@@ -140,7 +140,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.map-frame',
     move: async page => { await button(page, /^Keep \d+ tickets?$/).click(); }
   },
-  splendor: {
+  jewelguild: {
     keep: ['.turn-message', '.player-me', '.player-me .player-tokens'],
     hide: ['.player:not(.player-me)'],
     board: 'section.table',

@@ -1,4 +1,4 @@
-// Splendor rules shared by the browser (what can be afforded) and the server (validation).
+// Jewel Guild rules shared by the browser (what can be afforded) and the server (validation).
 // Rules follow https://en.wikipedia.org/wiki/Splendor_(game); token counts per player count follow the published rulebook.
 import { rankStandings } from '../../shared/standings.ts';
 import { houseRule } from '../../shared/houseRules.ts';
