@@ -96,6 +96,6 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each token shows its color shape in place of its initial: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens on the board and in the player list show it. The brown and slate tokens of the seventh and eighth players keep their initial.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each token shows its color shape in place of its initial: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon, cyan pentagon, pink heart. Tokens on the board and in the player list show it.'
   }
 ];

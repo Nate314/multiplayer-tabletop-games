@@ -1,8 +1,10 @@
 import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { BOARD } from '../board.ts';
 import { seatClass, shortName } from './layout.ts';
+import ServerSvg from '../../../src/assets/ServerSvg.tsx';
+import { DISC_URL } from '../../../src/components/pieces.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type PlayerListProps = {
@@ -44,7 +46,8 @@ export default function PlayerList({ gameState, viewer, onSelect }: PlayerListPr
           <div key={seat} className={classNames.join(' ')}>
             <div className="player-line">
               <span className={`token ${seatClass(seat)}`} aria-hidden="true">
-                <ColorSymbol color={SEAT_SYMBOLS[seat]} className="token-symbol" />
+                <ServerSvg url={DISC_URL} className="piece-art" />
+                <ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="token-symbol" />
                 <span className="token-initial">{playerNames[seat].slice(0, 1).toUpperCase()}</span>
               </span>
               <span className="player-name">
