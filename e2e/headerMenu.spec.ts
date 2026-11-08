@@ -9,7 +9,7 @@ const names = (page: Page) => panelOf(page).locator('button, a').evaluateAll(ele
   elements.map(element => element.getAttribute('aria-label') ?? element.textContent?.trim() ?? ''));
 
 test('the header shows Back to games, the title and a closed Menu button', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   const children = await alice.locator('.game-header > *').evaluateAll(elements =>
     elements.filter(element => element.checkVisibility()).map(element => element.tagName === 'H1' ? 'h1' : `.${element.className}`));
   expect(children).toEqual(['.back-button', 'h1', '.game-menu']);
@@ -20,7 +20,7 @@ test('the header shows Back to games, the title and a closed Menu button', async
 });
 
 test('Menu lists the controls in order, with labels, the same on a phone and a laptop', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
   for (const width of [1280, 390]) {
     await alice.setViewportSize({ width, height: 800 });
@@ -42,14 +42,14 @@ test('Menu lists the controls in order, with labels, the same on a phone and a l
 });
 
 test('Pause is listed only once play has started', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await menuOf(alice).click();
   await expect(panelOf(alice)).toBeVisible();
   expect(await names(alice)).not.toContain('Pause');
 });
 
 test('a second press, a press outside, Escape and choosing a control each close the menu', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   const menu = menuOf(alice);
   const focusInPanel = () => alice.evaluate(() => document.querySelector('.game-menu-panel')!.contains(document.activeElement));
 
@@ -76,7 +76,7 @@ test('a second press, a press outside, Escape and choosing a control each close 
 });
 
 test('Share keeps the menu open to show Link copied', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await alice.evaluate(() => Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }));
   await (await headerButton(alice, 'Share')).click();
@@ -85,9 +85,9 @@ test('Share keeps the menu open to show Link copied', async ({ seat }) => {
 });
 
 test('Rules and Settings chosen from the menu stay open while hidden and before agreement', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 }, agree: false });
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 }, agree: false });
   await (await headerButton(alice, 'Rules')).click();
-  const rules = alice.getByRole('dialog', { name: 'Connect Four rules' });
+  const rules = alice.getByRole('dialog', { name: 'Four in a Row rules' });
   await expect(rules).toBeVisible();
   await expect(menuOf(alice)).toHaveAttribute('aria-expanded', 'false');
   await expect(rules.locator('xpath=ancestor::header[contains(@class, "game-header")]')).toHaveCount(1);
@@ -99,7 +99,7 @@ test('Rules and Settings chosen from the menu stay open while hidden and before 
 });
 
 test('the Menu button shows a dot while the house rules need this player, and Rules keeps its own', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 }, agree: false });
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 }, agree: false });
   const menu = menuOf(alice);
   await expect(menu).toHaveAttribute('data-attention', '');
   await menu.click();
@@ -111,7 +111,7 @@ test('the Menu button shows a dot while the house rules need this player, and Ru
 });
 
 test('Hide shows its state in the menu', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await (await headerButton(alice, 'Hide')).click();
   await menuOf(alice).click();
   await expect(panelOf(alice).getByRole('button', { name: 'Show', exact: true })).toHaveText('Show');
@@ -119,7 +119,7 @@ test('Hide shows its state in the menu', async ({ seat }) => {
 });
 
 test('Settings has no Share and theme section', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.setViewportSize({ width: 390, height: 800 });
   await (await headerButton(alice, 'Settings')).click();
   const dialog = alice.getByRole('dialog', { name: 'Settings' });
@@ -129,8 +129,8 @@ test('Settings has no Share and theme section', async ({ seat }) => {
 });
 
 test('the menu animates, and not with reduced motion', async ({ seat }) => {
-  const { pages: [moving] } = await seat('connectfour', ['Alice', 'Bob'], { motion: true });
+  const { pages: [moving] } = await seat('fourinarow', ['Alice', 'Bob'], { motion: true });
   expect(await panelOf(moving).evaluate(element => getComputedStyle(element).transitionDuration)).toContain('0.15s');
-  const { pages: [still] } = await seat('connectfour', ['Carol', 'Dan']);
+  const { pages: [still] } = await seat('fourinarow', ['Carol', 'Dan']);
   expect(await panelOf(still).evaluate(element => getComputedStyle(element).transitionDuration)).toBe('0s');
 });

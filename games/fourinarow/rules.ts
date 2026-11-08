@@ -1,4 +1,4 @@
-// Connect Four rules shared by the browser (column hints) and the server (validation).
+// Four in a Row rules shared by the browser (column hints) and the server (validation).
 import { applyEndingAction, endGame, lapseDrawOffer } from '../../shared/drawOffer.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';

@@ -157,7 +157,7 @@ test.describe('House rules lobby', () => {
   });
 
   test('a game without rules of its own lists only the Turn timer once play starts', async ({ seat }) => {
-    const table = await seat('connectfour', ['Alice', 'Bob']);
+    const table = await seat('fourinarow', ['Alice', 'Bob']);
     await table.patch({ started: true });
     const rules = (await openHouseRules(table.pages[0])).getByRole('region', { name: 'House rules' });
     await expect(rules).toContainText('Turn timer');

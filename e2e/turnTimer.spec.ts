@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { expect, inHouseRules, test } from './fixtures.ts';
 
-// The turn timer house rule, played in Connect Four (a game with no rules of its own) and Chess (which has a game clock).
+// The turn timer house rule, played in Four in a Row (a game with no rules of its own) and Chess (which has a game clock).
 // Seat 1 (Alice) moves first. Running out is a warning only: nobody's turn is skipped.
 
 const timer = (page: Page) => page.locator('.presence-timer');
@@ -9,7 +9,7 @@ const drop = (page: Page, column: number) => page.getByRole('button', { name: `D
 
 test.describe('Turn timer', () => {
   test('a game without house rules starts without Agree while the timer is off', async ({ seat }) => {
-    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
     await inHouseRules(alice, async dialog => {
       await expect(dialog.getByLabel('Turn timer', { exact: true })).toHaveValue('0');
       await expect(dialog.getByRole('button', { name: 'Agree', exact: true })).toHaveCount(0);
@@ -20,7 +20,7 @@ test.describe('Turn timer', () => {
   });
 
   test('the host turns the timer on and everyone agrees', async ({ seat }) => {
-    const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
+    const { pages: [alice, bob] } = await seat('fourinarow', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
     for (const page of [alice, bob]) {
       await expect(timer(page)).toContainText('Alice');
       await expect(timer(page)).toHaveText(/^Alice\s*0:(30|29|28|27|26)/);
@@ -28,7 +28,7 @@ test.describe('Turn timer', () => {
   });
 
   test('the last 10 seconds are red, then Time\'s up and overtime', async ({ seat }) => {
-    const table = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
+    const table = await seat('fourinarow', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
     const [alice, bob] = table.pages;
     await table.patch({ turnStartedAt: Date.now() - 25_000 });
     await expect(timer(alice)).toHaveAttribute('data-low', '');
@@ -42,7 +42,7 @@ test.describe('Turn timer', () => {
   });
 
   test('an undo vote pauses the timer', async ({ seat }) => {
-    const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
+    const { pages: [alice, bob] } = await seat('fourinarow', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
     await drop(alice, 1);
     await expect(timer(bob)).toContainText('Bob');
     await alice.getByRole('button', { name: 'Undo' }).click();

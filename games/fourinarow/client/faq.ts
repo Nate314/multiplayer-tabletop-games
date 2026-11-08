@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const FAQS: FaqItem[] = [
   {
     question: 'How do I join a game?',
-    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Connect Four is ' +
+    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Four in a Row is ' +
       'for exactly two players, and nobody can join after the first move. The first player plays Red and moves ' +
       'first; the second plays Yellow.'
   },

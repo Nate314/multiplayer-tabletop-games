@@ -24,7 +24,7 @@ test('Hide covers the hand and everything below the header, and Show brings it b
 });
 
 test('while hidden nothing can be clicked or reached with Tab', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await (await hideButton(alice)).click();
   await expect(alice.getByRole('button', { name: 'Drop in column 1' })).toBeHidden();
   for (let i = 0; i < 15; i++) {
@@ -36,7 +36,7 @@ test('while hidden nothing can be clicked or reached with Tab', async ({ seat })
 });
 
 test('hiding and showing sends nothing to the server', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.getByRole('button', { name: 'Drop in column 1' }).click(); // a reload frees the seat until the game has started
   const sent: string[] = [];
   alice.on('websocket', socket => socket.on('framesent', frame => sent.push(String(frame.payload))));
@@ -60,7 +60,7 @@ test('a spectator can hide, a table screen has no Hide', async ({ seat, browser,
 });
 
 test('History still opens while hidden', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
   await (await hideButton(alice)).click();
   await (await headerButton(alice, 'History')).click();

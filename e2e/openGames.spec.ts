@@ -5,7 +5,7 @@ test.use({ serverEnv: { SHOW_OPEN_GAMES: 'true' } });
 const heading = (page: Awaited<ReturnType<typeof newPlayer>>) => page.getByRole('heading', { name: 'Games happening now' });
 
 test('games happening now lists lobbies and games in progress', async ({ browser, server, seat }) => {
-  const table = await seat('connectfour', ['Alice']);
+  const table = await seat('fourinarow', ['Alice']);
   const page = await newPlayer(browser, server);
   await page.goto('/');
   await expect(heading(page)).toBeVisible();
@@ -13,16 +13,16 @@ test('games happening now lists lobbies and games in progress', async ({ browser
   await expect(entry).toContainText('Alice in the lobby');
   const bob = await table.join('Bob');
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
-  await expect(entry).toContainText('Alice, Bob currently playing Connect Four', { timeout: 10_000 });
+  await expect(entry).toContainText('Alice, Bob currently playing Four in a Row', { timeout: 10_000 });
   await expect(bob.locator('.game-header')).toBeVisible();
 });
 
 test('tapping a game fills the join dialog', async ({ browser, server, seat }) => {
-  const table = await seat('connectfour', ['Alice']);
+  const table = await seat('fourinarow', ['Alice']);
   const page = await newPlayer(browser, server);
   await page.goto('/');
   await page.locator('.open-game', { hasText: `ID ${table.gameId}` }).click();
-  const dialog = page.getByRole('dialog', { name: 'Join Connect Four' });
+  const dialog = page.getByRole('dialog', { name: 'Join Four in a Row' });
   await expect(dialog.getByLabel('Game ID')).toHaveValue(table.gameId);
   await dialog.getByLabel('Your name').fill('Carol');
   await dialog.getByRole('button', { name: 'Join', exact: true }).click();
@@ -30,7 +30,7 @@ test('tapping a game fills the join dialog', async ({ browser, server, seat }) =
 });
 
 test('a finished game drops off the list', async ({ browser, server, seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const page = await newPlayer(browser, server);
   await page.goto('/');
   const entry = page.locator('.open-game', { hasText: `ID ${table.gameId}` });
@@ -41,7 +41,7 @@ test('a finished game drops off the list', async ({ browser, server, seat }) => 
 });
 
 test('a long name wraps instead of scrolling sideways at 320 px', async ({ browser, server, seat }) => {
-  await seat('connectfour', ['A'.repeat(20)]);
+  await seat('fourinarow', ['A'.repeat(20)]);
   const page = await newPlayer(browser, server);
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto('/');
@@ -50,12 +50,12 @@ test('a long name wraps instead of scrolling sideways at 320 px', async ({ brows
 });
 
 test('tapping a game in progress opens the dialog with Spectator picked', async ({ browser, server, seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
   const page = await newPlayer(browser, server);
   await page.goto('/');
   await page.locator('.open-game', { hasText: `ID ${table.gameId}` }).click();
-  const dialog = page.getByRole('dialog', { name: 'Join Connect Four' });
+  const dialog = page.getByRole('dialog', { name: 'Join Four in a Row' });
   await expect(dialog.getByRole('button', { name: 'Spectator' })).toHaveAttribute('aria-pressed', 'true');
   await dialog.getByLabel('Your name').fill('Cara');
   await dialog.getByRole('button', { name: 'Watch', exact: true }).click();

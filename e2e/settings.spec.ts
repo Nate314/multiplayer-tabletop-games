@@ -2,7 +2,7 @@ import { test, expect, newPlayer, setPreference, headerButton } from './fixtures
 
 test.describe('Settings', () => {
   test('the gear opens Settings from the landing page and the game header, every setting at its default', async ({ seat }) => {
-    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
     await (await headerButton(alice, 'Settings')).click();
     const dialog = alice.getByRole('dialog', { name: 'Settings' });
     await expect(dialog.getByLabel('Volume')).toHaveValue('50');
@@ -20,7 +20,7 @@ test.describe('Settings', () => {
   });
 
   test('a change is kept in this browser across a reload and does not change another player', async ({ seat }) => {
-    const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob']);
+    const { pages: [alice, bob] } = await seat('fourinarow', ['Alice', 'Bob']);
     await setPreference(alice, 'Color-blind symbols', true);
     await alice.reload();
     await alice.getByRole('button', { name: 'Settings' }).click(); // before the first move a reload frees the seat, so this is the landing page's gear
@@ -30,7 +30,7 @@ test.describe('Settings', () => {
   });
 
   test('the History gear has a Sounds option, off by default and kept for next time', async ({ seat }) => {
-    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
     await alice.getByRole('button', { name: 'Drop in column 1' }).click();
     await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
@@ -44,7 +44,7 @@ test.describe('Settings', () => {
     await expect(sounds).toBeChecked();
   });
   test('on a phone Share and the theme toggle are in the menu, not in Settings', async ({ seat }) => {
-    const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+    const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
     await alice.setViewportSize({ width: 375, height: 667 });
     await expect(await headerButton(alice, 'Share')).toBeVisible();
     const before = await alice.evaluate(() => document.documentElement.dataset.theme);

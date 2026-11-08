@@ -33,7 +33,7 @@ test('the table screen rejoins after a refresh', async ({ seat }) => {
 });
 
 test('game over on the table screen has no Rematch', async ({ seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
   const tv = await tableScreen(table);
   await table.patch({ isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!' });
@@ -66,7 +66,7 @@ test('phones get the switch only while a table screen is connected', async ({ se
 });
 
 test('the choice is remembered', async ({ seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const phone = table.pages[0];
   await phone.getByRole('button', { name: 'Drop in column 1' }).click(); // a refresh rejoins only once the game started
   await tableScreen(table);
@@ -172,7 +172,7 @@ test('the table screen shows the QR code from the header during play', async ({ 
 });
 
 test('the QR button is there in the lobby and after the game ends', async ({ seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
   const tv = await tableScreen(table);
   await expect(await headerButton(tv, 'Show QR code')).toBeVisible();

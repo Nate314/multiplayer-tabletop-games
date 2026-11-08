@@ -72,9 +72,9 @@ test('stepping through History never enlarges the board or moves its top edge, a
   await expect.poll(() => scaleOf(dialog)).toBeGreaterThan(scale);
 });
 
-// Connect Four with three discs dropped: four steps to move through
-async function openConnectFourHistory(seat: Parameters<Parameters<typeof test>[2]>[0]['seat']) {
-  const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob']);
+// Four in a Row with three discs dropped: four steps to move through
+async function openFourInARowHistory(seat: Parameters<Parameters<typeof test>[2]>[0]['seat']) {
+  const { pages: [alice, bob] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
   await bob.getByRole('button', { name: 'Drop in column 2' }).click();
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
@@ -83,7 +83,7 @@ async function openConnectFourHistory(seat: Parameters<Parameters<typeof test>[2
 }
 
 test('the row under the board is Play, the slider and the settings gear, and the dialog keeps its size between steps', async ({ seat }) => {
-  const { dialog } = await openConnectFourHistory(seat);
+  const { dialog } = await openFourInARowHistory(seat);
   const board = (await dialog.locator('.history-board').boundingBox())!;
   const play = (await dialog.locator('.history-play').boundingBox())!;
   const slider = (await dialog.locator('.history-slider').boundingBox())!;
@@ -102,7 +102,7 @@ test('the row under the board is Play, the slider and the settings gear, and the
 });
 
 test('the gear holds Animations, Sounds and Speed, and the live game has no View as', async ({ seat }) => {
-  const { dialog } = await openConnectFourHistory(seat);
+  const { dialog } = await openFourInARowHistory(seat);
   const settings = dialog.getByRole('group', { name: 'Playback settings' });
   await expect(settings).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
@@ -116,7 +116,7 @@ test('the gear holds Animations, Sounds and Speed, and the live game has no View
 });
 
 test('Escape closes the open gear panel first and a second Escape closes the dialog', async ({ seat }) => {
-  const { dialog } = await openConnectFourHistory(seat);
+  const { dialog } = await openFourInARowHistory(seat);
   const settings = dialog.getByRole('group', { name: 'Playback settings' });
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await expect(settings).toBeVisible();
@@ -128,7 +128,7 @@ test('Escape closes the open gear panel first and a second Escape closes the dia
 });
 
 test('speed and animations are remembered, and 4x plays a step every 375 ms', async ({ seat }) => {
-  const { alice, dialog } = await openConnectFourHistory(seat);
+  const { alice, dialog } = await openFourInARowHistory(seat);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await dialog.getByLabel('Speed').selectOption({ label: '4x' });
   await dialog.getByLabel('Animations').check();
@@ -150,13 +150,13 @@ test('speed and animations are remembered, and 4x plays a step every 375 ms', as
 });
 
 test('history without the seat key is not available', async ({ seat, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const [alice] = table.pages;
-  const url = `${server.url}/api/history/connectfour/${table.gameId}`;
+  const url = `${server.url}/api/history/fourinarow/${table.gameId}`;
   const response = await alice.request.get(url);
   expect(response.status()).toBe(404);
   expect(await response.json()).toEqual({ error: 'This game is not available' });
-  expect((await alice.request.get(`${server.url}/api/game-file/connectfour/${table.gameId}`)).status()).toBe(404);
+  expect((await alice.request.get(`${server.url}/api/game-file/fourinarow/${table.gameId}`)).status()).toBe(404);
   expect((await alice.request.get(url, { headers: { Authorization: 'Bearer nope' } })).status()).toBe(404);
   expect((await alice.request.get(`${url}/x`)).status()).toBe(404);
 });

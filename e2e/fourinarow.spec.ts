@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import type { Board } from '../games/connectfour/types.ts';
+import type { Board } from '../games/fourinarow/types.ts';
 
-// One test per rule, control and difference in games/connectfour/README.md. Seat 1 (Alice) plays Red and moves first,
+// One test per rule, control and difference in games/fourinarow/README.md. Seat 1 (Alice) plays Red and moves first,
 // seat 2 (Bob) plays Yellow. Cells are named 'row,col' as the server stores them, row 0 at the top.
 
 // Rows from the top, '.' for empty and '1' or '2' for a disc
@@ -25,7 +25,7 @@ const status = (page: Page) => page.locator('.game-status');
 const turn = (page: Page) => page.locator('.turn-message');
 
 async function start(seat: Seat) {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const [alice, bob] = table.pages;
   return { table, alice, bob };
 }
@@ -40,7 +40,7 @@ async function expectWin(page: Page, cells: string[], text: string) {
 // Full except the top of column 7, with no four in a row anywhere
 const NEARLY_FULL = ['1221122', '2112211', '1221122', '2112211', '1221122', '2112211'];
 
-test.describe('Connect Four rules', () => {
+test.describe('Four in a Row rules', () => {
   test('the grid has 7 columns and 6 rows and starts empty, with Red to move', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await expect(alice.locator('.cell')).toHaveCount(42);
@@ -168,7 +168,7 @@ test.describe('Connect Four rules', () => {
   });
 });
 
-test.describe('Connect Four controls', () => {
+test.describe('Four in a Row controls', () => {
   test('with Color-blind symbols on, Red discs show a circle and Yellow discs a star, in the board and the player list', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await setPreference(alice, 'Color-blind symbols', true);

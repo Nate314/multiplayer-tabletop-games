@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { COLUMNS, ROWS, applyAction, createBoard, landingRow, moveSummary } from './rules.ts';
-import { connectfour } from './index.ts';
+import { fourinarow } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Board, GameState, Seat } from './types.ts';
 
@@ -11,13 +11,13 @@ function seated(result: ReturnType<typeof addPlayer<GameState>>) {
 }
 
 function lobby(...names: string[]): GameState {
-  let state = connectfour.createGameState('g1');
-  for (const name of names) state = seated(addPlayer(connectfour, state, name)).state;
+  let state = fourinarow.createGameState('g1');
+  for (const name of names) state = seated(addPlayer(fourinarow, state, name)).state;
   return state;
 }
 
 function drop(state: GameState, seat: Seat, column: number): GameState {
-  const result = applyMove(connectfour, state, seat, { type: 'drop', column });
+  const result = applyMove(fourinarow, state, seat, { type: 'drop', column });
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -77,7 +77,7 @@ test('a disc falls to the lowest empty cell', () => {
 test('a full column is refused', () => {
   const state = playColumns(lobby('A', 'B'), [0, 0, 0, 0, 0, 0]);
   assert.equal(state.board[0][0], 2);
-  assert.deepEqual(applyMove(connectfour, state, 1, { type: 'drop', column: 0 }), { error: 'That column is full' });
+  assert.deepEqual(applyMove(fourinarow, state, 1, { type: 'drop', column: 0 }), { error: 'That column is full' });
   assert.equal(drop(state, 1, 1).board[5][1], 1);
 });
 
@@ -139,7 +139,7 @@ test('a winning last disc on a full board is a win, not a draw', () => {
 
 test('invalid moves are refused and leave the state unchanged', () => {
   const state = lobby('A', 'B');
-  const refused = (move: unknown, seat: Seat = 1) => applyMove(connectfour, state, seat, move);
+  const refused = (move: unknown, seat: Seat = 1) => applyMove(fourinarow, state, seat, move);
   assert.deepEqual(refused({ type: 'wall' }), { error: 'Unknown move type' });
   assert.deepEqual(refused(null), { error: 'Unknown move type' });
   for (const column of [-1, 7, 1.5, '3', null, undefined, NaN]) {
@@ -158,7 +158,7 @@ test('resign and draw by agreement end the game', () => {
 
   const offered = act(state, 1, { type: 'offerDraw' });
   assert.equal(offered.drawOffer, 1);
-  assert.deepEqual(connectfour.waitingOn?.(offered), [2]);
+  assert.deepEqual(fourinarow.waitingOn?.(offered), [2]);
   const agreed = act(offered, 2, { type: 'answerDraw', accept: true });
   assert.equal(agreed.isGameOver, true);
   assert.deepEqual(agreed.winners, []);
@@ -172,9 +172,9 @@ test('resign and draw by agreement end the game', () => {
 
 test('exactly two players can sit; a dismissed player mid-turn leaves the other the winner', () => {
   let state = lobby('A', 'B');
-  assert.deepEqual(addPlayer(connectfour, state, 'C'), { error: 'Game is full' });
+  assert.deepEqual(addPlayer(fourinarow, state, 'C'), { error: 'Game is full' });
   state = drop(state, 1, 3);
-  state = removePlayer(connectfour, state, 2); // it was B's turn
+  state = removePlayer(fourinarow, state, 2); // it was B's turn
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
 });
@@ -183,9 +183,9 @@ test('table view hides nothing: every step shows the same board to every viewer'
   let state = lobby('A', 'B');
   for (const column of [3, 3, 4, 4, 5]) {
     state = drop(state, state.currentPlayer as Seat, column);
-    const table = connectfour.toPublicState(state, true, null);
+    const table = fourinarow.toPublicState(state, true, null);
     for (const viewer of [1, 2] as Seat[]) {
-      assert.deepEqual(connectfour.toPublicState(state, true, viewer), table);
+      assert.deepEqual(fourinarow.toPublicState(state, true, viewer), table);
     }
   }
 });

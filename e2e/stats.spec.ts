@@ -2,11 +2,11 @@ import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import { expect, seeTable, test, type Seat } from './fixtures.ts';
 
-// Each browser context is one device. Alice and Bob finish a Connect Four game; Cara finishes one with a stranger.
+// Each browser context is one device. Alice and Bob finish a Four in a Row game; Cara finishes one with a stranger.
 
 // The first named player wins by four discs down column 1
-async function finishConnectFour(seat: Seat, names: [string, string]) {
-  const { pages: [first, second] } = await seat('connectfour', names);
+async function finishFourInARow(seat: Seat, names: [string, string]) {
+  const { pages: [first, second] } = await seat('fourinarow', names);
   for (let turn = 0; turn < 3; turn++) {
     await first.getByRole('button', { name: 'Drop in column 1' }).click();
     await second.getByRole('button', { name: 'Drop in column 2' }).click();
@@ -26,22 +26,22 @@ async function openStats(page: Page) {
 }
 
 test('stats show only games this device played', async ({ seat }) => {
-  const [alice] = await finishConnectFour(seat, ['Alice', 'Bob']);
-  await finishConnectFour(seat, ['Cara', 'Stranger']);
+  const [alice] = await finishFourInARow(seat, ['Alice', 'Bob']);
+  await finishFourInARow(seat, ['Cara', 'Stranger']);
   await seeTable(alice);
   await alice.getByRole('button', { name: 'Back to games' }).click();
   await alice.locator('.lobby-actions').getByRole('link', { name: 'Stats' }).click();
   await expect(alice).toHaveURL(/\/stats$/);
   await expect(recentGames(alice)).toHaveCount(1);
-  await expect(recentGames(alice)).toContainText('Connect Four');
+  await expect(recentGames(alice)).toContainText('Four in a Row');
   await expect(recentGames(alice)).toContainText('Alice');
   await expect(recentGames(alice)).toContainText('Bob');
   await expect(alice.locator('.stats-page')).not.toContainText('Stranger');
 });
 
 test('no stats request or page carries an ID', async ({ seat }) => {
-  const [alice, bob] = await finishConnectFour(seat, ['Alice', 'Bob']);
-  const [cara] = await finishConnectFour(seat, ['Cara', 'Stranger']);
+  const [alice, bob] = await finishFourInARow(seat, ['Alice', 'Bob']);
+  const [cara] = await finishFourInARow(seat, ['Cara', 'Stranger']);
   const ids = [await deviceIdOf(alice), await deviceIdOf(bob), await deviceIdOf(cara)];
   expect(ids.every(id => /^[0-9a-f]{32}$/.test(id))).toBe(true);
   const seen: { url: string; body: Promise<string> }[] = [];
@@ -83,7 +83,7 @@ test('no stats request or page carries an ID', async ({ seat }) => {
 });
 
 test('clear replaces the ID and shows Former player to the other player', async ({ seat }) => {
-  const [alice, bob] = await finishConnectFour(seat, ['Alice', 'Bob']);
+  const [alice, bob] = await finishFourInARow(seat, ['Alice', 'Bob']);
   const before = await deviceIdOf(alice);
   await openStats(alice);
   await expect(recentGames(alice)).toHaveCount(1);
@@ -108,8 +108,8 @@ test('clear replaces the ID and shows Former player to the other player', async 
 });
 
 test('a link code merges a device', async ({ seat }) => {
-  const [alice] = await finishConnectFour(seat, ['Alice', 'Bob']);
-  const [cara] = await finishConnectFour(seat, ['Cara', 'Stranger']);
+  const [alice] = await finishFourInARow(seat, ['Alice', 'Bob']);
+  const [cara] = await finishFourInARow(seat, ['Cara', 'Stranger']);
   await openStats(alice);
   await alice.getByRole('button', { name: 'Link another device' }).click();
   const panel = alice.locator('.stats-link');
@@ -132,7 +132,7 @@ test('a link code merges a device', async ({ seat }) => {
 });
 
 test('the recent game opens its History', async ({ seat }) => {
-  const [alice] = await finishConnectFour(seat, ['Alice', 'Bob']);
+  const [alice] = await finishFourInARow(seat, ['Alice', 'Bob']);
   await openStats(alice);
   await recentGames(alice).getByRole('button', { name: 'History' }).click();
   const dialog = alice.getByRole('dialog', { name: 'History' });
@@ -144,7 +144,7 @@ test('the recent game opens its History', async ({ seat }) => {
   const file = await download;
   expect(file.suggestedFilename()).toMatch(/\.json$/);
   const saved = JSON.parse(await readFile(await file.path(), 'utf8'));
-  expect(saved.gameType).toBe('connectfour');
+  expect(saved.gameType).toBe('fourinarow');
   expect(saved.steps.length).toBeGreaterThan(7);
   await dialog.getByRole('button', { name: 'Close' }).click();
   await expect(dialog).toHaveCount(0);

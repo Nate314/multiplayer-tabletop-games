@@ -191,7 +191,7 @@ const HAND_ONLY: Record<string, Row> = {
       await page.locator('.square.target').first().click();
     }
   },
-  connectfour: {
+  fourinarow: {
     keep: ['.turn-message', '.player-list', 'button:has-text("Undo")', 'button:has-text("Resign")'],
     hide: [],
     board: '.board-frame',

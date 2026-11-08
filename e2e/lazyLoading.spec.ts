@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { connectfour } from '../games/connectfour/index.ts';
+import { fourinarow } from '../games/fourinarow/index.ts';
 import { buildGameFile } from '../shared/gameFile.ts';
 import { test, expect, joinGame, newPlayer } from './fixtures.ts';
 
@@ -44,14 +44,14 @@ test('a failed download shows Could not load with Retry, and Retry loads the gam
   const context = await browser.newContext({ baseURL: server.url, reducedMotion: 'reduce', serviceWorkers: 'block' });
   const page = await context.newPage();
   let failures = 0;
-  await page.route(/\/assets\/connectfour-.*\.js$/, route => {
+  await page.route(/\/assets\/fourinarow-.*\.js$/, route => {
     if (failures++ === 0) return route.abort();
     return route.continue();
   });
   await page.goto('/');
-  await openDialog(page, 'Connect Four');
-  const dialog = page.getByRole('dialog', { name: 'Join Connect Four' });
-  await expect(dialog.getByRole('alert')).toHaveText(/Could not load Connect Four/);
+  await openDialog(page, 'Four in a Row');
+  const dialog = page.getByRole('dialog', { name: 'Join Four in a Row' });
+  await expect(dialog.getByRole('alert')).toHaveText(/Could not load Four in a Row/);
   await expect(dialog.getByRole('button', { name: 'Rules' })).toHaveCount(0);
   await page.getByLabel('Your name').fill('Alice');
   await page.getByLabel('Game ID').fill('retry');
@@ -68,24 +68,24 @@ test('a failed download shows Could not load with Retry, and Retry loads the gam
   await rules.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Back to games' })).toBeVisible();
-  await expect(page.locator('[data-game="connectfour"]').first()).toBeVisible();
+  await expect(page.locator('[data-game="fourinarow"]').first()).toBeVisible();
 });
 
 test('a saved game opened on the landing page downloads its game first', async ({ browser, server }) => {
   const page = await newPlayer(browser, server);
   const urls = scriptsAndStyles(page);
   await page.goto('/');
-  const start = { ...connectfour.toPublicState(connectfour.createGameState('saved'), false, null), moveCount: 0, historyStep: 'start' as const };
-  const file = buildGameFile('connectfour', 'saved', [start], new Date());
+  const start = { ...fourinarow.toPublicState(fourinarow.createGameState('saved'), false, null), moveCount: 0, historyStep: 'start' as const };
+  const file = buildGameFile('fourinarow', 'saved', [start], new Date());
   await page.locator('input[type="file"]:not([multiple])').setInputFiles({ name: 'saved.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   const history = page.getByRole('dialog', { name: 'History' });
   await expect(history.getByRole('heading', { name: 'Saved game: saved' })).toBeVisible();
   await expect(history.getByText('Start of the game')).toBeVisible();
-  expect(urls.some(url => url.includes('/connectfour-'))).toBe(true);
+  expect(urls.some(url => url.includes('/fourinarow-'))).toBe(true);
 });
 
 test('a refresh in the middle of a game downloads the game and shows it again', async ({ seat }) => {
-  const { pages: [alice] } = await seat('connectfour', ['Alice', 'Bob']);
+  const { pages: [alice] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.getByRole('button', { name: 'Drop in column 3' }).click();
   await expect(alice.locator('.turn-message')).toHaveText(/Bob/);
   await alice.reload();

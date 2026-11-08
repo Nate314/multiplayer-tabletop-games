@@ -1,6 +1,6 @@
-# Connect Four
+# Four in a Row
 
-Drop discs into the grid and line up four in a row.
+Drop discs into the grid and line up four in a row. It plays like Connect Four.
 
 Exactly two players: Player 1 plays Red and moves first, Player 2 plays Yellow.
 
