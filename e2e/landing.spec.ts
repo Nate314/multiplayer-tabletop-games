@@ -16,9 +16,9 @@ const card = (page: Awaited<ReturnType<typeof newPlayer>>, name: string) =>
 test('search finds games by name or description', async ({ browser, server }) => {
   const { page, cards } = await landing(browser, server);
   await page.getByLabel('Search games').fill('meeples');
-  await expect(cards).toHaveText(['Carcassonne']);
-  await page.getByLabel('Search games').fill('CONNECT FOUR');
-  await expect(cards).toHaveText(['Connect Four']);
+  await expect(cards).toHaveText(['Roads and Fields']);
+  await page.getByLabel('Search games').fill('FOUR IN A ROW');
+  await expect(cards).toHaveText(['Four in a Row']);
 });
 
 test('A to Z lists every game in one list without category headings', async ({ browser, server }) => {
@@ -27,8 +27,8 @@ test('A to Z lists every game in one list without category headings', async ({ b
   await page.getByLabel('Sort').selectOption('A to Z');
   await expect(page.locator('.lobby-category-heading')).toHaveCount(0);
   await expect(cards).toHaveCount(51);
-  await expect(cards.first()).toHaveText('Azul');
-  await expect(cards.last()).toHaveText('Yahtzee');
+  await expect(cards.first()).toHaveText('Backgammon');
+  await expect(cards.last()).toHaveText('Whodunit');
 });
 
 test('category chips show only the picked categories', async ({ browser, server }) => {
@@ -36,7 +36,7 @@ test('category chips show only the picked categories', async ({ browser, server 
   await openFilters(page);
   const dice = page.getByRole('button', { name: 'Dice games' });
   await dice.click();
-  await expect(cards).toHaveText(['Farkle', 'Yahtzee']);
+  await expect(cards).toHaveText(['Farkle', 'Five Dice']);
   await expect(dice).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Tile games' }).click();
   await expect(cards).toHaveCount(7);
@@ -49,12 +49,12 @@ test('the players filter shows games that seat that many, marking those that nee
   await openFilters(page);
   await page.getByLabel('Players').fill('7');
   await expect(cards).toHaveCount(17);
-  expect((await cards.allTextContents()).sort()).toEqual(['Categories', 'Charades', 'Farkle', 'Fictionary', 'Hint Grid', 'Jenga', 'Jigsaw', 'Monopoly', 'Phase 10', 'Pictionary', 'Rook', 'Steady Hand', 'Sudoku', "Texas Hold'em", 'Trading Floor', 'UNO', 'Yahtzee']);
+  expect((await cards.allTextContents()).sort()).toEqual(['Block Tower', 'Categories', 'Charades', 'Draw and Guess', 'Farkle', 'Fictionary', 'Five Dice', 'Hint Grid', 'Jigsaw', 'Nest', 'Rainbow Eights', 'Stage Rummy', 'Steady Hand', 'Street Deeds', 'Sudoku', "Texas Hold'em", 'Trading Floor']);
   const marked = page.locator('.lobby-game', { has: page.locator('.lobby-game-house-rule') }).locator('.lobby-game-name');
-  expect((await marked.allTextContents()).sort()).toEqual(['Phase 10', 'Rook']);
-  await expect(card(page, 'Rook').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
+  expect((await marked.allTextContents()).sort()).toEqual(['Nest', 'Stage Rummy']);
+  await expect(card(page, 'Nest').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
   await page.getByLabel('Players').fill('2');
-  await expect(card(page, 'Catan').locator('.lobby-game-house-rule')).toHaveText('2 with a house rule');
+  await expect(card(page, 'Hex Island').locator('.lobby-game-house-rule')).toHaveText('2 with a house rule');
   await page.getByLabel('Players').fill('');
   await expect(cards).toHaveCount(51);
 });
@@ -109,8 +109,8 @@ test('the Filter button hides sort, chips and Players, and counts the filters it
   await expect(filter).toHaveText('Filter (1)');
   await page.reload();
   await expect(filter).toHaveText('Filter (1)');
-  await expect(cards).toHaveText(['Farkle', 'Yahtzee']);
-  await page.getByLabel('Search games').fill('catan');
+  await expect(cards).toHaveText(['Farkle', 'Five Dice']);
+  await page.getByLabel('Search games').fill('hex island');
   await expect(page.getByText('No games match these filters')).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters' }).click();
   await expect(filter).toHaveText('Filter');
@@ -128,8 +128,8 @@ test('a press outside the Filter panel closes it', async ({ browser, server }) =
 test('a join link opens its dialog even when a remembered search hides that game', async ({ browser, server }) => {
   const { page } = await landing(browser, server);
   await page.getByLabel('Search games').fill('zzz');
-  await page.goto('/join/connectfour/abc');
-  await expect(page.getByRole('dialog', { name: 'Join Connect Four' })).toBeVisible();
+  await page.goto('/join/fourinarow/abc');
+  await expect(page.getByRole('dialog', { name: 'Join Four in a Row' })).toBeVisible();
   await expect(page.getByText('No games match these filters')).toBeVisible();
 });
 
@@ -152,7 +152,7 @@ test('wide windows show cards side by side and phones keep one column', async ({
 });
 
 test('games happening now is absent without SHOW_OPEN_GAMES', async ({ browser, server, seat }) => {
-  await seat('connectfour', ['Alice']);
+  await seat('fourinarow', ['Alice']);
   const page = await newPlayer(browser, server);
   await page.goto('/');
   await expect(page.locator('.lobby-game').first()).toBeVisible();
@@ -192,7 +192,7 @@ test('browsers without AccentColor keep the green accent in both themes', async 
   const { page } = await landing(browser, server);
   // A canary: Playwright's Chromium lacks AccentColor today; when an upgrade adds it, run this check in a browser that still lacks it
   expect(await page.evaluate(() => CSS.supports('color', 'AccentColor'))).toBe(false);
-  await card(page, 'Connect Four').click();
+  await card(page, 'Four in a Row').click();
   const join = page.locator('.lobby-button-primary');
   await expect(join).toHaveCSS('background-color', 'rgb(45, 106, 79)');
   await expect(join).toHaveCSS('color', 'rgb(255, 255, 255)');
@@ -218,7 +218,7 @@ async function rowsOf(page: Awaited<ReturnType<typeof newPlayer>>): Promise<{ ro
 test('the join choices sit in one row, two per row or one per row', async ({ browser, server }) => {
   const { page } = await landing(browser, server);
   const sizes = [{ width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 320, height: 700 }];
-  for (const [game, rowCounts] of [['hearts', [1, 2, 4]], ['pictionary', [1, 2, 3]]] as const) {
+  for (const [game, rowCounts] of [['hearts', [1, 2, 4]], ['drawandguess', [1, 2, 3]]] as const) {
     await page.setViewportSize(sizes[0]);
     await openJoinDialog(page, game);
     for (const [i, size] of sizes.entries()) {
