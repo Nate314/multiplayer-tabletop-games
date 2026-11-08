@@ -78,9 +78,11 @@ export default function Table({ gameState, viewer, showLastMove = false, taskPic
     <div className="table">
       <div className="mission-info">
         <span className="mission-number">Mission {mission}</span>
+        <span className="mission-title">{missionOf(mission).title}</span>
         <span className="mission-attempt">Attempt {attempt}</span>
         {seated && <span>Trick {Math.min(trickWinners.length + 1, totalTricks(activePlayers.length))} of {totalTricks(activePlayers.length)}</span>}
       </div>
+      <p className="mission-story">{missionOf(mission).story}</p>
       <ul className="mission-rules" aria-label="Mission rules">
         {missionRules(missionOf(mission), activePlayers.length).map(line => <li key={line}>{line}</li>)}
         {missionOf(mission).tasks === 0 && !missionOf(mission).rule && <li>No tasks</li>}

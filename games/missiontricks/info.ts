@@ -5,7 +5,7 @@ export const missiontricksInfo: GameInfo = {
   id: 'missiontricks',
   category: 'card',
   name: 'Mission Tricks',
-  description: 'Work together to complete mission tasks in a trick-taking game with little talking',
+  description: 'A cooperative trick-taking game: finish the tasks of each mission as a team while barely talking',
   minPlayers: 3,
   maxPlayers: 5
 };

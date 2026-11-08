@@ -423,6 +423,19 @@
     font-weight: 800;
   }
 
+  .mission-title {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .mission-story {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
   .mission-rules {
     margin: 0;
     padding: 8px 12px 8px 28px;

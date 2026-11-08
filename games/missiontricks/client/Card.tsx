@@ -19,7 +19,7 @@ type CardProps = {
 // A letter per suit as well as its color, as the rulebook gives a symbol per color for players who cannot tell them apart
 const MARK = { pink: 'P', blue: 'B', green: 'G', yellow: 'Y' } as const;
 
-// One Crew card: its value in the middle and its suit's mark in the corner
+// One card: its value in the middle and its suit's mark in the corner
 export default function Card({ card, animKey, playable = false, selected = false, highlighted = false, small = false, onClick }: CardProps) {
   const classes = ['crew-card', `crew-card-${card.suit}`];
   if (small) classes.push('crew-card-small');

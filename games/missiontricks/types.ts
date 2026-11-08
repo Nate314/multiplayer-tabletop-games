@@ -40,6 +40,8 @@ export type Rule =
 
 export type Mission = {
   number: number;
+  title: string;
+  story: string; // one to three sentences setting up the mission's tasks and rule
   tasks: number; // task cards drawn
   tokens: OrderToken[]; // given to the drawn task cards from the first one on
   deadSpot?: boolean; // a communicated card shows no radio token

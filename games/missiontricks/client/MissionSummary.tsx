@@ -9,7 +9,7 @@ type MissionSummaryProps = {
   onClose: () => void;
 };
 
-// The end of an attempt: success or why it failed, and the attempts for the logbook. Until the game is over, everyone
+// The end of an attempt: success or why it failed, and the attempts counted for the mission. Until the game is over, everyone
 // connected clicks Continue for the next mission or the retry, or votes to end the game here.
 export default function MissionSummary({ summary, gameState, playerNumber, onContinue, onVote, onClose }: MissionSummaryProps) {
   const { playerNames, isGameOver, gameStatus, activePlayers, disconnected, endVotes } = gameState;

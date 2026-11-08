@@ -61,7 +61,7 @@ async function playTrick(pages: Page[], cards: Card[]): Promise<void> {
   for (const [index, card] of cards.entries()) await handCard(pages[index], card).click();
 }
 
-test.describe('The Crew rules', () => {
+test.describe('Mission Tricks rules', () => {
   test('40 cards, four colors 1 to 9 and rockets 1 to 4, all dealt out; with three players one gets an extra card', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     const state = await table.state<GameState>();
@@ -244,7 +244,7 @@ test.describe('The Crew rules', () => {
     await expect(result(alice).locator('.summary-waiting')).toHaveText('Waiting for Bob, Cara');
     await button(bob, 'Continue').click();
     await leave(cara);
-    await expect(alice.locator('.mission-info')).toContainText('Mission 1Attempt 2');
+    await expect(alice.locator('.mission-info')).toContainText('Mission 1Leaving the DockAttempt 2');
     await expect(status(alice)).toHaveText('Mission 1, attempt 2');
   });
 
@@ -361,7 +361,7 @@ test.describe('The Crew rules', () => {
   });
 });
 
-test.describe('The Crew mission rules', () => {
+test.describe('Mission Tricks mission rules', () => {
   test('mission 5: the commander names the sick crew member, who must not win a trick', async ({ seat }) => {
     const { table, pages } = await start(seat);
     const [alice, bob, cara] = pages;
@@ -543,7 +543,7 @@ test.describe('The Crew mission rules', () => {
   });
 });
 
-test.describe('The Crew controls', () => {
+test.describe('Mission Tricks controls', () => {
   test('with Color-blind symbols on, every suit card shows its color shape and a rocket shows none', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await playing(table, { hands: { 1: [p(1), b(1), g(1), y(1), r(1)], 2: [p(2)], 3: [p(3)] } });
@@ -553,10 +553,11 @@ test.describe('The Crew controls', () => {
     await expect(hand(alice).locator('.color-symbol')).toHaveCount(4);
   });
 
-  test('the table shows the mission, attempt, trick and rules, and the FAQ opens', async ({ seat }) => {
+  test('the table shows the mission, its title and story, attempt, trick and rules, and the FAQ opens', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await playing(table, { mission: 19, attempt: 3, hands: { 1: [p(9)], 2: [p(1)], 3: [p(2)] }, tasks: [task(p(1), 1, 1)], tricks: tricksBefore(2) });
-    await expect(alice.locator('.mission-info')).toHaveText('Mission 19Attempt 3Trick 3 of 13');
+    await expect(alice.locator('.mission-info')).toHaveText('Mission 19Long RebootAttempt 3Trick 3 of 13');
+    await expect(alice.locator('.mission-story')).toHaveText('Five parcels, one marked first. The array needs two full tricks to warm up before anyone can signal.');
     await expect(rules(alice).locator('li')).toHaveText(['5 tasks, order tokens 1', 'Disruption: nobody may communicate before trick 3']);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Who is the commander?');

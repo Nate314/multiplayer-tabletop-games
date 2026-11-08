@@ -19,7 +19,7 @@ function gearPath(teeth: number, outer: number, inner: number): string {
   return `M${corners.join('L')}Z`;
 }
 
-export const rocketIcon = () => lineIcon(
+const rocketIcon = () => lineIcon(
   el('path', { d: 'M12 2c3 2.5 4.5 6 4.5 10v5h-9v-5c0-4 1.5-7.5 4.5-10z' }),
   el('circle', { cx: 12, cy: 10, r: 1.5 }),
   el('path', { d: 'M7.5 13l-3 3v3h3M16.5 13l3 3v3h-3M10 20l2 2 2-2' }));

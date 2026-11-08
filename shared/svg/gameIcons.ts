@@ -1,5 +1,5 @@
 import { el, type SvgAsset } from './svg.ts';
-import { lineIcon, rocketIcon, solid } from './icons.ts';
+import { lineIcon, solid } from './icons.ts';
 
 const pip = (cx: number, cy: number, r = 1.1) => solid('circle', { cx, cy, r });
 const label = (text: string, x: number, y: number, size: number) =>
@@ -41,6 +41,8 @@ const GAME_ICONS: Record<string, () => string> = {
   jigsaw: () => lineIcon(el('path', { d: 'M4 8h4a2.2 2.2 0 1 1 4 0h4v4a2.2 2.2 0 1 1 0 4v4H4z' })),
   mancala: () => lineIcon(el('rect', { x: 2, y: 7, width: 20, height: 10, rx: 5 }),
     ...[8.5, 12, 15.5].flatMap(x => [el('circle', { cx: x, cy: 10.2, r: 1.2 }), el('circle', { cx: x, cy: 13.8, r: 1.2 })])),
+  // A playing card with a check mark: a mission done
+  missiontricks: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), el('path', { d: 'M9 12.5l2 2 4-4.5' })),
   monopoly: () => lineIcon(el('path', { d: 'M3 18c0 1.5 4 2.5 9 2.5s9-1 9-2.5M6 18.5V6c0-1 2.7-2 6-2s6 1 6 2v12.5M6 14c2 .7 4 1 6 1s4-.3 6-1' })),
   naval: () => lineIcon(el('path', { d: 'M2 15h20l-3 5H5z' }), el('path', { d: 'M12 15V3l6 9h-6' })),
   parchisi: () => lineIcon(el('path', { d: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z' }), el('path', { d: 'M12 9l3 3-3 3-3-3z' })),
@@ -59,7 +61,6 @@ const GAME_ICONS: Record<string, () => string> = {
   splendor: () => lineIcon(el('path', { d: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M8 9l4 12 4-12' })),
   steadyhand: () => lineIcon(el('path', { d: 'M3 20h6v-6H5V8h8V4h8' }), el('circle', { cx: 3.5, cy: 20, r: 2 })),
   sudoku: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), label('5', 12, 14.5, 6)),
-  missiontricks: rocketIcon,
   tickettoride: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 14, rx: 3 }), el('rect', { x: 7.5, y: 6, width: 9, height: 4.5, rx: 1 }),
     pip(9, 14), pip(15, 14), el('path', { d: 'M8 17l-2 4M16 17l2 4' })),
   tictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18M10.5 10.5l3 3M13.5 10.5l-3 3' })),

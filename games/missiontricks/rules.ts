@@ -1,6 +1,6 @@
-// The Crew rules shared by the browser (playable cards, mission text) and the server (validation).
+// Mission Tricks rules shared by the browser (playable cards, mission text) and the server (validation).
 //
-// From Wikipedia's "The Crew (card game)" article and, where it is silent, the publisher's rulebook (Kosmos, 2019):
+// From the Wikipedia article linked in the README and, where it is silent, the publisher's rulebook (2019):
 // - Deck: pink, blue, green and yellow cards 1 to 9 and rockets 1 to 4, 40 cards, dealt out evenly. With three
 //   players one gets an extra card, which stays unplayed after the last trick.
 // - The holder of the 4 rocket is the commander: they take the first task, lead the first trick and carry out the

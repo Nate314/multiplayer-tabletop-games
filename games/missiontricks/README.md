@@ -1,6 +1,8 @@
-# The Crew
+# Mission Tricks
 
-The cooperative trick-taking game The Crew: The Quest for Planet Nine, with its 50-mission logbook, for 3 to 5 players. The crew wins or loses together.
+Plays like [The Crew](https://en.wikipedia.org/wiki/The_Crew_(card_game)), with its own fifty-mission campaign.
+
+A cooperative trick-taking game for 3 to 5 players: the crew of the courier ship Longhaul flies one fifty-stop delivery route and wins or loses together.
 
 ## Rules
 
@@ -14,7 +16,7 @@ The cooperative trick-taking game The Crew: The Quest for Planet Nine, with its 
 - **Dead spot.** In some missions the shown card has no token: the card still has to be the highest, lowest or only of its color, but nobody is told which
 - **Disruption.** In some missions nobody may communicate before a given trick
 - **Distress signal.** Before the first trick and before anyone communicates, the crew may send a distress signal: everyone passes one card, never a rocket, to the left or everyone to the right. It stays active for every retry of that mission, and the mission's attempt count for the logbook goes up by one
-- **Missions.** All 50 missions of the logbook, with their task counts, order tokens and special rules (see the table below). After a mission succeeds the next one is dealt; after a failure the crew retries the same mission and the attempt count goes up. The screen shows the mission number, the attempt and the mission's rules
+- **Missions.** 50 missions, each with its own title and story, with the task counts, order tokens and special rules of the published game's 50 missions (see the table below). After a mission succeeds the next one is dealt; after a failure the crew retries the same mission and the attempt count goes up. The screen shows the mission number and title, its story, the attempt and the mission's rules
 - **Five players.** From mission 25 on, in a mission with tasks, one crew member may hand one of their tasks to another before the first trick
 - **Starting mission.** Before the first move any seated player may choose the starting mission, 1 to 50 (default 1). Everyone in the lobby sees it
 - **Winning.** Completing mission 50 ends the game with the whole crew as winners. Between missions any player may vote to end the game; when every connected player has voted yes, the game ends, the whole crew is listed as winners and the status names the last mission completed
@@ -24,62 +26,62 @@ The cooperative trick-taking game The Crew: The Quest for Planet Nine, with its 
 
 ### The missions
 
-| Mission | Tasks | Order tokens | Special rule |
-| --- | --- | --- | --- |
-| 1 | 1 | | |
-| 2 | 2 | | |
-| 3 | 2 | 1 2 | |
-| 4 | 3 | | |
-| 5 | 0 | | The commander names a sick crew member, who must not win a trick |
-| 6 | 3 | > >> | Dead spot |
-| 7 | 3 | Ω | |
-| 8 | 3 | 1 2 3 | |
-| 9 | 0 | | A color card of value 1 must win a trick |
-| 10 | 4 | | |
-| 11 | 4 | 1 | The commander names another crew member, who may not communicate |
-| 12 | 4 | Ω | Right after the first trick, everyone draws a random card from the player on their right |
-| 13 | 0 | | Each rocket must win a trick |
-| 14 | 4 | > >> >>> | Dead spot |
-| 15 | 4 | 1 2 3 4 | |
-| 16 | 0 | | No trick may be won by a 9 |
-| 17 | 2 | | No trick may be won by a 9 |
-| 18 | 5 | | Disruption until trick 2 |
-| 19 | 5 | 1 | Disruption until trick 3 |
-| 20 | 2 | | Commander's decision: the tasks lie face down and another crew member takes them all |
-| 21 | 5 | 1 2 | Dead spot |
-| 22 | 5 | > >> >>> >>>> | |
-| 23 | 5 | 1 2 3 4 5 | Before the tasks are taken, two order tokens may swap places |
-| 24 | 6 | | Commander's distribution |
-| 25 | 6 | > >> | Dead spot |
-| 26 | 0 | | Two tricks must each be won by a color card of value 1 |
-| 27 | 3 | | Commander's decision |
-| 28 | 6 | 1 Ω | Disruption until trick 3 |
-| 29 | 0 | | Dead spot; nobody may ever have won two tricks more than another |
-| 30 | 6 | > >> >>> | Disruption until trick 2 |
-| 31 | 6 | 1 2 3 | |
-| 32 | 7 | | Commander's distribution |
-| 33 | 0 | | The commander names a crew member, who must win exactly one trick, not with a rocket |
-| 34 | 0 | | Nobody may ever have won two tricks more than another; the commander must win the first and the last trick |
-| 35 | 7 | > >> >>> | |
-| 36 | 7 | 1 2 | Commander's distribution |
-| 37 | 4 | | Commander's decision |
-| 38 | 8 | | Disruption until trick 3 |
-| 39 | 8 | > >> >>> | Dead spot |
-| 40 | 8 | 1 2 3 | Before the tasks are taken, one order token may move to a task without one |
-| 41 | 0 | | The commander names a crew member, who must win only the first and the last trick, neither with a rocket |
-| 42 | 9 | | |
-| 43 | 9 | | Commander's distribution |
-| 44 | 0 | | Each rocket must win a trick, in the order 1, 2, 3, 4 |
-| 45 | 9 | > >> >>> | |
-| 46 | 0 | | The player to the left of the pink 9's holder must win all nine pink cards |
-| 47 | 10 | | |
-| 48 | 3 | Ω | The Ω task must be won in the last trick |
-| 49 | 10 | > >> >>> | |
-| 50 | 0 | | One crew member wins tricks 1 to 4 and no other, another only the last trick, and the rest every trick between |
+| Mission | Title | Tasks | Order tokens | Special rule |
+| --- | --- | --- | --- | --- |
+| 1 | Leaving the Dock | 1 | | |
+| 2 | Two Drops on the Inner Ring | 2 | | |
+| 3 | Priority Mail | 2 | 1 2 | |
+| 4 | A Fuller Hold | 3 | | |
+| 5 | Sick Bay | 0 | | The commander names a sick crew member, who must not win a trick |
+| 6 | Static on the Line | 3 | > >> | Dead spot |
+| 7 | Last Crate Out | 3 | Ω | |
+| 8 | Strict Timetable | 3 | 1 2 3 | |
+| 9 | Low Fuel | 0 | | A color card of value 1 must win a trick |
+| 10 | Four Doors | 4 | | |
+| 11 | Broken Headset | 4 | 1 | The commander names another crew member, who may not communicate |
+| 12 | Changing Watch | 4 | Ω | Right after the first trick, everyone draws a random card from the player on their right |
+| 13 | Engine Test | 0 | | Each rocket must win a trick |
+| 14 | Storm Front | 4 | > >> >>> | Dead spot |
+| 15 | Rush Hour | 4 | 1 2 3 4 | |
+| 16 | Overheating | 0 | | No trick may be won by a 9 |
+| 17 | Still Running Hot | 2 | | No trick may be won by a 9 |
+| 18 | Blackout | 5 | | Disruption until trick 2 |
+| 19 | Long Reboot | 5 | 1 | Disruption until trick 3 |
+| 20 | Sealed Orders | 2 | | Commander's decision: the tasks lie face down and another crew member takes them all |
+| 21 | Ion Haze | 5 | 1 2 | Dead spot |
+| 22 | Chain of Custody | 5 | > >> >>> >>>> | |
+| 23 | Clerical Error | 5 | 1 2 3 4 5 | Before the tasks are taken, two order tokens may swap places |
+| 24 | Quartermaster | 6 | | Commander's distribution |
+| 25 | Asteroid Field | 6 | > >> | Dead spot |
+| 26 | Feather Touch | 0 | | Two tricks must each be won by a color card of value 1 |
+| 27 | Locked Manifest | 3 | | Commander's decision |
+| 28 | Delayed Relay | 6 | 1 Ω | Disruption until trick 3 |
+| 29 | Even Shifts | 0 | | Dead spot; nobody may ever have won two tricks more than another |
+| 30 | Late Signal | 6 | > >> >>> | Disruption until trick 2 |
+| 31 | Tight Schedule | 6 | 1 2 3 | |
+| 32 | Inventory Day | 7 | | Commander's distribution |
+| 33 | One Day Off | 0 | | The commander names a crew member, who must win exactly one trick, not with a rocket |
+| 34 | Commander's Watch | 0 | | Nobody may ever have won two tricks more than another; the commander must win the first and the last trick |
+| 35 | Convoy | 7 | > >> >>> | |
+| 36 | Assigned Priorities | 7 | 1 2 | Commander's distribution |
+| 37 | Blind Cargo | 4 | | Commander's decision |
+| 38 | Dark Side Approach | 8 | | Disruption until trick 3 |
+| 39 | Deep Static | 8 | > >> >>> | Dead spot |
+| 40 | Relabeling | 8 | 1 2 3 | Before the tasks are taken, one order token may move to a task without one |
+| 41 | Bookends | 0 | | The commander names a crew member, who must win only the first and the last trick, neither with a rocket |
+| 42 | Full Manifest | 9 | | |
+| 43 | Fair Shares | 9 | | Commander's distribution |
+| 44 | Ignition Sequence | 0 | | Each rocket must win a trick, in the order 1, 2, 3, 4 |
+| 45 | Narrow Window | 9 | > >> >>> | |
+| 46 | Pink Consignment | 0 | | The player to the left of the pink 9's holder must win all nine pink cards |
+| 47 | Heavy Load | 10 | | |
+| 48 | Final Seal | 3 | Ω | The Ω task must be won in the last trick |
+| 49 | Approach Corridor | 10 | > >> >>> | |
+| 50 | Home Port | 0 | | One crew member wins tricks 1 to 4 and no other, another only the last trick, and the rest every trick between |
 
 The commander's decision: the commander names another crew member, who takes all the tasks once named. The commander's distribution: the tasks are shown one at a time, and the commander gives each to any crew member, themselves included, so that nobody ends with two tasks more than another; order tokens go with the first tasks.
 
-Sources for the missions, mechanics only: the task counts and special rules are from the publisher's logbook (the English rulebook and logbook PDFs hosted at [1jour-1jeu.com, rulebook](https://cdn.1j1ju.com/medias/8f/13/09-the-crew-the-quest-for-planet-nine-rulebook.pdf) and [logbook](https://cdn.1j1ju.com/medias/dd/5a/3a-the-crew-the-quest-for-planet-nine-log-book.pdf)). The order tokens, which the logbook shows only as pictures, are from two independent mission tables that agree on all 50 missions: [AaronJV/crew space-missions.json](https://github.com/AaronJV/crew/blob/main/assets/quests/space-missions.json) and [CalvinNeo/OpenBoardGame the_crew_data.py](https://github.com/CalvinNeo/OpenBoardGame/blob/master/game/the_crew_data.py). Where those two tables differ (whether missions 20, 27 and 37 are a commander's decision or a distribution), the logbook's wording decides: the commander names who does the job, a decision. A third partial table, [shiftsayan/crew missions.ts](https://github.com/shiftsayan/crew/blob/main/src/game/config/missions.ts), gives mission 7 one task; the logbook shows three, as do the other two tables.
+Sources for the mechanics, which follow the published game's 50 missions (the titles and stories are this project's own): the task counts and special rules are from the publisher's mission book (the English PDFs hosted at 1jour-1jeu.com, [rulebook](https://cdn.1j1ju.com/medias/8f/13/09-the-crew-the-quest-for-planet-nine-rulebook.pdf) and [mission book](https://cdn.1j1ju.com/medias/dd/5a/3a-the-crew-the-quest-for-planet-nine-log-book.pdf)). The order tokens, which the mission book shows only as pictures, are from two independent mission tables that agree on all 50 missions: [AaronJV space-missions.json](https://github.com/AaronJV/crew/blob/main/assets/quests/space-missions.json) and [CalvinNeo/OpenBoardGame mission data](https://github.com/CalvinNeo/OpenBoardGame/blob/master/game/the_crew_data.py). Where those two tables differ (whether missions 20, 27 and 37 are a commander's decision or a distribution), the mission book's wording decides: the commander names who does the job, a decision. A third partial table, [shiftsayan missions.ts](https://github.com/shiftsayan/crew/blob/main/src/game/config/missions.ts), gives mission 7 one task; the mission book shows three, as do the other two tables.
 
 ## Controls
 
@@ -91,7 +93,7 @@ Sources for the missions, mechanics only: the task counts and special rules are 
 - To communicate, click Communicate, click a card in your hand, then click what it is (only true choices are offered; in a dead spot there is a single button). Cancel puts it away
 - Before the first trick the commander can click Distress signal: pass left or pass right once the crew agrees. Then everyone clicks a card (not a rocket) and Pass
 - With five players from mission 25 on, the commander can hand a task to another crew member before the first trick with the Hand over a task lists
-- The table shows the mission number, the attempt, the trick number and the mission's rules, then each crew member with their cards, tricks won, tasks (with order tokens and which are done), communicated card and any role a special rule gives them, then the trick being played or the last trick taken
+- The table shows the mission number and title, the attempt, the trick number, the mission's story and rules, then each crew member with their cards, tricks won, tasks (with order tokens and which are done), communicated card and any role a special rule gives them, then the trick being played or the last trick taken
 - After each mission, read the result and click Continue. Vote to end and Vote to play on call or answer the end vote. After the game, Close hides the result and Show the mission opens it again
 - With Color-blind symbols on in Settings, each color also shows its shape: pink heart, blue square, green triangle, yellow star. Each suit card shows it in its top right corner; the rocket already carries a symbol
 - Click Undo to ask everyone to undo the last move
@@ -100,7 +102,7 @@ Sources for the missions, mechanics only: the task counts and special rules are 
 
 ## Differences from Wikipedia
 
-These follow [Wikipedia's The Crew article](https://en.wikipedia.org/wiki/The_Crew_(card_game)) and, where it is brief, the publisher's rulebook and logbook. What is different:
+These follow the rules in the Wikipedia article linked above and, where it is brief, the publisher's rulebook. What is different:
 
 - **Players.** 3 to 5. The rulebook's two-player variant is not offered
 - **The commander's question.** In missions 5, 20, 27, 33, 37, 41 and 50 the rulebook has the commander ask everyone "good or bad" or "yes or no" (in mission 50, everyone's preference) before deciding. The site has no chat, so the question is asked at the table and the site records only the commander's choice. In missions 5, 33, 41 and 50 the commander may choose themselves; in 11, 20, 27 and 37 the rulebook says another crew member
@@ -109,7 +111,7 @@ These follow [Wikipedia's The Crew article](https://en.wikipedia.org/wiki/The_Cr
 - **Communication is checked.** A communication that is not true is refused, so it cannot happen by mistake
 - **Undo and face-down tasks.** An undo puts new face-down tasks on the table, drawn from the task cards not in play with the same order tokens, in place of any still face down (a commander's decision before the pick, a commander's distribution after the task on show), so an undo cannot reveal them
 - **Undo.** Communications and distress passes are not undoable on their own, as information once shown cannot be taken back, but undoing the move made before them takes them back too
-- **Pink 9 in mission 46.** The logbook has the holder declare it; the site names the player who must win the pink cards at once
+- **Pink 9 in mission 46.** The published mission has the holder declare it; the site names the player who must win the pink cards at once
 - **Mission 12.** Right after the first trick everyone's draw happens at once, at random, from the hand of the player on their right; a communicated card that is drawn stays on the table marked as no longer held. Undoing the trick that led to the draw cannot hide what was drawn: the cards are back in their owners' hands, so the drawer still knows one card of their right neighbour's hand, and a replayed trick draws again at random
 - **Missions in one game.** The game runs from the starting mission on, one mission after another, and keeps no logbook between games. The attempts are counted for the mission being played and shown in the result, the distress signal adding one. A crew that wants to skip a mission chooses a later starting mission in a new game
 - **Ending.** The game ends after mission 50, or earlier by an end vote between missions, or when a player is dismissed; in every case the crew is listed as winners

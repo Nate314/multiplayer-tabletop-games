@@ -5,7 +5,7 @@ import { MISSIONS } from './missions.ts';
 import { missiontricks } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
-import type { Card, GameState, OrderToken, PublicGameState, Result, Rule, Task } from './types.ts';
+import type { Card, GameState, Mission, OrderToken, PublicGameState, Result, Rule, Task } from './types.ts';
 
 const p = (value: number): Card => ({ suit: 'pink', value });
 const b = (value: number): Card => ({ suit: 'blue', value });
@@ -83,9 +83,15 @@ test('missions.ts has 50 missions numbered 1 to 50', () => {
     assert.ok(mission.tokens.length <= mission.tasks, `mission ${mission.number} has more tokens than tasks`);
     assert.ok(mission.tasks > 0 || mission.rule, `mission ${mission.number} has neither tasks nor a rule`);
   }
-  // A few spot checks against the logbook
-  assert.deepEqual(MISSIONS[2], { number: 3, tasks: 2, tokens: [1, 2] });
-  assert.deepEqual(MISSIONS[47], { number: 48, tasks: 3, tokens: ['omega'], rule: { kind: 'omegaInLastTrick' } });
+  // A few spot checks against the published game's missions; the titles and stories are this project's own
+  const mechanics = (mission: Mission) => {
+    const copy: Partial<Mission> = { ...mission };
+    delete copy.title;
+    delete copy.story;
+    return copy;
+  };
+  assert.deepEqual(mechanics(MISSIONS[2]), { number: 3, tasks: 2, tokens: [1, 2] });
+  assert.deepEqual(mechanics(MISSIONS[47]), { number: 48, tasks: 3, tokens: ['omega'], rule: { kind: 'omegaInLastTrick' } });
   assert.equal(MISSIONS[49].rule?.kind, 'relay');
 });
 

@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'What is the goal?',
-    answer: 'The Crew is cooperative: everyone wins or loses together. Play through the 50 missions of the logbook. Most missions give the crew tasks, and each task is a card that its owner must win in a trick. Completing mission 50 wins the game.'
+    answer: 'Mission Tricks is cooperative: everyone wins or loses together. Play through the 50 missions of the logbook. Most missions give the crew tasks, and each task is a card that its owner must win in a trick. Completing mission 50 wins the game.'
   },
   {
     question: 'What is in the deck?',
