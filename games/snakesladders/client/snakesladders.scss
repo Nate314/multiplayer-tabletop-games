@@ -257,6 +257,8 @@
     line-height: 1.25em;
     height: 2.5em;
     overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: content-box;
   }
 
   .sl-status.sl-status-error {

@@ -138,7 +138,8 @@ test.describe('House rules lobby', () => {
 
   test('the House rules tab shows the chosen rules all game, the house rule marked, and Settings has none', async ({ seat }) => {
     const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { houseRules: { targetScore: 5000 }, maxPlayers: 9 });
-    await expect(alice.locator('.game-header').getByRole('button', { name: 'House rules', exact: true })).toHaveCount(0);
+    await expect(await headerButton(alice, 'House rules')).toHaveCount(0);
+    await alice.keyboard.press('Escape');
     await rollButton(alice).click();
     for (const page of [alice, bob]) {
       await inHouseRules(page, async dialog => {

@@ -167,7 +167,8 @@ test('the table screen shows the QR code from the header during play', async ({ 
   await tv.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(tv.locator('.table-screen-board')).toBeVisible();
-  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+  await expect(await headerButton(table.pages[0], 'Show QR code')).toHaveCount(0);
+  await table.pages[0].keyboard.press('Escape');
 });
 
 test('the QR button is there in the lobby and after the game ends', async ({ seat }) => {
@@ -182,5 +183,6 @@ test('the QR button is there in the lobby and after the game ends', async ({ sea
   await tv.keyboard.press('Escape');
   await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeHidden();
   await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
-  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+  // The Game over dialog blocks the menu button, so look in the closed menu panel too
+  await expect(table.pages[0].getByRole('button', { name: 'Show QR code', includeHidden: true })).toHaveCount(0);
 });
