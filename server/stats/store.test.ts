@@ -104,3 +104,27 @@ test('a device with no games can still be linked', () => {
   assert.deepEqual(store.link(C, A), { games: 0 });
   assert.equal(store.deviceCount(A), 2);
 });
+
+test('renameGameType moves an old game type and its archive ids, once', () => {
+  const store = openStatsStore(':memory:');
+  store.record(result('oldgame/g1#1', [A], { gameType: 'oldgame' }));
+  store.record(result('hearts/g2#1', [A]));
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 1);
+  const games = store.resultsFor(A);
+  assert.ok(Array.isArray(games));
+  const renamed = games.find(g => g.gameType === 'newgame');
+  assert.equal(renamed?.archiveId, 'newgame/g1#1');
+  assert.equal(games.find(g => g.archiveId === 'hearts/g2#1')?.gameType, 'hearts');
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+});
+
+test('renameGameType leaves a row whose new archive id is taken', () => {
+  const store = openStatsStore(':memory:');
+  store.record(result('oldgame/g1#1', [A], { gameType: 'oldgame' }));
+  store.record(result('newgame/g1#1', [A], { gameType: 'newgame' }));
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+  const games = store.resultsFor(A);
+  assert.ok(Array.isArray(games));
+  assert.deepEqual(games.map(g => [g.archiveId, g.gameType]).sort(),
+    [['newgame/g1#1', 'newgame'], ['oldgame/g1#1', 'oldgame']]);
+});
