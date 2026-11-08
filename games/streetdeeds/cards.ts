@@ -31,7 +31,7 @@ export const CHANCE: Card[] = [
 
 export const COMMUNITY_CHEST: Card[] = [
   { text: 'Ride the tram back to Start. Collect $200', effect: { type: 'advance', to: 0 } },
-  { text: 'The bank mixed up two ledgers in your favor. Collect $200', effect: { type: 'collect', amount: 200 } },
+  { text: 'The bank mixed up two ledgers and the mistake is yours to keep. Collect $200', effect: { type: 'collect', amount: 200 } },
   { text: "Dentist's bill. Pay $50", effect: { type: 'pay', amount: 50 } },
   { text: 'You sell your old bicycle. Collect $50', effect: { type: 'collect', amount: 50 } },
   { text: 'Jail pass. Keep this card until you need it, or trade it', effect: { type: 'jailCard' } },
