@@ -52,6 +52,15 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     { ...s, seen: [{ suggestion: 0, from: 2, to: 1, card: s.hands[2][0] }], notes: { ...s.notes, 1: { [s.hands[1][0]]: 'no' } } },
     { ...s, phase: 'showing', suggestions: [{ suspect: 'miss-gull', object: 'boat-oar', room: 'galley', by: 1, passed: [], shownBy: null, awaiting: 2 }] }
   ],
+  categories: s => [
+    { ...s, started: true, phase: 'answering', letter: 'B', list: ['Fruits', 'Animals'], answers: { 1: ['Banana', 'Bat'], 2: ['Berry', ''] } },
+    { ...s, started: true, phase: 'review', letter: 'B', list: ['Fruits', 'Animals'], review: { acknowledged: [] }, answers: { 1: ['Banana', 'Bat'], 2: ['Berry', ''] } }
+  ],
+  hintgrid: s => [{
+    ...s, started: true, phase: 'guessing', turn: 'red', currentPlayer: 2,
+    roles: { 1: { team: 'red', clueGiver: true }, 2: { team: 'red', clueGiver: false }, 3: { team: 'blue', clueGiver: true }, 4: { team: 'blue', clueGiver: false } },
+    revealed: s.revealed.map((_: boolean, i: number) => i < 2)
+  }],
   codebreaker: s => [
     { ...s, phase: 'breaking', code: ['red', 'blue', 'green', 'yellow'], currentPlayer: 2 },
     {

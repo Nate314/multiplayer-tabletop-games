@@ -11,6 +11,8 @@ const GAME_ICONS: Record<string, () => string> = {
   backgammon: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 1.5 }),
     el('path', { d: 'M5.5 4l2 6.5 2-6.5M14.5 4l2 6.5 2-6.5M5.5 20l2-6.5 2 6.5M14.5 20l2-6.5 2 6.5' })),
   carcassonne: () => lineIcon(el('path', { d: 'M4 21V6h3v3h3V6h4v3h3V6h3v15z' }), el('path', { d: 'M10 21v-4a2 2 0 0 1 4 0v4' })),
+  // Three lines beside a large letter
+  categories: () => lineIcon(el('path', { d: 'M14 6h7M14 12h7M14 18h7' }), label('B', 7.5, 18, 17)),
   catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
   checkers: () => lineIcon(el('ellipse', { cx: 12, cy: 8, rx: 8, ry: 3 }), el('path', { d: 'M4 8v4a8 3 0 0 0 16 0V8M4 12v4a8 3 0 0 0 16 0v-4' })),
   chinesecheckers: () => lineIcon(el('path', { d: 'M12 2l2.9 5h5.8l-2.9 5 2.9 5h-5.8L12 22l-2.9-5H3.3l2.9-5-2.9-5h5.8z' }), pip(12, 12, 1.6)),
@@ -27,6 +29,8 @@ const GAME_ICONS: Record<string, () => string> = {
   farkle: () => lineIcon(el('path', { d: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z' })),
   go: () => lineIcon(el('path', { d: 'M4 8h16M4 16h16M8 4v16M16 4v16' }), solid('circle', { cx: 8, cy: 8, r: 2.5 }), el('circle', { cx: 16, cy: 16, r: 2.5 })),
   gofish: () => lineIcon(el('path', { d: 'M6 12c2.5-3.5 6-5 9-5s6 2.5 7 5c-1 2.5-4 5-7 5s-6.5-1.5-9-5zM6 12L2 8v8z' }), pip(17, 11, 0.9)),
+  // A 3 by 3 grid of squares, two filled
+  hintgrid: () => lineIcon(...[4, 9.5, 15].flatMap(x => [4, 9.5, 15].map(y => (x === 4 && y === 4) || (x === 15 && y === 9.5) ? solid('rect', { x, y, width: 5, height: 5 }) : el('rect', { x, y, width: 5, height: 5 })))),
   hearts: () => lineIcon(solid('path', { d: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z' })),
   holdem: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('circle', { cx: 12, cy: 12, r: 5 }), el('path', { d: 'M12 3v4M12 17v4M3 12h4M17 12h4' })),
   // Three courses of bricks, the middle one pulled halfway out to the right

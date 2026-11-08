@@ -15,6 +15,7 @@ import { farkleInfo } from './farkle/info.ts';
 import { goInfo } from './go/info.ts';
 import { gofishInfo } from './gofish/info.ts';
 import { heartsInfo } from './hearts/info.ts';
+import { hintgridInfo } from './hintgrid/info.ts';
 import { holdemInfo } from './holdem/info.ts';
 import { jengaInfo } from './jenga/info.ts';
 import { jigsawInfo } from './jigsaw/info.ts';
@@ -23,6 +24,7 @@ import { monopolyInfo } from './monopoly/info.ts';
 import { navalInfo } from './naval/info.ts';
 import { parchisiInfo } from './parchisi/info.ts';
 import { phase10Info } from './phase10/info.ts';
+import { categoriesInfo } from './categories/info.ts';
 import { pictionaryInfo } from './pictionary/info.ts';
 import { quoridorInfo } from './quoridor/info.ts';
 import { rackoInfo } from './racko/info.ts';
@@ -46,7 +48,7 @@ import { yahtzeeInfo } from './yahtzee/info.ts';
 
 // What the browser lists, in the order of GAMES in registry.ts, without any game's rules code
 export const GAME_INFOS: GameInfo[] = [
-  azulInfo, backgammonInfo, carcassonneInfo, catanInfo, checkersInfo, chinesecheckersInfo, chessInfo, codebreakerInfo, connectfourInfo, cornersInfo, dominoesInfo, euchreInfo, farkleInfo,
-  goInfo, gofishInfo, heartsInfo, jengaInfo, jigsawInfo, mancalaInfo, monopolyInfo, navalInfo, parchisiInfo, phase10Info, pictionaryInfo, quoridorInfo, rackoInfo, riskInfo, rookInfo, rummikubInfo,
+  azulInfo, backgammonInfo, carcassonneInfo, catanInfo, checkersInfo, chinesecheckersInfo, chessInfo, categoriesInfo, codebreakerInfo, connectfourInfo, cornersInfo, dominoesInfo, euchreInfo, farkleInfo,
+  goInfo, gofishInfo, heartsInfo, hintgridInfo, jengaInfo, jigsawInfo, mancalaInfo, monopolyInfo, navalInfo, parchisiInfo, phase10Info, pictionaryInfo, quoridorInfo, rackoInfo, riskInfo, rookInfo, rummikubInfo,
   scrabbleInfo, skipboInfo, snakesladdersInfo, spadesInfo, splendorInfo, sudokuInfo, holdemInfo, thecrewInfo, tictactoeInfo, tickettorideInfo, ultimatetictactoeInfo, unoInfo, warInfo, whodunitInfo, yahtzeeInfo
 ];
