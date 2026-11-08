@@ -294,6 +294,50 @@
     cursor: default;
   }
 
+  /* Round scoring rows, in the summary dialog and the final round */
+  .summary-seats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .summary-seat {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--status-bg);
+  }
+
+  .summary-winner {
+    border-color: var(--highlight);
+  }
+
+  .summary-name,
+  .summary-points {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .summary-points {
+    text-align: right;
+  }
+
+  .summary-reason {
+    grid-column: 1 / -1;
+    color: var(--muted);
+  }
+
+  .summary-reason:empty {
+    display: none;
+  }
+
   /* At phone width the bar stays fixed at the bottom, and the screen leaves room for it */
   @media (max-width: 600px) {
     .tf-screen {

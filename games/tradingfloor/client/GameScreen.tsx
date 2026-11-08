@@ -11,8 +11,10 @@ import OfferBoard from './OfferBoard';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { PublicGameState } from '../types.ts';
 
-const ALREADY_TAKEN = 'Already taken';
 const QUIET_MS = 3000;
+// Refusals that only mean a friend's swap or withdraw crossed this one; nothing was lost, so they stay quiet
+const isRace = (error: string | null): error is string => error !== null
+  && (error === 'Already taken' || error === 'You have no open offer' || error.startsWith('Make an offer of ') || error.startsWith('Your offer must be '));
 
 export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
   const { activePlayers, playerNames, isGameOver, started, phase, summary, hand, offering, gameStatus } = gameState;
@@ -25,16 +27,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const corner = cornerOf(hand);
 
   // A lost race to an offer is a quiet line for a few seconds, kept past the next state, which clears the error
-  const [taken, setTaken] = useState(false);
+  const [taken, setTaken] = useState<string | null>(null);
   const takenTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
-    if (error !== ALREADY_TAKEN) return;
-    setTaken(true);
+    if (!isRace(error)) return;
+    setTaken(error);
     clearTimeout(takenTimer.current);
-    takenTimer.current = setTimeout(() => setTaken(false), QUIET_MS);
+    takenTimer.current = setTimeout(() => setTaken(null), QUIET_MS);
   }, [error]);
   useEffect(() => () => clearTimeout(takenTimer.current), []);
-  const loud = error !== null && error !== ALREADY_TAKEN;
+  const loud = error !== null && !isRace(error);
 
   const toggle = (id: number) => setPicks(picked.includes(id) ? picked.filter(each => each !== id) : [...picked, id]);
   const offer = () => {
@@ -45,7 +47,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   return (
     <div className="tf-layout tf-screen">
       <div className={loud ? 'game-status game-status-error' : 'game-status'} role="status">
-        {loud ? error : taken ? ALREADY_TAKEN : gameStatus}
+        {loud ? error : taken ?? gameStatus}
       </div>
       <OfferBoard gameState={gameState} viewer={playerNumber}
         onAccept={trading ? id => gameService.sendAction({ type: 'accept', offer: id }) : undefined} />
