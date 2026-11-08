@@ -2,7 +2,7 @@
 
 Roll the die, climb the ladders and dodge the snakes on the way to 100.
 
-Players are seated in join order, each with a token of their own color: Player 1 red, Player 2 blue, Player 3 green, Player 4 orange, Player 5 purple, Player 6 cyan. Seat 1 rolls first, then the turn passes in join order.
+Players are seated in join order, each with a token of their own color: Player 1 red, Player 2 blue, Player 3 green, Player 4 yellow, Player 5 purple, Player 6 orange, the same seat colors as every other game. Seat 1 rolls first, then the turn passes in join order.
 
 ## Rules
 
@@ -31,7 +31,7 @@ Players are seated in join order, each with a token of their own color: Player 1
 - The player list shows each player's square, with the player on turn highlighted
 - Click Undo to ask everyone to undo the last roll; it happens only if every player still in the game approves
 - Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
-- With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens and the player list show it
+- With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon. Tokens and the player list show it
 
 ## Differences from Wikipedia
 

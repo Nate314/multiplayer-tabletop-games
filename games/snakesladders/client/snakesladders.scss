@@ -21,15 +21,8 @@
   --snake: #2E7D32;
   --snake-head: #1B5E20;
   --snake-eye: #FFF59D;
-  --token-edge: rgba(0, 0, 0, 0.55);
   --die-bg: #FFFFFF;
   --die-pip: #1F2A1C;
-  --player1: #E53935;
-  --player2: #1E88E5;
-  --player3: #43A047;
-  --player4: #FB8C00;
-  --player5: #8E24AA;
-  --player6: #00ACC1;
   --symbol-ink: #FFFFFF;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
@@ -61,42 +54,24 @@
     --snake: #66BB6A;
     --snake-head: #43A047;
     --snake-eye: #1B1B1B;
-    --token-edge: rgba(0, 0, 0, 0.8);
     --die-bg: #E8F0E0;
     --die-pip: #151A13;
-    --player1: #EF5350;
-    --player2: #42A5F5;
-    --player3: #66BB6A;
-    --player4: #FFA726;
-    --player5: #AB47BC;
-    --player6: #26C6DA;
     --symbol-ink: #151A13;
   }
 
-  /* Each seat's color, read by its token and player dot */
+  /* Each seat's color from the shared palette (src/App.scss), read by its token and player dot */
 
-  .sl-seat1 {
-    --seat: var(--player1);
+  @for $n from 1 through 6 {
+    .sl-seat#{$n} {
+      --seat: var(--seat-color-#{$n});
+      --seat-edge: var(--seat-stroke-#{$n});
+    }
   }
 
-  .sl-seat2 {
-    --seat: var(--player2);
-  }
-
-  .sl-seat3 {
-    --seat: var(--player3);
-  }
+  /* White ink would not read on yellow */
 
   .sl-seat4 {
-    --seat: var(--player4);
-  }
-
-  .sl-seat5 {
-    --seat: var(--player5);
-  }
-
-  .sl-seat6 {
-    --seat: var(--player6);
+    --symbol-ink: var(--seat-edge);
   }
 
   .sl-layout {
@@ -208,7 +183,7 @@
 
   .sl-token-disc {
     fill: var(--seat);
-    stroke: var(--token-edge);
+    stroke: var(--seat-edge);
     stroke-width: 0.45;
   }
 
