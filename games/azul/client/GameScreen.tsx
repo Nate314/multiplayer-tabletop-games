@@ -5,7 +5,7 @@ import GameStatus from './GameStatus';
 import PlayerBoard from './PlayerBoard';
 import RoundSummary from './RoundSummary';
 import UndoVote from '../../../src/components/UndoVote';
-import { MOVE_DURATION_MS, prefersReducedMotion } from '../../../src/animation/motion.ts';
+import { prefersReducedMotion } from '../../../src/animation/motion.ts';
 import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
 import { useDrag } from '../../../src/drag/useDrag.ts';
 import { canPlaceOnLine } from '../rules.ts';
@@ -17,7 +17,8 @@ import type { Selection } from './selection.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 const MAX_PLAYERS = azulInfo.maxPlayers;
-const SUMMARY_DELAY_MS = MOVE_DURATION_MS + 100;
+// The last tile and the wall tiling stay in view this long, counted from the move's animation start
+const SUMMARY_DELAY_MS = 2500;
 
 // True for a moment after a move ends the round, so everyone sees the tiles slide onto the wall
 // before the summary covers them. A summary already open on load, refresh or rejoin is not held.
