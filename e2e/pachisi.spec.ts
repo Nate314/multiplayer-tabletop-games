@@ -3,8 +3,8 @@ import { dismiss, drag, expect, leave, openFaq, setPreference, test, undo, type 
 import { HOME, LAST_TRACK, NEST, TRACK_LENGTH, entryIndex, isOnTrack, trackIndex } from '../games/pachisi/rules.ts';
 import type { Progress, Seat as SeatNumber } from '../games/pachisi/types.ts';
 
-// One test per rule and control in games/pachisi/README.md. Seat 1 (Alice) is blue at the bottom and seat 2 (Bob)
-// red at the top. A pawn's progress counts squares from its own entry square: NEST, 0 to 63 on the track,
+// One test per rule and control in games/pachisi/README.md. Seat 1 (Alice) is red at the bottom and seat 2 (Bob)
+// blue at the top. A pawn's progress counts squares from its own entry square: NEST, 0 to 63 on the track,
 // 64 to 70 up its home column and HOME at the center.
 
 type Server = { url: string };
@@ -98,11 +98,11 @@ test.describe('Pachisi seating', () => {
       const color = await alice.locator(`.player-dot.player${number}`).evaluate(element => getComputedStyle(element).backgroundColor);
       return color.match(/\d+/g)!.slice(0, 3).map(Number);
     };
-    const [blue, red, green, purple] = [await rgb(1), await rgb(2), await rgb(3), await rgb(4)];
-    expect(blue[2]).toBeGreaterThan(blue[0]);
+    const [red, blue, green, yellow] = [await rgb(1), await rgb(2), await rgb(3), await rgb(4)];
     expect(red[0]).toBeGreaterThan(red[2]);
+    expect(blue[2]).toBeGreaterThan(blue[0]);
     expect(green[1]).toBeGreaterThan(green[0]);
-    expect(purple[2]).toBeGreaterThan(purple[1]);
+    expect(yellow[1]).toBeGreaterThan(yellow[2]);
   });
 });
 
@@ -388,17 +388,17 @@ test.describe('Pachisi controls', () => {
     await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4]);
     await expect(alice.locator('.color-symbol')).toHaveCount(0);
     await setPreference(alice, 'Color-blind symbols', true);
-    await expect(pawn(alice, 1, 0).locator('.color-symbol-square')).toHaveCount(1);
-    await expect(pawn(alice, 2, 0).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(pawn(alice, 1, 0).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(pawn(alice, 2, 0).locator('.color-symbol-square')).toHaveCount(1);
     await expect(alice.locator('.pawn .color-symbol')).toHaveCount(8);
-    await expect(alice.locator('.nest.player1 .nest-name .color-symbol-square')).toHaveCount(1);
-    await expect(alice.locator('.nest.player2 .nest-name .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.nest.player1 .nest-name .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.nest.player2 .nest-name .color-symbol-square')).toHaveCount(1);
     await expect(alice.locator('.nest.player3 .nest-name .color-symbol-triangle')).toHaveCount(1);
-    await expect(alice.locator('.nest.player4 .nest-name .color-symbol-cross')).toHaveCount(1);
-    await expect(alice.locator('.square.home-lane.player1 .color-symbol-square')).toHaveCount(HOME_COLUMN_LENGTH);
-    await expect(alice.locator('.square.home-lane.player2 .color-symbol-circle')).toHaveCount(HOME_COLUMN_LENGTH);
-    await expect(alice.locator('.player-dot.player1 .color-symbol-square')).toHaveCount(1);
-    await expect(alice.locator('.player-dot.player2 .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.nest.player4 .nest-name .color-symbol-star')).toHaveCount(1);
+    await expect(alice.locator('.square.home-lane.player1 .color-symbol-circle')).toHaveCount(HOME_COLUMN_LENGTH);
+    await expect(alice.locator('.square.home-lane.player2 .color-symbol-square')).toHaveCount(HOME_COLUMN_LENGTH);
+    await expect(alice.locator('.player-dot.player1 .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.player-dot.player2 .color-symbol-square')).toHaveCount(1);
     await setPreference(alice, 'Color-blind symbols', false);
     await expect(alice.locator('.color-symbol')).toHaveCount(0);
   });
