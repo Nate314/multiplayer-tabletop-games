@@ -30,6 +30,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'It is a house rule that widens every slot (Easy) or narrows it (Hard). Normal is the standard.'
   },
   {
+    question: 'Can I play on a phone?',
+    answer: 'Yes, but it plays best on a laptop or tablet. On a phone the slots are very narrow; the Easy wall tolerance house rule helps.'
+  },
+  {
     question: 'Can I take back a buzz?',
     answer: 'Press Undo to ask the table. If everyone agrees, the last turn is taken back.'
   }

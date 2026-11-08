@@ -23,6 +23,7 @@ Steer each part out of its twisting slot in a robot repair bay without touching 
 - Parts already out are listed under "Out of the bay" with their value and who brought them out
 - Click Undo to ask the table to take back the last turn; everyone else votes on it
 - History shows the bay after each turn, with the part moved highlighted and the spot of a buzz marked
+- It plays best on a laptop or tablet. On a phone the slots are very narrow; the Easy wall tolerance house rule helps
 - Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide
 
 ## Differences from Wikipedia
