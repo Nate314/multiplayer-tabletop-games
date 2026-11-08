@@ -27,7 +27,7 @@ export type Move =
 
 // Not turn-bound and not undoable
 export type Action =
-  | { type: 'callLastCard' } // a late call, still in time if nobody has caught you
+  | { type: 'callUno' } // saved games store this name; kept from before the rename so older files load
   // saved games store this name; kept from before the rename so older files load
   | { type: 'catchUno' } // the player who did not call Last card draws 2
   | { type: 'acknowledgeRound' };

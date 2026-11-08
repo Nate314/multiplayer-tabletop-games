@@ -408,8 +408,8 @@ test('a player caught not calling Last card before the next move draws 2', () =>
 
 test('a late Last card call counts until someone catches it, and the next move closes the window', () => {
   const forgot = ok(play(withHand(1, [red('7'), blue('9')]), 1, red('7')));
-  assert.deepEqual(act(forgot, 2, 'callLastCard'), { error: 'Call Last card when you play your second-to-last card' });
-  const late = ok(act(forgot, 1, 'callLastCard'));
+  assert.deepEqual(act(forgot, 2, 'callUno'), { error: 'Call Last card when you play your second-to-last card' });
+  const late = ok(act(forgot, 1, 'callUno'));
   assert.deepEqual(late.unoWindow, { seat: 1, called: true });
   assert.equal(late.gameStatus, 'Alice called Last card!');
   assert.deepEqual(act(late, 2, 'catchUno'), { error: 'There is nobody to catch' });
@@ -417,7 +417,7 @@ test('a late Last card call counts until someone catches it, and the next move c
   const moved = ok(draw(forgot, 2));
   assert.equal(moved.unoWindow, null);
   assert.deepEqual(act(moved, 3, 'catchUno'), { error: 'There is nobody to catch' });
-  assert.deepEqual(act(game(), 1, 'callLastCard'), { error: 'Call Last card when you play your second-to-last card' });
+  assert.deepEqual(act(game(), 1, 'callUno'), { error: 'Call Last card when you play your second-to-last card' });
 });
 
 test('actions are refused during a vote, after the game, or when unknown', () => {

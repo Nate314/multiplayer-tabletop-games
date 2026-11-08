@@ -127,7 +127,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   }
 
   function callLastCard() {
-    if (lateLastCard) gameService.sendAction({ type: 'callLastCard' });
+    if (lateLastCard) gameService.sendAction({ type: 'callUno' });
     else setLastCardArmed(armed => !armed);
   }
 

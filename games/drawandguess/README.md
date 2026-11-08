@@ -31,7 +31,7 @@ Draw a word while everyone else races to guess it in the chat, for 2 to 10 playe
 
 ## Differences from the board game
 
-These follow the familiar drawing and guessing party game, played online. What is different:
+These follow the familiar rules of drawing and guessing party games, played online. What is different:
 
 - **No teams.** Everyone plays for themselves. All other players guess at once, and faster guesses score more
 - **No board.** There is no board, no category squares and no die. Every player draws the same number of times, and points decide the winner

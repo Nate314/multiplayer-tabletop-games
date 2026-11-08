@@ -64,7 +64,6 @@ function ghostCard(card: Card | null): HTMLElement {
   if (!card) {
     ghost.className = 'card card-back';
     ghost.appendChild(pieceArt(cardArt(null)));
-    ghost.append('10');
     return ghost;
   }
   ghost.className = `card card-${card.kind === 'number' ? card.color : card.kind}`;

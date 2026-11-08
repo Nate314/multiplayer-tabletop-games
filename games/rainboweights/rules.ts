@@ -565,7 +565,7 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   switch (asRecord(action)?.type) {
-    case 'callLastCard': return callLastCard(state, seat);
+    case 'callUno': return callLastCard(state, seat);
     case 'catchUno': return catchUno(state, seat, random);
     case 'acknowledgeRound': return acknowledgeRound(state, seat, random);
     default: return { error: 'Unknown action' };
