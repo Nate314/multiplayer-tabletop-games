@@ -31,11 +31,8 @@
   --card-gray: #a7a49c;
   --card-ink-dark: #1d1d1d;
   --card-ink-light: #ffffff;
-  --seat1: #c62828;
-  --seat2: #1565c0;
-  --seat3: #2e7d32;
-  --seat4: #f9a825;
-  --seat5: #6a1b9a;
+  --ticket-done: #2e7d32;
+  --ticket-missed: #c62828;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -68,23 +65,28 @@
   }
 
   .seat1 {
-    --seat: var(--seat1);
+    --seat: var(--seat-color-1);
+    --seat-stroke: var(--seat-stroke-1);
   }
 
   .seat2 {
-    --seat: var(--seat2);
+    --seat: var(--seat-color-2);
+    --seat-stroke: var(--seat-stroke-2);
   }
 
   .seat3 {
-    --seat: var(--seat3);
+    --seat: var(--seat-color-3);
+    --seat-stroke: var(--seat-stroke-3);
   }
 
   .seat4 {
-    --seat: var(--seat4);
+    --seat: var(--seat-color-4);
+    --seat-stroke: var(--seat-stroke-4);
   }
 
   .seat5 {
-    --seat: var(--seat5);
+    --seat: var(--seat-color-5);
+    --seat-stroke: var(--seat-stroke-5);
   }
 
   button {
@@ -227,6 +229,8 @@
     fill: var(--seat);
     stroke: #ffffff;
     stroke-width: 2;
+    /* A thin dark edge outside the white outline, so the yellow seat still reads on the light land */
+    filter: drop-shadow(0 0 0.6px var(--seat-stroke));
   }
 
   /* A white dot on each claimed space, like a train car's window, so a claimed route never reads as an open one of the same color */
@@ -599,8 +603,8 @@
   }
 
   .ticket.done {
-    border-color: var(--seat3);
-    background: color-mix(in srgb, var(--seat3) 18%, var(--panel-bg));
+    border-color: var(--ticket-done);
+    background: color-mix(in srgb, var(--ticket-done) 18%, var(--panel-bg));
   }
 
   .tickets .missed .ticket {
@@ -617,12 +621,12 @@
   }
 
   .ticket-mark {
-    color: var(--seat3);
+    color: var(--ticket-done);
     font-weight: 700;
   }
 
   .ticket-mark.missed-mark {
-    color: var(--seat1);
+    color: var(--ticket-missed);
   }
 
   .tickets li:focus-visible {
@@ -661,6 +665,7 @@
     height: 14px;
     border-radius: 3px;
     background: var(--seat);
+    box-shadow: inset 0 0 0 1px var(--seat-stroke);
   }
 
   .player-row:has(.swatch-symbol) {

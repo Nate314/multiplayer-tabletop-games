@@ -27,7 +27,7 @@ Lay land tiles to build a countryside of cities, roads, monasteries and fields, 
 - Click Undo to ask everyone to undo the last move
 - With a table screen connected, on Hand only (the default) the other players are hidden and the board shows only on your turn
 - Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
-- With Color-blind symbols on in Settings, each meeple color also shows its shape: red circle, blue square, yellow star, green triangle, black diamond. Meeples on the board, the meeple you are about to place and the player list show it
+- With Color-blind symbols on in Settings, each meeple color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross. Meeples on the board, the meeple you are about to place and the player list show it
 
 ## Differences from Wikipedia
 

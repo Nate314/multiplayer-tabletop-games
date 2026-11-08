@@ -29,12 +29,12 @@ Collect train cards, claim railway routes across the continent of Esterra and co
 - Click the ticket deck to draw destination tickets. Tick the ones to keep and click Keep. Your first tickets are shown before your turn comes, and Keep works once it does
 - Your hand shows your train cards grouped by color with their counts, and your tickets with a check mark on each one already completed by your routes. Point at a ticket to ring its two cities on the map
 - The player list shows each player's points, trains left, train cards and tickets. The player whose turn it is is outlined, and in the last round each player still to play is marked
-- Claimed routes show in their owner's color with white dots. A closed track of a double route is drawn faded. The route claimed in the last move is outlined
+- Claimed routes show in their owner's seat color (the shared seat palette: seat 1 red, 2 blue, 3 green, 4 yellow, 5 purple) with a white outline and white dots, so a claimed route never reads as an open route of a train card color. A closed track of a double route is drawn faded. The route claimed in the last move is outlined
 - When the game ends, the final scores below the map show route points, tickets made and missed, and the longest path for each player
 - On a narrow window the map keeps a usable size and scrolls sideways
 - With Highlight newly drawn cards on in Settings (the default), both cards of a draw stay outlined until your next turn's move
 - Click Undo to ask everyone to undo the last move
-- With Color-blind symbols on in Settings, each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows the shape of its owner instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too
+- With Color-blind symbols on in Settings, each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows the shape of its owner's seat instead, which the player list shows too: seat 1 red circle, seat 2 blue square, seat 3 green triangle, seat 4 yellow star, seat 5 purple cross
 - With a table screen connected, on Hand only (the default) the other players are hidden, and the map and the train card market show only on your turn
 - Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 

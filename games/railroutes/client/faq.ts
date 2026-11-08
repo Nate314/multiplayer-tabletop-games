@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I claim a route?',
-    answer: 'Click the route on the map, then click a way to pay. A colored route takes cards of its color; a gray route takes any one color. Locomotives stand in for any color. You need as many cards and trains as the route has spaces. The route then shows in your color.'
+    answer: 'Click the route on the map, then click a way to pay. A colored route takes cards of its color; a gray route takes any one color. Locomotives stand in for any color. You need as many cards and trains as the route has spaces. The route then shows in your seat color, outlined in white with a white dot on each car so it never looks like an open route of that card color.'
   },
   {
     question: 'What about double routes?',
@@ -47,7 +47,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows its owner\'s shape instead: red circle, blue square, green triangle, yellow star, purple cross, which the player list shows too.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each train color also shows its shape: red circle, blue square, green triangle, yellow star, black diamond, white ring, orange hexagon, pink heart. Train cards and the middle car of each open colored route show it; locomotives and gray routes (any color) show none. A claimed route shows its owner\'s seat shape instead, which the player list shows too: seat 1 red circle, seat 2 blue square, seat 3 green triangle, seat 4 yellow star, seat 5 purple cross.'
   },
   {
     question: 'Why is a train card in my hand outlined?',

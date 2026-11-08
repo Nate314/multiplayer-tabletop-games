@@ -306,11 +306,11 @@ test.describe('Roads and Fields rules', () => {
 });
 
 test.describe('Roads and Fields controls', () => {
-  test('with Color-blind symbols on, meeples and the player list show the shape of their color: red circle, blue square, yellow star', async ({ seat }) => {
+  test('with Color-blind symbols on, meeples and the player list show the shape of their color: red circle, blue square, green triangle', async ({ seat }) => {
     const { table, alice, bob } = await start(seat, 3);
     await craft(table, { board: [START, at(-1, 0, 'W', 0, on(1, 'road')), at(2, 0, 'W', 0, on(2, 'road')), at(0, 1, 'D', 0, on(3, 'field'))], currentTile: 'U', drawPile: ['U', 'U'] });
     await setPreference(alice, 'Color-blind symbols', true);
-    const shapes = ['circle', 'square', 'star'];
+    const shapes = ['circle', 'square', 'triangle'];
     for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
       await expect(playerRow(alice, name).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
       await expect(board(alice).locator(`.cc-symbol-seat${index + 1}.color-symbol-${shapes[index]}`)).toHaveCount(1);

@@ -1,7 +1,7 @@
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
 import ServerSvg from '../../../src/assets/ServerSvg.tsx';
 import { meepleUrl } from './pieces.ts';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import type { Seat } from '../types.ts';
 
 // The shape sits on the meeple's body, upright even on a farmer lying on its side (whose body is to the right)
@@ -17,7 +17,7 @@ export default function Meeple({ seat, x, y, lying = false, size = 1.3 }: { seat
     <>
       <ServerSvg url={meepleUrl(seat, lying)} inSvg svgProps={{ x: x - 10 * size, y: y - 10 * size, width: 20 * size, height: 20 * size }} />
       <ColorSymbol
-        color={SEAT_SYMBOLS[seat]}
+        color={SEAT_SYMBOL_COLORS[seat]}
         className={`cc-meeple-symbol cc-symbol-seat${seat}`}
         svgProps={{ x: (lying ? x + shift : x) - symbolSize / 2, y: (lying ? y : y + shift) - symbolSize / 2, width: symbolSize, height: symbolSize, style: { width: symbolSize, height: symbolSize } }}
       />

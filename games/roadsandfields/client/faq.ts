@@ -65,6 +65,6 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each meeple color also shows its shape: red circle, blue square, yellow star, green triangle, black diamond. Meeples on the board, the meeple you are about to place and the player list show it.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each meeple color also shows its shape: red circle, blue square, green triangle, yellow star, purple cross. Meeples on the board, the meeple you are about to place and the player list show it.'
   }
 ];
