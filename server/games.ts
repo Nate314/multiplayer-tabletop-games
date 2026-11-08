@@ -28,7 +28,7 @@ import type {
   BaseGameState, BasePublicState, GameResult, HistoryStep, OpenGame, Random, Result, Seat
 } from '../shared/types.ts';
 
-export const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // how long a started game waits with nobody connected
+export const EMPTY_ROOM_TIMEOUT_MS = 60 * 60 * 1000; // how long a started game waits with nobody connected
 export const ARCHIVE_TTL_MS = 90 * 24 * 60 * 60 * 1000; // how long a finished game stays in the archive
 export const PAUSED_ROOM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // how long a paused game is kept; its players' files still bring it back
 const ARCHIVE_PRUNE_MS = 24 * 60 * 60 * 1000;
@@ -87,6 +87,7 @@ type ResumeLobby = {
 // Anyone may open a lobby, so the files every lobby holds together are capped to keep the process in memory
 export const MAX_RESUME_BYTES = 200 * 1024 * 1024;
 export const MAX_RESUME_LOBBY_MS = 60 * 60 * 1000; // status reads renew a lobby, but never past this
+export const RESUME_LOBBY_IDLE_MS = 10 * 60 * 1000; // a lobby nobody reads or uploads to is forgotten after this
 const SERVER_BUSY = 'The server is too busy to resume a game. Try again later';
 const NOT_A_PAUSE_FILE = 'This file is not a pause file';
 const ANOTHER_GAME = 'Another game with this ID is on this server';
@@ -671,10 +672,10 @@ export function createGameManager(
     return { state: view(room, seat) };
   }
 
-  // A resume lobby lives EMPTY_ROOM_TIMEOUT_MS from its last upload or status read, and never past its lifetime
+  // A resume lobby lives RESUME_LOBBY_IDLE_MS from its last upload or status read, and never past its lifetime
   function touchLobby(roomId: string, lobby: ResumeLobby): void {
     clearTimeout(lobby.timer);
-    lobby.timer = setTimeout(() => forgetLobby(roomId, lobby), EMPTY_ROOM_TIMEOUT_MS);
+    lobby.timer = setTimeout(() => forgetLobby(roomId, lobby), RESUME_LOBBY_IDLE_MS);
     lobby.timer.unref(); // never keeps the process alive on its own
     if (lobby.lifetime) return;
     lobby.lifetime = setTimeout(() => forgetLobby(roomId, lobby), MAX_RESUME_LOBBY_MS);

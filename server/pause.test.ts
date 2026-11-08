@@ -1,7 +1,7 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createGameManager, EMPTY_ROOM_TIMEOUT_MS, MAX_RESUME_LOBBY_MS, NOT_AVAILABLE, PAUSED_ROOM_TTL_MS, type ManagerHooks
+  createGameManager, EMPTY_ROOM_TIMEOUT_MS, MAX_RESUME_LOBBY_MS, RESUME_LOBBY_IDLE_MS, NOT_AVAILABLE, PAUSED_ROOM_TTL_MS, type ManagerHooks
 } from './games.ts';
 import { openGameStore, type GameStore } from './store.ts';
 import { rememberingKeys } from './testing.ts';
@@ -477,11 +477,11 @@ test('a lobby nobody touches is forgotten', (t: TestContext) => {
   const { alice } = pauseFiles();
   const { manager } = managerFor();
   const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
-  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  t.mock.timers.tick(RESUME_LOBBY_IDLE_MS - 1);
   statusOf(manager, first.seatKey); // a status read keeps it
-  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+  t.mock.timers.tick(RESUME_LOBBY_IDLE_MS - 1);
   statusOf(manager, first.seatKey);
-  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS + 1);
+  t.mock.timers.tick(RESUME_LOBBY_IDLE_MS + 1);
   assert.deepEqual(manager.resumeStatus('test', 'g1', first.seatKey), { error: NOT_AVAILABLE });
   assert.ok(!('error' in manager.join('test', 'g1', 'Cara')));
 });
@@ -491,9 +491,9 @@ test('a lobby kept polling is forgotten an hour after it opened', (t: TestContex
   const { alice } = pauseFiles();
   const { manager } = managerFor();
   const first = uploaded(manager.uploadPauseFile(alice, DEVICE));
-  const polls = Math.floor(MAX_RESUME_LOBBY_MS / EMPTY_ROOM_TIMEOUT_MS);
+  const polls = Math.floor(MAX_RESUME_LOBBY_MS / RESUME_LOBBY_IDLE_MS);
   for (let poll = 0; poll < polls; poll++) {
-    t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS - 1);
+    t.mock.timers.tick(RESUME_LOBBY_IDLE_MS - 1);
     statusOf(manager, first.seatKey);
   }
   t.mock.timers.tick(polls);
@@ -510,7 +510,7 @@ test('the files every lobby holds are capped, and freed when dropped or forgotte
   const first = uploaded(small.uploadPauseFile(alice, DEVICE));
   assert.deepEqual(small.uploadPauseFile(bob, BOB_DEVICE), busy);
   assert.deepEqual(statusOf(small, first.seatKey).players.map(player => player.ready), [true, false]);
-  t.mock.timers.tick(EMPTY_ROOM_TIMEOUT_MS + 1);
+  t.mock.timers.tick(RESUME_LOBBY_IDLE_MS + 1);
   uploaded(small.uploadPauseFile(bob, BOB_DEVICE)); // Alice's forgotten file no longer counts
 
   // a file a failed check drops no longer counts either
