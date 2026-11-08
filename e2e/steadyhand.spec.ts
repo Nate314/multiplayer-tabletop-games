@@ -78,11 +78,13 @@ async function fingerDrag(page: Page, route: Point[]): Promise<void> {
   await cdp.detach();
 }
 
-// Where a page draws the part, read from its inline transform
+// Where a page draws the Bolt, read from its inline transform (the computed one glides between streamed positions)
 const drawnAt = (page: Page) => bolt(page).evaluate(g => {
-  const [x, y] = (g as SVGGElement).style.transform.match(/-?[\d.]+/g)!.map(Number);
-  return [x, y];
+  const [, x, y] = (g as SVGGElement).style.transform.match(/translate\(([^,]+)px, ([^)]+)px\)/)!;
+  return [parseFloat(x), parseFloat(y)];
 });
+// Within half a board unit, since the drag went through the screen matrix and back
+const near = ([x, y]: Point) => [expect.closeTo(x, 0), expect.closeTo(y, 0)];
 
 test.describe('Steady Hand house rules', () => {
   for (const names of [['Alice'], ['Alice', 'Bob']]) {
@@ -120,7 +122,7 @@ test.describe('Steady Hand turns', () => {
     for (const page of [alice, bob]) {
       await expect(status(page)).toHaveText('Alice buzzed on the Bolt');
       await expect(seatRow(page, 'Alice')).toContainText('2 buzzes left');
-      await expect.poll(() => drawnAt(page)).toEqual(BOLT[0]);
+      await expect.poll(() => drawnAt(page)).toEqual(near(BOLT[0]));
     }
     await expect(turn(alice)).toHaveText("Bob's turn");
     const state = await table.state<GameState>();
@@ -132,7 +134,7 @@ test.describe('Steady Hand turns', () => {
     const { table, alice, bob } = await start(seat);
     await drag(alice, [BOLT[0], [50, 180]]);
     await expect.poll(async () => (await table.state<GameState>()).live).toBeNull();
-    for (const page of [alice, bob]) await expect.poll(() => drawnAt(page)).toEqual(BOLT[0]);
+    for (const page of [alice, bob]) await expect.poll(() => drawnAt(page)).toEqual(near(BOLT[0]));
     await expect(seatRow(alice, 'Alice')).toContainText('3 buzzes left');
     await expect(turn(alice)).toHaveText('Your turn: drag a part out along its slot without touching the walls');
     // The same part can be tried again at once
@@ -143,10 +145,10 @@ test.describe('Steady Hand turns', () => {
   test('Bob watches the part move during the drag, and History holds only the finished turn', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await drag(alice, [BOLT[0], [50, 200]], false);
-    await expect.poll(() => drawnAt(bob)).toEqual([50, 200]);
+    await expect.poll(() => drawnAt(bob)).toEqual(near([50, 200]));
     await expect(bolt(bob)).toHaveClass(/sh-part-watched/);
     await moveAlong(alice, [[50, 200], [50, 160]]);
-    await expect.poll(() => drawnAt(bob)).toEqual([50, 160]);
+    await expect.poll(() => drawnAt(bob)).toEqual(near([50, 160]));
     await moveAlong(alice, [[50, 160], ...BOLT.slice(1)]);
     await alice.mouse.up();
     await expect(status(bob)).toHaveText('Alice brought out the Bolt for 8 points');
@@ -168,6 +170,24 @@ test.describe('Steady Hand turns', () => {
       await expect(gameOver(page)).toBeVisible();
       await expect(status(page)).toHaveText('Bob wins with 8 points');
     }
+  });
+
+  test('any part in a slot can be picked: the Gear comes out for 15 points', async ({ seat }) => {
+    const { alice, bob } = await start(seat);
+    await drag(alice, GEAR);
+    await expect(status(bob)).toHaveText('Alice brought out the Gear for 15 points');
+    await expect(seatRow(bob, 'Alice')).toContainText('15 points');
+    await expect(bob.locator('.sh-tray-part')).toHaveText(['Gear, 15 points, Alice']);
+  });
+
+  test('History shows a buzz with its spot marked', async ({ seat }) => {
+    const { bob, alice } = await start(seat);
+    await drag(alice, BOLT_CUT);
+    await expect(status(bob)).toHaveText('Alice buzzed on the Bolt');
+    await (await headerButton(bob, 'History')).click();
+    const history = bob.getByRole('dialog', { name: 'History' });
+    await expect(history.locator('.history-move')).toHaveText('Move 1 of 1: Alice buzzed on the Bolt');
+    await expect(history.locator('.sh-buzz-mark')).toHaveCount(1);
   });
 
   test('Undo by vote after a buzz gives the buzz and the turn back', async ({ seat }) => {

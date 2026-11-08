@@ -64,3 +64,11 @@ test('one player plays solo and the game ends with the bonus', () => {
   assert.deepEqual(state.winners, [1]);
   assert.equal(state.scores[1], total + 3 * SOLO_BONUS);
 });
+
+test('the server trusts the browser: an out move with no pick or drag before it is accepted', () => {
+  const { raw, move } = table(['Alice', 'Bob']);
+  move(1, { type: 'out', part: 4 });
+  assert.equal(raw().outBy[4], 1);
+  assert.equal(raw().scores[1], PARTS[4].value);
+  assert.equal(raw().currentPlayer, 2);
+});
