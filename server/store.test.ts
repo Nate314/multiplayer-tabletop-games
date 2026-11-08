@@ -222,3 +222,45 @@ test('on load, the images of a room that was not saved (a lobby) are deleted', (
   assert.ok(reopened.loadImage(IMAGE));
   assert.equal(reopened.loadImage(OTHER), undefined);
 });
+
+const OLD_ARCHIVE_IMAGE = 'a'.repeat(32);
+
+function pushStep(store: ReturnType<typeof openGameStore>, roomId: string, gameType: string, label: string): void {
+  store.save(roomId, gameType, started(label), { type: 'push', index: 0, before: started('before'), after: started(label) });
+}
+
+test('renameGameType moves a room with its steps, images and archives', () => {
+  const store = openGameStore(':memory:');
+  pushStep(store, 'oldgame/g1', 'oldgame', 'one');
+  store.saveImage(OLD_ARCHIVE_IMAGE, 'oldgame/g1', 'image/png', Buffer.from([1]));
+  const game = archived('g1', 1);
+  store.archive({ ...game, id: 'oldgame/g1#1', gameType: 'oldgame' }, [OLD_ARCHIVE_IMAGE]);
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 1);
+  const rooms = store.loadAll();
+  assert.equal(rooms.get('newgame/g1')?.gameType, 'newgame');
+  assert.equal(rooms.get('newgame/g1')?.history.length, 1);
+  assert.equal(rooms.has('oldgame/g1'), false);
+  assert.equal(store.countRoomImages('newgame/g1'), 1);
+  assert.equal(store.loadArchive('newgame/g1#1')?.gameType, 'newgame');
+  assert.equal(store.loadArchive('oldgame/g1#1'), undefined);
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+});
+
+test('renameGameType leaves a room whose new id is taken, with its own steps', () => {
+  const store = openGameStore(':memory:');
+  pushStep(store, 'oldgame/g1', 'oldgame', 'a');
+  store.save('oldgame/g1', 'oldgame', started('b'), { type: 'push', index: 1, before: started('a'), after: started('b') });
+  pushStep(store, 'newgame/g1', 'newgame', 'c');
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 0);
+  const rooms = store.loadAll();
+  assert.equal(rooms.get('oldgame/g1')?.history.length, 2);
+  assert.equal(rooms.get('newgame/g1')?.history.length, 1);
+});
+
+test('renameGameType matches the old id as a whole prefix', () => {
+  const store = openGameStore(':memory:');
+  store.save('oldgame/g1', 'oldgame', started('a'));
+  store.save('oldgamex/g1', 'oldgamex', started('b'));
+  assert.equal(store.renameGameType('oldgame', 'newgame'), 1);
+  assert.deepEqual([...store.loadAll().keys()].sort(), ['newgame/g1', 'oldgamex/g1']);
+});

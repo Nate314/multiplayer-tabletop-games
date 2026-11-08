@@ -754,7 +754,8 @@ function memoryStore(): MemoryStore {
     saveImage: () => {},
     loadImage: () => undefined,
     countRoomImages: () => 0,
-    deleteRoomImages: () => {}
+    deleteRoomImages: () => {},
+    renameGameType: () => 0
   };
 }
 

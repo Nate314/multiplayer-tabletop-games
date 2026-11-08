@@ -12,6 +12,8 @@ export type StatsStore = {
   clear(hash: string): { games: number; devices: number };
   link(fromHash: string, toHash: string): { games: number } | { error: string };
   samePerson(hash: string, hashes: string[]): boolean;
+  // Moves the results of an old game id to a new one, archive ids included; a row whose new archive id is taken stays
+  renameGameType(from: string, to: string): number;
 };
 
 const FORMER_PLAYER = 'Former player';
@@ -66,6 +68,10 @@ export function openStatsStore(file: string): StatsStore {
   const deletePerson = db.prepare('DELETE FROM people WHERE id = ?');
   const moveSeats = db.prepare('UPDATE result_players SET person_id = ? WHERE person_id = ?');
   const moveDevices = db.prepare('UPDATE devices SET person_id = ? WHERE person_id = ?');
+  const renameResults = db.prepare(
+    "UPDATE OR IGNORE results SET game_type = $to, archive_id = $to || substr(archive_id, length($from) + 1) " +
+    "WHERE game_type = $from AND substr(archive_id, 1, length($from) + 1) = $from || '/'"
+  );
 
   function transaction<T>(write: () => T): T {
     db.exec('BEGIN');
@@ -170,6 +176,10 @@ export function openStatsStore(file: string): StatsStore {
     samePerson(hash, hashes) {
       const person = findPerson(hash);
       return hashes.some(other => other === hash || (person !== undefined && findPerson(other) === person));
+    },
+
+    renameGameType(from, to) {
+      return transaction(() => Number(renameResults.run({ from, to }).changes));
     }
   };
 }
