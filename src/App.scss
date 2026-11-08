@@ -467,6 +467,18 @@
   text-align: center;
 }
 
+/* On a phone the back button keeps only its arrow, so a long game name fits without breaking inside a word */
+@media (max-width: 420px) {
+  :where([data-game] .back-button-label) {
+    display: none;
+  }
+
+  :where([data-game] .back-button) {
+    min-width: 2.75rem;
+    padding: 0 0.75rem;
+  }
+}
+
 /* The game ID beside the title, quieter than the name */
 :where([data-game] .game-header-id) {
   font-size: 0.65em;

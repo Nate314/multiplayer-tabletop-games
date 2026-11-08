@@ -115,7 +115,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
     <WatchingContext value={playerNumber === null}>
       <div className="game-root" data-game={game.id} data-awaiting-agreement={awaitingAgreement ? '' : undefined} data-hidden={hidden ? '' : undefined} data-table-screen={tableScreen ? '' : undefined} data-hand-only={tableScreenOn && layout === 'handOnly' ? '' : undefined} data-my-turn={myTurn ? '' : undefined}>
         <header className="game-header">
-          <button type="button" className="back-button" onClick={onBack}>Back to games</button>
+          <button type="button" className="back-button" aria-label="Back to games" onClick={onBack}><span aria-hidden="true">←</span><span className="back-button-label"> Back to games</span></button>
           <h1>{game.name} <span className="game-header-id">{gameState.gameId}</span></h1>
           <GameMenu attention={agreeNeeded}>
             <HistoryButton onOpen={history.open} />
