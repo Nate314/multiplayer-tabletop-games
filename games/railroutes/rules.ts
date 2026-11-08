@@ -1,5 +1,5 @@
 // Rail Routes rules shared by the browser (what can be claimed and drawn) and the server (validation).
-// Rules follow https://en.wikipedia.org/wiki/Ticket_to_Ride_(board_game) and, where it is silent, the Days of Wonder USA rules.
+// Rules follow the Wikipedia article linked in README.md and, where it is silent, the publisher's rules for the first edition.
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import type { Standing } from '../../shared/types.ts';
 import { asRecord } from '../../shared/messages.ts';

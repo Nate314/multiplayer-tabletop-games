@@ -15,8 +15,7 @@
   --error-text: #8c1d13;
   --highlight: #ff8f00;
   --sea: #b9d3dd;
-  --land-usa: #efe3c2;
-  --land-canada: #e2dcc4;
+  --land-fill: #efe3c2;
   --land-border: #a89770;
   --city: #3b2b1d;
   --city-fill: #f7d76a;
@@ -61,8 +60,7 @@
     --error-text: #ffd5d0;
     --highlight: #ffb300;
     --sea: #24353d;
-    --land-usa: #4a4232;
-    --land-canada: #3c382b;
+    --land-fill: #4a4232;
     --land-border: #7d6f52;
     --city: #f1e8d8;
     --city-fill: #d9b440;
@@ -152,19 +150,19 @@
     fill: var(--sea);
   }
 
-  .map .land {
+  .map .land,
+  .map .lake {
     stroke: var(--land-border);
     stroke-width: 1.5;
     stroke-linejoin: round;
   }
 
-  .map .usa {
-    fill: var(--land-usa);
+  .map .land {
+    fill: var(--land-fill);
   }
 
-  .map .canada {
-    fill: var(--land-canada);
-    stroke-dasharray: 5 4;
+  .map .lake {
+    fill: var(--sea);
   }
 
   .track rect {
@@ -547,7 +545,7 @@
     height: 36px;
     border: 1px solid var(--land-border);
     border-radius: 5px;
-    background: var(--land-usa);
+    background: var(--land-fill);
     color: var(--text);
     font-size: 11px;
     font-weight: 700;

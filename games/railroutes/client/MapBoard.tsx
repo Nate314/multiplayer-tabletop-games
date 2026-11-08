@@ -40,7 +40,7 @@ export default function MapBoard({ gameState, selected = null, highlight = null,
   return (
     // On a narrow window the map keeps a usable size and scrolls sideways
     <div className="map-frame hand-only-board">
-      <svg className="map" viewBox={`${MAP_LEFT} 0 ${MAP_WIDTH - MAP_LEFT} ${MAP_HEIGHT}`} role="group" aria-label="Map of the United States with its railway routes">
+      <svg className="map" viewBox={`${MAP_LEFT} 0 ${MAP_WIDTH - MAP_LEFT} ${MAP_HEIGHT}`} role="group" aria-label="Map of Esterra with its railway routes">
         <ServerSvg url={svgUrl('railroutes-land')} inSvg svgProps={{ x: MAP_LEFT, y: 0, width: MAP_WIDTH - MAP_LEFT, height: MAP_HEIGHT }} />
         {ROUTES.map(route => {
           const owner = claimed[route.id];

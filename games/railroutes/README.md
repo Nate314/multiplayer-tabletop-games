@@ -1,10 +1,12 @@
 # Rail Routes
 
-Collect train cards, claim railway routes across the USA and connect your destination tickets, for 2 to 5 players.
+Plays like [Ticket to Ride](https://en.wikipedia.org/wiki/Ticket_to_Ride_(board_game)), on its own continent.
+
+Collect train cards, claim railway routes across the continent of Esterra and connect your destination tickets, for 2 to 5 players.
 
 ## Rules
 
-- **Components.** The original USA map: 36 cities joined by 100 tracks over 78 city pairs, 22 of them double routes, from 1 to 6 spaces long, gray or one of eight colors. 110 train cards (12 each of pink, white, blue, yellow, orange, black, red and green, and 14 locomotives) and the 30 destination tickets. Each player has 45 trains
+- **Components.** The map of Esterra, a fictional continent: 36 cities joined by 100 tracks over 78 city pairs, 22 of them double routes, from 1 to 6 spaces long, gray or one of eight colors. 110 train cards (12 each of pink, white, blue, yellow, orange, black, red and green, and 14 locomotives) and the 30 destination tickets. Each player has 45 trains
 - **Setup.** Everyone is dealt 4 train cards and 3 destination tickets, and 5 train cards are turned face up. In seat order, each player keeps at least 2 of their 3 tickets; the rest go under the ticket deck. Then the first seat takes the first turn and play goes up the seats
 - **A turn** is one of:
   - **draw 2 train cards**, each from the face-up row or the top of the deck. A face-up locomotive is the whole draw, and a face-up locomotive cannot be taken as the second card. A locomotive from the deck counts as one card. A face-up card that is taken is replaced from the deck at once
@@ -38,9 +40,9 @@ Collect train cards, claim railway routes across the USA and connect your destin
 
 ## Differences from Wikipedia
 
-The rules follow [Wikipedia](https://en.wikipedia.org/wiki/Ticket_to_Ride_(board_game)) and, where it is silent, the Days of Wonder rules for the original USA game. What remains different or was settled here:
+These follow the rules in the Wikipedia article linked above and, where it is silent, the publisher's rules for the first edition. What remains different or was settled here:
 
-- **The USA map and tickets.** Wikipedia gives no map data. The routes and tickets were entered from the published board and checked against two independent lists that agree track for track (see the comment at the top of `map.ts`). The map is this site's own drawing, with cities placed by longitude and latitude
+- **Map and tickets.** An original continent with the published game's totals; each ticket is worth the fewest train spaces between its cities.
 - **Choosing the first tickets.** At a table everyone chooses at once. Here players choose one after another in seat order, as moves, so each choice can be undone and replayed in the history; a player can look at their offer before their turn
 - **Who goes first.** The rules pick the most experienced traveler. Here the first seat goes first
 - **Double routes after a dismissal.** Whether both tracks of a double route are open is set by the number of players when the game began, so the board does not change when someone leaves

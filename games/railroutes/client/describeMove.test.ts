@@ -26,7 +26,7 @@ test('describes a claim with its payment', () => {
   const route = ROUTES.findIndex(candidate => candidate.length === 4 && candidate.color === 'pink');
   assert.equal(
     say({ seat: 1, type: 'claim', route, payment: { color: 'pink', locomotives: 1 } }),
-    'Alice claimed Denver to Omaha (4, pink) with 3 pink and 1 locomotive'
+    'Alice claimed Ashgrove to Ironmoor (4, pink) with 3 pink and 1 locomotive'
   );
 });
 

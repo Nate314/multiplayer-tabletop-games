@@ -123,18 +123,19 @@ async function keepFirstTickets(pages: Page[]): Promise<void> {
   }
 }
 
-const LA_VEGAS = routeId('Los Angeles', 'Las Vegas'); // 2 gray
-const KC_STL = routeId('Kansas City', 'Saint Louis');  // 2 blue, its twin 2 pink
-const KC_STL_PINK = routeId('Kansas City', 'Saint Louis', 1);
-const SEATTLE_PORTLAND = routeId('Seattle', 'Portland'); // 1 gray, double
-const CALGARY_HELENA = routeId('Calgary', 'Helena');     // 4 gray
-const DENVER_SANTA_FE = routeId('Santa Fe', 'Denver');   // 2 gray
-const EL_PASO_SANTA_FE = routeId('El Paso', 'Santa Fe'); // 2 gray
-const DENVER_EL_PASO_TICKET = 6; // 4 points
-const BOSTON_MIAMI_TICKET = 0;   // 12 points
+// Routes and tickets of the same lengths, colors and points as on the published map, so every score below is unchanged
+const EMBERLY_REDMARSH = routeId('Emberly', 'Redmarsh');           // 2 gray
+const BRIGHTWELL_IRONMOOR = routeId('Brightwell', 'Ironmoor');     // 2 blue, its twin 2 pink
+const BRIGHTWELL_IRONMOOR_PINK = routeId('Brightwell', 'Ironmoor', 1);
+const HIGHCLIFF_OAKHURST = routeId('Highcliff', 'Oakhurst');       // 1 gray, double
+const HARROWBY_UMBER = routeId('Harrowby', 'Umber');               // 4 gray
+const FROSTFORD_DUNHALLOW = routeId('Dunhallow', 'Frostford');     // 2 gray
+const GREYWATER_DUNHALLOW = routeId('Greywater', 'Dunhallow');     // 2 gray
+const FROSTFORD_GREYWATER_TICKET = 6; // 4 points
+const VALEMONT_SALTCOMBE_TICKET = 0;  // 12 points
 
 test.describe('Rail Routes rules', () => {
-  test('the USA map has 36 cities and 100 tracks over 78 pairs, 110 train cards, 30 tickets and 45 trains each', async ({ seat }) => {
+  test('the map has 36 cities and 100 tracks over 78 pairs, 110 train cards, 30 tickets and 45 trains each', async ({ seat }) => {
     const table = await seat('railroutes', ['Alice', 'Bob']);
     const [alice] = table.pages;
     await expect(alice.locator('.map .city')).toHaveCount(36);
@@ -237,27 +238,27 @@ test.describe('Rail Routes rules', () => {
   });
 
   test('claiming a route pays its length in its color, with locomotives for any color, and places that many trains', async ({ seat }) => {
-    const { alice, bob } = await start(seat, 2, { claimed: { [SEATTLE_PORTLAND]: 1 } }, { 1: { hand: { blue: 1, locomotive: 1, red: 3 } } });
+    const { alice, bob } = await start(seat, 2, { claimed: { [HIGHCLIFF_OAKHURST]: 1 } }, { 1: { hand: { blue: 1, locomotive: 1, red: 3 } } });
     // A blue route far from Alice's other route: red cards are not offered for it
-    await pickRoute(alice, KC_STL);
+    await pickRoute(alice, BRIGHTWELL_IRONMOOR);
     await expect(claimButtons(alice)).toHaveText(['Claim with 1 blue and 1 locomotive']);
     await claimButtons(alice).click();
-    await expect(track(bob, KC_STL)).toHaveClass(/owned seat1/);
+    await expect(track(bob, BRIGHTWELL_IRONMOOR)).toHaveClass(/owned seat1/);
     await expect(stat(bob, 'Alice', 'Trains left')).toHaveText('43 trains');
     await expect(stat(bob, 'Alice', 'Train cards')).toHaveText('3 cards');
     await expect(held(alice, 'red')).toHaveText('3');
     await expect(myHand(alice).locator('.card-blue')).toHaveCount(0);
-    await expect(status(bob)).toHaveText('Alice claimed Kansas City to Saint Louis (2, blue) with 1 blue and 1 locomotive');
+    await expect(status(bob)).toHaveText('Alice claimed Brightwell to Ironmoor (2, blue) with 1 blue and 1 locomotive');
 
     // A gray route takes any one color
     const gray = await start(seat, 2, {}, { 1: { hand: { yellow: 2 } } });
-    await claim(gray.alice, LA_VEGAS, '2 yellow');
-    await expect(track(gray.alice, LA_VEGAS)).toHaveClass(/owned seat1/);
+    await claim(gray.alice, EMBERLY_REDMARSH, '2 yellow');
+    await expect(track(gray.alice, EMBERLY_REDMARSH)).toHaveClass(/owned seat1/);
   });
 
   test('a route needs enough trains left', async ({ seat }) => {
     const { alice } = await start(seat, 2, {}, { 1: { hand: { red: 4 }, trains: 3 } });
-    await pickRoute(alice, CALGARY_HELENA);
+    await pickRoute(alice, HARROWBY_UMBER);
     await expect(panel(alice)).toContainText('You have only 3 trains left');
     await expect(claimButtons(alice)).toHaveCount(0);
   });
@@ -317,35 +318,35 @@ test.describe('Rail Routes rules', () => {
   });
 
   test('with 4 or 5 players two players may each claim one track of a double route, but nobody claims both', async ({ seat }) => {
-    const { table, alice, bob } = await start(seat, 4, { claimed: { [KC_STL]: 2 } }, { 1: { hand: { pink: 2, blue: 2 } } });
-    await claim(alice, KC_STL_PINK, '2 pink');
-    await expect(track(bob, KC_STL_PINK)).toHaveClass(/owned seat1/);
-    await expect(track(bob, KC_STL)).toHaveClass(/owned seat2/);
+    const { table, alice, bob } = await start(seat, 4, { claimed: { [BRIGHTWELL_IRONMOOR]: 2 } }, { 1: { hand: { pink: 2, blue: 2 } } });
+    await claim(alice, BRIGHTWELL_IRONMOOR_PINK, '2 pink');
+    await expect(track(bob, BRIGHTWELL_IRONMOOR_PINK)).toHaveClass(/owned seat1/);
+    await expect(track(bob, BRIGHTWELL_IRONMOOR)).toHaveClass(/owned seat2/);
     await expect(turn(alice)).toHaveText("Bob's turn");
 
-    await table.patch(playState(4, { claimed: { [KC_STL]: 1 } }, { 1: { hand: { pink: 2, blue: 2 } } }));
+    await table.patch(playState(4, { claimed: { [BRIGHTWELL_IRONMOOR]: 1 } }, { 1: { hand: { pink: 2, blue: 2 } } }));
     await expect(turn(alice)).toHaveText('Your turn');
-    await pickRoute(alice, KC_STL_PINK);
+    await pickRoute(alice, BRIGHTWELL_IRONMOOR_PINK);
     await expect(panel(alice)).toContainText('You cannot claim both tracks of a double route');
     await expect(claimButtons(alice)).toHaveCount(0);
   });
 
   test('with 2 or 3 players, once one track of a double route is claimed the other is closed', async ({ seat }) => {
-    const { alice } = await start(seat, 2, { claimed: { [KC_STL]: 2 } }, { 1: { hand: { pink: 2 } } });
-    await expect(track(alice, KC_STL_PINK)).toHaveClass(/closed/);
-    await expect(track(alice, KC_STL_PINK).locator('title')).toHaveText('Kansas City to Saint Louis: 2 pink, closed (the other track is taken)');
-    await expect(alice.getByRole('button', { name: /^Kansas City to Saint Louis/ })).toHaveCount(0);
+    const { alice } = await start(seat, 2, { claimed: { [BRIGHTWELL_IRONMOOR]: 2 } }, { 1: { hand: { pink: 2 } } });
+    await expect(track(alice, BRIGHTWELL_IRONMOOR_PINK)).toHaveClass(/closed/);
+    await expect(track(alice, BRIGHTWELL_IRONMOOR_PINK).locator('title')).toHaveText('Brightwell to Ironmoor: 2 pink, closed (the other track is taken)');
+    await expect(alice.getByRole('button', { name: /^Brightwell to Ironmoor/ })).toHaveCount(0);
   });
 
   test('a claimed route scores by its length: 1, 2, 4, 7, 10 or 15 points', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     const routes: [number, string, string][] = [
-      [routeId('Omaha', 'Kansas City'), '1 red', '1 pts'],
-      [LA_VEGAS, '2 red', '2 pts'],
-      [routeId('Phoenix', 'Santa Fe'), '3 red', '4 pts'],
-      [CALGARY_HELENA, '4 red', '7 pts'],
-      [routeId('Phoenix', 'Denver'), '5 white', '10 pts'],
-      [routeId('Winnipeg', 'Sault St. Marie'), '6 red', '15 pts']
+      [routeId('Lanthorn', 'Redmarsh'), '1 red', '1 pts'],
+      [EMBERLY_REDMARSH, '2 red', '2 pts'],
+      [routeId('Dunhallow', 'Highcliff'), '3 red', '4 pts'],
+      [HARROWBY_UMBER, '4 red', '7 pts'],
+      [routeId('Cobalt', 'Kestrel'), '5 white', '10 pts'],
+      [routeId('Glenrook', 'Umber'), '6 red', '15 pts']
     ];
     for (const [id, payment, points] of routes) {
       await table.patch(playState(2, {}, { 1: { hand: { red: 6, white: 5 } } }));
@@ -358,12 +359,12 @@ test.describe('Rail Routes rules', () => {
 
   test('ending a turn with 2 trains or fewer gives everyone one more turn, then tickets and the longest path are scored', async ({ seat }) => {
     const { alice, bob } = await start(seat, 2, {
-      claimed: { [DENVER_SANTA_FE]: 1, [EL_PASO_SANTA_FE]: 1, [CALGARY_HELENA]: 2 }
+      claimed: { [FROSTFORD_DUNHALLOW]: 1, [GREYWATER_DUNHALLOW]: 1, [HARROWBY_UMBER]: 2 }
     }, {
-      1: { hand: { red: 2 }, trains: 4, tickets: [DENVER_EL_PASO_TICKET] },
-      2: { tickets: [BOSTON_MIAMI_TICKET] }
+      1: { hand: { red: 2 }, trains: 4, tickets: [FROSTFORD_GREYWATER_TICKET] },
+      2: { tickets: [VALEMONT_SALTCOMBE_TICKET] }
     });
-    await claim(alice, LA_VEGAS, '2 red');
+    await claim(alice, EMBERLY_REDMARSH, '2 red');
     await expect(status(bob)).toContainText('Alice has 2 trains left: everyone, Alice included, gets one last turn.');
     await expect(turn(bob)).toHaveText('Last round: Your turn');
     await drawTwo(bob);
@@ -381,8 +382,8 @@ test.describe('Rail Routes rules', () => {
     // Both on 18 points; Alice completed a ticket and Bob none
     const tickets = await start(seat);
     await finish(tickets.table, tickets.alice, {
-      claimed: { [DENVER_SANTA_FE]: 1, [EL_PASO_SANTA_FE]: 1, [CALGARY_HELENA]: 2, [routeId('Vancouver', 'Seattle')]: 2 }
-    }, { 1: { tickets: [DENVER_EL_PASO_TICKET] } });
+      claimed: { [FROSTFORD_DUNHALLOW]: 1, [GREYWATER_DUNHALLOW]: 1, [HARROWBY_UMBER]: 2, [routeId('Millstone', 'Stonemere')]: 2 }
+    }, { 1: { tickets: [FROSTFORD_GREYWATER_TICKET] } });
     await expect(finalCells(tickets.bob, 'Alice').last()).toHaveText('18');
     await expect(finalCells(tickets.bob, 'Bob').last()).toHaveText('18');
     await expect(status(tickets.bob)).toHaveText('Alice wins with 18 points!');
@@ -391,8 +392,8 @@ test.describe('Rail Routes rules', () => {
     const path = await start(seat);
     await finish(path.table, path.alice, {
       claimed: {
-        [CALGARY_HELENA]: 1, [routeId('Winnipeg', 'Duluth')]: 1, [routeId('Montreal', 'New York')]: 1, [routeId('Houston', 'New Orleans')]: 1,
-        [routeId('Phoenix', 'Denver')]: 2
+        [HARROWBY_UMBER]: 1, [routeId('Emberly', 'Thornwick')]: 1, [routeId('Oakhurst', 'Zephyr')]: 1, [routeId('Stonemere', 'Valemont')]: 1,
+        [routeId('Cobalt', 'Kestrel')]: 2
       }
     }, {});
     await expect(finalCells(path.alice, 'Alice').last()).toHaveText('20');
@@ -401,25 +402,25 @@ test.describe('Rail Routes rules', () => {
 
     // The same points, tickets and path: the win is shared
     const shared = await start(seat);
-    await finish(shared.table, shared.alice, { claimed: { [CALGARY_HELENA]: 1, [routeId('Winnipeg', 'Duluth')]: 2 } }, {});
+    await finish(shared.table, shared.alice, { claimed: { [HARROWBY_UMBER]: 1, [routeId('Emberly', 'Thornwick')]: 2 } }, {});
     await expect(status(shared.bob)).toHaveText('Alice and Bob share the win with 17 points!');
     await expect(finalScores(shared.bob).locator('tr.winner')).toHaveCount(2);
   });
 
   test('only you see your train cards and tickets; others see counts, and all tickets show in the final scoring', async ({ seat }) => {
     const players: Players = {
-      1: { hand: { blue: 2 }, tickets: [BOSTON_MIAMI_TICKET] },
+      1: { hand: { blue: 2 }, tickets: [VALEMONT_SALTCOMBE_TICKET] },
       2: { hand: { black: 3 }, tickets: [14] }
     };
     const { table, alice, bob } = await start(seat, 2, {}, players);
-    await expect(myHand(alice).locator('.ticket-cities')).toHaveText([ticketName(BOSTON_MIAMI_TICKET)]);
+    await expect(myHand(alice).locator('.ticket-cities')).toHaveText([ticketName(VALEMONT_SALTCOMBE_TICKET)]);
     await expect(alice.locator('.hand-panel')).toHaveCount(1);
     await expect(myHand(alice).locator('.card-black')).toHaveCount(0);
     await expect(alice.getByText(ticketName(14))).toHaveCount(0);
     await expect(stat(alice, 'Bob', 'Train cards')).toHaveText('3 cards');
     await expect(stat(alice, 'Bob', 'Destination tickets')).toHaveText('1 ticket');
     await expect(myHand(bob).locator('.card-blue')).toHaveCount(0);
-    await expect(bob.getByText(ticketName(BOSTON_MIAMI_TICKET))).toHaveCount(0);
+    await expect(bob.getByText(ticketName(VALEMONT_SALTCOMBE_TICKET))).toHaveCount(0);
 
     // A card from the deck is never named
     await deck(alice).click();
@@ -435,11 +436,11 @@ test.describe('Rail Routes rules', () => {
 
     await finish(table, alice, {}, players);
     await expect(finalScores(alice).getByText(ticketName(14))).toBeVisible();
-    await expect(finalScores(bob).getByText(ticketName(BOSTON_MIAMI_TICKET))).toBeVisible();
+    await expect(finalScores(bob).getByText(ticketName(VALEMONT_SALTCOMBE_TICKET))).toBeVisible();
   });
 
   test('leaving: a dismissed player\'s routes stay and block, their cards are discarded, and a half-drawn turn is dropped', async ({ seat }) => {
-    const { table, alice, bob, cara } = await start(seat, 3, { claimed: { [SEATTLE_PORTLAND]: 2 } }, {
+    const { table, alice, bob, cara } = await start(seat, 3, { claimed: { [HIGHCLIFF_OAKHURST]: 2 } }, {
       2: { hand: { red: 3 }, tickets: [14] }
     });
     await drawTwo(alice);
@@ -454,8 +455,8 @@ test.describe('Rail Routes rules', () => {
     await expect(deckCount(cara)).toHaveText('17 left, 4 discarded'); // his 3 red and the one he drew
     await expect(stat(cara, 'Bob', 'Train cards')).toHaveText('0 cards');
     await expect(stat(cara, 'Bob', 'Destination tickets')).toHaveText('0 tickets');
-    await expect(track(cara, SEATTLE_PORTLAND).locator('title')).toHaveText('Seattle to Portland: 1 gray, claimed by Bob');
-    await expect(track(cara, routeId('Seattle', 'Portland', 1))).toHaveClass(/closed/);
+    await expect(track(cara, HIGHCLIFF_OAKHURST).locator('title')).toHaveText('Highcliff to Oakhurst: 1 gray, claimed by Bob');
+    await expect(track(cara, routeId('Highcliff', 'Oakhurst', 1))).toHaveClass(/closed/);
     expect((await table.state<GameState>()).players[2].tickets).toEqual([]);
   });
 
@@ -525,18 +526,18 @@ test.describe('Rail Routes controls', () => {
     await expect(myHand(alice).locator('.card-locomotive .color-symbol')).toHaveCount(0);
     await expect(faceUp(alice, 0).locator('.color-symbol')).toHaveCount(0);
     for (const [slot, card] of ['green', 'yellow', 'black', 'white'].entries()) await expect(faceUp(alice, slot + 1).locator(`.color-symbol-${shapes[card as keyof typeof shapes]}`)).toHaveCount(1);
-    await expect(track(alice, KC_STL).locator('.color-symbol-square')).toHaveCount(1);
-    await expect(track(alice, KC_STL_PINK).locator('.color-symbol-heart')).toHaveCount(1);
-    await expect(track(alice, LA_VEGAS).locator('.color-symbol')).toHaveCount(0);
+    await expect(track(alice, BRIGHTWELL_IRONMOOR).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(track(alice, BRIGHTWELL_IRONMOOR_PINK).locator('.color-symbol-heart')).toHaveCount(1);
+    await expect(track(alice, EMBERLY_REDMARSH).locator('.color-symbol')).toHaveCount(0);
   });
 
   test('with Color-blind symbols on, a claimed route shows the shape of its owner, not of the route color, and the player list shows each seat shape', async ({ seat }) => {
-    const { alice } = await start(seat, 3, { claimed: { [KC_STL]: 2, [LA_VEGAS]: 1, [SEATTLE_PORTLAND]: 3 } });
+    const { alice } = await start(seat, 3, { claimed: { [BRIGHTWELL_IRONMOOR]: 2, [EMBERLY_REDMARSH]: 1, [HIGHCLIFF_OAKHURST]: 3 } });
     await setPreference(alice, 'Color-blind symbols', true);
-    await expect(track(alice, KC_STL).locator('.color-symbol-square')).toHaveCount(1);
-    await expect(track(alice, KC_STL).locator('.color-symbol')).toHaveCount(1);
-    await expect(track(alice, LA_VEGAS).locator('.color-symbol-circle')).toHaveCount(1);
-    await expect(track(alice, SEATTLE_PORTLAND).locator('.color-symbol-triangle')).toHaveCount(1);
+    await expect(track(alice, BRIGHTWELL_IRONMOOR).locator('.color-symbol-square')).toHaveCount(1);
+    await expect(track(alice, BRIGHTWELL_IRONMOOR).locator('.color-symbol')).toHaveCount(1);
+    await expect(track(alice, EMBERLY_REDMARSH).locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(track(alice, HIGHCLIFF_OAKHURST).locator('.color-symbol-triangle')).toHaveCount(1);
     const shapes = ['circle', 'square', 'triangle'];
     for (const [index, name] of ['Alice', 'Bob', 'Cara'].entries()) {
       await expect(alice.locator('.player-row', { hasText: name }).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
@@ -561,23 +562,23 @@ test.describe('Rail Routes controls', () => {
   });
 
   test('a picked route offers one button per way to pay, Cancel puts it back, and a route you cannot claim says why', async ({ seat }) => {
-    const { alice } = await start(seat, 2, { claimed: { [SEATTLE_PORTLAND]: 2 } }, { 1: { hand: { red: 1, blue: 2, locomotive: 2 } } });
-    await pickRoute(alice, LA_VEGAS);
-    await expect(track(alice, LA_VEGAS)).toHaveClass(/selected/);
-    await expect(panel(alice)).toContainText('Los Angeles to Las Vegas: 2 gray (any one color)');
+    const { alice } = await start(seat, 2, { claimed: { [HIGHCLIFF_OAKHURST]: 2 } }, { 1: { hand: { red: 1, blue: 2, locomotive: 2 } } });
+    await pickRoute(alice, EMBERLY_REDMARSH);
+    await expect(track(alice, EMBERLY_REDMARSH)).toHaveClass(/selected/);
+    await expect(panel(alice)).toContainText('Emberly to Redmarsh: 2 gray (any one color)');
     await expect(panel(alice)).toContainText('Choose how to pay:');
     await expect(claimButtons(alice)).toHaveText(['Claim with 2 blue', 'Claim with 1 red and 1 locomotive', 'Claim with 2 locomotives']);
     await panel(alice).getByRole('button', { name: 'Cancel' }).click();
-    await expect(track(alice, LA_VEGAS)).not.toHaveClass(/selected/);
+    await expect(track(alice, EMBERLY_REDMARSH)).not.toHaveClass(/selected/);
     await expect(panel(alice)).toContainText('Take 2 train cards');
 
-    await pickRoute(alice, routeId('Winnipeg', 'Sault St. Marie'));
+    await pickRoute(alice, routeId('Glenrook', 'Umber'));
     await expect(panel(alice)).toContainText('You do not have the cards for that route');
     await expect(claimButtons(alice)).toHaveCount(0);
     // Claimed and closed tracks cannot be picked, and their labels say why
-    await expect(track(alice, SEATTLE_PORTLAND).locator('title')).toHaveText('Seattle to Portland: 1 gray, claimed by Bob');
-    await expect(track(alice, routeId('Seattle', 'Portland', 1)).locator('title')).toContainText('closed (the other track is taken)');
-    await expect(track(alice, SEATTLE_PORTLAND)).not.toHaveAttribute('role', 'button');
+    await expect(track(alice, HIGHCLIFF_OAKHURST).locator('title')).toHaveText('Highcliff to Oakhurst: 1 gray, claimed by Bob');
+    await expect(track(alice, routeId('Highcliff', 'Oakhurst', 1)).locator('title')).toContainText('closed (the other track is taken)');
+    await expect(track(alice, HIGHCLIFF_OAKHURST)).not.toHaveAttribute('role', 'button');
   });
 
   test('clicking the ticket deck draws tickets, ticked ones are kept with Keep, and first tickets show before your turn', async ({ seat }) => {
@@ -615,14 +616,14 @@ test.describe('Rail Routes controls', () => {
     await drawTwo(bob);
     await expect(turn(alice)).toHaveText('Your turn');
     await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(2);
-    await claim(alice, LA_VEGAS, '2 yellow');
-    await expect(track(alice, LA_VEGAS)).toHaveClass(/owned seat1/);
+    await claim(alice, EMBERLY_REDMARSH, '2 yellow');
+    await expect(track(alice, EMBERLY_REDMARSH)).toHaveClass(/owned seat1/);
     await expect(myHand(alice).locator('.newly-drawn')).toHaveCount(0);
   });
 
   test('your hand groups train cards by color with counts, checks completed tickets, and a pointed ticket rings its cities', async ({ seat }) => {
-    const { alice } = await start(seat, 2, { claimed: { [DENVER_SANTA_FE]: 1, [EL_PASO_SANTA_FE]: 1 } }, {
-      1: { hand: { red: 3, blue: 2, locomotive: 1 }, tickets: [DENVER_EL_PASO_TICKET, BOSTON_MIAMI_TICKET] }
+    const { alice } = await start(seat, 2, { claimed: { [FROSTFORD_DUNHALLOW]: 1, [GREYWATER_DUNHALLOW]: 1 } }, {
+      1: { hand: { red: 3, blue: 2, locomotive: 1 }, tickets: [FROSTFORD_GREYWATER_TICKET, VALEMONT_SALTCOMBE_TICKET] }
     });
     await expect(myHand(alice).locator('.card .card-name')).toHaveText(['Blue', 'Red', 'Loco']);
     await expect(myHand(alice).locator('.card .card-count')).toHaveText(['2', '3', '1']);
@@ -632,13 +633,13 @@ test.describe('Rail Routes controls', () => {
     await expect(tickets.nth(1).getByLabel('completed')).toHaveCount(0);
 
     await tickets.nth(0).hover();
-    await expect(alice.locator('.city.ringed text')).toHaveText(['Denver', 'El Paso']);
+    await expect(alice.locator('.city.ringed text')).toHaveText(['Frostford', 'Greywater']);
     await alice.mouse.move(0, 0);
     await expect(alice.locator('.city.ringed')).toHaveCount(0);
   });
 
   test('the player list shows points, trains, cards and tickets, outlines whose turn it is and marks the last round', async ({ seat }) => {
-    const { alice, bob } = await start(seat, 2, { claimed: { [CALGARY_HELENA]: 2 }, lastTurns: [1, 2] }, {
+    const { alice, bob } = await start(seat, 2, { claimed: { [HARROWBY_UMBER]: 2 }, lastTurns: [1, 2] }, {
       1: { hand: { red: 2 }, tickets: [0, 3] },
       2: { trains: 2, tickets: [6] }
     });
@@ -659,26 +660,26 @@ test.describe('Rail Routes controls', () => {
 
   test('claimed routes show in the owner\'s color with white dots, closed tracks are faded and the last claim is outlined', async ({ seat }) => {
     const { alice, bob } = await start(seat, 2, {}, { 1: { hand: { blue: 2 } } });
-    await claim(alice, KC_STL, '2 blue');
-    const claimed = track(bob, KC_STL);
+    await claim(alice, BRIGHTWELL_IRONMOOR, '2 blue');
+    const claimed = track(bob, BRIGHTWELL_IRONMOOR);
     await expect(claimed).toHaveClass(/owned seat1/);
     await expect(claimed).toHaveClass(/highlight/);
     await expect(claimed.locator('circle')).toHaveCount(2);
     expect(await claimed.locator('circle').first().evaluate(element => getComputedStyle(element).fill)).toBe('rgb(255, 255, 255)');
     const [fill, open] = await Promise.all([
       claimed.locator('rect').first().evaluate(element => getComputedStyle(element).fill),
-      track(bob, LA_VEGAS).locator('rect').first().evaluate(element => getComputedStyle(element).fill)
+      track(bob, EMBERLY_REDMARSH).locator('rect').first().evaluate(element => getComputedStyle(element).fill)
     ]);
     expect(fill).not.toBe(open);
-    const twin = track(bob, KC_STL_PINK);
+    const twin = track(bob, BRIGHTWELL_IRONMOOR_PINK);
     await expect(twin).toHaveClass(/closed/);
     expect(await twin.evaluate(element => getComputedStyle(element).opacity)).toBe('0.3');
   });
 
   test('when the game ends, the final scores below the map show routes, tickets made and missed, and the longest path', async ({ seat }) => {
     const { table, alice } = await start(seat);
-    await finish(table, alice, { claimed: { [DENVER_SANTA_FE]: 1, [EL_PASO_SANTA_FE]: 1 } }, {
-      1: { tickets: [DENVER_EL_PASO_TICKET, BOSTON_MIAMI_TICKET] }
+    await finish(table, alice, { claimed: { [FROSTFORD_DUNHALLOW]: 1, [GREYWATER_DUNHALLOW]: 1 } }, {
+      1: { tickets: [FROSTFORD_GREYWATER_TICKET, VALEMONT_SALTCOMBE_TICKET] }
     });
     const scores = finalScores(alice);
     await expect(alice.locator('.map-area .final-scores')).toBeVisible();
@@ -746,13 +747,13 @@ test.describe('Rail Routes differences from Wikipedia', () => {
   });
 
   test('both tracks of a double route stay open after a dismissal leaves 3 of the 4 players who began', async ({ seat }) => {
-    const { table, alice, bob, cara } = await start(seat, 4, { claimed: { [KC_STL]: 2 } }, { 1: { hand: { pink: 2 } } });
+    const { table, alice, bob, cara } = await start(seat, 4, { claimed: { [BRIGHTWELL_IRONMOOR]: 2 } }, { 1: { hand: { pink: 2 } } });
     await leave(table.pages[3]);
     await dismiss('Dan', alice, bob, cara);
     await expect(row(alice, 'Dan')).toContainText('(left)');
-    await expect(track(alice, KC_STL_PINK)).not.toHaveClass(/closed/);
-    await claim(alice, KC_STL_PINK, '2 pink');
-    await expect(track(bob, KC_STL_PINK)).toHaveClass(/owned seat1/);
+    await expect(track(alice, BRIGHTWELL_IRONMOOR_PINK)).not.toHaveClass(/closed/);
+    await claim(alice, BRIGHTWELL_IRONMOOR_PINK, '2 pink');
+    await expect(track(bob, BRIGHTWELL_IRONMOOR_PINK)).toHaveClass(/owned seat1/);
   });
 
   test('three face-up locomotives are replaced at most 10 times in a row', async ({ seat }) => {
@@ -791,10 +792,10 @@ test.describe('Rail Routes differences from Wikipedia', () => {
 
   test('the payment picker offers each color with as few locomotives as possible, and locomotives alone', async ({ seat }) => {
     const { alice } = await start(seat, 2, {}, { 1: { hand: { red: 2, locomotive: 2 } } });
-    await pickRoute(alice, LA_VEGAS);
+    await pickRoute(alice, EMBERLY_REDMARSH);
     await expect(claimButtons(alice)).toHaveText(['Claim with 2 red', 'Claim with 2 locomotives']);
     await panel(alice).getByRole('button', { name: 'Cancel' }).click();
-    await pickRoute(alice, routeId('Phoenix', 'Santa Fe')); // 3 gray: 2 red and 1 locomotive is the fewest
+    await pickRoute(alice, routeId('Dunhallow', 'Highcliff')); // 3 gray: 2 red and 1 locomotive is the fewest
     await expect(claimButtons(alice)).toHaveText(['Claim with 2 red and 1 locomotive']);
   });
 });

@@ -29,7 +29,7 @@ test('a second card of the same color keeps the first outlined', () => {
 });
 
 test('claiming a route clears them', () => {
-  const route = routeBetween('Vancouver', 'Seattle');
+  const route = routeBetween('Highcliff', 'Oakhurst');
   const before = game({}, { 1: { hand: hand({ red: 2, blue: 2 }) } });
   const claimed = played(before, 1, { type: 'claim', route: route.id, payment: { color: 'red', locomotives: 0 } });
   assert.deepEqual(drawnStep(view(before, 1), view(claimed, 1), 1), { add: [], clear: true });

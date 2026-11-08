@@ -123,7 +123,7 @@ test('the discards are shuffled into a new deck when it runs out, and with neith
 });
 
 test('claiming a colored route spends that color, locomotives as wild, and scores by length', () => {
-  const route = routeBetween('Denver', 'Omaha'); // 4 pink
+  const route = routeBetween('Ashgrove', 'Ironmoor'); // 4 pink
   const start = game({}, { 1: { hand: hand({ pink: 3, locomotive: 2, red: 4 }) } });
   assert.deepEqual(move(start, 1, claimOf(route.id, 'red')), { error: 'That route needs pink cards' });
   assert.deepEqual(move(start, 1, claimOf(route.id, 'pink')), { error: 'You do not have 4 pink cards' });
@@ -141,7 +141,7 @@ test('claiming a colored route spends that color, locomotives as wild, and score
 });
 
 test('a gray route takes any one color, or locomotives alone', () => {
-  const route = routeBetween('Pittsburgh', 'Raleigh'); // 2 gray
+  const route = routeBetween('Ashgrove', 'Northfold'); // 2 gray
   const start = game({}, { 1: { hand: hand({ green: 1, black: 2, locomotive: 2 }) } });
   assert.deepEqual(paymentOptions(start.players[1].hand, route), [
     { color: 'black', locomotives: 0 }, { color: 'green', locomotives: 1 }, { color: null, locomotives: 2 }
@@ -153,7 +153,7 @@ test('a gray route takes any one color, or locomotives alone', () => {
 });
 
 test('a route needs enough trains, and an owned route cannot be claimed again', () => {
-  const route = routeBetween('Seattle', 'Helena'); // 6 yellow
+  const route = routeBetween('Emberly', 'Yarrow'); // 6 yellow
   const short = game({}, { 1: { hand: hand({ yellow: 6 }), trains: 5 } });
   assert.deepEqual(move(short, 1, claimOf(route.id, 'yellow')), { error: 'You have only 5 trains left' });
   const taken = game({ claimed: { [route.id]: 2 } }, { 1: { hand: hand({ yellow: 6 }) } });
@@ -161,7 +161,7 @@ test('a route needs enough trains, and an owned route cannot be claimed again', 
 });
 
 test('with 2 or 3 players only one track of a double route is used', () => {
-  const [blue, pink] = [routeBetween('Kansas City', 'Saint Louis', 0), routeBetween('Kansas City', 'Saint Louis', 1)];
+  const [blue, pink] = [routeBetween('Brightwell', 'Ironmoor', 0), routeBetween('Brightwell', 'Ironmoor', 1)];
   assert.equal(blue.twin, pink.id);
   const cards = { 1: { hand: hand({ blue: 2, pink: 2 }) }, 2: { hand: hand({ blue: 2, pink: 2 }) } };
   const three = played(game({}, cards), 1, claimOf(blue.id, blue.color as Card));
@@ -195,34 +195,34 @@ test('drawing tickets offers 3, keeps at least 1 and puts the rest under the dec
 });
 
 test('tickets are completed through a player\'s own routes only', () => {
-  // Ticket 6 is Denver to El Paso
+  // Ticket 6 is Frostford to Greywater: two routes of 2 through Dunhallow, or 2 and 3 and 3 by Highcliff
   assert.deepEqual([TICKETS[6].points], [4]);
   const route = (a: string, b: string) => routeBetween(a, b).id;
-  let state = owning(game(), 1, route('Denver', 'Santa Fe'));
+  let state = owning(game(), 1, route('Frostford', 'Dunhallow'));
   assert.equal(ticketDone(state.claimed, 1, 6), false);
-  state = owning(state, 2, route('Santa Fe', 'El Paso'));
+  state = owning(state, 2, route('Dunhallow', 'Greywater'));
   assert.equal(ticketDone(state.claimed, 1, 6), false);
-  state = owning(state, 1, route('Santa Fe', 'Phoenix'), route('Phoenix', 'El Paso'));
+  state = owning(state, 1, route('Dunhallow', 'Highcliff'), route('Highcliff', 'Greywater'));
   assert.equal(ticketDone(state.claimed, 1, 6), true);
 });
 
 test('the longest path may revisit a city but uses each route once', () => {
   const route = (a: string, b: string) => routeBetween(a, b).id;
-  // A loop Denver, Santa Fe, Oklahoma City back to Denver, with a tail from Denver to Helena
+  // A loop Dunhallow, Greywater, Saltcombe back to Dunhallow, with a tail from Saltcombe to Brightwell (the same lengths as before)
   const claimed = owning(game(), 1,
-    route('Denver', 'Santa Fe'), route('Santa Fe', 'Oklahoma City'), route('Oklahoma City', 'Denver'), route('Denver', 'Helena'),
-    route('El Paso', 'Phoenix')).claimed;
+    route('Dunhallow', 'Greywater'), route('Greywater', 'Saltcombe'), route('Saltcombe', 'Dunhallow'), route('Saltcombe', 'Brightwell'),
+    route('Emberly', 'Lanthorn')).claimed;
   assert.equal(longestPath(claimed, 1), 2 + 3 + 4 + 4);
   assert.equal(longestPath(claimed, 2), 0);
   // A branch: only the two longest arms join into one path
-  const fork = owning(game(), 2, route('Denver', 'Helena'), route('Denver', 'Phoenix'), route('Denver', 'Omaha')).claimed;
+  const fork = owning(game(), 2, route('Alderwick', 'Glenrook'), route('Alderwick', 'Harrowby'), route('Alderwick', 'Yarrow')).claimed;
   assert.equal(longestPath(fork, 2), 5 + 4);
 });
 
 test('final scores add completed tickets, subtract missed ones and give tied longest paths the bonus', () => {
   const route = (a: string, b: string) => routeBetween(a, b).id;
-  let state = owning(game(), 1, route('Denver', 'Santa Fe'), route('Santa Fe', 'El Paso'));
-  state = owning(state, 2, route('Phoenix', 'Santa Fe'), route('Las Vegas', 'Los Angeles'));
+  let state = owning(game(), 1, route('Frostford', 'Dunhallow'), route('Dunhallow', 'Greywater'));
+  state = owning(state, 2, route('Highcliff', 'Dunhallow'), route('Redmarsh', 'Emberly'));
   const scores = finalScores(state.claimed, { 1: [6, 0], 2: [6] }, [1, 2]);
   assert.deepEqual(scores[1], {
     routes: 4, tickets: [{ ticket: 6, completed: true }, { ticket: 0, completed: false }], ticketPoints: 4 - 12,
@@ -230,7 +230,7 @@ test('final scores add completed tickets, subtract missed ones and give tied lon
   });
   assert.equal(scores[2].longestPath, 3);
   assert.equal(scores[2].longestBonus, false);
-  const tie = owning(owning(game(), 1, route('Denver', 'Santa Fe')), 2, route('El Paso', 'Santa Fe'));
+  const tie = owning(owning(game(), 1, route('Frostford', 'Dunhallow')), 2, route('Greywater', 'Dunhallow'));
   const tied = finalScores(tie.claimed, { 1: [], 2: [], 3: [] }, [1, 2, 3]);
   assert.deepEqual([1, 2, 3].map(seat => tied[seat].longestBonus), [true, true, false]);
 });
@@ -246,7 +246,7 @@ test('ties go to the most tickets completed, then the longest path, and are othe
 });
 
 test('ending a turn with 2 trains or fewer gives everyone one last turn, then the game is scored', () => {
-  const route = routeBetween('Nashville', 'Atlanta'); // 1 gray
+  const route = routeBetween('Ashgrove', 'Greywater'); // 1 gray
   let state = game({}, { 2: { hand: hand({ red: 1 }), trains: 3 } });
   state = played(played(state, 1, { type: 'drawCard', source: 'deck' }), 1, { type: 'drawCard', source: 'deck' });
   state = played(state, 2, claimOf(route.id, 'red'));
@@ -306,7 +306,7 @@ test('invalid moves are refused and change nothing', () => {
 test('a player dismissed halfway through drawing cards: the next player starts afresh and their cards are discarded', () => {
   let state = played(game({}, { 1: { hand: hand({ blue: 2 }) } }), 1, { type: 'drawCard', source: 'deck' });
   assert.equal(state.drawing, 1);
-  const routeId = routeBetween('Denver', 'Santa Fe').id;
+  const routeId = routeBetween('Frostford', 'Dunhallow').id;
   state = owning(state, 1, routeId);
   state = removePlayer(railroutes, state, 1, seeded(3));
   assert.deepEqual(state.activePlayers, [2, 3]);
