@@ -1,4 +1,4 @@
-// Helpers for the Risk tests: a game under way with a known map and deck, and dice that come up as asked
+// Helpers for the Territories tests: a game under way with a known map and deck, and dice that come up as asked
 import { ALL_CARDS, TERRITORIES } from './map.ts';
 import { applyMove, createGameState } from './rules.ts';
 import type { GameState, Random, Result, Seat } from './types.ts';

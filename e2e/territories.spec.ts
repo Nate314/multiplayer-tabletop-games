@@ -1,10 +1,10 @@
 import type { Page } from '@playwright/test';
 import { headerButton, dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
-import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/risk/map.ts';
-import { game, ownership } from '../games/risk/testing.ts';
-import type { ContinentId, GameState } from '../games/risk/types.ts';
+import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/territories/map.ts';
+import { game, ownership } from '../games/territories/testing.ts';
+import type { ContinentId, GameState } from '../games/territories/types.ts';
 
-// One test per rule, control and difference in games/risk/README.md. Alice, Bob and Cara sit in seats 1, 2 and 3.
+// One test per rule, control and difference in games/territories/README.md. Alice, Bob and Cara sit in seats 1, 2 and 3.
 // Most tests patch in the unit tests' map: the territories are dealt in map order (Alaska to Alice, Northwest Territory
 // to Bob, Greenland to Cara, Alberta to Alice and so on) with 3 armies each, and the deck is in card order. Card n
 // shows territory n, with the symbols in turn (infantry, cavalry, artillery), and cards 42 and 43 are the wilds.
@@ -36,7 +36,7 @@ const attacking = (overrides: Partial<GameState> = {}) => crafted({ phase: 'atta
 const armiesWith = (changes: Record<string, number>) => ({ ...game().armies, ...changes });
 
 async function start(seat: Seat) {
-  const table = await seat('risk', ['Alice', 'Bob', 'Cara']);
+  const table = await seat('territories', ['Alice', 'Bob', 'Cara']);
   const [alice, bob, cara] = table.pages;
   return { table, alice, bob, cara };
 }
@@ -50,8 +50,8 @@ const panelTitle = (page: Page) => page.locator('.phase-panel .panel-title');
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const turn = (page: Page) => page.locator('.turn-message');
 const playerRow = (page: Page, name: string) => page.locator('.player-row', { has: page.locator('.player-name', { hasText: new RegExp(`^${name}`) }) });
-const cards = (page: Page) => page.locator('.card-hand .risk-card');
-const card = (page: Page, text: string) => page.locator('.card-hand .risk-card', { hasText: text });
+const cards = (page: Page) => page.locator('.card-hand .territories-card');
+const card = (page: Page, text: string) => page.locator('.card-hand .territories-card', { hasText: text });
 const battle = (page: Page) => page.getByRole('region', { name: 'Last battle' });
 const slider = (page: Page) => page.locator('.army-slider input[type="range"]');
 const tray = (page: Page, left: number) => page.getByRole('button', { name: `Armies, ${left} left`, exact: true });
@@ -94,7 +94,7 @@ const rgb = (page: Page, selector: string) => page.locator(selector).first().eva
   return element.tagName === 'circle' ? style.fill : style.backgroundColor;
 });
 
-test.describe('Risk rules', () => {
+test.describe('Territories rules', () => {
   test('the map has 42 territories in six continents with their bonuses and 83 borders, sea lanes included', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await expect(alice.locator('.territory')).toHaveCount(42);
@@ -147,13 +147,13 @@ test.describe('Risk rules', () => {
     test.slow();
     const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Finn'];
     for (const [count, armies] of [[3, 35], [4, 30], [5, 25], [6, 20]]) {
-      const table = await seat('risk', names.slice(0, count));
+      const table = await seat('territories', names.slice(0, count));
       await expect(table.pages[0].locator('.game-status')).toContainText(`Each player has ${armies} armies`);
     }
   });
 
   test('setup: a random player goes first and the territories are dealt from them, one army each, the first players getting one more', async ({ seat }) => {
-    const table = await seat('risk', ['Alice', 'Bob', 'Cara']);
+    const table = await seat('territories', ['Alice', 'Bob', 'Cara']);
     await table.random(0.99); // the last of four seats
     const dan = await table.join('Dan');
     await expect(turn(dan)).toHaveText('You place first. Joining closes after the first move.');
@@ -167,7 +167,7 @@ test.describe('Risk rules', () => {
   });
 
   test('setup: in turn order each player places all their starting armies in one move, then the first player starts and turns go up the seats', async ({ seat }) => {
-    const table = await seat('risk', ['Alice', 'Bob']);
+    const table = await seat('territories', ['Alice', 'Bob']);
     await table.random(0.5); // the second of three seats
     const cara = await table.join('Cara');
     const [alice, bob] = table.pages;
@@ -272,7 +272,7 @@ test.describe('Risk rules', () => {
     await table.patch(crafted({ hands: { 1: [0, 1, 2, 3, 6, WILD], 2: [], 3: [] } }));
     const tradeButton = alice.getByRole('button', { name: /^Trade for/ });
     const pick = async (...texts: string[]) => {
-      const picked = alice.locator('.card-hand .risk-card[aria-pressed="true"]');
+      const picked = alice.locator('.card-hand .territories-card[aria-pressed="true"]');
       while (await picked.count() > 0) await picked.first().click();
       for (const text of texts) await card(alice, text).click();
     };
@@ -482,7 +482,7 @@ test.describe('Risk rules', () => {
     await expect(cards(alice)).toHaveCount(3);
     await expect(cards(bob)).toHaveCount(1);
     await expect(card(bob, 'Northwest Territory')).toHaveCount(1);
-    await expect(bob.locator('.risk-card', { hasText: 'Alaska' })).toHaveCount(0);
+    await expect(bob.locator('.territories-card', { hasText: 'Alaska' })).toHaveCount(0);
     await expect(playerRow(bob, 'Alice').locator('.player-stats')).toContainText('3 cards');
     await expect(bob.locator('.deck-line')).toHaveText('Next set: 4 armies. Cards in the deck: 44'); // a count, not the order
 
@@ -494,7 +494,7 @@ test.describe('Risk rules', () => {
     await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.world-map')).toBeVisible();
-    await expect(history.locator('.risk-card')).toHaveCount(0);
+    await expect(history.locator('.territories-card')).toHaveCount(0);
     await expect(history.getByLabel('View as')).toHaveCount(0);
   });
 
@@ -510,24 +510,24 @@ test.describe('Risk rules', () => {
     await seeTable(alice);
     await (await headerButton(alice, 'History')).click();
     const [download] = await Promise.all([alice.waitForEvent('download'), button(alice, 'Download game').click()]);
-    const file = test.info().outputPath('risk-game.json');
+    const file = test.info().outputPath('territories-game.json');
     await download.saveAs(file);
 
     await visitor.goto('/');
     await visitor.locator('input[type="file"]:not([multiple])').setInputFiles(file);
     const saved = visitor.getByRole('dialog', { name: 'History' });
     await expect(saved).toContainText(`Saved game: ${table.gameId}`);
-    await expect(saved.locator('.risk-card')).toHaveCount(0);
+    await expect(saved.locator('.territories-card')).toHaveCount(0);
     await saved.getByRole('button', { name: 'Playback settings' }).click();
     await saved.getByLabel('View as').selectOption({ label: 'Alice' });
     await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Alice');
-    await expect(saved.locator('.risk-card')).toHaveCount(3);
+    await expect(saved.locator('.territories-card')).toHaveCount(3);
     await saved.getByLabel('View as').selectOption({ label: 'Cara' });
     await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Cara');
-    await expect(saved.locator('.risk-card')).toHaveText([/Greenland/]);
+    await expect(saved.locator('.territories-card')).toHaveText([/Greenland/]);
     await saved.getByLabel('View as').selectOption({ label: 'Table only' });
     await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Table only');
-    await expect(saved.locator('.risk-card')).toHaveCount(0);
+    await expect(saved.locator('.territories-card')).toHaveCount(0);
   });
 
   test('dismissed on their turn: the territories turn neutral (grey) with their armies, the cards are discarded, the next player starts, and two play on', async ({ seat }) => {
@@ -578,7 +578,7 @@ test.describe('Risk rules', () => {
   });
 
   test('dismissed during the setup: the next player places', async ({ seat }) => {
-    const table = await seat('risk', ['Alice', 'Bob']);
+    const table = await seat('territories', ['Alice', 'Bob']);
     await table.random(0); // Alice goes first
     const cara = await table.join('Cara');
     const [alice, bob] = table.pages;
@@ -649,7 +649,7 @@ test.describe('Risk rules', () => {
   });
 });
 
-test.describe('Risk controls', () => {
+test.describe('Territories controls', () => {
   test('each territory is a disc in its owner\'s color with its army count, borders are lines and sea lanes dashed, and Alaska\'s lane runs off both edges', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await table.patch(crafted({ armies: armiesWith({ alaska: 7 }) }));
@@ -693,7 +693,7 @@ test.describe('Risk controls', () => {
   test('on a narrow window the map scrolls sideways in its own box', async ({ seat }) => {
     const { alice } = await start(seat);
     await alice.setViewportSize({ width: 400, height: 800 });
-    const box = alice.locator('.risk-layout .map-area');
+    const box = alice.locator('.territories-layout .map-area');
     await expect.poll(() => box.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
     expect(await box.evaluate(element => getComputedStyle(element).overflowX)).toBe('auto');
     expect(await box.evaluate(element => { element.scrollLeft = 120; return element.scrollLeft; })).toBeGreaterThan(0);
@@ -838,9 +838,9 @@ test.describe('Risk controls', () => {
   });
 });
 
-test.describe('Risk differences from Wikipedia', () => {
+test.describe('Territories differences from Wikipedia', () => {
   test('the territories are dealt at random with one army each, and each player places all their starting armies in a single move', async ({ seat }) => {
-    const table = await seat('risk', ['Alice', 'Bob']);
+    const table = await seat('territories', ['Alice', 'Bob']);
     await table.random(0); // Alice goes first
     await table.join('Cara');
     const [alice, bob] = table.pages;
@@ -855,7 +855,7 @@ test.describe('Risk differences from Wikipedia', () => {
   });
 
   test('who goes first is drawn at random', async ({ seat }) => {
-    const table = await seat('risk', ['Alice', 'Bob']);
+    const table = await seat('territories', ['Alice', 'Bob']);
     await table.random(0.99); // the last of three seats
     const cara = await table.join('Cara');
     await expect(cara.locator('.game-status')).toContainText('Cara was drawn to go first');
@@ -923,7 +923,7 @@ test.describe('Risk differences from Wikipedia', () => {
   });
 
   test('two players cannot play: the deal waits for a third', async ({ seat }) => {
-    const table = await seat('risk', ['Alice', 'Bob']);
+    const table = await seat('territories', ['Alice', 'Bob']);
     const [alice] = table.pages;
     await expect(turn(alice)).toHaveText('Waiting for 1 more player (3 to 6 play)');
     await expect(alice.locator('.territory[aria-label*="unclaimed"]')).toHaveCount(42);
@@ -955,4 +955,13 @@ test.describe('Risk differences from Wikipedia', () => {
     await button(alice, 'End turn').click();
     await expect(turn(bob)).toHaveText('Your turn');
   });
+});
+
+test('an old risk join link opens Territories', async ({ browser, server }) => {
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto(`/join/risk/oldlink-${Date.now()}`);
+  const dialog = visitor.getByRole('dialog', { name: 'Join Territories' });
+  await dialog.getByLabel('Your name').fill('Alice');
+  await dialog.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(visitor.locator('[data-game="territories"]')).toBeVisible();
 });

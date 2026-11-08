@@ -124,7 +124,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board-area', // setup: the board is there on your turn to place
     move: async page => { await page.getByRole('button', { name: /^Intersection \d+$/ }).first().click(); }
   },
-  risk: {
+  territories: {
     keep: ['.turn-message', '.phase-panel', you('.player-row'), '.deck-line'],
     hide: [others('.player-row')],
     board: '.map-area',

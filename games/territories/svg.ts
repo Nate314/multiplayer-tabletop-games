@@ -3,7 +3,7 @@ import { CONTINENTS, MAP_HEIGHT, MAP_WIDTH, TERRITORIES } from './map.ts';
 import type { ContinentId } from './types.ts';
 
 // The world map's sea and land, drawn on the server; the territories, borders and labels on top stay in the client,
-// where they can be clicked. The classes are the ones client/risk.scss colors
+// where they can be clicked. The classes are the ones client/territories.scss colors
 
 type Point = { x: number; y: number };
 
@@ -34,4 +34,4 @@ export function landSvg(): string {
     ...CONTINENTS.map(({ id }) => el('g', { class: `continent continent-${id}` }, el('polygon', { class: 'land', points: CONTINENT_SHAPES[id] }))));
 }
 
-export const RISK_ASSETS: SvgAsset[] = [{ name: 'risk-land', params: [], samples: [], render: landSvg }];
+export const TERRITORIES_ASSETS: SvgAsset[] = [{ name: 'territories-land', params: [], samples: [], render: landSvg }];

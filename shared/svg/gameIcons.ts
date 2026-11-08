@@ -50,7 +50,7 @@ const GAME_ICONS: Record<string, () => string> = {
   pictionary: () => lineIcon(el('path', { d: 'M3 21l3.5-1 11-11-2.5-2.5-11 11zM14 5.5l2.5 2.5M3 15c2-3 4 1 6-2' })),
   quoridor: () => lineIcon(el('circle', { cx: 12, cy: 6, r: 3 }), el('path', { d: 'M9.5 11h5l1.5 7H8zM6 21h12v-3H6z' })),
   racko: () => lineIcon(el('path', { d: 'M4 21v-5M9 21v-9M14 21v-13M19 21V3' })),
-  risk: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('ellipse', { cx: 12, cy: 12, rx: 4, ry: 9 }), el('path', { d: 'M3 12h18' })),
+  territories: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('ellipse', { cx: 12, cy: 12, rx: 4, ry: 9 }), el('path', { d: 'M3 12h18' })),
   roadtoretirement: () => lineIcon(el('path', { d: 'M3 21c5 0 3-5 8-6s5-4 7-6' }), el('path', { d: 'M14.5 9V5.5L18 2.5l3.5 3V9z' })),
   rook: () => lineIcon(el('path', { d: 'M3 16c4 0 6-2 7-5s3-6 7-6c2 0 3 1 3.5 2l2 1-2 1c0 6-4 10-10 10H7l2-3c-2.5 0-4.5-.5-6-1z' }), pip(17, 7, 0.8)),
   rummikub: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), label('7', 12, 14, 9), el('circle', { cx: 12, cy: 17.5, r: 1 })),

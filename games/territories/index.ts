@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { riskInfo } from './info.ts';
+import { territoriesInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const risk: GameDefinition<GameState, PublicGameState> = {
-  info: riskInfo,
+export const territories: GameDefinition<GameState, PublicGameState> = {
+  info: territoriesInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

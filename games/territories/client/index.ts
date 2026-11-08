@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './risk.scss';
+import './territories.scss';
 
-export const riskClient: ClientGame = {
-  id: 'risk',
+export const territoriesClient: ClientGame = {
+  id: 'territories',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

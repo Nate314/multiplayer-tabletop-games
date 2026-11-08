@@ -32,7 +32,7 @@ export default function CardHand({ gameState, hand, playerNumber, canTrade = fal
           const symbol = cardSymbol(card);
           const territory = cardTerritory(card);
           const yours = territory !== null && owners[territory] === playerNumber;
-          const classNames = ['risk-card', `card-${symbol}`];
+          const classNames = ['territories-card', `card-${symbol}`];
           if (chosen.includes(card)) classNames.push('card-picked');
           const content = (
             <>

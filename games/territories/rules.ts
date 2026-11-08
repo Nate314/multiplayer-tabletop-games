@@ -1,4 +1,4 @@
-// Risk rules: the game's hooks for the platform, the setup, reading untrusted moves, ending a turn, and the public view.
+// Territories rules: the game's hooks for the platform, the setup, reading untrusted moves, ending a turn, and the public view.
 // The rules themselves live in map.ts, state.ts, cards.ts, battle.ts and placement.ts.
 import { rankStandings } from '../../shared/standings.ts';
 import type { Standing } from '../../shared/types.ts';

@@ -5,13 +5,13 @@ import { rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { isSet } from './cards.ts';
 import { NEIGHBORS } from './map.ts';
 import { territoriesHeld } from './state.ts';
-import { risk } from './index.ts';
+import { territories } from './index.ts';
 import type { Card, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'risk/g1';
+const ROOM = 'territories/g1';
 
 // The same rolls on every run
 function seeded(seed: number): Random {
@@ -25,12 +25,12 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(seed: number, ...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([risk], seeded(seed)));
-  for (const name of names) manager.join('risk', 'g1', name);
+  const manager = rememberingKeys(createGameManager([territories], seeded(seed)));
+  for (const name of names) manager.join('territories', 'g1', name);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Risk's
+// The manager is generic over games, so tests narrow the public state to Territories'
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -90,14 +90,14 @@ test('a seeded game plays to a world conqueror, and no step shows a hand or the 
   assert.equal(territoriesHeld(state, state.winners[0]).length, 42);
   assert.equal(state.eliminated.length, 2);
 
-  const steps = stepsOf(manager, 'risk') ?? assert.fail('no history');
+  const steps = stepsOf(manager, 'territories') ?? assert.fail('no history');
   assert.ok(steps.length > 20);
   for (const past of steps) {
     assert.equal('hands' in past, false);
     assert.equal('deck' in past, false);
     assert.equal((past as unknown as PublicGameState).hand, null);
   }
-  const file = fileOf(manager, 'risk', new Date());
+  const file = fileOf(manager, 'territories', new Date());
   if (!file || !('file' in file)) assert.fail('no game file');
   const last = file.file.steps.at(-1) as unknown as PublicGameState & { views: Record<string, PublicGameState> };
   assert.equal(last.hand, null);
@@ -112,7 +112,7 @@ test('a rejoin mid-turn shows the same captured territory waiting to be moved in
   const conquest = state.conquest ?? assert.fail('nobody captured anything');
   const seat = state.currentPlayer ?? assert.fail('nobody to act');
   manager.disconnect(ROOM, seat);
-  const rejoined = manager.join('risk', 'g1', state.playerNames[seat], true);
+  const rejoined = manager.join('territories', 'g1', state.playerNames[seat], true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   const view = rejoined.state as PublicGameState;
   assert.equal(view.phase, 'conquer');

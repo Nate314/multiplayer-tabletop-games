@@ -1,7 +1,7 @@
 import { el, svgDoc, type SvgAsset } from './svg.ts';
 
 // A round playing piece seen from above, lit from the top left: Checkers men, Connect Four discs, backgammon
-// checkers, Mancala stones, Parchisi and Quoridor pawns, Splendor gems, Monopoly tokens and Risk's tray army. Each
+// checkers, Mancala stones, Parchisi and Quoridor pawns, Splendor gems, Monopoly tokens and Territories' tray army. Each
 // game colors it on the page element with --disc-fill, --disc-edge and --disc-edge-width (in hundredths of the
 // piece's width), so one drawing serves every seat and theme
 export function discSvg(): string {

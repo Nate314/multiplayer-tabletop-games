@@ -100,7 +100,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   return (
     <>
-      <div className="risk-layout">
+      <div className="territories-layout">
         <div className="map-area hand-only-board" ref={mapRef}>
           <WorldMap gameState={gameState} source={source} target={target} targets={targets} draft={draft}
             canSelect={canSelect} onSelect={select} />

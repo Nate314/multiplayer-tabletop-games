@@ -1,4 +1,4 @@
-// Where things go on the drawn map (the land itself is games/risk/svg.ts): labels, short territory names and seat colors
+// Where things go on the drawn map (the land itself is games/territories/svg.ts): labels, short territory names and seat colors
 import { TERRITORIES } from '../map.ts';
 import type { SymbolColor } from '../../../src/components/colorSymbols.ts';
 import type { ContinentId, Seat } from '../types.ts';

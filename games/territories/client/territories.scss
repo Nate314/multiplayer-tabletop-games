@@ -1,4 +1,4 @@
-[data-game="risk"] {
+[data-game="territories"] {
   color-scheme: light;
   --page-bg: #F1EEE6;
   --text: #2A2620;
@@ -123,7 +123,7 @@
     cursor: pointer;
   }
 
-  .risk-layout {
+  .territories-layout {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -376,7 +376,7 @@
     font-size: 13px;
   }
 
-  .side-panel button:where(:not(.risk-card)) {
+  .side-panel button:where(:not(.territories-card)) {
     padding: 6px 12px;
     border: 1px solid var(--button-bg);
     border-radius: 6px;
@@ -535,7 +535,7 @@
     gap: 6px;
   }
 
-  .risk-card {
+  .territories-card {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -549,11 +549,11 @@
     text-align: left;
   }
 
-  button.risk-card:hover {
+  button.territories-card:hover {
     border-color: var(--highlight);
   }
 
-  .risk-card.card-picked {
+  .territories-card.card-picked {
     border-color: var(--highlight);
     box-shadow: 0 0 0 2px var(--highlight);
   }
@@ -737,11 +737,11 @@
   /* On a phone the map keeps a size that can be tapped and scrolls sideways inside its own box */
 
   @media (max-width: 679px) {
-    .risk-layout .map-area {
+    .territories-layout .map-area {
       overflow-x: auto;
     }
 
-    .risk-layout .world-map {
+    .territories-layout .world-map {
       min-width: 640px;
     }
   }

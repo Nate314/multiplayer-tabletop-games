@@ -37,3 +37,8 @@ test('thecrew is now Mission Tricks and its saves still fit', () => {
   assert.equal(currentId('thecrew'), 'missiontricks');
   assert.equal(keepsSaves('thecrew'), true);
 });
+
+test('risk is now Territories and its saves are refused', () => {
+  assert.equal(currentId('risk'), 'territories');
+  assert.equal(keepsSaves('risk'), false);
+});

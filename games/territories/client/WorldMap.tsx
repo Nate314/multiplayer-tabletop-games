@@ -26,7 +26,7 @@ export default function WorldMap({ gameState, source = null, target = null, targ
   const { owners, armies, playerNames } = gameState;
   return (
     <svg className="world-map" viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} role="group" aria-label="World map">
-      <ServerSvg url={svgUrl('risk-land')} inSvg svgProps={{ width: MAP_WIDTH, height: MAP_HEIGHT }} />
+      <ServerSvg url={svgUrl('territories-land')} inSvg svgProps={{ width: MAP_WIDTH, height: MAP_HEIGHT }} />
       {CONTINENTS.map(({ id, name, bonus }) => (
         <text key={id} className="continent-label" x={CONTINENT_LABELS[id].x} y={CONTINENT_LABELS[id].y}>{name} +{bonus}</text>
       ))}
