@@ -8,6 +8,7 @@ import { shipsIn } from './testing.ts';
 import { seeded } from '../testStates.ts';
 import type { Cell, PublicGameState, Seat, Ship } from './types.ts';
 import type { Result } from '../../shared/types.ts';
+import type { HouseRuleValues } from '../../shared/houseRules.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
@@ -22,9 +23,10 @@ function ok(result: Result<unknown>): PublicGameState {
   return result.state as PublicGameState;
 }
 
-function joined(): Manager {
+function joined(values?: HouseRuleValues): Manager {
   const manager = rememberingKeys(createGameManager([naval], seeded(3)));
   for (const name of ['Alice', 'Bob']) manager.join('naval', 'g1', name);
+  if (values) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -123,4 +125,15 @@ test('a rejoin after confirming gets the confirmed fleet back', () => {
   const state = result.state as PublicGameState;
   assert.deepEqual(state.myFleet, FLEETS[1]);
   assert.deepEqual(state.ready, [1]);
+});
+
+test('an undone first hit takes its length with it', () => {
+  const manager = joined({ announceLength: true });
+  place(manager, 1);
+  place(manager, 2);
+  assert.equal(fire(manager, 1, ALICE_TARGETS[0]).shots[1][0].hitLength, FLEETS[2][0].length);
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  assert.deepEqual(view(manager, null).shots[1], []);
+  assert.ok(!JSON.stringify(stepsOf(manager, 'naval')).includes('hitLength'));
 });

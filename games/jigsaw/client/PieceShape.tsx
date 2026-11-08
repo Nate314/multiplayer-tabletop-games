@@ -8,6 +8,7 @@ type PieceShapeProps = {
   y: number;
   offset: { x: number; y: number }; // its cell's top left within the picture
   cell: { w: number; h: number };
+  turns: number; // quarter turns clockwise about the cell's middle
   path: string;
   fillId: string;
   url: string;
@@ -21,7 +22,7 @@ type PieceShapeProps = {
 // One piece: its shape filled with its part of the picture, moved to (x, y). Memoized, so a drag re-renders only the
 // dragged piece. A pattern rather than a clipped <image>, so the piece's bounding box is its shape, not the whole picture.
 // The pattern's tile is the cell and half a cell around it, room for any tab
-function PieceShape({ piece, x, y, offset, cell, path, fillId, url, placed, heldBy, holderName, highlighted, pointer }: PieceShapeProps) {
+function PieceShape({ piece, x, y, offset, cell, turns, path, fillId, url, placed, heldBy, holderName, highlighted, pointer }: PieceShapeProps) {
   const classes = ['jigsaw-piece', placed && 'placed', heldBy !== null && 'held', pointer && 'liftable', highlighted && 'highlighted'];
   const margin = { x: cell.w / 2, y: cell.h / 2 };
   return (
@@ -30,7 +31,7 @@ function PieceShape({ piece, x, y, offset, cell, path, fillId, url, placed, held
       data-piece={piece}
       data-drag={pointer ? '' : undefined}
       data-held-by={heldBy ?? undefined}
-      transform={`translate(${x},${y})`}
+      transform={`translate(${x},${y})${turns > 0 ? ` rotate(${turns * 90},${cell.w / 2},${cell.h / 2})` : ''}`}
       style={heldBy !== null ? { '--holder': `var(--player${heldBy})` } as CSSProperties : undefined}
       {...pointer}
     >

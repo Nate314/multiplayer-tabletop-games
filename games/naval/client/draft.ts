@@ -27,6 +27,10 @@ export function rotate(draft: Draft, index: number): Draft {
   return withShip(draft, index, { ...ship, orientation: ship.orientation === 'across' ? 'down' : 'across' });
 }
 
+// Takes ship `index` off the grid and back to the tray
+export const removeShip = (draft: Draft, index: number): Draft =>
+  draft[index] === null ? draft : draft.map((ship, i) => (i === index ? null : ship));
+
 export function complete(draft: Draft): Ship[] | null {
   return draft.every(ship => ship !== null) ? (draft as Ship[]) : null;
 }

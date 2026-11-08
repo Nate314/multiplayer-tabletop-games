@@ -29,7 +29,7 @@ export function samePiece(a: Piece | undefined, b: Piece): boolean {
 type Options = {
   canLift(piece: number): boolean;
   positionOf(piece: number): Point; // the piece's top left on the table now
-  onLift(piece: number): void;
+  onLift(piece: number, pointerType: string): void; // pointerType of the press that lifted it: mouse, pen or touch
   onDrop(piece: number, x: number, y: number): void;
 };
 
@@ -93,7 +93,7 @@ export function usePieceDrag(options: Options) {
         window.addEventListener('pointercancel', onEnd);
         grab.current = { piece, stop };
         setDragging({ piece, ...start });
-        latest.current.onLift(piece);
+        latest.current.onLift(piece, event.pointerType);
       }
     };
     bound.current.set(piece, props);

@@ -4,7 +4,7 @@ import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import { FLEET, GRID_SIZE, cellName, fleetError, onGrid, shipAt, shipCells, shotsText } from './fleet.ts';
-import { SALVO } from './options.ts';
+import { ANNOUNCE_LENGTH, SALVO } from './options.ts';
 import type { Cell, GameState, PublicGameState, Result, Seat, Ship, Shot } from './types.ts';
 
 // Seating changes start the setup over: no fleet is kept
@@ -90,14 +90,15 @@ function asTargets(state: GameState, seat: Seat, value: unknown): Cell[] | strin
 }
 
 // The answer to one shot, given the shots already fired at the fleet
-function answer(fleet: Ship[], earlier: Shot[], target: Cell): Shot {
+function answer(fleet: Ship[], earlier: Shot[], target: Cell, announce: boolean): Shot {
   const index = shipAt(fleet, target);
   if (index === -1) return { ...target, result: 'miss' };
   const hit = new Set([...earlier, target].map(cellName));
   const ship = fleet[index];
-  return shipCells(ship).every(c => hit.has(cellName(c)))
-    ? { ...target, result: 'sunk', sunkLength: ship.length }
-    : { ...target, result: 'hit' };
+  const cells = shipCells(ship);
+  if (cells.every(c => hit.has(cellName(c)))) return { ...target, result: 'sunk', sunkLength: ship.length };
+  const first = announce && !earlier.some(shot => cells.some(c => cellName(c) === cellName(shot)));
+  return first ? { ...target, result: 'hit', hitLength: ship.length } : { ...target, result: 'hit' };
 }
 
 export function applyMove(state: GameState, seat: Seat, move: unknown): Result<GameState> {
@@ -108,8 +109,9 @@ export function applyMove(state: GameState, seat: Seat, move: unknown): Result<G
   if (typeof targets === 'string') return { error: targets };
 
   const fleet = state.fleets[opponentOf(seat)] as Ship[];
+  const announce = houseRule(state, ANNOUNCE_LENGTH);
   const fired: Shot[] = [];
-  for (const target of targets) fired.push(answer(fleet, [...state.shots[seat], ...fired], target));
+  for (const target of targets) fired.push(answer(fleet, [...state.shots[seat], ...fired], target, announce));
   const name = state.playerNames[seat];
   const next: GameState = lapseDrawOffer({
     ...state,
