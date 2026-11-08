@@ -145,7 +145,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const tapPiece = (id: string) => setMode(activeMode === id ? null : id as TrayKind);
   const pieces = (['road', 'settlement', 'city'] as const).map(kind => ({
     id: kind, label: kind[0].toUpperCase() + kind.slice(1), count: left[kind],
-    // The outline is on a wrapper, as the piece's own clip-path would cut it off; it keeps white (seat 5) readable
+    // The outline is on a wrapper, as the piece's own clip-path would cut it off; it keeps yellow (seat 4) readable
     icon: (
       <span className="tray-icon" aria-hidden="true">
         {kind === 'road'

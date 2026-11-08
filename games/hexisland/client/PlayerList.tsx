@@ -1,7 +1,8 @@
 import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { RESOURCES } from '../board.ts';
-import { RESOURCE_LABELS, SEAT_SYMBOLS, seatClass } from './layout.ts';
+import { RESOURCE_LABELS, seatClass } from './layout.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 // Every player's points, card counts, knights and road, with the award cards, then the bank
@@ -28,7 +29,7 @@ export default function PlayerList({ gameState, viewer }: { gameState: PublicGam
         return (
           <div key={seat} className={classNames.join(' ')}>
             <div className="player-line">
-              <span className={`player-swatch ${seatClass(seat)}`} aria-hidden="true"><ColorSymbol color={SEAT_SYMBOLS[seat as Seat]} className="swatch-symbol" /></span>
+              <span className={`player-swatch ${seatClass(seat)}`} aria-hidden="true"><ColorSymbol color={SEAT_SYMBOL_COLORS[seat as Seat]} className="swatch-symbol" /></span>
               <span className="player-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
               {status && <span className="player-status">{status}</span>}
               <span className="player-points" title={`Points${hiddenNote}`}>{points[seat] ?? 0} pts</span>
