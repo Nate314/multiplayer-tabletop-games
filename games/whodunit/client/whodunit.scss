@@ -85,7 +85,7 @@
   .wd-board-area {
     flex: 1 1 auto;
     min-width: 0;
-    overflow: auto; // the board keeps 32px squares and scrolls inside its box on a narrow screen
+    overflow: auto; // 32px squares (about 692px with padding); stacked above the panel below 1080px, and below about 724px it scrolls inside its box
   }
 
   .wd-side {
@@ -96,7 +96,7 @@
     min-width: 0;
   }
 
-  @media (max-width: 719px) {
+  @media (max-width: 1079px) {
     .wd-layout {
       flex-direction: column;
       align-items: stretch;
@@ -141,6 +141,8 @@
     gap: 4px;
     box-sizing: border-box;
     margin: 2px;
+    min-height: 0;
+    overflow: hidden; // a crowded room never spills into the corridor
     padding: 6px;
     background: var(--room-bg);
     border: 2px solid var(--room-border);
