@@ -23,7 +23,7 @@ test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
     card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
-    tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
+    tile: ['palacewalls', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'connectfour', 'mancala', 'naval', 'parchisi', 'quoridor', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
     strategy: ['catan', 'corners', 'go', 'monopoly', 'risk', 'splendor', 'tickettoride'],

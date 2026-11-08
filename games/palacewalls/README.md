@@ -1,6 +1,6 @@
-# Azul
+# Palace Walls
 
-Draft colored tiles and decorate your palace wall.
+Draft colored tiles and decorate your palace wall. It plays like Azul.
 
 ## Rules
 

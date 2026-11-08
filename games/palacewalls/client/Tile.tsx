@@ -5,9 +5,9 @@ import { svgUrl } from '../../../src/assets/svgCache.ts';
 import usePreferences from '../../../src/hooks/usePreferences.ts';
 import type { FloorItem } from '../types.ts';
 
-const tileUrl = (kind: FloorItem, plain: boolean) => svgUrl('azul-tile', kind, plain ? 'plain' : 'mark');
+const tileUrl = (kind: FloorItem, plain: boolean) => svgUrl('palacewalls-tile', kind, plain ? 'plain' : 'mark');
 const KINDS: FloorItem[] = ['blue', 'yellow', 'red', 'black', 'cyan', 'first'];
-const AZUL_PIECES = KINDS.flatMap(kind => [tileUrl(kind, false), tileUrl(kind, true)]);
+const PALACEWALLS_PIECES = KINDS.flatMap(kind => [tileUrl(kind, false), tileUrl(kind, true)]);
 
 type TileProps = {
   kind: FloorItem;
@@ -16,10 +16,10 @@ type TileProps = {
   animKey?: string; // the slot the tile fills, for move animations
 };
 
-// A tile drawn by the server (games/azul/svg.ts) with its color's own mark; with Color-blind symbols on, the shared
+// A tile drawn by the server (games/palacewalls/svg.ts) with its color's own mark; with Color-blind symbols on, the shared
 // shape takes the mark's place
 export default function Tile({ kind, faded = false, selected = false, animKey }: TileProps) {
-  usePreloadSvgs(AZUL_PIECES);
+  usePreloadSvgs(PALACEWALLS_PIECES);
   const { colorSymbols } = usePreferences();
   const symbol = colorSymbols && kind !== 'first';
   const classes = ['tile', `tile-${kind}`];

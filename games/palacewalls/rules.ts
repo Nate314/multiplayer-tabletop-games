@@ -1,4 +1,4 @@
-// Azul rules shared by the browser (legal picks and lines) and the server (validation).
+// Palace Walls rules shared by the browser (legal picks and lines) and the server (validation).
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { mapSeats } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';

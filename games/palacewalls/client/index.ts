@@ -6,10 +6,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './azul.scss';
+import './palacewalls.scss';
 
-export const azulClient: ClientGame = {
-  id: 'azul',
+export const palacewallsClient: ClientGame = {
+  id: 'palacewalls',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

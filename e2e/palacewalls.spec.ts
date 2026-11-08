@@ -1,14 +1,14 @@
 import type { Locator, Page } from '@playwright/test';
 import { dismiss, drag, expect, leave, openFaq, setPreference, test, touchDrag, undo, type Seat as SeatFixture } from './fixtures.ts';
-import type { Color, FloorItem, PlayerBoard } from '../games/azul/types.ts';
+import type { Color, FloorItem, PlayerBoard } from '../games/palacewalls/types.ts';
 
-// One test per rule and control in games/azul/README.md. Seat 1 (Alice) goes first. Two players get five factories,
+// One test per rule and control in games/palacewalls/README.md. Seat 1 (Alice) goes first. Two players get five factories,
 // three get seven. Wall row r holds blue at column r, yellow at r + 1, red at r + 2 and so on, wrapping around.
 
 const NAMES = ['Alice', 'Bob', 'Cara'];
 
 async function start(seat: SeatFixture, players = 2) {
-  const table = await seat('azul', NAMES.slice(0, players));
+  const table = await seat('palacewalls', NAMES.slice(0, players));
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -39,7 +39,7 @@ const turnMessage = (page: Page) => page.locator('.turn-message');
 const scoring = (page: Page) => page.getByRole('dialog', { name: 'Round scoring' });
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 
-test.describe('Azul rules', () => {
+test.describe('Palace Walls rules', () => {
   test('picking takes every tile of one color from a factory or the center, and the first from the center takes the marker', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await table.patch({
@@ -232,7 +232,7 @@ test.describe('Azul rules', () => {
   });
 });
 
-test.describe('Azul controls', () => {
+test.describe('Palace Walls controls', () => {
   test('with Color-blind symbols on, every colored tile shows its shape, in factories, pattern lines and the wall', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await table.patch({ factories: factoriesOf(5, ['red', 'blue', 'cyan', 'black']), boards: { 1: boardOf({ lines: { 1: ['yellow', 2] } }), 2: boardOf() } });
@@ -370,7 +370,7 @@ test.describe('Azul controls', () => {
   });
 
   test('the board stays in view for 2.5 seconds before the round summary opens', async ({ seat }) => {
-    const table = await seat('azul', ['Alice', 'Bob'], { motion: true });
+    const table = await seat('palacewalls', ['Alice', 'Bob'], { motion: true });
     const [alice, bob] = table.pages;
     await table.patch({ factories: factoriesOf(5, ['red']), centerHasMarker: false });
     await take(factory(alice, 0), 'red');

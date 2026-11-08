@@ -32,3 +32,13 @@ test('every legacy entry points at a registered game and no old id is still regi
     assert.ok(!Object.hasOwn(LEGACY_IDS, id), `${old} chains through ${id}`);
   }
 });
+
+// Chunk 11's renames: every old id points at its renamed game, and no old id is still registered
+const CHUNK_11: Record<string, string> = { azul: 'palacewalls' };
+test('chunk 11 old ids map to their renamed games', () => {
+  for (const [old, id] of Object.entries(CHUNK_11)) {
+    assert.deepEqual(LEGACY_IDS[old], { id, keepsSaves: true }, old);
+    assert.ok(GAMES.some(game => game.info.id === id), id);
+    assert.ok(!GAMES.some(game => game.info.id === old), old);
+  }
+});

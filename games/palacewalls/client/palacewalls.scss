@@ -1,5 +1,5 @@
-[data-game="azul"] {
-  /* Azul's blue theme. Every rule is scoped to data-game="azul", so none of it reaches the landing page or other games. */
+[data-game="palacewalls"] {
+  /* Palace Walls' blue theme. Every rule is scoped to data-game="palacewalls", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   color: var(--text);
@@ -22,7 +22,7 @@
   --slot-border: rgba(28, 43, 58, 0.25);
   --highlight: #e08a00;
   --tile: 34px;
-  /* The shared platform controls (Settings, the History gear, the house rules panel) in Azul's colors; each follows the
+  /* The shared platform controls (Settings, the History gear, the house rules panel) in Palace Walls' colors; each follows the
      dark values below, which redefine the variables they point at */
   --platform-page-bg: var(--page-bg-start);
   --platform-text: var(--text);
@@ -57,7 +57,7 @@
 
 /* Page: the blue background, with the header and the game in a centered column */
 
-.game-root[data-game="azul"] {
+.game-root[data-game="palacewalls"] {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 0 16px 32px;
@@ -65,7 +65,7 @@
   background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
 }
 
-[data-game="azul"] {
+[data-game="palacewalls"] {
   .game-header {
     display: flex;
     align-items: center;
@@ -213,7 +213,7 @@
     flex: none;
   }
 
-  /* The tile is the server drawing (games/azul/svg.ts); its color-blind symbol sits on top, in the tile's color */
+  /* The tile is the server drawing (games/palacewalls/svg.ts); its color-blind symbol sits on top, in the tile's color */
   .tile {
     display: inline-flex;
     align-items: center;

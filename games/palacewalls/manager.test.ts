@@ -2,22 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys } from '../../server/testing.ts';
-import { azul } from './index.ts';
+import { palacewalls } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'azul/g1';
+const ROOM = 'palacewalls/g1';
 const acknowledge = { type: 'acknowledgeRound' };
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([azul]));
-  for (const name of names) manager.join('azul', 'g1', name);
+  const manager = rememberingKeys(createGameManager([palacewalls]));
+  for (const name of names) manager.join('palacewalls', 'g1', name);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Azul's
+// The manager is generic over games, so tests narrow the public state to Palace Walls'
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -47,9 +47,9 @@ function playRound(manager: Manager): PublicGameState {
 }
 
 test('what browsers receive never includes the bag or the lid', () => {
-  const manager = rememberingKeys(createGameManager([azul]));
-  const first = manager.join('azul', 'g1', 'A');
-  const second = manager.join('azul', 'g1', 'B');
+  const manager = rememberingKeys(createGameManager([palacewalls]));
+  const first = manager.join('palacewalls', 'g1', 'A');
+  const second = manager.join('palacewalls', 'g1', 'B');
   if ('error' in first || 'error' in second) assert.fail('join failed');
   const afterMove = ok(manager.move(ROOM, 1, anyMove(second.state as PublicGameState)));
   const three = gameWith('A', 'B', 'C').disconnect(ROOM, 3);

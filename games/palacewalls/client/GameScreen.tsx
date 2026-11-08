@@ -11,12 +11,12 @@ import { useDrag } from '../../../src/drag/useDrag.ts';
 import { canPlaceOnLine } from '../rules.ts';
 import { parseDragId, parseDropTarget } from './drag.ts';
 import animateMove from './animateMove.ts';
-import { azulInfo } from '../info.ts';
+import { palacewallsInfo } from '../info.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Selection } from './selection.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
-const MAX_PLAYERS = azulInfo.maxPlayers;
+const MAX_PLAYERS = palacewallsInfo.maxPlayers;
 // The last tile and the wall tiling stay in view this long, counted from the move's animation start
 const SUMMARY_DELAY_MS = 2500;
 

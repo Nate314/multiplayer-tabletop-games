@@ -7,7 +7,7 @@ const label = (text: string, x: number, y: number, size: number) =>
 
 // One outline drawing per game for the landing page, in currentColor
 const GAME_ICONS: Record<string, () => string> = {
-  azul: () => lineIcon(el('path', { d: 'M12 3l9 9-9 9-9-9z' }), solid('path', { d: 'M12 8l4 4-4 4-4-4z' })),
+  palacewalls: () => lineIcon(el('rect', { x: 3, y: 3, width: 5, height: 5 }), el('rect', { x: 9.5, y: 3, width: 5, height: 5 }), el('rect', { x: 16, y: 3, width: 5, height: 5 }), el('rect', { x: 3, y: 9.5, width: 5, height: 5 }), el('rect', { x: 16, y: 9.5, width: 5, height: 5 }), el('rect', { x: 3, y: 16, width: 5, height: 5 }), el('rect', { x: 9.5, y: 16, width: 5, height: 5 }), el('rect', { x: 16, y: 16, width: 5, height: 5 }), solid('rect', { x: 9.5, y: 9.5, width: 5, height: 5 })),
   backgammon: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 1.5 }),
     el('path', { d: 'M5.5 4l2 6.5 2-6.5M14.5 4l2 6.5 2-6.5M5.5 20l2-6.5 2 6.5M14.5 20l2-6.5 2 6.5' })),
   carcassonne: () => lineIcon(el('path', { d: 'M4 21V6h3v3h3V6h4v3h3V6h3v15z' }), el('path', { d: 'M10 21v-4a2 2 0 0 1 4 0v4' })),

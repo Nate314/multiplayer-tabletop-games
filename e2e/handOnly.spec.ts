@@ -164,7 +164,7 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Place tile').click();
     }
   },
-  azul: {
+  palacewalls: {
     keep: ['.turn-message', '.board-mine'],
     hide: ['.board-other'],
     board: '.table',

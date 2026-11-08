@@ -7,7 +7,7 @@ type RoundSummaryDialogProps = {
   gameState: Pick<BasePublicState, 'gameStatus' | 'activePlayers' | 'disconnected' | 'playerNames'>;
   result?: ReactNode; // the line under the title; defaults to the game status, null leaves it out
   acknowledged: Seat[];
-  listDisconnected?: boolean; // Azul's waiting line also names disconnected players
+  listDisconnected?: boolean; // Palace Walls' waiting line also names disconnected players
   playerNumber: Seat;
   onContinue: () => void;
   children: ReactNode;

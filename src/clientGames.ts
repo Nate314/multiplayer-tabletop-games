@@ -32,7 +32,7 @@ export type ClientGame = {
 
 // Each game's client is its own chunk, downloaded when first needed; use loadClientGame, which shares one download per game
 export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
-  azul: () => import('../games/azul/client/index.ts').then(m => m.azulClient),
+  palacewalls: () => import('../games/palacewalls/client/index.ts').then(m => m.palacewallsClient),
   backgammon: () => import('../games/backgammon/client/index.ts').then(m => m.backgammonClient),
   carcassonne: () => import('../games/carcassonne/client/index.ts').then(m => m.carcassonneClient),
   categories: () => import('../games/categories/client/index.ts').then(m => m.categoriesClient),

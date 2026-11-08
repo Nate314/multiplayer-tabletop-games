@@ -1,7 +1,7 @@
 import { el, escapeText, svgDoc, type SvgAsset } from '../../shared/svg/svg.ts';
 
-// Azul's tiles and the first player marker, drawn on the server. The page keeps each tile's border, outline and
-// clipping (client/azul.scss); with Color-blind symbols on, the page asks for the plain tile and lays the shared shape
+// Palace Walls' tiles and the first player marker, drawn on the server. The page keeps each tile's border, outline and
+// clipping (client/palacewalls.scss); with Color-blind symbols on, the page asks for the plain tile and lays the shared shape
 // over it, so colors are never told apart by hue alone
 
 // Each color has its own mark, so colors are not told apart by hue alone
@@ -28,9 +28,9 @@ export function tileSvg(kind: string, style: string): string | null {
   return svgDoc('0 0 40 40', {}, ...parts);
 }
 
-export const AZUL_ASSETS: SvgAsset[] = [
+export const PALACEWALLS_ASSETS: SvgAsset[] = [
   {
-    name: 'azul-tile',
+    name: 'palacewalls-tile',
     params: ['kind', 'mark or plain'],
     samples: [...Object.keys(TILES).map(kind => [kind, 'mark']), ['blue', 'plain']],
     render: ([kind, style]) => tileSvg(kind, style),

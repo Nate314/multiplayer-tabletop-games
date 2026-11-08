@@ -2,7 +2,7 @@ import YouTag from '../../../src/components/YouTag.tsx';
 import RoundSummaryDialog from '../../../src/components/RoundSummaryDialog';
 import { plural } from '../../../shared/text.ts';
 import Tile from './Tile';
-import { azulInfo } from '../info.ts';
+import { palacewallsInfo } from '../info.ts';
 import type { Placement, PublicGameState, RoundSummary as Summary, Seat, SeatSummary } from '../types.ts';
 
 type RoundSummaryProps = {
@@ -76,7 +76,7 @@ function SeatLines({ seat }: { seat: SeatSummary }) {
 export function RoundRows({ summary, gameState, viewer }: { summary: Summary; gameState: PublicGameState; viewer: Seat | null }) {
   const { playerNames, activePlayers, winners } = gameState;
   // Turn order starting with the viewer, as the boards are shown
-  const stepsAfterViewer = (seat: Seat) => (seat - (viewer ?? 0) + azulInfo.maxPlayers) % azulInfo.maxPlayers;
+  const stepsAfterViewer = (seat: Seat) => (seat - (viewer ?? 0) + palacewallsInfo.maxPlayers) % palacewallsInfo.maxPlayers;
   const seats = Object.keys(summary.seats).map(Number).sort((a, b) => stepsAfterViewer(a) - stepsAfterViewer(b));
 
   return (
