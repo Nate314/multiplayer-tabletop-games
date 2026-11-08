@@ -352,9 +352,15 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 640px;
+    width: 1200px;
     max-width: 100%;
     min-width: 0;
+  }
+
+  /* Wide and short so the dialog's fit-to-box scale stays readable: the category cards sit three across */
+  .history-layout .review-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .faq dd {

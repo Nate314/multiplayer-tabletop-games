@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyAction, applyMove, createGameState, deadline, finalStandings, onDeadline, onPlayerLeft, recordsAction, resetLobby, votersOf, waitingOn } from './rules.ts';
+import { applyAction, applyMove, createGameState, deadline, finalStandings, onDeadline, onPlayerDisconnected, onPlayerLeft, recordsAction, resetLobby, votersOf, waitingOn } from './rules.ts';
 import { verdicts } from './scoring.ts';
 import type { GameState, Seat } from './types.ts';
 import { withRules } from '../../server/testing.ts';
@@ -170,6 +170,14 @@ test('a dismissed voter no longer blocks a challenge', () => {
   state = act(state, 2, { type: 'challenge', category: 0, seat: 1 });
   assert.equal(state.challenges[0].verdict, 'open');
   state = onPlayerLeft(without(state, 3), 3);
+  assert.equal(state.challenges[0].verdict, 'rejected');
+});
+
+test('a disconnected voter does not leave a challenge open', () => {
+  let state = review({ 1: ['Banana', ''], 2: ['Bean', ''], 3: ['Beet', ''] });
+  state = act(state, 2, { type: 'challenge', category: 0, seat: 1 });
+  assert.equal(state.challenges[0].verdict, 'open');
+  state = onPlayerDisconnected({ ...state, disconnected: [3] });
   assert.equal(state.challenges[0].verdict, 'rejected');
 });
 

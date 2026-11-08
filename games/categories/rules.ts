@@ -2,7 +2,7 @@ import { everyoneAgreed, houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { acknowledge, awaiting, everyoneReady } from '../../shared/rounds.ts';
 import type { RoundAccess } from '../../shared/rounds.ts';
-import { baseGameState } from '../../shared/seating.ts';
+import { baseGameState, connectedPlayers } from '../../shared/seating.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { seatFields } from '../../shared/spectators.ts';
@@ -81,7 +81,7 @@ function settle(state: GameState): GameState {
   let next = state;
   for (const c of state.challenges) {
     if (c.verdict !== 'open') continue;
-    const voters = votersOf(state, c.seat);
+    const voters = connectedPlayers(state).filter(seat => seat !== c.seat);
     if (!voters.every(seat => c.votes[seat] !== undefined)) continue;
     const rejected = voters.filter(seat => c.votes[seat]).length * 2 > voters.length;
     next = {
@@ -260,7 +260,7 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   return recheck(settle(dropped));
 }
 
-export const onPlayerDisconnected = (state: GameState): GameState => recheck(state);
+export const onPlayerDisconnected = (state: GameState): GameState => recheck(settle(state));
 
 export function waitingOn(state: GameState): Seat[] {
   if (state.isGameOver || state.phaseStartedAt === null) return [];
