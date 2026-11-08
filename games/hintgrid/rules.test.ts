@@ -18,7 +18,7 @@ function seat(state: GameState, count: number): GameState {
 }
 
 function pick(state: GameState, who: Seat, team: Team, clueGiver: boolean): GameState {
-  const result = applyAction(state, who, { type: 'pickRole', team, clueGiver });
+  const result = applyAction(state, who, { type: 'pickRole', team, clueGiver }, () => 0.3);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -52,13 +52,26 @@ test('the lobby has no current player until the teams are ready', () => {
 
 test('a second clue-giver on one team is refused', () => {
   const state = pick(seat(createGameState('g'), 4), 1, 'red', true);
-  assert.deepEqual(applyAction(state, 2, { type: 'pickRole', team: 'red', clueGiver: true }), { error: 'Red already has a clue-giver' });
+  assert.deepEqual(applyAction(state, 2, { type: 'pickRole', team: 'red', clueGiver: true }, () => 0.3), { error: 'Red already has a clue-giver' });
+});
+
+test('a clue-giver who steps down gets a new grid and key, other picks keep it', () => {
+  const state = pick(seat(createGameState('g'), 4), 1, 'red', true);
+  const same = pick(state, 2, 'red', false);
+  assert.deepEqual(same.words, state.words);
+  const after = applyAction(state, 1, { type: 'pickRole', team: 'red', clueGiver: false }, () => 0.9);
+  if ('error' in after) assert.fail(after.error);
+  assert.notDeepEqual(after.state.words, state.words);
+  assert.notDeepEqual(after.state.key, state.key);
+  const evened = applyAction(state, 1, { type: 'evenOut' }, () => 0.9);
+  if ('error' in evened) assert.fail(evened.error);
+  assert.deepEqual(evened.state.words, state.words);
 });
 
 test('role picks are refused once the game has started', () => {
   const state = clued();
-  assert.deepEqual(applyAction(state, 2, { type: 'pickRole', team: 'blue', clueGiver: false }), { error: 'Teams are set once the game starts' });
-  assert.deepEqual(applyAction(state, 2, { type: 'evenOut' }), { error: 'Teams are set once the game starts' });
+  assert.deepEqual(applyAction(state, 2, { type: 'pickRole', team: 'blue', clueGiver: false }, () => 0.3), { error: 'Teams are set once the game starts' });
+  assert.deepEqual(applyAction(state, 2, { type: 'evenOut' }, () => 0.3), { error: 'Teams are set once the game starts' });
 });
 
 test('a clue that is a grid word is refused, whatever its case, and other words are taken', () => {

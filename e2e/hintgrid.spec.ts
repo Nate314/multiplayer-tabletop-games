@@ -77,6 +77,17 @@ test.describe('Hint Grid rules', () => {
     await expect(role(dan)).toContainText('Blue guesser');
   });
 
+  test('a clue-giver who steps down gets a new grid', async ({ seat }) => {
+    const table = await seat('hintgrid', FOUR);
+    const alice = table.pages[0];
+    await button(alice, "Be Red's clue-giver").click();
+    await expect(role(alice)).toContainText('Red clue-giver');
+    const before = await alice.locator('.hint-word').allTextContents();
+    await button(alice, 'Guess for Red').click();
+    await expect(role(alice)).toContainText('Red guesser');
+    await expect.poll(async () => (await alice.locator('.hint-word').allTextContents()).join()).not.toBe(before.join());
+  });
+
   test('Even out balances four unplaced players', async ({ seat }) => {
     const table = await seat('hintgrid', FOUR);
     await button(table.pages[1], 'Even out').click();

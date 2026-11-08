@@ -41,9 +41,8 @@ export function turnHolder(state: GameState): Seat | null {
 
 const seatsOf = (state: GameState, team: Team): Seat[] => state.activePlayers.filter(seat => state.roles[seat]?.team === team);
 
-// Before the start: a fresh grid and key, keeping the roles of the seats still seated
-export function resetLobby(state: GameState, random: Random): GameState {
-  const roles = Object.fromEntries(Object.entries(state.roles).filter(([seat]) => state.activePlayers.includes(Number(seat))));
+// A fresh grid and key for `roles`
+function deal(state: GameState, roles: GameState['roles'], random: Random): GameState {
   const { startingTeam, key } = dealKey(random);
   const fresh: GameState = {
     ...state, roles, words: shuffle(WORDS, random).slice(0, 25), key, revealed: Array<boolean>(25).fill(false),
@@ -52,27 +51,36 @@ export function resetLobby(state: GameState, random: Random): GameState {
   return { ...fresh, currentPlayer: turnHolder(fresh) };
 }
 
-function lobbyState(state: GameState, roles: GameState['roles']): GameState {
-  const next = { ...state, roles };
+// Before the start: a fresh grid and key, keeping the roles of the seats still seated
+export function resetLobby(state: GameState, random: Random): GameState {
+  return deal(state, Object.fromEntries(Object.entries(state.roles).filter(([seat]) => state.activePlayers.includes(Number(seat)))), random);
+}
+
+// A seat that saw the key as clue-giver and stepped down must not guess on the same grid
+const steppedDown = (before: GameState['roles'], after: GameState['roles']): boolean =>
+  Object.keys(before).some(seat => before[Number(seat)]?.clueGiver && !after[Number(seat)]?.clueGiver);
+
+function lobbyState(state: GameState, roles: GameState['roles'], random: Random): GameState {
+  const next = steppedDown(state.roles, roles) ? deal(state, roles, random) : { ...state, roles };
   const holder = turnHolder(next);
   return {
     ...next, currentPlayer: holder,
     gameStatus: holder === null
       ? 'Pick teams: each team needs a clue-giver and a guesser'
-      : `${TEAM_NAMES[state.startingTeam]} starts: ${state.playerNames[holder]} gives the first clue`
+      : `${TEAM_NAMES[next.startingTeam]} starts: ${state.playerNames[holder]} gives the first clue`
   };
 }
 
-export function applyAction(state: GameState, seat: Seat, action: unknown): Result<GameState> {
+export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
   const a = asRecord(action);
   if (state.started || state.isGameOver) return { error: 'Teams are set once the game starts' };
   if (!state.activePlayers.includes(seat)) return { error: 'Invalid move' };
-  if (a?.type === 'evenOut') return { state: lobbyState(state, evenOut(state.roles, state.activePlayers)) };
+  if (a?.type === 'evenOut') return { state: lobbyState(state, evenOut(state.roles, state.activePlayers), random) };
   if (a?.type !== 'pickRole' || !TEAMS.includes(a.team as Team) || typeof a.clueGiver !== 'boolean') return { error: 'Invalid move' };
   const team = a.team as Team;
   const holder = clueGiverOf(state.roles, team);
   if (a.clueGiver && holder !== null && holder !== seat) return { error: `${TEAM_NAMES[team]} already has a clue-giver` };
-  return { state: lobbyState(state, { ...state.roles, [seat]: { team, clueGiver: a.clueGiver } }) };
+  return { state: lobbyState(state, { ...state.roles, [seat]: { team, clueGiver: a.clueGiver } }, random) };
 }
 
 export function allowsOutOfTurn(state: GameState, seat: Seat, move: unknown): boolean {
