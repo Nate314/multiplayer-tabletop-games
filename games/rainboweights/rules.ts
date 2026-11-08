@@ -1,4 +1,4 @@
-// UNO rules shared by the browser (playable cards) and the server (validation).
+// Rainbow Eights rules shared by the browser (playable cards) and the server (validation).
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';
 import { houseRule } from '../../shared/houseRules.ts';
@@ -30,7 +30,7 @@ const VALUES: Value[] = [...NUMBERS, ...ACTIONS, ...WILDS];
 // How many cards the next player draws
 const DRAWS: Partial<Record<Value, number>> = { drawTwo: 2, wildDrawFour: 4 };
 const FAILED_CHALLENGE_DRAW = 6;
-const UNO_PENALTY = 2;
+const LAST_CARD_PENALTY = 2;
 
 // 0 once and 1 to 9, Skip, Reverse and Draw Two twice per color, then 4 Wild and 4 Wild Draw Four: 108 cards
 export function buildDeck(): Card[] {
@@ -371,11 +371,11 @@ function moveHands(state: GameState, seat: Seat, card: Card, swapWith: Seat | un
   return { hands: { ...hands, ...passed }, passedHands: true };
 }
 
-// A play that leaves one card opens the UNO window, already closed if `uno` called it with the play.
+// A play that leaves one card opens the Last card window, already closed if the move's `uno` field called it with the play.
 // A Wild Draw Four waits for its target to accept or challenge it. With stacking, so does a Draw Two, and
 // the target may answer with another Draw Two (on a Draw Two) or Wild Draw Four instead.
 function play(
-  state: GameState, seat: Seat, card: Card, chosen: Color | undefined, uno: boolean, swapWith: Seat | undefined, random: Random
+  state: GameState, seat: Seat, card: Card, chosen: Color | undefined, calledLastCard: boolean, swapWith: Seat | undefined, random: Random
 ): Result<GameState> {
   const hand = state.hands[seat];
   const index = hand.findIndex(held => sameCard(held, card));
@@ -399,7 +399,7 @@ function play(
     hands: { ...state.hands, [seat]: rest },
     discardPile: [...state.discardPile, card],
     currentColor: color,
-    unoWindow: rest.length === 1 ? { seat, called: uno } : null
+    unoWindow: rest.length === 1 ? { seat, called: calledLastCard } : null
   };
   if (rest.length === 0) return { state: endRound(played, seat, card, color, random, jumping) };
 
@@ -425,7 +425,7 @@ function play(
     }
     const { hands, ...moved } = moveHands(played, seat, card, swapWith);
     extra = moved;
-    // Whoever is left with one card by the swap or the pass has no UNO to call
+    // Whoever is left with one card by the swap or the pass has no Last card to call
     dealt = { ...played, hands, unoWindow: null };
   }
 
@@ -501,7 +501,7 @@ export function allowsOutOfTurn(state: GameState, seat: Seat, move: unknown): bo
   return state.hands[seat]?.some(held => sameCard(held, parsed.card)) === true && canJumpIn(state, top, parsed.card);
 }
 
-// Any move closes the UNO window, and the challenger's next move hides a challenged hand again
+// Any move closes the Last card window, and the challenger's next move hides a challenged hand again
 export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
@@ -546,18 +546,18 @@ function acknowledgeRound(state: GameState, seat: Seat, random: Random): Result<
 }
 
 // A call after the play still counts if nobody has caught the player yet
-function callUno(state: GameState, seat: Seat): Result<GameState> {
-  if (state.unoWindow?.seat !== seat) return { error: 'Call UNO when you play your second-to-last card' };
-  return { state: { ...state, unoWindow: { seat, called: true }, gameStatus: `${state.playerNames[seat]} called UNO!` } };
+function callLastCard(state: GameState, seat: Seat): Result<GameState> {
+  if (state.unoWindow?.seat !== seat) return { error: 'Call Last card when you play your second-to-last card' };
+  return { state: { ...state, unoWindow: { seat, called: true }, gameStatus: `${state.playerNames[seat]} called Last card!` } };
 }
 
-// Any other player may catch someone who has not called UNO before the next move; they draw 2
+// Any other player may catch someone who has not called Last card before the next move; they draw 2
 function catchUno(state: GameState, seat: Seat, random: Random): Result<GameState> {
   const open = state.unoWindow;
   if (!open || open.called || open.seat === seat) return { error: 'There is nobody to catch' };
-  const { state: drawn, drew } = dealTo({ ...state, unoWindow: null }, open.seat, UNO_PENALTY, random);
+  const { state: drawn, drew } = dealTo({ ...state, unoWindow: null }, open.seat, LAST_CARD_PENALTY, random);
   const caught = state.playerNames[open.seat];
-  return { state: { ...drawn, gameStatus: `${state.playerNames[seat]} caught ${caught} not calling UNO; ${caught} draws ${drew}` } };
+  return { state: { ...drawn, gameStatus: `${state.playerNames[seat]} caught ${caught} not calling Last card; ${caught} draws ${drew}` } };
 }
 
 export function applyAction(state: GameState, seat: Seat, action: unknown, random: Random): Result<GameState> {
@@ -565,7 +565,7 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, rando
   if (state.undoVote) return { error: 'An undo vote is in progress' };
   if (state.dismissVote) return { error: 'A dismiss vote is in progress' };
   switch (asRecord(action)?.type) {
-    case 'callUno': return callUno(state, seat);
+    case 'callLastCard': return callLastCard(state, seat);
     case 'catchUno': return catchUno(state, seat, random);
     case 'acknowledgeRound': return acknowledgeRound(state, seat, random);
     default: return { error: 'Unknown action' };

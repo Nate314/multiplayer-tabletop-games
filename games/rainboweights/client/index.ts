@@ -6,10 +6,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './uno.scss';
+import './rainboweights.scss';
 
-export const unoClient: ClientGame = {
-  id: 'uno',
+export const rainboweightsClient: ClientGame = {
+  id: 'rainboweights',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

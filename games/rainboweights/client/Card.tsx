@@ -31,7 +31,7 @@ export default function Card({ card, animKey, highlighted = false, onClick, play
   if (drawn) classes.push('newly-drawn');
   const face = (
     <>
-      <ServerSvg url={svgUrl('uno-card', card.color)} className="piece-art" />
+      <ServerSvg url={svgUrl('rainboweights-card', card.color)} className="piece-art" />
       <ColorSymbol color={card.color === 'wild' ? null : card.color} className="card-symbol" />
       <span className="card-face">{SYMBOLS[card.value] ?? card.value}</span>
     </>

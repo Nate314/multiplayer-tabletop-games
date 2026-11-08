@@ -50,8 +50,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [pendingWild, setPendingWild] = useState<CardData | null>(null);
   // A 7 waiting for the player to swap hands with
   const [pendingSwap, setPendingSwap] = useState<CardData | null>(null);
-  // UNO is called with the next play, which leaves one card
-  const [unoArmed, setUnoArmed] = useState(false);
+  // Last card is called with the next play, which leaves one card
+  const [lastCardArmed, setLastCardArmed] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
   const {
     currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable,
@@ -66,12 +66,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // A Wild Draw Four can be answered only by accepting or challenging it, unless stacking lets a card be played on it
   const canPlayCards = isMyTurn && !needsColor && (!answering || pendingDraw !== null);
   const canDrawOrPass = canPlayCards && !answering;
-  // The UNO button calls with the play that leaves one card, or late, before anyone catches you
-  const lateUno = canAct && unoWindow?.seat === playerNumber && !unoWindow.called;
+  // The Last card button calls with the play that leaves one card, or late, before anyone catches you
+  const lateLastCard = canAct && unoWindow?.seat === playerNumber && !unoWindow.called;
   // With jump-in, a number card matching the top card exactly may be played out of turn
   const jumpable = (card: CardData) => canAct && !isMyTurn && currentPlayer !== null && canJumpIn(gameState, discardTop, card);
   const canJump = hand.some(jumpable);
-  const canArmUno = (canPlayCards || canJump) && hand.length === 2 && !lateUno;
+  const canArmLastCard = (canPlayCards || canJump) && hand.length === 2 && !lateLastCard;
   const catchable = canAct && unoWindow !== null && !unoWindow.called && unoWindow.seat !== playerNumber ? unoWindow.seat : null;
   const showSummary = roundSummary !== null && !isGameOver;
 
@@ -79,10 +79,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   useMoveAnimation(screenRef, gameState, animateMove);
 
   useEffect(() => {
-    // A Wild picked up but not played is put back, and an UNO call not yet played is dropped, when the turn changes
+    // A Wild picked up but not played is put back, and a Last card call not yet played is dropped, when the turn changes
     setPendingWild(null);
     setPendingSwap(null);
-    setUnoArmed(false);
+    setLastCardArmed(false);
   }, [currentPlayer, hasDrawn]);
 
   // After drawing, only the drawn card may be played
@@ -107,12 +107,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       setPendingSwap(card);
       return;
     }
-    send({ type: 'play', card, uno: unoArmed });
+    send({ type: 'play', card, uno: lastCardArmed });
   }
 
   function swapWith(seat: Seat) {
     if (!pendingSwap) return;
-    send({ type: 'play', card: pendingSwap, uno: unoArmed, swapWith: seat });
+    send({ type: 'play', card: pendingSwap, uno: lastCardArmed, swapWith: seat });
     setPendingSwap(null);
   }
 
@@ -122,27 +122,27 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       return;
     }
     if (!pendingWild) return;
-    gameService.makeMove({ type: 'play', card: pendingWild, color, uno: unoArmed });
+    gameService.makeMove({ type: 'play', card: pendingWild, color, uno: lastCardArmed });
     setPendingWild(null);
   }
 
-  function callUno() {
-    if (lateUno) gameService.sendAction({ type: 'callUno' });
-    else setUnoArmed(armed => !armed);
+  function callLastCard() {
+    if (lateLastCard) gameService.sendAction({ type: 'callLastCard' });
+    else setLastCardArmed(armed => !armed);
   }
 
   let hint: string | null = null;
   if (needsColor) hint = 'The game starts on a Wild: name the first color';
   else if (answering && pendingDraw) hint = `Play ${stackable} on it, or accept and draw ${pendingDraw.count}`;
   else if (answering) hint = 'Accept the Wild Draw Four, or challenge it';
-  else if (lateUno) hint = 'Call UNO before anyone catches you!';
+  else if (lateLastCard) hint = 'Call Last card before anyone catches you!';
   else if (canJump) hint = 'Jump in: you hold a card identical to the top card';
   else if (isMyTurn) {
     if (pendingWild) hint = 'Choose a color for your Wild';
     else if (pendingSwap) hint = 'Choose a player to swap hands with';
-    else if (unoArmed) hint = 'UNO! Now play your next-to-last card';
+    else if (lastCardArmed) hint = 'Last card! Now play your next-to-last card';
     else if (hasDrawn) hint = 'Play the card you drew, or pass to keep it';
-    else if (hand.length === 2) hint = 'Call UNO before you play your next-to-last card';
+    else if (hand.length === 2) hint = 'Call Last card before you play your next-to-last card';
     else hint = 'Play a matching card, or draw one';
   }
 
@@ -171,12 +171,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             </button>
             <button
               type="button"
-              className="uno-button"
-              aria-pressed={unoArmed}
-              onClick={callUno}
-              disabled={!lateUno && !canArmUno}
+              className="last-card-button"
+              aria-pressed={lastCardArmed}
+              onClick={callLastCard}
+              disabled={!lateLastCard && !canArmLastCard}
             >
-              UNO!
+              Last card!
             </button>
             <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>
               Undo
@@ -184,7 +184,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           </div>
           {catchable !== null && (
             <button type="button" className="catch-button" onClick={() => gameService.sendAction({ type: 'catchUno' })}>
-              Catch {playerNames[catchable]}: no UNO call!
+              Catch {playerNames[catchable]}: no Last card call!
             </button>
           )}
         </div>

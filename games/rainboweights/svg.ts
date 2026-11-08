@@ -1,7 +1,7 @@
 import { el, svgDoc, type SvgAsset } from '../../shared/svg/svg.ts';
 
-// UNO's card faces and back, drawn on the server: the card color (four quarters for a wild) and the tilted oval in
-// the middle, painted with client/uno.scss's --card-* variables. The mark on the oval stays on the page
+// Rainbow Eights' card faces and back, drawn on the server: the card color (four quarters for a wild) and the upright circle in
+// the middle, painted with client/rainboweights.scss's --card-* variables. The mark in the circle stays on the page
 
 const COLORS: Record<string, string> = {
   red: 'var(--card-red, #d72600)',
@@ -20,17 +20,17 @@ function quarters(): string {
 
 export function cardSvg(kind: string): string | null {
   let background: string;
-  let oval = '#fff';
+  let circle = '#fff';
   if (Object.hasOwn(COLORS, kind)) background = el('rect', { width: 100, height: 150, style: `fill: ${COLORS[kind]}` });
   else if (kind === 'wild') background = quarters();
   else if (kind === 'back') {
     background = el('rect', { width: 100, height: 150, style: `fill: ${DARK}` });
-    oval = COLORS.red;
+    circle = COLORS.red;
   } else return null;
   return svgDoc('0 0 100 150', {}, background,
-    el('ellipse', { cx: 50, cy: 75, rx: 39, ry: 43.5, transform: 'rotate(-20 50 75)', style: `fill: ${oval}` }));
+    el('circle', { cx: 50, cy: 75, r: 36, style: `fill: ${circle}` }));
 }
 
-export const UNO_ASSETS: SvgAsset[] = [
-  { name: 'uno-card', params: ['color, wild or back'], samples: [...Object.keys(COLORS), 'wild', 'back'].map(kind => [kind]), render: ([kind]) => cardSvg(kind) },
+export const RAINBOWEIGHTS_ASSETS: SvgAsset[] = [
+  { name: 'rainboweights-card', params: ['color, wild or back'], samples: [...Object.keys(COLORS), 'wild', 'back'].map(kind => [kind]), render: ([kind]) => cardSvg(kind) },
 ];

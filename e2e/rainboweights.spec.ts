@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 import { dismiss, expect, leave, inHouseRules, openFaq, setPreference, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
-import { buildDeck, sameCard } from '../games/uno/rules.ts';
-import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
+import { buildDeck, sameCard } from '../games/rainboweights/rules.ts';
+import type { Card, Color, GameState, Value } from '../games/rainboweights/types.ts';
 
-// One test per rule, control and difference in games/uno/README.md. Players are seated in join order:
+// One test per rule, control and difference in games/rainboweights/README.md. Players are seated in join order:
 // Alice is seat 1, Bob seat 2, Cara seat 3. Piles keep their top card last, as the server does.
 
 const c = (color: Color | 'wild', value: Value): Card => ({ color, value });
@@ -29,7 +29,7 @@ function stacked(top: Card[]): number[] {
 // Seats everyone but the last player, then queues the cut for the dealer (each player's card in seat order) and the
 // deal's starting card, which the last player's join uses
 async function cutAndDeal(seat: Seat, cut: Card[], starter: Card, names: string[]) {
-  const table = await seat('uno', names.slice(0, -1));
+  const table = await seat('rainboweights', names.slice(0, -1));
   await table.random(...stacked(cut), ...stacked([starter]));
   const last = await table.join(names[names.length - 1]);
   return { table, pages: [...table.pages, last] };
@@ -73,7 +73,7 @@ async function deal(table: Table, { hands, discard, color, drawPile = GREENS, cu
 }
 
 async function start(seat: Seat, names = ['Alice', 'Bob', 'Cara'], options?: SeatOptions) {
-  const table = await seat('uno', names, options);
+  const table = await seat('rainboweights', names, options);
   return { table, pages: table.pages };
 }
 
@@ -119,7 +119,7 @@ const scenarios = {
     return cutAndDeal(seat, [c('red', '9'), c('red', '3'), c('red', '2')], starter, ['Alice', 'Bob', 'Cara']);
   },
 
-  // Alice plays her second-to-last card without calling UNO, and Bob and Cara may catch her
+  // Alice plays her second-to-last card without calling Last card, and Bob and Cara may catch her
   async uncalled(seat: Seat) {
     const { table, pages } = await start(seat);
     await deal(table, {
@@ -147,7 +147,7 @@ const scenarios = {
   }
 };
 
-test.describe('UNO rules', () => {
+test.describe('Rainbow Eights rules', () => {
   test('the deck has the standard 108 cards', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat, ['Alice', 'Bob']);
     const state = await table.state<GameState>();
@@ -322,29 +322,29 @@ test.describe('UNO rules', () => {
     await expect(turn(cara)).toHaveText('Your turn');
   });
 
-  test('UNO is called with the second-to-last card, a late call counts until caught, and a caught player draws 2 until the next move', async ({ seat }) => {
+  test('Last card is called with the second-to-last card, a late call counts until caught, and a caught player draws 2 until the next move', async ({ seat }) => {
     // Called with the play: nothing to catch
     const called = await start(seat);
     await deal(called.table, {
       hands: { 1: [c('red', '7'), c('red', '8')], 2: [c('blue', '1'), c('red', '2')], 3: [c('green', '1')] },
       discard: [c('red', '5')]
     });
-    await button(called.pages[0], 'UNO!').click();
+    await button(called.pages[0], 'Last card!').click();
     await play(called.pages[0], 'red 7');
-    await expect(player(called.pages[1], 'Alice').locator('.uno-badge')).toHaveText('UNO!');
+    await expect(player(called.pages[1], 'Alice').locator('.last-card-badge')).toHaveText('Last card!');
     await expect(catchButton(called.pages[1])).toHaveCount(0);
 
     // Not called: caught, and draws 2
     const caught = await scenarios.uncalled(seat);
     await catchButton(caught.pages[1]).click();
-    await expect(status(caught.pages[2])).toHaveText('Bob caught Alice not calling UNO; Alice draws 2');
+    await expect(status(caught.pages[2])).toHaveText('Bob caught Alice not calling Last card; Alice draws 2');
     await expect(countOf(caught.pages[2], 'Alice')).toHaveText('3 cards');
 
     // A late call still counts
     const lateCall = await scenarios.uncalled(seat);
     await expect(catchButton(lateCall.pages[1])).toBeVisible();
-    await button(lateCall.pages[0], 'UNO!').click();
-    await expect(status(lateCall.pages[1])).toHaveText('Alice called UNO!');
+    await button(lateCall.pages[0], 'Last card!').click();
+    await expect(status(lateCall.pages[1])).toHaveText('Alice called Last card!');
     await expect(catchButton(lateCall.pages[1])).toHaveCount(0);
 
     // The next player's move closes the window
@@ -423,7 +423,7 @@ test.describe('UNO rules', () => {
     }
     await expect(countOf(alice, 'Bob')).toHaveText('3 cards');
     await expect(alice.locator('[title="blue 1"]')).toHaveCount(0);
-    await expect(alice.locator('.piles .card-back .card-face')).toHaveText('UNO');
+    await expect(alice.locator('.piles .card-back .card-face')).toHaveCount(0);
     await expect(alice.locator('[title="red Skip"]')).toHaveCount(0);
   });
 
@@ -460,7 +460,7 @@ test.describe('UNO rules', () => {
     await expect(status(pair.pages[0])).toHaveText('Dan wins! Everyone else left.');
   });
 
-  test('an undo needs every player\'s approval, and goes back past UNO calls and catches', async ({ seat }) => {
+  test('an undo needs every player\'s approval, and goes back past Last card calls and catches', async ({ seat }) => {
     const { pages: [alice, bob, cara] } = await scenarios.uncalled(seat);
     await catchButton(bob).click();
     await expect(countOf(cara, 'Alice')).toHaveText('3 cards');
@@ -591,7 +591,7 @@ test.describe('UNO rules', () => {
   });
 });
 
-test.describe('UNO controls', () => {
+test.describe('Rainbow Eights controls', () => {
   test('with Color-blind symbols on, every colored card, the current color and the color choices show a shape', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await deal(table, { hands: { 1: [c('red', '7'), c('blue', '7'), c('green', '7'), c('yellow', '7'), WILD], 2: [c('blue', '1')], 3: [c('blue', '2')] }, discard: [c('red', '5')] });
@@ -673,24 +673,24 @@ test.describe('UNO controls', () => {
     await expect(discardTop(alice)).toHaveAttribute('title', 'red 9');
   });
 
-  test('UNO! with two cards stays pressed until you play, can be clicked right after, and Catch shows for everyone else until the next move', async ({ seat }) => {
+  test('Last card! with two cards stays pressed until you play, can be clicked right after, and Catch shows for everyone else until the next move', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await deal(table, {
       hands: { 1: [c('red', '7'), c('red', '8')], 2: [c('blue', '1'), c('red', '2')], 3: [c('green', '1')] },
       discard: [c('red', '5')]
     });
-    await expect(alice.locator('.hint')).toHaveText('Call UNO before you play your next-to-last card');
-    await button(alice, 'UNO!').click();
-    await expect(button(alice, 'UNO!')).toHaveAttribute('aria-pressed', 'true');
-    await expect(alice.locator('.hint')).toHaveText('UNO! Now play your next-to-last card');
+    await expect(alice.locator('.hint')).toHaveText('Call Last card before you play your next-to-last card');
+    await button(alice, 'Last card!').click();
+    await expect(button(alice, 'Last card!')).toHaveAttribute('aria-pressed', 'true');
+    await expect(alice.locator('.hint')).toHaveText('Last card! Now play your next-to-last card');
     await play(alice, 'red 7');
-    await expect(button(alice, 'UNO!')).toHaveAttribute('aria-pressed', 'false');
-    await expect(button(alice, 'UNO!')).toBeDisabled();
+    await expect(button(alice, 'Last card!')).toHaveAttribute('aria-pressed', 'false');
+    await expect(button(alice, 'Last card!')).toBeDisabled();
 
     const forgot = await scenarios.uncalled(seat);
-    await expect(forgot.pages[0].locator('.hint')).toHaveText('Call UNO before anyone catches you!');
-    await expect(button(forgot.pages[0], 'UNO!')).toBeEnabled();
-    for (const page of forgot.pages.slice(1)) await expect(catchButton(page)).toHaveText('Catch Alice: no UNO call!');
+    await expect(forgot.pages[0].locator('.hint')).toHaveText('Call Last card before anyone catches you!');
+    await expect(button(forgot.pages[0], 'Last card!')).toBeEnabled();
+    for (const page of forgot.pages.slice(1)) await expect(catchButton(page)).toHaveText('Catch Alice: no Last card call!');
     await expect(catchButton(forgot.pages[0])).toHaveCount(0);
     await play(forgot.pages[1], 'red 2');
     for (const page of forgot.pages) await expect(catchButton(page)).toHaveCount(0);
@@ -789,13 +789,13 @@ test.describe('UNO controls', () => {
     const { pages: [alice] } = await start(seat, ['Alice', 'Bob']);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Wild Draw Four');
-    await expect(faq).toContainText('How do I call UNO?');
+    await expect(faq).toContainText('How do I call Last card?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
   });
 });
 
-test.describe('UNO differences from Wikipedia', () => {
+test.describe('Rainbow Eights differences from Wikipedia', () => {
   test('with house rules off there is no stacking a Draw Two, and no jumping in out of turn', async ({ seat }) => {
     const { table, pages: [alice, bob, cara] } = await start(seat);
     await deal(table, {
@@ -827,13 +827,13 @@ test.describe('UNO differences from Wikipedia', () => {
     await scenarios.cutForDealer(seat);
   });
 
-  test('UNO is a button, and the catch window closes when any move is made', async ({ seat }) => {
+  test('Last card is a button, and the catch window closes when any move is made', async ({ seat }) => {
     const { pages: [alice, bob, cara] } = await scenarios.uncalled(seat);
-    await expect(button(alice, 'UNO!')).toBeEnabled();
+    await expect(button(alice, 'Last card!')).toBeEnabled();
     await expect(catchButton(cara)).toBeVisible();
     await button(bob, 'Draw').click();
     await expect(catchButton(cara)).toHaveCount(0);
-    await expect(button(alice, 'UNO!')).toBeDisabled();
+    await expect(button(alice, 'Last card!')).toBeDisabled();
   });
 
   test('a leaver\'s cards go under the draw pile, and a Wild Draw Four played on them is dropped', async ({ seat }) => {
@@ -845,10 +845,10 @@ test.describe('UNO differences from Wikipedia', () => {
   });
 });
 
-test.describe('UNO house rules', () => {
+test.describe('Rainbow Eights house rules', () => {
   test('10 players can join with Most players raised', async ({ seat }) => {
     const names = Array.from({ length: 10 }, (_, index) => `Player${index + 1}`);
-    const table = await seat('uno', names, { maxPlayers: 10 });
+    const table = await seat('rainboweights', names, { maxPlayers: 10 });
     expect(table.pages).toHaveLength(10);
     expect((await table.state<{ activePlayers: number[] }>()).activePlayers).toHaveLength(10);
     for (const page of table.pages) await expect(page.getByText('Game is full')).toHaveCount(0);

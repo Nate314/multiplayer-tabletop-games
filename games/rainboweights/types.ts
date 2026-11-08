@@ -16,7 +16,8 @@ export type Card = { color: Color | 'wild'; value: Value };
 export type Direction = 1 | -1; // 1 plays up through the seats, to the dealer's left; -1 down
 
 export type Move =
-  | { type: 'play'; card: Card; color?: Color; uno?: boolean; swapWith?: Seat } // color is required for a Wild; uno calls UNO with the play; swapWith is required for a 7 under the 7-0 rule
+  // color is required for a Wild; uno calls Last card with the play (saved games store this name; kept from before the rename so older files load); swapWith is required for a 7 under the 7-0 rule
+  | { type: 'play'; card: Card; color?: Color; uno?: boolean; swapWith?: Seat }
   | { type: 'draw' }
   | { type: 'pass' } // only after drawing a playable card
   | { type: 'chooseColor'; color: Color } // the first player names the color after a starting Wild
@@ -25,8 +26,9 @@ export type Move =
 
 // Not turn-bound and not undoable
 export type Action =
-  | { type: 'callUno' } // a late call, still in time if nobody has caught you
-  | { type: 'catchUno' } // the player who did not call UNO draws 2
+  | { type: 'callLastCard' } // a late call, still in time if nobody has caught you
+  // saved games store this name; kept from before the rename so older files load
+  | { type: 'catchUno' } // the player who did not call Last card draws 2
   | { type: 'acknowledgeRound' };
 
 // `target` is who a Skip, Reverse with 2 players, Draw Two or Wild Draw Four hit; `drew` is how many they drew.
@@ -45,8 +47,8 @@ export type LastMove =
 // A Wild Draw Four waiting for its target to accept or challenge. It was legal only if `by` held no card of `previousColor`.
 export type PendingFour = { by: Seat; target: Seat; previousColor: Color };
 
-// The player who just played their second-to-last card; until the next move they may be caught if they have not called UNO
-export type UnoWindow = { seat: Seat; called: boolean };
+// The player who just played their second-to-last card; until the next move they may be caught if they have not called Last card
+export type LastCardWindow = { seat: Seat; called: boolean };
 
 // How one round went. Cards left in hand are counted, not shown.
 export type RoundSummary = {
@@ -74,7 +76,8 @@ export type GameState = BaseGameState & {
   pendingFour: PendingFour | null;
   // With stacking: the cards `target` draws unless they stack another Draw Two or Wild Draw Four. Saved games may lack it.
   pendingDraw: { count: number; target: Seat } | null;
-  unoWindow: UnoWindow | null;
+  // saved games store this name; kept from before the rename so older files load
+  unoWindow: LastCardWindow | null;
   // The challenged player's hand as it was, shown to the challenger only, until the challenger's next move
   revealed: { to: Seat; of: Seat; hand: Card[] } | null;
   roundSummary: RoundSummary | null;

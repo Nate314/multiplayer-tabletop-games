@@ -9,6 +9,7 @@ export const LEGACY_IDS: LegacyIds = {
   racko: { id: 'inorder', keepsSaves: true },
   rook: { id: 'nest', keepsSaves: true },
   skipbo: { id: 'spiteandmalice', keepsSaves: true },
+  uno: { id: 'rainboweights', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

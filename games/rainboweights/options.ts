@@ -1,4 +1,4 @@
-// The house rules of uno, declared apart from the rules so the landing page can list them without loading the rules
+// The house rules of rainboweights, declared apart from the rules so the landing page can list them without loading the rules
 import { targetScoreRule, type ChoiceRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
 
 // A target of 0 ends the game when the first round ends
@@ -20,4 +20,4 @@ export const JUMP_IN_RULE: ToggleRule = {
   id: 'jumpIn', label: 'Jump-in', kind: 'toggle', standard: false,
   help: 'Any player can play a number card out of turn if it matches the top card exactly, and play continues from them'
 };
-export const UNO_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE, JUMP_IN_RULE];
+export const RAINBOWEIGHTS_RULES: HouseRule[] = [TARGET_RULE, STACKING_RULE, SEVEN_ZERO_RULE, DRAW_UNTIL_RULE, JUMP_IN_RULE];

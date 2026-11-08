@@ -18,7 +18,7 @@ import { monopoly } from './monopoly/index.ts';
 import { naval } from './naval/index.ts';
 import { parchisi } from './parchisi/index.ts';
 import { scrabble } from './scrabble/index.ts';
-import { uno } from './uno/index.ts';
+import { rainboweights } from './rainboweights/index.ts';
 import { stagerummy } from './stagerummy/index.ts';
 import { categories } from './categories/index.ts';
 import { drawandguess } from './drawandguess/index.ts';
@@ -55,5 +55,5 @@ import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
   azul, backgammon, carcassonne, catan, charades, checkers, chinesecheckers, chess, categories, codebreaker, connectfour, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, jenga, jigsaw, mancala, monopoly, naval, parchisi, stagerummy, drawandguess,
-  quoridor, inorder, roadtoretirement, risk, nest, rummikub, scrabble, spiteandmalice, snakesladders, spades, splendor, steadyhand, sudoku, holdem, thecrew, tictactoe, tickettoride, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
+  quoridor, inorder, roadtoretirement, risk, nest, rummikub, scrabble, spiteandmalice, snakesladders, spades, splendor, steadyhand, sudoku, holdem, thecrew, tictactoe, tickettoride, tradingfloor, ultimatetictactoe, rainboweights, war, whodunit, yahtzee
 ];

@@ -7,7 +7,7 @@ const showButton = (page: Page) => headerButton(page, 'Show');
 const below = (page: Page) => page.locator('.game-root > :not(.game-header, .hidden-cover) :visible');
 
 test('Hide covers the hand and everything below the header, and Show brings it back', async ({ seat }) => {
-  const { pages: [alice, bob] } = await seat('uno', ['Alice', 'Bob']);
+  const { pages: [alice, bob] } = await seat('rainboweights', ['Alice', 'Bob']);
   const hand = alice.locator('.hand-cards');
   await expect(hand.getByRole('button')).toHaveCount(7);
   await hand.evaluate(element => { element.setAttribute('data-test-mark', ''); }); // proves no remount

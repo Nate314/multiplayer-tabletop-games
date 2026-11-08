@@ -16,7 +16,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
   nest: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
   thecrew: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
-  uno: s => [
+  rainboweights: s => [
     { ...s, currentPlayer: 1, drawnCard: s.hands[1][0] },
     { ...s, revealed: { to: 2, of: 1, hand: s.hands[1] } }
   ],
@@ -96,9 +96,9 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   ]
 };
 
-// Fields of a seat's view that show another seat's secrets (UNO's challenged hand): privateSeatView leaves them out,
+// Fields of a seat's view that show another seat's secrets (Rainbow Eights' challenged hand): privateSeatView leaves them out,
 // so a spectator allowed on one seat never learns another's, and the table view's value stands
-const OTHER_SEATS_SECRETS: Record<string, string[]> = { uno: ['revealed'] };
+const OTHER_SEATS_SECRETS: Record<string, string[]> = { rainboweights: ['revealed'] };
 
 for (const game of GAMES) {
   const id = game.info.id;

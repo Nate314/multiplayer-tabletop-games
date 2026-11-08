@@ -11,7 +11,7 @@ const voteTitle = (page: Page) => page.locator('.pause-vote-title');
 const paused = (page: Page) => page.getByRole('heading', { name: 'Game paused' });
 
 async function started(seat: Seat) {
-  const table = await seat('uno', ['Alice', 'Bob']);
+  const table = await seat('rainboweights', ['Alice', 'Bob']);
   await table.patch({ started: true });
   return table;
 }
@@ -35,7 +35,7 @@ test('everyone agrees to pause, each downloads a file, and Resume continues', as
   const downloading = alice.waitForEvent('download');
   await alice.getByRole('button', { name: 'Download my pause file' }).click();
   const download = await downloading;
-  expect(download.suggestedFilename()).toBe(`uno-${table.gameId}-Alice-paused.json`);
+  expect(download.suggestedFilename()).toBe(`rainboweights-${table.gameId}-Alice-paused.json`);
   const file = JSON.parse(await readFile(await download.path(), 'utf8')) as { seat: number };
   expect(file.seat).toBe(1);
   await bob.getByRole('button', { name: 'Resume', exact: true }).click();
@@ -66,16 +66,16 @@ test('a paused game waits for a missing player', async ({ seat }) => {
   await bob.getByRole('button', { name: 'Back to games' }).click();
   await expect(alice.getByText('Waiting for Bob', { exact: true })).toBeVisible();
   await expect(alice.getByRole('button', { name: 'Resume', exact: true })).toHaveCount(0);
-  await bob.getByRole('button', { name: `Back to ${nameOf('uno')} (${table.gameId})` }).click();
+  await bob.getByRole('button', { name: `Back to ${nameOf('rainboweights')} (${table.gameId})` }).click();
   await expect(paused(bob)).toBeVisible();
   await expect(alice.getByText('Everyone is here')).toBeVisible();
   await expect(alice.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
 });
 
 test('a pass and play device pauses for every seat it holds', async ({ seat, browser, server }) => {
-  const table = await seat('uno', [], { agree: false });
+  const table = await seat('rainboweights', [], { agree: false });
   const device = await newPlayer(browser, server);
-  await joinPassAndPlay(device, 'uno', table.gameId, ['Alice', 'Bob']);
+  await joinPassAndPlay(device, 'rainboweights', table.gameId, ['Alice', 'Bob']);
   await table.patch({ started: true });
   await (await pauseButton(device)).click();
   await expect(paused(device)).toBeVisible();
@@ -115,9 +115,9 @@ test('pausing from the menu on a phone closes the menu', async ({ seat }) => {
 });
 
 test('a pass and play phone pauses from the menu straight to the paused screen', async ({ seat, browser, server }) => {
-  const table = await seat('uno', [], { agree: false });
+  const table = await seat('rainboweights', [], { agree: false });
   const device = await newPlayer(browser, server);
-  await joinPassAndPlay(device, 'uno', table.gameId, ['Alice', 'Bob']);
+  await joinPassAndPlay(device, 'rainboweights', table.gameId, ['Alice', 'Bob']);
   await table.patch({ started: true });
   await pauseFromMenu(device);
   await expect(paused(device)).toBeVisible();
@@ -125,7 +125,7 @@ test('a pass and play phone pauses from the menu straight to the paused screen',
 });
 
 type PauseFileJson = { hand: unknown };
-type UnoState = { currentPlayer: number; hands: unknown };
+type RainbowEightsState = { currentPlayer: number; hands: unknown };
 
 // Pauses Alice and Bob's game, has each download their file and go back to the games (so Alice has left before Bob
 // downloads), then loses the room as a server restart would
@@ -133,7 +133,7 @@ async function lostGame(seat: Seat, server: { url: string }) {
   const table = await started(seat);
   const [alice, bob] = table.pages;
   await pauseAll(alice, bob);
-  const before = await table.state<UnoState>();
+  const before = await table.state<RainbowEightsState>();
   const files: string[] = [];
   for (const page of [alice, bob]) {
     const downloading = page.waitForEvent('download');
@@ -141,7 +141,7 @@ async function lostGame(seat: Seat, server: { url: string }) {
     files.push(await (await downloading).path());
     await page.getByRole('button', { name: 'Back to games' }).click();
   }
-  const response = await fetch(`${server.url}/api/e2e/room/uno/${table.gameId}`, { method: 'DELETE' });
+  const response = await fetch(`${server.url}/api/e2e/room/rainboweights/${table.gameId}`, { method: 'DELETE' });
   expect(response.ok).toBe(true);
   return { table, alice, bob, before, files };
 }
@@ -157,14 +157,14 @@ const waitingRoom = (page: Page) => page.locator('.resume-waiting');
 test("a lost game resumes from everyone's files", async ({ seat, server }) => {
   const { table, alice, bob, before, files } = await lostGame(seat, server);
   await resumeFrom(alice, files[0]);
-  await expect(waitingRoom(alice).getByRole('heading')).toHaveText(`Resuming ${nameOf('uno')} ${table.gameId}`);
+  await expect(waitingRoom(alice).getByRole('heading')).toHaveText(`Resuming ${nameOf('rainboweights')} ${table.gameId}`);
   await expect(waitingRoom(alice).getByText('Alice: file in')).toBeVisible();
   await expect(waitingRoom(alice).getByText('Bob: waiting')).toBeVisible();
   await resumeFrom(bob, files[1]);
   for (const page of [alice, bob]) await expect(page.getByText('Everyone is here')).toBeVisible();
   await alice.getByRole('button', { name: 'Resume', exact: true }).click();
   for (const page of [alice, bob]) await expect(page.locator('.game-screen')).toBeVisible();
-  const after = await table.state<UnoState>();
+  const after = await table.state<RainbowEightsState>();
   expect(after.currentPlayer).toBe(before.currentPlayer);
   expect(after.hands).toEqual(before.hands);
 });
@@ -184,7 +184,7 @@ test('joining by ID while files are awaited explains what to do', async ({ seat,
   const { table, alice, bob, files } = await lostGame(seat, server);
   await resumeFrom(alice, files[0]);
   await expect(waitingRoom(alice).getByText('Bob: waiting')).toBeVisible();
-  await openJoinDialog(bob, 'uno');
+  await openJoinDialog(bob, 'rainboweights');
   await bob.getByLabel('Your name').fill('Bob');
   await bob.getByLabel('Game ID').fill(table.gameId);
   await bob.getByRole('button', { name: 'Join', exact: true }).click();
@@ -196,7 +196,7 @@ test('a spectator sees the pause but no download',async ({ seat, browser, server
   const [alice, bob] = table.pages;
   const cara = await newPlayer(browser, server);
   await cara.goto('/');
-  await cara.locator('.lobby-game').filter({ has: cara.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf('uno')}$`) }) }).click();
+  await cara.locator('.lobby-game').filter({ has: cara.locator('.lobby-game-name', { hasText: new RegExp(`^${nameOf('rainboweights')}$`) }) }).click();
   await cara.getByRole('button', { name: 'Spectator' }).click();
   await cara.getByLabel('Your name').fill('Cara');
   await cara.getByLabel('Game ID').fill(table.gameId);

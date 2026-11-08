@@ -70,8 +70,8 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.holdem-seat'), '.holdem-board'],
     move: async page => { await button(page, /^(Check|Call)/).click(); }
   },
-  uno: {
-    keep: ['.hand', '.turn-message', '.uno-button', '.piles', you('.player')], // UNO! is open to everyone; the catch button shows only while a call is owed
+  rainboweights: {
+    keep: ['.hand', '.turn-message', '.last-card-button', '.piles', you('.player')], // Last card! is open to everyone; the catch button shows only while a call is owed
     hide: [others('.player')],
     move: async page => { await button(page, 'Draw').click(); }
   },

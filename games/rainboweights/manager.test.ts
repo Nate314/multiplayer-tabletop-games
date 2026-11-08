@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
 import { canPlay } from './rules.ts';
-import { uno } from './index.ts';
+import { rainboweights } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'uno/g1';
+const ROOM = 'rainboweights/g1';
 
 // The same deal on every run
 function seeded(seed: number): Random {
@@ -27,14 +27,14 @@ function gameWith(...names: string[]): Manager {
 }
 
 function gameWithRules(values: Record<string, boolean>, ...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([uno], seeded(1)));
-  for (const name of names) manager.join('uno', 'g1', name);
+  const manager = rememberingKeys(createGameManager([rainboweights], seeded(1)));
+  for (const name of names) manager.join('rainboweights', 'g1', name);
   if (Object.keys(values).length > 0) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to UNO's
+// The manager is generic over games, so tests narrow the public state to Rainbow Eights'
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -47,7 +47,7 @@ function viewOf(manager: Manager, viewer: number | null): PublicGameState {
 }
 
 // A legal move for the current player, from their own view: name a color after a starting Wild, accept a
-// Wild Draw Four, else play the card just drawn or the first card that matches (calling UNO), else draw.
+// Wild Draw Four, else play the card just drawn or the first card that matches (calling Last card), else draw.
 // A Wild always asks for red.
 function anyMove(view: PublicGameState): Move {
   const { hand, discardTop, currentColor, drawnCard, pendingFour, pendingDraw } = view;
@@ -88,7 +88,7 @@ test('each player sees only their own hand, and the history sees none', () => {
   });
   assert.notDeepEqual(views[0].hand, views[1].hand);
 
-  const history = (stepsOf(manager, 'uno') as unknown as PublicGameState[]);
+  const history = (stepsOf(manager, 'rainboweights') as unknown as PublicGameState[]);
   assert.equal(history.length, 7);
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
@@ -97,9 +97,9 @@ test('each player sees only their own hand, and the history sees none', () => {
 });
 
 test('the joining player gets their own hand straight away', () => {
-  const manager = rememberingKeys(createGameManager([uno], seeded(2)));
-  manager.join('uno', 'g1', 'A');
-  const joined = manager.join('uno', 'g1', 'B');
+  const manager = rememberingKeys(createGameManager([rainboweights], seeded(2)));
+  manager.join('rainboweights', 'g1', 'A');
+  const joined = manager.join('rainboweights', 'g1', 'B');
   if ('error' in joined) assert.fail(joined.error);
   const view = joined.state as PublicGameState;
   assert.equal(joined.seat, 2);
@@ -159,12 +159,12 @@ test('a challenged hand reaches the challenger\'s view only, never the others or
   assert.deepEqual(viewOf(manager, pending.target).revealed, { of: pending.by, hand: held });
   for (const seat of [1, 2, 3].filter(other => other !== pending.target)) assert.equal(viewOf(manager, seat).revealed, null);
   assert.equal(viewOf(manager, null).revealed, null);
-  for (const past of (stepsOf(manager, 'uno') as unknown as PublicGameState[])) assert.equal(past.revealed, null);
+  for (const past of (stepsOf(manager, 'rainboweights') as unknown as PublicGameState[])) assert.equal(past.revealed, null);
 });
 
 test('a spectator allowed on the challenger never gets the challenged hand, live or in the game file', () => {
   const manager = gameWith('A', 'B', 'C');
-  const dana = manager.join('uno', 'g1', 'Dana', false, undefined, 'spectator');
+  const dana = manager.join('rainboweights', 'g1', 'Dana', false, undefined, 'spectator');
   if ('error' in dana || !dana.spectatorId) assert.fail('Dana could not watch');
   let state = viewOf(manager, null);
   for (let moves = 0; !state.pendingFour && moves < 5000; moves++) state = step(manager);
@@ -179,7 +179,7 @@ test('a spectator allowed on the challenger never gets the challenged hand, live
   assert.equal('revealed' in seen.seatViews[pending.target], false);
 
   for (let moves = 0; !state.isGameOver && moves < 50000; moves++) state = step(manager);
-  const file = manager.gameFile('uno', 'g1', dana.seatKey, new Date(0));
+  const file = manager.gameFile('rainboweights', 'g1', dana.seatKey, new Date(0));
   if (!('file' in file)) assert.fail(file.error);
   for (const { views } of file.file.steps) {
     assert.deepEqual(Object.keys(views ?? {}), [String(pending.target)]);
@@ -255,10 +255,10 @@ test('the second of two jump-ins on the same card is refused', () => {
 });
 
 test('a full game at 10 players', () => {
-  const manager = rememberingKeys(createGameManager([uno], seeded(3)));
-  manager.join('uno', 'g1', 'P1');
+  const manager = rememberingKeys(createGameManager([rainboweights], seeded(3)));
+  manager.join('rainboweights', 'g1', 'P1');
   ok(manager.setHouseRules(ROOM, 1, { values: {}, maxPlayers: 10 }));
-  for (let seat = 2; seat <= 10; seat++) manager.join('uno', 'g1', `P${seat}`);
+  for (let seat = 2; seat <= 10; seat++) manager.join('rainboweights', 'g1', `P${seat}`);
   agreeAll(manager, ROOM);
   let state = viewOf(manager, null);
   assert.equal(state.activePlayers.length, 10);

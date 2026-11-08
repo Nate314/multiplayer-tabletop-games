@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { allowsOutOfTurn, applyAction, applyMove, createGameState, finalStandings, onPlayerDisconnected, onPlayerLeft, resetLobby, toPublicState, waitingOn } from './rules.ts';
-import { unoInfo } from './info.ts';
+import { rainboweightsInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const uno: GameDefinition<GameState, PublicGameState> = {
-  info: unoInfo,
+export const rainboweights: GameDefinition<GameState, PublicGameState> = {
+  info: rainboweightsInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

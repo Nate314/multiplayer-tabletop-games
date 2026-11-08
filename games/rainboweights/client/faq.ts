@@ -38,8 +38,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'When a Wild Draw Four is played on you, click Accept to draw 4 and lose your turn, or Challenge. On a challenge you alone see the other player\'s hand. If they held a card of the color that was current before the Wild Draw Four, they draw 4 instead and you take your turn. If not, you draw 6 and lose your turn. Cards that match only the number, and Wilds, do not count.'
   },
   {
-    question: 'How do I call UNO?',
-    answer: 'When you hold two cards on your turn, click UNO! and then play your next-to-last card. If you forget, you can still click UNO! afterwards. Until the next player moves, any other player can click Catch while you have not called it, and you draw 2 cards. A player who called UNO shows an UNO! badge.'
+    question: 'How do I call Last card?',
+    answer: 'When you hold two cards on your turn, click Last card! and then play your next-to-last card. If you forget, you can still click Last card! afterwards. Until the next player moves, any other player can click Catch while you have not called it, and you draw 2 cards. A player who called Last card shows a Last card! badge.'
   },
   {
     question: 'How is a round scored?',
@@ -63,11 +63,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Why is a card in my hand outlined?',
-    answer: 'It is a card you just drew, including the cards a Draw Two or Wild Draw Four made you take. The outline stays until your next move. The 2 cards a caught missed UNO makes you draw are not outlined. Turn it off with Highlight newly drawn cards in Settings.'
+    answer: 'It is a card you just drew, including the cards a Draw Two or Wild Draw Four made you take. The outline stays until your next move. The 2 cards you draw for a caught missed Last card call are not outlined. Turn it off with Highlight newly drawn cards in Settings.'
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves, and every hand and pile goes back to how it was before that move. Calling UNO, catching and Continue are not moves, so an undo goes back past them too.'
+    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves, and every hand and pile goes back to how it was before that move. Calling Last card, catching and Continue are not moves, so an undo goes back past them too.'
   },
   {
     question: 'What happens if someone leaves?',
@@ -83,7 +83,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does 7-0 work?',
-    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice: click the 7, then click their name. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing. A player left with one card by a swap or a pass has no UNO to call and cannot be caught for it.'
+    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice: click the 7, then click their name. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing. A player left with one card by a swap or a pass has no Last card to call and cannot be caught for it.'
   },
   {
     question: 'What does drawing until you can play do?',
@@ -91,6 +91,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does jump-in work?',
-    answer: 'When the host turns on jump-in, you may play a number card out of turn if it is exactly the same color and number as the top card, for example a red 7 on a red 7. Play then continues from you in the same direction, and the player whose turn it was loses it, along with any card they had drawn. Only number cards can jump in, and not while cards are waiting to be drawn, a Wild Draw Four is waiting to be answered, or the round is over. If two players jump in on the same card, the first one the server receives counts and the other is told that someone else moved first. A jump-in is a move like any other, so it can be undone. It also counts as a move for UNO: a player who has not yet called UNO can no longer be caught once someone jumps in.'
+    answer: 'When the host turns on jump-in, you may play a number card out of turn if it is exactly the same color and number as the top card, for example a red 7 on a red 7. Play then continues from you in the same direction, and the player whose turn it was loses it, along with any card they had drawn. Only number cards can jump in, and not while cards are waiting to be drawn, a Wild Draw Four is waiting to be answered, or the round is over. If two players jump in on the same card, the first one the server receives counts and the other is told that someone else moved first. A jump-in is a move like any other, so it can be undone. It also counts as a move for Last card: a player who has not yet called Last card can no longer be caught once someone jumps in.'
   }
 ];

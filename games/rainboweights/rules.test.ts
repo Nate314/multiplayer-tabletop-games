@@ -6,7 +6,7 @@ import {
   buildDeck, canPlay, cardName, cardPoints, createGameState, cutForDealer, dealRound, handPoints, sameCard, stepFrom,
   targetScore, toPublicState
 } from './rules.ts';
-import { uno } from './index.ts';
+import { rainboweights } from './index.ts';
 import { TARGET_RULE } from './options.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import type { Random } from '../../shared/types.ts';
@@ -49,7 +49,7 @@ function stacked(top: Card[], then: Random = noShuffle): Random {
 function lobby(...names: string[]): GameState {
   let state = createGameState('g');
   for (const name of names) {
-    const result = addPlayer(uno, state, name, seeded(names.length));
+    const result = addPlayer(rainboweights, state, name, seeded(names.length));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -88,13 +88,13 @@ function ok(result: Result<GameState>): GameState {
 }
 
 const move = (state: GameState, seat: number, made: object, random: Random = noShuffle) =>
-  applyMove(uno, state, seat, made, random);
+  applyMove(rainboweights, state, seat, made, random);
 const play = (state: GameState, seat: number, played: Card, color?: Color, uno?: boolean) =>
   move(state, seat, { type: 'play', card: played, color, uno });
 const draw = (state: GameState, seat: number) => move(state, seat, { type: 'draw' });
 const pass = (state: GameState, seat: number) => move(state, seat, { type: 'pass' });
 const act = (state: GameState, seat: number, type: string, random: Random = noShuffle) =>
-  uno.applyAction?.(state, seat, { type }, random, 0) ?? assert.fail('UNO has actions');
+  rainboweights.applyAction?.(state, seat, { type }, random, 0) ?? assert.fail('Rainbow Eights has actions');
 
 test('the deck has the standard 108 cards', () => {
   const deck = buildDeck();
@@ -160,7 +160,7 @@ test('seven cards each are dealt and a starting card flipped, afresh whenever th
 
   const three = lobby('A', 'B', 'C');
   assert.equal(countCards(three), 108);
-  const left = removePlayer(uno, three, 2, seeded(3));
+  const left = removePlayer(rainboweights, three, 2, seeded(3));
   assert.deepEqual(Object.keys(left.hands), ['1', '3']);
   assert.equal(countCards(left), 108);
   assert.equal(left.started, false);
@@ -175,7 +175,7 @@ test('each player draws a card and the highest number deals; ties draw again', (
   // Only the tied players draw again
   assert.equal(cutForDealer([1, 2, 3], stacked([red('7'), blue('7'), red('2'), red('1'), red('4')])), 2);
 
-  const state = uno.resetLobby(lobby('A', 'B', 'C'), stacked([red('2'), red('9'), red('5')], seeded(4)));
+  const state = rainboweights.resetLobby(lobby('A', 'B', 'C'), stacked([red('2'), red('9'), red('5')], seeded(4)));
   assert.equal(state.dealer, 2);
   assert.equal(countCards(state), 108);
 });
@@ -281,8 +281,8 @@ test('plays are validated', () => {
   assert.deepEqual(play(game(), 2, blue('1')), { error: 'Not your turn' });
   assert.deepEqual(move(game(), 1, { type: 'play', card: { color: 'pink', value: '7' } }), { error: 'Invalid move' });
   assert.deepEqual(move(game(), 1, { type: 'play', card: { color: 'red', value: 'wild' } }), { error: 'Invalid move' });
-  assert.deepEqual(applyMove(uno, game(), 1, 'draw'), { error: 'Invalid move' });
-  assert.deepEqual(applyMove(uno, game(), 1, null), { error: 'Invalid move' });
+  assert.deepEqual(applyMove(rainboweights, game(), 1, 'draw'), { error: 'Invalid move' });
+  assert.deepEqual(applyMove(rainboweights, game(), 1, null), { error: 'Invalid move' });
 });
 
 test('a Wild needs a color, which the next card must match', () => {
@@ -387,13 +387,13 @@ test('the challenged hand is shown to the challenger only, and hidden again afte
   assert.equal(toPublicState(next, true, 2).revealed, null);
 });
 
-test('calling UNO with the second-to-last card leaves nothing to catch', () => {
+test('calling Last card with the second-to-last card leaves nothing to catch', () => {
   const called = ok(play(withHand(1, [red('7'), blue('9')]), 1, red('7'), undefined, true));
   assert.deepEqual(called.unoWindow, { seat: 1, called: true });
   assert.deepEqual(act(called, 3, 'catchUno'), { error: 'There is nobody to catch' });
 });
 
-test('a player caught not calling UNO before the next move draws 2', () => {
+test('a player caught not calling Last card before the next move draws 2', () => {
   const forgot = ok(play(withHand(1, [red('7'), blue('9')]), 1, red('7')));
   assert.deepEqual(forgot.unoWindow, { seat: 1, called: false });
   assert.deepEqual(act(forgot, 1, 'catchUno'), { error: 'There is nobody to catch' });
@@ -402,22 +402,22 @@ test('a player caught not calling UNO before the next move draws 2', () => {
   assert.equal(caught.hands[1].length, 3);
   assert.equal(caught.unoWindow, null);
   assert.equal(caught.currentPlayer, 2);
-  assert.equal(caught.gameStatus, 'Cara caught Alice not calling UNO; Alice draws 2');
+  assert.equal(caught.gameStatus, 'Cara caught Alice not calling Last card; Alice draws 2');
   assert.deepEqual(act(caught, 2, 'catchUno'), { error: 'There is nobody to catch' });
 });
 
-test('a late UNO call counts until someone catches it, and the next move closes the window', () => {
+test('a late Last card call counts until someone catches it, and the next move closes the window', () => {
   const forgot = ok(play(withHand(1, [red('7'), blue('9')]), 1, red('7')));
-  assert.deepEqual(act(forgot, 2, 'callUno'), { error: 'Call UNO when you play your second-to-last card' });
-  const late = ok(act(forgot, 1, 'callUno'));
+  assert.deepEqual(act(forgot, 2, 'callLastCard'), { error: 'Call Last card when you play your second-to-last card' });
+  const late = ok(act(forgot, 1, 'callLastCard'));
   assert.deepEqual(late.unoWindow, { seat: 1, called: true });
-  assert.equal(late.gameStatus, 'Alice called UNO!');
+  assert.equal(late.gameStatus, 'Alice called Last card!');
   assert.deepEqual(act(late, 2, 'catchUno'), { error: 'There is nobody to catch' });
 
   const moved = ok(draw(forgot, 2));
   assert.equal(moved.unoWindow, null);
   assert.deepEqual(act(moved, 3, 'catchUno'), { error: 'There is nobody to catch' });
-  assert.deepEqual(act(game(), 1, 'callUno'), { error: 'Call UNO when you play your second-to-last card' });
+  assert.deepEqual(act(game(), 1, 'callLastCard'), { error: 'Call Last card when you play your second-to-last card' });
 });
 
 test('actions are refused during a vote, after the game, or when unknown', () => {
@@ -535,21 +535,21 @@ test('the next round does not wait for disconnected players', () => {
 
   // A disconnect can be all the summary was waiting for
   const waiting = ok(act(ok(act(ended, 1, 'acknowledgeRound')), 2, 'acknowledgeRound'));
-  assert.equal(disconnectPlayer(uno, waiting, 3, seeded(7)).roundNumber, 2);
+  assert.equal(disconnectPlayer(rainboweights, waiting, 3, seeded(7)).roundNumber, 2);
 });
 
 test('a player leaving mid-game puts their hand under the draw pile', () => {
-  const state = removePlayer(uno, game({ currentPlayer: 2, turnHolder: 2 }), 3);
+  const state = removePlayer(rainboweights, game({ currentPlayer: 2, turnHolder: 2 }), 3);
   assert.deepEqual(Object.keys(state.hands), ['1', '2']);
   assert.deepEqual(state.drawPile.slice(0, 2), [blue('3'), blue('4')]);
   assert.equal(state.currentPlayer, 2);
 });
 
 test('the turn of a player who leaves passes on in the direction of play', () => {
-  const upward = removePlayer(uno, game({ currentPlayer: 2, turnHolder: 2 }), 2);
+  const upward = removePlayer(rainboweights, game({ currentPlayer: 2, turnHolder: 2 }), 2);
   assert.equal(upward.currentPlayer, 3);
 
-  const downward = removePlayer(uno, game({ currentPlayer: 2, turnHolder: 2, direction: -1, drawnCard: blue('6') }), 2);
+  const downward = removePlayer(rainboweights, game({ currentPlayer: 2, turnHolder: 2, direction: -1, drawnCard: blue('6') }), 2);
   assert.equal(downward.currentPlayer, 1);
   assert.equal(downward.turnHolder, 1);
   assert.equal(downward.drawnCard, null);
@@ -557,7 +557,7 @@ test('the turn of a player who leaves passes on in the direction of play', () =>
 
 test('a Wild Draw Four waiting on a player who leaves is dropped', () => {
   const four = fourOn([red('7'), blue('9')]);
-  const left = removePlayer(uno, four, 2);
+  const left = removePlayer(rainboweights, four, 2);
   assert.equal(left.pendingFour, null);
   assert.equal(left.currentPlayer, 3);
   assert.equal(ok(play(left, 3, blue('3'))).currentPlayer, 1);
@@ -777,7 +777,7 @@ const jumpRules = { houseRules: withRules({ jumpIn: true }) };
 const jumpGame = (hands: GameState['hands'], overrides: Partial<GameState> = {}) =>
   game({ ...jumpRules, hands: { ...game().hands, ...hands }, ...overrides });
 const jumps = (state: GameState, seat: number, played: Card) =>
-  uno.allowsOutOfTurn?.(state, seat, { type: 'play', card: played }) ?? assert.fail('UNO allows out of turn play');
+  rainboweights.allowsOutOfTurn?.(state, seat, { type: 'play', card: played }) ?? assert.fail('Rainbow Eights allows out of turn play');
 
 test('allowsOutOfTurn accepts only an exact number match with jump-in on', () => {
   const hands = { 2: [red('5'), red('6'), blue('5'), red('skip'), WILD], 3: [blue('3'), blue('4')] };
@@ -789,7 +789,7 @@ test('allowsOutOfTurn accepts only an exact number match with jump-in on', () =>
   const off = game({ hands: { ...game().hands, ...hands } });
   assert.equal(jumps(off, 2, red('5')), false);
   assert.deepEqual(move(off, 2, { type: 'play', card: red('5') }), { error: 'Not your turn' });
-  assert.equal(uno.allowsOutOfTurn?.(state, 2, { type: 'draw' }), false);
+  assert.equal(rainboweights.allowsOutOfTurn?.(state, 2, { type: 'draw' }), false);
   const topAction = jumpGame({ 2: [red('skip')] }, { discardPile: [red('skip')] });
   assert.equal(jumps(topAction, 2, red('skip')), false);
 });
@@ -828,7 +828,7 @@ test('a jump-in that empties the hand goes out', () => {
   assert.equal(out.currentPlayer, null);
 });
 
-test('a jump-in closes the UNO window, and can open its own', () => {
+test('a jump-in closes the Last card window, and can open its own', () => {
   const state = jumpGame({ 2: [red('5'), blue('1'), blue('2')] }, { unoWindow: { seat: 1, called: false } });
   assert.equal(ok(play(state, 2, red('5'))).unoWindow, null);
   assert.deepEqual(ok(play(jumpGame({ 2: [red('5'), blue('1')] }), 2, red('5'))).unoWindow, { seat: 2, called: false });

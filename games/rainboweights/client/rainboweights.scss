@@ -1,5 +1,5 @@
-[data-game="uno"] {
-  /* UNO's red table theme. Every rule is scoped to data-game="uno", so none of it reaches the landing page or other games. */
+[data-game="rainboweights"] {
+  /* Rainbow Eights' red table theme. Every rule is scoped to data-game="rainboweights", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   color: var(--text);
@@ -50,7 +50,7 @@
 
 /* Page: the red background, with the header and the game in a centered column */
 
-.game-root[data-game="uno"] {
+.game-root[data-game="rainboweights"] {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 0 16px 32px;
@@ -58,7 +58,7 @@
   background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
 }
 
-[data-game="uno"] {
+[data-game="rainboweights"] {
   .game-header {
     display: flex;
     align-items: center;
@@ -241,7 +241,7 @@
     z-index: 1;
   }
 
-  /* The tilted white oval in the middle of every card; the mark on it stays upright, so a 7 never reads as a 1 */
+  /* The upright white circle in the middle of every card; the mark on it stays upright, so a 7 never reads as a 1 */
 
   .card-face {
     position: relative;
@@ -256,7 +256,7 @@
     line-height: 1;
   }
 
-  /* The card color and its oval are the server drawing (games/uno/svg.ts) */
+  /* The card color and its circle are the server drawing (games/rainboweights/svg.ts) */
   .card-red {
     --face-color: var(--card-red);
   }
@@ -277,15 +277,6 @@
     --face-color: var(--card-blue);
   }
 
-  .card-back {
-    --face-color: var(--card-red);
-  }
-
-  .card-back .card-face {
-    color: var(--card-yellow);
-    font-size: calc(var(--card-w) * 0.24);
-    font-style: italic;
-  }
 
   .card-empty {
     background: none;
@@ -394,7 +385,7 @@
     font-size: 0.85rem;
   }
 
-  .uno-badge {
+  .last-card-badge {
     padding: 1px 8px;
     border-radius: 10px;
     background: var(--card-red);
@@ -538,16 +529,16 @@
     padding-top: 12px;
   }
 
-  /* Calling UNO, catching a player who did not, and answering a Wild Draw Four */
+  /* Calling Last card, catching a player who did not, and answering a Wild Draw Four */
 
   .action-buttons {
     flex-wrap: wrap;
   }
 
-  /* Pressed: UNO is called with the next play. Beats the shared hover color, which would hide the dark text. */
+  /* Pressed: Last card is called with the next play. Beats the shared hover color, which would hide the dark text. */
 
-  .action-buttons .uno-button[aria-pressed="true"],
-  .action-buttons .uno-button[aria-pressed="true"]:hover {
+  .action-buttons .last-card-button[aria-pressed="true"],
+  .action-buttons .last-card-button[aria-pressed="true"]:hover {
     background: var(--card-yellow);
     color: #3a2a00;
     box-shadow: 0 0 0 2px var(--button-bg);
@@ -713,7 +704,7 @@
   /* The history shows the table and any hand without their panel shadow */
 
   /* A fixed width, so a hand shown with View as wraps instead of stretching the History board into one long row;
-     an UNO hand has no upper size */
+     a Rainbow Eights hand has no upper size */
   .history-board-content {
     width: 520px;
   }

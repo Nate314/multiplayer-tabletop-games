@@ -1295,7 +1295,7 @@ export function createGameManager(
 
     // The finished game as a version 2 file: each step as the table sees it plus one view per seat
     // A spectator's file has only the seats that allowed them, each as the table plus that seat's private fields,
-    // the same as their live view, so nothing a seat saw of another seat (an UNO challenge) reaches them
+    // the same as their live view, so nothing a seat saw of another seat (a Wild Draw Four challenge) reaches them
     gameFile(gameType: unknown, gameId: unknown, credential: unknown, now: Date, n?: number): { file: GameFile } | { error: string } {
       const found = findHistoryRoom(gameType, gameId, credential, n);
       if (!found) return { error: NOT_AVAILABLE };

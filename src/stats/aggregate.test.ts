@@ -36,7 +36,7 @@ test('people: wins, win rate, streak and favorite game, names grouped ignoring c
 });
 
 test('people: shown in the spelling of the most recent game, favorite ties go to the most recent', () => {
-  const people = peopleStats([game('chess', day(1), [['ANN', 1], ['Bo', 2]]), game('uno', day(2), [['ann', 1], ['Bo', 2]])]);
+  const people = peopleStats([game('chess', day(1), [['ANN', 1], ['Bo', 2]]), game('rainboweights', day(2), [['ann', 1], ['Bo', 2]])]);
   assert.equal(people.find(p => p.name === 'ANN')?.favoriteGame, 'chess');
 });
 
