@@ -8,7 +8,7 @@ import {
   hasPathToGoal,
   isValidWallPlacement
 } from './rules.ts';
-import { quoridor } from './index.ts';
+import { pawnsandwalls } from './index.ts';
 import { addPlayer, removePlayer, applyMove } from '../../shared/seating.ts';
 import type { BoardState, GameState, Move, Position, Seat, Wall } from './types.ts';
 
@@ -126,13 +126,13 @@ function seated(result: ReturnType<typeof addPlayer<GameState>>) {
 }
 
 function lobby(...names: string[]): GameState {
-  let state = quoridor.createGameState('g1');
-  for (const name of names) state = seated(addPlayer(quoridor, state, name)).state;
+  let state = pawnsandwalls.createGameState('g1');
+  for (const name of names) state = seated(addPlayer(pawnsandwalls, state, name)).state;
   return state;
 }
 
 function play(state: GameState, seat: Seat, move: Move): GameState {
-  const result = applyMove(quoridor, state, seat, move);
+  const result = applyMove(pawnsandwalls, state, seat, move);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -151,55 +151,55 @@ test('players take seats in order on their start squares', () => {
 test('lobby wall counts follow the player count', () => {
   let state = lobby('A', 'B');
   assert.deepEqual(state.wallCounts, { 1: 10, 2: 10 });
-  state = seated(addPlayer(quoridor, state, 'C')).state;
+  state = seated(addPlayer(pawnsandwalls, state, 'C')).state;
   assert.deepEqual(state.wallCounts, { 1: 6, 2: 6, 3: 6 });
-  state = removePlayer(quoridor, state, 3);
+  state = removePlayer(pawnsandwalls, state, 3);
   assert.deepEqual(state.wallCounts, { 1: 10, 2: 10 });
 });
 
 test('a freed lobby seat is reused and the lowest seat moves first', () => {
-  const state = removePlayer(quoridor, lobby('A', 'B', 'C'), 1);
+  const state = removePlayer(pawnsandwalls, lobby('A', 'B', 'C'), 1);
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.pawns[1], undefined);
   assert.equal(state.gameStatus, 'A left');
-  const result = seated(addPlayer(quoridor, state, 'D'));
+  const result = seated(addPlayer(pawnsandwalls, state, 'D'));
   assert.equal(result.seat, 1);
   assert.equal(result.state.currentPlayer, 1);
 });
 
 test('a fifth player is refused', () => {
-  assert.deepEqual(addPlayer(quoridor, lobby('A', 'B', 'C', 'D'), 'E'), { error: 'Game is full' });
+  assert.deepEqual(addPlayer(pawnsandwalls, lobby('A', 'B', 'C', 'D'), 'E'), { error: 'Game is full' });
 });
 
 test('joining is refused after the first move and wall counts freeze', () => {
   const state = play(lobby('A', 'B'), 1, step(7, 4));
   assert.equal(state.started, true);
-  assert.deepEqual(addPlayer(quoridor, state, 'C'), { error: 'Game already in progress' });
+  assert.deepEqual(addPlayer(pawnsandwalls, state, 'C'), { error: 'Game already in progress' });
   assert.deepEqual(state.wallCounts, { 1: 10, 2: 10 });
 });
 
 test('moves need at least two players', () => {
-  assert.deepEqual(applyMove(quoridor, lobby('A'), 1, step(7, 4)), { error: 'Waiting for more players' });
+  assert.deepEqual(applyMove(pawnsandwalls, lobby('A'), 1, step(7, 4)), { error: 'Waiting for more players' });
 });
 
 test('rejects malformed and illegal moves', () => {
   const state = lobby('A', 'B');
-  assert.deepEqual(applyMove(quoridor, state, 2, step(1, 4)), { error: 'Not your turn' });
-  assert.deepEqual(applyMove(quoridor, state, 1, step(6, 4)), { error: 'Invalid move' });
-  assert.deepEqual(applyMove(quoridor, state, 1, { type: 'move', row: '7', col: '4' }), { error: 'Invalid move' });
-  assert.deepEqual(applyMove(quoridor, state, 1, undefined), { error: 'Unknown move type' });
-  assert.deepEqual(applyMove(quoridor, state, 1, { type: 'teleport' }), { error: 'Unknown move type' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 2, step(1, 4)), { error: 'Not your turn' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, step(6, 4)), { error: 'Invalid move' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, { type: 'move', row: '7', col: '4' }), { error: 'Invalid move' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, undefined), { error: 'Unknown move type' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, { type: 'teleport' }), { error: 'Unknown move type' });
   assert.deepEqual(
-    applyMove(quoridor, state, 1, { type: 'wall', row: 8, col: 0, orientation: 'horizontal' }),
+    applyMove(pawnsandwalls, state, 1, { type: 'wall', row: 8, col: 0, orientation: 'horizontal' }),
     { error: 'Invalid wall placement' }
   );
 });
 
 test('rejects moves that are not objects', () => {
   const state = lobby('A', 'B');
-  assert.deepEqual(applyMove(quoridor, state, 1, 'move'), { error: 'Unknown move type' });
-  assert.deepEqual(applyMove(quoridor, state, 1, []), { error: 'Unknown move type' });
-  assert.deepEqual(applyMove(quoridor, state, 1, null), { error: 'Unknown move type' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, 'move'), { error: 'Unknown move type' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, []), { error: 'Unknown move type' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, null), { error: 'Unknown move type' });
 });
 
 test('a pawn move updates position, last move, status and turn', () => {
@@ -221,7 +221,7 @@ test('a wall uses one wall and records the last move', () => {
 test('a player with no walls left cannot place one', () => {
   const state = { ...lobby('A', 'B'), wallCounts: { 1: 0, 2: 10 } };
   assert.deepEqual(
-    applyMove(quoridor, state, 1, { type: 'wall', row: 3, col: 3, orientation: 'horizontal' }),
+    applyMove(pawnsandwalls, state, 1, { type: 'wall', row: 3, col: 3, orientation: 'horizontal' }),
     { error: 'No walls left' }
   );
 });
@@ -239,14 +239,14 @@ test('reaching the goal edge wins, for every seat', () => {
     assert.equal(state.isGameOver, true);
     assert.deepEqual(state.winners, [seat]);
     assert.equal(state.gameStatus, `${state.playerNames[seat]} wins!`);
-    assert.deepEqual(applyMove(quoridor, state, seat, step(from.row, from.col)), { error: 'The game is over' });
+    assert.deepEqual(applyMove(pawnsandwalls, state, seat, step(from.row, from.col)), { error: 'The game is over' });
   }
 });
 
 test('turns skip players who left, and their pawn leaves the board', () => {
   let state = play(lobby('A', 'B', 'C'), 1, step(7, 4));
   assert.equal(state.currentPlayer, 2);
-  state = removePlayer(quoridor, state, 2);
+  state = removePlayer(pawnsandwalls, state, 2);
   assert.equal(state.currentPlayer, 3);
   assert.equal(state.gameStatus, 'B was dismissed');
   assert.equal(state.pawns[2], undefined);
@@ -256,7 +256,7 @@ test('turns skip players who left, and their pawn leaves the board', () => {
 });
 
 test('the last connected player wins', () => {
-  const state = removePlayer(quoridor, play(lobby('A', 'B'), 1, step(7, 4)), 1);
+  const state = removePlayer(pawnsandwalls, play(lobby('A', 'B'), 1, step(7, 4)), 1);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [2]);
   assert.equal(state.gameStatus, 'B wins! Everyone else left.');
@@ -264,7 +264,7 @@ test('the last connected player wins', () => {
 
 test('moves are blocked while an undo vote is open', () => {
   const state = { ...lobby('A', 'B'), undoVote: { requestedBy: 2, votes: { 2: true } } };
-  assert.deepEqual(applyMove(quoridor, state, 1, step(7, 4)), { error: 'An undo vote is in progress' });
+  assert.deepEqual(applyMove(pawnsandwalls, state, 1, step(7, 4)), { error: 'An undo vote is in progress' });
 });
 
 test('a leave after the game is over clears an open undo vote when fewer than two remain', () => {
@@ -274,7 +274,7 @@ test('a leave after the game is over clears an open undo vote when fewer than tw
     winners: [1],
     undoVote: { requestedBy: 2, votes: { 2: true } }
   };
-  const state = removePlayer(quoridor, over, 1);
+  const state = removePlayer(pawnsandwalls, over, 1);
   assert.equal(state.undoVote, null);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);

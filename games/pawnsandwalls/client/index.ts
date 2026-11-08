@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './quoridor.scss';
+import './pawnsandwalls.scss';
 
-export const quoridorClient: ClientGame = {
-  id: 'quoridor',
+export const pawnsandwallsClient: ClientGame = {
+  id: 'pawnsandwalls',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

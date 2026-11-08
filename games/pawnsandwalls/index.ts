@@ -1,10 +1,10 @@
 import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { applyMove, createGameState, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { quoridorInfo } from './info.ts';
+import { pawnsandwallsInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const quoridor: GameDefinition<GameState, PublicGameState> = {
-  info: quoridorInfo,
+export const pawnsandwalls: GameDefinition<GameState, PublicGameState> = {
+  info: pawnsandwallsInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

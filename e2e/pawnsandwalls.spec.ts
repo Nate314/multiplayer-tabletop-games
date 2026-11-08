@@ -1,14 +1,14 @@
 import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, undo, type Seat as SeatFixture } from './fixtures.ts';
-import type { PlacedWall, Position } from '../games/quoridor/types.ts';
+import type { PlacedWall, Position } from '../games/pawnsandwalls/types.ts';
 
-// One test per rule and control in games/quoridor/README.md. Every player sees the board the same way up: row 0 is
+// One test per rule and control in games/pawnsandwalls/README.md. Every player sees the board the same way up: row 0 is
 // the top, where Alice (seat 1) is heading, and Bob (seat 2) starts there heading for row 8.
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan'];
 
 async function start(seat: SeatFixture, players = 2) {
-  const table = await seat('quoridor', NAMES.slice(0, players));
+  const table = await seat('pawnsandwalls', NAMES.slice(0, players));
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -46,7 +46,7 @@ const squares = (...positions: Position[]) => positions.map(({ row, col }) => `$
 const expectHighlighted = (page: Page, ...positions: Position[]) =>
   expect.poll(() => highlighted(page)).toEqual(squares(...positions));
 
-test.describe('Quoridor rules', () => {
+test.describe('Pawns and Walls rules', () => {
   test('players take turns either moving their pawn or placing a wall', async ({ seat }) => {
     const { alice, bob } = await start(seat);
     await turn(alice, 'Alice moves first');
@@ -192,7 +192,7 @@ test.describe('Quoridor rules', () => {
   });
 });
 
-test.describe('Quoridor controls', () => {
+test.describe('Pawns and Walls controls', () => {
   test('with Color-blind symbols on, each pawn and Goals dot shows the shape of its color: blue square, red circle, green triangle, purple cross', async ({ seat }) => {
     const { alice, bob } = await start(seat, 4);
     await setPreference(alice, 'Color-blind symbols', true);
@@ -292,7 +292,7 @@ test.describe('Quoridor controls', () => {
   });
 });
 
-test.describe('Quoridor drag and drop', () => {
+test.describe('Pawns and Walls drag and drop', () => {
 
   test('the pawn dragged onto a highlighted square moves there', async ({ seat }) => {
     const { alice, bob } = await start(seat);

@@ -1,4 +1,4 @@
-[data-game="quoridor"] {
+[data-game="pawnsandwalls"] {
   color-scheme: light;
   color: #FFF;
   --page-bg-start: #A1887F;
@@ -53,7 +53,7 @@
 
 /* Page: the wood background and a column with the header on top */
 
-.game-root[data-game="quoridor"] {
+.game-root[data-game="pawnsandwalls"] {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,7 +66,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-[data-game="quoridor"] {
+[data-game="pawnsandwalls"] {
   button {
     font-weight: 500;
   }
@@ -446,7 +446,7 @@
     pointer-events: none;
   }
 
-  /* Each wall is the server drawing (games/quoridor/svg.ts), recolored through --qd-wall-fill */
+  /* Each wall is the server drawing (games/pawnsandwalls/svg.ts), recolored through --qd-wall-fill */
   .wall-art {
     display: block;
     width: 100%;
@@ -534,7 +534,7 @@
     margin: 10px 0;
     border-radius: 5px;
     text-align: center;
-    animation: quoridor-fade-in 0.5s ease-in;
+    animation: pawnsandwalls-fade-in 0.5s ease-in;
   }
 
   .game-status.game-status-error {
@@ -549,7 +549,7 @@
   }
 }
 
-@keyframes quoridor-fade-in {
+@keyframes pawnsandwalls-fade-in {
   from {
     opacity: 0;
     transform: translateY(-10px);
@@ -560,7 +560,7 @@
   }
 }
 
-[data-game="quoridor"] {
+[data-game="pawnsandwalls"] {
   .player-left {
     opacity: 0.5;
   }
@@ -711,7 +711,7 @@
 
 /* The action tray: Move, then one wall to tap or drag, with its count */
 
-[data-game="quoridor"] {
+[data-game="pawnsandwalls"] {
   .piece-tray {
     flex-direction: row;
     align-items: center;

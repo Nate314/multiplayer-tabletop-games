@@ -227,7 +227,7 @@ const HAND_ONLY: Record<string, Row> = {
       await page.locator('.board > .square', { has: page.locator('.destination-badge') }).first().click();
     }
   },
-  quoridor: {
+  pawnsandwalls: {
     keep: ['.game-info', '.action-buttons', '.piece-tray'],
     hide: [],
     board: '.board-frame',

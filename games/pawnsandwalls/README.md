@@ -1,6 +1,6 @@
-# Quoridor
+# Pawns and Walls
 
-Race your pawn to the far side and block opponents with walls.
+Race your pawn to the far side and block opponents with walls. It plays like Quoridor.
 
 Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2 (red) at the top, Player 3 (green) on the left, Player 4 (purple) on the right.
 

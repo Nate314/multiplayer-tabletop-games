@@ -1,4 +1,4 @@
-// Quoridor rules shared by the browser (move hints, wall previews) and the server (validation).
+// Pawns and Walls rules shared by the browser (move hints, wall previews) and the server (validation).
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
 import type { BoardState, GameState, Position, PublicGameState, Result, Seat, Wall, WallInput } from './types.ts';
