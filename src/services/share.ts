@@ -1,14 +1,15 @@
 export { joinLink } from '../../shared/links.ts';
+import { currentId, LEGACY_IDS, type LegacyIds } from '../../games/legacyIds.ts';
 
 export type JoinLink = { gameType: string; gameId: string };
 export type ShareTarget = { share?: (data: ShareData) => Promise<void>; clipboard?: { writeText(text: string): Promise<void> } };
 export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'manual';
 
-export function parseJoinLink(pathname: string, gameTypes: readonly string[]): JoinLink | null {
+export function parseJoinLink(pathname: string, gameTypes: readonly string[], legacy: LegacyIds = LEGACY_IDS): JoinLink | null {
   const match = /^\/join\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
   if (!match) return null;
   try {
-    const gameType = decodeURIComponent(match[1]);
+    const gameType = currentId(decodeURIComponent(match[1]), legacy);
     const gameId = decodeURIComponent(match[2]);
     return gameTypes.includes(gameType) && gameId ? { gameType, gameId } : null;
   } catch {

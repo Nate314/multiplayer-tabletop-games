@@ -53,3 +53,9 @@ test('without a share sheet or clipboard the link is shown to copy by hand', asy
   assert.equal(await shareGame({}, data), 'manual');
   assert.equal(await shareGame({ clipboard: { writeText: () => Promise.reject(new Error('denied')) } }, data), 'manual');
 });
+
+test('an old join link opens the renamed game', () => {
+  const legacy = { oldgame: { id: 'newgame', keepsSaves: true } };
+  assert.deepEqual(parseJoinLink('/join/oldgame/abc', ['newgame'], legacy), { gameType: 'newgame', gameId: 'abc' });
+  assert.equal(parseJoinLink('/join/__proto__/abc', ['newgame'], legacy), null);
+});
