@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, ghostsSeen, leave, lift, openFaq, recordGhosts, recordTones, test, tones, undo, type Seat, type SeatOptions } from './fixtures.ts';
-import { BLANK, emptyBoard } from '../games/scrabble/rules.ts';
-import type { GameState, Placement } from '../games/scrabble/types.ts';
+import { BLANK, emptyBoard } from '../games/lettergrid/rules.ts';
+import type { GameState, Placement } from '../games/lettergrid/types.ts';
 
-// One test per rule and control in games/scrabble/README.md. Rows and columns here count from 0, as the server
+// One test per rule and control in games/lettergrid/README.md. Rows and columns here count from 0, as the server
 // does; the squares' labels count from 1. Racks are written as strings, with ? for a blank.
 
 type Setup = Partial<Pick<GameState, 'bag' | 'scores' | 'scorelessTurns' | 'currentPlayer'>> & {
@@ -25,7 +25,7 @@ function boardOf(words: Placement[]) {
 
 // Seats the players, then sets up a game in progress on Alice's turn
 async function start(seat: Seat, setup: Setup = {}, names = ['Alice', 'Bob'], options: SeatOptions = {}) {
-  const table = await seat('scrabble', names, options);
+  const table = await seat('lettergrid', names, options);
   const { racks, words = [], ...rest } = setup;
   const patch: Record<string, unknown> = { started: true, currentPlayer: 1, board: boardOf(words), ...rest };
   // The patch replaces the whole of `racks`, so the racks not named keep the tiles they were dealt
@@ -69,7 +69,7 @@ async function placeWord(page: Page, tiles: Placement[]) {
   for (const tile of tiles) await place(page, tile.letter, tile.row, tile.col);
 }
 
-test.describe('Scrabble rules', () => {
+test.describe('Letter Grid rules', () => {
   test('a 15x15 board with premium squares, a double-word center star, and 100 tiles with their usual values', async ({ seat }) => {
     const { alice } = await start(seat, { racks: { 1: 'QZXJKE?' } });
     await expect(alice.locator('.board .square')).toHaveCount(225);
@@ -84,7 +84,7 @@ test.describe('Scrabble rules', () => {
     await expect(rack(alice).locator('.tile-value')).toHaveText(['10', '10', '8', '8', '5', '1']);
     await expect(rackTile(alice, BLANK).locator('.tile-value')).toHaveCount(0);
 
-    const fresh = await seat('scrabble', ['Cara', 'Dan']);
+    const fresh = await seat('lettergrid', ['Cara', 'Dan']);
     await expect(fresh.pages[0].locator('.bag-count')).toHaveText('Tiles in the bag: 86');
     const state = await fresh.state<GameState>();
     const tiles = [...state.bag, ...Object.values(state.racks).flat()];
@@ -93,7 +93,7 @@ test.describe('Scrabble rules', () => {
   });
 
   test('each player draws a tile, closest to A goes first, a blank beats every letter, ties draw again, redone on every join and leave', async ({ seat }) => {
-    const first = await seat('scrabble', ['Alice']);
+    const first = await seat('lettergrid', ['Alice']);
     const [alice] = first.pages;
     // Alice draws the bag's first tile, an A; Bob the ninth of what is left, a B
     await first.random(0, 8.5 / 99);
@@ -117,7 +117,7 @@ test.describe('Scrabble rules', () => {
   });
 
   test('play passes in seat order from whoever goes first', async ({ seat }) => {
-    const first = await seat('scrabble', ['Alice', 'Bob']);
+    const first = await seat('lettergrid', ['Alice', 'Bob']);
     // Alice draws a B, Bob an A and Cara a C, so Bob (seat 2) goes first
     await first.random(9.5 / 100, 0, 9.5 / 98);
     const cara = await first.join('Cara');
@@ -343,7 +343,7 @@ test.describe('Scrabble rules', () => {
   });
 });
 
-test.describe('Scrabble controls', () => {
+test.describe('Letter Grid controls', () => {
   test('click a rack tile then a square to place it; click it again to take it back, or Recall them all', async ({ seat }) => {
     const { alice } = await start(seat, { racks: { 1: 'CATSXYZ' } });
     await rackTile(alice, 'C').click();
@@ -487,7 +487,7 @@ test.describe('Scrabble controls', () => {
   });
 });
 
-test.describe('Scrabble drag and drop', () => {
+test.describe('Letter Grid drag and drop', () => {
   test('an exchanged tile flies into the bag with its face, and nothing is left behind', async ({ seat }) => {
     const { alice } = await start(seat, { racks: { 1: 'CAT?YZE' } }, ['Alice', 'Bob'], { motion: true });
     await recordGhosts(alice, '.game-layout', '.tile');
@@ -566,7 +566,7 @@ test.describe('Scrabble drag and drop', () => {
   });
 });
 
-test.describe('Scrabble differences from Wikipedia', () => {
+test.describe('Letter Grid differences from Wikipedia', () => {
   test('no dictionary: an approved Undo takes a disputed word back and nobody loses a turn', async ({ seat }) => {
     const { alice, bob } = await start(seat, { racks: { 1: 'QXZJKVW' } });
     await placeWord(alice, spell('ZQX', 7, 6));
@@ -582,9 +582,9 @@ test.describe('Scrabble differences from Wikipedia', () => {
   });
 });
 
-test.describe('Scrabble turn timer', () => {
+test.describe('Letter Grid turn timer', () => {
   test('tiles placed when the time runs out go back to the rack and the turn passes', async ({ seat }) => {
-    const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
+    const table = await seat('lettergrid', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
     const [alice, bob] = table.pages;
     const dealt = (await table.state<GameState>()).racks;
     await table.patch({ started: true, currentPlayer: 1, racks: { ...dealt, 1: 'CATAAAA'.split('') }, turnLimitStartedAt: Date.now() + 5000 });
@@ -600,7 +600,7 @@ test.describe('Scrabble turn timer', () => {
   });
 
   test('the last 10 seconds tick for the player on turn, and rack tiles still drag while the timer runs', async ({ seat }) => {
-    const table = await seat('scrabble', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
+    const table = await seat('lettergrid', ['Alice', 'Bob'], { houseRules: { turnMinutes: 1 } });
     const [alice, bob] = table.pages;
     await recordTones(alice);
     await recordTones(bob);

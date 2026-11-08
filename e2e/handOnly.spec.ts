@@ -112,7 +112,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board',
     move: async page => { await page.locator('.hand-tiles .tile-playable').first().click(); }
   },
-  scrabble: {
+  lettergrid: {
     keep: ['.rack', '.turn-message', '.turn-buttons', you('.score-row')],
     hide: [others('.score-row'), '.bag-count'],
     board: '.board-wrap',
@@ -301,7 +301,7 @@ for (const [id, row] of Object.entries(HAND_ONLY)) {
 }
 
 test('History shows the whole table in Hand only', async ({ seat }) => {
-  const table = await seat('scrabble', NAMES.slice(0, 2));
+  const table = await seat('lettergrid', NAMES.slice(0, 2));
   await tableScreen(table);
   const current = (await table.state<{ currentPlayer: number }>()).currentPlayer;
   const page = table.pages[current - 1];

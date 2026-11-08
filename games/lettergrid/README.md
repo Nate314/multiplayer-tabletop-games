@@ -1,10 +1,10 @@
-# Scrabble
+# Letter Grid
 
-Build crossing words from your letter tiles on the premium-square board.
+Build crossing words from your letter tiles on the premium-square board. It plays like Scrabble.
 
 ## Rules
 
-- Standard English Scrabble for two to four players: a 15x15 board with double and triple letter and word squares (the center star is a double word), and the standard 100 tiles with their usual values, including two blanks worth 0
+- Standard English Letter Grid for two to four players: a 15x15 board with double and triple letter and word squares (the center star is a double word), and the standard 100 tiles with their usual values, including two blanks worth 0
 - **Who goes first.** Each player draws a tile, and the one closest to A goes first; a blank beats every letter, and tied players draw again. The tiles go back in the bag before the racks are dealt, and the status line shows the draw. It is redone whenever someone joins or leaves before the first move. Play passes in seat order
 - Everyone holds 7 tiles and draws back up to 7 after each play
 - On your turn, play tiles, exchange tiles, or pass
@@ -50,4 +50,4 @@ Before the first move the host picks the rules and every player must agree. They
 ## Differences from Wikipedia
 
 - **No dictionary.** [Wikipedia](https://en.wikipedia.org/wiki/Scrabble) has words checked against an agreed dictionary and settles disputes by challenge: an unacceptable word is taken off the board and scores 0, and a failed challenge costs the challenger their turn. The site checks no words. A disputed word is taken back by an Undo vote instead, which every player still in the game must approve, and nobody loses a turn over it
-- **Turn limit.** Official tournament Scrabble uses a game clock for each player's total time. This site's optional turn limit instead limits each turn, and running out passes the turn rather than costing points or the game
+- **Turn limit.** Official tournament play uses a game clock for each player's total time. This site's optional turn limit instead limits each turn, and running out passes the turn rather than costing points or the game

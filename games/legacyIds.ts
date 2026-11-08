@@ -12,6 +12,7 @@ export const LEGACY_IDS: LegacyIds = {
   parchisi: { id: 'pachisi', keepsSaves: true },
   quoridor: { id: 'pawnsandwalls', keepsSaves: true },
   rummikub: { id: 'rummytiles', keepsSaves: true },
+  scrabble: { id: 'lettergrid', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

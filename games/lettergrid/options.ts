@@ -1,4 +1,4 @@
-// The house rules of scrabble, declared apart from the rules so the landing page can list them without loading the rules
+// The house rules of lettergrid, declared apart from the rules so the landing page can list them without loading the rules
 import { type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 
 export const TURN_MINUTES: ChoiceRule<'off' | 1 | 2 | 3 | 5> = {
@@ -11,4 +11,4 @@ export const TURN_MINUTES: ChoiceRule<'off' | 1 | 2 | 3 | 5> = {
     { value: 5, label: '5 minutes' }
   ]
 };
-export const SCRABBLE_RULES: HouseRule[] = [TURN_MINUTES];
+export const LETTERGRID_RULES: HouseRule[] = [TURN_MINUTES];

@@ -14,7 +14,7 @@ import {
   toPublicState,
   createGameState
 } from './rules.ts';
-import { scrabble } from './index.ts';
+import { lettergrid } from './index.ts';
 import { withRules } from '../../server/testing.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Board, GameState, Move, Placement, Premium, RackTile, Result, Seat } from './types.ts';
@@ -25,7 +25,7 @@ const first = () => 0;
 function lobby(...names: string[]): GameState {
   let state = createGameState('g1');
   for (const name of names) {
-    const result = addPlayer(scrabble, state, name, first);
+    const result = addPlayer(lettergrid, state, name, first);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -62,7 +62,7 @@ function ok(result: Result<GameState>): GameState {
 }
 
 function move(state: GameState, seat: Seat, input: Move): Result<GameState> {
-  return applyMove(scrabble, state, seat, input, first);
+  return applyMove(lettergrid, state, seat, input, first);
 }
 
 function points(board: Board, tiles: Placement[]): number {
@@ -116,7 +116,7 @@ test('everyone seated gets seven tiles, dealt again when the lobby changes', () 
   assert.deepEqual(two.scores, { 1: 0, 2: 0 });
   assert.equal(two.currentPlayer, 1);
 
-  const left = removePlayer(scrabble, two, 1, first);
+  const left = removePlayer(lettergrid, two, 1, first);
   assert.deepEqual(Object.keys(left.racks), ['2']);
   assert.equal(left.bag.length, 93);
 });
@@ -225,7 +225,7 @@ test('after six scoreless turns in a row play goes on until a player ends the ga
   let state = game({ 1: 'QAAAAAA', 2: 'ZEEEEEE' });
   for (let turn = 0; turn < 5; turn++) state = ok(move(state, state.currentPlayer ?? 0, { type: 'pass' }));
   assert.equal(state.gameStatus, 'A passed');
-  assert.deepEqual(scrabble.applyAction?.(state, 1, { type: 'endGame' }, first, 0), {
+  assert.deepEqual(lettergrid.applyAction?.(state, 1, { type: 'endGame' }, first, 0), {
     error: 'The game can end only after 6 scoreless turns in a row'
   });
 
@@ -238,20 +238,20 @@ test('after six scoreless turns in a row play goes on until a player ends the ga
   assert.equal(seventh.scorelessTurns, 7);
 
   // Either player may end it, not only the one whose turn it is
-  const ended = ok(scrabble.applyAction?.(seventh, 1, { type: 'endGame' }, first, 0) ?? { error: 'no actions' });
+  const ended = ok(lettergrid.applyAction?.(seventh, 1, { type: 'endGame' }, first, 0) ?? { error: 'no actions' });
   assert.equal(ended.isGameOver, true);
   assert.equal(ended.currentPlayer, null);
   assert.deepEqual(ended.scores, { 1: -16, 2: -16 });
   assert.deepEqual(ended.endAdjustments, { 1: -16, 2: -16 });
   assert.deepEqual(ended.winners, [1, 2]);
   assert.equal(ended.gameStatus, 'A ended the game. A and B share the win with -16 points!');
-  assert.deepEqual(scrabble.applyAction?.(ended, 2, { type: 'endGame' }, first, 0), {
+  assert.deepEqual(lettergrid.applyAction?.(ended, 2, { type: 'endGame' }, first, 0), {
     error: 'The game can end only after 6 scoreless turns in a row'
   });
-  assert.deepEqual(scrabble.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first, 0), {
+  assert.deepEqual(lettergrid.applyAction?.({ ...seventh, undoVote: { requestedBy: 2, votes: {} } }, 1, { type: 'endGame' }, first, 0), {
     error: 'An undo vote is in progress'
   });
-  assert.deepEqual(scrabble.applyAction?.(seventh, 1, { type: 'resign' }, first, 0), { error: 'Unknown action' });
+  assert.deepEqual(lettergrid.applyAction?.(seventh, 1, { type: 'resign' }, first, 0), { error: 'Unknown action' });
 
   // A scoring play starts the count again
   const scored = ok(move({ ...game({ 1: 'CATAAAA', 2: 'AAAAAAA' }), scorelessTurns: 7 }, 1, { type: 'play', tiles: CAT }));
@@ -267,7 +267,7 @@ function sequence(...values: number[]): () => number {
 
 // Bo joins Ann, drawing for first with `random`
 function boJoinsAnn(random: () => number): GameState {
-  const result = addPlayer(scrabble, lobby('Ann'), 'Bo', random);
+  const result = addPlayer(lettergrid, lobby('Ann'), 'Bo', random);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
@@ -314,7 +314,7 @@ test('going out with the bag empty ends the game and takes the other racks', () 
 test('a player who leaves mid-game returns their tiles to the bag', () => {
   let state = ok(move(game({ 1: 'CATAAAA', 2: 'AAAAAAA' }), 1, { type: 'play', tiles: CAT }));
   state = { ...state, ...addPlayerRack(state, 3, 'QZXJKEE') };
-  const left = removePlayer(scrabble, state, 3, first);
+  const left = removePlayer(lettergrid, state, 3, first);
   assert.equal(left.bag.length, state.bag.length + 7);
   assert.equal(3 in left.racks, false);
   assert.equal(left.scores[1], 10);
@@ -349,7 +349,7 @@ test('malformed moves are refused', () => {
     { type: 'play', tiles: [{ row: 7, col: 7, letter: 'C', blank: 'yes' }] }, { type: 'exchange', letters: [] },
     { type: 'exchange', letters: ['1'] }
   ];
-  for (const input of bad) assert.deepEqual(applyMove(scrabble, state, 1, input, first), { error: 'Invalid move' });
+  for (const input of bad) assert.deepEqual(applyMove(lettergrid, state, 1, input, first), { error: 'Invalid move' });
   assert.deepEqual(move(state, 1, { type: 'play', tiles: [] }), { error: 'Place at least one tile' });
 });
 
@@ -364,16 +364,16 @@ const timed = (minutes: 'off' | 1 | 2 | 3 | 5 = 2): GameState => ({
 });
 
 test('with the timer off there is no deadline', () => {
-  const state = scrabble.resumeClock?.(timed('off'), T0) as GameState;
+  const state = lettergrid.resumeClock?.(timed('off'), T0) as GameState;
   assert.equal(state.turnLimitStartedAt, null);
-  assert.equal(scrabble.deadline?.(state), null);
-  assert.equal(scrabble.deadline?.(scrabble.createGameState('g1')), null);
+  assert.equal(lettergrid.deadline?.(state), null);
+  assert.equal(lettergrid.deadline?.(lettergrid.createGameState('g1')), null);
 });
 
 test('the turn passes when the timer runs out', () => {
-  const started = scrabble.resumeClock?.(timed(), T0) as GameState;
-  assert.equal(scrabble.deadline?.(started), T0 + 2 * MINUTE);
-  const passed = scrabble.onDeadline?.(started, T0 + 2 * MINUTE, first) as GameState;
+  const started = lettergrid.resumeClock?.(timed(), T0) as GameState;
+  assert.equal(lettergrid.deadline?.(started), T0 + 2 * MINUTE);
+  const passed = lettergrid.onDeadline?.(started, T0 + 2 * MINUTE, first) as GameState;
   assert.equal(passed.currentPlayer, 2);
   assert.deepEqual(passed.lastMove, { type: 'pass', playerNumber: 1, timedOut: true });
   assert.equal(passed.gameStatus, 'A ran out of time');
@@ -381,22 +381,22 @@ test('the turn passes when the timer runs out', () => {
 });
 
 test('a timed-out turn counts as scoreless', () => {
-  let state = { ...(scrabble.resumeClock?.(timed(1), T0) as GameState), scorelessTurns: 5 };
-  state = scrabble.onDeadline?.(state, T0 + MINUTE, first) as GameState;
+  let state = { ...(lettergrid.resumeClock?.(timed(1), T0) as GameState), scorelessTurns: 5 };
+  state = lettergrid.onDeadline?.(state, T0 + MINUTE, first) as GameState;
   assert.equal(state.scorelessTurns, 6);
   assert.match(state.gameStatus, /any player may end the game/);
 });
 
 test('each turn gets the full time', () => {
-  const started = scrabble.resumeClock?.(timed(), T0) as GameState;
-  const next = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 90_000));
+  const started = lettergrid.resumeClock?.(timed(), T0) as GameState;
+  const next = ok(applyMove(lettergrid, started, 1, { type: 'pass' }, first, T0 + 90_000));
   assert.equal(next.turnLimitStartedAt, T0 + 90_000);
-  assert.equal(scrabble.deadline?.(next), T0 + 90_000 + 2 * MINUTE);
-  const late = ok(applyMove(scrabble, started, 1, { type: 'pass' }, first, T0 + 3 * MINUTE));
+  assert.equal(lettergrid.deadline?.(next), T0 + 90_000 + 2 * MINUTE);
+  const late = ok(applyMove(lettergrid, started, 1, { type: 'pass' }, first, T0 + 3 * MINUTE));
   assert.equal(late.lastMove?.type === 'pass' && late.lastMove.timedOut, true); // a move that arrives late is a timeout
-  const loaded = scrabble.resumeClock?.(next, T0 + 9_999_999) as GameState;
-  assert.equal(scrabble.deadline?.(loaded), T0 + 9_999_999 + 2 * MINUTE); // downtime is not charged
-  assert.equal(scrabble.deadline?.(scrabble.resetLobby(loaded, first)), null);
+  const loaded = lettergrid.resumeClock?.(next, T0 + 9_999_999) as GameState;
+  assert.equal(lettergrid.deadline?.(loaded), T0 + 9_999_999 + 2 * MINUTE); // downtime is not charged
+  assert.equal(lettergrid.deadline?.(lettergrid.resetLobby(loaded, first)), null);
 });
 
 test('finalStandings ranks by the highest score', () => {

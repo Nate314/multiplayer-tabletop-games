@@ -1,5 +1,5 @@
-[data-game="scrabble"] {
-  /* Scrabble's green and wood theme. Every rule is scoped to data-game="scrabble", so none of it reaches the landing page or other games. */
+[data-game="lettergrid"] {
+  /* Letter Grid's green and wood theme. Every rule is scoped to data-game="lettergrid", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   --page-bg: #ece6d6;
@@ -16,14 +16,14 @@
   --board-frame: #2f6b4f;
   --square-bg: #e9e1c8;
   --square-text: rgba(42, 36, 28, 0.7);
-  --tw-bg: #d8504a;
-  --dw-bg: #f2aaa2;
-  --tl-bg: #3f7fcf;
-  --dl-bg: #acd3ef;
+  --tw-bg: #1f6b3a;
+  --dw-bg: #bfe3b4;
+  --tl-bg: #5b3a9c;
+  --dl-bg: #d6c9f0;
   --tile-bg: #f3d59b;
   --tile-border: #b98f4c;
   --tile-text: #2a1d0c;
-  --blank-text: #b0361f;
+  --blank-text: #992a16;
   --highlight: #e08a00;
   --drag-over: #1f7a52;
   --platform-page-bg: var(--page-bg);
@@ -50,10 +50,10 @@
     --board-frame: #1d3d2e;
     --square-bg: #3a4039;
     --square-text: rgba(232, 228, 218, 0.75);
-    --tw-bg: #a3403b;
-    --dw-bg: #84524d;
-    --tl-bg: #2d5d96;
-    --dl-bg: #3b6987;
+    --tw-bg: #2a7a48;
+    --dw-bg: #2f5233;
+    --tl-bg: #6b4bb0;
+    --dl-bg: #4a3d70;
     --tile-bg: #e4c68d;
     --tile-border: #9c7a40;
     --highlight: #ffb020;
@@ -498,19 +498,19 @@
 }
 
 @media (max-width: 480px) {
-  .game-root[data-game="scrabble"] {
+  .game-root[data-game="lettergrid"] {
     padding: 0 8px 16px;
   }
 
-  [data-game="scrabble"] .game-header h1 {
+  [data-game="lettergrid"] .game-header h1 {
     font-size: 1.4rem;
   }
 
-  [data-game="scrabble"] .score-list {
+  [data-game="lettergrid"] .score-list {
     margin-top: 8px;
   }
 
-  [data-game="scrabble"] .turn-buttons button {
+  [data-game="lettergrid"] .turn-buttons button {
     padding: 8px 10px;
   }
 }

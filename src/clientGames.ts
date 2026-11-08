@@ -67,7 +67,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   roadtoretirement: () => import('../games/roadtoretirement/client/index.ts').then(m => m.roadtoretirementClient),
   rook: () => import('../games/rook/client/index.ts').then(m => m.rookClient),
   rummytiles: () => import('../games/rummytiles/client/index.ts').then(m => m.rummytilesClient),
-  scrabble: () => import('../games/scrabble/client/index.ts').then(m => m.scrabbleClient),
+  lettergrid: () => import('../games/lettergrid/client/index.ts').then(m => m.lettergridClient),
   skipbo: () => import('../games/skipbo/client/index.ts').then(m => m.skipboClient),
   snakesladders: () => import('../games/snakesladders/client/index.ts').then(m => m.snakesladdersClient),
   spades: () => import('../games/spades/client/index.ts').then(m => m.spadesClient),

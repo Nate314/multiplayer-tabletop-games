@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import { animateMove, identityOrder } from './animateMove.ts';
-import './scrabble.scss';
+import './lettergrid.scss';
 
-export const scrabbleClient: ClientGame = {
-  id: 'scrabble',
+export const lettergridClient: ClientGame = {
+  id: 'lettergrid',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

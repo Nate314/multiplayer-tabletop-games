@@ -1,4 +1,4 @@
-// Scrabble rules shared by the browser (score preview) and the server (validation).
+// Letter Grid rules shared by the browser (score preview) and the server (validation).
 // There is no dictionary: any placement that follows the rules below is accepted, and players dispute a word with Undo.
 import { pointsText, rankStandings } from '../../shared/standings.ts';
 import { handCounts, viewHand } from '../../shared/hands.ts';

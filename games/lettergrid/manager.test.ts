@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
-import { scrabble } from './index.ts';
+import { lettergrid } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'scrabble/g1';
+const ROOM = 'lettergrid/g1';
 
 // Always draws the first tile left in the bag: Player 1 gets AAAAAAA and Player 2 AABBCCD
 const first = () => 0;
@@ -18,13 +18,13 @@ const FIRST_WORD: Move = { type: 'play', tiles: [{ row: 7, col: 7, letter: 'A' }
 const SECOND_WORD: Move = { type: 'play', tiles: [{ row: 8, col: 7, letter: 'B' }] };
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([scrabble], first));
-  for (const name of names) manager.join('scrabble', 'g1', name);
+  const manager = rememberingKeys(createGameManager([lettergrid], first));
+  for (const name of names) manager.join('lettergrid', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Scrabble's
+// The manager is generic over games, so tests narrow the public state to Letter Grid's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -56,7 +56,7 @@ test('the history shows no rack', () => {
   const manager = gameWith('A', 'B');
   ok(manager.move(ROOM, 1, FIRST_WORD));
   ok(manager.move(ROOM, 2, SECOND_WORD));
-  const steps = stepsOf(manager, 'scrabble') as unknown as PublicGameState[] | null;
+  const steps = stepsOf(manager, 'lettergrid') as unknown as PublicGameState[] | null;
   assert.equal(steps?.length, 3);
   for (const step of steps ?? []) {
     assert.deepEqual(step.rack, []);
@@ -106,9 +106,9 @@ test('a dismissed player puts their tiles back in the bag', () => {
 
 test('the turn timer starts when the last player agrees and a restored turn gets a full timer', () => {
   let time = 1_000_000;
-  const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
-  manager.join('scrabble', 'g1', 'A');
-  manager.join('scrabble', 'g1', 'B');
+  const manager = rememberingKeys(createGameManager([lettergrid], first, undefined, { now: () => time }));
+  manager.join('lettergrid', 'g1', 'A');
+  manager.join('lettergrid', 'g1', 'B');
   ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   const raw = () => manager.rawState(ROOM) as unknown as { turnLimitStartedAt: number };
@@ -124,9 +124,9 @@ test('the turn timer starts when the last player agrees and a restored turn gets
 
 test('a vote pauses the platform turn timer but never moves the Turn limit deadline', () => {
   let time = 1_000_000;
-  const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
-  manager.join('scrabble', 'g1', 'A');
-  manager.join('scrabble', 'g1', 'B');
+  const manager = rememberingKeys(createGameManager([lettergrid], first, undefined, { now: () => time }));
+  manager.join('lettergrid', 'g1', 'A');
+  manager.join('lettergrid', 'g1', 'B');
   ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2, turnTimer: 60 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   time += 10_000;
@@ -142,8 +142,8 @@ test('a vote pauses the platform turn timer but never moves the Turn limit deadl
 
 test('dismissing the player to move gives the next player a full turn timer', () => {
   let time = 1_000_000;
-  const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
-  for (const name of ['A', 'B', 'C']) manager.join('scrabble', 'g1', name);
+  const manager = rememberingKeys(createGameManager([lettergrid], first, undefined, { now: () => time }));
+  for (const name of ['A', 'B', 'C']) manager.join('lettergrid', 'g1', name);
   ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, FIRST_WORD));
@@ -159,8 +159,8 @@ test('dismissing the player to move gives the next player a full turn timer', ()
 
 test('dismissing a player not to move leaves the turn timer alone', () => {
   let time = 1_000_000;
-  const manager = rememberingKeys(createGameManager([scrabble], first, undefined, { now: () => time }));
-  for (const name of ['A', 'B', 'C']) manager.join('scrabble', 'g1', name);
+  const manager = rememberingKeys(createGameManager([lettergrid], first, undefined, { now: () => time }));
+  for (const name of ['A', 'B', 'C']) manager.join('lettergrid', 'g1', name);
   ok(manager.setHouseRules(ROOM, 1, { values: { turnMinutes: 2 }, maxPlayers: null }));
   agreeAll(manager, ROOM);
   ok(manager.move(ROOM, 1, FIRST_WORD));
