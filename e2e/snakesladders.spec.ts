@@ -11,10 +11,11 @@ const rollButton = (page: Page) => page.getByRole('button', { name: 'Roll', exac
 const status = (page: Page) => page.locator('.sl-status');
 const turn = (page: Page) => page.locator('.sl-turn');
 const playerRow = (page: Page, name: string) => page.locator('.sl-player-row', { hasText: name });
+const autoRoll = (page: Page) => page.getByRole('checkbox', { name: 'Auto-roll' });
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 
-async function expectAt(page: Page, seat: number, name: string, at: number): Promise<void> {
-  await expect(token(page, seat)).toHaveAttribute('aria-label', `${name}, square ${at}`);
+async function expectAt(page: Page, seat: number, name: string, at: number, timeout?: number): Promise<void> {
+  await expect(token(page, seat)).toHaveAttribute('aria-label', `${name}, square ${at}`, { timeout });
 }
 
 // `page` presses Roll and waits until the status shows `expected`
@@ -342,6 +343,97 @@ test.describe('Snakes and Ladders controls', () => {
     await expect(faq).toContainText('There is no limit on how many sixes in a row you can roll');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+
+  test('Auto-roll rolls one second after your turn comes up, only in your own tab, and is off after a reload', async ({ seat }) => {
+    const table = await seat('snakesladders', ['Alice', 'Bob']);
+    const [alice, bob] = table.pages;
+    await autoRoll(bob).check();
+    await table.dice(1, 3);
+    const rolledAt = Date.now();
+    await press(alice, 'Alice rolled 1 and moved from 1 to 2');
+    // Bob never clicks: his token moves on its own
+    await expectAt(alice, 2, 'Bob', 4, 10000);
+    expect(Date.now() - rolledAt).toBeGreaterThanOrEqual(1000);
+    await expect(status(alice)).toHaveText('Bob rolled 3 and moved from 1 to 4');
+    // Alice's tab has its own setting, so her turn waits for her
+    await expect(autoRoll(alice)).not.toBeChecked();
+    await expect(rollButton(alice)).toBeEnabled();
+
+    await bob.reload();
+    await expect(bob.getByRole('button', { name: 'Back to games' })).toBeVisible();
+    await expect(autoRoll(bob)).not.toBeChecked();
+  });
+
+  test('Auto-roll and a click at the same moment roll once', async ({ seat }) => {
+    const table = await seat('snakesladders', ['Alice', 'Bob']);
+    const [alice] = table.pages;
+    // Keeps the Auto-roll timer's callback, so the click and the timer can fire in one task, before any reply
+    await alice.evaluate(() => {
+      const setTimer = window.setTimeout;
+      window.setTimeout = ((handler: () => void, ms?: number) => {
+        if (ms === 1000) (window as unknown as { autoRoll: () => void }).autoRoll = handler;
+        return setTimer(handler, ms);
+      }) as typeof window.setTimeout;
+    });
+    await table.dice(3, 5);
+    await autoRoll(alice).check();
+    await alice.evaluate(() => {
+      document.querySelector<HTMLButtonElement>('.sl-roll-button')!.click();
+      (window as unknown as { autoRoll: () => void }).autoRoll();
+    });
+    await alice.waitForTimeout(1500);
+    // table.state() has no moveCount, so one roll shows as Alice on 4, Bob to roll and the 5 still queued
+    const after = await table.state<{ positions: Record<number, number>; currentPlayer: number; lastMove: { roll: number } }>();
+    expect(after.positions[1]).toBe(4);
+    expect(after.currentPlayer).toBe(2);
+    expect(after.lastMove.roll).toBe(3);
+    await expect(alice.locator('.sl-status-error')).toHaveCount(0);
+  });
+
+  test('Auto-roll rolls again after a 6', async ({ seat }) => {
+    const table = await seat('snakesladders', ['Alice', 'Bob']);
+    const [alice] = table.pages;
+    await table.dice(6, 2);
+    await autoRoll(alice).check();
+    await expectAt(alice, 1, 'Alice', 9, 10000);
+  });
+
+  test('the Roll button stays in the same spot all game', async ({ seat }) => {
+    const names = ['Alice', 'Bartholomew Longname'];
+    const table = await seat('snakesladders', names);
+    const [alice, bob] = table.pages;
+    const widths = [1280, 390];
+    const spots = new Map<string, { x: number; y: number; width: number }>();
+    // Measures Roll on both pages at both widths; the first call records the spots the rest must match
+    const check = async () => {
+      for (const width of widths) {
+        for (const [index, page] of [alice, bob].entries()) {
+          await page.setViewportSize({ width, height: 844 });
+          const { x, y, width: w } = (await rollButton(page).boundingBox())!;
+          const key = `${width}-${index}`;
+          const spot = spots.get(key);
+          if (!spot) { spots.set(key, { x, y, width: w }); continue; }
+          expect(Math.abs(x - spot.x), key).toBeLessThanOrEqual(1);
+          expect(Math.abs(y - spot.y), key).toBeLessThanOrEqual(1);
+          expect(Math.abs(w - spot.width), key).toBeLessThanOrEqual(1);
+        }
+      }
+    };
+    await check();
+    await rollOnce(table, alice, 1, 'Alice rolled 1 and moved from 1 to 2');
+    await expect(turn(alice)).toHaveText("Bartholomew Longname's turn");
+    await check();
+    // Roll is disabled for Alice and React drops clicks on it, so call its handler to send a roll the server refuses
+    await rollButton(alice).evaluate(button => {
+      const key = Object.keys(button).find(name => name.startsWith('__reactProps'))!;
+      (button as unknown as Record<string, { onClick: () => void }>)[key].onClick();
+    });
+    await expect(alice.locator('.sl-status-error')).toBeVisible();
+    await check();
+    await rollOnce(table, bob, 4, 'Bartholomew Longname rolled 4 and moved from 1 to 5');
+    await expect(alice.locator('.sl-roller')).toHaveText("Bartholomew Longname's roll");
+    await check();
   });
 
   test('on a phone the Roll button is on screen below the board', async ({ seat }) => {

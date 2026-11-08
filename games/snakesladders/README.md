@@ -25,6 +25,7 @@ Players are seated in join order, each with a token of their own color: Player 1
 ## Controls
 
 - On your turn click Roll, beside the board (below it on a phone). The die is rolled for you and your token walks square by square, then climbs the ladder or slides down the snake it landed on. Roll is disabled when it is not your turn, while an undo or dismiss vote is open, and once the game is over
+- Auto-roll (beside Roll) rolls for you one second after your turn comes up. It is kept only in this browser tab and is off after a reload
 - The die shows the last roll and whose it was, or "No roll yet" before the first
 - The last roll's starting square has a dashed outline and its final square a solid one. Tokens sharing a square are drawn side by side inside it
 - The player list shows each player's square, with the player on turn highlighted
