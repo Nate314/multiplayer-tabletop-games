@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I turn a piece?',
-    answer: 'Only with the Rotate pieces house rule on. Touch a piece and a ↻ handle appears at its top right corner: press it to turn the piece 90 degrees clockwise. While you hold a piece, R or a right-click turns it too. A turned piece snaps into its spot only once it is the right way up.'
+    answer: 'Only with the Rotate pieces house rule on. Touch a piece and a ↻ handle appears at its top right corner: press it to turn the piece 90 degrees clockwise. While you hold a piece, R or a right-click turns it too. A turned piece snaps into its spot only once it is the right way up. Turning is not a History step and Undo does not take it back (in Solo, Undo also puts back turns and loose moves made since the last snap).'
   },
   {
     question: 'Why can I not pick up a piece?',

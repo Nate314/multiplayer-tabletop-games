@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, type CSSProperties } from 'react';
 import { BOARD_X, BOARD_Y, TABLE_H, TABLE_W, edgesOf, gridOf, homeOf, piecePath, type PieceCount } from '../cut.ts';
 import { PICTURE_H, PICTURE_W } from '../pictures.ts';
 import PieceShape from './PieceShape';
@@ -54,64 +54,65 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
   const turning = turnHandle && cut[turnHandle.piece] && board.pieces[turnHandle.piece]
     ? { ...turnHandle, at: shownAt(turnHandle.piece), cell: cut[turnHandle.piece].grid }
     : undefined;
-  const handleSize = turning ? Math.min(turning.cell.w, turning.cell.h) : 0;
+  // The svg spans the table box edge to edge, so table units map to percents of that box
+  const viewW = TABLE_W + 2 * PAD;
+  const viewH = TABLE_H + 2 * PAD;
+  const handleAt = turning && {
+    '--x': `${((turning.at.x + turning.cell.w + PAD) / viewW) * 100}%`,
+    '--y': `${((turning.at.y + PAD) / viewH) * 100}%`,
+    '--cell': `${(Math.min(turning.cell.w, turning.cell.h) / 2 / viewW) * 100}cqw`
+  } as CSSProperties;
 
   return (
-    <svg className="jigsaw-table" viewBox={`${-PAD} ${-PAD} ${TABLE_W + 2 * PAD} ${TABLE_H + 2 * PAD}`} role="img" aria-label="Puzzle table">
-      <rect className="jigsaw-table-cloth" x={0} y={0} width={TABLE_W} height={TABLE_H} rx={24} />
-      <rect className="jigsaw-board" x={BOARD_X} y={BOARD_Y} width={PICTURE_W} height={PICTURE_H} />
-      {guide && (
-        <image className="jigsaw-guide" href={url} x={BOARD_X} y={BOARD_Y} width={PICTURE_W} height={PICTURE_H}
-          preserveAspectRatio="xMidYMid slice" opacity={0.15} />
-      )}
-      {cut.map(({ home, grid }, piece) => (
-        <rect key={piece} className="jigsaw-spot" data-spot={piece} x={home.x} y={home.y} width={grid.w} height={grid.h} />
-      ))}
-      {order.map(({ piece, index }) => {
-        const mine = dragging?.piece === index;
-        // A read-only table (History) shows no holders: a step can catch someone mid-hold
-        const heldByOther = drag !== undefined && !mine && piece.heldBy !== null && piece.heldBy !== viewer ? piece.heldBy : null;
-        const liftable = drag !== undefined && (mine || drag.canLift(index));
-        return (
-          <PieceShape
-            key={index}
-            piece={index}
-            x={shownAt(index).x}
-            y={shownAt(index).y}
-            offset={cut[index].offset}
-            cell={cut[index].grid}
-            turns={turnsOf(piece)}
-            path={cut[index].path}
-            fillId={`${fillPrefix}-${index}`}
-            url={url}
-            placed={piece.placed && !mine}
-            heldBy={heldByOther}
-            holderName={heldByOther === null ? undefined : playerNames[heldByOther]}
-            highlighted={highlight === index}
-            pointer={liftable ? drag.bind(index) : undefined}
-          />
-        );
-      })}
+    <>
+      <svg className="jigsaw-table" viewBox={`${-PAD} ${-PAD} ${viewW} ${viewH}`} role="img" aria-label="Puzzle table">
+        <rect className="jigsaw-table-cloth" x={0} y={0} width={TABLE_W} height={TABLE_H} rx={24} />
+        <rect className="jigsaw-board" x={BOARD_X} y={BOARD_Y} width={PICTURE_W} height={PICTURE_H} />
+        {guide && (
+          <image className="jigsaw-guide" href={url} x={BOARD_X} y={BOARD_Y} width={PICTURE_W} height={PICTURE_H}
+            preserveAspectRatio="xMidYMid slice" opacity={0.15} />
+        )}
+        {cut.map(({ home, grid }, piece) => (
+          <rect key={piece} className="jigsaw-spot" data-spot={piece} x={home.x} y={home.y} width={grid.w} height={grid.h} />
+        ))}
+        {order.map(({ piece, index }) => {
+          const mine = dragging?.piece === index;
+          // A read-only table (History) shows no holders: a step can catch someone mid-hold
+          const heldByOther = drag !== undefined && !mine && piece.heldBy !== null && piece.heldBy !== viewer ? piece.heldBy : null;
+          const liftable = drag !== undefined && (mine || drag.canLift(index));
+          return (
+            <PieceShape
+              key={index}
+              piece={index}
+              x={shownAt(index).x}
+              y={shownAt(index).y}
+              offset={cut[index].offset}
+              cell={cut[index].grid}
+              turns={turnsOf(piece)}
+              path={cut[index].path}
+              fillId={`${fillPrefix}-${index}`}
+              url={url}
+              placed={piece.placed && !mine}
+              heldBy={heldByOther}
+              holderName={heldByOther === null ? undefined : playerNames[heldByOther]}
+              highlighted={highlight === index}
+              pointer={liftable ? drag.bind(index) : undefined}
+            />
+          );
+        })}
+      </svg>
       {turning && (
-        // On top of every piece, at the top right corner of its cell. A press here never starts a drag
-        <g
+        // An HTML button over the svg, so it keeps a finger-sized box at any zoom. Just up and right of the
+        // top right corner, on top of every piece; a press here never starts a drag
+        <button
+          type="button"
           className="jigsaw-turn"
-          role="button"
-          tabIndex={0}
           aria-label="Turn piece"
-          transform={`translate(${turning.at.x + turning.cell.w},${turning.at.y})`}
+          style={handleAt}
           onPointerDown={event => { event.stopPropagation(); event.preventDefault(); }}
           onClick={turning.onTurn}
-          onKeyDown={event => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            turning.onTurn();
-          }}
-        >
-          <circle r={handleSize / 4} />
-          <text textAnchor="middle" dominantBaseline="central" fontSize={handleSize / 3}>↻</text>
-        </g>
+        >↻</button>
       )}
-    </svg>
+    </>
   );
 }

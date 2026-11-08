@@ -569,6 +569,10 @@ test.describe('Jigsaw Rotate pieces', () => {
     await expect(handle(alice)).toHaveCount(0);
     await expect(handle(bob)).toBeVisible();
     await bob.mouse.up();
+    // Bob touched it last, so the handle stays his after he lets go
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBeNull();
+    await expect(handle(bob)).toBeVisible();
+    await expect(handle(alice)).toHaveCount(0);
   });
 
   test('turning is not a History step and Undo my last move does not take it back', async ({ seat }) => {
@@ -609,6 +613,29 @@ test.describe('Jigsaw Rotate pieces', () => {
     await expect(handle(alice)).toBeVisible();
     await handle(alice).tap();
     await expect.poll(() => turnsOn(table, 0)).toBe(1);
+  });
+
+  test('on a phone the handle is finger-sized at zoom 1 and 2 and leaves the piece body free to drag', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice'], true);
+    const [alice] = table.pages;
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await lay(table, { board: layout(48, [0]) });
+    await piece(alice, 0).scrollIntoViewIfNeeded();
+    await touchDrag(alice, piece(alice, 0), piece(alice, 0));
+    for (const zoom of [1, 2]) {
+      if (zoom === 2) await button(alice, 'Zoom in').click();
+      await piece(alice, 0).scrollIntoViewIfNeeded();
+      const box = (await handle(alice).boundingBox())!;
+      const body = (await piece(alice, 0).boundingBox())!;
+      const centre = { x: body.x + body.width / 2, y: body.y + body.height / 2 };
+      expect(box.width).toBeGreaterThanOrEqual(32);
+      expect(box.height).toBeGreaterThanOrEqual(32);
+      const covers = centre.x >= box.x && centre.x <= box.x + box.width && centre.y >= box.y && centre.y <= box.y + box.height;
+      expect(covers).toBe(false);
+    }
+    await touchDrag(alice, piece(alice, 0), spot(alice, 47));
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].x).not.toBe(SLOTS[0].x);
+    expect(await turnsOn(table, 0)).toBe(0);
   });
 
   test('a long press with a finger never turns the held piece', async ({ seat }) => {

@@ -46,6 +46,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [landing, setLanding] = useState<(Dragging & { from: Piece }) | null>(null);
   // The piece this player last pressed: it shows the turn handle. Kept in this browser only
   const [touched, setTouched] = useState<number | null>(null);
+  // Whether the current drag was started by a mouse: only then does a right-click turn the piece
+  const liftedByMouse = useRef(false);
   // A refused drop (or any refusal) lets go of the dropped piece, so no ghost stays where it was let go
   useEffect(() => { if (error) setLanding(null); }, [error]);
 
@@ -56,7 +58,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const { dragging, bind, cancel } = usePieceDrag({
     canLift,
     positionOf: index => board.pieces[index],
-    onLift: piece => {
+    onLift: (piece, pointerType) => {
+      liftedByMouse.current = pointerType === 'mouse';
       setLanding(null);
       setTouched(piece);
       setLiftedInLobby(!started);
@@ -72,6 +75,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const draggedPiece = dragging === null ? undefined : board.pieces[dragging.piece];
   const lost = dragging !== null && lostHold(draggedPiece, playerNumber);
   useEffect(() => { if (lost) cancel(); }, [lost, cancel]);
+  // Someone else took the piece this player touched: the handle is theirs now
+  const touchedHolder = touched === null ? null : board.pieces[touched]?.heldBy ?? null;
+  useEffect(() => { if (touchedHolder !== null && touchedHolder !== playerNumber) setTouched(null); }, [touchedHolder, playerNumber]);
 
   const landed = landing !== null && samePiece(board.pieces[landing.piece], landing.from) ? landing : null;
   const shown = lost ? null : dragging ?? landed;
@@ -85,10 +91,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       if ((event.target as Element | null)?.closest?.('input, textarea, select')) return;
       turn();
     }
-    // A long press of a finger fires contextmenu too (touch pointerType): that must never turn the piece
+    // A long press of a finger fires contextmenu too: only a drag started by a mouse turns on it
     function onMenu(event: MouseEvent) {
       event.preventDefault();
-      if (!('pointerType' in event) || event.pointerType === 'mouse') turn();
+      if (liftedByMouse.current) turn();
     }
     window.addEventListener('keydown', onKey);
     window.addEventListener('contextmenu', onMenu);
