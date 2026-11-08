@@ -249,10 +249,10 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.pictionary-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
     move: async page => { await page.getByRole('group', { name: 'Choose a word' }).getByRole('button').first().click(); }
   },
-  jenga: {
-    keep: ['.jenga-status', '.jenga-undo'],
+  blocktower: {
+    keep: ['.blocktower-status', '.blocktower-undo'],
     hide: [],
-    board: '.jenga-controls',
+    board: '.blocktower-controls',
     setup: async table => { // Alice has pulled block 49 out, so the move is placing it, which needs no physics from the test
       const { blocks } = await table.state<{ blocks: { id: number }[] }>();
       await table.patch({ started: true, blocks: blocks.filter(block => block.id !== 49), held: 49, phase: 'place', pull: { seat: 1, block: 49 } });

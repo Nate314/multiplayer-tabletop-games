@@ -1,4 +1,4 @@
-// Jenga rules shared by the browser (legal pulls, open slots) and the server (validation and the physics tick)
+// Block Tower rules shared by the browser (legal pulls, open slots) and the server (validation and the physics tick)
 import { houseRule } from '../../shared/houseRules.ts';
 import { asRecord } from '../../shared/messages.ts';
 import { baseGameState, nextActivePlayer } from '../../shared/seating.ts';
@@ -364,7 +364,7 @@ export const onPlayerDisconnected = (state: GameState, seat: Seat) => holdingOn(
 export const resumeClock = (state: GameState) => holdingOn(state) ? letGo(state) : state;
 
 // Winners (everyone but the loser, or the last player left after a dismissal) share place 1
-export function jengaStandings(state: GameState): Standing[] {
+export function blocktowerStandings(state: GameState): Standing[] {
   return state.activePlayers.map(seat => ({
     seat,
     place: state.winners.includes(seat) ? 1 : 2,
@@ -393,7 +393,7 @@ export function simulate(state: GameState): GameState {
     return tick(state);
   } catch (error) {
     forgetWorld(state.gameId);
-    console.error(`jenga simulation failed in ${state.gameId}:`, error);
+    console.error(`blocktower simulation failed in ${state.gameId}:`, error);
     return atRest({ ...state, grab: null });
   }
 }

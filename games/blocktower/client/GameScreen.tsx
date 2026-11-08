@@ -152,7 +152,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     <>
       <div className="game-layout">
         <div className="board-area">
-          <div className="jenga-controls hand-only-board" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}
+          <div className="blocktower-controls hand-only-board" role="application" aria-label="Tower" tabIndex={0} onKeyDown={onKeyDown}
             onKeyUp={(event) => turnKey(event.key) !== null && releaseTurnKey(event.key.toLowerCase())} onBlur={() => releaseTurnKey(null)}>
             <TowerView
               ref={tower}
@@ -163,7 +163,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               turning={owns}
               carry={carry}
             />
-            <div className="jenga-selection" aria-live="polite">{selection}</div>
+            <div className="blocktower-selection" aria-live="polite">{selection}</div>
           </div>
           <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteUndo(approve)} />
         </div>
@@ -171,10 +171,10 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           {(error || gameStatus) && (
             <div className={error ? 'game-status game-status-error' : 'game-status'}>{error || gameStatus}</div>
           )}
-          <div className="jenga-status">{statusLine(gameState, playerNumber)}</div>
+          <div className="blocktower-status">{statusLine(gameState, playerNumber)}</div>
           {pulling && <div className="hint">Drag a block out with the mouse or a finger; drag empty space left or right to turn the turntable, or up and down to tilt the view. Q and E turn it too</div>}
           {isMyTurn && phase === 'place' && (
-            <div className="jenga-place">
+            <div className="blocktower-place">
               <div className="hint">
                 {free ? 'Drag the block over the top and let go where it should go, or use the buttons' : 'Drag the block to an open spot on top, or use the buttons'}
               </div>
@@ -187,7 +187,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               ))}
             </div>
           )}
-          <button type="button" className="jenga-undo" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
+          <button type="button" className="blocktower-undo" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
         </div>
       </div>
     </>

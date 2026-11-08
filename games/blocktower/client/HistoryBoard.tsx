@@ -16,7 +16,7 @@ export default function HistoryBoard({ gameState }: { gameState: PublicGameState
   const blocks = start ? START : gameState.blocks;
   const turntable = start ? IDENTITY : viewTurntable(gameState.turntable).q;
   return (
-    <div className="jenga-history">
+    <div className="blocktower-history">
       <TowerView blocks={blocks} turntable={turntable} highlight={placed?.block ?? null} ghost={placed?.from ?? null} />
     </div>
   );

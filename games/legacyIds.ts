@@ -8,6 +8,7 @@ export const LEGACY_IDS: LegacyIds = {
   carcassonne: { id: 'roadsandfields', keepsSaves: true },
   catan: { id: 'hexisland', keepsSaves: true },
   connectfour: { id: 'fourinarow', keepsSaves: true },
+  jenga: { id: 'blocktower', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

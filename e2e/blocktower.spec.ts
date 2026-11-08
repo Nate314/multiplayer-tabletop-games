@@ -1,19 +1,19 @@
 import type { Page } from '@playwright/test';
 import { expect, leave, test, type Seat, type Table, headerButton } from './fixtures.ts';
-import type { GameState } from '../games/jenga/types.ts';
+import type { GameState } from '../games/blocktower/types.ts';
 
-// One test per rule and control in games/jenga/README.md, driven by the keyboard and buttons only, so they pass without WebGL.
+// One test per rule and control in games/blocktower/README.md, driven by the keyboard and buttons only, so they pass without WebGL.
 // The server only moves the tower when told: table.simulate(n) runs n physics ticks. Seat 1 (Alice) pulls first.
 
 // Lets headless Chrome draw the tower through its software renderer
 test.use({ launchOptions: { args: ['--enable-unsafe-swiftshader'] } });
 
-const status = (page: Page) => page.locator('.jenga-status');
+const status = (page: Page) => page.locator('.blocktower-status');
 const tower = (page: Page) => page.getByRole('application', { name: 'Tower' });
 const place = (page: Page, slot: string) => page.getByRole('button', { name: `Place on top, ${slot}` });
 
 async function start(seat: Seat) {
-  const table = await seat('jenga', ['Alice', 'Bob']);
+  const table = await seat('blocktower', ['Alice', 'Bob']);
   const [alice, bob] = table.pages;
   return { table, alice, bob };
 }
@@ -25,7 +25,7 @@ async function grabMiddle(table: Table, page: Page) {
   await tower(page).focus();
   await tower(page).press('ArrowDown');
   await tower(page).press('ArrowRight');
-  await expect(page.locator('.jenga-selection')).toHaveText(/Level 17, middle block/);
+  await expect(page.locator('.blocktower-selection')).toHaveText(/Level 17, middle block/);
   await tower(page).press('Enter');
   await expect.poll(async () => (await state(table)).grab?.block).toBe(49);
 }
@@ -58,7 +58,7 @@ async function settle(table: Table) {
   expect((await state(table)).sim).toBeNull();
 }
 
-test.describe('Jenga rules', () => {
+test.describe('Block Tower rules', () => {
   test('the tower has 54 blocks and Alice pulls first', async ({ seat }) => {
     const { table, alice, bob } = await start(seat);
     await expect(status(alice)).toHaveText('Your turn: pull a block from the tower');
@@ -82,7 +82,7 @@ test.describe('Jenga rules', () => {
   });
 
   test('with Free placement, Place on top sets the block down and the physics finishes the turn', async ({ seat }) => {
-    const table = await seat('jenga', ['Alice', 'Bob'], { houseRules: { freePlacement: true } });
+    const table = await seat('blocktower', ['Alice', 'Bob'], { houseRules: { freePlacement: true } });
     const [alice, bob] = table.pages;
     await grabMiddle(table, alice);
     for (let press = 0; press < 80 && (await state(table)).held === null; press++) await pressAndTick(table, alice, 'ArrowDown', 1);
@@ -105,7 +105,7 @@ test.describe('Jenga rules', () => {
     await expect(status(alice)).toHaveText("Bob's turn to pull a block");
     await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
-    const drawn = dialog.locator('.jenga-history [data-block-count]');
+    const drawn = dialog.locator('.blocktower-history [data-block-count]');
     await dialog.getByRole('slider', { name: 'Step' }).fill('0');
     await expect(drawn).toHaveAttribute('data-block-count', '54');
     await dialog.getByRole('slider', { name: 'Step' }).fill('1');
@@ -207,7 +207,7 @@ test.describe('Jenga rules', () => {
     await expect(bob.getByText('Waiting for Alice to reconnect')).toBeVisible();
   });
 
-  test('the Rules dialog shows the Jenga rules', async ({ seat }) => {
+  test('the Rules dialog shows the Block Tower rules', async ({ seat }) => {
     const { alice } = await start(seat);
     await (await headerButton(alice, 'Rules')).click();
     const rules = alice.getByRole('dialog', { name: / rules$/ });

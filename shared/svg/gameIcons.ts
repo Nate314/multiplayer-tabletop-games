@@ -36,7 +36,7 @@ const GAME_ICONS: Record<string, () => string> = {
   hearts: () => lineIcon(solid('path', { d: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z' })),
   holdem: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('circle', { cx: 12, cy: 12, r: 5 }), el('path', { d: 'M12 3v4M12 17v4M3 12h4M17 12h4' })),
   // Three courses of bricks, the middle one pulled halfway out to the right
-  jenga: () => lineIcon(el('path', { d: 'M3 3h14v6H3zM7.7 3v6M12.3 3v6M7 9h14v6H7zM3 15h14v6H3zM7.7 15v6M12.3 15v6' })),
+  blocktower: () => lineIcon(el('path', { d: 'M3 3h14v6H3zM7.7 3v6M12.3 3v6M7 9h14v6H7zM3 15h14v6H3zM7.7 15v6M12.3 15v6' })),
   // One piece with a tab on top and on the right
   jigsaw: () => lineIcon(el('path', { d: 'M4 8h4a2.2 2.2 0 1 1 4 0h4v4a2.2 2.2 0 1 1 0 4v4H4z' })),
   mancala: () => lineIcon(el('rect', { x: 2, y: 7, width: 20, height: 10, rx: 5 }),

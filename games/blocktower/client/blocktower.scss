@@ -1,4 +1,4 @@
-[data-game="jenga"] {
+[data-game="blocktower"] {
   color-scheme: light;
   --page-bg: #F3ECE2;
   --text: #2B2118;
@@ -12,12 +12,12 @@
   --error-text: #8A1C12;
   --focus: #2F6FD6;
   /* The tower's colors, read by TowerView from here so a theme switch recolors it */
-  --jenga-wood: #D9B98A;
-  --jenga-highlight: #F2A33A;
-  --jenga-light: #FFFFFF;
-  --jenga-shadow: #6B5A48;
-  --jenga-turntable: #6F5640;
-  --jenga-mark: #EADBC4;
+  --blocktower-wood: #D9B98A;
+  --blocktower-highlight: #F2A33A;
+  --blocktower-light: #FFFFFF;
+  --blocktower-shadow: #6B5A48;
+  --blocktower-turntable: #6F5640;
+  --blocktower-mark: #EADBC4;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
   --platform-button-bg: var(--button-bg);
@@ -38,12 +38,12 @@
     --error-bg: #4A1D18;
     --error-text: #FFD6D0;
     --focus: #7FB0FF;
-    --jenga-wood: #C9A574;
-    --jenga-highlight: #FFB347;
-    --jenga-light: #D8D0C4;
-    --jenga-shadow: #2A2119;
-    --jenga-turntable: #3A2E24;
-    --jenga-mark: #B8A68E;
+    --blocktower-wood: #C9A574;
+    --blocktower-highlight: #FFB347;
+    --blocktower-light: #D8D0C4;
+    --blocktower-shadow: #2A2119;
+    --blocktower-turntable: #3A2E24;
+    --blocktower-mark: #B8A68E;
   }
 
   .game-header {
@@ -69,28 +69,28 @@
     max-width: 720px;
   }
 
-  .jenga-controls {
+  .blocktower-controls {
     border-radius: 8px;
     outline: none;
   }
 
-  .jenga-controls:focus-visible {
+  .blocktower-controls:focus-visible {
     box-shadow: 0 0 0 3px var(--focus);
   }
 
-  .jenga-tower {
+  .blocktower-tower {
     height: min(70vh, 720px);
     cursor: grab;
   }
 
-  .jenga-no-webgl {
+  .blocktower-no-webgl {
     padding: 24px;
     border: 1px dashed var(--panel-border);
     border-radius: 8px;
     text-align: center;
   }
 
-  .jenga-selection {
+  .blocktower-selection {
     min-height: 1.4em;
     margin-top: 6px;
     font-size: 14px;
@@ -123,7 +123,7 @@
     color: var(--error-text);
   }
 
-  .jenga-status {
+  .blocktower-status {
     font-size: 1.1rem;
     font-weight: bold;
   }
@@ -132,7 +132,7 @@
     font-size: 14px;
   }
 
-  .jenga-place {
+  .blocktower-place {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -159,11 +159,11 @@
 
   /* The history dialog draws a fixed-size tower, which the dialog scales to fit */
 
-  .jenga-history {
+  .blocktower-history {
     width: 360px;
   }
 
-  .jenga-history .jenga-tower {
+  .blocktower-history .blocktower-tower {
     height: 480px;
     cursor: default;
   }
@@ -173,11 +173,11 @@
       flex-basis: 100%;
     }
 
-    .jenga-tower {
+    .blocktower-tower {
       height: 60vh;
     }
 
-    .jenga-history .jenga-tower {
+    .blocktower-history .blocktower-tower {
       height: 480px;
     }
   }

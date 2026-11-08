@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import type { HouseRuleValues } from '../../shared/houseRules.ts';
-import { jenga } from './index.ts';
+import { blocktower } from './index.ts';
 import { IDENTITY, anchorWorld } from './physics.ts';
 import type { GameState, PublicGameState, Seat, Vec3 } from './types.ts';
 import type { Result } from '../../shared/types.ts';
 
-const ROOM = 'jenga/g1';
+const ROOM = 'blocktower/g1';
 // Middle of level 7, which runs along Z; local +X is its long axis
 const MIDDLE = 22;
 const END: Vec3 = [3.75, 0, 0];
@@ -20,8 +20,8 @@ function ok(result: Result<unknown>): PublicGameState {
 
 // Everyone joins and agrees to the house rules, after Alice sets `values` if given
 function game(values?: HouseRuleValues) {
-  const manager = rememberingKeys(createGameManager([jenga], () => 0.5, undefined, { manualSimulation: true }));
-  for (const name of ['Alice', 'Bob', 'Cat']) manager.join('jenga', 'g1', name);
+  const manager = rememberingKeys(createGameManager([blocktower], () => 0.5, undefined, { manualSimulation: true }));
+  for (const name of ['Alice', 'Bob', 'Cat']) manager.join('blocktower', 'g1', name);
   if (values) ok(manager.setHouseRules(ROOM, 1, { values, maxPlayers: null }));
   agreeAll(manager, ROOM);
   return manager;
@@ -58,7 +58,7 @@ test('a whole turn is one move: grabs and drags are not on the timeline', () => 
   const placed = ok(manager.move(ROOM, 1, { type: 'place', slot: 0 }));
   assert.equal(placed.moveCount, 1);
   assert.equal(placed.currentPlayer, 2);
-  const history = stepsOf(manager, 'jenga')!;
+  const history = stepsOf(manager, 'blocktower')!;
   assert.equal(history.length, 2);
   assert.deepEqual(history.map(step => step.historyStep), ['start', 'move']);
   assert.equal((history[1] as unknown as PublicGameState).lastMove?.type, 'place');
@@ -74,7 +74,7 @@ test('a free drop is one recorded move and undo puts the whole turn back', () =>
   manager.simulateTicks(ROOM, 400);
   assert.equal(raw(manager).sim, null);
   assert.equal(raw(manager).currentPlayer, 2);
-  const history = stepsOf(manager, 'jenga')!;
+  const history = stepsOf(manager, 'blocktower')!;
   assert.deepEqual(history.map(step => step.historyStep), ['start', 'move']);
   const lastMove = (history[1] as unknown as PublicGameState).lastMove;
   assert.equal(lastMove?.type === 'place' && lastMove.free, true);
@@ -104,7 +104,7 @@ test('a drop that slides off and a drop again are two recorded moves, and undo p
   assert.equal(again.moveCount, 2);
   manager.simulateTicks(ROOM, 400);
   assert.equal(raw(manager).currentPlayer, 2);
-  assert.deepEqual(stepsOf(manager, 'jenga')!.map(step => step.historyStep), ['start', 'move', 'move']);
+  assert.deepEqual(stepsOf(manager, 'blocktower')!.map(step => step.historyStep), ['start', 'move', 'move']);
   ok(manager.requestUndo(ROOM, 2));
   ok(manager.voteUndo(ROOM, 1, true));
   ok(manager.voteUndo(ROOM, 3, true));
@@ -132,7 +132,7 @@ test('toppling the tower ends the game with a recorded topple step and everyone 
   const state = raw(manager);
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [2, 3]);
-  const history = stepsOf(manager, 'jenga')!;
+  const history = stepsOf(manager, 'blocktower')!;
   assert.equal(history.length, 2);
   assert.deepEqual((history.at(-1) as unknown as PublicGameState).lastMove, { type: 'topple', seat: 1 });
 });
@@ -148,7 +148,7 @@ test('a placement that topples at once records the place step, then the topple s
   ok(manager.move(ROOM, 1, { type: 'place', slot: 0 }));
   manager.simulateTicks(ROOM, 400);
   assert.equal(raw(manager).isGameOver, true);
-  const history = stepsOf(manager, 'jenga')!;
+  const history = stepsOf(manager, 'blocktower')!;
   assert.deepEqual(history.map(step => (step as unknown as PublicGameState).lastMove?.type ?? null), [null, 'place', 'topple']);
   ok(manager.requestUndo(ROOM, 2));
   ok(manager.voteUndo(ROOM, 1, true));
@@ -179,8 +179,8 @@ test('a collapse whose tick throws still ends and records the game instead of st
 test('the table view and the game file never contain grip values', () => {
   const manager = game();
   topple(manager);
-  assert.equal(JSON.stringify(stepsOf(manager, 'jenga')).includes('"grip"'), false);
-  const file = fileOf(manager, 'jenga', new Date(0));
+  assert.equal(JSON.stringify(stepsOf(manager, 'blocktower')).includes('"grip"'), false);
+  const file = fileOf(manager, 'blocktower', new Date(0));
   assert.ok(file && 'file' in file);
   assert.equal(JSON.stringify(file).includes('"grip"'), false);
   assert.equal(JSON.stringify(file).includes('"turnStart"'), false);

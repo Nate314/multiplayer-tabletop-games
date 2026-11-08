@@ -7,7 +7,7 @@ const gameOf = (file: string | null | undefined) => file?.match(/games[\\/](\w+)
 
 // The game server is chosen by the player (Settings or a ?server= link) and its SVGs are inlined, so a hostile server
 // could send onload= or javascript: markup. This policy refuses every inline script except index.html's own, by hash;
-// Rapier (Jenga) compiles WebAssembly. Build only, since Vite's dev server injects inline scripts of its own.
+// Rapier (Block Tower) compiles WebAssembly. Build only, since Vite's dev server injects inline scripts of its own.
 function scriptPolicy(): Plugin {
   return {
     name: 'script-policy',

@@ -2,17 +2,17 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { initPhysics } from './physics.ts';
 import {
-  applyAction, applyMove, createGameState, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, resumeClock, simulate,
+  applyAction, applyMove, createGameState, blocktowerStandings, onPlayerDisconnected, onPlayerLeft, onUndo, resetLobby, resumeClock, simulate,
   simulating, toPublicState,
 } from './rules.ts';
-import { jengaInfo } from './info.ts';
+import { blocktowerInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
 // The server and tests load the WASM before any tick; the browser never imports this file
 await initPhysics();
 
-export const jenga: GameDefinition<GameState, PublicGameState> = {
-  info: jengaInfo,
+export const blocktower: GameDefinition<GameState, PublicGameState> = {
+  info: blocktowerInfo,
   createGameState,
   resetLobby,
   applyMove,
@@ -24,6 +24,6 @@ export const jenga: GameDefinition<GameState, PublicGameState> = {
   simulating,
   simulate,
   toPublicState,
-  finalStandings: jengaStandings,
+  finalStandings: blocktowerStandings,
   secretState: state => seatFields(state, ['grip'])
 };

@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const FAQS: FaqItem[] = [
   {
     question: 'How do I join a game?',
-    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Jenga is for 2 to 8 ' +
+    answer: 'Enter your name and a Game ID. Anyone who enters the same Game ID joins the same game. Block Tower is for 2 to 8 ' +
       'players, and nobody can join after the first block is grabbed or the turntable first turned. Players take turns in join order.'
   },
   {

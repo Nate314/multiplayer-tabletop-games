@@ -46,15 +46,15 @@ const TICK_ANGLES = [1, 3, 5, 7].map(n => n * Math.PI / 4);
 
 // Colors come from the game's CSS so dark mode recolors the tower; the fallbacks keep it drawable without the stylesheet
 function themeColors(canvas: HTMLCanvasElement) {
-  const style = getComputedStyle(canvas.closest('[data-game="jenga"]') ?? canvas);
+  const style = getComputedStyle(canvas.closest('[data-game="blocktower"]') ?? canvas);
   const read = (name: string, fallback: string) => new THREE.Color(style.getPropertyValue(name).trim() || fallback);
   return {
-    wood: read('--jenga-wood', '#d9b98a'),
-    highlight: read('--jenga-highlight', '#f2a33a'),
-    sky: read('--jenga-light', '#ffffff'),
-    ground: read('--jenga-shadow', '#6b5a48'),
-    turntable: read('--jenga-turntable', '#6f5640'),
-    mark: read('--jenga-mark', '#eadbc4'),
+    wood: read('--blocktower-wood', '#d9b98a'),
+    highlight: read('--blocktower-highlight', '#f2a33a'),
+    sky: read('--blocktower-light', '#ffffff'),
+    ground: read('--blocktower-shadow', '#6b5a48'),
+    turntable: read('--blocktower-turntable', '#6f5640'),
+    mark: read('--blocktower-mark', '#eadbc4'),
   };
 }
 
@@ -94,7 +94,7 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
   useEffect(() => {
     // A fresh canvas per mount: StrictMode remounts, and a canvas whose context was force-lost cannot get a new one
     const canvas = document.createElement('canvas');
-    canvas.className = 'jenga-tower';
+    canvas.className = 'blocktower-tower';
     canvas.style.touchAction = 'none';
     canvas.style.display = 'block';
     canvas.style.width = '100%';
@@ -475,6 +475,6 @@ export default function TowerView({ blocks, turntable = IDENTITY, highlight = nu
     }
   }), []);
 
-  if (failed) return <p className="jenga-no-webgl">This device cannot draw the 3D tower</p>;
+  if (failed) return <p className="blocktower-no-webgl">This device cannot draw the 3D tower</p>;
   return <div ref={containerRef} data-block-count={blocks.length} />;
 }

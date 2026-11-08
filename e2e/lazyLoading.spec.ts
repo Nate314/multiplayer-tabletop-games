@@ -31,12 +31,12 @@ test('the landing page and a chess game download only chess, and opening Hex Isl
   expect(urls.some(url => /\/hexisland-.*\.css$/.test(url))).toBe(true);
 });
 
-test('the landing page and a chess game never download Jenga or its libraries', async ({ browser, server }) => {
+test('the landing page and a chess game never download Block Tower or its libraries', async ({ browser, server }) => {
   const page = await newPlayer(browser, server);
   const urls = scriptsAndStyles(page);
-  await joinGame(page, 'chess', 'lazy-jenga', 'Alice');
+  await joinGame(page, 'chess', 'lazy-blocktower', 'Alice');
   expect(urls.some(url => url.includes('/chess-'))).toBe(true);
-  expect(urls.filter(url => /jenga|three|rapier/i.test(url))).toEqual([]);
+  expect(urls.filter(url => /blocktower|three|rapier/i.test(url))).toEqual([]);
 });
 
 test('a failed download shows Could not load with Retry, and Retry loads the game', async ({ browser, server }) => {

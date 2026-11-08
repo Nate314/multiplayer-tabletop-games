@@ -1,8 +1,8 @@
 import { test, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { jenga } from './index.ts';
+import { blocktower } from './index.ts';
 import {
-  CALM_TICKS, COLLAPSE_TICKS, applyAction, canPull, jengaStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
+  CALM_TICKS, COLLAPSE_TICKS, applyAction, canPull, blocktowerStandings, onPlayerDisconnected, onPlayerLeft, onUndo, openSlots, placementTargets, simulate, simulating, topLevel,
   restingLevel, turntableOf,
 } from './rules.ts';
 import { forgetWorld } from './simulation.ts';
@@ -15,9 +15,9 @@ const MIDDLE = 22;
 const END: Vec3 = [3.75, 0, 0];
 
 function lobby(random: () => number = () => 0.5, names = ['Alice', 'Bob']): GameState {
-  let state = jenga.createGameState('g1');
+  let state = blocktower.createGameState('g1');
   for (const name of names) {
-    const result = addPlayer(jenga, state, name, random);
+    const result = addPlayer(blocktower, state, name, random);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -68,7 +68,7 @@ test('a new game has the full tower, Alice to pull and every grip between 0.35 a
 test('no view, for a seat or the table, contains grip or turnStart', () => {
   const state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
   for (const viewer of [1, 2, null]) {
-    const view = jenga.toPublicState(state, false, viewer);
+    const view = blocktower.toPublicState(state, false, viewer);
     assert.equal('grip' in view, false);
     assert.equal('turnStart' in view, false);
     assert.equal(JSON.stringify(view).includes('grip'), false);
@@ -78,7 +78,7 @@ test('no view, for a seat or the table, contains grip or turnStart', () => {
 test('views round positions to 3 places and drop velocities of blocks at rest', () => {
   const moving: Block = { id: 0, level: 0, pose: { p: [1.23456, 0.75, -0.00049], q: [0.123456, 0, 0, 0.99234567] }, v: [3.14159, 0, 0], w: [0, 0, 0] };
   const still: Block = { id: 1, level: 0, pose: { p: [0, 0.75, 0], q: [0, 0, 0, 1] }, v: [0.001, 0, 0], w: [0, 0.001, 0] };
-  const view = jenga.toPublicState({ ...lobby(), blocks: [moving, still] }, false, 1);
+  const view = blocktower.toPublicState({ ...lobby(), blocks: [moving, still] }, false, 1);
   assert.deepEqual(view.blocks[0], { id: 0, level: 0, pose: { p: [1.235, 0.75, -0], q: [0.1235, 0, 0, 0.9923] }, v: [3.142, 0, 0], w: [0, 0, 0] });
   assert.deepEqual(view.blocks[1], { id: 1, level: 0, pose: { p: [0, 0.75, 0], q: [0, 0, 0, 1] } });
 });
@@ -119,8 +119,8 @@ test('a grab is refused during a vote, after a topple and while a block is in ha
   assert.equal(refusal({ ...state, toppled: true, loser: 1 }, 1, grab), 'The tower has toppled');
   assert.equal(refusal({ ...state, isGameOver: true }, 1, grab), 'The game is over');
   assert.equal(refusal({ ...state, phase: 'place', held: 10 }, 1, grab), 'Place the block you are holding first');
-  const alone = jenga.createGameState('g2');
-  assert.equal(refusal(jenga.resetLobby({ ...alone, activePlayers: [1], playerNames: { 1: 'Alice' }, currentPlayer: 1 }, () => 0.5), 1, grab), 'Waiting for more players');
+  const alone = blocktower.createGameState('g2');
+  assert.equal(refusal(blocktower.resetLobby({ ...alone, activePlayers: [1], playerNames: { 1: 'Alice' }, currentPlayer: 1 }, () => 0.5), 1, grab), 'Waiting for more players');
 });
 
 test('a drag target far from the block is clamped', () => {
@@ -241,13 +241,13 @@ test('a world is rebuilt when the state did not come from the last tick', () => 
 });
 
 function place(state: GameState, seat: Seat, move: unknown): GameState {
-  const result = jenga.applyMove(state, seat, move, () => 0.5, 0);
+  const result = blocktower.applyMove(state, seat, move, () => 0.5, 0);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
 
 const placeRefusal = (state: GameState, seat: Seat, move: unknown) => {
-  const result = jenga.applyMove(state, seat, move, () => 0.5, 0);
+  const result = blocktower.applyMove(state, seat, move, () => 0.5, 0);
   return 'error' in result ? result.error : 'accepted';
 };
 
@@ -326,7 +326,7 @@ test('a slid top block blocks the slot it moved into, and a top with no room lef
 test('a disconnect mid-pull drops the grab and the tower settles', () => {
   let state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
   for (let tick = 0; tick < 5; tick++) state = simulate(act(state, 1, { type: 'drag', target: far(state, MIDDLE) }));
-  const gone = disconnectPlayer(jenga, state, 1);
+  const gone = disconnectPlayer(blocktower, state, 1);
   assert.equal(gone.grab, null);
   assert.deepEqual(gone.pull, { seat: 1, block: MIDDLE });
   assert.equal(simulating(gone), true);
@@ -338,7 +338,7 @@ test('a disconnect mid-pull drops the grab and the tower settles', () => {
 });
 
 test('a disconnect with a block in hand keeps it in hand', () => {
-  const gone = disconnectPlayer(jenga, holding(MIDDLE), 1);
+  const gone = disconnectPlayer(blocktower, holding(MIDDLE), 1);
   assert.equal(gone.held, MIDDLE);
   assert.equal(gone.phase, 'place');
   assert.deepEqual(gone.disconnected, [1]);
@@ -348,7 +348,7 @@ test('a dismissal mid-turn puts the tower back as the turn started', () => {
   let state = act(lobby(() => 0.5, ['Alice', 'Bob', 'Cat']), 1, { type: 'grab', block: MIDDLE, anchor: END });
   for (let tick = 0; tick < 10; tick++) state = simulate(act(state, 1, { type: 'drag', target: far(state, MIDDLE) }));
   assert.notDeepEqual(state.blocks, state.turnStart);
-  const left = removePlayer(jenga, disconnectPlayer(jenga, state, 1), 1);
+  const left = removePlayer(blocktower, disconnectPlayer(blocktower, state, 1), 1);
   assert.deepEqual(left.blocks, left.turnStart);
   assert.equal(left.grab, null);
   assert.equal(left.pull, null);
@@ -364,7 +364,7 @@ test('a dismissal mid-turn puts the tower back as the turn started', () => {
 test('a dismissal of someone not pulling leaves the tower as it is', () => {
   let state = act(lobby(() => 0.5, ['Alice', 'Bob', 'Cat']), 1, { type: 'grab', block: MIDDLE, anchor: END });
   state = simulate(act(state, 1, { type: 'drag', target: far(state, MIDDLE) }));
-  const left = removePlayer(jenga, disconnectPlayer(jenga, state, 3), 3);
+  const left = removePlayer(blocktower, disconnectPlayer(blocktower, state, 3), 3);
   assert.equal(left.blocks, state.blocks);
   assert.notEqual(left.grab, null);
   forgetWorld('g1');
@@ -374,7 +374,7 @@ test('onUndo always returns to the turn start with nobody holding a block', () =
   let state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
   for (let tick = 0; tick < 5; tick++) state = simulate(act(state, 1, { type: 'drag', target: far(state, MIDDLE) }));
   for (const restored of [state, { ...holding(MIDDLE), toppled: true, loser: 1 as Seat }]) {
-    const undone = jenga.onUndo!(restored, () => 0.5);
+    const undone = blocktower.onUndo!(restored, () => 0.5);
     assert.deepEqual(undone.blocks, restored.turnStart);
     assert.equal(undone.blocks.length, 54);
     assert.equal(undone.phase, 'pull');
@@ -390,12 +390,12 @@ test('onUndo always returns to the turn start with nobody holding a block', () =
 test('resumeClock clears a grab and keeps settling', () => {
   let state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
   for (let tick = 0; tick < 5; tick++) state = simulate(act(state, 1, { type: 'drag', target: far(state, MIDDLE) }));
-  const resumed = jenga.resumeClock!(state, 0);
+  const resumed = blocktower.resumeClock!(state, 0);
   assert.equal(resumed.grab, null);
   assert.equal(simulating(resumed), true);
   assert.equal(settle(resumed).toppled, false);
   const idle = lobby();
-  assert.equal(jenga.resumeClock!(idle, 0), idle);
+  assert.equal(blocktower.resumeClock!(idle, 0), idle);
   forgetWorld('g1');
 });
 
@@ -418,7 +418,7 @@ test('a tick that throws is logged, forgets the world and stops the simulation w
 test('a collapse after everyone else left does not change the winner', () => {
   const state = act(lobby(), 1, { type: 'grab', block: MIDDLE, anchor: END });
   const fallen = { ...state, blocks: state.blocks.filter(b => b.id !== 3 && b.id !== 4), grab: null };
-  const over = settle(removePlayer(jenga, disconnectPlayer(jenga, fallen, 2), 2));
+  const over = settle(removePlayer(blocktower, disconnectPlayer(blocktower, fallen, 2), 2));
   assert.equal(over.isGameOver, true);
   assert.deepEqual(over.winners, [1]);
   assert.equal(over.toppled, false);
@@ -442,7 +442,7 @@ test('a block lying outside during a collapse stays on the table and nobody hold
 });
 
 test('dismissing the toppler during the collapse keeps the loss', () => {
-  const left = removePlayer(jenga, disconnectPlayer(jenga, collapsing(['Alice', 'Bob', 'Cat']), 1), 1);
+  const left = removePlayer(blocktower, disconnectPlayer(blocktower, collapsing(['Alice', 'Bob', 'Cat']), 1), 1);
   assert.equal(left.toppled, true);
   assert.equal(left.loser, 1);
   const over = settle(left);
@@ -520,7 +520,7 @@ test('standings put the toppler last and everyone else first with blocks placed'
   const over: GameState = {
     ...lobby(() => 0.5, ['Alice', 'Bob', 'Cat']), isGameOver: true, toppled: true, loser: 1, winners: [2, 3], placed: { 1: 2, 2: 1, 3: 0 }
   };
-  assert.deepEqual(jengaStandings(over), [
+  assert.deepEqual(blocktowerStandings(over), [
     { seat: 1, place: 2, score: 'Toppled the tower' }, { seat: 2, place: 1, score: '1 block placed' }, { seat: 3, place: 1, score: '0 blocks placed' }
   ]);
 });
@@ -654,13 +654,13 @@ test('a disconnect lets go of the turntable', () => {
   assert.equal(turntableOf(gone).drive, null);
   assert.equal(simulating(gone), true);
   assert.equal(onPlayerDisconnected(state, 2), state);
-  assert.equal(turntableOf(jenga.resumeClock!(state, 0)).drive, null);
+  assert.equal(turntableOf(blocktower.resumeClock!(state, 0)).drive, null);
   forgetWorld('g1');
 });
 
 test('a room saved before the turntable loads and plays', () => {
   const { turntable: _turntable, turnStartTurntable: _turnStartTurntable, ...saved } = lobby();
-  assert.deepEqual(jenga.toPublicState(saved, false, 1).turntable, REST_TURNTABLE);
+  assert.deepEqual(blocktower.toPublicState(saved, false, 1).turntable, REST_TURNTABLE);
   let turning = act(saved, 1, turn(2));
   for (let tick = 0; tick < 3; tick++) turning = simulate(turning);
   assert.notDeepEqual(turntableOf(turning).q, IDENTITY);
@@ -678,11 +678,11 @@ test('a room saved before the turntable loads and plays', () => {
 test('views carry the turntable rounded and never the turn-start angle', () => {
   const state = { ...act(lobby(), 1, turn(2)), turntable: { q: [0, 0.123456, 0, 0.99234567] as Quat, w: 1.23456, drive: 2 } };
   for (const viewer of [1, 2, null]) {
-    const json = JSON.stringify(jenga.toPublicState(state, false, viewer));
+    const json = JSON.stringify(blocktower.toPublicState(state, false, viewer));
     assert.ok(json.includes('"turntable"'));
     assert.equal(json.includes('turnStartTurntable'), false);
   }
-  assert.deepEqual(jenga.toPublicState(state, false, 1).turntable, { q: [0, 0.1235, 0, 0.9923], w: 1.235, drive: 2 });
+  assert.deepEqual(blocktower.toPublicState(state, false, 1).turntable, { q: [0, 0.1235, 0, 0.9923], w: 1.235, drive: 2 });
 });
 
 // Free placement on, as the host sets it before the first move
@@ -786,7 +786,7 @@ test('a topple while a dropped block settles is the dropper\'s loss', () => {
 test('a dropper who disconnects while the block settles still has it rest and end the turn', () => {
   let state = place(freeRules(holding(MIDDLE)), 1, drop([0, 0]));
   state = simulate(state);
-  const gone = disconnectPlayer(jenga, state, 1);
+  const gone = disconnectPlayer(blocktower, state, 1);
   assert.equal(gone.dropping, MIDDLE);
   assert.equal(simulating(gone), true);
   const rested = settle(gone);

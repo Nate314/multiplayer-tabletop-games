@@ -1,6 +1,6 @@
-# Jenga
+# Block Tower
 
-Pull blocks from a wobbly tower and stack them on top without knocking it over.
+Pull blocks from a wobbly tower and stack them on top without knocking it over. It plays like Jenga.
 
 For 2 to 8 players, who take turns in join order. Nobody can join after the first block is grabbed or the turntable first turned. House rule: Free placement (off by default), where you set the block on top yourself and the physics decides what happens.
 
@@ -43,7 +43,7 @@ The server runs the tower's physics (Rapier, deterministic build) 20 times a sec
 
 The physics runs in the turntable's frame. The turntable is a disc collider in Rapier that never moves and never rotates there; turning acts on the blocks through the rotating frame's Euler, centrifugal and Coriolis forces, and the turntable's angle is integrated without trig. State poses stay world poses. A turntable that Rapier carried by friction drifted every block outward and toppled the tower after about two thirds of a turn at any speed, so it is not done that way. The spin values are `MAX_SPIN` 10 rad/s, `SPIN_ACCEL` 300 rad/s^2 and `COAST_DECEL` 3 rad/s^2: in measurements made while tuning a steady turn at 6 rad/s or less stands (measured, not a test; only 2 rad/s is pinned by a test), while a held full-speed turn or a back-and-forth jerk can topple. The player's speed request is clamped to `MAX_SPIN`, and letting go makes the turntable coast to a stop.
 
-The physics costs server CPU. Measured on a Windows dev machine over five runs, a tick during a pull (about 60 ticks a run, since the pull stops simulating once the block is out) takes a median of about 8 ms (90th percentile 13 ms, maximum about 97 ms) of the 50 ms between ticks, a tick while turning the turntable and coasting a median of about 12 ms (90th percentile 14 ms), a tick during a collapse a median of about 10 ms (90th percentile 14 ms, maximum 18 ms), and each placement settles synchronously in a median of about 96 ms (90th percentile 121 ms), so a few Jenga rooms playing at once can slow the server.
+The physics costs server CPU. Measured on a Windows dev machine over five runs, a tick during a pull (about 60 ticks a run, since the pull stops simulating once the block is out) takes a median of about 8 ms (90th percentile 13 ms, maximum about 97 ms) of the 50 ms between ticks, a tick while turning the turntable and coasting a median of about 12 ms (90th percentile 14 ms), a tick during a collapse a median of about 10 ms (90th percentile 14 ms, maximum 18 ms), and each placement settles synchronously in a median of about 96 ms (90th percentile 121 ms), so a few Block Tower rooms playing at once can slow the server.
 
 Known gaps:
 
