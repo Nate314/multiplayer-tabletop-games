@@ -213,8 +213,7 @@
     opacity: 0.55;
   }
 
-  .sea-lane,
-  .sea-lane line {
+  .sea-lane {
     stroke: var(--sea-line);
     stroke-width: 1.8px;
     stroke-dasharray: 5 4;

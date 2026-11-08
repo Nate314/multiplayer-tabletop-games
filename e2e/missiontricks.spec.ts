@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { dismiss, expect, leave, newPlayer, openFaq, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Card, GameState, OrderToken, Task } from '../games/missiontricks/types.ts';
+import { LEGACY_IDS } from '../games/legacyIds.ts';
 
 // One test per rule, control and difference in games/missiontricks/README.md. Seats join in order: Alice 1, Bob 2, Cara 3
 // (Dan 4 and Eve 5 where a test needs them). Crafted states make Alice the commander, so she leads, and play runs
@@ -564,9 +565,10 @@ test.describe('Mission Tricks controls', () => {
   });
 });
 
-test('an old thecrew join link opens Mission Tricks', async ({ browser, server }) => {
+test('a join link with the old game id opens Mission Tricks', async ({ browser, server }) => {
+  const oldId = Object.keys(LEGACY_IDS).find(id => LEGACY_IDS[id].id === 'missiontricks')!;
   const visitor = await newPlayer(browser, server);
-  await visitor.goto(`/join/thecrew/oldlink-${Date.now()}`);
+  await visitor.goto(`/join/${oldId}/oldlink-${Date.now()}`);
   const dialog = visitor.getByRole('dialog', { name: 'Join Mission Tricks' });
   await dialog.getByLabel('Your name').fill('Alice');
   await dialog.getByRole('button', { name: 'Join', exact: true }).click();

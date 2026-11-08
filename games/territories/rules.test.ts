@@ -82,28 +82,28 @@ test('each player places all their starting armies in one move, then the first p
 test('reinforcements: a third of the territories, at least 3, plus whole continents', () => {
   const base = game();
   assert.equal(reinforcementsFor(base, 1), 4); // 14 territories
-  assert.equal(reinforcementsFor({ owners: ownership(2, { frostcape: 1 }) }, 1), 3);
+  assert.equal(reinforcementsFor({ owners: ownership(2, { redwater: 1 }) }, 1), 3);
   assert.equal(reinforcementsFor({ owners: ownership(2, Object.fromEntries(territoriesOf('coralIsles').map(id => [id, 1]))) }, 1), 3 + 2);
   const eastwild = Object.fromEntries([...territoriesOf('eastwild'), ...territoriesOf('sunreach')].map(id => [id, 1]));
   assert.equal(reinforcementsFor({ owners: ownership(2, eastwild) }, 1), 5 + 7 + 2);
-  assert.equal(reinforcementsFor({ owners: ownership(1, { frostcape: 2 }) }, 1), 13 + 2 + 5 + 3 + 7 + 2);
+  assert.equal(reinforcementsFor({ owners: ownership(1, { redwater: 2 }) }, 1), 13 + 2 + 5 + 3 + 7 + 2);
 });
 
 test('placing reinforcements in parts, then the attack phase begins', () => {
   let state = game();
-  assert.deepEqual(move(state, 1, { type: 'place', placements: { frostcape: 4 } }), { error: 'You have only 3 armies to place' });
-  assert.deepEqual(move(state, 1, { type: 'place', placements: { pinewatch: 1 } }), { error: 'You do not hold Pinewatch' });
-  assert.deepEqual(move(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 1 }), { error: 'You can attack only in the attack phase' });
+  assert.deepEqual(move(state, 1, { type: 'place', placements: { redwater: 4 } }), { error: 'You have only 3 armies to place' });
+  assert.deepEqual(move(state, 1, { type: 'place', placements: { harrowgate: 1 } }), { error: 'You do not hold Harrowgate' });
+  assert.deepEqual(move(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 1 }), { error: 'You can attack only in the attack phase' });
   assert.deepEqual(move(state, 1, { type: 'endTurn' }), { error: 'You cannot end your turn yet' });
-  state = played(state, 1, { type: 'place', placements: { frostcape: 1 } });
+  state = played(state, 1, { type: 'place', placements: { redwater: 1 } });
   assert.equal(state.reinforcements, 2);
   assert.equal(state.phase, 'reinforce');
-  state = played(state, 1, { type: 'place', placements: { frostcape: 1, elkmoor: 1 } });
-  assert.equal(state.armies.frostcape, 5);
-  assert.equal(state.armies.elkmoor, 4);
+  state = played(state, 1, { type: 'place', placements: { redwater: 1, dustgate: 1 } });
+  assert.equal(state.armies.redwater, 5);
+  assert.equal(state.armies.dustgate, 4);
   assert.equal(state.phase, 'attack');
-  assert.equal(state.lastMove?.events[0], 'Alice placed 1 on Frostcape, 1 on Elkmoor');
-  assert.deepEqual(state.lastMove?.territories, ['frostcape', 'elkmoor']);
+  assert.equal(state.lastMove?.events[0], 'Alice placed 1 on Redwater, 1 on Dustgate');
+  assert.deepEqual(state.lastMove?.territories, ['redwater', 'dustgate']);
 });
 
 test('sets: three alike, one of each, or any two with a wild', () => {
@@ -122,19 +122,19 @@ test('set values escalate 4, 6, 8, 10, 12, 15, then 5 more each', () => {
 });
 
 test('trading a set adds its armies, and 2 more on a held territory shown on a card, once a turn', () => {
-  // Cards 0 (Frostcape), 3 (Elkmoor), 6 (Gullskerry): infantry, all Alice's; 9, 12, 15 likewise
+  // Cards 0 (Redwater), 3 (Dustgate), 6 (Pinewatch): infantry, all Alice's; 9, 12, 15 likewise
   let state = game({ hands: { 1: [0, 3, 6, 9, 12, 15], 2: [], 3: [] }, tradeCount: 5 });
   assert.deepEqual(move(state, 1, { type: 'trade', cards: [0, 3, 1] }), { error: 'Choose three of your cards' });
   assert.deepEqual(move(state, 1, { type: 'trade', cards: [0, 0, 3] }), { error: 'Choose three of your cards' });
   state = played(state, 1, { type: 'trade', cards: [0, 3, 6] });
   assert.equal(state.reinforcements, 3 + 15);
-  assert.equal(state.armies.frostcape, 5);
+  assert.equal(state.armies.redwater, 5);
   assert.equal(state.tradeCount, 6);
   assert.deepEqual(state.hands[1], [9, 12, 15]);
   assert.deepEqual(state.discard, [0, 3, 6]);
   state = played(state, 1, { type: 'trade', cards: [9, 12, 15] });
   assert.equal(state.reinforcements, 3 + 15 + 20);
-  assert.equal(state.armies.glassbay, 3); // no second bonus this turn
+  assert.equal(state.armies.saltmarsh, 3); // no second bonus this turn
   assert.deepEqual(state.hands[1], []);
 });
 
@@ -148,9 +148,9 @@ test('the bonus goes only to a territory the trader holds', () => {
 
 test('holding 5 cards at the start of the turn forces a trade before placing', () => {
   let state = game({ hands: { 1: [1, 4, 7, 10, 13], 2: [], 3: [] } });
-  assert.deepEqual(move(state, 1, { type: 'place', placements: { frostcape: 3 } }), { error: 'You hold 5 or more cards: trade a set first' });
+  assert.deepEqual(move(state, 1, { type: 'place', placements: { redwater: 3 } }), { error: 'You hold 5 or more cards: trade a set first' });
   state = played(state, 1, { type: 'trade', cards: [1, 4, 7] });
-  state = played(state, 1, { type: 'place', placements: { frostcape: 7 } });
+  state = played(state, 1, { type: 'place', placements: { redwater: 7 } });
   assert.equal(state.phase, 'attack');
   assert.deepEqual(move(state, 1, { type: 'trade', cards: [10, 13, WILD_CARDS[0]] }), { error: 'Trade cards while placing armies, at the start of your turn' });
 });
@@ -164,67 +164,67 @@ test('dice: highest pairs compared, ties to the defender', () => {
 
 test('an attack rolls the chosen dice against up to 2, and one army must stay behind', () => {
   let state = attacking();
-  assert.deepEqual(move(state, 1, { type: 'attack', from: 'frostcape', to: 'pinewatch', dice: 3 }), { error: 'Roll 1 to 2 dice' });
-  assert.deepEqual(move(state, 1, { type: 'attack', from: 'frostcape', to: 'dustgate', dice: 1 }), { error: 'Frostcape does not border Dustgate' });
-  assert.deepEqual(move(state, 1, { type: 'attack', from: 'frostcape', to: 'elkmoor', dice: 1 }), { error: 'You cannot attack your own territory' });
-  assert.deepEqual(move(state, 1, { type: 'attack', from: 'dawnspire', to: 'frostcape', dice: 1 }), { error: 'Attack from a territory you hold' });
-  assert.deepEqual(move({ ...state, armies: { ...state.armies, frostcape: 1 } }, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 1 }),
+  assert.deepEqual(move(state, 1, { type: 'attack', from: 'redwater', to: 'harrowgate', dice: 3 }), { error: 'Roll 1 to 2 dice' });
+  assert.deepEqual(move(state, 1, { type: 'attack', from: 'redwater', to: 'elkmoor', dice: 1 }), { error: 'Redwater does not border Elkmoor' });
+  assert.deepEqual(move(state, 1, { type: 'attack', from: 'redwater', to: 'dustgate', dice: 1 }), { error: 'You cannot attack your own territory' });
+  assert.deepEqual(move(state, 1, { type: 'attack', from: 'mossdeep', to: 'redwater', dice: 1 }), { error: 'Attack from a territory you hold' });
+  assert.deepEqual(move({ ...state, armies: { ...state.armies, redwater: 1 } }, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 1 }),
     { error: 'You need at least 2 armies to attack, as one must stay behind' });
 
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 2 }, dice(3, 5, 4, 5));
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 2 }, dice(3, 5, 4, 5));
   assert.deepEqual(state.battle?.attackDice, [5, 3]);
   assert.deepEqual(state.battle?.defendDice, [5, 4]);
-  assert.equal(state.armies.frostcape, 1);
-  assert.equal(state.armies.dawnspire, 3);
+  assert.equal(state.armies.redwater, 1);
+  assert.equal(state.armies.mossdeep, 3);
   assert.equal(state.phase, 'attack');
 
-  const oneDefender = attacking({ armies: { ...state.armies, frostcape: 4, dawnspire: 1 } });
-  const won = played(oneDefender, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(1, 1, 2, 3));
+  const oneDefender = attacking({ armies: { ...state.armies, redwater: 4, mossdeep: 1 } });
+  const won = played(oneDefender, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(1, 1, 2, 3));
   assert.deepEqual(won.battle?.defendDice, [3]); // one die for one army
-  assert.equal(won.armies.frostcape, 3);
-  assert.equal(won.owners.dawnspire, 3);
+  assert.equal(won.armies.redwater, 3);
+  assert.equal(won.owners.mossdeep, 3);
 });
 
 test('a conquest moves at least the dice rolled, then attacks go on', () => {
-  let state = attacking({ armies: { ...game().armies, frostcape: 5, dawnspire: 1 } });
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(6, 1, 1, 2));
-  assert.equal(state.owners.dawnspire, 1);
+  let state = attacking({ armies: { ...game().armies, redwater: 5, mossdeep: 1 } });
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(6, 1, 1, 2));
+  assert.equal(state.owners.mossdeep, 1);
   assert.equal(state.phase, 'conquer');
-  assert.deepEqual(state.conquest, { from: 'frostcape', to: 'dawnspire', minimum: 3 });
+  assert.deepEqual(state.conquest, { from: 'redwater', to: 'mossdeep', minimum: 3 });
   assert.equal(state.conqueredThisTurn, true);
   assert.deepEqual(move(state, 1, { type: 'endTurn' }), { error: 'Move armies into the captured territory first' });
   assert.deepEqual(move(state, 1, { type: 'occupy', armies: 2 }), { error: 'Move 3 to 4 armies' });
   assert.deepEqual(move(state, 1, { type: 'occupy', armies: 5 }), { error: 'Move 3 to 4 armies' });
   state = played(state, 1, { type: 'occupy', armies: 4 });
-  assert.equal(state.armies.frostcape, 1);
-  assert.equal(state.armies.dawnspire, 4);
+  assert.equal(state.armies.redwater, 1);
+  assert.equal(state.armies.mossdeep, 4);
   assert.equal(state.phase, 'attack');
   assert.deepEqual(move(state, 1, { type: 'occupy', armies: 1 }), { error: 'There is no captured territory to move into' });
 });
 
 test('blitz rolls the most dice until the territory falls or one army is left', () => {
-  const start = attacking({ armies: { ...game().armies, frostcape: 10, dawnspire: 2 } });
-  const won = played(start, 1, { type: 'blitz', from: 'frostcape', to: 'dawnspire' }, dice(6, 6, 6, 1, 1));
+  const start = attacking({ armies: { ...game().armies, redwater: 10, mossdeep: 2 } });
+  const won = played(start, 1, { type: 'blitz', from: 'redwater', to: 'mossdeep' }, dice(6, 6, 6, 1, 1));
   assert.equal(won.phase, 'conquer');
   assert.equal(won.battle?.rolls, 1);
   assert.deepEqual(won.conquest?.minimum, 3);
 
-  const lost = played(attacking({ armies: { ...game().armies, frostcape: 4, dawnspire: 5 } }), 1, { type: 'blitz', from: 'frostcape', to: 'dawnspire' });
-  assert.equal(lost.armies.frostcape, 1);
-  assert.equal(lost.owners.dawnspire, 3);
+  const lost = played(attacking({ armies: { ...game().armies, redwater: 4, mossdeep: 5 } }), 1, { type: 'blitz', from: 'redwater', to: 'mossdeep' });
+  assert.equal(lost.armies.redwater, 1);
+  assert.equal(lost.owners.mossdeep, 3);
   assert.equal(lost.battle?.attackerLost, 3);
   assert.equal(lost.battle?.rolls, 2); // 3 dice against 2 loses 2, then 1 die against 2 loses 1
   assert.equal(lost.phase, 'attack');
 });
 
 test('a card is drawn at the end of a turn with a conquest, and only then', () => {
-  let state = attacking({ armies: { ...game().armies, frostcape: 5, dawnspire: 1 } });
+  let state = attacking({ armies: { ...game().armies, redwater: 5, mossdeep: 1 } });
   const quiet = played(state, 1, { type: 'endTurn' });
   assert.deepEqual(quiet.hands[1], []);
   assert.equal(quiet.currentPlayer, 2);
   assert.equal(quiet.phase, 'reinforce');
 
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(6, 1, 1, 2));
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(6, 1, 1, 2));
   state = played(state, 1, { type: 'occupy', armies: 3 });
   state = played(state, 1, { type: 'endTurn' });
   assert.deepEqual(state.hands[1], [0]);
@@ -245,32 +245,32 @@ test('an empty deck is refilled from the discards, and with none anywhere no car
 });
 
 test('fortify moves armies once through connected territories and ends the turn', () => {
-  // Alice holds all of Westmarch but Dustgate
-  const owners = ownership(2, Object.fromEntries(territoriesOf('westmarch').filter(id => id !== 'dustgate').map(id => [id, 1])));
+  // Alice holds all of Westmarch but Elkmoor
+  const owners = ownership(2, Object.fromEntries(territoriesOf('westmarch').filter(id => id !== 'elkmoor').map(id => [id, 1])));
   let state = attacking({ owners });
-  assert.deepEqual([...connectedTerritories(state, 'frostcape')].sort(),
-    ['copperfield', 'elkmoor', 'gullskerry', 'harrowgate', 'pinewatch', 'redwater', 'stonebridge']);
-  assert.deepEqual(move(state, 1, { type: 'fortify', from: 'frostcape', to: 'glassbay', armies: 1 }), { error: 'Fortify between two territories you hold' });
-  const island = attacking({ owners: { ...owners, oakheart: 1 } });
-  assert.deepEqual(move(island, 1, { type: 'fortify', from: 'frostcape', to: 'oakheart', armies: 1 }),
-    { error: 'Oakheart is not connected to Frostcape through your territories' });
-  assert.deepEqual(move(state, 1, { type: 'fortify', from: 'frostcape', to: 'stonebridge', armies: 3 }), { error: 'Move 1 to 2 armies' });
-  assert.deepEqual(move(state, 1, { type: 'fortify', from: 'frostcape', to: 'stonebridge', armies: 0 }), { error: 'Move 1 to 2 armies' });
+  assert.deepEqual([...connectedTerritories(state, 'redwater')].sort(),
+    ['copperfield', 'dustgate', 'frostcape', 'gullskerry', 'harrowgate', 'pinewatch', 'stonebridge']);
+  assert.deepEqual(move(state, 1, { type: 'fortify', from: 'redwater', to: 'saltmarsh', armies: 1 }), { error: 'Fortify between two territories you hold' });
+  const island = attacking({ owners: { ...owners, windhold: 1 } });
+  assert.deepEqual(move(island, 1, { type: 'fortify', from: 'redwater', to: 'windhold', armies: 1 }),
+    { error: 'Windhold is not connected to Redwater through your territories' });
+  assert.deepEqual(move(state, 1, { type: 'fortify', from: 'redwater', to: 'gullskerry', armies: 3 }), { error: 'Move 1 to 2 armies' });
+  assert.deepEqual(move(state, 1, { type: 'fortify', from: 'redwater', to: 'gullskerry', armies: 0 }), { error: 'Move 1 to 2 armies' });
   state = played(state, 1, { type: 'endAttack' });
   assert.equal(state.phase, 'fortify');
-  assert.deepEqual(move(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 1 }), { error: 'You can attack only in the attack phase' });
-  state = played(state, 1, { type: 'fortify', from: 'frostcape', to: 'stonebridge', armies: 2 });
-  assert.equal(state.armies.frostcape, 1);
-  assert.equal(state.armies.stonebridge, 5);
+  assert.deepEqual(move(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 1 }), { error: 'You can attack only in the attack phase' });
+  state = played(state, 1, { type: 'fortify', from: 'redwater', to: 'gullskerry', armies: 2 });
+  assert.equal(state.armies.redwater, 1);
+  assert.equal(state.armies.gullskerry, 5);
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.phase, 'reinforce');
 });
 
 test('eliminating a player takes their cards, and 6 or more must be traded down to 4 at once', () => {
-  // Bob holds only Dawnspire and four cards; Alice has two
-  const owners = ownership(1, { dawnspire: 2, dustgate: 3 });
-  let state = attacking({ owners, armies: { ...game().armies, frostcape: 6, dawnspire: 1 }, hands: { 1: [0, 3], 2: [6, 9, 12, WILD_CARDS[0]], 3: [] } });
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(6, 6, 6, 1));
+  // Bob holds only Mossdeep and four cards; Alice has two
+  const owners = ownership(1, { mossdeep: 2, elkmoor: 3 });
+  let state = attacking({ owners, armies: { ...game().armies, redwater: 6, mossdeep: 1 }, hands: { 1: [0, 3], 2: [6, 9, 12, WILD_CARDS[0]], 3: [] } });
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(6, 6, 6, 1));
   assert.deepEqual(state.eliminated, [2]);
   assert.deepEqual(state.hands[2], []);
   assert.equal(state.hands[1].length, 6);
@@ -282,7 +282,7 @@ test('eliminating a player takes their cards, and 6 or more must be traded down 
   assert.equal(state.reinforcements, 4);
   assert.equal(state.hands[1].length, 3);
   assert.deepEqual(move(state, 1, { type: 'trade', cards: [9, 12, WILD_CARDS[0]] }), { error: 'You hold fewer than 5 cards: place your armies' });
-  state = played(state, 1, { type: 'place', placements: { dawnspire: 4 } });
+  state = played(state, 1, { type: 'place', placements: { mossdeep: 4 } });
   assert.equal(state.phase, 'attack');
   assert.equal(state.midTurnTrade, false);
   state = played(state, 1, { type: 'endTurn' });
@@ -291,22 +291,22 @@ test('eliminating a player takes their cards, and 6 or more must be traded down 
 });
 
 test('taking cards that leave fewer than 6 waits for the next turn', () => {
-  const owners = ownership(1, { dawnspire: 2, dustgate: 3 });
-  let state = attacking({ owners, armies: { ...game().armies, frostcape: 6, dawnspire: 1 }, hands: { 1: [0], 2: [6, 9], 3: [] } });
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(6, 6, 6, 1));
+  const owners = ownership(1, { mossdeep: 2, elkmoor: 3 });
+  let state = attacking({ owners, armies: { ...game().armies, redwater: 6, mossdeep: 1 }, hands: { 1: [0], 2: [6, 9], 3: [] } });
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(6, 6, 6, 1));
   state = played(state, 1, { type: 'occupy', armies: 3 });
   assert.equal(state.phase, 'attack');
   assert.equal(state.hands[1].length, 3);
 });
 
 test('capturing the last territory wins the game', () => {
-  let state = attacking({ owners: ownership(1, { dawnspire: 2 }), armies: { ...game().armies, frostcape: 4, dawnspire: 1 } });
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 2 }, dice(6, 6, 1));
+  let state = attacking({ owners: ownership(1, { mossdeep: 2 }), armies: { ...game().armies, redwater: 4, mossdeep: 1 } });
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 2 }, dice(6, 6, 1));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [1]);
   assert.equal(state.currentPlayer, null);
-  assert.equal(state.armies.dawnspire, 2);
-  assert.equal(state.armies.frostcape, 2);
+  assert.equal(state.armies.mossdeep, 2);
+  assert.equal(state.armies.redwater, 2);
   assert.match(state.gameStatus, /Alice wins: they control the whole world/);
 });
 
@@ -315,26 +315,26 @@ test('invalid moves are refused and change nothing', () => {
   const before = JSON.stringify(state);
   const bad: unknown[] = [
     null, 'place', 42, { type: 'fly' }, { type: 'place' }, { type: 'place', placements: [] },
-    { type: 'place', placements: { atlantis: 1 } }, { type: 'place', placements: { frostcape: '1' } },
-    { type: 'place', placements: { frostcape: -1 } }, { type: 'place', placements: { frostcape: 1.5 } }, { type: 'place', placements: {} },
+    { type: 'place', placements: { atlantis: 1 } }, { type: 'place', placements: { redwater: '1' } },
+    { type: 'place', placements: { redwater: -1 } }, { type: 'place', placements: { redwater: 1.5 } }, { type: 'place', placements: {} },
     { type: 'trade', cards: [0, 3, 6] }, { type: 'trade', cards: [0, 3, 99] }, { type: 'trade', cards: 'all' },
-    { type: 'attack', from: 'frostcape', to: 'dawnspire' }, { type: 'attack', from: 'frostcape', to: 'mars', dice: 1 },
-    { type: 'occupy', armies: 'all' }, { type: 'fortify', from: 'frostcape', to: 'elkmoor', armies: -1 }, { type: 'endAttack' }
+    { type: 'attack', from: 'redwater', to: 'mossdeep' }, { type: 'attack', from: 'redwater', to: 'mars', dice: 1 },
+    { type: 'occupy', armies: 'all' }, { type: 'fortify', from: 'redwater', to: 'dustgate', armies: -1 }, { type: 'endAttack' }
   ];
   for (const value of bad) assert.ok('error' in move(state, 1, value), JSON.stringify(value));
   const fighting = attacking();
-  for (const dice of [0, -1, 1.5, 4]) assert.ok('error' in move(fighting, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice }));
+  for (const dice of [0, -1, 1.5, 4]) assert.ok('error' in move(fighting, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice }));
   assert.equal(JSON.stringify(state), before);
 });
 
 test('a player dismissed mid-turn leaves neutral territories, their cards are discarded and the next turn begins', () => {
-  let state = fourPlayers({ phase: 'attack', reinforcements: 0, owners: ownership(1, { dawnspire: 2, pinewatch: 2, dustgate: 3, silkfen: 4 }),
+  let state = fourPlayers({ phase: 'attack', reinforcements: 0, owners: ownership(1, { mossdeep: 2, harrowgate: 2, elkmoor: 3, dawnspire: 4 }),
     hands: { 1: [], 2: [7, 8], 3: [], 4: [] },
-    armies: { ...game().armies, frostcape: 5, dawnspire: 1 }, currentPlayer: 2, turnHolder: 2 });
+    armies: { ...game().armies, redwater: 5, mossdeep: 1 }, currentPlayer: 2, turnHolder: 2 });
   state = removePlayer(territories, state, 2, dice());
   assert.deepEqual(state.activePlayers, [1, 3, 4]);
-  assert.equal(state.owners.dawnspire, null);
-  assert.equal(state.armies.dawnspire, 1);
+  assert.equal(state.owners.mossdeep, null);
+  assert.equal(state.armies.mossdeep, 1);
   assert.deepEqual(state.hands[2], []);
   assert.deepEqual(state.discard, [7, 8]);
   assert.equal(state.currentPlayer, 3);
@@ -344,19 +344,19 @@ test('a player dismissed mid-turn leaves neutral territories, their cards are di
 
   // A neutral territory defends with its armies and can be captured, and gives no cards
   state = { ...state, currentPlayer: 1, turnHolder: 1, phase: 'attack' };
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(6, 6, 6, 1));
-  assert.equal(state.owners.dawnspire, 1);
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(6, 6, 6, 1));
+  assert.equal(state.owners.mossdeep, 1);
   assert.equal(state.battle?.defender, null);
   assert.deepEqual(state.eliminated, []);
 });
 
 test('a player dismissed while moving into a capture leaves the minimum there', () => {
-  let state = fourPlayers({ phase: 'attack', reinforcements: 0, armies: { ...game().armies, frostcape: 5, dawnspire: 1 } });
-  state = played(state, 1, { type: 'attack', from: 'frostcape', to: 'dawnspire', dice: 3 }, dice(6, 1, 1, 2));
+  let state = fourPlayers({ phase: 'attack', reinforcements: 0, armies: { ...game().armies, redwater: 5, mossdeep: 1 } });
+  state = played(state, 1, { type: 'attack', from: 'redwater', to: 'mossdeep', dice: 3 }, dice(6, 1, 1, 2));
   state = removePlayer(territories, state, 1, dice());
-  assert.equal(state.owners.dawnspire, null);
-  assert.equal(state.armies.dawnspire, 3);
-  assert.equal(state.armies.frostcape, 2);
+  assert.equal(state.owners.mossdeep, null);
+  assert.equal(state.armies.mossdeep, 3);
+  assert.equal(state.armies.redwater, 2);
   assert.equal(state.conquest, null);
   assert.equal(state.currentPlayer, 2);
   assert.equal(state.phase, 'reinforce');
@@ -366,7 +366,7 @@ test('a player dismissed while not their turn changes nobody\'s turn', () => {
   const state = removePlayer(territories, fourPlayers({ phase: 'attack', reinforcements: 0 }), 3, dice());
   assert.equal(state.currentPlayer, 1);
   assert.equal(state.phase, 'attack');
-  assert.equal(state.owners.dustgate, null);
+  assert.equal(state.owners.elkmoor, null);
 });
 
 test('a dismissal that leaves two of three players lets the two play on', () => {
@@ -378,7 +378,7 @@ test('a dismissal that leaves two of three players lets the two play on', () => 
 });
 
 test('dismissing an eliminated player leaves the last two at war', () => {
-  const state = removePlayer(territories, attacking({ owners: ownership(1, { dustgate: 2 }), eliminated: [3] }), 3, dice());
+  const state = removePlayer(territories, attacking({ owners: ownership(1, { elkmoor: 2 }), eliminated: [3] }), 3, dice());
   assert.equal(state.isGameOver, false);
   assert.deepEqual(state.activePlayers, [1, 2]);
   assert.equal(state.currentPlayer, 1);
@@ -395,7 +395,7 @@ test('a player dismissed during the setup is skipped, and the last one left hold
   assert.equal(state.phase, 'reinforce');
   assert.equal(state.currentPlayer, 2); // the first player left, so the next one starts
 
-  const lastTwo = attacking({ owners: ownership(1, { dustgate: 3 }), eliminated: [2] });
+  const lastTwo = attacking({ owners: ownership(1, { elkmoor: 3 }), eliminated: [2] });
   const won = removePlayer(territories, lastTwo, 3, dice());
   assert.equal(won.isGameOver, true);
   assert.deepEqual(won.winners, [1]);

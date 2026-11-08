@@ -22,12 +22,12 @@ type Point = { x: number; y: number };
 
 // Each continent's name and bonus sits in the sea next to it
 export const CONTINENT_LABELS: Record<ContinentId, Point> = {
-  westmarch: { x: 95, y: 336 },
-  sunreach: { x: 105, y: 588 },
-  highvale: { x: 500, y: 38 },
-  amberveld: { x: 470, y: 598 },
-  eastwild: { x: 660, y: 18 },
-  coralIsles: { x: 860, y: 598 }
+  westmarch: { x: 186, y: 390 },
+  sunreach: { x: 930, y: 438 },
+  highvale: { x: 477, y: 18 },
+  amberveld: { x: 491, y: 574 },
+  eastwild: { x: 732, y: 414 },
+  coralIsles: { x: 170, y: 434 }
 };
 
 export function continentShort(id: ContinentId): string {

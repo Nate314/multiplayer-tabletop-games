@@ -21,7 +21,7 @@ const SYMBOL_SIZE = 9; // under the army count, inside the disc
 const byId = new Map(TERRITORIES.map(territory => [territory.id, territory]));
 
 // The world: continents as soft land shapes, every border as a line (dashed across the sea), and each territory as a
-// disc in its owner's color with its army count. Dawnspire and Frostcape meet across the edge of the map.
+// disc in its owner's color with its army count
 export default function WorldMap({ gameState, source = null, target = null, targets = [], highlight = [], draft = {}, canSelect, onSelect }: WorldMapProps) {
   const { owners, armies, playerNames } = gameState;
   return (
@@ -33,14 +33,6 @@ export default function WorldMap({ gameState, source = null, target = null, targ
       {BORDERS.map(({ a, b, sea }) => {
         const from = byId.get(a)!;
         const to = byId.get(b)!;
-        if (a === 'dawnspire' && b === 'frostcape') {
-          return (
-            <g key={`${a}-${b}`} className="border sea-lane">
-              <line x1={from.x} y1={from.y} x2={MAP_WIDTH} y2={from.y - 6} />
-              <line x1={0} y1={to.y - 6} x2={to.x} y2={to.y} />
-            </g>
-          );
-        }
         return <line key={`${a}-${b}`} className={sea ? 'border sea-lane' : 'border'} x1={from.x} y1={from.y} x2={to.x} y2={to.y} />;
       })}
       {TERRITORIES.map(({ id, name, x, y }) => {
