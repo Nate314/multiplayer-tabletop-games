@@ -2,8 +2,7 @@ import type { Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
 import {
   agreeToHouseRules, dismiss, drag, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, test, touchDrag, undo, watch,
-  type Seat, type Table
-} from './fixtures.ts';
+  type Seat, type Table, headerButton } from './fixtures.ts';
 import { gridOf, homeOf, type PieceCount } from '../games/jigsaw/cut.ts';
 import type { Board, GameState, Piece } from '../games/jigsaw/types.ts';
 
@@ -447,7 +446,7 @@ test.describe('Jigsaw controls', () => {
     await place(alice, 0);
     await place(alice, 1);
     await expect(placedCount(alice)).toHaveText('2 of 48 placed');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-move')).toContainText('Alice placed a piece (2 of 48)');
     await expect(history.locator('.jigsaw-piece.highlighted')).toHaveAttribute('data-piece', '1');

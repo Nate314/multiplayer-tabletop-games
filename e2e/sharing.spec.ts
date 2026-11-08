@@ -1,4 +1,4 @@
-import { test, expect, newPlayer } from './fixtures.ts';
+import { test, expect, newPlayer, headerButton } from './fixtures.ts';
 
 test('a join link opens the join dialog with the game ID and the last used name filled in', async ({ seat, browser, server }) => {
   const { gameId } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
@@ -50,7 +50,7 @@ test('share copies the join link and says so when there is no share sheet', asyn
   const { pages: [alice] } = await seat('connectfour', ['Alice'], { gameId: 'Fri day #1' });
   await alice.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await alice.evaluate(() => Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }));
-  await alice.getByRole('button', { name: 'Share' }).click();
+  await (await headerButton(alice, 'Share')).click();
   await expect(alice.getByRole('status')).toHaveText('Link copied');
   expect(await alice.evaluate(() => navigator.clipboard.readText())).toBe(`${server.url}/join/connectfour/Fri%20day%20%231`);
 });
@@ -63,7 +63,7 @@ test('share opens the share sheet when there is one', async ({ seat, server }) =
       configurable: true,
     });
   });
-  await alice.getByRole('button', { name: 'Share' }).click();
+  await (await headerButton(alice, 'Share')).click();
   await expect.poll(() => alice.evaluate(() => (window as unknown as { shared?: ShareData }).shared?.url)).toBe(`${server.url}/join/connectfour/Fri%20day%20%231`);
   expect(await alice.evaluate(() => (window as unknown as { shared: ShareData }).shared.title)).toBe('Join Connect Four');
   await expect(alice.getByText('Link copied')).toHaveCount(0);
@@ -75,7 +75,7 @@ test('share falls back to a link to copy by hand when the clipboard fails', asyn
     Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) }, configurable: true });
   });
-  await alice.getByRole('button', { name: 'Share' }).click();
+  await (await headerButton(alice, 'Share')).click();
   await expect(alice.getByRole('textbox', { name: 'Game link' })).toHaveValue(`${server.url}/join/connectfour/Fri%20day%20%231`);
 });
 
@@ -85,7 +85,7 @@ async function openManualPanel(seat: Parameters<Parameters<typeof test>[2]>[0]['
     Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) }, configurable: true });
   });
-  await alice.getByRole('button', { name: 'Share' }).click();
+  await (await headerButton(alice, 'Share')).click();
   const link = alice.getByRole('textbox', { name: 'Game link' });
   await expect(link).toBeVisible();
   return { alice, link };
@@ -93,7 +93,7 @@ async function openManualPanel(seat: Parameters<Parameters<typeof test>[2]>[0]['
 
 test('the copy-by-hand panel closes when Share is pressed again', async ({ seat }) => {
   const { alice, link } = await openManualPanel(seat);
-  await alice.getByRole('button', { name: 'Share' }).click();
+  await (await headerButton(alice, 'Share')).click();
   await expect(link).toHaveCount(0);
 });
 

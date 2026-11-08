@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, ghostsSeen, leave, recordGhosts, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, expect, ghostsSeen, leave, recordGhosts, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table, headerButton } from './fixtures.ts';
 import { createDeck } from '../games/phase10/rules.ts';
 import type { Card, CardColor, GameState, Group } from '../games/phase10/types.ts';
 
@@ -444,7 +444,7 @@ test.describe('Phase 10 controls', () => {
     for (const shape of ['circle', 'square', 'triangle', 'star']) await expect(handCards(alice).locator(`.color-symbol-${shape}`)).toHaveCount(1);
     await expect(handCards(alice).locator('.color-symbol')).toHaveCount(4);
     await drawPile(alice).click();
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     await expect(alice.locator('.history-board .color-symbol').first()).toBeVisible();
   });
 

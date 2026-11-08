@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, type Seat, seeTable, setHouseRules, setPreference, type Table, test, undo } from './fixtures.ts';
+import { headerButton, agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, type Seat, seeTable, setHouseRules, setPreference, type Table, test, undo } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/catan/board.ts';
@@ -724,7 +724,7 @@ test.describe('Catan rules', () => {
     await expect(status(cara)).toHaveText('Alice moved the robber. Alice stole a card from Bob');
     await expect(cara.locator('.steal-note')).toHaveCount(0);
 
-    await button(cara, 'History').click();
+    await (await headerButton(cara, 'History')).click();
     const history = cara.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.player-list')).toBeVisible();
     await expect(history.locator('.hand-panel')).toHaveCount(0);
@@ -744,7 +744,7 @@ test.describe('Catan rules', () => {
     await expect(row(bob, 'Alice').locator('.player-points')).toHaveText('10 pts');
 
     await seeTable(bob);
-    await button(bob, 'History').click();
+    await (await headerButton(bob, 'History')).click();
     const downloading = bob.waitForEvent('download');
     await bob.getByRole('dialog', { name: 'History' }).getByRole('button', { name: 'Download game' }).click();
     const file = testInfo.outputPath('catan-game.json');

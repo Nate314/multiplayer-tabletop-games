@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test, type Seat } from './fixtures.ts';
+import { expect, test, type Seat, headerButton } from './fixtures.ts';
 
 // Reactions open after the first move, so every test drops one disc first. Ann is seat 1, Bo seat 2.
 
@@ -46,7 +46,7 @@ test('a reaction is in History at its step and is not a move', async ({ seat }) 
   await nameButton(ann, 'Bo').click();
   await picker(ann, 'Bo').getByRole('button', { name: '😂' }).click();
   await expect(ann.locator('.reaction-bubble')).toBeVisible();
-  await ann.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(ann, 'History')).click();
   const dialog = ann.getByRole('dialog', { name: 'History' });
   await expect(dialog.locator('.history-move')).toContainText('Move 1 of 1');
   await expect(dialog.locator('.history-reactions')).toContainText('Ann → Bo 😂');

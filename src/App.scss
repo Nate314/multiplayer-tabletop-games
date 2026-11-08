@@ -458,8 +458,12 @@
 
 :where([data-game] .game-header h1) {
   flex: 1;
+  /* A long title shrinks, then wraps, instead of pushing the menu button off a phone screen */
+  min-width: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
   margin: 0;
-  font-size: 1.5rem;
+  font-size: clamp(1.125rem, 0.6rem + 3vw, 1.5rem);
   text-align: center;
 }
 

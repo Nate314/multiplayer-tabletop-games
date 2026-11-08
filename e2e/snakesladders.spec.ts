@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table, headerButton } from './fixtures.ts';
 import { LADDERS, SNAKES } from '../games/snakesladders/board.ts';
 
 // One test per rule, control and difference in games/snakesladders/README.md. Seat 1 is Alice (red), seat 2 Bob
@@ -322,7 +322,7 @@ test.describe('Snakes and Ladders controls', () => {
     const [alice, bob] = table.pages;
     await rollOnce(table, alice, 4, 'Alice rolled 4 and moved from 1 to 5');
     await rollOnce(table, bob, 2, 'Bob rolled 2 and climbed a ladder from 3 to 22');
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-move')).toContainText('Bob rolled 2 and climbed a ladder from 3 to 22');
     await expect(token(history, 2)).toHaveAttribute('aria-label', 'Bob, square 22');

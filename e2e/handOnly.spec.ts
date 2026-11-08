@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, nameOf, tableScreen, test, type Table } from './fixtures.ts';
+import { headerButton, expect, nameOf, tableScreen, test, type Table } from './fixtures.ts';
 import { GAMES } from '../games/registry.ts';
 
 // While a table screen is connected, a phone on Hand only keeps what the player acts on and hides what the TV shows.
@@ -309,7 +309,7 @@ test('History shows the whole table in Hand only', async ({ seat }) => {
   // This phone is now off turn, so both hiding rules apply outside History
   await expect(page.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(page.locator('.score-row >> visible=true')).toHaveCount(1);
-  await button(page, 'History').click();
+  await (await headerButton(page, 'History')).click();
   const history = page.getByRole('dialog', { name: 'History' });
   await expect(history.locator('.board-wrap')).toBeVisible();
   await expect(history.locator('.score-row >> visible=true')).toHaveCount(2);

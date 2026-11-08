@@ -1,7 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import {
-  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table
-} from './fixtures.ts';
+  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
 import { EMPTY_BOARD, boardFromLine, lay } from '../games/dominoes/board.ts';
 import type { Board, Layout } from '../games/dominoes/board.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
@@ -318,7 +317,7 @@ test.describe('Dominoes rules', () => {
     await deal(table, { hands: { 1: [[4, 5], [1, 1]], 2: [[3, 6]] } });
     await play(alice, 4, 5);
     await expect(status(bob)).toHaveText('Alice played 4-5 on the right');
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history).toContainText('Alice played 4-5 on the right');
     await expect(history.locator('.line .tile-highlighted')).toHaveCount(1);
@@ -542,7 +541,7 @@ test.describe('Dominoes layouts', () => {
     const { table, pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], {});
     await deal(table, { hands: { 1: [[4, 4], [0, 0]], 2: [[1, 1]] }, boneyard: [[2, 2]] });
     await play(alice, 4, 4);
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.board-row')).toHaveCount(3);
     await expect(history.getByRole('list', { name: 'First branch of 4-4', exact: true })).toBeVisible();

@@ -659,31 +659,15 @@
     margin-top: 16px;
   }
 
-  /* Phones: shrink the tiles so a board fits the screen, and tighten the header */
+  /* Phones: shrink the tiles so a board fits the screen, and the title */
 
   @media (max-width: 480px) {
     & {
       --tile: 26px;
     }
 
-    /* The six header buttons fill the width, so the title takes its own row above them */
-
-    .game-header {
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.375rem;
-    }
-
     .game-header h1 {
-      flex-basis: 100%;
-      order: -1;
       font-size: 1.4rem;
-    }
-
-    .back-button,
-    .history-button,
-    .rules-button {
-      padding: 0 0.6rem;
     }
   }
 

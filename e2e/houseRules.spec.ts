@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, closeRules, expect, inHouseRules, openHouseRules, setHouseRules, test } from './fixtures.ts';
+import { agreeToHouseRules, closeRules, expect, inHouseRules, openHouseRules, setHouseRules, test, headerButton } from './fixtures.ts';
 
 // The lobby flow of the house rules, played in Farkle, the first game with rules. Seat 1 (Alice) is the host.
 // The rules live in the Rules dialog's House rules tab, so each check opens it first.
@@ -8,7 +8,7 @@ const panel = (page: Page) => page.locator('.house-rules-panel');
 const targetField = (page: Page) => page.getByLabel('Target score', { exact: true });
 const row = (page: Page, name: string) => page.locator('.house-rules-list li', { hasText: `${name}:` });
 const rollButton = (page: Page) => page.getByRole('button', { name: 'Roll', exact: true });
-const rulesButton = (page: Page) => page.locator('.game-header').getByRole('button', { name: 'Rules', exact: true });
+const rulesButton = (page: Page) => headerButton(page, 'Rules');
 
 test.describe('House rules lobby', () => {
   test('the host edits the form and everyone else sees it read-only, live', async ({ seat }) => {
@@ -50,20 +50,20 @@ test.describe('House rules lobby', () => {
 
   test('Rules is marked while this player still has to agree, and opens on House rules', async ({ seat }) => {
     const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { agree: false });
-    for (const page of [alice, bob]) await expect(rulesButton(page)).not.toHaveAttribute('data-attention');
+    for (const page of [alice, bob]) await expect(await rulesButton(page)).not.toHaveAttribute('data-attention');
     await setHouseRules(alice, 'farkle', { targetScore: 5000 });
     for (const page of [alice, bob]) {
-      await expect(rulesButton(page)).toHaveAttribute('data-attention', '');
-      await expect(rulesButton(page)).toHaveAccessibleDescription('House rules need your agreement');
+      await expect(await rulesButton(page)).toHaveAttribute('data-attention', '');
+      await expect(await rulesButton(page)).toHaveAccessibleDescription('House rules need your agreement');
     }
-    await rulesButton(bob).click();
+    await (await rulesButton(bob)).click();
     await expect(bob.getByRole('button', { name: 'House rules', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await bob.getByRole('button', { name: 'Agree', exact: true }).click();
-    await expect(rulesButton(bob)).not.toHaveAttribute('data-attention');
-    await expect(rulesButton(alice)).toHaveAttribute('data-attention', '');
     await closeRules(bob);
+    await expect(await rulesButton(bob)).not.toHaveAttribute('data-attention');
+    await expect(await rulesButton(alice)).toHaveAttribute('data-attention', '');
     // Without a mark, Rules opens on the rules themselves
-    await rulesButton(bob).click();
+    await (await rulesButton(bob)).click();
     await expect(bob.getByRole('button', { name: 'Rules', exact: true, pressed: true })).toBeVisible();
   });
 
@@ -149,7 +149,7 @@ test.describe('House rules lobby', () => {
     }
     await bob.reload();
     await inHouseRules(bob, dialog => expect(dialog).toContainText('Target score5,000 (house rule)'));
-    await bob.getByRole('button', { name: 'Settings' }).click();
+    await (await headerButton(bob, 'Settings')).click();
     const settings = bob.getByRole('dialog', { name: 'Settings' });
     await expect(settings.getByRole('heading', { name: 'Sounds' })).toBeVisible();
     await expect(settings.getByRole('region', { name: 'House rules' })).toHaveCount(0);

@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, test, touchDrag, undo } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, test, touchDrag, undo, headerButton } from './fixtures.ts';
 import type { GameState } from '../games/pictionary/types.ts';
 
 // One test per rule and control in games/pictionary/README.md. Alice (seat 1) draws first; Bob and Cara guess.
@@ -162,7 +162,7 @@ test.describe('Pictionary rules', () => {
     await expect(chatLines(bob).filter({ hasText: 'Cara guessed the word!' })).toHaveCount(1);
     await say(cara, 'what a xylophone');
     await expect(chatLines(alice).filter({ hasText: 'what a xylophone' })).toHaveCount(1);
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-layout')).toBeVisible();
     await expect.poll(() => bodies.some(body => body.includes('Cara guessed'))).toBe(true);
@@ -254,7 +254,7 @@ test.describe('Pictionary rules', () => {
     await say(bob, 'xylophone');
     await say(cara, 'xylophone');
     await expect(turn(alice)).toHaveText('The word was xylophone');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-move')).toContainText('Everyone guessed it: xylophone');
     await expect(history.locator('.history-layout .score-row', { hasText: 'Bob' })).toContainText('guessed');
