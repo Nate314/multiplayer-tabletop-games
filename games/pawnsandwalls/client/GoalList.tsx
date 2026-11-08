@@ -1,6 +1,6 @@
 import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { SEATS } from '../rules.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
@@ -22,7 +22,7 @@ export default function GoalList({ gameState, playerNumber }: GoalListProps) {
         if (!activePlayers.includes(seat)) classNames.push('player-left');
         return (
           <div key={seat} className={classNames.join(' ')}>
-            <span className={`goal-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat]} className="dot-symbol" /></span>
+            <span className={`goal-dot player${seat}`}><ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="dot-symbol" /></span>
             {playerNames[seat]}
             <YouTag when={seat === playerNumber} /> → {SEATS[seat].goalLabel}
           </div>

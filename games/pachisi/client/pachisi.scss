@@ -19,10 +19,6 @@
   --drag-over: #2B2118;
   --die-bg: #FFFFFF;
   --die-pip: #2B2118;
-  --player1: #1E88E5;
-  --player2: #E53935;
-  --player3: #43A047;
-  --player4: #8E24AA;
   --symbol-ink: #FFFFFF;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
@@ -51,29 +47,21 @@
     --drag-over: #F2E9DC;
     --die-bg: #F2E9DC;
     --die-pip: #1A1714;
-    --player1: #42A5F5;
-    --player2: #EF5350;
-    --player3: #66BB6A;
-    --player4: #AB47BC;
     --symbol-ink: #1A1714;
   }
 
   /* Each seat's color, read by its nest, lane, entry square, pawns and player dot */
 
-  .player1 {
-    --seat: var(--player1);
+  @for $seat from 1 through 4 {
+    .player#{$seat} {
+      --seat: var(--seat-color-#{$seat});
+      --seat-stroke: var(--seat-stroke-#{$seat});
+    }
   }
 
-  .player2 {
-    --seat: var(--player2);
-  }
-
-  .player3 {
-    --seat: var(--player3);
-  }
-
+  /* Dark ink on the light yellow seat, as on Hex Island */
   .player4 {
-    --seat: var(--player4);
+    --symbol-ink: var(--seat-stroke-4);
   }
 
   .game-layout {
@@ -164,6 +152,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    /* A dark pill so the white name reads on the light yellow nest too */
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.3);
   }
 
   /* Two fixed rows: with fewer than three pawns a lone implicit row would stretch to the full height and the pawns with it */
@@ -189,10 +181,10 @@
     container-type: inline-size;
     background: conic-gradient(
     from -45deg,
-    var(--player2) 0 90deg,
-    var(--player3) 90deg 180deg,
-    var(--player1) 180deg 270deg,
-    var(--player4) 270deg 360deg
+    var(--seat-color-2) 0 90deg,
+    var(--seat-color-3) 90deg 180deg,
+    var(--seat-color-1) 180deg 270deg,
+    var(--seat-color-4) 270deg 360deg
   );
   }
 
@@ -250,7 +242,7 @@
     border-radius: 50%;
     /* The shared disc drawing (shared/svg/disc.ts) in the seat's color */
     --disc-fill: var(--seat);
-    --disc-edge: rgba(0, 0, 0, 0.45);
+    --disc-edge: var(--seat-stroke);
     --disc-edge-width: 5;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     box-sizing: border-box;
@@ -476,6 +468,8 @@
     flex-shrink: 0;
     width: 12px;
     height: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--seat-stroke);
     border-radius: 50%;
     background: var(--seat);
   }
@@ -493,10 +487,6 @@
   .dot-symbol {
     width: 12px;
     height: 12px;
-    color: var(--symbol-ink);
-  }
-
-  .nest-symbol {
     color: var(--symbol-ink);
   }
 

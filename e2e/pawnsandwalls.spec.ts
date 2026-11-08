@@ -193,10 +193,10 @@ test.describe('Pawns and Walls rules', () => {
 });
 
 test.describe('Pawns and Walls controls', () => {
-  test('with Color-blind symbols on, each pawn and Goals dot shows the shape of its color: blue square, red circle, green triangle, purple cross', async ({ seat }) => {
+  test('with Color-blind symbols on, each pawn and Goals dot shows the shape of its color: red circle, blue square, green triangle, yellow star', async ({ seat }) => {
     const { alice, bob } = await start(seat, 4);
     await setPreference(alice, 'Color-blind symbols', true);
-    const shapes = ['square', 'circle', 'triangle', 'cross'];
+    const shapes = ['circle', 'square', 'triangle', 'star'];
     for (const [index, name] of NAMES.entries()) {
       await expect(pawn(alice, name).locator(`.color-symbol-${shapes[index]}`)).toHaveCount(1);
       await expect(alice.locator(`.goal-dot.player${index + 1} .color-symbol-${shapes[index]}`)).toHaveCount(1);
@@ -267,8 +267,8 @@ test.describe('Pawns and Walls controls', () => {
     const frame = bob.locator('.board-frame');
     await expect(frame).toHaveClass(/goal-edge1/);
     await expect(frame).toHaveClass(/goal-edge2/);
-    await expect(frame).toHaveCSS('border-top-color', 'rgb(30, 136, 229)'); // Alice's blue on top
-    await expect(frame).toHaveCSS('border-bottom-color', 'rgb(229, 57, 53)'); // Bob's red at the bottom
+    await expect(frame).toHaveCSS('border-top-color', 'rgb(209, 36, 47)'); // Alice's red on top
+    await expect(frame).toHaveCSS('border-bottom-color', 'rgb(31, 99, 209)'); // Bob's blue at the bottom
   });
 
   test('FAQ at the top of the page covers moving, placing walls and the rules', async ({ seat }) => {

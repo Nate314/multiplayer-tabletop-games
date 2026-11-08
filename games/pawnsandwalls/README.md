@@ -2,7 +2,7 @@
 
 Race your pawn to the far side and block opponents with walls. It plays like Quoridor.
 
-Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2 (red) at the top, Player 3 (green) on the left, Player 4 (purple) on the right.
+Players are seated in join order: Player 1 (red) starts at the bottom, Player 2 (blue) at the top, Player 3 (green) on the left, Player 4 (yellow) on the right.
 
 ## Rules
 
@@ -27,7 +27,7 @@ Players are seated in join order: Player 1 (blue) starts at the bottom, Player 2
 - With a table screen connected, on Hand only (the default) the board shows only on your turn
 - Open the ☰ menu and choose "Rules" for these rules, and "FAQ" in it for FAQs on moving, placing walls and the rules
 - Click Undo to ask everyone to undo the last turn; it happens only if every player still in the game approves
-- With Color-blind symbols on in Settings, each pawn color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns and the Goals list show it
+- With Color-blind symbols on in Settings, each pawn color also shows its shape: red circle, blue square, green triangle, yellow star. Pawns and the Goals list show it
 
 ## Differences from Wikipedia
 

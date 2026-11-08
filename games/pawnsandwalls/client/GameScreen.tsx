@@ -90,7 +90,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
             label="Your action"
             leading={
               <button type="button" className="piece-tray-piece" aria-pressed={!wallHeld} onClick={() => setSelectedAction('move')}>
-                <span className="tray-pawn" style={{ '--disc-fill': `var(--player${playerNumber}, var(--wall))` } as CSSProperties}>
+                <span className="tray-pawn" style={{ '--disc-fill': `var(--seat-color-${playerNumber}, var(--wall))` } as CSSProperties}>
                   <ServerSvg url={DISC_URL} className="piece-art" />
                 </span>
                 Move

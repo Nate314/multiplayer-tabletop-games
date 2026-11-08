@@ -2,7 +2,7 @@
 
 Roll two dice and race your four pawns around the cross to home. It is the traditional Indian game. It plays like Parchisi.
 
-Players are seated in join order: Player 1 (blue) at the bottom, Player 2 (red) at the top, Player 3 (green) on the right, Player 4 (purple) on the left. With two players they sit on opposite sides. Turns pass to the player on the left, clockwise around the board: bottom, left, top, right. The player list shows the players in turn order.
+Players are seated in join order: Player 1 (red) at the bottom, Player 2 (blue) at the top, Player 3 (green) on the right, Player 4 (yellow) on the left. With two players they sit on opposite sides. Turns pass to the player on the left, clockwise around the board: bottom, left, top, right. The player list shows the players in turn order.
 
 ## Rules
 
@@ -29,7 +29,7 @@ Players are seated in join order: Player 1 (blue) at the bottom, Player 2 (red) 
 - Click Undo to ask everyone to undo the last move; it happens only if every player still in the game approves
 - With a table screen connected, on Hand only (the default) the board shows only on your turn
 - Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
-- With Color-blind symbols on in Settings, each player color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns, nests, home columns and the player list show it
+- With Color-blind symbols on in Settings, each player color also shows its shape: red circle, blue square, green triangle, yellow star. Pawns, nests, home columns and the player list show it
 
 ## Differences from Wikipedia
 

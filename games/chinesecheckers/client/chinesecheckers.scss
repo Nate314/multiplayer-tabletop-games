@@ -19,12 +19,6 @@
   --glow: #FFB300;
   --path: #1F2933;
   --last-move: #1F2933;
-  --player1: #D32F2F;
-  --player2: #1E63C6;
-  --player3: #2E8B3A;
-  --player4: #E3B505;
-  --player5: #7B3FA6;
-  --player6: #EF7A12;
   --symbol-ink: #FFFFFF;
   --platform-page-bg: var(--page-bg);
   --platform-text: var(--text);
@@ -54,39 +48,21 @@
     --glow: #FFD54F;
     --path: #F2F4F6;
     --last-move: #F2F4F6;
-    --player1: #EF5350;
-    --player2: #4A8FE7;
-    --player3: #4CAF50;
-    --player4: #F4D03F;
-    --player5: #A66DD4;
-    --player6: #FF9A3C;
     --symbol-ink: #15191E;
   }
 
   /* Each seat's color, read by its marbles, its tinted points and its player dot */
 
-  .player1 {
-    --seat: var(--player1);
+  @for $seat from 1 through 6 {
+    .player#{$seat} {
+      --seat: var(--seat-color-#{$seat});
+      --seat-stroke: var(--seat-stroke-#{$seat});
+    }
   }
 
-  .player2 {
-    --seat: var(--player2);
-  }
-
-  .player3 {
-    --seat: var(--player3);
-  }
-
+  /* Dark ink on the light yellow seat, as on Hex Island */
   .player4 {
-    --seat: var(--player4);
-  }
-
-  .player5 {
-    --seat: var(--player5);
-  }
-
-  .player6 {
-    --seat: var(--player6);
+    --symbol-ink: var(--seat-stroke-4);
   }
 
   /* The board beside the side panel, or above it on a phone */
@@ -186,7 +162,7 @@
 
   .marble circle {
     fill: var(--seat);
-    stroke: rgba(0, 0, 0, 0.45);
+    stroke: var(--seat-stroke);
     stroke-width: 0.08;
   }
 
@@ -331,6 +307,7 @@
     justify-content: center;
     width: 16px;
     height: 16px;
+    border: 1px solid var(--seat-stroke);
     border-radius: 50%;
     background: var(--seat);
   }

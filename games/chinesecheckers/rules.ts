@@ -9,8 +9,6 @@ import type { GameState, Hole, LastMove, PointIndex, PublicGameState, Result, Se
 
 export const MARBLE_COUNT = 10;
 
-export const SEAT_COLORS: Record<Seat, string> = { 1: 'Red', 2: 'Blue', 3: 'Green', 4: 'Yellow', 5: 'Purple', 6: 'Orange' };
-
 const NEEDS_PLAYABLE_COUNT = 'Chinese Checkers needs 2, 3, 4 or 6 players';
 
 // Five seated cannot start; a table that drops to five after the first move plays on
