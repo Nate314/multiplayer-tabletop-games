@@ -73,7 +73,7 @@ export default function Table({ gameState, viewer, showLastMove = false, onDraw 
         <div className="pile">
           {onDraw ? (
             <button type="button" className="card card-back card-playable" onClick={onDraw} aria-label="Draw a card">
-              <ServerSvg url={svgUrl('rainboweights-card', 'back')} className="piece-art" />
+              <ServerSvg url={svgUrl('rainboweights-card', 'back')} className="piece-art" />
             </button>
           ) : (
             <span className="card card-back"><ServerSvg url={svgUrl('rainboweights-card', 'back')} className="piece-art" /></span>

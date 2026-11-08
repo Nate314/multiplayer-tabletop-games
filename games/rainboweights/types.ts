@@ -16,7 +16,8 @@ export type Card = { color: Color | 'wild'; value: Value };
 export type Direction = 1 | -1; // 1 plays up through the seats, to the dealer's left; -1 down
 
 export type Move =
-  // color is required for a Wild; uno calls Last card with the play (saved games store this name; kept from before the rename so older files load); swapWith is required for a 7 under the 7-0 rule
+  // color is required for a Wild; uno calls Last card with the play; swapWith is required for a 7 under the 7-0 rule
+  // saved games store this name; kept from before the rename so older files load
   | { type: 'play'; card: Card; color?: Color; uno?: boolean; swapWith?: Seat }
   | { type: 'draw' }
   | { type: 'pass' } // only after drawing a playable card
