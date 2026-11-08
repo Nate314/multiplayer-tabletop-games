@@ -24,7 +24,7 @@ test('every registered game has the spec\'s category', () => {
     card: ['euchre', 'gofish', 'hearts', 'phase10', 'racko', 'rook', 'skipbo', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
     tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummikub', 'scrabble'],
-    classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'parchisi', 'quoridor', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
+    classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'pachisi', 'quoridor', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
     strategy: ['hexisland', 'corners', 'go', 'monopoly', 'risk', 'splendor', 'tickettoride'],
     party: ['charades', 'fictionary', 'categories', 'hintgrid', 'blocktower', 'pictionary', 'steadyhand']

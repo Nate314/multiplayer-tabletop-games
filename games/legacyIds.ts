@@ -9,6 +9,7 @@ export const LEGACY_IDS: LegacyIds = {
   catan: { id: 'hexisland', keepsSaves: true },
   connectfour: { id: 'fourinarow', keepsSaves: true },
   jenga: { id: 'blocktower', keepsSaves: true },
+  parchisi: { id: 'pachisi', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

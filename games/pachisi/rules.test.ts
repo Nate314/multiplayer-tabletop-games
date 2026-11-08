@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   CAPTURE_BONUS, HOME, HOME_BONUS, NEST, TRACK_LENGTH, createGameState, entryIndex, getLegalMoves, isSafe, nextPlayer
 } from './rules.ts';
-import { parchisi } from './index.ts';
+import { pachisi } from './index.ts';
 import { addPlayer, removePlayer } from '../../shared/seating.ts';
 import type { DieChoice, GameState, Progress, Random, Result, Seat } from './types.ts';
 
@@ -46,7 +46,7 @@ function onSquare(seat: Seat, index: number): Progress {
 }
 
 function move(state: GameState, seat: Seat, pawn: number, die: DieChoice, random: Random = rolls()): GameState {
-  const result = parchisi.applyMove(state, seat, { type: 'move', pawn, die }, random, 0);
+  const result = pachisi.applyMove(state, seat, { type: 'move', pawn, die }, random, 0);
   return ok(result);
 }
 
@@ -61,9 +61,9 @@ function options(state: GameState, seat: Seat): string[] {
 }
 
 function lobby(names: string[], random: Random): GameState {
-  let state = parchisi.createGameState('g1');
+  let state = pachisi.createGameState('g1');
   for (const name of names) {
-    const result = addPlayer(parchisi, state, name, random);
+    const result = addPlayer(pachisi, state, name, random);
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -84,7 +84,7 @@ test('with four players turns pass to the left, around the board', () => {
   assert.equal(next.gameStatus, 'Alice moved a pawn 3 squares. Dan rolled 1 and 2 and cannot move. ' +
     'Bob rolled 1 and 2 and cannot move. Cara rolled 1 and 2 and cannot move. Alice rolled 6 and 1');
 
-  const left = removePlayer(parchisi, state, 1, rolls(5, 1));
+  const left = removePlayer(pachisi, state, 1, rolls(5, 1));
   assert.equal(left.currentPlayer, 4);
 });
 
@@ -98,7 +98,7 @@ test('the lowest roll-off goes first, and players tied for lowest roll again', (
   assert.deepEqual(state.dice, [{ value: 5, used: false }, { value: 2, used: false }]);
   assert.match(state.gameStatus, /Lowest roll goes first: Alice 4, Bob 3\. Bob goes first\. Bob rolled 5 and 2$/);
 
-  const three = parchisi.resetLobby({ ...state, activePlayers: [1, 2, 3], playerNames: NAMES, gameStatus: 'Cara joined' },
+  const three = pachisi.resetLobby({ ...state, activePlayers: [1, 2, 3], playerNames: NAMES, gameStatus: 'Cara joined' },
     rolls(4, 2, 2, 5, 3, 5, 1));
   assert.equal(three.currentPlayer, 3);
   assert.equal(three.gameStatus,
@@ -282,20 +282,20 @@ test('the fourth pawn home wins', () => {
 
 test('malformed and illegal moves are rejected', () => {
   const state = playing({ pawns: { 1: IN_NEST, 2: IN_NEST }, dice: [5, 2] });
-  assert.deepEqual(parchisi.applyMove(state, 1, 'move', rolls(), 0), { error: 'Unknown move type' });
-  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: '0', die: 0 }, rolls(), 0), { error: 'Invalid move' });
-  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: 4, die: 0 }, rolls(), 0), { error: 'Invalid move' });
-  assert.deepEqual(parchisi.applyMove(state, 1, { type: 'move', pawn: 0, die: 1 }, rolls(), 0), { error: 'Invalid move' });
+  assert.deepEqual(pachisi.applyMove(state, 1, 'move', rolls(), 0), { error: 'Unknown move type' });
+  assert.deepEqual(pachisi.applyMove(state, 1, { type: 'move', pawn: '0', die: 0 }, rolls(), 0), { error: 'Invalid move' });
+  assert.deepEqual(pachisi.applyMove(state, 1, { type: 'move', pawn: 4, die: 0 }, rolls(), 0), { error: 'Invalid move' });
+  assert.deepEqual(pachisi.applyMove(state, 1, { type: 'move', pawn: 0, die: 1 }, rolls(), 0), { error: 'Invalid move' });
 });
 
 test('a player who leaves loses their pawns, and the next player rolls if it was their turn', () => {
   const state = playing({ pawns: { 1: [3, NEST, NEST, NEST], 2: [5, NEST, NEST, NEST], 3: IN_NEST }, dice: [6, 4], current: 2 });
-  const next = removePlayer(parchisi, state, 2, rolls(5, 1));
+  const next = removePlayer(pachisi, state, 2, rolls(5, 1));
   assert.deepEqual(Object.keys(next.pawns), ['1', '3']);
   assert.equal(next.currentPlayer, 3);
   assert.deepEqual(next.dice.map(die => die.value), [5, 1]);
 
-  const other = removePlayer(parchisi, state, 3, rolls(5, 1));
+  const other = removePlayer(pachisi, state, 3, rolls(5, 1));
   assert.equal(other.currentPlayer, 2);
   assert.deepEqual(other.dice.map(die => die.value), [6, 4]);
 });

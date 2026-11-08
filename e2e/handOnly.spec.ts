@@ -212,7 +212,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board-wrap',
     move: async page => { await page.locator('.pit-bottom').first().click(); }
   },
-  parchisi: {
+  pachisi: {
     keep: ['.turn-message', '.dice-tray', '.undo-button', '.player-list'],
     hide: [],
     board: '.board-area .board',

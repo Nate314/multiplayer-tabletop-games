@@ -1,6 +1,6 @@
-# Parchisi
+# Pachisi
 
-Roll two dice and race your four pawns around the cross to home.
+Roll two dice and race your four pawns around the cross to home. It is the traditional Indian game. It plays like Parchisi.
 
 Players are seated in join order: Player 1 (blue) at the bottom, Player 2 (red) at the top, Player 3 (green) on the right, Player 4 (purple) on the left. With two players they sit on opposite sides. Turns pass to the player on the left, clockwise around the board: bottom, left, top, right. The player list shows the players in turn order.
 

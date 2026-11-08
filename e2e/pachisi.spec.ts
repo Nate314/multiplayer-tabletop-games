@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
-import { HOME, LAST_TRACK, NEST, TRACK_LENGTH, entryIndex, isOnTrack, trackIndex } from '../games/parchisi/rules.ts';
-import type { Progress, Seat as SeatNumber } from '../games/parchisi/types.ts';
+import { HOME, LAST_TRACK, NEST, TRACK_LENGTH, entryIndex, isOnTrack, trackIndex } from '../games/pachisi/rules.ts';
+import type { Progress, Seat as SeatNumber } from '../games/pachisi/types.ts';
 
-// One test per rule and control in games/parchisi/README.md. Seat 1 (Alice) is blue at the bottom and seat 2 (Bob)
+// One test per rule and control in games/pachisi/README.md. Seat 1 (Alice) is blue at the bottom and seat 2 (Bob)
 // red at the top. A pawn's progress counts squares from its own entry square: NEST, 0 to 63 on the track,
 // 64 to 70 up its home column and HOME at the center.
 
@@ -27,7 +27,7 @@ function defaultOpening(players: number): number[] {
 
 async function start(seat: Seat, server: Server, names = ['Alice', 'Bob'], opening?: number[]) {
   await queueDice(server, ...(opening ?? defaultOpening(names.length)));
-  const table = await seat('parchisi', names);
+  const table = await seat('pachisi', names);
   return { table, pages: table.pages, alice: table.pages[0], bob: table.pages[1] };
 }
 
@@ -85,7 +85,7 @@ async function move(page: Page, index: number, progress: Progress, seat: SeatNum
   await expect(pawnAt(page, seat, index, progress)).toHaveCount(1);
 }
 
-test.describe('Parchisi seating', () => {
+test.describe('Pachisi seating', () => {
   test('players sit bottom, top, right, left in join order, turns go clockwise, and the list is in turn order', async ({ seat, server }) => {
     const { pages } = await start(seat, server, ['Alice', 'Bob', 'Cara', 'Dan']);
     const [alice] = pages;
@@ -106,7 +106,7 @@ test.describe('Parchisi seating', () => {
   });
 });
 
-test.describe('Parchisi rules', () => {
+test.describe('Pachisi rules', () => {
   test('four pawns each in the nest, 68 track squares with 12 safe, and a 7 square home column per color', async ({ seat, server }) => {
     const { alice } = await start(seat, server);
     await expect(alice.locator('.nest.player1 .pawn')).toHaveCount(4);
@@ -365,7 +365,7 @@ test.describe('Parchisi rules', () => {
   });
 });
 
-test.describe('Parchisi controls', () => {
+test.describe('Pachisi controls', () => {
   test('movable pawns glow, and the selected pawn\'s squares are marked with their dice: 4, 2+3 or +20', async ({ seat, server }) => {
     const { table, alice } = await start(seat, server);
     await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4]);
@@ -473,7 +473,7 @@ test.describe('Parchisi controls', () => {
   });
 });
 
-test.describe('Parchisi differences from Wikipedia', () => {
+test.describe('Pachisi differences from Wikipedia', () => {
   test('three doubles in a row send back the pawn closest to home on the track', async ({ seat, server }) => {
     const { table, alice } = await start(seat, server);
     await craft(table, { 1: [10, 40, N, N], 2: [N, N, N, N] }, [1, 1], { doublesRolled: 2 });
@@ -528,7 +528,7 @@ test.describe('Parchisi differences from Wikipedia', () => {
   });
 });
 
-test.describe('Parchisi drag and drop', () => {
+test.describe('Pachisi drag and drop', () => {
   test('a pawn dragged to a square with a badge moves there', async ({ seat, server }) => {
     const { table, alice, bob } = await start(seat, server);
     await craft(table, { 1: [0, N, N, N], 2: [N, N, N, N] }, [2, 4]);

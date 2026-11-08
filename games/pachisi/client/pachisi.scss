@@ -1,4 +1,4 @@
-[data-game="parchisi"] {
+[data-game="pachisi"] {
   color-scheme: light;
   --page-bg: #F3EBDD;
   --text: #2B2118;
@@ -276,7 +276,7 @@
   .pawn.movable {
     cursor: pointer;
     box-shadow: 0 0 0 2px var(--highlight), 0 0 8px var(--highlight);
-    animation: parchisi-glow 1.2s ease-in-out infinite alternate;
+    animation: pachisi-glow 1.2s ease-in-out infinite alternate;
   }
 
   .pawn.selected {
@@ -285,12 +285,12 @@
   }
 }
 
-@keyframes parchisi-glow {
+@keyframes pachisi-glow {
   from { filter: brightness(1); }
   to { filter: brightness(1.3); }
 }
 
-[data-game="parchisi"] {
+[data-game="pachisi"] {
   .destination {
     cursor: pointer;
     outline: 3px solid var(--highlight);

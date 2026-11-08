@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys } from '../../server/testing.ts';
 import { NEST } from './rules.ts';
-import { parchisi } from './index.ts';
+import { pachisi } from './index.ts';
 import type { Move, PublicGameState } from './types.ts';
 import type { Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'parchisi/g1';
+const ROOM = 'pachisi/g1';
 const enter = (pawn: number): Move => ({ type: 'move', pawn, die: 0 });
 
 // Every die comes up 5 then 2, so the second player wins the roll-off and each roll lets a pawn enter
@@ -19,12 +19,12 @@ function fiveAndTwo(): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([parchisi], fiveAndTwo()));
-  for (const name of names) manager.join('parchisi', 'g1', name);
+  const manager = rememberingKeys(createGameManager([pachisi], fiveAndTwo()));
+  for (const name of names) manager.join('pachisi', 'g1', name);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Parchisi's
+// The manager is generic over games, so tests narrow the public state to Pachisi's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;

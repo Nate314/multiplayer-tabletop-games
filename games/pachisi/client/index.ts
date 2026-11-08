@@ -4,10 +4,10 @@ import HistoryBoard from './HistoryBoard';
 import { FAQS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './parchisi.scss';
+import './pachisi.scss';
 
-export const parchisiClient: ClientGame = {
-  id: 'parchisi',
+export const pachisiClient: ClientGame = {
+  id: 'pachisi',
   Screen: GameScreen,
   faq: FAQS,
   HistoryBoard,

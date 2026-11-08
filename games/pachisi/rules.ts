@@ -1,4 +1,4 @@
-// Parchisi rules shared by the browser (move hints) and the server (validation).
+// Pachisi rules shared by the browser (move hints) and the server (validation).
 import { rankStandings } from '../../shared/standings.ts';
 import type { Standing } from '../../shared/types.ts';
 import { rollDie } from '../../shared/dice.ts';
