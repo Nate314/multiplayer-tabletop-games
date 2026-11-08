@@ -36,10 +36,10 @@ It plays like The Game of Life, on an original road with original careers, house
 
 ## Controls
 
-- Click Spin to spin the spinner (1 to 10) or the teetotum (1 to 6). The number spun shows on the spinner, and the line above the board says what happened
+- Click Spin to spin the spinner (1 to 10) or the teetotum (1 to 6). The number spun shows on the spinner, and the status line beside or below the board says what happened
 - On your first turn on the road, click College or Straight to work. At the fork, click Safe road or Fast lane
 - When careers are offered, click one (its salary is shown), or Keep with your current career. When houses are offered, click one (its price is shown) or No house
-- Hover over a road space to read what it does; stop spaces have a thick border, and the spaces left out of a Short game are dimmed
+- The legend under the road names each space color; stop spaces have a thick border, and the spaces left out of a Short game are dimmed. With a mouse, hover over a space to read what it does
 - On the 1860 board the squares the spin allows are highlighted; click one to move there
 - The Players list shows each player's cash, loans, career and salary, degree, houses and family on the road, or points on the 1860 board, and marks the winner, a player who left and a player who loses their next turn
 - Click Undo to ask everyone to undo the last move

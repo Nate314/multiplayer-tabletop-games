@@ -96,7 +96,7 @@ test.describe('Road to Retirement rules', () => {
     await expect(details(bob, 1)).toHaveText('$15,000 cash, 2 loans, no career yet');
     // Still Alice's turn: she spins onto the college road
     await spin(table, alice, 3);
-    await expect(status(bob)).toHaveText('Alice spun 3, landed on an event: The car needs a new transmission');
+    await expect(status(bob)).toHaveText('Alice spun 3, landed on an event: The car needs a new transmission (-$1,800)');
     await expect(details(bob, 1)).toHaveText('$13,200 cash, 2 loans, no career yet');
     await expect(turn(bob)).toHaveText('Your turn');
     await button(bob, 'Straight to work').click();
@@ -115,7 +115,7 @@ test.describe('Road to Retirement rules', () => {
     const [alice, bob] = table.pages;
     await road(table, { 1: { space: 25, career: 'chef', cash: 25000 } }, '$25,000 cash, Chef, $35,000');
     await spin(table, alice, 3); // past the payday on 27 to a loss on 28
-    await expect(status(bob)).toHaveText('Alice spun 3, collected $35,000 on payday, landed on an event: Your phone falls into the lake');
+    await expect(status(bob)).toHaveText('Alice spun 3, collected $35,000 on payday, landed on an event: Your phone falls into the lake (-$400)');
     await expect(details(bob, 1)).toHaveText('$59,600 cash, Chef, $35,000');
     await road(table, { 1: { space: 26, career: 'chef', cash: 25000 } }, '$25,000 cash, Chef, $35,000');
     await spin(table, alice, 1);
@@ -144,7 +144,7 @@ test.describe('Road to Retirement rules', () => {
     await expect(panel(bob, 'Choose a road')).toHaveCount(0);
     await expect(panel(alice, 'Choose a road').getByRole('button')).toHaveText(['Safe road', 'Fast lane']);
     await button(alice, 'Safe road').click();
-    await expect(status(bob)).toHaveText('Alice took the safe road, collected $35,000 on payday, landed on an event: You return a lost wallet and get a reward');
+    await expect(status(bob)).toHaveText('Alice took the safe road, collected $35,000 on payday, landed on an event: You return a lost wallet and get a reward (+$500)');
     expect(await playerAt(table, 1)).toBe(51);
     // The fast lane starts with a risk space
     await road(table, { 1: { space: 46, career: 'chef', cash: 25000 } }, '$25,000 cash, Chef, $35,000');
@@ -261,7 +261,7 @@ test.describe('1860 Checkered rules', () => {
     const [alice] = table.pages;
     await expect(alice.locator('.checkered-board .cell')).toHaveCount(64);
     await expect(alice.locator('.checkered-board .cell.light .square-name')).toHaveCount(32);
-    await expect(square(alice, { row: 7, col: 0 }).locator('.square-name')).toHaveText('Infancy');
+    await expect(square(alice, { row: 7, col: 0 }).locator('.square-name')).toHaveText('In\u00ADfancy'); // shown with the soft hyphen it may break at
     await expect(square(alice, { row: 0, col: 7 }).locator('.square-name')).toHaveText('Happy Old Age');
     await expect(square(alice, { row: 0, col: 7 }).locator('.square-note')).toHaveText('+50, the goal');
     await expect(square(alice, { row: 7, col: 0 }).locator('.piece')).toHaveCount(2);
@@ -334,7 +334,7 @@ test.describe('1860 Checkered rules', () => {
     const [alice, bob] = table.pages;
     await place(table, { row: 6, col: 5 }, 30);
     await expect(details(bob, 1)).toHaveText('30 points');
-    await expect(square(bob, { row: 5, col: 6 }).locator('.square-name')).toHaveText('Despair');
+    await expect(square(bob, { row: 5, col: 6 }).locator('.square-name')).toHaveText('De\u00ADspair');
     await twirl(table, alice, 3);
     await button(alice, 'Move to Despair').click();
     await expect(status(bob)).toHaveText('Alice landed on Despair, went back to Infancy and lost every point');
@@ -406,7 +406,7 @@ test.describe('Road to Retirement controls', () => {
     await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     const step = history.locator('.history-move');
-    await expect(step).toHaveText('Move 2 of 2: Alice spun 3. Alice landed on an event: The car needs a new transmission');
+    await expect(step).toHaveText('Move 2 of 2: Alice spun 3. Alice landed on an event: The car needs a new transmission (-$1,800)');
     await expect(history.locator('.space.highlight')).toHaveAttribute('data-space', '3');
     await history.getByRole('slider', { name: 'Step' }).press('ArrowLeft');
     await expect(step).toHaveText('Move 1 of 2: Alice chose college. Alice took 2 loans of $20,000');

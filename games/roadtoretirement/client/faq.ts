@@ -16,7 +16,7 @@ export const FAQS: FaqItem[] = [
     question: 'How does a turn work on the road?',
     answer: 'Press Spin and your token moves that many spaces. Every payday you pass or land on pays your salary. ' +
       'The space you land on then acts: a gain or a loss of money, a job, a house, family, or a risk. Turns go ' +
-      'around in seat order and skip anyone who has retired. Hover over a space to read what it does.'
+      'around in seat order and skip anyone who has retired. The legend under the board names each color, and with a mouse, hovering over a space says what it does.'
   },
   {
     question: 'College or straight to work?',

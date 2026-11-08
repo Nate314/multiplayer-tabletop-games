@@ -5,7 +5,7 @@ import { withRules } from '../../server/testing.ts';
 import type { HouseRuleValues } from '../../shared/houseRules.ts';
 import { HOUSES, careerOf, houseOf } from './content.ts';
 import { MID_FORK, ROAD, START_FORK, type SpaceKind } from './road.ts';
-import { CHILD_BONUS, LOAN_REPAY, charge, roadLeft, roadMove, roadStandings, startRoad } from './roadRules.ts';
+import { CHILD_BONUS, LOAN_REPAY, charge, money, roadLeft, roadMove, roadStandings, startRoad } from './roadRules.ts';
 import type { GameState, Move, Random, RoadPhase, RoadPlayer, Seat } from './types.ts';
 
 const NAMES: Record<Seat, string> = { 1: 'Alice', 2: 'Bob', 3: 'Cara' };
@@ -111,7 +111,7 @@ test('a payday is paid when passed and when landed on', () => {
   state = play(start, 1, { type: 'spin' }, spins(2));
   const event = ROAD[START_FORK.work + 2];
   assert.equal(player(state, 1).cash, 25000 + SALARY + event.amount!);
-  assert.deepEqual(state.lastMove!.events, ['spun 2', 'collected $35,000 on payday', `landed on an event: ${event.text!.slice(0, -1)}`]);
+  assert.deepEqual(state.lastMove!.events, ['spun 2', 'collected $35,000 on payday', `landed on an event: ${event.text!.slice(0, -1)} (${event.amount! > 0 ? '+' : ''}${money(event.amount!)})`]);
 });
 
 test('a stop space stops the move', () => {
@@ -192,6 +192,14 @@ test('a house can be bought or skipped and sells at retirement', () => {
   state = play(state, 1, { type: 'spin' }, spins(3));
   assert.equal(player(state, 1).retired, true);
   assert.equal(player(state, 1).worth, 200000 - houseOf('cottage')!.price + houseOf('cottage')!.saleValue);
+});
+
+test('a house space says so when every house is taken', () => {
+  const house = indexOf('house');
+  const start = patch(patch(game(), 2, { houses: HOUSES.map(h => h.id) }), 1, { space: house - 1 });
+  const state = play(start, 1, { type: 'spin' }, spins(1));
+  assert.equal(state.gameStatus, 'Alice spun 1, landed on a house, but every house is taken');
+  assert.equal(state.currentPlayer, 2);
 });
 
 test('family adds a partner first, then children', () => {

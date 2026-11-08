@@ -40,13 +40,14 @@ test('a route choice', () => {
 test('a spin and everything it led to, the event text without its period', () => {
   const kitchen = ROAD.findIndex(s => s.text === 'A pipe bursts in the kitchen.');
   const state = play(atRoad({ space: kitchen - 1, cash: 100 }), { type: 'spin' });
-  assert.equal(describeMove(state), 'Alice spun 1. Alice landed on an event: A pipe bursts in the kitchen. Alice took 1 loan of $20,000');
+  assert.equal(describeMove(state), 'Alice spun 1. Alice landed on an event: A pipe bursts in the kitchen (-$1,500). Alice took 1 loan of $20,000');
 });
 
 test('a fork, a career and a house', () => {
   const fork = play(atRoad({ space: MID_FORK.space, career: 'chef' }, 'fork'), { type: 'fork', road: 'fast' });
   assert.ok(describeMove(fork).startsWith('Alice took the fast lane. Alice '));
   assert.equal(describeMove(play(atRoad({}, 'career', ['chef']), { type: 'career', pick: 'chef' })), 'Alice became a Chef');
+  assert.equal(describeMove(play(atRoad({}, 'career', ['electrician']), { type: 'career', pick: 'electrician' })), 'Alice became an Electrician');
   assert.equal(describeMove(play(atRoad({ career: 'chef' }, 'career', ['nurse']), { type: 'career', pick: null })), 'Alice kept their career');
   assert.equal(describeMove(play(atRoad({ cash: 50000 }, 'house', ['cabin']), { type: 'buyHouse', pick: 'cabin' })),
     'Alice bought the Lake Cabin for $40,000');

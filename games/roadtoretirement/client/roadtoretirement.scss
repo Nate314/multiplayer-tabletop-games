@@ -342,6 +342,38 @@
     stroke-width: 1.5;
   }
 
+  .token text {
+    fill: #FFFFFF;
+    font-family: sans-serif;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  /* The legend under the road: each space color by name, readable at any width */
+
+  .road-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
   /* The 1860 board: an 8 by 8 grid, arrows drawn over the squares and under their names */
 
   .checkered-board {
@@ -367,7 +399,7 @@
     min-width: 0;
     min-height: 0;
     margin: 0;
-    padding: 2px;
+    padding: 1px;
     border: none;
     border-radius: 0;
     color: var(--square-text);
@@ -376,7 +408,8 @@
   }
 
   .cell.light {
-    background: var(--light-square);
+    --cell-bg: var(--light-square);
+    background: var(--cell-bg);
   }
 
   .cell.dark {
@@ -384,7 +417,8 @@
   }
 
   .cell.legal {
-    background: color-mix(in srgb, var(--highlight) 45%, var(--light-square));
+    --cell-bg: color-mix(in srgb, var(--highlight) 45%, var(--light-square));
+    background: var(--cell-bg);
     outline: 3px solid var(--highlight);
     outline-offset: -3px;
   }
@@ -394,7 +428,8 @@
   }
 
   button.cell:hover {
-    background: color-mix(in srgb, var(--highlight) 65%, var(--light-square));
+    --cell-bg: color-mix(in srgb, var(--highlight) 65%, var(--light-square));
+    background: var(--cell-bg);
   }
 
   .cell.highlight {
@@ -408,12 +443,19 @@
     position: relative;
     z-index: 2;
     max-width: 100%;
-    overflow-wrap: anywhere;
     line-height: 1.05;
   }
 
+  /* The square's own color behind its text, so an arrow passes behind the words */
+  .square-name,
+  .square-note {
+    padding: 0 1px;
+    border-radius: 2px;
+    background: var(--cell-bg);
+  }
+
   .square-name {
-    font-size: clamp(7px, 1.75cqi, 14px);
+    font-size: clamp(8px, 1.75cqi, 14px);
     font-weight: 700;
     font-variant: small-caps;
   }
@@ -421,6 +463,13 @@
   .square-note {
     font-size: clamp(6px, 1.35cqi, 11px);
     font-style: italic;
+  }
+
+  /* A narrow board gives the name the whole square; the arrows and the rules carry the note */
+  @container (max-width: 440px) {
+    .square-note {
+      display: none;
+    }
   }
 
   .pieces {

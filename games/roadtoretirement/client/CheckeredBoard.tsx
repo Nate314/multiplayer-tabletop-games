@@ -27,6 +27,13 @@ const ARROWS = Object.entries(SQUARES).filter(([, square]) => square.sendTo).map
   return { key, ...arrow({ row, col }, cellOf(square.sendTo!)) };
 });
 
+// Soft hyphens where a long name may break in a small square; display only, since cellOf matches the plain names
+const BREAKS = ['Perse-ver-ance', 'Intem-per-ance', 'Specu-la-tion', 'Matri-mony', 'Happi-ness', 'Indus-try', 'Influ-ence',
+  'Ambi-tion', 'Gam-bling', 'Poli-tics', 'Idle-ness', 'Con-gress', 'Dis-grace', 'Hon-esty', 'Brav-ery', 'Pov-erty',
+  'Col-lege', 'De-spair', 'Suc-cess', 'In-fancy', 'Of-fice'];
+const SHOWN = new Map(BREAKS.map(word => [word.replaceAll('-', ''), word.replaceAll('-', '\u00AD')]));
+const shown = (name: string): string => name.split(' ').map(word => SHOWN.get(word) ?? word).join(' ');
+
 type Props = { gameState: PublicGameState; canMove: boolean; onMove: (move: Move) => void; highlight: Cell | null };
 
 // The 1860 board: the named light squares, an arrow for each send, the pieces, and the squares the spin allows
@@ -47,7 +54,7 @@ export default function CheckeredBoard({ gameState, canMove, onMove, highlight }
         const here = pieces.filter(piece => same(piece.cell, cell));
         const content = (
           <>
-            {square && <span className="square-name">{square.name}</span>}
+            {square && <span className="square-name">{shown(square.name)}</span>}
             {square && <span className="square-note">{note(square)}</span>}
             {here.length > 0 && (
               <span className="pieces">

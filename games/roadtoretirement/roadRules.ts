@@ -71,8 +71,9 @@ function land(turn: Turn, random: Random): void {
       offerCareers(turn, random, true);
       break;
     case 'event':
-      turn.events.push(`landed on an event: ${space.text!.replace(/\.$/, '')}`); // a clause inside the status line
-      pay(turn, -(space.amount ?? 0));
+      // a clause inside the status line, with what it pays or costs
+      turn.events.push(`landed on an event: ${space.text!.replace(/\.$/, '')} (${space.amount! > 0 ? '+' : ''}${money(space.amount!)})`);
+      pay(turn, -space.amount!);
       break;
     case 'house':
     case 'houseStop': {
@@ -80,6 +81,7 @@ function land(turn: Turn, random: Random): void {
       const free = HOUSES.filter(h => !owned.includes(h.id)).map(h => h.id);
       turn.events.push('landed on a house');
       if (free.length > 0) [turn.offer, turn.phase] = [pickTwo(free, random), 'house'];
+      else turn.events.push('but every house is taken');
       break;
     }
     case 'family':
@@ -179,6 +181,8 @@ const PHASE_ERROR: Record<RoadPhase, string> = {
 };
 const PHASE_MOVE: Record<RoadPhase, Move['type']> = { route: 'route', spin: 'spin', fork: 'fork', career: 'career', house: 'buyHouse' };
 
+const becameA = (name: string): string => `became ${/^[AEIOU]/.test(name) ? 'an' : 'a'} ${name}`;
+
 export function roadMove(state: GameState, seat: Seat, move: Move, random: Random): Result<GameState> {
   const road = state.road;
   const player = road?.players[seat];
@@ -210,7 +214,7 @@ export function roadMove(state: GameState, seat: Seat, move: Move, random: Rando
     case 'career':
       if (move.pick === null ? player.career === null : !road.offer.includes(move.pick)) return { error: PHASE_ERROR.career };
       turn.player = { ...player, career: move.pick ?? player.career };
-      turn.events.push(move.pick === null ? 'kept their career' : `became a ${careerOf(move.pick)!.name}`);
+      turn.events.push(move.pick === null ? 'kept their career' : becameA(careerOf(move.pick)!.name));
       return { state: finish(turn, move) };
     case 'buyHouse': {
       if (move.pick !== null && !road.offer.includes(move.pick)) return { error: PHASE_ERROR.house };
