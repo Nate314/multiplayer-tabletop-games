@@ -571,6 +571,14 @@
     --disc-edge: var(--seat-stroke-4);
   }
 
+  /* Dark ink on the light yellow pawn and dot, as on Hex Island */
+  .pawn.player4,
+  .pawn.player4 .pawn-symbol,
+  .goal-dot.player4 .dot-symbol {
+    color: var(--seat-stroke-4);
+    text-shadow: none;
+  }
+
   .board-area {
     position: relative;
   }

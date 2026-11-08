@@ -59,6 +59,11 @@
     }
   }
 
+  /* Dark ink on the light yellow seat, as on Hex Island */
+  .player4 {
+    --symbol-ink: var(--seat-stroke-4);
+  }
+
   .game-layout {
     display: flex;
     flex-wrap: wrap;

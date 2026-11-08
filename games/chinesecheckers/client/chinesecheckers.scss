@@ -60,6 +60,11 @@
     }
   }
 
+  /* Dark ink on the light yellow seat, as on Hex Island */
+  .player4 {
+    --symbol-ink: var(--seat-stroke-4);
+  }
+
   /* The board beside the side panel, or above it on a phone */
 
   .game-layout {
