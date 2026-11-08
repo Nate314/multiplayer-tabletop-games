@@ -76,23 +76,23 @@ test('the choice is remembered', async ({ seat }) => {
   await expect(phone.getByRole('button', { name: 'Board and hand' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('pictionary: the table screen never shows the word', async ({ seat }) => {
-  const table = await seat('pictionary', ['Alice', 'Bob', 'Cara']);
+test('drawandguess: the table screen never shows the word', async ({ seat }) => {
+  const table = await seat('drawandguess', ['Alice', 'Bob', 'Cara']);
   const [alice, bob] = table.pages;
   await table.patch({ wordChoices: ['xylophone', 'quokka', 'zeppelin'] });
   await alice.getByRole('group', { name: 'Choose a word' }).getByRole('button', { name: 'xylophone' }).click();
   await table.patch({ word: 'red apple' });
   const tv = await tableScreen(table);
   const say = async (text: string) => {
-    await bob.locator('#pictionary-chat-input').fill(text);
-    await bob.locator('#pictionary-chat-input').press('Enter');
+    await bob.locator('#drawandguess-chat-input').fill(text);
+    await bob.locator('#drawandguess-chat-input').press('Enter');
   };
   await say('blue pear'); // a public, wrong guess
   await say('red apple');
   await say('only for guessers');
   await expect(alice.locator('.chat-line', { hasText: 'only for guessers' })).toHaveCount(1); // delivered to those allowed
   await expect(tv.locator('.chat-line', { hasText: 'Bob: blue pear' })).toHaveCount(1);
-  await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: 8 letters');
+  await expect(tv.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: 8 letters');
   await expect(tv.locator('.table-screen-status')).toContainText('Bob guessed the word');
   const shown = () => tv.locator('body').innerText();
   expect(await shown()).not.toContain('red apple');
@@ -100,7 +100,7 @@ test('pictionary: the table screen never shows the word', async ({ seat }) => {
 
   // When the turn runs out the reveal shows the word to everyone, the table screen included
   await table.patch({ phaseStartedAt: Date.now() - 89_500 });
-  await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: red apple');
+  await expect(tv.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: red apple');
   expect(await shown()).toContain('red apple');
 });
 

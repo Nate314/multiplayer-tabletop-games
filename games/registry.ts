@@ -18,11 +18,11 @@ import { streetdeeds } from './streetdeeds/index.ts';
 import { naval } from './naval/index.ts';
 import { pachisi } from './pachisi/index.ts';
 import { lettergrid } from './lettergrid/index.ts';
-import { uno } from './uno/index.ts';
-import { phase10 } from './phase10/index.ts';
+import { rainboweights } from './rainboweights/index.ts';
+import { stagerummy } from './stagerummy/index.ts';
 import { categories } from './categories/index.ts';
-import { pictionary } from './pictionary/index.ts';
-import { skipbo } from './skipbo/index.ts';
+import { drawandguess } from './drawandguess/index.ts';
+import { spiteandmalice } from './spiteandmalice/index.ts';
 import { go } from './go/index.ts';
 import { snakesladders } from './snakesladders/index.ts';
 import { gofish } from './gofish/index.ts';
@@ -32,9 +32,9 @@ import { blocktower } from './blocktower/index.ts';
 import { jigsaw } from './jigsaw/index.ts';
 import { war } from './war/index.ts';
 import { risk } from './risk/index.ts';
-import { racko } from './racko/index.ts';
+import { inorder } from './inorder/index.ts';
 import { roadtoretirement } from './roadtoretirement/index.ts';
-import { rook } from './rook/index.ts';
+import { nest } from './nest/index.ts';
 import { spades } from './spades/index.ts';
 import { jewelguild } from './jewelguild/index.ts';
 import { steadyhand } from './steadyhand/index.ts';
@@ -46,7 +46,7 @@ import { railroutes } from './railroutes/index.ts';
 import { tradingfloor } from './tradingfloor/index.ts';
 import { dominoes } from './dominoes/index.ts';
 import { whodunit } from './whodunit/index.ts';
-import { yahtzee } from './yahtzee/index.ts';
+import { fivedice } from './fivedice/index.ts';
 import { thecrew } from './thecrew/index.ts';
 import { tictactoe } from './tictactoe/index.ts';
 import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
@@ -54,6 +54,6 @@ import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 // Registry order, alphabetical by name; the landing page groups them by category. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, streetdeeds, naval, pachisi, phase10, pictionary,
-  pawnsandwalls, racko, roadtoretirement, risk, rook, rummytiles, lettergrid, skipbo, snakesladders, spades, jewelguild, steadyhand, sudoku, holdem, thecrew, tictactoe, railroutes, tradingfloor, ultimatetictactoe, uno, war, whodunit, yahtzee
+  palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, streetdeeds, naval, pachisi, stagerummy, drawandguess,
+  pawnsandwalls, inorder, roadtoretirement, risk, nest, rummytiles, lettergrid, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, holdem, thecrew, tictactoe, railroutes, tradingfloor, ultimatetictactoe, rainboweights, war, whodunit, fivedice
 ];

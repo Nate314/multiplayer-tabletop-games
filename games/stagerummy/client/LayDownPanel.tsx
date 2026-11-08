@@ -1,0 +1,64 @@
+import CardView from './CardView';
+import { cardKey } from './animateMove.ts';
+import { buildGroup, phaseLabel, phaseName, phaseRef, phaseRequirements, requirementName } from '../rules.ts';
+import type { Card, Seat } from '../types.ts';
+
+type LayDownPanelProps = {
+  seat: Seat;
+  phase: number;
+  choices: number[]; // the phases that may be laid down; more than one lets the player pick
+  staged: Card[][]; // the cards put in each part of the phase so far
+  hasSelection: boolean;
+  onChoose: (phase: number) => void;
+  onAdd: (part: number) => void;
+  onReturn: (card: Card) => void;
+  onClear: () => void;
+  onLayDown: () => void;
+};
+
+// Building your phase: put selected cards into each part, then lay it down once every part is right
+export default function LayDownPanel({ seat, phase, choices, staged, hasSelection, onChoose, onAdd, onReturn, onClear, onLayDown }: LayDownPanelProps) {
+  const requirements = phaseRequirements(phase);
+  const valid = requirements.every((requirement, part) => buildGroup(seat, requirement, staged[part] ?? []) !== null);
+  const anyStaged = staged.some(cards => cards.length > 0);
+
+  return (
+    <div className="lay-down">
+      <div className="lay-down-title">Lay down {phaseRef(phase)}</div>
+      {choices.length > 1 && (
+        <label className="lay-down-choice">
+          Phase to lay down
+          <select value={phase} onChange={event => onChoose(Number(event.target.value))}>
+            {choices.map(choice => (
+              <option key={choice} value={choice}>{phaseLabel(choice)}: {phaseName(choice)}</option>
+            ))}
+          </select>
+        </label>
+      )}
+      <div className="lay-down-parts">
+        {requirements.map((requirement, part) => {
+          const cards = staged[part] ?? [];
+          return (
+            <div key={part} className="lay-down-part">
+              <div className="group-label">
+                Group {part + 1}: {requirementName(requirement)} or more ({cards.length} {cards.length === 1 ? 'card' : 'cards'})
+              </div>
+              <div className="group-cards">
+                {cards.map(card => (
+                  <CardView key={card.id} card={card} small animKey={cardKey(card.id)} onClick={() => onReturn(card)} />
+                ))}
+              </div>
+              <button type="button" disabled={!hasSelection} onClick={() => onAdd(part)}>
+                Add selected to group {part + 1}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="lay-down-actions">
+        <button type="button" disabled={!valid} onClick={onLayDown}>Lay down phase</button>
+        <button type="button" disabled={!anyStaged} onClick={onClear}>Clear</button>
+      </div>
+    </div>
+  );
+}

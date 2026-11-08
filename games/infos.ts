@@ -25,17 +25,17 @@ import { mancalaInfo } from './mancala/info.ts';
 import { streetdeedsInfo } from './streetdeeds/info.ts';
 import { navalInfo } from './naval/info.ts';
 import { pachisiInfo } from './pachisi/info.ts';
-import { phase10Info } from './phase10/info.ts';
+import { stagerummyInfo } from './stagerummy/info.ts';
 import { categoriesInfo } from './categories/info.ts';
-import { pictionaryInfo } from './pictionary/info.ts';
+import { drawandguessInfo } from './drawandguess/info.ts';
 import { pawnsandwallsInfo } from './pawnsandwalls/info.ts';
-import { rackoInfo } from './racko/info.ts';
+import { inorderInfo } from './inorder/info.ts';
 import { roadtoretirementInfo } from './roadtoretirement/info.ts';
 import { riskInfo } from './risk/info.ts';
-import { rookInfo } from './rook/info.ts';
+import { nestInfo } from './nest/info.ts';
 import { rummytilesInfo } from './rummytiles/info.ts';
 import { lettergridInfo } from './lettergrid/info.ts';
-import { skipboInfo } from './skipbo/info.ts';
+import { spiteandmaliceInfo } from './spiteandmalice/info.ts';
 import { snakesladdersInfo } from './snakesladders/info.ts';
 import { spadesInfo } from './spades/info.ts';
 import { jewelguildInfo } from './jewelguild/info.ts';
@@ -46,14 +46,14 @@ import { tictactoeInfo } from './tictactoe/info.ts';
 import { railroutesInfo } from './railroutes/info.ts';
 import { tradingfloorInfo } from './tradingfloor/info.ts';
 import { ultimatetictactoeInfo } from './ultimatetictactoe/info.ts';
-import { unoInfo } from './uno/info.ts';
+import { rainboweightsInfo } from './rainboweights/info.ts';
 import { warInfo } from './war/info.ts';
 import { whodunitInfo } from './whodunit/info.ts';
-import { yahtzeeInfo } from './yahtzee/info.ts';
+import { fivediceInfo } from './fivedice/info.ts';
 
 // What the browser lists, in the order of GAMES in registry.ts, without any game's rules code
 export const GAME_INFOS: GameInfo[] = [
   palacewallsInfo, backgammonInfo, roadsandfieldsInfo, hexislandInfo, charadesInfo, checkersInfo, chinesecheckersInfo, chessInfo, categoriesInfo, codebreakerInfo, fourinarowInfo, cornersInfo, dominoesInfo, euchreInfo, farkleInfo, fictionaryInfo,
-  goInfo, gofishInfo, heartsInfo, hintgridInfo, blocktowerInfo, jigsawInfo, mancalaInfo, streetdeedsInfo, navalInfo, pachisiInfo, phase10Info, pictionaryInfo, pawnsandwallsInfo, rackoInfo, roadtoretirementInfo, riskInfo, rookInfo, rummytilesInfo,
-  lettergridInfo, skipboInfo, snakesladdersInfo, spadesInfo, jewelguildInfo, steadyhandInfo, sudokuInfo, holdemInfo, thecrewInfo, tictactoeInfo, railroutesInfo, tradingfloorInfo, ultimatetictactoeInfo, unoInfo, warInfo, whodunitInfo, yahtzeeInfo
+  goInfo, gofishInfo, heartsInfo, hintgridInfo, blocktowerInfo, jigsawInfo, mancalaInfo, streetdeedsInfo, navalInfo, pachisiInfo, stagerummyInfo, drawandguessInfo, pawnsandwallsInfo, inorderInfo, roadtoretirementInfo, riskInfo, nestInfo, rummytilesInfo,
+  lettergridInfo, spiteandmaliceInfo, snakesladdersInfo, spadesInfo, jewelguildInfo, steadyhandInfo, sudokuInfo, holdemInfo, thecrewInfo, tictactoeInfo, railroutesInfo, tradingfloorInfo, ultimatetictactoeInfo, rainboweightsInfo, warInfo, whodunitInfo, fivediceInfo
 ];

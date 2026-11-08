@@ -14,14 +14,14 @@ const NAVAL_SHOTS = { 1: [{ row: 0, col: 0, result: 'miss' }], 2: [{ row: 4, col
 const CASES: Record<string, (s: Loose) => Loose[]> = {
   hearts: s => [{ ...s, passes: { 1: s.hands[1].slice(0, 3) } }],
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
-  rook: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
+  nest: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
   thecrew: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
-  uno: s => [
+  rainboweights: s => [
     { ...s, currentPlayer: 1, drawnCard: s.hands[1][0] },
     { ...s, revealed: { to: 2, of: 1, hand: s.hands[1] } }
   ],
   gofish: s => [{ ...s, lastMove: { asker: 1, fished: 'other' }, fishedCard: s.hands[1][0] }],
-  racko: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
+  inorder: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
   hexisland: s => [{
     ...s,
     steal: { thief: 1, victim: 2, resource: 'wood' },
@@ -38,7 +38,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     { ...s, started: true, phase: 'firing', currentPlayer: 1, fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS },
     { ...s, started: true, phase: 'firing', currentPlayer: null, isGameOver: true, winners: [1], fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS }
   ],
-  pictionary: s => [
+  drawandguess: s => [
     { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['cat', 'dog', 'owl'] },
     {
       ...s, started: true, phase: 'drawing', drawer: 1, word: 'cat', guessed: [2],
@@ -96,9 +96,9 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   ]
 };
 
-// Fields of a seat's view that show another seat's secrets (UNO's challenged hand): privateSeatView leaves them out,
+// Fields of a seat's view that show another seat's secrets (Rainbow Eights' challenged hand): privateSeatView leaves them out,
 // so a spectator allowed on one seat never learns another's, and the table view's value stands
-const OTHER_SEATS_SECRETS: Record<string, string[]> = { uno: ['revealed'] };
+const OTHER_SEATS_SECRETS: Record<string, string[]> = { rainboweights: ['revealed'] };
 
 for (const game of GAMES) {
   const id = game.info.id;
@@ -163,8 +163,8 @@ for (const game of GAMES) {
   });
 }
 
-test('a Pictionary spectator sees the word being drawn, and a table screen sees only the blanks', () => {
-  const game = GAMES.find(candidate => candidate.info.id === 'pictionary')!;
+test('a Draw and Guess spectator sees the word being drawn, and a table screen sees only the blanks', () => {
+  const game = GAMES.find(candidate => candidate.info.id === 'drawandguess')!;
   const s: Loose = { ...dealt(game), started: true, phase: 'drawing', drawer: 1, word: 'cat' };
   assert.equal((spectatorView(game, s, EVE) as Loose).word, 'cat');
   assert.equal((spectatorView(game, s, { ...EVE, tableScreen: true }) as Loose).word, null);

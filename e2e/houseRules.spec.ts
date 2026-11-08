@@ -187,24 +187,24 @@ test.describe('Changing a rule back', () => {
     await expect(clock(bob)).toHaveValue('10');
   });
 
-  test('Rook at six goes from three teams of two back to two teams of three', async ({ seat }) => {
+  test('Nest at six goes from three teams of two back to two teams of three', async ({ seat }) => {
     const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay'];
-    const { pages } = await seat('rook', names, { maxPlayers: 6, agree: false });
+    const { pages } = await seat('nest', names, { maxPlayers: 6, agree: false });
     const [alice, bob] = pages;
     const teams = (page: Page) => page.getByLabel('Teams at 6 players', { exact: true });
     const defenders = (page: Page) => page.getByLabel('Defending teams score', { exact: true });
     for (const page of pages) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(6));
     await openHouseRules(bob);
-    await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo', defenders: 'together' });
+    await setHouseRules(alice, 'nest', { sixTeams: 'threeOfTwo', defenders: 'together' });
     await expect(defenders(bob)).toHaveValue('together');
-    await setHouseRules(alice, 'rook', { sixTeams: 'twoOfThree' });
+    await setHouseRules(alice, 'nest', { sixTeams: 'twoOfThree' });
     await expect(teams(bob)).toHaveValue('twoOfThree');
     await expect(defenders(bob)).toHaveCount(0);
     await inHouseRules(alice, async dialog => {
       await expect(teams(alice)).toHaveValue('twoOfThree');
       await expect(dialog.locator('.house-rules-error')).toHaveCount(0);
     });
-    await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo' });
+    await setHouseRules(alice, 'nest', { sixTeams: 'threeOfTwo' });
     await expect(defenders(bob)).toHaveValue('separate');
   });
 });

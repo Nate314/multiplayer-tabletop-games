@@ -41,7 +41,7 @@ const HAND_ONLY: Record<string, Row> = {
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }
   },
-  rook: {
+  nest: {
     keep: TRICK_KEEP,
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }
@@ -70,12 +70,12 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.holdem-seat'), '.holdem-board'],
     move: async page => { await button(page, /^(Check|Call)/).click(); }
   },
-  uno: {
-    keep: ['.hand', '.turn-message', '.uno-button', '.piles', you('.player')], // UNO! is open to everyone; the catch button shows only while a call is owed
+  rainboweights: {
+    keep: ['.hand', '.turn-message', '.last-card-button', '.piles', you('.player')], // Last card! is open to everyone; the catch button shows only while a call is owed
     hide: [others('.player')],
     move: async page => { await button(page, 'Draw').click(); }
   },
-  phase10: {
+  stagerummy: {
     keep: ['.my-hand', '.turn-message', '.piles', you('.seat')],
     hide: [others('.seat') + ' .seat-details'],
     board: '.table .groups', // Bob's laid set, which Alice can hit
@@ -85,7 +85,7 @@ const HAND_ONLY: Record<string, Row> = {
     },
     move: async page => { await page.locator('.piles .pile').first().click(); }
   },
-  skipbo: {
+  spiteandmalice: {
     keep: ['.my-hand', '.turn-message', '.my-area .stock', '.my-area .discard-piles'],
     hide: ['.other-seats'],
     board: '.board',
@@ -95,7 +95,7 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Discard here on pile 1 and end your turn').click();
     }
   },
-  racko: {
+  inorder: {
     keep: ['.my-rack', '.turn-message', '.piles .pile'],
     hide: ['.other-racks'],
     move: async page => { await button(page, /^Draw pile/).click(); }
@@ -238,15 +238,15 @@ const HAND_ONLY: Record<string, Row> = {
     hide: ['.farkle-score.hand-only-hide'],
     move: async page => { await button(page, 'Roll').click(); }
   },
-  yahtzee: {
-    keep: ['.turn-message', '.yz-turn', '.yz-sheet', '.yz-total td:not(.hand-only-hide)'],
-    hide: ['.yz-player.hand-only-hide'],
+  fivedice: {
+    keep: ['.turn-message', '.fivedice-turn', '.fivedice-sheet', '.fivedice-total td:not(.hand-only-hide)'],
+    hide: ['.fivedice-player.hand-only-hide'],
     move: async page => { await button(page, /^Roll/).click(); }
   },
-  pictionary: {
-    keep: ['.turn-message', '.pictionary-chat', '#pictionary-chat-input', you('.score-row')],
+  drawandguess: {
+    keep: ['.turn-message', '.drawandguess-chat', '#drawandguess-chat-input', you('.score-row')],
     hide: [others('.score-row')],
-    board: '.pictionary-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
+    board: '.drawandguess-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
     move: async page => { await page.getByRole('group', { name: 'Choose a word' }).getByRole('button').first().click(); }
   },
   blocktower: {

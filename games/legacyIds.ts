@@ -16,6 +16,13 @@ export const LEGACY_IDS: LegacyIds = {
   rummikub: { id: 'rummytiles', keepsSaves: true },
   scrabble: { id: 'lettergrid', keepsSaves: true },
   splendor: { id: 'jewelguild', keepsSaves: true },
+  phase10: { id: 'stagerummy', keepsSaves: true },
+  pictionary: { id: 'drawandguess', keepsSaves: true },
+  racko: { id: 'inorder', keepsSaves: true },
+  rook: { id: 'nest', keepsSaves: true },
+  skipbo: { id: 'spiteandmalice', keepsSaves: true },
+  uno: { id: 'rainboweights', keepsSaves: true },
+  yahtzee: { id: 'fivedice', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

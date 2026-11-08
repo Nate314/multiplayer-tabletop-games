@@ -8,7 +8,7 @@ const fake = (name: string, category: GameCategory, min = 2, max = 4, descriptio
 
 const roadsandfields = fake('Roads and Fields', 'tile', 2, 5, 'Place tiles and claim meeples');
 const fourinarow = fake('Four in a Row', 'classic', 2, 2, 'Drop discs');
-const uno = fake('UNO', 'card', 2, 10, 'Shed your cards');
+const rainboweights = fake('Rainbow Eights', 'card', 2, 10, 'Shed your cards');
 
 test('search matches the name or the description, ignoring case and spaces around it', () => {
   assert.equal(matchesFilters(roadsandfields.info, { ...DEFAULT_FILTERS, search: '  MEEPLES ' }), true);
@@ -17,10 +17,10 @@ test('search matches the name or the description, ignoring case and spaces aroun
 });
 
 test('no categories picked shows every category, and several can be picked', () => {
-  const all = [roadsandfields, fourinarow, uno];
+  const all = [roadsandfields, fourinarow, rainboweights];
   const names = (categories: GameCategory[]) => arrangeGames(all, { ...DEFAULT_FILTERS, categories, sort: 'name' }).flatMap(s => s.games.map(g => g.info.name));
-  assert.deepEqual(names([]), ['Four in a Row', 'Roads and Fields', 'UNO']);
-  assert.deepEqual(names(['card', 'tile']), ['Roads and Fields', 'UNO']);
+  assert.deepEqual(names([]), ['Four in a Row', 'Rainbow Eights', 'Roads and Fields']);
+  assert.deepEqual(names(['card', 'tile']), ['Rainbow Eights', 'Roads and Fields']);
 });
 
 test('the player count keeps games whose range includes it', () => {
@@ -37,17 +37,17 @@ test('the player count includes the stretched range, and only those counts need 
 });
 
 test('sorting by category keeps the group order, and A to Z is one list with no heading', () => {
-  const all = [roadsandfields, fourinarow, uno];
+  const all = [roadsandfields, fourinarow, rainboweights];
   const byCategory = arrangeGames(all, DEFAULT_FILTERS);
   assert.deepEqual(byCategory.map(s => [s.key, s.heading]), [['card', 'Card games'], ['tile', 'Tile games'], ['classic', 'Classic board games']]);
   const byName = arrangeGames(all, { ...DEFAULT_FILTERS, sort: 'name' });
   assert.deepEqual(byName.map(s => [s.key, s.heading]), [['all', null]]);
-  assert.deepEqual(byName[0].games.map(g => g.info.name), ['Four in a Row', 'Roads and Fields', 'UNO']);
+  assert.deepEqual(byName[0].games.map(g => g.info.name), ['Four in a Row', 'Rainbow Eights', 'Roads and Fields']);
 });
 
 test('nothing matching gives no sections', () => {
-  assert.deepEqual(arrangeGames([uno], { ...DEFAULT_FILTERS, search: 'zzz' }), []);
-  assert.deepEqual(arrangeGames([uno], { ...DEFAULT_FILTERS, search: 'zzz', sort: 'name' }), []);
+  assert.deepEqual(arrangeGames([rainboweights], { ...DEFAULT_FILTERS, search: 'zzz' }), []);
+  assert.deepEqual(arrangeGames([rainboweights], { ...DEFAULT_FILTERS, search: 'zzz', sort: 'name' }), []);
 });
 
 test('only search, categories and players count as active filters', () => {
@@ -61,7 +61,7 @@ test('only search, categories and players count as active filters', () => {
 
 test('the Filter button counts picked categories and a player count, not search or sort', () => {
   assert.equal(activeFilterCount(DEFAULT_FILTERS), 0);
-  assert.equal(activeFilterCount({ ...DEFAULT_FILTERS, search: 'uno', sort: 'name' }), 0);
+  assert.equal(activeFilterCount({ ...DEFAULT_FILTERS, search: 'eights', sort: 'name' }), 0);
   assert.equal(activeFilterCount({ ...DEFAULT_FILTERS, categories: ['classic', 'card'], players: 4 }), 3);
 });
 
@@ -77,6 +77,6 @@ test('every registered game is shown with the default filters', () => {
 
 test('seven players lists the seventeen games that seat seven, two of them only as a house rule', () => {
   const games = arrangeGames(GAMES, { ...DEFAULT_FILTERS, players: 7, sort: 'name' })[0].games;
-  assert.deepEqual(games.map(g => g.info.name), ['Block Tower', 'Categories', 'Charades', 'Farkle', 'Fictionary', 'Hint Grid', 'Jigsaw', 'Phase 10', 'Pictionary', 'Rook', 'Steady Hand', 'Street Deeds', 'Sudoku', "Texas Hold'em", 'Trading Floor', 'UNO', 'Yahtzee']);
-  assert.deepEqual(games.filter(g => needsHouseRule(g.info, 7)).map(g => g.info.name), ['Phase 10', 'Rook']);
+  assert.deepEqual(games.map(g => g.info.name), ['Block Tower', 'Categories', 'Charades', 'Draw and Guess', 'Farkle', 'Fictionary', 'Five Dice', 'Hint Grid', 'Jigsaw', 'Nest', 'Rainbow Eights', 'Stage Rummy', 'Steady Hand', 'Street Deeds', 'Sudoku', "Texas Hold'em", 'Trading Floor']);
+  assert.deepEqual(games.filter(g => needsHouseRule(g.info, 7)).map(g => g.info.name), ['Nest', 'Stage Rummy']);
 });

@@ -164,8 +164,8 @@ test.describe('Pass and play', () => {
     await expect(device.getByRole('button', { name: /^I'm (Ann|Cy)/ }).first()).toBeVisible();
   });
 
-  test('Pictionary offers no pass and play', async ({ device }) => {
-    await openJoinDialog(device, 'pictionary');
+  test('Draw and Guess offers no pass and play', async ({ device }) => {
+    await openJoinDialog(device, 'drawandguess');
     const roles = device.getByRole('group', { name: 'Join as' });
     await expect(roles.getByRole('button')).toHaveText(['Player', 'Spectator', 'Table screen']);
   });

@@ -9,7 +9,7 @@ function file(): PauseFile {
   return {
     format: PAUSE_FILE_FORMAT,
     version: 1,
-    gameType: 'uno',
+    gameType: 'rainboweights',
     gameId: 'g1',
     pausedAt: '2026-10-31T12:00:00.000Z',
     seat: 1,
@@ -23,7 +23,7 @@ function file(): PauseFile {
   };
 }
 
-const parse = (value: unknown) => parsePauseFile(typeof value === 'string' ? value : JSON.stringify(value), ['uno']);
+const parse = (value: unknown) => parsePauseFile(typeof value === 'string' ? value : JSON.stringify(value), ['rainboweights']);
 
 test('parsePauseFile accepts a built file', () => {
   assert.deepEqual(parse(file()), { file: file() });
@@ -56,8 +56,8 @@ test('parsePauseFile refuses an unknown game type', () => {
 });
 
 test('pauseFileName names the file for its game and player', () => {
-  assert.equal(pauseFileName('uno', 'g1', 'Alice'), 'uno-g1-Alice-paused.json');
-  assert.equal(pauseFileName('uno', 'g/1', 'A b'), 'uno-g-1-A-b-paused.json');
+  assert.equal(pauseFileName('rainboweights', 'g1', 'Alice'), 'rainboweights-g1-Alice-paused.json');
+  assert.equal(pauseFileName('rainboweights', 'g/1', 'A b'), 'rainboweights-g-1-A-b-paused.json');
 });
 
 test('parsePauseFile round-trips images and refuses broken ones', () => {

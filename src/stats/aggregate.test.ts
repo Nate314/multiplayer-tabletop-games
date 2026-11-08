@@ -36,7 +36,7 @@ test('people: wins, win rate, streak and favorite game, names grouped ignoring c
 });
 
 test('people: shown in the spelling of the most recent game, favorite ties go to the most recent', () => {
-  const people = peopleStats([game('chess', day(1), [['ANN', 1], ['Bo', 2]]), game('uno', day(2), [['ann', 1], ['Bo', 2]])]);
+  const people = peopleStats([game('chess', day(1), [['ANN', 1], ['Bo', 2]]), game('rainboweights', day(2), [['ann', 1], ['Bo', 2]])]);
   assert.equal(people.find(p => p.name === 'ANN')?.favoriteGame, 'chess');
 });
 
@@ -54,10 +54,10 @@ test('games: played count and the median length in whole minutes', () => {
 
 test('games: a high score only where the winner always holds the largest score', () => {
   const hearts = [game('hearts', day(1), [['Ann', 1, '12'], ['Bo', 2, '80']]), game('hearts', day(2), [['Ann', 1, '20'], ['Bo', 2, '101']])];
-  const yahtzee = [game('yahtzee', day(1), [['Ann', 1, '250'], ['Bo', 2, '200']]), game('yahtzee', day(2), [['Ann', 2, '180 points'], ['Bo', 1, '301 points']])];
-  const stats = gameStats([...hearts, ...yahtzee, ...games]);
+  const fivedice = [game('fivedice', day(1), [['Ann', 1, '250'], ['Bo', 2, '200']]), game('fivedice', day(2), [['Ann', 2, '180 points'], ['Bo', 1, '301 points']])];
+  const stats = gameStats([...hearts, ...fivedice, ...games]);
   assert.equal(stats.find(s => s.gameType === 'hearts')?.highScore, undefined);
-  assert.deepEqual(stats.find(s => s.gameType === 'yahtzee')?.highScore, { score: 301, name: 'Bo' });
+  assert.deepEqual(stats.find(s => s.gameType === 'fivedice')?.highScore, { score: 301, name: 'Bo' });
   assert.equal(stats.find(s => s.gameType === 'fourinarow')?.highScore, undefined);
 });
 

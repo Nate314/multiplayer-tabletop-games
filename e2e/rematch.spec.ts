@@ -43,7 +43,7 @@ test('Rematch opens a vote and everyone joining starts a new lobby at the same l
 });
 
 test('a player who drops goes back to the game list', async ({ seat }) => {
-  const table = await finished(seat, 'yahtzee', ['Alice', 'Bob', 'Cara']);
+  const table = await finished(seat, 'fivedice', ['Alice', 'Bob', 'Cara']);
   const [alice, bob, cara] = table.pages;
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
   await cara.getByRole('button', { name: 'Drop' }).click();
@@ -54,7 +54,7 @@ test('a player who drops goes back to the game list', async ({ seat }) => {
 });
 
 test('a player who does not answer can be removed', async ({ seat }) => {
-  const table = await finished(seat, 'yahtzee', ['Alice', 'Bob', 'Cara']);
+  const table = await finished(seat, 'fivedice', ['Alice', 'Bob', 'Cara']);
   const [alice, bob, cara] = table.pages;
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
   await gameOver(bob).getByRole('button', { name: 'Join', exact: true }).click();
@@ -75,7 +75,7 @@ test('a player who does not answer can be removed', async ({ seat }) => {
 });
 
 test('a silent player cannot hold up a Remove, and can be removed too', async ({ seat }) => {
-  const table = await finished(seat, 'yahtzee', ['Alice', 'Bob', 'Cara']);
+  const table = await finished(seat, 'fivedice', ['Alice', 'Bob', 'Cara']);
   const [alice, bob, cara] = table.pages;
   await gameOver(cara).getByRole('button', { name: 'Rematch' }).click();
   // Bob is connected but has not answered, so Cara's Remove decides it at once
