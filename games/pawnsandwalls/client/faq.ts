@@ -50,6 +50,6 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
-    answer: 'Yes. Turn on Color-blind symbols in Settings and each pawn color also shows its shape: blue square, red circle, green triangle, purple cross. Pawns and the Goals list show it.'
+    answer: 'Yes. Turn on Color-blind symbols in Settings and each pawn color also shows its shape: red circle, blue square, green triangle, yellow star. Pawns and the Goals list show it.'
   }
 ];

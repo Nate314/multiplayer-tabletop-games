@@ -16,10 +16,6 @@
   --board-grain: rgba(255, 255, 255, 0.1);
   --wall: #3E2723;
   --wall-preview: rgba(62, 39, 35, 0.4);
-  --player1: #1E88E5;
-  --player2: #E53935;
-  --player3: #43A047;
-  --player4: #8E24AA;
   /* The wall tray (src/components/PieceTray.tsx) and the outline under a dragged piece, in the wood palette */
   --piece-tray-bg: rgba(0, 0, 0, 0.2);
   --piece-tray-border: rgba(255, 255, 255, 0.25);
@@ -311,19 +307,19 @@
   /* Each side of the frame takes the color of the pawn that has to reach it */
 
   .board-frame.goal-edge1 {
-    border-top-color: var(--player1);
+    border-top-color: var(--seat-color-1);
   }
 
   .board-frame.goal-edge2 {
-    border-bottom-color: var(--player2);
+    border-bottom-color: var(--seat-color-2);
   }
 
   .board-frame.goal-edge3 {
-    border-right-color: var(--player3);
+    border-right-color: var(--seat-color-3);
   }
 
   .board-frame.goal-edge4 {
-    border-left-color: var(--player4);
+    border-left-color: var(--seat-color-4);
   }
 
   .board-frame::before {
@@ -423,13 +419,13 @@
   }
 
   .pawn.player1 {
-    --disc-fill: var(--player1);
-    --disc-edge: #1565C0;
+    --disc-fill: var(--seat-color-1);
+    --disc-edge: var(--seat-stroke-1);
   }
 
   .pawn.player2 {
-    --disc-fill: var(--player2);
-    --disc-edge: #C62828;
+    --disc-fill: var(--seat-color-2);
+    --disc-edge: var(--seat-stroke-2);
   }
 
   .pawn-symbol {
@@ -566,13 +562,13 @@
   }
 
   .pawn.player3 {
-    --disc-fill: var(--player3);
-    --disc-edge: #2E7D32;
+    --disc-fill: var(--seat-color-3);
+    --disc-edge: var(--seat-stroke-3);
   }
 
   .pawn.player4 {
-    --disc-fill: var(--player4);
-    --disc-edge: #6A1B9A;
+    --disc-fill: var(--seat-color-4);
+    --disc-edge: var(--seat-stroke-4);
   }
 
   .board-area {
@@ -595,13 +591,14 @@
   }
 
   .goal-dot {
+    box-sizing: border-box;
     width: 12px;
     height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  /* Room round the shape, so a blue square on a blue dot still reads as a shape */
+  /* Room round the shape, so a red circle on a red dot still reads as a shape */
 
   .goal-dot:has(.dot-symbol) {
     display: flex;
@@ -618,19 +615,23 @@
   }
 
   .goal-dot.player1 {
-    background: var(--player1);
+    background: var(--seat-color-1);
+    border: 1px solid var(--seat-stroke-1);
   }
 
   .goal-dot.player2 {
-    background: var(--player2);
+    background: var(--seat-color-2);
+    border: 1px solid var(--seat-stroke-2);
   }
 
   .goal-dot.player3 {
-    background: var(--player3);
+    background: var(--seat-color-3);
+    border: 1px solid var(--seat-stroke-3);
   }
 
   .goal-dot.player4 {
-    background: var(--player4);
+    background: var(--seat-color-4);
+    border: 1px solid var(--seat-stroke-4);
   }
 
   .undo-vote {
