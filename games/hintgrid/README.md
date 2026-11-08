@@ -14,7 +14,7 @@ Two teams, Red and Blue, race to find their words on a grid of 25 from one-word 
 - **Winning.** The first team to turn over all its words wins, even on the other team's turn. Standings show every player on the winning team as a winner
 - **Hidden key.** Only the clue-givers see the key. Guessers see only the words already turned over, and a table screen and History do the same until the game ends. Spectators see the key
 - **Leaving.** A disconnected player keeps their seat and can rejoin. Before the first clue, a player who leaves is simply removed from the lobby. A dismissed player loses their role. If a team is left without a clue-giver or without a guesser, the game ends and the team with fewer words left to find wins, or it is a draw if equal
-- Any player can ask to undo the last move: a clue, a guess or End guessing. It is undone only if every connected player approves. Picking a team or role is not a move and cannot be undone
+- Any player can ask to undo the last move: a clue, a guess or End guessing. It is undone only if every connected player approves. A guess that ends the game cannot be undone, because it shows the key. Picking a team or role is not a move and cannot be undone
 
 ## Controls
 

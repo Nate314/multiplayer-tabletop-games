@@ -27,10 +27,10 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last clue, guess or End guessing. It is undone only if everyone else approves.'
+    answer: 'Click Undo to ask everyone to undo the last clue, guess or End guessing. It is undone only if everyone else approves. A guess that ends the game cannot be undone, because it shows the key.'
   },
   {
     question: 'What happens if someone leaves?',
-    answer: 'A player who leaves keeps their seat and can rejoin. If a team is left without a clue-giver or a guesser, the game ends and the team with fewer words left to find wins.'
+    answer: 'A player who leaves keeps their seat and can rejoin. If a team is left without a clue-giver or a guesser, the game ends and the team with fewer words left to find wins. If both teams have the same number left, it is a draw.'
   }
 ];

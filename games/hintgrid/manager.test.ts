@@ -71,3 +71,13 @@ test("no history step shows a face-down card's kind", () => {
     assert.ok(shown.key.every((entry, i) => entry === null || shown.revealed[i]), 'a face-down card is named');
   }
 });
+
+test('undo is not offered once a guess has ended the game', () => {
+  const manager = started();
+  const state = manager.rawState(ROOM) as unknown as GameState;
+  const [giver, guesser] = state.startingTeam === 'red' ? [1, 2] : [3, 4];
+  ok(manager.move(ROOM, giver, { type: 'clue', word: 'zzzz', count: 1 }));
+  ok(manager.move(ROOM, guesser, { type: 'guess', index: state.key.indexOf('trap') }));
+  assert.ok((manager.rawState(ROOM) as unknown as GameState).isGameOver);
+  assert.ok('error' in manager.requestUndo(ROOM, guesser));
+});

@@ -18,6 +18,8 @@ export const hintgrid: GameDefinition<GameState, PublicGameState> = {
   toPublicState,
   privateSeatView,
   spectatorState,
+  // The key is shown once the game ends, so undoing the last guess would resume play with it revealed
+  allowsUndoVote: state => !state.isGameOver,
   spectatorsSeeEverySeat: true,
   secretState: state => (state.isGameOver ? {} : seatFields(state, ['key']))
 };
