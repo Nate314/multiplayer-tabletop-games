@@ -19,6 +19,7 @@ const GAME_ICONS: Record<string, () => string> = {
   codebreaker: () => lineIcon(...[4.5, 9.5, 14.5, 19.5].map(x => el('circle', { cx: x, cy: 9, r: 2.2 })), pip(9.5, 16.5, 1.4), el('circle', { cx: 14.5, cy: 16.5, r: 1.4 })),
   connectfour: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 2 }),
     ...[7.5, 12, 16.5].flatMap(x => [el('circle', { cx: x, cy: 9.5, r: 1.6 }), x === 12 ? solid('circle', { cx: x, cy: 14.5, r: 1.6 }) : el('circle', { cx: x, cy: 14.5, r: 1.6 })])),
+  corners: () => lineIcon(...[3, 7.5, 12, 16.5].map(n => el('rect', { x: n, y: n, width: 4.5, height: 4.5 }))),
   dominoes: () => lineIcon(el('rect', { x: 7, y: 2, width: 10, height: 20, rx: 2 }), el('path', { d: 'M7 12h10' }),
     pip(10, 5.5), pip(14, 8.5), pip(10, 15), pip(12, 17), pip(14, 19)),
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),
