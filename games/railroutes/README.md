@@ -50,4 +50,4 @@ These follow the rules in the Wikipedia article linked above and, where it is si
 - **The second card.** When no card is left that could be a second card (nothing in the deck or discards and only locomotives face up), the turn ends after the first
 - **Nothing to do.** Neither Wikipedia nor the rules cover a player who cannot draw a card, claim a route or draw tickets. Here that player passes, and if every player passes in a row the game ends and is scored
 - **Payment.** The payment picker offers each color with as few locomotives as possible, and locomotives alone. Paying with more locomotives than needed while holding enough of the color is not offered
-- **Leaving.** The rules do not cover a player leaving; see Leaving above. It follows Splendor: a dismissed player's hidden cards leave play and what they built stays on the board
+- **Leaving.** The rules do not cover a player leaving; see Leaving above. It follows Jewel Guild: a dismissed player's hidden cards leave play and what they built stays on the board

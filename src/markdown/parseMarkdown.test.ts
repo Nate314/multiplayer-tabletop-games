@@ -45,12 +45,12 @@ test('bold, italic and code spans', () => {
 });
 
 test('a link, with parentheses in its address', () => {
-  assert.deepEqual(parseMarkdown('[t](u) and [Rook](https://x.org/Rook_(card_game)).'), [
+  assert.deepEqual(parseMarkdown('[t](u) and [Hearts](https://x.org/Hearts_(card_game)).'), [
     {
       kind: 'paragraph', children: [
         { kind: 'link', href: 'u', children: [text('t')] },
         text(' and '),
-        { kind: 'link', href: 'https://x.org/Rook_(card_game)', children: [text('Rook')] },
+        { kind: 'link', href: 'https://x.org/Hearts_(card_game)', children: [text('Hearts')] },
         text('.')
       ]
     }
