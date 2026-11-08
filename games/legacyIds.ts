@@ -8,6 +8,7 @@ export const LEGACY_IDS: LegacyIds = {
   pictionary: { id: 'drawandguess', keepsSaves: true },
   racko: { id: 'inorder', keepsSaves: true },
   rook: { id: 'nest', keepsSaves: true },
+  skipbo: { id: 'spiteandmalice', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

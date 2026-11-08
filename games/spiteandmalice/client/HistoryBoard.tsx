@@ -11,7 +11,7 @@ export default function HistoryBoard({ gameState, viewer }: { gameState: PublicG
   const { lastMove, myHand, playerNames, activePlayers } = gameState;
   const lastPile = lastMove?.type === 'play' ? lastMove.to : null;
   return (
-    <div className="skipbo-history">
+    <div className="spiteandmalice-history">
       <Board gameState={gameState} picked={null} onPlay={() => {}} lastPile={lastPile} />
       {viewer !== null && <Hand cards={myHand} label={`${playerNames[viewer]}'s hand (${myHand.length})`} />}
       <div className="other-seats">

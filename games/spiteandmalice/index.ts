@@ -2,11 +2,11 @@ import type { GameDefinition } from '../../shared/gameDefinition.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { shuffle } from '../../shared/shuffle.ts';
 import { applyMove, createGameState, finalStandings, onPlayerLeft, resetLobby, toPublicState } from './rules.ts';
-import { skipboInfo } from './info.ts';
+import { spiteandmaliceInfo } from './info.ts';
 import type { GameState, PublicGameState } from './types.ts';
 
-export const skipbo: GameDefinition<GameState, PublicGameState> = {
-  info: skipboInfo,
+export const spiteandmalice: GameDefinition<GameState, PublicGameState> = {
+  info: spiteandmaliceInfo,
   createGameState,
   resetLobby,
   onPlayerLeft,

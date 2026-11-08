@@ -1,5 +1,5 @@
-// Skip-Bo rules shared by the browser (what fits where, move text) and the server (validation).
-// Source: https://en.wikipedia.org/wiki/Skip-Bo, and Mattel's rules where the article is silent.
+// Spite and Malice rules shared by the browser (what fits where, move text) and the server (validation).
+// Source: https://en.wikipedia.org/wiki/Skip-Bo, and the publisher's rules where the article is silent.
 import { rankStandings } from '../../shared/standings.ts';
 import { viewHand } from '../../shared/hands.ts';
 import { asRecord } from '../../shared/messages.ts';
@@ -10,7 +10,7 @@ import type { Card, GameState, LastMove, Move, PileIndex, PublicGameState, Resul
 
 export const MAX_VALUE = 12;
 export const COPIES = 12; // of each number
-export const SKIPBO_COUNT = 18;
+export const WILD_COUNT = 18;
 export const HAND_SIZE = 5;
 export const PILE_COUNT = 4; // building piles, and discard piles per player
 export const PILES: PileIndex[] = [0, 1, 2, 3];
@@ -22,12 +22,12 @@ export function stockSize(players: number): number {
 
 export function createDeck(): Card[] {
   const numbers = Array.from({ length: MAX_VALUE * COPIES }, (_, id): Card => ({ id, kind: 'number', value: (id % MAX_VALUE) + 1 }));
-  const wilds = Array.from({ length: SKIPBO_COUNT }, (_, index): Card => ({ id: numbers.length + index, kind: 'skipbo' }));
+  const wilds = Array.from({ length: WILD_COUNT }, (_, index): Card => ({ id: numbers.length + index, kind: 'skipbo' }));
   return [...numbers, ...wilds];
 }
 
 export function cardName(card: Card): string {
-  return card.kind === 'skipbo' ? 'Skip-Bo' : String(card.value);
+  return card.kind === 'skipbo' ? 'Wild' : String(card.value);
 }
 
 // The number a building pile needs next. Piles always run from 1 up, so it is one more than its size.
@@ -46,7 +46,7 @@ function sourceText(from: Source['kind']): string {
   return from === 'stock' ? 'their stock' : 'a discard pile';
 }
 
-// 'a Skip-Bo', 'a 4', 'an 8', 'an 11'
+// 'a Wild', 'a 4', 'an 8', 'an 11'
 function withArticle(card: Card): string {
   const name = cardName(card);
   return `${card.kind === 'number' && (card.value === 8 || card.value === 11) ? 'an' : 'a'} ${name}`;
@@ -57,7 +57,7 @@ export function moveText(lastMove: LastMove, playerNames: Record<Seat, string>):
   const name = playerNames[lastMove.playerNumber];
   switch (lastMove.type) {
     case 'play': {
-      const card = lastMove.card.kind === 'skipbo' ? `a Skip-Bo as ${lastMove.value}` : withArticle(lastMove.card);
+      const card = lastMove.card.kind === 'skipbo' ? `a Wild as ${lastMove.value}` : withArticle(lastMove.card);
       const done = lastMove.completed ? ` and completed building pile ${lastMove.to + 1}` : '';
       return `${name} played ${card} from ${sourceText(lastMove.from.kind)} on building pile ${lastMove.to + 1}${done}`;
     }
@@ -214,7 +214,7 @@ function play(state: GameState, seat: Seat, from: Source, to: PileIndex, random:
   if ('error' in taken) return taken;
   const { card } = taken;
   if (!fits(card, pile)) {
-    return { error: pile.length === 0 ? 'A building pile starts with a 1 or a Skip-Bo' : `That pile needs a ${nextValue(pile)}` };
+    return { error: pile.length === 0 ? 'A building pile starts with a 1 or a Wild' : `That pile needs a ${nextValue(pile)}` };
   }
 
   const value = nextValue(pile);

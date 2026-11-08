@@ -85,7 +85,7 @@ const HAND_ONLY: Record<string, Row> = {
     },
     move: async page => { await page.locator('.piles .pile').first().click(); }
   },
-  skipbo: {
+  spiteandmalice: {
     keep: ['.my-hand', '.turn-message', '.my-area .stock', '.my-area .discard-piles'],
     hide: ['.other-seats'],
     board: '.board',

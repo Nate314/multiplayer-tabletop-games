@@ -68,7 +68,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   nest: () => import('../games/nest/client/index.ts').then(m => m.nestClient),
   rummikub: () => import('../games/rummikub/client/index.ts').then(m => m.rummikubClient),
   scrabble: () => import('../games/scrabble/client/index.ts').then(m => m.scrabbleClient),
-  skipbo: () => import('../games/skipbo/client/index.ts').then(m => m.skipboClient),
+  spiteandmalice: () => import('../games/spiteandmalice/client/index.ts').then(m => m.spiteandmaliceClient),
   snakesladders: () => import('../games/snakesladders/client/index.ts').then(m => m.snakesladdersClient),
   spades: () => import('../games/spades/client/index.ts').then(m => m.spadesClient),
   splendor: () => import('../games/splendor/client/index.ts').then(m => m.splendorClient),

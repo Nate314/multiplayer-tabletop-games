@@ -21,7 +21,7 @@ test('the Puzzles group sits after Classic board games and is dropped while empt
 
 test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
-    card: ['euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'skipbo', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
+    card: ['euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'spiteandmalice', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'uno', 'war'],
     dice: ['farkle', 'yahtzee'],
     tile: ['azul', 'carcassonne', 'dominoes', 'rummikub', 'scrabble'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'connectfour', 'mancala', 'naval', 'parchisi', 'quoridor', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],

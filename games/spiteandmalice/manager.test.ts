@@ -2,14 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameManager } from '../../server/games.ts';
 import { rememberingKeys, stepsOf } from '../../server/testing.ts';
-import { skipbo } from './index.ts';
+import { spiteandmalice } from './index.ts';
 import { fits } from './rules.ts';
 import type { PublicGameState } from './types.ts';
 import type { Result, Seat } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'skipbo/g1';
+const ROOM = 'spiteandmalice/g1';
 
 // A repeatable random, so every run deals the same cards
 function seeded(seed: number): () => number {
@@ -21,12 +21,12 @@ function seeded(seed: number): () => number {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([skipbo], seeded(42)));
-  for (const name of names) manager.join('skipbo', 'g1', name);
+  const manager = rememberingKeys(createGameManager([spiteandmalice], seeded(42)));
+  for (const name of names) manager.join('spiteandmalice', 'g1', name);
   return manager;
 }
 
-// The manager is generic over games, so tests narrow the public state to Skip-Bo's
+// The manager is generic over games, so tests narrow the public state to Spite and Malice's
 function ok(result: Result<unknown>): PublicGameState {
   if ('error' in result) assert.fail(result.error);
   return result.state as PublicGameState;
@@ -67,7 +67,7 @@ test('each player sees only their own hand, and the history sees no hand', () =>
   }
 
   for (let moves = 0; moves < 12; moves++) step(manager);
-  const history = stepsOf(manager, 'skipbo') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'spiteandmalice') as unknown as PublicGameState[];
   assert.equal(history.length, 13);
   for (const past of history) assert.deepEqual(past.myHand, []);
 });
@@ -83,7 +83,7 @@ test('a rejoin mid-turn shows the same half-finished turn', () => {
 
   manager.disconnect(ROOM, seat);
   assert.deepEqual(viewOf(manager, null).disconnected, [seat]);
-  const rejoined = manager.join('skipbo', 'g1', seat === 1 ? 'A' : 'B', true);
+  const rejoined = manager.join('spiteandmalice', 'g1', seat === 1 ? 'A' : 'B', true);
   if ('error' in rejoined) assert.fail(rejoined.error);
   assert.equal(rejoined.seat, seat);
   const after = rejoined.state as PublicGameState;

@@ -35,7 +35,7 @@ import { riskInfo } from './risk/info.ts';
 import { nestInfo } from './nest/info.ts';
 import { rummikubInfo } from './rummikub/info.ts';
 import { scrabbleInfo } from './scrabble/info.ts';
-import { skipboInfo } from './skipbo/info.ts';
+import { spiteandmaliceInfo } from './spiteandmalice/info.ts';
 import { snakesladdersInfo } from './snakesladders/info.ts';
 import { spadesInfo } from './spades/info.ts';
 import { splendorInfo } from './splendor/info.ts';
@@ -55,5 +55,5 @@ import { yahtzeeInfo } from './yahtzee/info.ts';
 export const GAME_INFOS: GameInfo[] = [
   azulInfo, backgammonInfo, carcassonneInfo, catanInfo, charadesInfo, checkersInfo, chinesecheckersInfo, chessInfo, categoriesInfo, codebreakerInfo, connectfourInfo, cornersInfo, dominoesInfo, euchreInfo, farkleInfo, fictionaryInfo,
   goInfo, gofishInfo, heartsInfo, hintgridInfo, jengaInfo, jigsawInfo, mancalaInfo, monopolyInfo, navalInfo, parchisiInfo, stagerummyInfo, drawandguessInfo, quoridorInfo, inorderInfo, roadtoretirementInfo, riskInfo, nestInfo, rummikubInfo,
-  scrabbleInfo, skipboInfo, snakesladdersInfo, spadesInfo, splendorInfo, steadyhandInfo, sudokuInfo, holdemInfo, thecrewInfo, tictactoeInfo, tickettorideInfo, tradingfloorInfo, ultimatetictactoeInfo, unoInfo, warInfo, whodunitInfo, yahtzeeInfo
+  scrabbleInfo, spiteandmaliceInfo, snakesladdersInfo, spadesInfo, splendorInfo, steadyhandInfo, sudokuInfo, holdemInfo, thecrewInfo, tictactoeInfo, tickettorideInfo, tradingfloorInfo, ultimatetictactoeInfo, unoInfo, warInfo, whodunitInfo, yahtzeeInfo
 ];

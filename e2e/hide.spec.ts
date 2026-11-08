@@ -80,7 +80,7 @@ for (const { info } of GAMES) {
         return box.y + box.height / 2;
       }));
       expect(Math.max(...middles) - Math.min(...middles), `header at ${width}px`).toBeLessThanOrEqual(4);
-      expect(await header.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0); // the header only: In Order, Skip-Bo and Dominoes boards are wider than 320 px
+      expect(await header.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0); // the header only: In Order, Spite and Malice and Dominoes boards are wider than 320 px
       await menu.click();
       await expect(panel).toHaveCSS('opacity', '1'); // the opening animation has finished
       const rows = await panel.locator(':scope > :is(button, a, .share-wrapper)').evaluateAll(elements => elements.map(element => {

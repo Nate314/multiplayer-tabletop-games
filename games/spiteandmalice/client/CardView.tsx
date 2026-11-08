@@ -6,7 +6,7 @@ import { cardArtUrl } from '../../../src/components/pieces.ts';
 
 type CardViewProps = {
   card: Card;
-  // What a Skip-Bo stands for on a building pile, shown under its name
+  // What a Wild stands for on a building pile, shown under its name
   standsFor?: number | null;
   selected?: boolean;
   small?: boolean;
@@ -19,7 +19,7 @@ type CardViewProps = {
 
 // The real cards are blue for 1 to 4, green for 5 to 8 and red for 9 to 12
 function band(card: Card): string {
-  if (card.kind === 'skipbo') return 'skipbo';
+  if (card.kind === 'skipbo') return 'wild';
   if (card.value <= 4) return 'low';
   return card.value <= 8 ? 'mid' : 'high';
 }
@@ -29,14 +29,14 @@ export default function CardView({ card, standsFor = null, selected = false, sma
   if (selected) classes.push('card-selected');
   if (small) classes.push('card-small');
   if (drawn) classes.push('newly-drawn');
-  const label = standsFor !== null && card.kind === 'skipbo' ? `Skip-Bo as ${standsFor}` : cardName(card);
+  const label = standsFor !== null && card.kind === 'skipbo' ? `Wild as ${standsFor}` : cardName(card);
   const content = (
     <>
       <ServerSvg url={cardArtUrl(card.kind === 'skipbo' ? 'bands' : 'solid')} className="piece-art" />
       {card.kind === 'skipbo'
         ? (
           <>
-            <span className="card-face card-face-wild">SB</span>
+            <span className="card-face card-face-wild">W</span>
             {standsFor !== null && <span className="card-stands-for">{standsFor}</span>}
           </>
         )

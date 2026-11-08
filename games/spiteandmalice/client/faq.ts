@@ -7,7 +7,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is in the deck?',
-    answer: '162 cards: twelve each of the numbers 1 to 12 and 18 Skip-Bo cards, which are wild. Each player gets a stock pile of 30 cards with 2 to 4 players, or 20 with 5 or 6. Only the top card of each stock is face up.'
+    answer: '162 cards: twelve each of the numbers 1 to 12 and 18 Wild cards. Each player gets a stock pile of 30 cards with 2 to 4 players, or 20 with 5 or 6. Only the top card of each stock is face up.'
   },
   {
     question: 'How does a turn work?',
@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do building piles work?',
-    answer: 'There are four shared building piles. An empty one starts with a 1 or a Skip-Bo, and each pile takes the next number up: 2 on 1, 3 on 2, and so on to 12. A Skip-Bo counts as whatever number the pile needs next, and shows that number. A pile that reaches 12 is shuffled into the draw pile and the space is free again.'
+    answer: 'There are four shared building piles. An empty one starts with a 1 or a Wild, and each pile takes the next number up: 2 on 1, 3 on 2, and so on to 12. A Wild counts as whatever number the pile needs next, and shows that number. A pile that reaches 12 is shuffled into the draw pile and the space is free again.'
   },
   {
     question: 'How do discard piles work?',

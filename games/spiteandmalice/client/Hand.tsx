@@ -14,7 +14,7 @@ type HandProps = {
 
 const order = (card: Card) => (card.kind === 'skipbo' ? 13 : card.value);
 
-// The hand shown low to high with Skip-Bo cards last; each card keeps its index in the server's hand for the move
+// The hand shown low to high with Wild cards last; each card keeps its index in the server's hand for the move
 export default function Hand({ cards, label, picked = null, onPick, drawnIds = [] }: HandProps) {
   const shown = cards.map((card, index) => ({ card, index })).sort((a, b) => order(a.card) - order(b.card));
   return (

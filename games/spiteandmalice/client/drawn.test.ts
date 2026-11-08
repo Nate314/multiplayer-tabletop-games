@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { drawnStep } from './drawn.ts';
 import { createGameState, toPublicState } from '../rules.ts';
-import { skipbo } from '../index.ts';
+import { spiteandmalice } from '../index.ts';
 import { applyMove } from '../../../shared/seating.ts';
 import type { Card, GameState, PublicGameState, Result, Seat } from '../types.ts';
 
@@ -30,7 +30,7 @@ function game(overrides: Partial<GameState> = {}): GameState {
 }
 
 function after(state: GameState, seat: Seat, made: object): GameState {
-  const result: Result<GameState> = applyMove(skipbo, state, seat, made, () => 0.5);
+  const result: Result<GameState> = applyMove(spiteandmalice, state, seat, made, () => 0.5);
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }

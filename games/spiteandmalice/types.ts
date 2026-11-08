@@ -7,6 +7,7 @@ import type { Seat } from '../../shared/types.ts';
 // Every card has an id, unique in the deck, so the screen can follow a card from one pile to another
 export type Card =
   | { id: number; kind: 'number'; value: number }
+  // saved games store this name; kept from before the rename so older files load
   | { id: number; kind: 'skipbo' };
 
 export type PileIndex = 0 | 1 | 2 | 3;

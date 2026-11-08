@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
-import type { Card, GameState } from '../games/skipbo/types.ts';
+import type { Card, GameState } from '../games/spiteandmalice/types.ts';
 
-// One test per rule and control in games/skipbo/README.md. Seats join in order, so Alice is Player 1 and goes first.
+// One test per rule and control in games/spiteandmalice/README.md. Seats join in order, so Alice is Player 1 and goes first.
 // Most tests deal a crafted table over the real deal, so the cards in play are known.
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Finn'];
@@ -16,7 +16,7 @@ const run = (from: number, to: number) => nums(...Array.from({ length: to - from
 const emptyPiles = (): Card[][] => [[], [], [], []];
 
 async function start(seat: Seat, players = 2): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('skipbo', NAMES.slice(0, players));
+  const table = await seat('spiteandmalice', NAMES.slice(0, players));
   return { table, pages: table.pages };
 }
 
@@ -65,8 +65,8 @@ async function discardLowest(page: Page): Promise<void> {
   await discardTo(page, 0);
 }
 
-test.describe('Skip-Bo rules', () => {
-  test('the deck is 162 cards: twelve each of 1 to 12 and 18 wild Skip-Bo cards', async ({ seat }) => {
+test.describe('Spite and Malice rules', () => {
+  test('the deck is 162 cards: twelve each of 1 to 12 and 18 Wild cards', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     // 162 less two stocks of 30 and Alice's first hand of 5
     await expect(drawPile(alice)).toHaveText('Draw pile (97)');
@@ -131,7 +131,7 @@ test.describe('Skip-Bo rules', () => {
     await expect(drawPile(bob)).toHaveText('Draw pile (0)');
   });
 
-  test('building piles start with a 1 or a Skip-Bo, take the next number up, and a 12 sends the pile into the draw pile', async ({ seat }) => {
+  test('building piles start with a 1 or a Wild, take the next number up, and a 12 sends the pile into the draw pile', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await craft(table, { hands: { 1: [...nums(2, 1, 12), wild(), num(3)] }, building: [run(1, 11), run(1, 2), [], []], drawPile: nums(12, 12) });
     // A 2 fits no pile: two are past it and two are empty
@@ -146,11 +146,11 @@ test.describe('Skip-Bo rules', () => {
     await handCard(alice, '3').click();
     await expect(alice.locator('.building-pile.pile-target')).toHaveCount(1);
     await expect(building(alice, 1)).toHaveClass(/pile-target/);
-    // A Skip-Bo fits every pile and counts as the number the pile needs
-    await handCard(alice, 'Skip-Bo').click();
+    // A Wild fits every pile and counts as the number the pile needs
+    await handCard(alice, 'Wild').click();
     await expect(alice.locator('.building-pile.pile-target')).toHaveCount(4);
     await building(alice, 1).click();
-    await expect(building(alice, 1).getByLabel('Skip-Bo as 3')).toBeVisible();
+    await expect(building(alice, 1).getByLabel('Wild as 3')).toBeVisible();
     await expect(building(alice, 1).locator('.pile-label')).toHaveText('Needs 4');
     // The 12 completes the first pile, which is shuffled into the draw pile and leaves its space free
     await handCard(alice, '12').click();
@@ -281,7 +281,7 @@ test.describe('Skip-Bo rules', () => {
   });
 });
 
-test.describe('Skip-Bo controls', () => {
+test.describe('Spite and Malice controls', () => {
   test('clicking a hand card, the stock top or a discard top picks it and outlines the building piles it fits; clicking one plays it there', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await craft(table, { hands: { 1: nums(1, 6, 7, 8, 9) }, building: [[], run(1, 4), [], []], stocks: { 1: nums(10, 2) }, discards: { 1: [nums(5), [], [], []] } });
@@ -363,12 +363,12 @@ test.describe('Skip-Bo controls', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
-  test('each building pile shows its top card, a Skip-Bo with the number it stands for, and what it needs next; the draw pile shows its count', async ({ seat }) => {
+  test('each building pile shows its top card, a Wild with the number it stands for, and what it needs next; the draw pile shows its count', async ({ seat }) => {
     const { table, pages: [alice] } = await start(seat);
     await craft(table, { building: [run(1, 5), [...run(1, 6), wild()], [], []], drawPile: nums(12, 12, 12, 12, 12, 12, 12) });
     await expect(building(alice, 0).getByLabel('5', { exact: true })).toBeVisible();
     await expect(building(alice, 0).locator('.pile-label')).toHaveText('Needs 6');
-    await expect(building(alice, 1).getByLabel('Skip-Bo as 7')).toBeVisible();
+    await expect(building(alice, 1).getByLabel('Wild as 7')).toBeVisible();
     await expect(building(alice, 1).locator('.card-stands-for')).toHaveText('7');
     await expect(building(alice, 1).locator('.pile-label')).toHaveText('Needs 8');
     await expect(building(alice, 2).locator('.pile-label')).toHaveText('Start with 1');
@@ -410,7 +410,7 @@ test.describe('Skip-Bo controls', () => {
   });
 });
 
-test.describe('Skip-Bo differences from Wikipedia', () => {
+test.describe('Spite and Malice differences from Wikipedia', () => {
   test('Player 1, the first to join, goes first', async ({ seat }) => {
     const { pages: [alice, bob] } = await start(seat);
     await expect(turn(bob)).toHaveText('Alice goes first. Joining closes after the first move.');
@@ -442,9 +442,9 @@ test.describe('Skip-Bo differences from Wikipedia', () => {
 
   test('every player plays alone, 2 to 6 players, in a single round', async ({ seat }) => {
     // The lobby offers 2 to 6 players (a lone player leaving the lobby frees nothing that matters)
-    const solo = await seat('skipbo', ['Gus']);
+    const solo = await seat('spiteandmalice', ['Gus']);
     await solo.pages[0].getByRole('button', { name: 'Back to games' }).click();
-    const card = solo.pages[0].locator('.lobby-game').filter({ hasText: 'Skip-Bo' });
+    const card = solo.pages[0].locator('.lobby-game').filter({ hasText: 'Spite and Malice' });
     await expect(card.locator('.lobby-game-players')).toHaveText('2 to 6 players');
 
     const { table, pages: [alice, bob] } = await start(seat);

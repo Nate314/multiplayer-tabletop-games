@@ -71,7 +71,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const seated = activePlayers.includes(playerNumber);
 
   return (
-    <div ref={screenRef} className="skipbo-screen">
+    <div ref={screenRef} className="spiteandmalice-screen">
       <div className="game-screen">
         <div className="game-info">
           <div className="player-info">You are {gameState.playerNames[playerNumber]} (Player {playerNumber})</div>

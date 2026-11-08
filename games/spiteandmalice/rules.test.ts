@@ -2,7 +2,7 @@ import { finalStandings } from './rules.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HAND_SIZE, createDeck, createGameState, nextValue, resetLobby, stockSize, toPublicState } from './rules.ts';
-import { skipbo } from './index.ts';
+import { spiteandmalice } from './index.ts';
 import { addPlayer, applyMove, removePlayer } from '../../shared/seating.ts';
 import type { Card, GameState, Result, Seat } from './types.ts';
 
@@ -51,7 +51,7 @@ function game(overrides: Partial<GameState> = {}): GameState {
   };
 }
 
-const move = (state: GameState, seat: Seat, input: unknown, random = seeded(1)) => applyMove(skipbo, state, seat, input, random);
+const move = (state: GameState, seat: Seat, input: unknown, random = seeded(1)) => applyMove(spiteandmalice, state, seat, input, random);
 const fromHand = (index: unknown, to: unknown) => ({ type: 'play', from: { kind: 'hand', index }, to });
 const fromStock = (to: number) => ({ type: 'play', from: { kind: 'stock' }, to });
 const fromDiscard = (pile: number, to: number) => ({ type: 'play', from: { kind: 'discard', pile }, to });
@@ -61,7 +61,7 @@ const endTurn = { type: 'endTurn' };
 function seat(names: string[], random = seeded(7)): GameState {
   let state = createGameState('g1');
   for (const name of names) {
-    const added = addPlayer(skipbo, state, name, random);
+    const added = addPlayer(spiteandmalice, state, name, random);
     if ('error' in added) assert.fail(added.error);
     state = added.state;
   }
@@ -76,7 +76,7 @@ const allCards = (state: GameState): Card[] => [
   ...state.drawPile
 ];
 
-test('deck has 162 cards, twelve of each 1 to 12 and 18 Skip-Bo', () => {
+test('deck has 162 cards, twelve of each 1 to 12 and 18 Wild', () => {
   const deck = createDeck();
   assert.equal(deck.length, 162);
   assert.equal(new Set(deck.map(card => card.id)).size, 162);
@@ -121,9 +121,9 @@ test('hand refills to 5 at turn start and when emptied mid-turn', () => {
   assert.equal(refilled.drawPile.length, 7);
 });
 
-test('a building pile starts with 1 or Skip-Bo and takes the next number', () => {
+test('a building pile starts with 1 or Wild and takes the next number', () => {
   const state = game({ hands: { 1: nums(2, 1, 3, 2, 9), 2: [] } });
-  assert.equal(refused(move(state, 1, fromHand(0, 0))), 'A building pile starts with a 1 or a Skip-Bo');
+  assert.equal(refused(move(state, 1, fromHand(0, 0))), 'A building pile starts with a 1 or a Wild');
   const one = ok(move(state, 1, fromHand(1, 0)));
   assert.deepEqual(one.building[0].map(card => card.kind === 'number' && card.value), [1]);
   assert.equal(nextValue(one.building[0]), 2);
@@ -135,7 +135,7 @@ test('a building pile starts with 1 or Skip-Bo and takes the next number', () =>
   ok(move(game({ hands: { 1: [sb()], 2: [] } }), 1, fromHand(0, 3)));
 });
 
-test('a Skip-Bo plays as the next number', () => {
+test('a Wild plays as the next number', () => {
   const wild = sb();
   const state = game({ hands: { 1: [wild, num(4)], 2: [] }, building: [run(1, 2), [], [], []] });
   const played = ok(move(state, 1, fromHand(0, 0)));
@@ -157,7 +157,7 @@ test('a pile reaching 12 is shuffled into the draw pile', () => {
   assert.equal(done.lastMove?.type === 'play' && done.lastMove.completed, true);
   assert.match(done.gameStatus, /completed building pile 2/);
 
-  // A Skip-Bo can be the 12 too
+  // A Wild can be the 12 too
   const wild = ok(move(game({ hands: { 1: [sb()], 2: [] }, building: [run(1, 11), [], [], []] }), 1, fromHand(0, 0)));
   assert.deepEqual(wild.building[0], []);
 });
@@ -212,14 +212,14 @@ test('invalid moves', () => {
     [fromHand(0, -1), 'Invalid move'],
     [fromHand(0, '0'), 'Invalid move'],
     [fromHand(5, 0), 'That card is not in your hand'],
-    [fromHand(0, 0), 'A building pile starts with a 1 or a Skip-Bo'],
+    [fromHand(0, 0), 'A building pile starts with a 1 or a Wild'],
     [fromStock(0), 'Your stock is empty'],
     [fromDiscard(2, 0), 'That discard pile is empty'],
     [discard(9, 0), 'That card is not in your hand'],
     [discard(0, 4), 'Invalid move'],
     [discard(0, 1.5), 'Invalid move'],
     [endTurn, 'You can end your turn only by discarding'],
-    [{ type: 'play', from: { kind: 'hand', index: 0 }, to: 0, extra: { kind: 'hand' } }, 'A building pile starts with a 1 or a Skip-Bo']
+    [{ type: 'play', from: { kind: 'hand', index: 0 }, to: 0, extra: { kind: 'hand' } }, 'A building pile starts with a 1 or a Wild']
   ];
   for (const [input, error] of bad) assert.equal(refused(move(state, 1, input)), error, JSON.stringify(input));
   assert.equal(refused(move(state, 2, discard(0, 0))), 'Not your turn');
@@ -362,7 +362,7 @@ test('dismissed player mid-turn', () => {
     drawPile: run(1, 10)
   });
   const total = allCards(state).length;
-  const left = removePlayer(skipbo, { ...state, disconnected: [2] }, 2, seeded(3));
+  const left = removePlayer(spiteandmalice, { ...state, disconnected: [2] }, 2, seeded(3));
   assert.equal(left.currentPlayer, 3);
   assert.equal(left.turnOf, 3);
   assert.equal(left.hands[3].length, 5);
@@ -373,12 +373,12 @@ test('dismissed player mid-turn', () => {
   ok(move(left, 3, discard(0, 0)));
 
   // Dismissed while someone else is mid-turn: that player's hand is left alone
-  const other = removePlayer(skipbo, { ...state, currentPlayer: 1, turnOf: 1, hands: { ...state.hands, 1: nums(1) } }, 3, seeded(3));
+  const other = removePlayer(spiteandmalice, { ...state, currentPlayer: 1, turnOf: 1, hands: { ...state.hands, 1: nums(1) } }, 3, seeded(3));
   assert.equal(other.currentPlayer, 1);
   assert.equal(other.hands[1].length, 1);
 
   // The last player left wins
-  const two = removePlayer(skipbo, removePlayer(skipbo, state, 2, seeded(3)), 3, seeded(3));
+  const two = removePlayer(spiteandmalice, removePlayer(spiteandmalice, state, 2, seeded(3)), 3, seeded(3));
   assert.equal(two.isGameOver, true);
   assert.deepEqual(two.winners, [1]);
 });
@@ -445,7 +445,7 @@ test('table view hides hands', () => {
 
 test('the lobby deals afresh when players join or leave', () => {
   const three = seat(['A', 'B', 'C']);
-  const left = removePlayer(skipbo, three, 3, seeded(2));
+  const left = removePlayer(spiteandmalice, three, 3, seeded(2));
   assert.deepEqual(Object.keys(left.stocks), ['1', '2']);
   assert.equal(left.stocks[1].length, 30);
   assert.equal(left.started, false);
