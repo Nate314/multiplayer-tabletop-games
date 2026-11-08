@@ -6,10 +6,10 @@ import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
-import './rook.scss';
+import './nest.scss';
 
-export const rookClient: ClientGame = {
-  id: 'rook',
+export const nestClient: ClientGame = {
+  id: 'nest',
   Screen: GameScreen,
   faq: QUESTIONS,
   HistoryBoard,

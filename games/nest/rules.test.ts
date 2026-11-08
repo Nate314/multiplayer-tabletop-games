@@ -3,12 +3,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withRules } from '../../server/testing.ts';
 import {
-  BID_STEP, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, ROOK, targetScore, buildDeck, calledCount, canPlayCard,
-  cardName, sameCard, cardPoints, createGameState, dealHand, dealSizes, handPoints, rookTeams, teamOf, teamOfSeat, toPublicState,
+  BID_STEP, HAND_SIZE, MAX_BID, MIN_BID, NEST_SIZE, BIRD, targetScore, buildDeck, calledCount, canPlayCard,
+  cardName, sameCard, cardPoints, createGameState, dealHand, dealSizes, handPoints, nestTeams, teamOf, teamOfSeat, toPublicState,
   trickWinner
 } from './rules.ts';
 import { DEFENDERS, SIX_TEAMS } from './options.ts';
-import { rook } from './index.ts';
+import { nest } from './index.ts';
 import { addPlayer, applyMove, disconnectPlayer, removePlayer } from '../../shared/seating.ts';
 import { houseRulesOf, setHouseRules, type HouseRuleValues } from '../../shared/houseRules.ts';
 import type { Random } from '../../shared/types.ts';
@@ -33,7 +33,7 @@ function seeded(seed: number): Random {
 function lobby(count = 4): GameState {
   let state = createGameState('g');
   for (const name of ['Alice', 'Bob', 'Cara', 'Dan'].slice(0, count)) {
-    const result = addPlayer(rook, state, name, seeded(7));
+    const result = addPlayer(nest, state, name, seeded(7));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
@@ -47,7 +47,7 @@ function ok(result: Result<GameState>): GameState {
 
 // Moves through the platform, which checks the turn first
 const move = (state: GameState, seat: number, m: Move | unknown, random: Random = seeded(3)) =>
-  applyMove(rook, state, seat, m, random);
+  applyMove(nest, state, seat, m, random);
 
 // A hand under way, red trump, seat 4 dealt, seat 1 bid 80 and leads. Two cards each, the nest laid aside.
 function game(overrides: Partial<GameState> = {}): GameState {
@@ -59,7 +59,7 @@ function game(overrides: Partial<GameState> = {}): GameState {
     playerNames: { 1: 'Alice', 2: 'Bob', 3: 'Cara', 4: 'Dan' },
     dealer: 4,
     phase: 'play',
-    hands: { 1: [green(5), red(6)], 2: [green(14), black(7)], 3: [green(10), ROOK], 4: [yellow(9), red(12)] },
+    hands: { 1: [green(5), red(6)], 2: [green(14), black(7)], 3: [green(10), BIRD], 4: [yellow(9), red(12)] },
     nest: [black(5), yellow(6), yellow(7), yellow(8), black(8)],
     bidding: { high: { seat: 1, amount: 80 }, passed: [2, 3, 4] },
     bidder: 1,
@@ -100,12 +100,12 @@ test('nothing is dealt until four players are seated', () => {
   assert.equal(state.phase, 'bidding');
 });
 
-test('counters are worth 5, 10, 10 and 20 for the Rook, 120 in all', () => {
+test('counters are worth 5, 10, 10 and 20 for the Bird, 120 in all', () => {
   assert.equal(cardPoints(red(5)), 5);
   assert.equal(cardPoints(red(10)), 10);
   assert.equal(cardPoints(red(14)), 10);
   assert.equal(cardPoints(red(13)), 0);
-  assert.equal(cardPoints(ROOK), 20);
+  assert.equal(cardPoints(BIRD), 20);
   assert.equal(handPoints(buildDeck()), MAX_BID);
 });
 
@@ -201,14 +201,14 @@ test('must follow suit when able', () => {
   assert.equal(canPlayCard([red(6), black(7)], black(7), state.trick, 'red'), true);
 });
 
-test('the Rook may be played at any time, and counts as trump', () => {
+test('the Bird may be played at any time, and counts as trump', () => {
   const trick = [{ seat: 2, card: green(14) }];
-  assert.equal(canPlayCard([green(10), ROOK], ROOK, trick, 'red'), true);
-  // The Rook led calls for trump
-  assert.equal(canPlayCard([red(6), green(5)], green(5), [{ seat: 3, card: ROOK }], 'red'), false);
-  // Trump led with only the Rook as trump: it must be played
-  assert.equal(canPlayCard([ROOK, green(5)], green(5), [{ seat: 3, card: red(9) }], 'red'), false);
-  assert.equal(canPlayCard([ROOK, green(5)], ROOK, [{ seat: 3, card: red(9) }], 'red'), true);
+  assert.equal(canPlayCard([green(10), BIRD], BIRD, trick, 'red'), true);
+  // The Bird led calls for trump
+  assert.equal(canPlayCard([red(6), green(5)], green(5), [{ seat: 3, card: BIRD }], 'red'), false);
+  // Trump led with only the Bird as trump: it must be played
+  assert.equal(canPlayCard([BIRD, green(5)], green(5), [{ seat: 3, card: red(9) }], 'red'), false);
+  assert.equal(canPlayCard([BIRD, green(5)], BIRD, [{ seat: 3, card: red(9) }], 'red'), true);
 });
 
 test('trick goes to the highest trump, else the highest of the led suit', () => {
@@ -219,10 +219,10 @@ test('trick goes to the highest trump, else the highest of the led suit', () => 
     { seat: 1, card: green(5) }, { seat: 2, card: green(14) }, { seat: 3, card: red(5) }, { seat: 4, card: red(6) }
   ], 'red'), 4);
   assert.equal(trickWinner([
-    { seat: 1, card: red(14) }, { seat: 2, card: ROOK }, { seat: 3, card: red(13) }, { seat: 4, card: red(6) }
+    { seat: 1, card: red(14) }, { seat: 2, card: BIRD }, { seat: 3, card: red(13) }, { seat: 4, card: red(6) }
   ], 'red'), 2);
   assert.equal(trickWinner([
-    { seat: 1, card: ROOK }, { seat: 2, card: red(14) }, { seat: 3, card: green(13) }, { seat: 4, card: red(6) }
+    { seat: 1, card: BIRD }, { seat: 2, card: red(14) }, { seat: 3, card: green(13) }, { seat: 4, card: red(6) }
   ], 'red'), 1);
 });
 
@@ -262,7 +262,7 @@ test('points per hand total the variant\'s maximum, last-trick bonus included', 
 test('the last trick takes the nest', () => {
   const state = game({
     hands: { 1: [green(5)], 2: [green(14)], 3: [green(10)], 4: [yellow(9)] },
-    nest: [black(5), yellow(10), yellow(7), yellow(8), ROOK], // 35 points
+    nest: [black(5), yellow(10), yellow(7), yellow(8), BIRD], // 35 points
     captured: [40, 30],
     tricksWon: [4, 4]
   });
@@ -317,9 +317,9 @@ test('first team to 500 wins after Continue', () => {
   let state = lastTrickOf([80, 40], 80);
   assert.equal(state.isGameOver, false);
   assert.deepEqual(move(state, 1, { type: 'bid', amount: 70 }), { error: 'Not your turn' });
-  for (const seat of [1, 2, 3]) state = ok(rook.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  for (const seat of [1, 2, 3]) state = ok(nest.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(state.phase, 'handOver');
-  state = ok(rook.applyAction?.(state, 4, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  state = ok(nest.applyAction?.(state, 4, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(state.phase, 'bidding');
   assert.equal(state.handNumber, 2);
   assert.equal(state.dealer, 1);
@@ -332,7 +332,7 @@ test('first team to 500 wins after Continue', () => {
   assert.equal(won.isGameOver, true);
   assert.deepEqual(won.winners, [1, 3]);
   assert.equal(won.gameStatus, 'Alice and Cara win with 510 points!');
-  assert.deepEqual(rook.applyAction?.(won, 1, { type: 'acknowledgeRound' }, seeded(1), 0), { error: 'The game is over' });
+  assert.deepEqual(nest.applyAction?.(won, 1, { type: 'acknowledgeRound' }, seeded(1), 0), { error: 'The game is over' });
 });
 
 test('when both teams pass 500 the higher total wins, and a tie plays on', () => {
@@ -346,15 +346,15 @@ test('when both teams pass 500 the higher total wins, and a tie plays on', () =>
 
 test('the next hand does not wait for disconnected players', () => {
   let state = lastTrickOf([80, 40], 80);
-  state = ok(rook.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
-  state = ok(rook.applyAction?.(state, 2, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
-  state = ok(rook.applyAction?.(state, 3, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
-  state = disconnectPlayer(rook, state, 4, seeded(1));
+  state = ok(nest.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  state = ok(nest.applyAction?.(state, 2, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  state = ok(nest.applyAction?.(state, 3, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  state = disconnectPlayer(nest, state, 4, seeded(1));
   assert.equal(state.phase, 'bidding');
 });
 
 test('a player leaving ends the game and the other team wins', () => {
-  const state = removePlayer(rook, game(), 3, seeded(1));
+  const state = removePlayer(nest, game(), 3, seeded(1));
   assert.equal(state.isGameOver, true);
   assert.deepEqual(state.winners, [2, 4]);
   assert.equal(state.currentPlayer, null);
@@ -365,11 +365,11 @@ test('dismissed player mid-turn', () => {
   // Dismissed while bidding on their own turn, and while holding the nest
   let state = dealHand(lobby(), 4, seeded(1));
   state = { ...ok(move(state, 1, { type: 'bid', amount: 70 })) };
-  const bidding = removePlayer(rook, disconnectPlayer(rook, state, 2, seeded(1)), 2, seeded(1));
+  const bidding = removePlayer(nest, disconnectPlayer(nest, state, 2, seeded(1)), 2, seeded(1));
   assert.equal(bidding.isGameOver, true);
   assert.deepEqual(bidding.winners, [1, 3]);
   for (const seat of [2, 3, 4]) state = ok(move(state, seat, { type: 'pass' }));
-  const discarding = removePlayer(rook, state, 1, seeded(1));
+  const discarding = removePlayer(nest, state, 1, seeded(1));
   assert.equal(discarding.isGameOver, true);
   assert.deepEqual(discarding.winners, [2, 4]);
   assert.deepEqual(move(discarding, 2, { type: 'pass' }), { error: 'The game is over' });
@@ -406,8 +406,8 @@ test('invalid moves', () => {
   assert.deepEqual(move(won, 1, { type: 'discard', cards: 'all' }), { error: 'Invalid move' });
   assert.deepEqual(move(won, 1, { type: 'nameTrump', color: 'rook' }), { error: 'Invalid move' });
 
-  assert.deepEqual(rook.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1), 0), { error: 'Nothing to continue' });
-  assert.deepEqual(rook.applyAction?.(state, 1, { type: 'other' }, seeded(1), 0), { error: 'Unknown action' });
+  assert.deepEqual(nest.applyAction?.(state, 1, { type: 'acknowledgeRound' }, seeded(1), 0), { error: 'Nothing to continue' });
+  assert.deepEqual(nest.applyAction?.(state, 1, { type: 'other' }, seeded(1), 0), { error: 'Unknown action' });
 });
 
 test('table view hides hands', () => {
@@ -447,7 +447,7 @@ test('describes moves for the status line', () => {
   let state = game();
   state = ok(move(state, 1, { type: 'play', card: red(6) }));
   assert.equal(state.gameStatus, 'Alice played red 6');
-  assert.equal(cardName(ROOK), 'the Rook');
+  assert.equal(cardName(BIRD), 'the Bird');
 });
 
 test('the game ends at the chosen target', () => {
@@ -461,7 +461,7 @@ test('the game ends at the chosen target', () => {
   assert.equal(standard.isGameOver, false);
 });
 
-// Rook at 4 to 7 players: fixed teams at 4 and 6, and one team per seat at 5 and 7 until called partners
+// Nest at 4 to 7 players: fixed teams at 4 and 6, and one team per seat at 5 and 7 until called partners
 
 const NAMES = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay', 'Gus'];
 
@@ -472,12 +472,12 @@ function lobbyOf(count: number, values: HouseRuleValues = {}): GameState {
     houseRules: { host: 1, values: {}, maxPlayers: count, agreed: [], revision: 0 }
   };
   for (const name of NAMES.slice(0, count)) {
-    const result = addPlayer(rook, state, name, seeded(7));
+    const result = addPlayer(nest, state, name, seeded(7));
     if ('error' in result) assert.fail(result.error);
     state = result.state;
   }
   if (Object.keys(values).length === 0) return state;
-  return rook.resetLobby(ok(setHouseRules(rook.info, state, 1, { values, maxPlayers: count })), seeded(7));
+  return nest.resetLobby(ok(setHouseRules(nest.info, state, 1, { values, maxPlayers: count })), seeded(7));
 }
 
 // The first `calledCount` cards of the deck that `seat` does not hold
@@ -526,7 +526,7 @@ function playGame(start: GameState): GameState {
     state = playHand(state, seeded(hands + 11));
     if (state.isGameOver) break;
     for (const seat of state.activePlayers) {
-      state = ok(rook.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(hands), 0) ?? assert.fail());
+      state = ok(nest.applyAction?.(state, seat, { type: 'acknowledgeRound' }, seeded(hands), 0) ?? assert.fail());
     }
   }
   assert.equal(state.isGameOver, true);
@@ -534,17 +534,17 @@ function playGame(start: GameState): GameState {
 }
 
 test('four players play exactly as before', () => {
-  assert.deepEqual(rookTeams([1, 2, 3, 4], 'twoOfThree'), [[1, 3], [2, 4]]);
-  assert.deepEqual(rookTeams([1, 2, 3, 4], 'threeOfTwo'), [[1, 3], [2, 4]]);
+  assert.deepEqual(nestTeams([1, 2, 3, 4], 'twoOfThree'), [[1, 3], [2, 4]]);
+  assert.deepEqual(nestTeams([1, 2, 3, 4], 'threeOfTwo'), [[1, 3], [2, 4]]);
   assert.deepEqual(dealSizes(4), { hand: HAND_SIZE, nest: NEST_SIZE });
   const state = lobby();
   assert.deepEqual(state.teams, [[1, 3], [2, 4]]);
   assert.deepEqual(state.scores, [0, 0]);
   assert.deepEqual([1, 2, 3, 4].map(seat => teamOfSeat(state, seat)), [0, 1, 0, 1]);
-  assert.deepEqual(houseRulesOf(rook.info, state).values, { targetScore: 500, turnTimer: 0 });
-  assert.deepEqual(rook.info.stretchedPlayers, { min: 4, max: 7 });
-  assert.equal(rook.info.minPlayers, 4);
-  assert.equal(rook.info.maxPlayers, 4);
+  assert.deepEqual(houseRulesOf(nest.info, state).values, { targetScore: 500, turnTimer: 0 });
+  assert.deepEqual(nest.info.stretchedPlayers, { min: 4, max: 7 });
+  assert.equal(nest.info.minPlayers, 4);
+  assert.equal(nest.info.maxPlayers, 4);
   const done = playHand(state);
   assert.equal(done.roundSummary?.points.length, 2);
   assert.equal(done.scores.length, 2);
@@ -553,7 +553,7 @@ test('four players play exactly as before', () => {
 test('six players as two teams of three', () => {
   const state = lobbyOf(6);
   assert.deepEqual(state.teams, [[1, 3, 5], [2, 4, 6]]);
-  assert.deepEqual(rookTeams([1, 2, 3, 4, 5, 6], 'twoOfThree'), [[1, 3, 5], [2, 4, 6]]);
+  assert.deepEqual(nestTeams([1, 2, 3, 4, 5, 6], 'twoOfThree'), [[1, 3, 5], [2, 4, 6]]);
   assert.deepEqual(state.scores, [0, 0]);
   // The last seat deals first and its left, seat 1, bids first
   assert.equal(state.dealer, 6);
@@ -570,7 +570,7 @@ test('six players as two teams of three', () => {
 
 test('six players as three teams of two', () => {
   const state = lobbyOf(6, { sixTeams: 'threeOfTwo' });
-  assert.deepEqual(rookTeams([1, 2, 3, 4, 5, 6], 'threeOfTwo'), [[1, 4], [2, 5], [3, 6]]);
+  assert.deepEqual(nestTeams([1, 2, 3, 4, 5, 6], 'threeOfTwo'), [[1, 4], [2, 5], [3, 6]]);
   // Partners sit three apart
   assert.deepEqual(state.teams, [[1, 4], [2, 5], [3, 6]]);
   assert.deepEqual(state.scores, [0, 0, 0]);
@@ -601,14 +601,14 @@ test('the defenders option is offered only for three teams of two', () => {
   assert.equal(DEFENDERS.offered?.(4, { sixTeams: 'threeOfTwo' }), false);
 
   const six = lobbyOf(6);
-  assert.deepEqual(houseRulesOf(rook.info, six).values, { targetScore: 500, sixTeams: 'twoOfThree', turnTimer: 0 });
-  assert.deepEqual(setHouseRules(rook.info, six, 1, { values: { defenders: 'together' }, maxPlayers: 6 }),
+  assert.deepEqual(houseRulesOf(nest.info, six).values, { targetScore: 500, sixTeams: 'twoOfThree', turnTimer: 0 });
+  assert.deepEqual(setHouseRules(nest.info, six, 1, { values: { defenders: 'together' }, maxPlayers: 6 }),
     { error: 'That is not a house rule of this game' });
-  const three = ok(setHouseRules(rook.info, six, 1, { values: { sixTeams: 'threeOfTwo', defenders: 'together' }, maxPlayers: 6 }));
+  const three = ok(setHouseRules(nest.info, six, 1, { values: { sixTeams: 'threeOfTwo', defenders: 'together' }, maxPlayers: 6 }));
   assert.deepEqual(three.houseRules?.values, { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'together', turnTimer: 0 });
-  assert.deepEqual(houseRulesOf(rook.info, lobbyOf(6, { sixTeams: 'threeOfTwo' })).values,
+  assert.deepEqual(houseRulesOf(nest.info, lobbyOf(6, { sixTeams: 'threeOfTwo' })).values,
     { targetScore: 500, sixTeams: 'threeOfTwo', defenders: 'separate', turnTimer: 0 });
-  assert.deepEqual(setHouseRules(rook.info, lobby(), 1, { values: { sixTeams: 'threeOfTwo' }, maxPlayers: null }),
+  assert.deepEqual(setHouseRules(nest.info, lobby(), 1, { values: { sixTeams: 'threeOfTwo' }, maxPlayers: null }),
     { error: 'That is not a house rule of this game' });
 });
 
@@ -681,7 +681,7 @@ test('six players deal 6 each and a 5-card nest', () => {
 
   // Five and seven players: each seat is its own team, and called partners join the bidder hand by hand
   assert.deepEqual(lobbyOf(5).teams, [[1], [2], [3], [4], [5]]);
-  assert.deepEqual(rookTeams([1, 2, 3, 4, 5, 6, 7], 'twoOfThree'), [[1], [2], [3], [4], [5], [6], [7]]);
+  assert.deepEqual(nestTeams([1, 2, 3, 4, 5, 6, 7], 'twoOfThree'), [[1], [2], [3], [4], [5], [6], [7]]);
   for (const count of [5, 7]) {
     const done = playHand(lobbyOf(count));
     assert.equal(done.roundSummary?.points.reduce((sum, points) => sum + points, 0), MAX_BID);
@@ -704,7 +704,7 @@ test('a game saved before teams existed loads and scores', () => {
   assert.deepEqual(old.roundSummary?.change, [80, 40]);
   assert.equal(teamOfSeat(old, 3), 0);
   let next = old;
-  for (const seat of [1, 2, 3, 4]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  for (const seat of [1, 2, 3, 4]) next = ok(nest.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(next.phase, 'bidding');
   assert.deepEqual(next.tricksWon, [0, 0]);
   assert.deepEqual(next.captured, [0, 0]);
@@ -716,7 +716,7 @@ test('a game saved before teams existed loads and scores', () => {
 
 test('a dismissal at six ends the game', () => {
   const three = { ...lobbyOf(6, { sixTeams: 'threeOfTwo' }), started: true, scores: [100, 300, 200] };
-  const left = removePlayer(rook, three, 2, seeded(1));
+  const left = removePlayer(nest, three, 2, seeded(1));
   assert.equal(left.isGameOver, true);
   assert.equal(left.currentPlayer, null);
   // Bob's team leads, so the highest-scoring team without him wins
@@ -724,20 +724,20 @@ test('a dismissal at six ends the game', () => {
   assert.equal(left.gameStatus, 'Bob left, so the partnership is broken: Cara and Fay win');
 
   const two = { ...lobbyOf(6), started: true, scores: [100, 50] };
-  const gone = removePlayer(rook, two, 1, seeded(1));
+  const gone = removePlayer(nest, two, 1, seeded(1));
   assert.deepEqual(gone.winners, [2, 4, 6]);
   assert.equal(gone.gameStatus, 'Alice left, so the partnership is broken: Bob, Dan and Fay win');
 });
 
 test('a dismissal at five ends the game with no partnership to break', () => {
   const five = { ...lobbyOf(5), started: true, scores: [100, 300, 200, 50, 0] };
-  const left = removePlayer(rook, five, 2, seeded(1));
+  const left = removePlayer(nest, five, 2, seeded(1));
   assert.equal(left.isGameOver, true);
   assert.deepEqual(left.winners, [3]);
   assert.equal(left.gameStatus, 'Bob left, so the game ends: Cara wins');
 });
 
-// Rook at 5 and 7: after naming trump the bidder calls cards, and whoever holds one is their partner for the hand
+// Nest at 5 and 7: after naming trump the bidder calls cards, and whoever holds one is their partner for the hand
 
 // The last trick at `cards.length` players, red trump: Alice (the bidder) leads red 13 and nobody beats it, the nest
 // holds no counters. Each seat is its own team, `captured` are the counters each took before it
@@ -855,7 +855,7 @@ test('a partner stays hidden until the called card is played', () => {
     assert.equal(state.phase, 'play');
     // No view says who holds the called card; only the holder sees it, in their own hand
     for (const viewer of viewers) {
-      const view = rook.toPublicState(state, false, viewer);
+      const view = nest.toPublicState(state, false, viewer);
       assert.deepEqual(view.called, { cards: [card], partners: [] });
       assert.equal(view.hand.some(held => sameCard(held, card)), viewer === holder);
     }
@@ -864,7 +864,7 @@ test('a partner stays hidden until the called card is played', () => {
     state = ok(move(state, seat, { type: 'play', card: next }));
   }
   assert.equal(state.lastMove?.type === 'play' && sameCard(state.lastMove.card, card), true);
-  for (const viewer of viewers) assert.deepEqual(rook.toPublicState(state, false, viewer).called?.partners, [holder]);
+  for (const viewer of viewers) assert.deepEqual(nest.toPublicState(state, false, viewer).called?.partners, [holder]);
   assert.match(state.gameStatus, new RegExp(`${NAMES[holder - 1]} is Alice's partner$`));
 });
 
@@ -874,7 +874,7 @@ test('each player scores individually', () => {
   assert.equal(done.isGameOver, false);
   // The next hand calls partners afresh
   let next = done;
-  for (const seat of [1, 2, 3, 4, 5]) next = ok(rook.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
+  for (const seat of [1, 2, 3, 4, 5]) next = ok(nest.applyAction?.(next, seat, { type: 'acknowledgeRound' }, seeded(1), 0) ?? assert.fail());
   assert.equal(next.called, null);
   assert.deepEqual(next.scores, [170, 70, 100, 90, 100]);
   const again = playHand(next);
@@ -905,8 +905,8 @@ test('five players deal 7 each with a 6-card nest', () => {
   assert.equal(calling.hands[1].length, 7);
   assert.equal(calling.nest.length, 6);
   // The bidder sees the laid-aside cards while calling, and may call one of them
-  assert.equal(rook.toPublicState(calling, false, 1).discards.length, 6);
-  assert.equal(rook.toPublicState(calling, false, 2).discards.length, 0);
+  assert.equal(nest.toPublicState(calling, false, 1).discards.length, 6);
+  assert.equal(nest.toPublicState(calling, false, 2).discards.length, 0);
 });
 
 test('finalStandings ranks by the team total', () => {

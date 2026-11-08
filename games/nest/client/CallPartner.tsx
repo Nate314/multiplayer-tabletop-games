@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { COLORS, NUMBERS, ROOK, cardName, sameCard } from '../rules.ts';
+import { COLORS, NUMBERS, BIRD, cardName, sameCard } from '../rules.ts';
 import type { Card } from '../types.ts';
 
 type CallPartnerProps = {
@@ -9,9 +9,9 @@ type CallPartnerProps = {
   onCall: (cards: Card[]) => void;
 };
 
-// Every card the bidder does not hold, highest first: the Rook, then each color from 14 down
+// Every card the bidder does not hold, highest first: the Bird, then each color from 14 down
 function callable(hand: Card[]): Card[] {
-  const deck = [ROOK, ...COLORS.flatMap(color => [...NUMBERS].reverse().map((number): Card => ({ color, number })))];
+  const deck = [BIRD, ...COLORS.flatMap(color => [...NUMBERS].reverse().map((number): Card => ({ color, number })))];
   return deck.filter(card => !hand.some(held => sameCard(held, card)));
 }
 

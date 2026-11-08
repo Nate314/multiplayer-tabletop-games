@@ -7,11 +7,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is in the deck?',
-    answer: '41 cards: 5 to 14 in red, yellow, green and black, and the Rook. With four players each gets 9 cards and 5 go face down to the nest; with five, 7 each and a 6-card nest; with six, 6 each and a 5-card nest; with seven, 5 each and a 6-card nest.'
+    answer: '41 cards: 5 to 14 in red, yellow, green and black, and the Bird. With four players each gets 9 cards and 5 go face down to the nest; with five, 7 each and a 6-card nest; with six, 6 each and a 5-card nest; with seven, 5 each and a 6-card nest.'
   },
   {
     question: 'Which cards count?',
-    answer: 'Each 5 is worth 5 points, each 10 and 14 is worth 10, and the Rook 20. That makes 120 points in a hand. Counters show their value in a corner.'
+    answer: 'Each 5 is worth 5 points, each 10 and 14 is worth 10, and the Bird 20. That makes 120 points in a hand. Counters show their value in a corner.'
   },
   {
     question: 'How does bidding work?',
@@ -26,8 +26,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'The player left of the dealer leads the first trick, and whoever takes a trick leads the next. Follow the color led if you can; if you cannot, play anything. The highest trump takes the trick, otherwise the highest card of the color led. 14 is high and 5 is low. Cards you may play are outlined.'
   },
   {
-    question: 'What is special about the Rook?',
-    answer: 'It is the highest trump, whatever color is trump. You may play it at any time, even when you could follow suit. When it is led, everyone must play trump if they can, and if trump is led and the Rook is your only trump, you must play it.'
+    question: 'What is special about the Bird?',
+    answer: 'It is the highest trump, whatever color is trump. You may play it at any time, even when you could follow suit. When it is led, everyone must play trump if they can, and if trump is led and the Bird is your only trump, you must play it.'
   },
   {
     question: 'How is a hand scored?',

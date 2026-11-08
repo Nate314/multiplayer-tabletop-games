@@ -41,7 +41,7 @@ const HAND_ONLY: Record<string, Row> = {
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }
   },
-  rook: {
+  nest: {
     keep: TRICK_KEEP,
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }

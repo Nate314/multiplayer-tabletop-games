@@ -1,4 +1,4 @@
-// The house rules of rook, declared apart from the rules so the landing page can list them without loading the rules
+// The house rules of nest, declared apart from the rules so the landing page can list them without loading the rules
 import { targetScoreRule, type ChoiceRule, type HouseRule } from '../../shared/houseRules.ts';
 
 export const TARGET_RULE = targetScoreRule(500, [300, 1000]);
@@ -17,4 +17,4 @@ export const DEFENDERS: ChoiceRule<'separate' | 'together'> = {
   offered: (seats, values) => seats === 6 && values.sixTeams === 'threeOfTwo'
 };
 
-export const ROOK_RULES: HouseRule[] = [TARGET_RULE, SIX_TEAMS, DEFENDERS];
+export const NEST_RULES: HouseRule[] = [TARGET_RULE, SIX_TEAMS, DEFENDERS];

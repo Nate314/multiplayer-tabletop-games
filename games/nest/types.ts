@@ -6,10 +6,11 @@ import type { Seat } from '../../shared/types.ts';
 
 export type Color = 'red' | 'yellow' | 'green' | 'black';
 
-// A numbered card, 5 to 14, or the Rook Bird card, which has no color or number of its own
+// A numbered card, 5 to 14, or the Bird card, which has no color or number of its own
 export type NumberCard = { color: Color; number: number };
-export type RookCard = { color: 'rook' };
-export type Card = NumberCard | RookCard;
+// saved games store this name; kept from before the rename so older files load
+export type BirdCard = { color: 'rook' };
+export type Card = NumberCard | BirdCard;
 
 // One entry per team, in the order of GameState.teams. A game saved before teams has two: seats 1 and 3, then 2 and 4
 export type TeamScores = number[];

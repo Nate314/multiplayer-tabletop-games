@@ -65,7 +65,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   inorder: () => import('../games/inorder/client/index.ts').then(m => m.inorderClient),
   risk: () => import('../games/risk/client/index.ts').then(m => m.riskClient),
   roadtoretirement: () => import('../games/roadtoretirement/client/index.ts').then(m => m.roadtoretirementClient),
-  rook: () => import('../games/rook/client/index.ts').then(m => m.rookClient),
+  nest: () => import('../games/nest/client/index.ts').then(m => m.nestClient),
   rummikub: () => import('../games/rummikub/client/index.ts').then(m => m.rummikubClient),
   scrabble: () => import('../games/scrabble/client/index.ts').then(m => m.scrabbleClient),
   skipbo: () => import('../games/skipbo/client/index.ts').then(m => m.skipboClient),

@@ -964,7 +964,7 @@ test('deleting a room removes it from the store', (t: TestContext) => {
 });
 
 test('a started game plays on and can undo after dismissals take it below its minimum', () => {
-  // Only the start needs the minimum; a game that cannot go on ends itself in onPlayerLeft, as Rook does
+  // Only the start needs the minimum; a game that cannot go on ends itself in onPlayerLeft, as Nest does
   const manager = rememberingKeys(createGameManager([{ ...testGame, info: { ...testGame.info, minPlayers: 3 } }], seededRandom), keys);
   for (const name of ['A', 'B', 'C']) manager.join('test', 'g1', name);
   ok(manager.move(ROOM, 1, tick));

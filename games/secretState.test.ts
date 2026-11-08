@@ -5,7 +5,7 @@ import { dealt } from './testStates.ts';
 
 const WITH_SECRET = [
   'azul', 'carcassonne', 'catan', 'charades', 'categories', 'codebreaker', 'sudoku', 'dominoes', 'euchre', 'fictionary', 'gofish', 'hintgrid', 'holdem', 'jenga', 'monopoly', 'stagerummy', 'drawandguess',
-  'inorder', 'risk', 'rook', 'rummikub', 'scrabble', 'skipbo', 'splendor', 'thecrew', 'tickettoride', 'uno', 'war', 'whodunit'
+  'inorder', 'risk', 'nest', 'rummikub', 'scrabble', 'skipbo', 'splendor', 'thecrew', 'tickettoride', 'uno', 'war', 'whodunit'
 ];
 
 const isEmpty = (value: unknown) => Array.isArray(value) ? value.length === 0

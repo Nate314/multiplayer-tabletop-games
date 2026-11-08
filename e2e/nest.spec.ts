@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import { agreeToHouseRules, dismiss, expect, inHouseRules, leave, openFaq, type Seat, type SeatOptions, setHouseRules, type Table, test, undo } from './fixtures.ts';
-import type { Card, Color, GameState, TeamScores } from '../games/rook/types.ts';
+import type { Card, Color, GameState, TeamScores } from '../games/nest/types.ts';
 
-// One test per rule and control in games/rook/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
+// One test per rule and control in games/nest/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
 // Alice and Cara are one team and Bob and Dan the other. Seat 4 deals first, so Alice bids and leads first.
 
 const c = (color: Color, number: number): Card => ({ color, number });
@@ -10,11 +10,11 @@ const red = (n: number) => c('red', n);
 const yellow = (n: number) => c('yellow', n);
 const green = (n: number) => c('green', n);
 const black = (n: number) => c('black', n);
-const ROOK: Card = { color: 'rook' };
-const label = (card: Card) => (card.color === 'rook' ? 'the Rook' : `${card.color} ${card.number}`);
+const BIRD: Card = { color: 'rook' };
+const label = (card: Card) => (card.color === 'rook' ? 'the Bird' : `${card.color} ${card.number}`);
 
 async function start(seat: Seat, options?: SeatOptions): Promise<{ table: Table; pages: Page[] }> {
-  const table = await seat('rook', ['Alice', 'Bob', 'Cara', 'Dan'], options);
+  const table = await seat('nest', ['Alice', 'Bob', 'Cara', 'Dan'], options);
   return { table, pages: table.pages };
 }
 
@@ -76,7 +76,7 @@ async function layAsideAndName(page: Page, trump: Color): Promise<void> {
   await page.getByRole('group', { name: 'Name trump' }).getByRole('button', { name: trump }).click();
 }
 
-test.describe('Rook rules', () => {
+test.describe('Nest rules', () => {
   test('two partnerships with partners across: seats 1 and 3 against seats 2 and 4', async ({ seat }) => {
     const { pages: [alice, bob] } = await start(seat);
     await expect(team(alice, 0).locator('.team-names')).toHaveText('Alice and Cara (you)');
@@ -86,13 +86,13 @@ test.describe('Rook rules', () => {
     await expect(position(bob, 'top').locator('.seat-name')).toHaveText('Dan (partner)');
   });
 
-  test('the deck is 41 cards, 5 to 14 in four colors and the Rook, with 14 high and 5 low', async ({ seat }) => {
+  test('the deck is 41 cards, 5 to 14 in four colors and the Bird, with 14 high and 5 low', async ({ seat }) => {
     const { table, pages } = await start(seat);
     for (const page of pages) await expect(hand(page).getByRole('button')).toHaveCount(9);
     const state = await table.state<GameState>();
     const cards = [...Object.values(state.hands).flat(), ...state.nest].map(label);
     expect(new Set(cards).size).toBe(41);
-    expect(cards).toContain('the Rook');
+    expect(cards).toContain('the Bird');
     for (const color of ['red', 'yellow', 'green', 'black'] as Color[]) {
       for (let number = 5; number <= 14; number++) expect(cards).toContain(label(c(color, number)));
     }
@@ -112,7 +112,7 @@ test.describe('Rook rules', () => {
     const [alice, bob] = pages;
     await expect(seatOf(alice, 'Dan')).toContainText('9 cards, dealer');
     for (const name of ['Alice', 'Bob', 'Cara']) await expect(seatOf(alice, name).locator('.seat-count')).toHaveText('9 cards');
-    await expect(alice.locator('.nest .rook-card-back')).toBeVisible();
+    await expect(alice.locator('.nest .nest-card-back')).toBeVisible();
     await expect(alice.locator('.nest-label')).toHaveText('Nest: 5 cards');
 
     await lastTrick(table);
@@ -123,15 +123,15 @@ test.describe('Rook rules', () => {
     await expect(turn(bob)).toHaveText('Your turn'); // left of the new dealer bids first
   });
 
-  test('each 5 counts 5, each 10 and 14 counts 10 and the Rook 20, 120 points in a hand', async ({ seat }) => {
+  test('each 5 counts 5, each 10 and 14 counts 10 and the Bird 20, 120 points in a hand', async ({ seat }) => {
     const { table, pages } = await start(seat);
     const [alice] = pages;
-    await playing(table, { 1: [red(5), red(10), red(14), ROOK, red(7)], 2: [], 3: [], 4: [] });
-    const points = (card: Card) => handCard(alice, card).locator('.rook-card-points');
+    await playing(table, { 1: [red(5), red(10), red(14), BIRD, red(7)], 2: [], 3: [], 4: [] });
+    const points = (card: Card) => handCard(alice, card).locator('.nest-card-points');
     await expect(points(red(5))).toHaveText('5');
     await expect(points(red(10))).toHaveText('10');
     await expect(points(red(14))).toHaveText('10');
-    await expect(points(ROOK)).toHaveText('20');
+    await expect(points(BIRD)).toHaveText('20');
     await expect(points(red(7))).toHaveCount(0);
 
     // A fresh table: once the nest is in Alice's hand, every one of the 41 cards is on someone's screen
@@ -140,7 +140,7 @@ test.describe('Rook rules', () => {
     await expect(hand(fresh.pages[0]).getByRole('button')).toHaveCount(14);
     let total = 0;
     for (const page of fresh.pages) {
-      for (const corner of await hand(page).locator('.rook-card-points').allTextContents()) total += Number(corner);
+      for (const corner of await hand(page).locator('.nest-card-points').allTextContents()) total += Number(corner);
     }
     expect(total).toBe(120);
   });
@@ -181,7 +181,7 @@ test.describe('Rook rules', () => {
     await expect(alice.getByRole('group', { name: 'Name trump' })).toHaveCount(0); // not before laying aside
     await layAsideAndName(alice, 'green');
     await expect(hand(alice).getByRole('button')).toHaveCount(9);
-    await expect(alice.locator('.discards .rook-card')).toHaveCount(5);
+    await expect(alice.locator('.discards .nest-card')).toHaveCount(5);
     await expect(alice.locator('.hand-info')).toContainText('Trump: green');
     await expect(bob.locator('.discards')).toHaveCount(0);
     const laidAside = (await table.state<GameState>()).nest;
@@ -210,21 +210,21 @@ test.describe('Rook rules', () => {
     await expect(dan.locator('.hint')).toHaveText('Lead any card');
   });
 
-  test('the Rook is the highest trump and may be played at any time; when it is led trump must be played, and a player whose only trump is the Rook must play it on trump', async ({ seat }) => {
+  test('the Bird is the highest trump and may be played at any time; when it is led trump must be played, and a player whose only trump is the Bird must play it on trump', async ({ seat }) => {
     const { table, pages: [alice, bob, cara, dan] } = await start(seat);
-    // Red led: Bob may follow with red or play the Rook, but not his green
-    await playing(table, { 1: [green(5)], 2: [red(9), ROOK, green(6)], 3: [green(7)], 4: [green(8)] }, { trick: [{ seat: 1, card: red(5) }], currentPlayer: 2 });
+    // Red led: Bob may follow with red or play the Bird, but not his green
+    await playing(table, { 1: [green(5)], 2: [red(9), BIRD, green(6)], 3: [green(7)], 4: [green(8)] }, { trick: [{ seat: 1, card: red(5) }], currentPlayer: 2 });
     await expect(handCard(bob, red(9))).toBeEnabled();
-    await expect(handCard(bob, ROOK)).toBeEnabled();
+    await expect(handCard(bob, BIRD)).toBeEnabled();
     await expect(handCard(bob, green(6))).toBeDisabled();
-    // The Rook led: Bob must play his black trump
-    await playing(table, { 1: [green(5)], 2: [black(9), red(6)], 3: [green(7)], 4: [green(8)] }, { trick: [{ seat: 1, card: ROOK }], currentPlayer: 2 });
+    // The Bird led: Bob must play his black trump
+    await playing(table, { 1: [green(5)], 2: [black(9), red(6)], 3: [green(7)], 4: [green(8)] }, { trick: [{ seat: 1, card: BIRD }], currentPlayer: 2 });
     await expect(handCard(bob, black(9))).toBeEnabled();
     await expect(handCard(bob, red(6))).toBeDisabled();
-    // Black led: the Rook is Bob's only trump, so he must play it, and it beats the black 14
-    await playing(table, { 1: [green(5)], 2: [ROOK, red(6)], 3: [red(7), green(7)], 4: [red(8), green(8)] }, { trick: [{ seat: 1, card: black(14) }], currentPlayer: 2 });
+    // Black led: the Bird is Bob's only trump, so he must play it, and it beats the black 14
+    await playing(table, { 1: [green(5)], 2: [BIRD, red(6)], 3: [red(7), green(7)], 4: [red(8), green(8)] }, { trick: [{ seat: 1, card: black(14) }], currentPlayer: 2 });
     await expect(handCard(bob, red(6))).toBeDisabled();
-    await handCard(bob, ROOK).click();
+    await handCard(bob, BIRD).click();
     await handCard(cara, red(7)).click();
     await handCard(dan, red(8)).click();
     await expect(alice.locator('.trick-taken')).toHaveText('Bob took the trick');
@@ -296,7 +296,7 @@ test.describe('Rook rules', () => {
       await expect(alice.getByLabel(label(card), { exact: true })).toHaveCount(0);
     }
     for (const name of ['Bob', 'Cara', 'Dan']) await expect(seatOf(alice, name).locator('.seat-count')).toHaveText(/^9 cards/);
-    await expect(alice.locator('.nest .rook-card-back')).toBeVisible();
+    await expect(alice.locator('.nest .nest-card-back')).toBeVisible();
 
     // A trick worth 25 is taken, but the score stays at 0 until the hand is scored
     await playing(table, { 1: [red(5), green(5)], 2: [red(14), green(6)], 3: [red(10), green(7)], 4: [red(12), green(8)] });
@@ -355,9 +355,9 @@ test.describe('Rook rules', () => {
   });
 });
 
-test.describe('Rook controls', () => {
+test.describe('Nest controls', () => {
   test('the lobby scoreboard names only the players seated so far', async ({ seat }) => {
-    const { pages: [alice] } = await seat('rook', ['Alice', 'Bob', 'Cara'], { agree: false });
+    const { pages: [alice] } = await seat('nest', ['Alice', 'Bob', 'Cara'], { agree: false });
     await expect(alice.locator('.scoreboard .team-names')).toHaveText(['Alice and Cara (you)', 'Bob']);
   });
 
@@ -399,8 +399,8 @@ test.describe('Rook controls', () => {
     const { table, pages: [alice, bob] } = await start(seat);
     await playing(table, { 1: [green(5)], 2: [red(9), green(6), yellow(6)], 3: [green(7)], 4: [green(8)] });
     await handCard(alice, green(5)).click();
-    await expect(handCard(bob, green(6))).toHaveClass(/rook-card-playable/);
-    await expect(handCard(bob, red(9))).not.toHaveClass(/rook-card-playable/);
+    await expect(handCard(bob, green(6))).toHaveClass(/nest-card-playable/);
+    await expect(handCard(bob, red(9))).not.toHaveClass(/nest-card-playable/);
     const look = await handCard(bob, green(6)).evaluate(element => [getComputedStyle(element).outlineStyle, getComputedStyle(element).transform]);
     expect(look[0]).toBe('solid');
     expect(look[1]).not.toBe('none');
@@ -433,7 +433,7 @@ test.describe('Rook controls', () => {
     await handCard(cara, red(6)).click();
     await handCard(dan, red(7)).click();
     await expect(alice.locator('.trick-taken')).toHaveText('Bob took the trick');
-    await expect(alice.locator('.trick .rook-card')).toHaveCount(4);
+    await expect(alice.locator('.trick .nest-card')).toHaveCount(4);
     await expect(team(alice, 1).locator('.team-tricks')).toHaveText('1 trick');
   });
 
@@ -444,7 +444,7 @@ test.describe('Rook controls', () => {
     await layAsideAndName(alice, 'red');
     const below = alice.locator('.hand .discards');
     await expect(below.locator('.discards-label')).toHaveText('Laid aside (only you see these; they go with the last trick):');
-    await expect(below.locator('.rook-card')).toHaveCount(5);
+    await expect(below.locator('.nest-card')).toHaveCount(5);
     for (const name of picked) await expect(below.getByLabel(name!, { exact: true })).toBeVisible();
     await expect(bob.locator('.discards')).toHaveCount(0);
   });
@@ -489,7 +489,7 @@ test.describe('Rook controls', () => {
   });
 });
 
-test.describe('Rook differences from Wikipedia', () => {
+test.describe('Nest differences from Wikipedia', () => {
   test('the game plays to 500, not 300', async ({ seat }) => {
     const past300 = await start(seat);
     await lastTrick(past300.table, [290, 0]); // 380
@@ -548,11 +548,11 @@ test.describe('Rook differences from Wikipedia', () => {
     await handCard(cara, red(6)).click();
     await handCard(dan, red(7)).click();
     await expect(dan.locator('.trick-taken')).toHaveText('Bob took the trick');
-    await expect(dan.locator('.trick .rook-card')).toHaveCount(4);
+    await expect(dan.locator('.trick .nest-card')).toHaveCount(4);
     await expect(dan.locator('.scoreboard .team-1 .team-tricks')).toHaveText('1 trick');
     await handCard(bob, green(6)).click();
     await expect(dan.locator('.trick-taken')).toHaveCount(0);
-    await expect(dan.locator('.trick .rook-card')).toHaveCount(1);
+    await expect(dan.locator('.trick .nest-card')).toHaveCount(1);
   });
 
   test('a player who leaves breaks the partnership, so the game ends and the other team wins', async ({ seat }) => {
@@ -565,14 +565,14 @@ test.describe('Rook differences from Wikipedia', () => {
   });
 });
 
-test.describe('Rook at six players', () => {
+test.describe('Nest at six players', () => {
   test('a six-player hand of three teams', async ({ seat }) => {
     const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Fay'];
-    const table = await seat('rook', names, { maxPlayers: 6, agree: false });
+    const table = await seat('nest', names, { maxPlayers: 6, agree: false });
     const { pages } = table;
     const [alice, bob, cara, dan] = pages;
     for (const page of pages) await inHouseRules(page, dialog => expect(dialog.locator('.house-rules-list li')).toHaveCount(6));
-    await setHouseRules(alice, 'rook', { sixTeams: 'threeOfTwo' });
+    await setHouseRules(alice, 'nest', { sixTeams: 'threeOfTwo' });
     for (const page of pages) await inHouseRules(page, dialog => expect(dialog.getByLabel('Teams at 6 players', { exact: true })).toHaveValue('threeOfTwo'));
     await inHouseRules(alice, dialog => expect(dialog.getByLabel('Defending teams score', { exact: true })).toHaveValue('separate'));
     await agreeToHouseRules(...pages);
@@ -619,10 +619,10 @@ test.describe('Rook at six players', () => {
   });
 });
 
-test.describe('Rook at five players', () => {
+test.describe('Nest at five players', () => {
   test('calling a partner at five players', async ({ seat }) => {
     const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve'];
-    const table = await seat('rook', names, { maxPlayers: 5 });
+    const table = await seat('nest', names, { maxPlayers: 5 });
     const { pages } = table;
     const [alice, bob, cara, dan, eve] = pages;
 

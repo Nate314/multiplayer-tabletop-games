@@ -34,7 +34,7 @@ test('every legacy entry points at a registered game and no old id is still regi
 });
 
 // Chunk 12's renames: every old id points at a registered game that keeps its saves, and no old id is still registered
-const CHUNK_12: Record<string, string> = { phase10: 'stagerummy', pictionary: 'drawandguess', racko: 'inorder' };
+const CHUNK_12: Record<string, string> = { phase10: 'stagerummy', pictionary: 'drawandguess', racko: 'inorder', rook: 'nest' };
 test('chunk 12 old ids map to their renamed games', () => {
   for (const [old, id] of Object.entries(CHUNK_12)) {
     assert.equal(LEGACY_IDS[old]?.id, id, old);

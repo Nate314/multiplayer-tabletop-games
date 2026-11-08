@@ -4,13 +4,13 @@ import { createGameManager } from '../../server/games.ts';
 import { openGameStore } from '../../server/store.ts';
 import { agreeAll, rememberingKeys, stepsOf, fileOf } from '../../server/testing.ts';
 import { canPlayCard, MIN_BID } from './rules.ts';
-import { rook } from './index.ts';
+import { nest } from './index.ts';
 import type { GameState, Move, PublicGameState } from './types.ts';
 import type { BaseGameState, Random, Result } from '../../shared/types.ts';
 
 type Manager = ReturnType<typeof createGameManager>;
 
-const ROOM = 'rook/g1';
+const ROOM = 'nest/g1';
 const NAMES = ['A', 'B', 'C', 'D'];
 
 function seeded(seed: number): Random {
@@ -24,8 +24,8 @@ function seeded(seed: number): Random {
 }
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([rook], seeded(1)));
-  for (const name of names) manager.join('rook', 'g1', name);
+  const manager = rememberingKeys(createGameManager([nest], seeded(1)));
+  for (const name of names) manager.join('nest', 'g1', name);
   agreeAll(manager, ROOM);
   return manager;
 }
@@ -66,9 +66,9 @@ test('moves wait for four players', () => {
   const manager = gameWith('A', 'B', 'C');
   assert.deepEqual(manager.move(ROOM, 1, { type: 'pass' }), { error: 'Waiting for more players' });
   assert.equal(viewOf(manager, 1).hand.length, 0);
-  manager.join('rook', 'g1', 'D');
+  manager.join('nest', 'g1', 'D');
   assert.equal(viewOf(manager, 1).hand.length, 9);
-  assert.equal('error' in manager.join('rook', 'g1', 'E'), true);
+  assert.equal('error' in manager.join('nest', 'g1', 'E'), true);
 });
 
 test('a short game: each player sees only their own hand, the table sees none', () => {
@@ -81,7 +81,7 @@ test('a short game: each player sees only their own hand, the table sees none', 
   const bidder = views[0].bidder ?? assert.fail('no bidder');
   assert.equal(viewOf(manager, bidder).discards.length, 5);
 
-  const history = stepsOf(manager, 'rook') as unknown as PublicGameState[];
+  const history = stepsOf(manager, 'nest') as unknown as PublicGameState[];
   assert.equal(history.length, 15);
   for (const state of [...history, viewOf(manager, null)]) {
     assert.deepEqual(state.hand, []);
@@ -99,7 +99,7 @@ test('a rejoin mid-turn shows the same half-finished trick and hand', () => {
   assert.equal(before.trick.length, 2);
   manager.disconnect(ROOM, seat);
   assert.deepEqual(viewOf(manager, null).disconnected, [seat]);
-  const back = manager.join('rook', 'g1', NAMES[seat - 1], true);
+  const back = manager.join('nest', 'g1', NAMES[seat - 1], true);
   if ('error' in back) assert.fail(back.error);
   const after = back.state as PublicGameState;
   assert.deepEqual(after.hand, before.hand);
@@ -128,7 +128,7 @@ test('a whole game played with legal moves ends when a team reaches 500', () => 
   assert.equal(state.winners.length, 2);
   assert.ok(Math.max(...state.scores) >= 500);
   assert.ok(state.handNumber > 1);
-  const file = fileOf(manager, 'rook', new Date());
+  const file = fileOf(manager, 'nest', new Date());
   assert.ok(file && 'file' in file);
 });
 
@@ -146,8 +146,8 @@ test('dismissing a player mid-game ends it and their opponents win', () => {
 test('a game saved before teams existed loads, plays on and builds its history and game file', () => {
   const keys = new Map<string, string>();
   const store = openGameStore(':memory:');
-  const manager = rememberingKeys(createGameManager([rook], seeded(1), store), keys);
-  for (const name of NAMES) manager.join('rook', 'g1', name);
+  const manager = rememberingKeys(createGameManager([nest], seeded(1), store), keys);
+  for (const name of NAMES) manager.join('nest', 'g1', name);
   agreeAll(manager, ROOM);
   // Bidding, the nest, trump and two tricks
   for (let i = 0; i < 4 + 2 + 8; i++) step(manager);
@@ -159,11 +159,11 @@ test('a game saved before teams existed loads, plays on and builds its history a
     return rest;
   };
   const legacy = openGameStore(':memory:');
-  room.history.forEach((before, index) => legacy.save(ROOM, 'rook', strip(room.state),
+  room.history.forEach((before, index) => legacy.save(ROOM, 'nest', strip(room.state),
     { type: 'push', index, before: strip(before), after: strip(room.timeline[index]) }));
-  const back = rememberingKeys(createGameManager([rook], seeded(2), legacy), keys);
-  for (const name of NAMES) assert.equal('error' in back.join('rook', 'g1', name, true), false);
-  assert.equal(stepsOf(back, 'rook')?.length, 15);
+  const back = rememberingKeys(createGameManager([nest], seeded(2), legacy), keys);
+  for (const name of NAMES) assert.equal('error' in back.join('nest', 'g1', name, true), false);
+  assert.equal(stepsOf(back, 'nest')?.length, 15);
 
   let state = viewOf(back, null);
   assert.equal('teams' in state, false);
@@ -171,6 +171,6 @@ test('a game saved before teams existed loads, plays on and builds its history a
   assert.equal(state.isGameOver, true);
   assert.equal(state.scores.length, 2);
   assert.equal(state.winners.length, 2);
-  const file = fileOf(back, 'rook', new Date());
+  const file = fileOf(back, 'nest', new Date());
   assert.ok(file && 'file' in file);
 });

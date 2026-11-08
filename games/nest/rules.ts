@@ -1,13 +1,13 @@
-// Rook rules shared by the browser (playable cards) and the server (validation).
+// Nest rules shared by the browser (playable cards) and the server (validation).
 //
-// From Wikipedia's "Rook (card game)" article, section "Official rules", which it calls Tournament Rook, also known
+// From Wikipedia's "Rook (card game)" article, section "Official rules", also known
 // as Kentucky Discard:
-// - Deck: the 1s to 4s are taken out of the 57-card Rook deck and the Rook Bird card is kept: 5 to 14 in red, yellow,
-//   green and black, plus the Rook, 41 cards. Four players in two partnerships, partners sitting across.
-// - Rank: 14 high down to 5 in each color. The Rook counts as the highest card of the trump suit, whatever trump is.
+// - Deck: the 1s to 4s are taken out of the 57-card deck and the Bird card is kept: 5 to 14 in red, yellow,
+//   green and black, plus the Bird, 41 cards. Four players in two partnerships, partners sitting across.
+// - Rank: 14 high down to 5 in each color. The Bird counts as the highest card of the trump suit, whatever trump is.
 //   It may be played at any time, even when its holder could follow suit. If it is led, the others must play trump
 //   if they can, and its holder must play it when trump is led and they hold no other trump.
-// - Counters: each 5 is worth 5, each 10 and 14 is worth 10, and the Rook 20, so 120 points in all.
+// - Counters: each 5 is worth 5, each 10 and 14 is worth 10, and the Bird 20, so 120 points in all.
 // - Deal: a five-card nest is set aside face down and the rest dealt, 9 cards each.
 // - Bidding: starts left of the dealer and goes around in steps of 5, from 70 up to 120 (all the counters).
 //   A player who passes cannot bid again that hand.
@@ -37,7 +37,7 @@ import { canFollow, describeTrickPlay, trickWinner as sharedTrickWinner } from '
 import { shuffle } from '../../shared/shuffle.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import type {
-  Bidding, Card, Color, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, RookCard, Seat, TeamScores
+  Bidding, Card, Color, GameState, HandSummary, LastMove, Move, Play, PublicGameState, Result, BirdCard, Seat, TeamScores
 } from './types.ts';
 import { DEFENDERS, SIX_TEAMS, TARGET_RULE, type SixTeams } from './options.ts';
 
@@ -46,7 +46,7 @@ export { teamOf };
 
 export const COLORS: Color[] = ['red', 'yellow', 'green', 'black'];
 export const NUMBERS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-export const ROOK: RookCard = { color: 'rook' };
+export const BIRD: BirdCard = { color: 'rook' };
 export const HAND_SIZE = 9; // at four players
 export const NEST_SIZE = 5; // at four players, and the smallest nest at any count
 export const MIN_PLAYERS = 4;
@@ -61,11 +61,11 @@ export function calledCount(players: number): number {
 }
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
-const ROOK_POINTS = 20;
+const BIRD_POINTS = 20;
 
 // The teams for these seats, in seat order. Four: partners across. Six: two teams of three sitting alternately, or
 // three teams of two sitting three apart. Five and seven: one team per seat
-export function rookTeams(seats: Seat[], sixTeams: SixTeams): Seat[][] {
+export function nestTeams(seats: Seat[], sixTeams: SixTeams): Seat[][] {
   const pairs = seats.length === 6 && sixTeams === 'threeOfTwo';
   const count = pairs ? 3 : seats.length === 4 || seats.length === 6 ? 2 : seats.length;
   return Array.from({ length: count }, (_, team) => seats.filter((_seat, index) => index % count === team));
@@ -100,7 +100,7 @@ export function seatAfter(state: Pick<GameState, 'teams'>, seat: Seat): Seat {
   return seats[(seats.indexOf(seat) + 1) % seats.length];
 }
 
-// Words joined for a sentence, e.g. 'red 14', 'red 14 and the Rook' or 'Bob, Dan and Fay'
+// Words joined for a sentence, e.g. 'red 14', 'red 14 and the Bird' or 'Bob, Dan and Fay'
 export function listOf(words: string[]): string {
   return words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
@@ -120,7 +120,7 @@ export function biddingSide(state: Pick<GameState, 'bidder' | 'called'>): Seat[]
 export const nestSize = (state: Pick<GameState, 'teams'>): number => dealSizes(seatsInPlay(state).length).nest;
 
 export function buildDeck(): Card[] {
-  return [...COLORS.flatMap(color => NUMBERS.map((number): Card => ({ color, number }))), ROOK];
+  return [...COLORS.flatMap(color => NUMBERS.map((number): Card => ({ color, number }))), BIRD];
 }
 
 export function sameCard(a: Card, b: Card): boolean {
@@ -129,11 +129,11 @@ export function sameCard(a: Card, b: Card): boolean {
 }
 
 export function cardName(card: Card): string {
-  return card.color === 'rook' ? 'the Rook' : `${card.color} ${card.number}`;
+  return card.color === 'rook' ? 'the Bird' : `${card.color} ${card.number}`;
 }
 
 export function cardPoints(card: Card): number {
-  if (card.color === 'rook') return ROOK_POINTS;
+  if (card.color === 'rook') return BIRD_POINTS;
   if (card.number === 5) return 5;
   return card.number === 10 || card.number === 14 ? 10 : 0;
 }
@@ -142,17 +142,17 @@ export function handPoints(cards: Card[]): number {
   return cards.reduce((sum, card) => sum + cardPoints(card), 0);
 }
 
-// The Rook belongs to the trump suit
+// The Bird belongs to the trump suit
 export function suitOf(card: Card, trump: Color | null): Color | null {
   return card.color === 'rook' ? trump : card.color;
 }
 
-// The Rook always plays; otherwise a player who holds the suit led (the Rook counting as trump) must follow it
+// The Bird always plays; otherwise a player who holds the suit led (the Bird counting as trump) must follow it
 export function canPlayCard(hand: Card[], card: Card, trick: Play[], trump: Color | null): boolean {
   return card.color === 'rook' || canFollow(hand, card, trick, held => suitOf(held, trump));
 }
 
-// The Rook ranks above every number, so it beats every trump
+// The Bird ranks above every number, so it beats every trump
 const rank = (card: Card) => (card.color === 'rook' ? 15 : card.number);
 
 export function trickWinner(plays: Play[], trump: Color | null): Seat {
@@ -209,7 +209,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
   const empty: GameState = { ...lobby, ...HAND_START, handNumber: 1, dealer: null, scores: [0, 0], hands: {}, nest: [] };
   const seats = state.activePlayers;
   if (seats.length < MIN_PLAYERS) return empty;
-  const teams = rookTeams(seats, houseRule(state, SIX_TEAMS));
+  const teams = nestTeams(seats, houseRule(state, SIX_TEAMS));
   return dealHand({ ...empty, teams, scores: teams.map(() => 0) }, seats[seats.length - 1], random);
 }
 
@@ -232,7 +232,7 @@ function isColor(value: unknown): value is Color {
 
 function parseCard(value: unknown): Card | null {
   const input = asRecord(value);
-  if (input?.color === 'rook') return ROOK;
+  if (input?.color === 'rook') return BIRD;
   const number = input?.number;
   if (!isColor(input?.color) || typeof number !== 'number' || !NUMBERS.includes(number)) return null;
   return { color: input.color, number };

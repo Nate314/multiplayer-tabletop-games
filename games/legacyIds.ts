@@ -7,6 +7,7 @@ export const LEGACY_IDS: LegacyIds = {
   phase10: { id: 'stagerummy', keepsSaves: true },
   pictionary: { id: 'drawandguess', keepsSaves: true },
   racko: { id: 'inorder', keepsSaves: true },
+  rook: { id: 'nest', keepsSaves: true },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

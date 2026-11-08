@@ -5,7 +5,7 @@ import type { Card, PublicGameState } from '../types.ts';
 import { handKey, seatKey, trickKey } from '../../../src/animation/animKeys.ts';
 
 
-// A hand is shown color by color, low to high, with the Rook last
+// A hand is shown color by color, low to high, with the Bird last
 const order = (card: Card) => card.color === 'rook' ? 1000 : COLORS.indexOf(card.color) * 100 + card.number;
 export const sortedHand = (hand: Card[]): Card[] => [...hand].sort((a, b) => order(a) - order(b));
 

@@ -1,5 +1,5 @@
-[data-game="rook"] {
-  /* Rook's dark teal table. Every rule is scoped to data-game="rook", so none of it reaches the landing page or other games. */
+[data-game="nest"] {
+  /* Nest's dark teal table. Every rule is scoped to data-game="nest", so none of it reaches the landing page or other games. */
 
   color-scheme: light;
   color: var(--text);
@@ -27,10 +27,10 @@
   --card-face: #fffdf7;
   --card-edge: rgba(0, 0, 0, 0.25);
   --card-back: #1a1a1a;
-  --rook-red: #c62828;
-  --rook-yellow: #c99400;
-  --rook-green: #2e7d32;
-  --rook-black: #1b1b1b;
+  --nest-red: #c62828;
+  --nest-yellow: #c99400;
+  --nest-green: #2e7d32;
+  --nest-black: #1b1b1b;
   --card-w: 54px;
 
   :root[data-theme="dark"] & {
@@ -57,7 +57,7 @@
 
 /* Page and header */
 
-.game-root[data-game="rook"] {
+.game-root[data-game="nest"] {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 0 16px 32px;
@@ -65,7 +65,7 @@
   background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
 }
 
-[data-game="rook"] {
+[data-game="nest"] {
   .game-header {
     display: flex;
     align-items: center;
@@ -264,20 +264,20 @@
   }
 
   .color-picker .choice-red {
-    background: var(--rook-red);
+    background: var(--nest-red);
   }
 
   .color-picker .choice-yellow {
-    background: var(--rook-yellow);
+    background: var(--nest-yellow);
     color: #2b1f00;
   }
 
   .color-picker .choice-green {
-    background: var(--rook-green);
+    background: var(--nest-green);
   }
 
   .color-picker .choice-black {
-    background: var(--rook-black);
+    background: var(--nest-black);
   }
 
   .color-picker .color-choice:hover {
@@ -286,7 +286,7 @@
 
   /* Cards */
 
-  .rook-card {
+  .nest-card {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -301,45 +301,45 @@
     /* The face and back are the server's card art (shared/svg/cardArt.ts) */
     --art-fill: var(--card-face);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    color: var(--card-color, var(--rook-black));
+    color: var(--card-color, var(--nest-black));
     font: inherit;
     font-weight: 800;
     user-select: none;
     transition: transform 0.12s, opacity 0.12s;
   }
 
-  .rook-card-small {
+  .nest-card-small {
     --card-w: 38px;
   }
 
-  .rook-card-red {
-    --card-color: var(--rook-red);
+  .nest-card-red {
+    --card-color: var(--nest-red);
   }
 
-  .rook-card-yellow {
-    --card-color: var(--rook-yellow);
+  .nest-card-yellow {
+    --card-color: var(--nest-yellow);
   }
 
-  .rook-card-green {
-    --card-color: var(--rook-green);
+  .nest-card-green {
+    --card-color: var(--nest-green);
   }
 
-  .rook-card-black {
-    --card-color: var(--rook-black);
+  .nest-card-black {
+    --card-color: var(--nest-black);
   }
 
-  .rook-card-rook {
+  .nest-card-bird {
     --art-fill: #f4d35e;
     --art-fill-4: #e07a1f;
     --card-color: #1b1b1b;
   }
 
-  .rook-card-back {
+  .nest-card-back {
     --art-fill: var(--card-back);
     --art-stripe: #2f2f2f;
   }
 
-  .rook-card-corner {
+  .nest-card-corner {
     position: absolute;
     top: 3px;
     left: 5px;
@@ -347,17 +347,17 @@
     line-height: 1;
   }
 
-  .rook-card-middle {
+  .nest-card-middle {
     font-size: calc(var(--card-w) * 0.44);
     line-height: 1;
   }
 
-  .rook-card-word {
+  .nest-card-word {
     font-size: calc(var(--card-w) * 0.22);
     letter-spacing: 0.04em;
   }
 
-  .rook-card-points {
+  .nest-card-points {
     position: absolute;
     right: 4px;
     bottom: 3px;
@@ -369,36 +369,36 @@
     line-height: 1.3;
   }
 
-  button.rook-card {
+  button.nest-card {
     cursor: default;
   }
 
-  button.rook-card:disabled {
+  button.nest-card:disabled {
     opacity: 0.55;
   }
 
-  .hand-waiting button.rook-card:disabled {
+  .hand-waiting button.nest-card:disabled {
     opacity: 1;
   }
 
-  button.rook-card-playable {
+  button.nest-card-playable {
     cursor: pointer;
     outline: 3px solid var(--highlight);
     outline-offset: 1px;
     transform: translateY(-5px);
   }
 
-  button.rook-card-playable:hover {
+  button.nest-card-playable:hover {
     transform: translateY(-8px);
   }
 
-  .rook-card-selected,
-  .rook-card-highlighted {
+  .nest-card-selected,
+  .nest-card-highlighted {
     outline: 3px solid var(--highlight);
     outline-offset: 2px;
   }
 
-  button.rook-card-selected {
+  button.nest-card-selected {
     transform: translateY(-14px);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.35);
   }
@@ -480,19 +480,19 @@
   }
 
   .swatch-red {
-    background: var(--rook-red);
+    background: var(--nest-red);
   }
 
   .swatch-yellow {
-    background: var(--rook-yellow);
+    background: var(--nest-yellow);
   }
 
   .swatch-green {
-    background: var(--rook-green);
+    background: var(--nest-green);
   }
 
   .swatch-black {
-    background: var(--rook-black);
+    background: var(--nest-black);
     border: 1px solid #888;
   }
 

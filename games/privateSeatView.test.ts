@@ -14,7 +14,7 @@ const NAVAL_SHOTS = { 1: [{ row: 0, col: 0, result: 'miss' }], 2: [{ row: 4, col
 const CASES: Record<string, (s: Loose) => Loose[]> = {
   hearts: s => [{ ...s, passes: { 1: s.hands[1].slice(0, 3) } }],
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
-  rook: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
+  nest: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
   thecrew: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
   uno: s => [
     { ...s, currentPlayer: 1, drawnCard: s.hands[1][0] },
