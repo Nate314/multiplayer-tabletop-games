@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table, headerButton } from './fixtures.ts';
 import { POINT_HOLES, holeKey } from '../games/chinesecheckers/board.ts';
 import type { PointIndex, Seat as SeatNumber } from '../games/chinesecheckers/types.ts';
 
@@ -332,7 +332,7 @@ test.describe('Chinese Checkers controls', () => {
     await expect(turn(bob)).toHaveText('Your turn');
     await clickPath(bob, '4,-4', '2,-4', '0,-4');
     await expect(status(alice)).toContainText('Bob made 2 jumps');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-move')).toContainText('Bob made 2 jumps');
     await expect(history.locator('.last-move-line')).toHaveCount(1);

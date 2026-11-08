@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, inHouseRules, openFaq, setPreference, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/uno/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/uno/types.ts';
 
@@ -490,6 +490,19 @@ test.describe('UNO rules', () => {
     await expect(dialog.locator('.summary-target')).toHaveText('First to 250 points wins');
     await expect(dialog.locator('.summary-seat', { hasText: 'Dan' }).locator('.summary-points')).toHaveText('250 pts');
     await expect(turn(pages[1])).toHaveText('Game over: Dan wins');
+  });
+
+  test('One round: the first player to go out wins the game', async ({ seat }) => {
+    const { table, pages } = await start(seat, ['Alice', 'Bob'], { houseRules: { targetScore: 0 } });
+    await expect(pages[0].locator('.round')).toHaveText('One round: first to go out wins');
+    await deal(table, { hands: { 1: [c('red', '7')], 2: [WILD] }, discard: [c('red', '5')] });
+    await play(pages[0], 'red 7');
+    await expect(gameOver(pages[1]).getByRole('heading', { level: 2 })).toHaveText('Alice wins');
+    await expect(scoring(pages[1])).toHaveCount(0);
+    await expect(gameOver(pages[1])).toContainText('One round: first to go out wins');
+    await expect(gameOver(pages[1])).not.toContainText(/first to 0 points/i);
+    await gameOver(pages[1]).getByRole('button', { name: 'See the table' }).click();
+    await inHouseRules(pages[1], dialog => expect(dialog).toContainText('Target scoreOne round (house rule)'));
   });
 
   test('stacking a Draw Two', async ({ seat }) => {

@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect, test } from './fixtures.ts';
+import { expect, test, headerButton } from './fixtures.ts';
 import { GAMES } from '../games/registry.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
 import { boardFromLine } from '../games/dominoes/board.ts';
@@ -25,7 +25,7 @@ for (const { info } of GAMES) {
     const { pages: [alice] } = await seat(info.id, names);
     for (const size of [{ width: 375, height: 667 }, { width: 1280, height: 800 }]) {
       await alice.setViewportSize(size);
-      await alice.getByRole('button', { name: 'History' }).click();
+      await (await headerButton(alice, 'History')).click();
       const dialog = history(alice);
       await expect(dialog.locator('.history-slider')).toBeVisible();
       const box = (await dialog.boundingBox())!;
@@ -51,7 +51,7 @@ test('stepping through History never enlarges the board or moves its top edge, a
     await page.getByRole('region', { name: 'Your hand' }).getByRole('button', { name: pipsName([Math.min(a, b), Math.max(a, b)]), exact: true }).click();
   }
   await alice.setViewportSize({ width: 375, height: 667 });
-  await alice.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(alice, 'History')).click();
   const dialog = history(alice);
   const slider = dialog.getByRole('slider', { name: 'Step' });
   await expect(dialog.locator('.history-move')).toContainText('Move 4 of 4');
@@ -78,7 +78,7 @@ async function openConnectFourHistory(seat: Parameters<Parameters<typeof test>[2
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
   await bob.getByRole('button', { name: 'Drop in column 2' }).click();
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
-  await alice.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(alice, 'History')).click();
   return { alice, dialog: history(alice) };
 }
 
@@ -133,7 +133,7 @@ test('speed and animations are remembered, and 4x plays a step every 375 ms', as
   await dialog.getByLabel('Speed').selectOption({ label: '4x' });
   await dialog.getByLabel('Animations').check();
   await dialog.getByRole('button', { name: 'Close' }).click();
-  await alice.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(alice, 'History')).click();
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await expect(dialog.getByLabel('Speed')).toHaveValue('4');
   await expect(dialog.getByLabel('Animations')).toBeChecked();

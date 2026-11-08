@@ -41,12 +41,12 @@ Match colors and numbers, empty your hand to score the cards left in the others,
 
 ## Differences from Wikipedia
 
-These follow the classic official rules described on [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)), which play to 500 points. The host can choose 250 or 1,000 instead, and everyone must agree to that before play starts. What remains different:
+These follow the classic official rules described on [Wikipedia](https://en.wikipedia.org/wiki/Uno_(card_game)), which play to 500 points. The host can choose 250 or 1,000 instead, or One round (the first player to go out wins), and everyone must agree to that before play starts. What remains different:
 
 - **House rules.** Stacking Draw Twos and Wild Draw Fours, Seven-O and drawing until you can play and jump-in are not part of the official rules, so they are off unless the host turns them on and everyone agrees. Other house rules Wikipedia lists are not available
 - **Stacking details.** Wikipedia describes stacking only loosely. Here a Draw Two goes on a Draw Two, a Wild Draw Four goes on either, and a Draw Two never goes on a Wild Draw Four. A stacked Wild Draw Four cannot be challenged
 - **Seven-O details.** The 7 may swap with any other player, and a 0 passes hands in the direction of play. Going out with either swaps nothing
-- **Mattel's 2022 rule changes are not followed.** Since 2022 the official goal is just to go out first in a single hand, there is no official way to choose the dealer, and a starting action card or Wild is ignored and another card flipped until a number card appears. This game keeps the classic rules instead: play to 500, cut for the dealer, and starting cards take effect
+- **Mattel's 2022 rule changes are not followed.** Since 2022 the official goal is just to go out first in a single hand, there is no official way to choose the dealer, and a starting action card or Wild is ignored and another card flipped until a number card appears. This game keeps the classic rules instead: play to 500 (the host can choose One round for the single hand), cut for the dealer, and starting cards take effect
 - **Cutting for the dealer.** Wikipedia says only that the highest number deals. Here a card that is not a number counts lowest and tied players draw again
 - **Calling and catching UNO.** At a table a player shouts "UNO" and anyone may catch them. Here the call is a button, and the catch window closes when any move is made, which is the next player beginning their turn
 - **Leaving.** The rules do not cover a player leaving mid-game. Here their cards go under the draw pile, and a Wild Draw Four played by or on them is dropped

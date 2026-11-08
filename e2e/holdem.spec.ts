@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, seeTable, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
 import { cardName, sameCard, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState } from '../games/holdem/types.ts';
 
@@ -177,7 +177,7 @@ test.describe("Texas Hold'em rules", () => {
     await expect(result(bob).locator('.holdem-result-pots li')).toHaveText(['Pot of 10: Alice with Flush, king high', 'Alice gets back 15 uncalled']);
     // The hand was dealt by Continue, not a move, so History shows it as the end of the game
     await seeTable(bob);
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const dialog = bob.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toHaveText(/^End of the game: Hand 2: Bob has the button\. The board is dealt out\./);
     await expect(dialog.locator('.holdem-board .playing-card')).toHaveCount(5);
@@ -319,7 +319,7 @@ test.describe("Texas Hold'em rules", () => {
     await expect(turn(alice)).toHaveText(/^Game over/);
 
     await seeTable(alice);
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     const slider = dialog.getByRole('slider', { name: 'Step' });
     const steps = Number(await slider.getAttribute('max'));
@@ -430,7 +430,7 @@ test.describe("Texas Hold'em controls", () => {
     const { alice, bob } = await start(seat);
     await raise(alice, 60);
     await fold(bob);
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toHaveText('Move 2 of 2: Bob folded');
     await dialog.getByRole('slider', { name: 'Step' }).fill('1');

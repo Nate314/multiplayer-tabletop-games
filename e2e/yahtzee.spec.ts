@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, headerButton } from './fixtures.ts';
 import { CATEGORIES } from '../games/yahtzee/rules.ts';
 import type { Sheet } from '../games/yahtzee/types.ts';
 
@@ -260,7 +260,7 @@ test.describe('Yahtzee rules', () => {
     await table.dice(1, 2, 3, 4, 5);
     await rollButton(alice).click();
     await option(alice, 15, 'Chance').click();
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toHaveText('Move 2 of 2: Alice scored 15 points in Chance');
     await expect(dialog.locator('.yz-cell-last')).toHaveText('15');

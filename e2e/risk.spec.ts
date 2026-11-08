@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
+import { headerButton, dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/risk/map.ts';
 import { game, ownership } from '../games/risk/testing.ts';
 import type { ContinentId, GameState } from '../games/risk/types.ts';
@@ -491,7 +491,7 @@ test.describe('Risk rules', () => {
     await expect(events(bob).nth(1)).toHaveText('Alice traded Alaska (infantry), Alberta (infantry), Western United States (infantry) for 4 armies');
 
     await table.patch({ hands: { 1: [9], 2: [1], 3: [] } });
-    await button(bob, 'History').click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.world-map')).toBeVisible();
     await expect(history.locator('.risk-card')).toHaveCount(0);
@@ -508,7 +508,7 @@ test.describe('Risk rules', () => {
     await expect(cards(alice)).toHaveCount(3); // Bob's card came with his last territory
 
     await seeTable(alice);
-    await button(alice, 'History').click();
+    await (await headerButton(alice, 'History')).click();
     const [download] = await Promise.all([alice.waitForEvent('download'), button(alice, 'Download game').click()]);
     const file = test.info().outputPath('risk-game.json');
     await download.saveAs(file);

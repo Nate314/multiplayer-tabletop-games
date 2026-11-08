@@ -159,10 +159,12 @@ async function setCheckbox(control: Locator, want: boolean): Promise<void> {
   await expect(control).toBeChecked({ checked: want });
 }
 
-// A header control (History, Share, Rules, Hide, Pause, Settings, Theme, Show QR code) by its accessible name.
-// Specs reach header controls only through this, so moving them behind a menu changes this helper alone.
+// A header control (History, Share, Rules, Hide, Pause, Settings, Theme, Show QR code) by its accessible name,
+// after opening the header's menu unless it is open already. Specs reach header controls only through this.
 export async function headerButton(page: Page, name: string | RegExp): Promise<Locator> {
-  return page.locator('.game-header').getByRole('button', { name, exact: typeof name === 'string' });
+  const menu = page.locator('.game-header').getByRole('button', { name: 'Menu', exact: true });
+  if (await menu.getAttribute('aria-expanded') !== 'true') await menu.click();
+  return page.locator('.game-header .game-menu-panel').getByRole('button', { name, exact: typeof name === 'string' });
 }
 
 // The host sets each rule in `values` by its label; `maxPlayers` fills "Most players"
@@ -329,7 +331,7 @@ export async function watch(browser: Browser, server: Server, gameType: string, 
 
 // Opens Settings, sets the checkbox `label` and closes the dialog
 export async function setPreference(page: Page, label: string, on: boolean): Promise<void> {
-  await page.getByRole('button', { name: 'Settings' }).click();
+  await (await headerButton(page, 'Settings')).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   await dialog.getByLabel(label).setChecked(on);
   await dialog.getByRole('button', { name: 'Close' }).click();

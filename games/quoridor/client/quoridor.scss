@@ -685,29 +685,15 @@
     background: var(--button-hover-bg);
   }
 
-  /* Phones: the six header buttons fill about 360px, so the title takes its own row above them, with an ellipsis */
+  /* Phones: a smaller title, with an ellipsis if it still does not fit */
 
   @media (max-width: 480px) {
-    .game-header {
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.375rem;
-    }
-
     .game-header h1 {
-      flex-basis: 100%;
-      order: -1;
       min-width: 0;
       overflow: hidden;
       font-size: 1.1rem;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-
-    .back-button,
-    .history-button,
-    .rules-button {
-      padding: 0 0.6rem;
     }
   }
 

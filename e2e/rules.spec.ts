@@ -1,4 +1,4 @@
-import { expect, newPlayer, test } from './fixtures.ts';
+import { expect, headerButton, newPlayer, test } from './fixtures.ts';
 
 async function chessJoinDialog(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1]) {
   const page = await newPlayer(browser, server);
@@ -75,6 +75,6 @@ test('the game header has Rules and no FAQ button', async ({ seat }) => {
   const { pages: [alice] } = await seat('chess', ['Alice', 'Bob']);
   const header = alice.locator('.game-header');
   await expect(header.getByRole('button', { name: 'FAQ' })).toHaveCount(0);
-  await header.getByRole('button', { name: 'Rules', exact: true }).click();
+  await (await headerButton(alice, 'Rules')).click();
   await expect(alice.getByRole('dialog', { name: 'Chess rules' }).getByRole('heading', { name: 'Controls' })).toBeVisible();
 });

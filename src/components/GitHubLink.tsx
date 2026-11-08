@@ -3,7 +3,7 @@ import { svgUrl } from '../assets/svgCache.ts';
 
 export const REPO_URL = 'https://github.com/Nate314/multiplayer-tabletop-games';
 
-export default function GitHubLink() {
+export default function GitHubLink({ withLabel = false }: { withLabel?: boolean }) {
   return (
     <a
       className="github-link"
@@ -13,6 +13,7 @@ export default function GitHubLink() {
       aria-label="View source on GitHub"
     >
       <ServerSvg url={svgUrl('icon', 'github')} className="header-icon" />
+      {withLabel && <span className="menu-label">GitHub</span>}
     </a>
   );
 }

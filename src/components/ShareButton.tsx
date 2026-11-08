@@ -8,7 +8,7 @@ import type { GameInfo } from '../../shared/gameDefinition.ts';
 
 const COPIED_MS = 2000;
 
-export default function ShareButton({ game, gameId }: { game: GameInfo; gameId: string }) {
+export default function ShareButton({ game, gameId, withLabel = false }: { game: GameInfo; gameId: string; withLabel?: boolean }) {
   const [copied, setCopied] = useState(false);
   const [manualUrl, setManualUrl] = useState<string | null>(null);
 
@@ -37,6 +37,7 @@ export default function ShareButton({ game, gameId }: { game: GameInfo; gameId: 
     <div className="share-wrapper" ref={wrapperRef}>
       <button type="button" className="share-button" aria-label="Share" onClick={share}>
         <ServerSvg url={svgUrl('icon', 'share')} className="header-icon" />
+        {withLabel && <span className="menu-label">Share</span>}
       </button>
       <span role="status" className="share-status" hidden={!copied}>{copied ? 'Link copied' : ''}</span>
       {manualUrl && (

@@ -1,8 +1,7 @@
 import type { Page } from '@playwright/test';
 import {
   agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, tableScreen, test, watch,
-  type Seat, type Table
-} from './fixtures.ts';
+  type Seat, type Table, headerButton } from './fixtures.ts';
 import type { GameState } from '../games/sudoku/types.ts';
 
 // One test per rule, control and difference in games/sudoku/README.md. Each test patches in one fixed solved grid
@@ -218,7 +217,7 @@ test.describe('Sudoku rules', () => {
     await enter(alice, 1, 3);
     await expect(gameOver(bob)).toBeVisible();
     await gameOver(bob).getByRole('button', { name: 'See the table' }).click();
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const dialog = bob.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toContainText('Alice finished first!');
     await expect(dialog.locator('[data-cell="0"]')).toHaveAttribute('aria-label', label(0, '5'));
@@ -253,7 +252,7 @@ test.describe('Sudoku rules', () => {
     await expectCell(bob, second, 'empty');
 
     const response = bob.waitForResponse(/\/api\/history\//);
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const body = await (await response).text();
     await expect(bob.getByRole('dialog', { name: 'History' }).locator('.history-slider')).toBeVisible();
 

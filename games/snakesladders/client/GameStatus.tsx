@@ -18,11 +18,8 @@ export default function GameStatus({ gameState, isMyTurn, error }: GameStatusPro
   const { gameStatus } = gameState;
   return (
     <>
-      {(error || gameStatus) && (
-        <div className={error ? 'sl-status sl-status-error' : 'sl-status'}>
-          {error || gameStatus}
-        </div>
-      )}
+      {/* Always present at a fixed height, so the Roll button below never moves */}
+      <div className={error ? 'sl-status sl-status-error' : 'sl-status'}>{error || gameStatus}</div>
       <div className={isMyTurn ? 'sl-turn sl-your-turn' : 'sl-turn'}>{turnMessage(gameState, isMyTurn)}</div>
     </>
   );

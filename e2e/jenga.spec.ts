@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, leave, test, type Seat, type Table } from './fixtures.ts';
+import { expect, leave, test, type Seat, type Table, headerButton } from './fixtures.ts';
 import type { GameState } from '../games/jenga/types.ts';
 
 // One test per rule and control in games/jenga/README.md, driven by the keyboard and buttons only, so they pass without WebGL.
@@ -77,7 +77,7 @@ test.describe('Jenga rules', () => {
     await place(alice, 'middle').click();
     await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
     await expect(status(alice)).toHaveText("Bob's turn to pull a block");
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and placed it on top');
   });
 
@@ -92,7 +92,7 @@ test.describe('Jenga rules', () => {
     await expect.poll(async () => (await state(table)).dropping).toBe(49);
     await settle(table);
     await expect(status(bob)).toHaveText('Your turn: pull a block from the tower');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     await expect(alice.getByRole('dialog', { name: 'History' })).toContainText('Move 1 of 1: Alice pulled a block from level 17 and dropped it on top');
   });
 
@@ -103,7 +103,7 @@ test.describe('Jenga rules', () => {
     await settle(table);
     await place(alice, 'middle').click();
     await expect(status(alice)).toHaveText("Bob's turn to pull a block");
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     const drawn = dialog.locator('.jenga-history [data-block-count]');
     await dialog.getByRole('slider', { name: 'Step' }).fill('0');
@@ -209,7 +209,7 @@ test.describe('Jenga rules', () => {
 
   test('the Rules dialog shows the Jenga rules', async ({ seat }) => {
     const { alice } = await start(seat);
-    await alice.locator('.game-header').getByRole('button', { name: 'Rules', exact: true }).click();
+    await (await headerButton(alice, 'Rules')).click();
     const rules = alice.getByRole('dialog', { name: / rules$/ });
     await expect(rules).toContainText('grip');
     await expect(rules).toContainText('topple');

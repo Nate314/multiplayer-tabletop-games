@@ -243,6 +243,24 @@
     overflow-wrap: anywhere;
   }
 
+  .sl-status:empty {
+    background: none;
+  }
+
+  // Two lines each, clamped, so the Roll button below stays put
+  .sl-status,
+  .sl-turn {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    line-height: 1.25em;
+    height: 2.5em;
+    overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: content-box;
+  }
+
   .sl-status.sl-status-error {
     background: var(--error-bg);
     color: var(--error-text);
@@ -255,26 +273,42 @@
 
   .sl-roll-panel {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
   }
 
+  // min-height: the die's height, so the panel is as tall before the first roll as after it
   .sl-last-roll {
     display: flex;
+    flex: 1;
     align-items: center;
     gap: 10px;
     min-width: 0;
+    min-height: 44px;
   }
 
   .sl-roller {
     color: var(--muted);
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sl-roll-button,
+  .sl-auto-roll {
+    flex: none;
+  }
+
+  .sl-auto-roll {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
   }
 
   .sl-die {
-    flex-shrink: 0;
+    flex: none;
     width: 44px;
     height: 44px;
     padding: 5px;

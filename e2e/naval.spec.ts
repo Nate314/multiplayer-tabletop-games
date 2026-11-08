@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { isDeepStrictEqual } from 'node:util';
 import {
-  agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, seeTable, tableScreen, test,
+  agreeToHouseRules, dismiss, headerButton, drag, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, seeTable, tableScreen, test,
   touchDrag, undo, watch, type Seat, type Table
 } from './fixtures.ts';
 import type { Ship, Shot } from '../games/naval/types.ts';
@@ -471,7 +471,7 @@ test.describe('Naval Battle controls', () => {
     const { alice, bob } = await playing(seat);
     await square(alice, 'Target', 'F1').click();
     await expect(status(bob)).toHaveText('Alice fired at F1: hit');
-    await button(bob, 'History').click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     await expect(history).toContainText('Alice fired at F1: hit');
     // History is the table's view: no fleet before the game is over

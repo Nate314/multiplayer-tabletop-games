@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table, headerButton } from './fixtures.ts';
 import { cardName, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState, PlayingCard } from '../games/hearts/types.ts';
 
@@ -224,7 +224,7 @@ test.describe('Hearts rules', () => {
 
     for (const page of [alice, cara, dan]) await passFirstThree(page);
     await expect(turn(alice)).not.toHaveText(/Passing/);
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history).toBeVisible();
     await expect(history.locator('.playing-card')).toHaveCount(0);

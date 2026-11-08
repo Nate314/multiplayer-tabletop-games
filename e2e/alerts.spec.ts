@@ -1,5 +1,5 @@
 import type { Browser, Page } from '@playwright/test';
-import { test, expect, joinGame, joinPassAndPlay, nameOf, newPlayer, tableScreen } from './fixtures.ts';
+import { test, expect, joinGame, joinPassAndPlay, nameOf, newPlayer, tableScreen, headerButton } from './fixtures.ts';
 
 // The tests have no push service, so what they see is the page's own notification. Each page records every
 // notification on window.__shown, whether made with new Notification or through the service worker, and fakes
@@ -127,7 +127,7 @@ test.describe('Turn alerts', () => {
     await alice.getByRole('button', { name: 'Join', exact: true }).click();
     await expect(alice.getByRole('button', { name: 'Back to games' })).toBeVisible();
     expect(await alice.evaluate(() => (window as unknown as Recorded).__asked)).toBe(1);
-    await alice.getByRole('button', { name: 'Settings' }).click();
+    await (await headerButton(alice, 'Settings')).click();
     const box = alice.getByRole('dialog', { name: 'Settings' }).getByLabel('Notify me when it is my turn');
     await expect(box).toBeChecked();
     await box.click();

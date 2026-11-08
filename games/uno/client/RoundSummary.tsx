@@ -31,7 +31,9 @@ export function RoundRows({ summary, gameState, viewer }: { summary: Summary; ga
           </li>
         ))}
       </ul>
-      <div className="summary-target">First to {targetScore(gameState).toLocaleString('en-US')} points wins</div>
+      <div className="summary-target">
+        {targetScore(gameState) === 0 ? 'One round: first to go out wins' : `First to ${targetScore(gameState).toLocaleString('en-US')} points wins`}
+      </div>
     </>
   );
 }

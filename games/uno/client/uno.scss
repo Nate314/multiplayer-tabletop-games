@@ -768,7 +768,7 @@
     color: var(--muted);
   }
 
-  /* Phones: smaller cards, and the title on its own row above the header buttons */
+  /* Phones: smaller cards and title */
 
   @media (max-width: 480px) {
     & {
@@ -779,22 +779,8 @@
       --card-w: 58px;
     }
 
-    .game-header {
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.375rem;
-    }
-
     .game-header h1 {
-      flex-basis: 100%;
-      order: -1;
       font-size: 1.4rem;
-    }
-
-    .back-button,
-    .history-button,
-    .rules-button {
-      padding: 0 0.6rem;
     }
 
     .game-info {

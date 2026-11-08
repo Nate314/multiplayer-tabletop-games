@@ -369,6 +369,19 @@ test.describe('Azul controls', () => {
     await expect(turnMessage(bob)).toHaveText("Round 2: Alice's turn");
   });
 
+  test('the board stays in view for 2.5 seconds before the round summary opens', async ({ seat }) => {
+    const table = await seat('azul', ['Alice', 'Bob'], { motion: true });
+    const [alice, bob] = table.pages;
+    await table.patch({ factories: factoriesOf(5, ['red']), centerHasMarker: false });
+    await take(factory(alice, 0), 'red');
+    await line(mine(alice), 1).click();
+    const clicked = Date.now();
+    await bob.waitForTimeout(1500);
+    await expect(scoring(bob)).toHaveCount(0);
+    await expect(scoring(bob)).toBeVisible({ timeout: 3000 });
+    expect(Date.now() - clicked).toBeGreaterThanOrEqual(2400);
+  });
+
   test('FAQ at the top of the page gives a short guide to the rules and controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);

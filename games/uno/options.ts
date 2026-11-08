@@ -1,7 +1,11 @@
 // The house rules of uno, declared apart from the rules so the landing page can list them without loading the rules
-import { targetScoreRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
+import { targetScoreRule, type ChoiceRule, type HouseRule, type ToggleRule } from '../../shared/houseRules.ts';
 
-export const TARGET_RULE = targetScoreRule(500, [250, 1000]);
+// A target of 0 ends the game when the first round ends
+const target = targetScoreRule(500, [0, 250, 1000]);
+export const TARGET_RULE: ChoiceRule<number> = {
+  ...target, choices: target.choices.map(choice => choice.value === 0 ? { ...choice, label: 'One round' } : choice)
+};
 export const STACKING_RULE: ToggleRule = {
   id: 'stacking', label: 'Stack +2 and +4 cards', kind: 'toggle', standard: false,
   help: 'A Draw Two or Wild Draw Four can be answered with another one instead of drawing'

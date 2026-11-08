@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, inHouseRules, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
+import { headerButton, dismiss, expect, inHouseRules, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
 import { boardOf } from '../games/go/testBoards.ts';
 import type { Seat as SeatNumber } from '../games/go/types.ts';
 
@@ -262,7 +262,7 @@ test.describe('Go controls', () => {
     await button(bob, 'Agree').click();
     await expect(status(alice)).toHaveText('Bob wins by 7.5 (Black 1, White 8.5)');
     await seeTable(alice);
-    await button(alice, 'History').click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     const step = history.locator('.history-move');
     const slider = history.getByRole('slider', { name: 'Step' });
