@@ -6,12 +6,15 @@ export function withoutArticle(text: string): string {
   return text.trim().replace(/^(a|an|the)\s+(?=\S)/i, '');
 }
 
+// "Éclair" starts with E and matches "eclair"
+const withoutAccents = (text: string): string => text.normalize('NFD').replace(/\p{M}/gu, '');
+
 export function answerKey(text: string): string {
-  return normalize(withoutArticle(text));
+  return normalize(withoutAccents(withoutArticle(text)));
 }
 
 export function startsWithLetter(text: string, letter: string): boolean {
-  return withoutArticle(text).charAt(0).toUpperCase() === letter;
+  return withoutAccents(withoutArticle(text)).charAt(0).toUpperCase() === letter;
 }
 
 export function verdicts(

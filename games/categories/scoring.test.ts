@@ -33,3 +33,9 @@ test('a seat left out of seats neither scores nor duplicates', () => {
   assert.equal(v[1]?.[0], 'valid');
   assert.equal(v[2], undefined);
 });
+
+test('an accented first letter counts as its plain letter, and accents do not make a different answer', () => {
+  assert.equal(startsWithLetter('Éclair', 'E'), true);
+  assert.equal(startsWithLetter('the Ñandu', 'N'), true);
+  assert.equal(answerKey('Éclair'), answerKey('eclair'));
+});
