@@ -85,7 +85,7 @@
   .wd-board-area {
     flex: 1 1 auto;
     min-width: 0;
-    overflow: auto; // 32px squares (about 692px with padding); stacked above the panel below 1080px, and below about 724px it scrolls inside its box
+    overflow: auto; // 32px squares (about 692px with padding); stacked above the panel below 1120px (1070px of content plus a scrollbar), and below about 724px it scrolls inside its box
   }
 
   .wd-side {
@@ -96,7 +96,7 @@
     min-width: 0;
   }
 
-  @media (max-width: 1079px) {
+  @media (max-width: 1119px) {
     .wd-layout {
       flex-direction: column;
       align-items: stretch;
