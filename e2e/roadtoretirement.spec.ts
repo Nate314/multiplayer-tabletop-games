@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, test, undo, type Table } from './fixtures.ts';
+import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, setPreference, test, undo, type Table } from './fixtures.ts';
 import { careerOf, houseOf } from '../games/roadtoretirement/content.ts';
 import { money } from '../games/roadtoretirement/roadRules.ts';
 import type { Cell, GameState, RoadPlayer } from '../games/roadtoretirement/types.ts';
@@ -367,6 +367,25 @@ test.describe('1860 Checkered rules', () => {
 });
 
 test.describe('Road to Retirement controls', () => {
+  test('with Color-blind symbols on, each token, 1860 piece and player dot shows the shape of its color: red circle, blue square', async ({ seat }) => {
+    const table = await seat(ROAD_GAME, ['Alice', 'Bob']);
+    const [alice, bob] = table.pages;
+    await setPreference(alice, 'Color-blind symbols', true);
+    for (const [seatNumber, shape] of [[1, 'circle'], [2, 'square']] as const) {
+      await expect(alice.locator(`g.token.seat${seatNumber} .color-symbol-${shape}`)).toHaveCount(1);
+      await expect(alice.locator(`.player-dot.seat${seatNumber} .color-symbol-${shape}`)).toHaveCount(1);
+    }
+    await expect(bob.locator('.color-symbol')).toHaveCount(0);
+  });
+
+  test("on the 1860 board, Color-blind symbols show each piece's shape in place of its initial", async ({ seat }) => {
+    const table = await seat(ROAD_GAME, ['Alice', 'Bob'], CHECKERED);
+    const alice = table.pages[0];
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(alice.locator('.piece.seat1 .color-symbol-circle')).toHaveCount(1);
+    await expect(alice.locator('.piece.seat1 .piece-initial')).toBeHidden();
+  });
+
   test('Undo of a spin puts the token back after everyone approves', async ({ seat }) => {
     const table = await seat(ROAD_GAME, ['Alice', 'Bob']);
     const [alice, bob] = table.pages;

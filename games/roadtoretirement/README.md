@@ -41,6 +41,7 @@ It plays like The Game of Life, on an original road with original careers, house
 - When careers are offered, click one (its salary is shown), or Keep with your current career. When houses are offered, click one (its price is shown) or No house
 - The legend under the road names each space color; stop spaces have a thick border, and the spaces left out of a Short game are dimmed. With a mouse, hover over a space to read what it does
 - On the 1860 board the squares the spin allows are highlighted; click one to move there
+- Players are red, blue, green, yellow, purple and orange in seat order. With Color-blind symbols on in Settings, each token, 1860 piece and player list dot shows the shape of its color in place of the initial: red circle, blue square, green triangle, yellow star, purple cross, orange hexagon
 - The Players list shows each player's cash, loans, career and salary, degree, houses and family on the road, or points on the 1860 board, and marks the winner, a player who left and a player who loses their next turn
 - Click Undo to ask everyone to undo the last move
 - Open the ☰ menu and choose History to step through every move, with the mover's space or square outlined

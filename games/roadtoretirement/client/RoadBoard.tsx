@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
+import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import { lengthOf } from '../options.ts';
 import { ROAD, isStop, type Space } from '../road.ts';
 import { money } from '../roadRules.ts';
@@ -73,6 +75,11 @@ export default function RoadBoard({ gameState, highlight }: { gameState: PublicG
             <g key={seat} className={`token seat${seat}`} data-anim-key={tokenKey(seat)}>
               <title>{gameState.playerNames[seat]}</title>
               <circle cx={at.x} cy={at.y} r={TOKEN_RADIUS} />
+              <ColorSymbol
+                color={SEAT_SYMBOL_COLORS[seat]}
+                className="token-symbol"
+                svgProps={{ x: at.x - TOKEN_RADIUS * 0.6, y: at.y - TOKEN_RADIUS * 0.6, width: TOKEN_RADIUS * 1.2, height: TOKEN_RADIUS * 1.2, style: { width: TOKEN_RADIUS * 1.2, height: TOKEN_RADIUS * 1.2 } }}
+              />
               <text x={at.x} y={at.y} dy="0.35em">{gameState.playerNames[seat]?.slice(0, 1).toUpperCase()}</text>
             </g>
           );
