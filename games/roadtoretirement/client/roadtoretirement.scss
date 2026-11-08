@@ -1,0 +1,530 @@
+[data-game="roadtoretirement"] {
+  color-scheme: light;
+  --page-bg: #F4F1E8;
+  --text: #23201A;
+  --muted: #645C4E;
+  --panel-bg: #FFFFFF;
+  --panel-border: #D9D2C2;
+  --button-bg: #2F6B4F;
+  --button-hover-bg: #24563F;
+  --button-text: #FFFFFF;
+  --status-bg: #ECE6D6;
+  --error-bg: #FBE4E1;
+  --error-text: #8A1C12;
+  --highlight: #FF8F00;
+  --board-bg: #DCEBD3;
+  --road: #BDB29C;
+  --space-border: #3A352C;
+  --space-text: #1A1712;
+  --space-plain: #FFFFFF;
+  --space-payday: #F2C94C;
+  --space-job: #7FB3E0;
+  --space-gain: #9CCB86;
+  --space-loss: #E57C7C;
+  --space-house: #D59BC0;
+  --space-family: #F6B26B;
+  --space-risk: #A597D6;
+  --light-square: #F3E7C9;
+  --dark-square: #7A4A2B;
+  --square-text: #2A1E12;
+  --arrow: #9B2C1F;
+  --seat1: #E53935;
+  --seat2: #1E88E5;
+  --seat3: #2E9E44;
+  --seat4: #F57C00;
+  --seat5: #8E24AA;
+  --seat6: #00A3B8;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  background: var(--page-bg);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #171511;
+    --text: #EEE8DA;
+    --muted: #B3AA98;
+    --panel-bg: #25221C;
+    --panel-border: #433D33;
+    --button-bg: #3C8A65;
+    --button-hover-bg: #48A077;
+    --status-bg: #322D25;
+    --error-bg: #4A1D18;
+    --error-text: #FFD6D0;
+    --highlight: #FFB300;
+    --board-bg: #22301F;
+    --road: #4F493D;
+    --space-border: #11100D;
+    --space-plain: #D8D2C4;
+    --space-payday: #D4AE36;
+    --space-job: #6A9CC8;
+    --space-gain: #86B470;
+    --space-loss: #CC6666;
+    --space-house: #BF85AB;
+    --space-family: #D9995A;
+    --space-risk: #9184C2;
+    --light-square: #D8C9A5;
+    --dark-square: #4A2D1A;
+    --arrow: #8E2418;
+  }
+
+  .seat1 { --seat: var(--seat1); }
+  .seat2 { --seat: var(--seat2); }
+  .seat3 { --seat: var(--seat3); }
+  .seat4 { --seat: var(--seat4); }
+  .seat5 { --seat: var(--seat5); }
+  .seat6 { --seat: var(--seat6); }
+
+  /* Board and side panel side by side; stacked below 1024px, and the road drawn top to bottom below 720px */
+
+  .rtr-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 8px;
+  }
+
+  .board-area {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 760px;
+  }
+
+  .board-area.board-checkered {
+    max-width: min(620px, calc(100vh - 140px));
+    min-width: min(100%, 320px);
+  }
+
+  .side-panel {
+    display: flex;
+    flex: 0 1 340px;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  /* Below 1024px a panel beside the board would shrink the road under readable size, so the panel goes below it */
+  @media (max-width: 1023px) {
+    .rtr-layout {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .board-area {
+      flex: none;
+      width: 100%;
+    }
+
+    .board-area.board-checkered {
+      min-width: 0;
+    }
+
+    .side-panel {
+      flex: none;
+      width: 100%;
+      max-width: 760px;
+    }
+  }
+
+  .panel {
+    padding: 10px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+  }
+
+  .panel-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .game-status {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--status-bg);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 700;
+  }
+
+  .side-panel button {
+    padding: 6px 12px;
+    border: 1px solid var(--button-bg);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+  }
+
+  .side-panel button.primary {
+    background: var(--button-bg);
+    color: var(--button-text);
+  }
+
+  .side-panel button.primary:hover:not(:disabled) {
+    background: var(--button-hover-bg);
+  }
+
+  .side-panel button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .undo-button {
+    align-self: flex-start;
+  }
+
+  .choice-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* The spinner: the number spun in a round face, its name and the Spin button */
+
+  .spinner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .spinner-face {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 3px solid var(--space-border);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--space-payday) 0 55%, var(--space-plain) 56%);
+    color: var(--space-text);
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .spinner-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .spinner-name {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .spinner-result {
+    min-height: 1.2em;
+    font-weight: 700;
+  }
+
+  /* Players */
+
+  .player-row {
+    padding: 6px 0;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .player-row:first-of-type {
+    border-top: none;
+  }
+
+  .player-current .player-name {
+    font-weight: 700;
+  }
+
+  .player-left {
+    opacity: 0.55;
+  }
+
+  .player-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .player-dot {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--space-border);
+    border-radius: 50%;
+    background: var(--seat);
+  }
+
+  .player-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .player-status {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .player-details {
+    margin-left: 22px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* The road: an SVG drawn to the board's width */
+
+  .road-board {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background: var(--board-bg);
+  }
+
+  .road-lines line {
+    stroke: var(--road);
+    stroke-width: 18;
+    stroke-linecap: round;
+  }
+
+  .space circle {
+    fill: var(--space-plain);
+    stroke: var(--space-border);
+    stroke-width: 1.5;
+  }
+
+  .space text {
+    fill: var(--space-text);
+    font-family: sans-serif;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  .kind-payday circle { fill: var(--space-payday); }
+  .kind-job circle { fill: var(--space-job); }
+  .gain circle { fill: var(--space-gain); }
+  .loss circle { fill: var(--space-loss); }
+  .kind-house circle,
+  .kind-houseStop circle { fill: var(--space-house); }
+  .kind-family circle,
+  .kind-marriage circle { fill: var(--space-family); }
+  .kind-risk circle { fill: var(--space-risk); }
+
+  .space.stop circle {
+    stroke-width: 3.5;
+  }
+
+  .space.skipped {
+    opacity: 0.35;
+  }
+
+  .space.highlight circle {
+    stroke: var(--highlight);
+    stroke-width: 4;
+  }
+
+  .token circle {
+    fill: var(--seat);
+    stroke: var(--space-plain);
+    stroke-width: 1.5;
+  }
+
+  .token text {
+    fill: #FFFFFF;
+    font-family: sans-serif;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  /* The legend under the road: each space color by name, readable at any width */
+
+  .road-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  /* The 1860 board: an 8 by 8 grid, arrows drawn over the squares and under their names */
+
+  .checkered-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    aspect-ratio: 1;
+    border: 6px solid var(--dark-square);
+    border-radius: 4px;
+    box-sizing: border-box;
+    container-type: inline-size;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2%;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 1px;
+    border: none;
+    border-radius: 0;
+    color: var(--square-text);
+    font: inherit;
+    text-align: center;
+  }
+
+  .cell.light {
+    --cell-bg: var(--light-square);
+    background: var(--cell-bg);
+  }
+
+  .cell.dark {
+    background: var(--dark-square);
+  }
+
+  .cell.legal {
+    --cell-bg: color-mix(in srgb, var(--highlight) 45%, var(--light-square));
+    background: var(--cell-bg);
+    outline: 3px solid var(--highlight);
+    outline-offset: -3px;
+  }
+
+  button.cell {
+    cursor: pointer;
+  }
+
+  button.cell:hover {
+    --cell-bg: color-mix(in srgb, var(--highlight) 65%, var(--light-square));
+    background: var(--cell-bg);
+  }
+
+  .cell.highlight {
+    outline: 3px solid var(--highlight);
+    outline-offset: -3px;
+  }
+
+  .square-name,
+  .square-note,
+  .pieces {
+    position: relative;
+    z-index: 2;
+    max-width: 100%;
+    line-height: 1.05;
+  }
+
+  /* The square's own color behind its text, so an arrow passes behind the words */
+  .square-name,
+  .square-note {
+    padding: 0 1px;
+    border-radius: 2px;
+    background: var(--cell-bg);
+  }
+
+  .square-name {
+    font-size: clamp(8px, 1.75cqi, 14px);
+    font-weight: 700;
+    font-variant: small-caps;
+  }
+
+  .square-note {
+    font-size: clamp(6px, 1.35cqi, 11px);
+    font-style: italic;
+  }
+
+  /* A narrow board gives the name the whole square; the arrows and the rules carry the note */
+  @container (max-width: 440px) {
+    .square-note {
+      display: none;
+    }
+  }
+
+  .pieces {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1px;
+  }
+
+  .piece {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(11px, 2.6cqi, 18px);
+    height: clamp(11px, 2.6cqi, 18px);
+    border: 1px solid #FFFFFF;
+    border-radius: 50%;
+    background: var(--seat);
+    color: #FFFFFF;
+    font-family: sans-serif;
+    font-size: clamp(7px, 1.5cqi, 11px);
+    font-weight: 700;
+  }
+
+  .send-arrows {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .send-arrows line {
+    stroke: var(--arrow);
+    stroke-width: 0.045;
+    opacity: 0.7;
+  }
+
+  .send-arrows path {
+    fill: var(--arrow);
+  }
+
+  /* The history dialog: the board over the player list */
+
+  .history-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(620px, 82vw);
+    text-align: left;
+  }
+
+  .history-layout .board-area {
+    width: 100%;
+    max-width: none;
+  }
+}
