@@ -323,4 +323,86 @@ test.describe('Hint Grid rules', () => {
       expect(box.x + box.width).toBeLessThanOrEqual(width);
     }
   });
+
+  test('a team wins when the other team turns over its last word', async ({ seat }) => {
+    const table = await start(seat, FOUR);
+    await table.patch({ revealed: KEY.map((_, i) => i > 9 && i < 17) });
+    await redClue(table, 2);
+    await card(table.pages[1], BLUE[0]).click();
+    for (const page of table.pages) await expect(gameOver(page)).toContainText('Cara and Dan win');
+    await expect(turn(table.pages[0])).toHaveText('Blue found all its words!');
+  });
+
+  test('dismissing a clue-giver with equal words left is a draw', async ({ seat }) => {
+    const table = await start(seat, FOUR);
+    const [alice, bob, cara, dan] = table.pages;
+    await redClue(table);
+    await table.patch({ revealed: KEY.map((_, i) => i === 0) });
+    await leave(alice);
+    await dismiss('Alice', bob, cara, dan);
+    for (const page of [bob, cara, dan]) await expect(gameOver(page)).toBeVisible();
+    await expect(turn(bob)).toHaveText('Not enough players left: a draw');
+    expect((await stateOf(table)).winners).toEqual([]);
+  });
+
+  test('face-up cards show a mark for each kind', async ({ seat }) => {
+    const table = await start(seat, FOUR);
+    await table.patch({ revealed: KEY.map((_, i) => [0, 9, 17, 24].includes(i)) });
+    const bob = table.pages[1];
+    await expect(card(bob, 'ocean').locator('.hint-mark')).toContainText('R');
+    await expect(card(bob, 'chair').locator('.hint-mark')).toContainText('B');
+    await expect(card(bob, BYSTANDER).locator('.hint-mark')).toContainText('○');
+    await expect(card(bob, TRAP).locator('.hint-mark')).toContainText('✖');
+    await expect(bob.locator('.hint-mark')).toHaveCount(4);
+  });
+
+  test('the last word turned over is outlined', async ({ seat }) => {
+    const table = await start(seat, FOUR);
+    const [alice, bob] = table.pages;
+    await redClue(table, 3);
+    await card(bob, 'ocean').click();
+    await expect(card(alice, 'ocean')).toHaveClass(/\blast\b/);
+    await card(bob, 'apple').click();
+    await expect(card(alice, 'apple')).toHaveClass(/\blast\b/);
+    await expect(card(alice, 'ocean')).not.toHaveClass(/\blast\b/);
+  });
+
+  test('picking a team or role is not a move and cannot be undone', async ({ seat }) => {
+    const table = await seat('hintgrid', FOUR);
+    await pickAll(table.pages);
+    for (const page of table.pages) {
+      await expect(ready(page)).toContainText('gives the first clue');
+      await expect(button(page, 'Undo')).toBeDisabled();
+    }
+  });
+
+  test('the Rules button opens the rules', async ({ seat }) => {
+    const table = await seat('hintgrid', FOUR);
+    await (await headerButton(table.pages[0], 'Rules')).click();
+    await expect(table.pages[0].getByRole('dialog', { name: / rules$/ })).toContainText('clue-giver');
+  });
+
+  test('Even out names a clue-giver for a team that has none', async ({ seat }) => {
+    const table = await seat('hintgrid', FIVE);
+    await button(table.pages[0], 'Be Red\'s clue-giver').click();
+    await button(table.pages[1], 'Even out').click();
+    for (const page of table.pages) await expect(ready(page)).toContainText('gives the first clue');
+    const roles = Object.values((await stateOf(table)).roles);
+    expect(roles.filter(r => r?.team === 'red' && r.clueGiver)).toHaveLength(1);
+    expect(roles.filter(r => r?.team === 'blue' && r.clueGiver)).toHaveLength(1);
+    expect(roles).toHaveLength(5);
+  });
+
+  test('History shows no face-down kinds to a clue-giver either', async ({ seat }) => {
+    const table = await start(seat, FOUR);
+    const alice = table.pages[0];
+    await redClue(table, 2);
+    await card(table.pages[1], 'ocean').click();
+    await (await headerButton(alice, 'History')).click();
+    const history = alice.getByRole('dialog', { name: 'History' });
+    await expect(history.locator('.history-layout')).toBeVisible();
+    await expect(history.locator('.hint-card.down')).toHaveCount(24);
+    const labels = await history.locator('.hint-card.down').evaluateAll(cards => cards.map(c => c.getAttribute('aria-label') ?? ''));
+    for (const label of labels) expect(label).not.toMatch(/, (red|blue|bystander|trap)/);
+  });
 });
