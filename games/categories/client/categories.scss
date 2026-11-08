@@ -363,6 +363,27 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  /* On a phone, scaling the wide History board to fit makes the text unreadably small: it scrolls at full size instead, one card per row */
+  @media (max-width: 700px) {
+    .history-board {
+      overflow-y: auto;
+    }
+
+    .history-board-content {
+      position: static;
+      width: auto;
+      transform: none;
+    }
+
+    .history-layout {
+      width: auto;
+    }
+
+    .history-layout .review-list {
+      display: flex;
+    }
+  }
+
   .faq dd {
     color: var(--muted);
   }
