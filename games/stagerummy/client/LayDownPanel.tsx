@@ -1,6 +1,6 @@
 import CardView from './CardView';
 import { cardKey } from './animateMove.ts';
-import { buildGroup, phaseName, phaseRequirements, requirementName } from '../rules.ts';
+import { buildGroup, phaseLabel, phaseName, phaseRef, phaseRequirements, requirementName } from '../rules.ts';
 import type { Card, Seat } from '../types.ts';
 
 type LayDownPanelProps = {
@@ -24,13 +24,13 @@ export default function LayDownPanel({ seat, phase, choices, staged, hasSelectio
 
   return (
     <div className="lay-down">
-      <div className="lay-down-title">Lay down phase {phase}</div>
+      <div className="lay-down-title">Lay down {phaseRef(phase)}</div>
       {choices.length > 1 && (
         <label className="lay-down-choice">
           Phase to lay down
           <select value={phase} onChange={event => onChoose(Number(event.target.value))}>
             {choices.map(choice => (
-              <option key={choice} value={choice}>Phase {choice}: {phaseName(choice)}</option>
+              <option key={choice} value={choice}>{phaseLabel(choice)}: {phaseName(choice)}</option>
             ))}
           </select>
         </label>

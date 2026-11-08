@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {
   PHASES,
   createDeck,
+  phaseLabel,
   phaseName,
+  phaseRef,
   cardPoints,
   buildGroup,
   extendGroup,
@@ -83,6 +85,7 @@ test('phases are named from their parts', () => {
   assert.equal(phaseName(8), '7 cards of one color');
   assert.equal(phaseName(10), '1 set of 5 + 1 set of 3');
 });
+test('the tenth phase reads Last phase', () => {  assert.deepEqual([phaseLabel(9), phaseLabel(10), phaseRef(9), phaseRef(10)], ['Phase 9', 'Last phase', 'phase 9', 'the last phase']);});
 
 test('cards left in hand cost 5, 10, 15 or 25 points', () => {
   assert.deepEqual([num(1), num(9), num(10), num(12), skip(), wild()].map(cardPoints), [5, 5, 10, 10, 15, 25]);

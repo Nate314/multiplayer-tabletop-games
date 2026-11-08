@@ -63,7 +63,7 @@ export function requirementName({ kind, size }: Requirement): string {
 // 'Phase 3'; the tenth reads 'Last phase'
 export const phaseLabel = (phase: number): string => (phase === LAST_PHASE ? 'Last phase' : `Phase ${phase}`);
 // 'phase 3' or 'the last phase', for the middle of a sentence
-const phaseRef = (phase: number): string => (phase === LAST_PHASE ? 'the last phase' : `phase ${phase}`);
+export const phaseRef = (phase: number): string => (phase === LAST_PHASE ? 'the last phase' : `phase ${phase}`);
 
 // e.g. '1 set of 3 + 1 run of 4'; phases with two equal parts read '2 sets of 3'
 export function phaseName(phase: number): string {
