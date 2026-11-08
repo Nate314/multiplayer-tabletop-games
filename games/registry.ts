@@ -31,7 +31,7 @@ import { hintgrid } from './hintgrid/index.ts';
 import { blocktower } from './blocktower/index.ts';
 import { jigsaw } from './jigsaw/index.ts';
 import { war } from './war/index.ts';
-import { risk } from './risk/index.ts';
+import { territories } from './territories/index.ts';
 import { inorder } from './inorder/index.ts';
 import { roadtoretirement } from './roadtoretirement/index.ts';
 import { nest } from './nest/index.ts';
@@ -47,13 +47,13 @@ import { tradingfloor } from './tradingfloor/index.ts';
 import { dominoes } from './dominoes/index.ts';
 import { whodunit } from './whodunit/index.ts';
 import { fivedice } from './fivedice/index.ts';
-import { thecrew } from './thecrew/index.ts';
+import { missiontricks } from './missiontricks/index.ts';
 import { tictactoe } from './tictactoe/index.ts';
 import { ultimatetictactoe } from './ultimatetictactoe/index.ts';
 
 // Registry order, alphabetical by name; the landing page groups them by category. Games differ in their state types, so the list holds them type-erased.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
-  palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, streetdeeds, naval, pachisi, stagerummy, drawandguess,
-  pawnsandwalls, inorder, roadtoretirement, risk, nest, rummytiles, lettergrid, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, holdem, thecrew, tictactoe, railroutes, tradingfloor, ultimatetictactoe, rainboweights, war, whodunit, fivedice
+  palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, missiontricks, streetdeeds, naval, pachisi, stagerummy, drawandguess,
+  pawnsandwalls, inorder, roadtoretirement, nest, rummytiles, lettergrid, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, territories, holdem, tictactoe, railroutes, tradingfloor, ultimatetictactoe, rainboweights, war, whodunit, fivedice
 ];

@@ -5,7 +5,7 @@ import { dealt } from './testStates.ts';
 
 const WITH_SECRET = [
   'palacewalls', 'roadsandfields', 'hexisland', 'charades', 'categories', 'codebreaker', 'sudoku', 'dominoes', 'euchre', 'fictionary', 'gofish', 'hintgrid', 'holdem', 'blocktower', 'streetdeeds', 'stagerummy', 'drawandguess',
-  'inorder', 'risk', 'nest', 'rummytiles', 'lettergrid', 'spiteandmalice', 'jewelguild', 'thecrew', 'railroutes', 'rainboweights', 'war', 'whodunit'
+  'inorder', 'nest', 'rummytiles', 'lettergrid', 'spiteandmalice', 'jewelguild', 'territories', 'missiontricks', 'railroutes', 'rainboweights', 'war', 'whodunit'
 ];
 
 const isEmpty = (value: unknown) => Array.isArray(value) ? value.length === 0
@@ -15,8 +15,8 @@ it('exactly the games with a secret declare one', () => {
   assert.deepEqual(GAMES.filter(g => g.secretState).map(g => g.info.id).sort(), [...WITH_SECRET].sort());
 });
 
-it('thecrew hides the face-down tasks of a distribution', () => {
-  const crew = GAMES.find(g => g.info.id === 'thecrew')!;
+it('missiontricks hides the face-down tasks of a distribution', () => {
+  const crew = GAMES.find(g => g.info.id === 'missiontricks')!;
   const state = dealt(crew);
   const tasks = [{ card: { suit: 'blue', value: 1 } }, { card: { suit: 'pink', value: 2 } }, { card: { suit: 'green', value: 3 } }]
     .map(t => ({ ...t, token: null, owner: null, done: false }));

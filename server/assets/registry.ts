@@ -8,7 +8,7 @@ import { PLAYING_CARD_ASSETS } from '../../shared/svg/playingCards.ts';
 import { DISC_ASSETS } from '../../shared/svg/disc.ts';
 import { CARD_ART_ASSETS } from '../../shared/svg/cardArt.ts';
 import { ROADSANDFIELDS_ASSETS } from '../../games/roadsandfields/svg.ts';
-import { RISK_ASSETS } from '../../games/risk/svg.ts';
+import { TERRITORIES_ASSETS } from '../../games/territories/svg.ts';
 import { RAILROUTES_ASSETS } from '../../games/railroutes/svg.ts';
 import { PAWNSANDWALLS_ASSETS } from '../../games/pawnsandwalls/svg.ts';
 import { PALACEWALLS_ASSETS } from '../../games/palacewalls/svg.ts';
@@ -35,7 +35,7 @@ export const SVG_ASSETS: SvgAsset[] = [
   ...DISC_ASSETS,
   ...CARD_ART_ASSETS,
   ...ROADSANDFIELDS_ASSETS,
-  ...RISK_ASSETS,
+  ...TERRITORIES_ASSETS,
   ...RAILROUTES_ASSETS,
   ...PAWNSANDWALLS_ASSETS,
   ...PALACEWALLS_ASSETS,

@@ -15,7 +15,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   hearts: s => [{ ...s, passes: { 1: s.hands[1].slice(0, 3) } }],
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
   nest: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
-  thecrew: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
+  missiontricks: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
   rainboweights: s => [
     { ...s, currentPlayer: 1, drawnCard: s.hands[1][0] },
     { ...s, revealed: { to: 2, of: 1, hand: s.hands[1] } }
@@ -29,7 +29,7 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
     devCards: { ...s.devCards, 1: ['victoryPoint'] },
     boughtThisTurn: ['victoryPoint']
   }],
-  risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
+  territories: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
   jewelguild: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
   railroutes: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
   tradingfloor: s => [{ ...s, offers: [{ id: 1, seat: 1, cards: s.hands[1].slice(0, 2).map((c: { id: number }) => c.id) }], nextOfferId: 2 }],

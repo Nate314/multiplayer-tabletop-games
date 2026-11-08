@@ -23,6 +23,8 @@ export const LEGACY_IDS: LegacyIds = {
   skipbo: { id: 'spiteandmalice', keepsSaves: true },
   uno: { id: 'rainboweights', keepsSaves: true },
   yahtzee: { id: 'fivedice', keepsSaves: true },
+  thecrew: { id: 'missiontricks', keepsSaves: true },
+  risk: { id: 'territories', keepsSaves: false },
 };
 
 export function currentId(id: string, legacy: LegacyIds = LEGACY_IDS): string {

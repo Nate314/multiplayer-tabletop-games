@@ -1,0 +1,964 @@
+import type { Page } from '@playwright/test';
+import { headerButton, dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
+import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/territories/map.ts';
+import { game, ownership } from '../games/territories/testing.ts';
+import { LEGACY_IDS } from '../games/legacyIds.ts';
+import type { ContinentId, GameState } from '../games/territories/types.ts';
+
+// One test per rule, control and difference in games/territories/README.md. Alice, Bob and Cara sit in seats 1, 2 and 3.
+// Most tests patch in the unit tests' map: the territories are dealt in map order (Redwater to Alice, Harrowgate
+// to Bob, Elkmoor to Cara, Dustgate to Alice and so on) with 3 armies each, and the deck is in card order. Card n
+// shows territory n, with the symbols in turn (infantry, cavalry, artillery), and cards 42 and 43 are the wilds.
+
+type Seat = (gameType: string, names: string[]) => Promise<Table>;
+
+// `visitor` is a browser that has joined nothing, as a player's own page goes back to their game
+const test = base.extend<{ visitor: Page }>({
+  visitor: async ({ browser, server }, use) => {
+    const page = await newPlayer(browser, server);
+    await use(page);
+    await page.context().close();
+  }
+});
+
+const WILD = 42;
+const PLATFORM_FIELDS = ['gameId', 'activePlayers', 'playerNames', 'disconnected', 'undoVote', 'dismissVote', 'seatKeys'] as const;
+
+// The unit tests' game, without the fields the platform owns, to merge over a live table
+function crafted(overrides: Partial<GameState> = {}): Partial<GameState> {
+  const state: Partial<GameState> = game(overrides);
+  for (const key of PLATFORM_FIELDS) delete state[key];
+  return state;
+}
+
+// Alice in her attack phase
+const attacking = (overrides: Partial<GameState> = {}) => crafted({ phase: 'attack', reinforcements: 0, ...overrides });
+// The default 3 armies everywhere, with some territories changed
+const armiesWith = (changes: Record<string, number>) => ({ ...game().armies, ...changes });
+
+async function start(seat: Seat) {
+  const table = await seat('territories', ['Alice', 'Bob', 'Cara']);
+  const [alice, bob, cara] = table.pages;
+  return { table, alice, bob, cara };
+}
+
+// A territory on the map, its disc and its army count
+const land = (page: Page, id: string) => page.locator(`[data-anim-key="territory-${id}"]`);
+const disc = (page: Page, id: string) => land(page, id).locator('.disc');
+const armiesOn = (page: Page, id: string) => land(page, id).locator('.army-count');
+const panel = (page: Page) => page.locator('.phase-panel');
+const panelTitle = (page: Page) => page.locator('.phase-panel .panel-title');
+const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+const turn = (page: Page) => page.locator('.turn-message');
+const playerRow = (page: Page, name: string) => page.locator('.player-row', { has: page.locator('.player-name', { hasText: new RegExp(`^${name}`) }) });
+const cards = (page: Page) => page.locator('.card-hand .territories-card');
+const card = (page: Page, text: string) => page.locator('.card-hand .territories-card', { hasText: text });
+const battle = (page: Page) => page.getByRole('region', { name: 'Last battle' });
+const slider = (page: Page) => page.locator('.army-slider input[type="range"]');
+const tray = (page: Page, left: number) => page.getByRole('button', { name: `Armies, ${left} left`, exact: true });
+const events = (page: Page) => page.getByRole('region', { name: 'Recent events' }).locator('li');
+
+async function diceShown(page: Page, side: 'attack' | 'defend'): Promise<string[]> {
+  return page.locator(`.battle .die-${side}`).evaluateAll(dice => dice.map(die => die.getAttribute('aria-label') ?? ''));
+}
+
+// Chooses an attack (or fortify) from one territory to another. A source stays chosen between moves, and clicking it
+// again would drop it, so it is clicked only if it is not chosen already.
+async function choose(page: Page, from: string, to: string) {
+  if (!/\bsource\b/.test(await land(page, from).getAttribute('class') ?? '')) await disc(page, from).click();
+  await expect(land(page, from)).toHaveClass(/\bsource\b/);
+  await disc(page, to).click();
+  await expect(land(page, to)).toHaveClass(/\btarget\b/);
+}
+
+// Picks how many dice to roll and rolls them
+async function rollDice(page: Page, count: number) {
+  await page.getByRole('group', { name: 'Dice' }).getByRole('button', { name: String(count), exact: true }).click();
+  await button(page, `Roll ${count} ${count === 1 ? 'die' : 'dice'}`).click();
+}
+
+// Picks exactly these cards (by the text they show) and trades them
+async function trade(page: Page, ...texts: string[]) {
+  for (const text of texts) await card(page, text).click();
+  await page.getByRole('button', { name: /^Trade for/ }).click();
+}
+
+// The setup: All, a territory of yours, Place all
+async function placeAllStarting(page: Page) {
+  await button(page, 'All').click();
+  await page.locator('.territory.selectable .disc').first().click();
+  await button(page, 'Place all').click();
+}
+
+const rgb = (page: Page, selector: string) => page.locator(selector).first().evaluate(element => {
+  const style = getComputedStyle(element);
+  return element.tagName === 'circle' ? style.fill : style.backgroundColor;
+});
+
+test.describe('Territories rules', () => {
+  test('the map has 42 territories in six continents with their bonuses and 83 borders, sea lanes included', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await expect(alice.locator('.territory')).toHaveCount(42);
+    await expect(alice.locator('.continent-label')).toHaveText([
+      'Westmarch +5', 'Sunreach +2', 'Highvale +5', 'Amberveld +3', 'Eastwild +7', 'Coral Isles +2'
+    ]);
+    await expect(alice.locator('.border')).toHaveCount(83);
+
+    // Holding exactly one whole continent shows its territory count and adds its bonus to the next turn
+    const continents: [ContinentId, string, number, number][] = [
+      ['westmarch', 'Westmarch', 9, 5], ['sunreach', 'Sunreach', 4, 2], ['highvale', 'Highvale', 7, 5],
+      ['amberveld', 'Amberveld', 6, 3], ['eastwild', 'Eastwild', 12, 7], ['coralIsles', 'Coral Isles', 4, 2]
+    ];
+    for (const [id, chip, count, bonus] of continents) {
+      await table.patch(crafted({ owners: ownership(2, Object.fromEntries(territoriesOf(id).map(territory => [territory, 1]))) }));
+      const row = playerRow(alice, 'Alice');
+      await expect(row.locator('.player-stats')).toContainText(`${count} territories`);
+      await expect(row.locator('.chip')).toHaveText([chip]);
+      await expect(row.locator('.player-stats')).toContainText(`+${Math.max(3, Math.floor(count / 3)) + bonus} a turn`);
+    }
+
+    // The named borders: Alice's territory can attack across each one
+    const pairs = [['redwater', 'mossdeep'], ['brightshore', 'duneholm'], ['tidewell', 'saffronCoast'], ['palmreach', 'saltmarsh'], ['reefwatch', 'mossdeep']];
+    await table.patch(attacking({ owners: ownership(2, Object.fromEntries(pairs.map(([from]) => [from, 1]))) }));
+    for (const [from, to] of pairs) {
+      await disc(alice, from).click();
+      await expect(land(alice, to)).toHaveClass(/can-target/);
+      await button(alice, 'Clear choice').click();
+    }
+  });
+
+  test('the deck holds 42 territory cards, 14 of each symbol, and 2 wilds, and the traded cards are reshuffled when it runs out', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await expect(alice.locator('.deck-line')).toContainText('Cards in the deck: 44');
+    const { deck } = await table.state<GameState>();
+    expect([...deck].sort((a, b) => a - b)).toEqual(ALL_CARDS);
+    const symbols = deck.map(cardSymbol);
+    for (const symbol of ['infantry', 'cavalry', 'artillery']) expect(symbols.filter(each => each === symbol)).toHaveLength(14);
+    expect(symbols.filter(each => each === 'wild')).toHaveLength(2);
+
+    // An empty deck: Alice earned a card, and the three traded cards make the new deck
+    await table.patch(attacking({ conqueredThisTurn: true, deck: [], discard: [5, 6, 7] }));
+    await button(alice, 'End turn').click();
+    await expect(cards(alice)).toHaveCount(1);
+    await expect(alice.locator('.deck-line')).toContainText('Cards in the deck: 2');
+    expect((await table.state<GameState>()).discard).toEqual([]);
+  });
+
+  test('setup: each player has 35 armies with 3 players, 30 with 4, 25 with 5 and 20 with 6', async ({ seat }) => {
+    test.slow();
+    const names = ['Alice', 'Bob', 'Cara', 'Dan', 'Eve', 'Finn'];
+    for (const [count, armies] of [[3, 35], [4, 30], [5, 25], [6, 20]]) {
+      const table = await seat('territories', names.slice(0, count));
+      await expect(table.pages[0].locator('.game-status')).toContainText(`Each player has ${armies} armies`);
+    }
+  });
+
+  test('setup: a random player goes first and the territories are dealt from them, one army each, the first players getting one more', async ({ seat }) => {
+    const table = await seat('territories', ['Alice', 'Bob', 'Cara']);
+    await table.random(0.99); // the last of four seats
+    const dan = await table.join('Dan');
+    await expect(turn(dan)).toHaveText('You place first. Joining closes after the first move.');
+    await expect(turn(table.pages[0])).toHaveText('Dan places first. Joining closes after the first move.');
+    await expect(dan.locator('.game-status')).toContainText('Dan was drawn to go first');
+    for (const [name, held] of [['Dan', 11], ['Alice', 11], ['Bob', 10], ['Cara', 10]] as const) {
+      await expect(playerRow(dan, name).locator('.player-stats')).toContainText(`${held} territories`);
+    }
+    await expect(dan.locator('.army-count')).toHaveText(Array(42).fill('1'));
+    await expect(dan.locator('.territory[aria-label*="unclaimed"]')).toHaveCount(0);
+  });
+
+  test('setup: in turn order each player places all their starting armies in one move, then the first player starts and turns go up the seats', async ({ seat }) => {
+    const table = await seat('territories', ['Alice', 'Bob']);
+    await table.random(0.5); // the second of three seats
+    const cara = await table.join('Cara');
+    const [alice, bob] = table.pages;
+
+    await expect(panel(alice)).toHaveText('Waiting for Bob to place their starting armies');
+    await expect(bob.locator('.armies-left')).toHaveText('21 of 21 armies left to place'); // 35 less 14 territories
+    await expect(button(bob, 'Place all')).toBeDisabled();
+    await placeAllStarting(bob);
+    await expect(bob.locator('.army-count', { hasText: '22' })).toHaveCount(1);
+
+    await expect(turn(cara)).toHaveText('Place your starting armies');
+    await placeAllStarting(cara);
+    await expect(turn(alice)).toHaveText('Place your starting armies');
+    await placeAllStarting(alice);
+
+    // Bob drew the first turn
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(panelTitle(bob)).toHaveText('Reinforce');
+    await button(bob, 'All').click();
+    await bob.locator('.territory.selectable .disc').first().click();
+    await button(bob, 'Place and attack').click();
+    await button(bob, 'End turn').click();
+    await expect(turn(cara)).toHaveText('Your turn');
+    await expect(turn(alice)).toHaveText("Cara's turn");
+  });
+
+  test('reinforce: a third of your territories, at least 3, plus whole continents, placed in one go or a few at a time', async ({ seat }) => {
+    const { table, alice, cara } = await start(seat);
+    // 17 territories with Sunreach: 5 + 2. Cara ends her turn, and Alice's begins
+    const seventeen = [...territoriesOf('sunreach'), ...territoriesOf('eastwild').filter(id => id !== 'palmreach'), 'cinderpeak', 'pearlCoast'];
+    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, owners: ownership(3, Object.fromEntries(seventeen.map(id => [id, 1]))) }));
+    await button(cara, 'End turn').click();
+    await expect(alice.locator('.armies-left')).toHaveText('7 of 7 armies left to place');
+
+    await disc(alice, 'saltmarsh').click();
+    await button(alice, 'Place').click();
+    await expect(armiesOn(alice, 'saltmarsh')).toHaveText('4');
+    await expect(alice.locator('.armies-left')).toHaveText('6 of 6 armies left to place');
+    await button(alice, 'All').click();
+    await disc(alice, 'glassBay').click();
+    await button(alice, 'Place and attack').click();
+    await expect(armiesOn(alice, 'glassBay')).toHaveText('9');
+    await expect(panelTitle(alice)).toHaveText('Attack');
+
+    // Two territories still get 3
+    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, owners: ownership(3, { redwater: 1, glassBay: 1 }) }));
+    await button(cara, 'End turn').click();
+    await expect(alice.locator('.armies-left')).toHaveText('3 of 3 armies left to place');
+  });
+
+  test('armies dragged from the tray onto your territory are added to the draft by the chosen step', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted());
+    await expect(tray(alice, 3)).toBeEnabled();
+    await alice.evaluate(() => window.scrollTo(0, 0)); // the lobby panel is gone, which leaves the page scrolled past the tray
+    await drag(alice, tray(alice, 3), disc(alice, 'redwater'));
+    await expect(land(alice, 'redwater').locator('.draft-badge')).toHaveText('+1');
+    await expect(tray(alice, 2)).toBeVisible();
+    await expect(alice.locator('.armies-left')).toHaveText('2 of 3 armies left to place');
+
+    await button(alice, 'All').click();
+    await drag(alice, tray(alice, 2), disc(alice, 'dustgate'));
+    await expect(land(alice, 'dustgate').locator('.draft-badge')).toHaveText('+2');
+    await expect(tray(alice, 0)).toBeDisabled();
+    await button(alice, 'Place and attack').click();
+    await expect(armiesOn(alice, 'redwater')).toHaveText('4');
+    await expect(armiesOn(alice, 'dustgate')).toHaveText('5');
+  });
+
+  test('armies dropped on an enemy territory go back', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted());
+    await lift(alice, tray(alice, 3));
+    await expect(alice.locator('.drag-ghost')).toBeVisible();
+    const enemy = await disc(alice, 'harrowgate').boundingBox();
+    await alice.mouse.move(enemy!.x + enemy!.width / 2, enemy!.y + enemy!.height / 2, { steps: 6 });
+    await alice.mouse.up();
+    await expect(alice.locator('.drag-ghost')).toHaveCount(0);
+    await expect(alice.locator('.draft-badge')).toHaveCount(0);
+    await expect(tray(alice, 3)).toBeVisible();
+    await expect(alice.locator('.armies-left')).toHaveText('3 of 3 armies left to place');
+  });
+
+  test('the tray is disabled outside placing and for the other players', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(crafted());
+    await expect(tray(alice, 3)).toBeEnabled();
+    await expect(tray(bob, 0)).toBeDisabled();
+    await lift(bob, tray(bob, 0));
+    await expect(bob.locator('.drag-ghost')).toHaveCount(0);
+    await bob.mouse.up();
+    await expect(bob.locator('.draft-badge')).toHaveCount(0);
+
+    await table.patch(attacking());
+    await expect(panelTitle(alice)).toHaveText('Attack');
+    await expect(tray(alice, 0)).toBeDisabled();
+  });
+
+  test('card sets: three alike, one of each, or two with a wild', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    // Redwater and Dustgate (infantry), Harrowgate (cavalry), Elkmoor (artillery), Pinewatch (infantry), a wild
+    await table.patch(crafted({ hands: { 1: [0, 1, 2, 3, 6, WILD], 2: [], 3: [] } }));
+    const tradeButton = alice.getByRole('button', { name: /^Trade for/ });
+    const pick = async (...texts: string[]) => {
+      const picked = alice.locator('.card-hand .territories-card[aria-pressed="true"]');
+      while (await picked.count() > 0) await picked.first().click();
+      for (const text of texts) await card(alice, text).click();
+    };
+    await pick('Redwater', 'Dustgate', 'Harrowgate');
+    await expect(tradeButton).toBeDisabled();
+    await expect(alice.locator('.trade-row .note')).toHaveText('Not a set');
+    await pick('Redwater', 'Dustgate', 'Pinewatch');
+    await expect(tradeButton).toBeEnabled();
+    await pick('Redwater', 'Harrowgate', 'Elkmoor');
+    await expect(tradeButton).toBeEnabled();
+    await pick('Redwater', 'Harrowgate', 'Wild');
+    await expect(tradeButton).toBeEnabled();
+  });
+
+  test('card sets: worth 4, 6, 8, 10, 12, 15, then 5 more each; a held territory on a card gets 2 armies once a turn; 5 cards must be traded first', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    for (const [traded, value] of [[0, 4], [1, 6], [2, 8], [3, 10], [4, 12], [5, 15], [6, 20], [7, 25]]) {
+      await table.patch({ tradeCount: traded });
+      await expect(alice.locator('.deck-line')).toContainText(`Next set: ${value} armies`);
+    }
+
+    // Six infantry, all on Alice's territories: Redwater, Dustgate, Pinewatch, Saltmarsh, Southmere, Oakheart
+    await table.patch(crafted({ tradeCount: 5, hands: { 1: [0, 3, 6, 9, 12, 15], 2: [], 3: [] } }));
+    await expect(panel(alice)).toContainText('You hold 6 cards: trade a set below before placing.');
+    await expect(button(alice, 'Place')).toHaveCount(0);
+    await trade(alice, 'Redwater', 'Dustgate', 'Pinewatch');
+    await expect(armiesOn(alice, 'redwater')).toHaveText('5');
+    await expect(armiesOn(alice, 'dustgate')).toHaveText('3');
+    await expect(alice.locator('.armies-left')).toHaveText('18 of 18 armies left to place');
+    await expect(alice.getByRole('button', { name: /^Trade for/ })).toHaveText('Trade for 20 armies');
+
+    await trade(alice, 'Saltmarsh', 'Southmere', 'Oakheart');
+    await expect(alice.locator('.armies-left')).toHaveText('38 of 38 armies left to place');
+    await expect(armiesOn(alice, 'saltmarsh')).toHaveText('3'); // no second bonus this turn
+  });
+
+  test('attack: from 2 or more armies into a bordering enemy, dice up to one fewer than the armies, highest pairs compared, ties to the defender', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ dustgate: 1 }) }));
+    await expect(land(alice, 'redwater')).toHaveClass(/selectable/);
+    await expect(land(alice, 'dustgate')).not.toHaveClass(/selectable/);
+
+    await disc(alice, 'redwater').click();
+    await expect(land(alice, 'mossdeep')).toHaveClass(/can-target/);
+    await expect(land(alice, 'harrowgate')).toHaveClass(/can-target/);
+    await expect(land(alice, 'dustgate')).not.toHaveClass(/can-target/); // her own
+    await expect(land(alice, 'elkmoor')).not.toHaveClass(/can-target/); // not a neighbor
+    await disc(alice, 'mossdeep').click();
+    await expect(alice.getByRole('group', { name: 'Dice' }).getByRole('button')).toHaveText(['1', '2']); // 3 armies
+
+    // 5, 3 against 5, 4: a tie and a loss, both the attacker's
+    await table.dice(3, 5, 4, 5);
+    await rollDice(alice, 2);
+    await expect.poll(() => diceShown(alice, 'attack')).toEqual(['5', '3']);
+    expect(await diceShown(alice, 'defend')).toEqual(['5', '4']);
+    await expect(battle(alice).locator('.battle-lost')).toHaveText(['lost 2', 'lost 0']);
+    await expect(armiesOn(alice, 'redwater')).toHaveText('1');
+    await expect(armiesOn(alice, 'mossdeep')).toHaveText('3');
+
+    // 6, 2, 1 against 5, 1 from Dustgate's 4 armies: the defender loses both
+    await table.patch(attacking({ armies: armiesWith({ dustgate: 4 }) }));
+    await expect(armiesOn(alice, 'dustgate')).toHaveText('4');
+    await choose(alice, 'dustgate', 'harrowgate');
+    await table.dice(6, 2, 1, 5, 1);
+    await rollDice(alice, 3);
+    await expect(battle(alice).locator('.battle-lost')).toHaveText(['lost 0', 'lost 2']);
+    await expect(armiesOn(alice, 'harrowgate')).toHaveText('1');
+
+    // A single defending army rolls 1 die
+    await table.dice(6, 1, 1, 6);
+    await rollDice(alice, 3);
+    await expect.poll(() => diceShown(alice, 'defend')).toEqual(['6']);
+    expect(await diceShown(alice, 'attack')).toEqual(['6', '1', '1']);
+  });
+
+  test('blitz attacks with the most dice until the territory falls or 1 army is left', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 4, mossdeep: 5 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    // 3 dice against 2, all ties, then 1 die against 2
+    await table.dice(1, 1, 1, 1, 1, 1, 1, 1);
+    await button(alice, 'Blitz').click();
+    await expect(battle(alice)).toContainText('(blitz, 2 rolls, last roll shown)');
+    await expect(battle(alice).locator('.battle-lost')).toHaveText(['lost 3', 'lost 0']);
+    await expect(armiesOn(alice, 'redwater')).toHaveText('1');
+    await expect(panelTitle(alice)).toHaveText('Attack');
+
+    await table.patch(attacking({ armies: armiesWith({ dustgate: 10, harrowgate: 2 }) }));
+    await expect(armiesOn(alice, 'dustgate')).toHaveText('10');
+    await choose(alice, 'dustgate', 'harrowgate');
+    await table.dice(6, 6, 6, 1, 1);
+    await button(alice, 'Blitz').click();
+    await expect(battle(alice)).toContainText('Harrowgate was captured');
+    await expect(panelTitle(alice)).toHaveText('Move into Harrowgate');
+  });
+
+  test('capture: move in at least as many armies as the dice rolled, leaving at least one behind', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 5, mossdeep: 1 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await alice.getByRole('group', { name: 'Dice' }).getByRole('button', { name: '2', exact: true }).click();
+    await table.dice(6, 6, 1);
+    await rollDice(alice, 2);
+    await expect(panelTitle(alice)).toHaveText('Move into Mossdeep');
+    await expect(slider(alice)).toHaveAttribute('min', '2');
+    await expect(slider(alice)).toHaveAttribute('max', '4');
+    await slider(alice).fill('2');
+    await button(alice, 'Move 2').click();
+    await expect(land(alice, 'mossdeep')).toHaveAttribute('aria-label', 'Mossdeep: Alice, 2 armies');
+    await expect(armiesOn(alice, 'redwater')).toHaveText('3');
+    await expect(panelTitle(alice)).toHaveText('Attack');
+  });
+
+  test('fortify: one move through your own connected territories, leaving one behind, ends the turn; so does End turn', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    // Alice holds Westmarch but Elkmoor, and Windhold beyond it
+    const owners = ownership(2, Object.fromEntries([...territoriesOf('westmarch').filter(id => id !== 'elkmoor'), 'windhold'].map(id => [id, 1])));
+    await table.patch(attacking({ owners }));
+    await button(alice, 'Stop attacking and fortify').click();
+    await expect(panelTitle(alice)).toHaveText('Fortify');
+    await disc(alice, 'redwater').click();
+    await expect(land(alice, 'gullskerry')).toHaveClass(/can-target/); // through her own territories
+    await expect(land(alice, 'windhold')).not.toHaveClass(/can-target/);
+    await expect(land(alice, 'mossdeep')).not.toHaveClass(/can-target/);
+    await disc(alice, 'gullskerry').click();
+    await expect(slider(alice)).toHaveAttribute('max', '2');
+    await button(alice, 'Move 2 and end turn').click();
+    await expect(armiesOn(alice, 'redwater')).toHaveText('1');
+    await expect(armiesOn(alice, 'gullskerry')).toHaveText('5');
+    await expect(turn(bob)).toHaveText('Your turn');
+
+    await table.patch(attacking({ owners }));
+    await button(alice, 'End turn').click();
+    await expect(turn(bob)).toHaveText('Your turn');
+  });
+
+  test('earning cards: a turn with a capture ends with one card drawn, and a turn without none', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 5, mossdeep: 1 }) }));
+    await button(alice, 'End turn').click();
+    await expect(turn(bob)).toHaveText('Your turn');
+    await expect(alice.locator('.card-hand .panel-title')).toHaveText('Your cards (0)');
+
+    await table.patch(attacking({ armies: armiesWith({ redwater: 5, mossdeep: 1 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 6, 1);
+    await rollDice(alice, 3);
+    await button(alice, 'Move 4').click();
+    await button(alice, 'End turn').click();
+    await expect(alice.locator('.card-hand .panel-title')).toHaveText('Your cards (1)');
+    await expect(card(alice, 'Redwater')).toHaveCount(1); // the top card of the ordered deck
+    await expect(playerRow(bob, 'Alice').locator('.player-stats')).toContainText('1 card');
+  });
+
+  test('elimination: the player who took the last territory takes the cards, and with 6 or more trades down to 4 at once, places them and attacks on', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({
+      owners: ownership(1, { mossdeep: 2, elkmoor: 3 }),
+      armies: armiesWith({ redwater: 6, mossdeep: 1 }),
+      hands: { 1: [0, 3], 2: [6, 9, 12, WILD], 3: [] }
+    }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 6, 1);
+    await rollDice(alice, 3);
+    await expect(playerRow(alice, 'Bob').locator('.player-status')).toHaveText('eliminated');
+    await expect(playerRow(bob, 'Alice').locator('.player-stats')).toContainText('6 cards');
+    await expect(cards(alice)).toHaveCount(6);
+
+    await button(alice, 'Move 5').click();
+    await expect(panelTitle(alice)).toHaveText('Trade the cards you took');
+    await expect(panel(alice)).toContainText('You hold 6 cards: trade a set below before placing.');
+    await trade(alice, 'Redwater', 'Dustgate', 'Pinewatch');
+    await expect(cards(alice)).toHaveCount(3);
+    await expect(alice.getByRole('button', { name: /^Trade for/ })).toHaveCount(0); // 4 or fewer: no more trading
+    await expect(alice.locator('.armies-left')).toHaveText('4 of 4 armies left to place');
+    await button(alice, 'All').click();
+    await disc(alice, 'mossdeep').click();
+    await button(alice, 'Place and attack').click();
+    await expect(armiesOn(alice, 'mossdeep')).toHaveText('9');
+    await expect(panelTitle(alice)).toHaveText('Attack');
+  });
+
+  test('winning: control all 42 territories, or be the only player left holding any', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({ owners: ownership(1, { mossdeep: 2 }), armies: armiesWith({ redwater: 4, mossdeep: 1 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 1);
+    await rollDice(alice, 2);
+    await expect(turn(bob)).toHaveText('Game over: Alice wins');
+    await expect(bob.locator('.game-status')).toContainText('Alice wins: they control the whole world');
+
+    // Cara is out and Elkmoor is neutral: taking Bob's last territory leaves Alice the only one holding any
+    const other = await start(seat);
+    await other.table.patch(attacking({
+      owners: ownership(1, { mossdeep: 2, elkmoor: null }), eliminated: [3], armies: armiesWith({ redwater: 4, mossdeep: 1 })
+    }));
+    await choose(other.alice, 'redwater', 'mossdeep');
+    await other.table.dice(6, 6, 1);
+    await rollDice(other.alice, 2);
+    await expect(turn(other.bob)).toHaveText('Game over: Alice wins');
+    await expect(other.bob.locator('.game-status')).toContainText('Alice wins: no other player holds a territory');
+  });
+
+  test('hidden: others see only how many cards a player holds, a traded set is shown to everyone, and the History dialog shows no cards', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(crafted({ hands: { 1: [0, 3, 6], 2: [1], 3: [] } }));
+    await expect(cards(alice)).toHaveCount(3);
+    await expect(cards(bob)).toHaveCount(1);
+    await expect(card(bob, 'Harrowgate')).toHaveCount(1);
+    await expect(bob.locator('.territories-card', { hasText: 'Redwater' })).toHaveCount(0);
+    await expect(playerRow(bob, 'Alice').locator('.player-stats')).toContainText('3 cards');
+    await expect(bob.locator('.deck-line')).toHaveText('Next set: 4 armies. Cards in the deck: 44'); // a count, not the order
+
+    await trade(alice, 'Redwater', 'Dustgate', 'Pinewatch');
+    await expect(events(bob).first()).toHaveText('Alice put 2 more armies on Redwater, shown on a traded card');
+    await expect(events(bob).nth(1)).toHaveText('Alice traded Redwater (infantry), Dustgate (infantry), Pinewatch (infantry) for 4 armies');
+
+    await table.patch({ hands: { 1: [9], 2: [1], 3: [] } });
+    await (await headerButton(bob, 'History')).click();
+    const history = bob.getByRole('dialog', { name: 'History' });
+    await expect(history.locator('.world-map')).toBeVisible();
+    await expect(history.locator('.territories-card')).toHaveCount(0);
+    await expect(history.getByLabel('View as')).toHaveCount(0);
+  });
+
+  test('hidden: a saved game viewed as a player shows that player\'s cards, and the table view shows none', async ({ seat, visitor }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ owners: ownership(1, { mossdeep: 2 }), armies: armiesWith({ redwater: 4, mossdeep: 1 }), hands: { 1: [0, 3], 2: [1], 3: [2] } }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 1);
+    await rollDice(alice, 2);
+    await expect(turn(alice)).toHaveText('Game over: Alice wins');
+    await expect(cards(alice)).toHaveCount(3); // Bob's card came with his last territory
+
+    await seeTable(alice);
+    await (await headerButton(alice, 'History')).click();
+    const [download] = await Promise.all([alice.waitForEvent('download'), button(alice, 'Download game').click()]);
+    const file = test.info().outputPath('territories-game.json');
+    await download.saveAs(file);
+
+    await visitor.goto('/');
+    await visitor.locator('input[type="file"]:not([multiple])').setInputFiles(file);
+    const saved = visitor.getByRole('dialog', { name: 'History' });
+    await expect(saved).toContainText(`Saved game: ${table.gameId}`);
+    await expect(saved.locator('.territories-card')).toHaveCount(0);
+    await saved.getByRole('button', { name: 'Playback settings' }).click();
+    await saved.getByLabel('View as').selectOption({ label: 'Alice' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Alice');
+    await expect(saved.locator('.territories-card')).toHaveCount(3);
+    await saved.getByLabel('View as').selectOption({ label: 'Cara' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Cara');
+    await expect(saved.locator('.territories-card')).toHaveText([/Elkmoor/]);
+    await saved.getByLabel('View as').selectOption({ label: 'Table only' });
+    await expect(saved.locator('.history-viewer')).toHaveText('Viewing as Table only');
+    await expect(saved.locator('.territories-card')).toHaveCount(0);
+  });
+
+  test('dismissed on their turn: the territories turn neutral (grey) with their armies, the cards are discarded, the next player starts, and two play on', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(attacking({ currentPlayer: 3, turnHolder: 3, armies: armiesWith({ elkmoor: 4 }), hands: { 1: [], 2: [], 3: [7, 8] } }));
+    await expect(playerRow(alice, 'Cara').locator('.player-stats')).toContainText('2 cards');
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+
+    await expect(land(alice, 'elkmoor')).toHaveAttribute('aria-label', 'Elkmoor: neutral, 4 armies');
+    await expect(land(alice, 'elkmoor')).toHaveClass(/seat-neutral/);
+    const [red, green, blue] = (await rgb(alice, '[data-anim-key="territory-elkmoor"] .disc')).match(/\d+/g)!.map(Number);
+    expect(red === green && green === blue).toBe(true);
+    await expect(playerRow(alice, 'Cara').locator('.player-status')).toHaveText('left');
+    await expect(playerRow(alice, 'Cara').locator('.player-stats')).toContainText('0 cards');
+    await expect(playerRow(alice, 'Neutral').locator('.player-stats')).toContainText('14 territories');
+    expect((await table.state<GameState>()).discard).toEqual([7, 8]);
+
+    await expect(turn(alice)).toHaveText('Your turn');
+    await expect(panelTitle(alice)).toHaveText('Reinforce');
+    await expect(turn(bob)).toHaveText("Alice's turn");
+  });
+
+  test('neutral armies never attack or move and count for nobody, but defend with the usual dice and can be captured', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 5, mossdeep: 2 }) }));
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(land(alice, 'mossdeep')).toHaveAttribute('aria-label', 'Mossdeep: neutral, 2 armies');
+    await expect(panelTitle(alice)).toHaveText('Attack'); // Alice's turn goes on
+    await expect(playerRow(alice, 'Neutral').locator('.player-stats')).not.toContainText('a turn');
+
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 6, 1, 1);
+    await rollDice(alice, 3);
+    await expect.poll(() => diceShown(alice, 'defend')).toEqual(['1', '1']);
+    await expect(battle(alice).locator('.battle-who')).toHaveText(['Alice', 'Neutral']);
+    await expect(battle(alice)).toContainText('Mossdeep was captured');
+    await button(alice, 'Move 4').click();
+    await button(alice, 'End turn').click();
+    // Neutral never takes a turn: Bob, then Alice again
+    await expect(turn(bob)).toHaveText('Your turn');
+    await button(bob, 'All').click();
+    await bob.locator('.territory.selectable .disc').first().click();
+    await button(bob, 'Place and attack').click();
+    await button(bob, 'End turn').click();
+    await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('dismissed during the setup: the next player places', async ({ seat }) => {
+    const table = await seat('territories', ['Alice', 'Bob']);
+    await table.random(0); // Alice goes first
+    const cara = await table.join('Cara');
+    const [alice, bob] = table.pages;
+    await placeAllStarting(alice);
+    await expect(turn(bob)).toHaveText('Place your starting armies');
+    await leave(bob);
+    await dismiss('Bob', alice, cara);
+    await expect(turn(cara)).toHaveText('Place your starting armies');
+    await placeAllStarting(cara);
+    await expect(turn(alice)).toHaveText('Your turn');
+  });
+
+  test('dismissed while moving into a captured territory: the dice they rolled move in first', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 5, mossdeep: 1 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 6, 1);
+    await rollDice(alice, 3);
+    await expect(panelTitle(alice)).toHaveText('Move into Mossdeep');
+    await leave(alice);
+    await dismiss('Alice', bob, cara);
+    await expect(land(bob, 'mossdeep')).toHaveAttribute('aria-label', 'Mossdeep: neutral, 3 armies');
+    await expect(land(bob, 'redwater')).toHaveAttribute('aria-label', 'Redwater: neutral, 2 armies');
+    await expect(turn(bob)).toHaveText('Your turn');
+  });
+
+  test('an eliminated player has no armies tray', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({ owners: ownership(1, { elkmoor: 3 }), eliminated: [2] }));
+    await expect(playerRow(alice, 'Bob').locator('.player-status')).toHaveText('eliminated');
+    await expect(alice.getByRole('region', { name: 'Your armies' })).toBeVisible();
+    await expect(bob.getByRole('region', { name: 'Your armies' })).toHaveCount(0);
+  });
+
+  test('dismissed: the game ends when only one player still holds territory', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(attacking({ owners: ownership(1, { elkmoor: 3 }), eliminated: [2] }));
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(turn(alice)).toHaveText('Game over: Alice wins');
+  });
+
+  test('undo needs every player\'s approval, and an attack played again rolls new dice', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 4 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(1, 1, 1, 6, 6);
+    await rollDice(alice, 3);
+    await expect(armiesOn(alice, 'redwater')).toHaveText('2');
+
+    await alice.getByRole('button', { name: 'Undo' }).click();
+    await bob.getByRole('button', { name: 'Decline' }).click();
+    await expect(armiesOn(alice, 'redwater')).toHaveText('2');
+
+    await alice.getByRole('button', { name: 'Undo' }).click();
+    await bob.getByRole('button', { name: 'Approve' }).click();
+    await expect(cara.getByRole('button', { name: 'Approve' })).toBeVisible();
+    await expect(armiesOn(alice, 'redwater')).toHaveText('2'); // Cara has not approved yet
+    await cara.getByRole('button', { name: 'Approve' }).click();
+    await expect(armiesOn(alice, 'redwater')).toHaveText('4');
+    await expect(armiesOn(alice, 'mossdeep')).toHaveText('3');
+
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 6, 1, 1);
+    await rollDice(alice, 3);
+    await expect(armiesOn(alice, 'mossdeep')).toHaveText('1');
+    await expect(armiesOn(alice, 'redwater')).toHaveText('4');
+  });
+});
+
+test.describe('Territories controls', () => {
+  test('each territory is a disc in its owner\'s color with its army count, borders are lines and sea lanes dashed', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ armies: armiesWith({ redwater: 7 }) }));
+    await expect(armiesOn(alice, 'redwater')).toHaveText('7');
+    await expect(land(alice, 'redwater')).toHaveAttribute('aria-label', 'Redwater: Alice, 7 armies');
+    const aliceColor = await rgb(alice, '[data-anim-key="territory-redwater"] .disc');
+    expect(aliceColor).toBe(await rgb(alice, '.player-row:has(.player-name:text-matches("^Alice")) .swatch'));
+    expect(await rgb(alice, '[data-anim-key="territory-dustgate"] .disc')).toBe(aliceColor);
+    expect(await rgb(alice, '[data-anim-key="territory-harrowgate"] .disc')).not.toBe(aliceColor);
+
+    const dashes = (selector: string) => alice.locator(selector).evaluateAll(lines => [...new Set(lines.map(line => getComputedStyle(line).strokeDasharray))]);
+    expect(await dashes('line.border:not(.sea-lane)')).toEqual(['none']);
+    const sea = await dashes('line.sea-lane');
+    expect(sea).toHaveLength(1);
+    expect(sea[0]).not.toBe('none');
+  });
+
+  test('with Color-blind symbols on, each owned territory disc and player list swatch shows a shape for its owner and neutral ones show none', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ owners: { ...game().owners, elkmoor: null } }));
+    await expect(land(alice, 'elkmoor')).toHaveClass(/seat-neutral/);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', true);
+    await expect(land(alice, 'redwater').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'harrowgate').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(land(alice, 'dustgate').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(land(alice, 'elkmoor').locator('.color-symbol')).toHaveCount(0);
+    await expect(playerRow(alice, 'Alice').locator('.color-symbol-circle')).toHaveCount(1);
+    await expect(playerRow(alice, 'Bob').locator('.color-symbol-square')).toHaveCount(1);
+    await expect(playerRow(alice, 'Cara').locator('.color-symbol-triangle')).toHaveCount(1);
+    await expect(alice.locator('.player-row', { hasText: 'Neutral' }).locator('.color-symbol')).toHaveCount(0);
+    await setPreference(alice, 'Color-blind symbols', false);
+    await expect(alice.locator('.color-symbol')).toHaveCount(0);
+  });
+
+  test('on a narrow window the map scrolls sideways in its own box', async ({ seat }) => {
+    const { alice } = await start(seat);
+    await alice.setViewportSize({ width: 400, height: 800 });
+    const box = alice.locator('.territories-layout .map-area');
+    await expect.poll(() => box.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+    expect(await box.evaluate(element => getComputedStyle(element).overflowX)).toBe('auto');
+    expect(await box.evaluate(element => { element.scrollLeft = 120; return element.scrollLeft; })).toBeGreaterThan(0);
+  });
+
+  test('placing: each click adds 1, 5 or all that are left, -1 takes one back, then Place', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ reinforcements: 7 }));
+    await expect(alice.locator('.armies-left')).toHaveText('7 of 7 armies left to place');
+    await button(alice, '5').click();
+    await expect(button(alice, '5')).toHaveAttribute('aria-pressed', 'true');
+    await disc(alice, 'redwater').click();
+    await expect(land(alice, 'redwater').locator('.draft-badge')).toHaveText('+5');
+    await button(alice, '1').click();
+    await disc(alice, 'dustgate').click();
+    await expect(alice.locator('.draft-list li span')).toHaveText(['5 on Redwater', '1 on Dustgate']);
+    await expect(alice.locator('.armies-left')).toHaveText('1 of 7 armies left to place');
+    await alice.getByRole('button', { name: 'Take one back from Redwater' }).click();
+    await expect(alice.locator('.draft-list li span')).toHaveText(['4 on Redwater', '1 on Dustgate']);
+    await button(alice, 'All').click();
+    await disc(alice, 'pinewatch').click();
+    await expect(land(alice, 'pinewatch').locator('.draft-badge')).toHaveText('+2');
+    await expect(alice.locator('.armies-left')).toHaveText('0 of 7 armies left to place');
+    await expect(land(alice, 'gullskerry')).not.toHaveClass(/selectable/);
+    await button(alice, 'Place and attack').click();
+    await expect(armiesOn(alice, 'redwater')).toHaveText('7');
+    await expect(armiesOn(alice, 'dustgate')).toHaveText('4');
+    await expect(armiesOn(alice, 'pinewatch')).toHaveText('5');
+  });
+
+  test('attacking: click an outlined territory, then a highlighted enemy, choose dice and Roll or Blitz; the choice stays and everyone sees the dice', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 4, dustgate: 1 }) }));
+    await expect(land(alice, 'redwater')).toHaveClass(/selectable/);
+    await expect(land(alice, 'dustgate')).not.toHaveClass(/selectable/);
+    await choose(alice, 'redwater', 'mossdeep');
+    await expect(panel(alice)).toContainText('Redwater (4) attacks Mossdeep (3).');
+    await expect(button(alice, 'Blitz')).toBeVisible();
+    const one = alice.getByRole('group', { name: 'Dice' }).getByRole('button', { name: '1', exact: true });
+    await one.click();
+    await expect(one).toHaveAttribute('aria-pressed', 'true');
+
+    await table.dice(6, 1, 1);
+    await button(alice, 'Roll 1 die').click();
+    await expect(armiesOn(alice, 'mossdeep')).toHaveText('2');
+    await expect(panel(alice)).toContainText('Redwater (4) attacks Mossdeep (2).');
+    await expect(button(alice, 'Roll 1 die')).toBeVisible();
+    await expect(land(alice, 'redwater')).toHaveClass(/\bsource\b/);
+    await expect(land(alice, 'mossdeep')).toHaveClass(/\btarget\b/);
+
+    await expect(battle(bob)).toContainText('Redwater attacked Mossdeep');
+    await expect.poll(() => diceShown(bob, 'attack')).toEqual(['6']);
+    expect(await diceShown(bob, 'defend')).toEqual(['1', '1']);
+  });
+
+  test('after a capture, choose the armies with the slider and click Move', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 8, mossdeep: 1 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 6, 1);
+    await rollDice(alice, 3);
+    await expect(button(alice, 'Move 7')).toBeVisible();
+    await slider(alice).fill('5');
+    await expect(alice.locator('.army-slider output')).toHaveText('5');
+    await expect(panel(alice)).toContainText('3 stay in Redwater');
+    await button(alice, 'Move 5').click();
+    await expect(armiesOn(alice, 'mossdeep')).toHaveText('5');
+    await expect(armiesOn(alice, 'redwater')).toHaveText('3');
+  });
+
+  test('Stop attacking and fortify, pick two territories, choose the armies with the slider and Move to end the turn, or End turn', async ({ seat }) => {
+    const { table, alice, bob } = await start(seat);
+    const owners = ownership(2, { redwater: 1, dustgate: 1, copperfield: 1 });
+    await table.patch(attacking({ owners, armies: armiesWith({ redwater: 6 }) }));
+    await button(alice, 'Stop attacking and fortify').click();
+    await choose(alice, 'redwater', 'copperfield');
+    await slider(alice).fill('1');
+    await button(alice, 'Move 1 and end turn').click();
+    await expect(armiesOn(alice, 'copperfield')).toHaveText('4');
+    await expect(armiesOn(alice, 'redwater')).toHaveText('5');
+    await expect(turn(bob)).toHaveText('Your turn');
+
+    await table.patch(attacking({ owners }));
+    await button(alice, 'Stop attacking and fortify').click();
+    await button(alice, 'End turn').click();
+    await expect(turn(bob)).toHaveText('Your turn');
+  });
+
+  test('your cards are listed with their symbol and territory; while placing, pick three and click Trade', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ hands: { 1: [0, 1, 2, WILD], 2: [], 3: [] } }));
+    await expect(alice.locator('.card-hand .card-symbol')).toHaveText(['I', 'C', 'A', 'W']);
+    await expect(alice.locator('.card-hand .card-territory')).toHaveText(['Redwater', 'Harrowgate', 'Elkmoor', 'Wild']);
+    await expect(alice.locator('.card-hand .card-kind')).toHaveText(['infantry, yours', 'cavalry', 'artillery', 'wild']);
+    await trade(alice, 'Redwater', 'Harrowgate', 'Elkmoor');
+    await expect(cards(alice)).toHaveCount(1);
+    await expect(alice.locator('.armies-left')).toHaveText('7 of 7 armies left to place'); // 3 and a set of 4
+  });
+
+  test('the player list shows territories, armies, cards, whole continents and next turn\'s armies, the next set and the deck; Recent events are newest first', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    const base = game();
+    await table.patch(crafted({
+      owners: { ...base.owners, reefwatch: 1, driftwood: 1, turtleback: 1 },
+      hands: { 1: [0, 3], 2: [1], 3: [] },
+      tradeCount: 2,
+      deck: ALL_CARDS.slice(10),
+      log: ['An older event']
+    }));
+    const stats = playerRow(alice, 'Alice').locator('.player-stats span');
+    await expect(stats).toHaveText(['17 territories', '51 armies', '2 cards', '+7 a turn']); // 5 for 17, 2 for Coral Isles
+    await expect(playerRow(alice, 'Alice').locator('.chip')).toHaveText(['Coral Isles']);
+    await expect(playerRow(alice, 'Bob').locator('.player-stats span')).toHaveText(['13 territories', '39 armies', '1 card', '+4 a turn']);
+    await expect(alice.locator('.deck-line')).toHaveText('Next set: 8 armies. Cards in the deck: 34');
+
+    await button(alice, 'All').click();
+    await disc(alice, 'redwater').click();
+    await button(alice, 'Place and attack').click();
+    await expect(events(alice)).toHaveText(['Alice placed 3 on Redwater', 'An older event']);
+  });
+
+  test('clicking Undo asks everyone to undo the last move', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(crafted());
+    await expect(button(alice, 'Undo')).toBeDisabled(); // nothing to undo yet
+    await button(alice, 'All').click();
+    await disc(alice, 'redwater').click();
+    await button(alice, 'Place and attack').click();
+    await button(alice, 'Undo').click();
+    await expect(bob.getByRole('button', { name: 'Approve' })).toBeVisible();
+    await expect(cara.getByRole('button', { name: 'Approve' })).toBeVisible();
+    await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
+  });
+
+  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+    const { alice } = await start(seat);
+    const faq = await openFaq(alice);
+    await expect(faq).toContainText('Blitz');
+    await expect(faq).toContainText('42 territories');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    await expect(faq).toHaveCount(0);
+  });
+});
+
+test.describe('Territories differences from Wikipedia', () => {
+  test('the territories are dealt at random with one army each, and each player places all their starting armies in a single move', async ({ seat }) => {
+    const table = await seat('territories', ['Alice', 'Bob']);
+    await table.random(0); // Alice goes first
+    await table.join('Cara');
+    const [alice, bob] = table.pages;
+    await expect(alice.locator('.army-count')).toHaveText(Array(42).fill('1'));
+    await expect(alice.locator('.territory[aria-label*="unclaimed"]')).toHaveCount(0);
+    await alice.locator('.territory.selectable .disc').first().click();
+    await expect(alice.locator('.armies-left')).toHaveText('20 of 21 armies left to place');
+    await expect(button(alice, 'Place all')).toBeDisabled(); // 1 of 21 is not all
+    await button(alice, 'Clear').click();
+    await placeAllStarting(alice);
+    await expect(turn(bob)).toHaveText('Place your starting armies');
+  });
+
+  test('who goes first is drawn at random', async ({ seat }) => {
+    const table = await seat('territories', ['Alice', 'Bob']);
+    await table.random(0.99); // the last of three seats
+    const cara = await table.join('Cara');
+    await expect(cara.locator('.game-status')).toContainText('Cara was drawn to go first');
+    await expect(turn(cara)).toHaveText('You place first. Joining closes after the first move.');
+  });
+
+  test('the defender always rolls the most dice allowed and never chooses', async ({ seat }) => {
+    const { table, alice, cara } = await start(seat);
+    await table.patch(attacking());
+    await expect(panel(cara)).toHaveText('Waiting for Alice to attack');
+    await expect(cara.getByRole('group', { name: 'Dice' })).toHaveCount(0);
+    await choose(alice, 'redwater', 'mossdeep');
+    await alice.getByRole('group', { name: 'Dice' }).getByRole('button', { name: '1', exact: true }).click();
+    await table.dice(1, 6, 6);
+    await button(alice, 'Roll 1 die').click();
+    await expect.poll(() => diceShown(cara, 'defend')).toEqual(['6', '6']); // 2 dice against 1
+  });
+
+  test('Blitz repeats attacks with the most dice, each roll still random', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ armies: armiesWith({ redwater: 5, mossdeep: 2 }) }));
+    await choose(alice, 'redwater', 'mossdeep');
+    await expect(button(alice, 'Blitz')).toHaveAttribute('title', 'Attack with the most dice until the territory falls or 1 army is left');
+    // First roll: 3 dice lose 2 on ties; second: 2 dice (3 armies left) win both
+    await table.dice(1, 1, 1, 1, 1, 6, 6, 1, 1);
+    await button(alice, 'Blitz').click();
+    await expect(battle(alice)).toContainText('(blitz, 2 rolls, last roll shown)');
+    expect(await diceShown(alice, 'attack')).toEqual(['6', '6']);
+    await expect(panelTitle(alice)).toHaveText('Move into Mossdeep');
+  });
+
+  test('card symbols are assigned in turn around the map', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(crafted({ hands: { 1: [0, 1, 2, 3, 4], 2: [], 3: [] } }));
+    await expect(alice.locator('.card-hand .card-territory')).toHaveText(['Redwater', 'Harrowgate', 'Elkmoor', 'Dustgate', 'Copperfield']);
+    await expect(alice.locator('.card-hand .card-symbol')).toHaveText(['I', 'C', 'A', 'I', 'C']);
+  });
+
+  test('the 2 bonus armies go to the first card in the set that shows a territory you hold, once a turn', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    // Dustgate, Redwater and Pinewatch are all Alice's; Dustgate is picked first
+    await table.patch(crafted({ hands: { 1: [0, 3, 6], 2: [], 3: [] } }));
+    await trade(alice, 'Dustgate', 'Redwater', 'Pinewatch');
+    await expect(armiesOn(alice, 'dustgate')).toHaveText('5');
+    await expect(armiesOn(alice, 'redwater')).toHaveText('3');
+    await expect(armiesOn(alice, 'pinewatch')).toHaveText('3');
+  });
+
+  test('trading is done only while placing armies', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    await table.patch(attacking({ hands: { 1: [0, 3, 6], 2: [], 3: [] } }));
+    await expect(cards(alice)).toHaveCount(3);
+    await expect(alice.locator('.card-hand button')).toHaveCount(0);
+    await table.patch({ phase: 'reinforce', reinforcements: 3 });
+    await expect(alice.getByRole('button', { name: /^Trade for/ })).toBeVisible();
+  });
+
+  test('fortify may move armies through any chain of your own territories', async ({ seat }) => {
+    const { table, alice } = await start(seat);
+    const chain = ['redwater', 'dustgate', 'pinewatch', 'stonebridge', 'gullskerry'];
+    await table.patch(attacking({ phase: 'fortify', owners: ownership(2, Object.fromEntries(chain.map(id => [id, 1]))) }));
+    await disc(alice, 'redwater').click();
+    for (const id of chain.slice(1)) await expect(land(alice, id)).toHaveClass(/can-target/);
+    await expect(alice.locator('.territory.can-target')).toHaveCount(4);
+  });
+
+  test('two players cannot play: the deal waits for a third', async ({ seat }) => {
+    const table = await seat('territories', ['Alice', 'Bob']);
+    const [alice] = table.pages;
+    await expect(turn(alice)).toHaveText('Waiting for 1 more player (3 to 6 play)');
+    await expect(alice.locator('.territory[aria-label*="unclaimed"]')).toHaveCount(42);
+    await expect(alice.locator('.phase-panel')).toHaveCount(0);
+  });
+
+  test('the only player left holding territory wins, even with neutral territories on the map', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    // Cara leaves first; then Alice takes Bob's last territory, with Cara's neutral ones still standing
+    await table.patch(attacking({ owners: ownership(1, { mossdeep: 2, elkmoor: 3, windhold: 3 }), armies: armiesWith({ redwater: 4, mossdeep: 1 }) }));
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(land(alice, 'elkmoor')).toHaveClass(/seat-neutral/);
+    await choose(alice, 'redwater', 'mossdeep');
+    await table.dice(6, 6, 1);
+    await rollDice(alice, 2);
+    await expect(turn(bob)).toHaveText('Game over: Alice wins');
+    await expect(land(bob, 'elkmoor')).toHaveClass(/seat-neutral/);
+  });
+
+  test('leaving: a dismissed player\'s territories turn neutral, their cards are discarded, and play goes on with 2', async ({ seat }) => {
+    const { table, alice, bob, cara } = await start(seat);
+    await table.patch(attacking({ hands: { 1: [], 2: [], 3: [5, 8] } }));
+    await leave(cara);
+    await dismiss('Cara', alice, bob);
+    await expect(land(alice, 'elkmoor')).toHaveAttribute('aria-label', 'Elkmoor: neutral, 3 armies');
+    await expect(playerRow(alice, 'Cara').locator('.player-stats')).toContainText('0 cards');
+    expect((await table.state<GameState>()).discard).toEqual([5, 8]);
+    await button(alice, 'End turn').click();
+    await expect(turn(bob)).toHaveText('Your turn');
+  });
+});
+
+test('a join link with the old game id opens Territories', async ({ browser, server }) => {
+  const oldId = Object.keys(LEGACY_IDS).find(id => LEGACY_IDS[id].id === 'territories')!;
+  const visitor = await newPlayer(browser, server);
+  await visitor.goto(`/join/${oldId}/oldlink-${Date.now()}`);
+  const dialog = visitor.getByRole('dialog', { name: 'Join Territories' });
+  await dialog.getByLabel('Your name').fill('Alice');
+  await dialog.getByRole('button', { name: 'Join', exact: true }).click();
+  await expect(visitor.locator('[data-game="territories"]')).toBeVisible();
+});

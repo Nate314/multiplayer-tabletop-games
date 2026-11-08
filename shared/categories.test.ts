@@ -21,12 +21,12 @@ test('the Puzzles group sits after Classic board games and is dropped while empt
 
 test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
-    card: ['euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'spiteandmalice', 'spades', 'holdem', 'thecrew', 'tradingfloor', 'rainboweights', 'war'],
+    card: ['euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'spiteandmalice', 'spades', 'holdem', 'missiontricks', 'tradingfloor', 'rainboweights', 'war'],
     dice: ['farkle', 'fivedice'],
     tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'pachisi', 'pawnsandwalls', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
-    strategy: ['hexisland', 'corners', 'go', 'streetdeeds', 'risk', 'jewelguild', 'railroutes'],
+    strategy: ['hexisland', 'corners', 'go', 'streetdeeds', 'jewelguild', 'territories', 'railroutes'],
     party: ['charades', 'fictionary', 'categories', 'hintgrid', 'blocktower', 'drawandguess', 'steadyhand']
   };
   const actual = Object.fromEntries(Object.keys(expected).map(c => [c, GAMES.filter(g => g.info.category === c).map(g => g.info.id).sort()]));
