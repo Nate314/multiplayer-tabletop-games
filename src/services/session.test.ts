@@ -48,3 +48,15 @@ test('a last game saved under the old key is still offered', () => {
   assert.equal(session?.playerName, 'Ann')
   assert.equal(session?.inGame, false)
 })
+
+test('a game remembered under an old id rejoins as the new game', () => {
+  const legacy = { oldgame: { id: 'newgame', keepsSaves: true } }
+  const saved = { gameType: 'oldgame', gameId: 'abc', playerName: 'Ann', seatKey: 'k1' }
+  installStorage('localStorage')
+  installStorage('sessionStorage', { 'multiplayer-tabletop-games:inGame': JSON.stringify(saved) })
+  assert.deepEqual(loadSession(legacy), { ...saved, gameType: 'newgame', role: undefined, localSeats: undefined, inGame: true })
+
+  installStorage('localStorage', { 'multiplayer-tabletop-games:lastGame': JSON.stringify(saved) })
+  installStorage('sessionStorage')
+  assert.deepEqual(loadSession(legacy), { ...saved, gameType: 'newgame', role: undefined, localSeats: undefined, inGame: false })
+})

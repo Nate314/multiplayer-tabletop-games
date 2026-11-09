@@ -122,3 +122,24 @@ test('parseGameFile refuses images that are not JPEG or PNG data under an image 
     assert.deepEqual(parseGameFile(JSON.stringify({ ...valid, images: bad }), ['chess']), notSaved, JSON.stringify(bad));
   }
 });
+
+const LEGACY = { oldgame: { id: 'newgame', keepsSaves: true }, oldmap: { id: 'newmap', keepsSaves: false } };
+
+test('a game file saved under an old id opens as the new game', () => {
+  const file = buildGameFile('oldgame', 'friday', steps, new Date());
+  assert.deepEqual(parseGameFile(JSON.stringify(file), ['newgame'], LEGACY), { file: { ...file, gameType: 'newgame' } });
+});
+
+test('a game file of a reshaped old game is refused', () => {
+  const file = buildGameFile('oldmap', 'friday', steps, new Date());
+  assert.deepEqual(parseGameFile(JSON.stringify(file), ['newmap'], LEGACY), {
+    error: 'This saved game is from before this game got its new map and cannot be opened'
+  });
+});
+
+test('a game file named __proto__ is an unknown game', () => {
+  const file = buildGameFile('__proto__', 'friday', steps, new Date());
+  assert.deepEqual(parseGameFile(JSON.stringify(file), ['newgame'], LEGACY), {
+    error: 'This saved game is for a game this site does not have'
+  });
+});

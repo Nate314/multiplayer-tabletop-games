@@ -302,3 +302,82 @@ test('Together and Race have no turn, so nobody is told it is their turn', () =>
   assert.equal(lobby(['Alice', 'Bob']).currentPlayer, null);
   assert.equal(lobby(['Alice', 'Bob'], { mode: 'race' }).currentPlayer, null);
 });
+
+const turnsAt = (state: GameState, piece: number) => boardOf(state, 1)!.pieces[piece].turns;
+const withTurns = (state: GameState, piece: number, turns: number | undefined): GameState => {
+  const pieces = state.board.pieces.map((each, index) => index === piece ? { ...each, turns } : each) as GameState['board']['pieces'];
+  if (turns === undefined) delete pieces[piece].turns;
+  return { ...state, board: { pieces } } as GameState;
+};
+const dropAt = (state: GameState, piece: number) => {
+  const { x, y } = home(state, piece);
+  return act(act(state, 1, { type: 'pickUp', piece }), 1, { type: 'drop', piece, x: x + 3, y: y - 2 });
+};
+
+test('with Rotate pieces on, every piece starts with 0 to 3 quarter turns, and not all upright', () => {
+  const state = lobby(['Alice'], { rotation: true });
+  const all = state.board.pieces.map(piece => piece.turns);
+  assert.ok(all.every(turns => turns !== undefined && [0, 1, 2, 3].includes(turns)));
+  assert.ok(all.some(turns => turns !== 0));
+});
+
+test('Race boards all start with the same turns', () => {
+  const state = lobby(['Alice', 'Bob'], { mode: 'race', rotation: true });
+  assert.deepEqual(state.boards[1], state.boards[2]);
+});
+
+test('with Rotate pieces off, pieces have no turns and the scatter is as before', () => {
+  const plain = lobby(['Alice']);
+  assert.ok(plain.board.pieces.every(piece => !('turns' in piece)));
+  const set = setHouseRules(jigsaw.info, plain, 1, { values: { rotation: false } });
+  if ('error' in set) assert.fail(set.error);
+  assert.deepEqual(jigsaw.resetLobby(set.state, seeded(5)).board, jigsaw.resetLobby(plain, seeded(5)).board);
+});
+
+test('turn adds a quarter turn clockwise and wraps after three', () => {
+  let state = withTurns(lobby(['Alice'], { rotation: true }), 0, 0);
+  const seen: unknown[] = [];
+  for (let i = 0; i < 4; i++) {
+    state = act(state, 1, { type: 'turn', piece: 0 });
+    seen.push(turnsAt(state, 0));
+  }
+  assert.deepEqual(seen, [1, 2, 3, 0]);
+  assert.equal(state.started, true);
+});
+
+test('turn is refused with the rule off, on a placed piece and on a piece someone else holds', () => {
+  assert.equal(refused(lobby(['Alice']), 1, { type: 'turn', piece: 0 }), 'Pieces do not turn in this game');
+  const on = lobby(['Alice', 'Bob'], { mode: 'together', rotation: true });
+  assert.equal(refused(on, 1, { type: 'turn', piece: 999 }), 'No such piece');
+  const held = act(on, 2, { type: 'pickUp', piece: 0 });
+  assert.equal(refused(held, 1, { type: 'turn', piece: 0 }), 'Bob is holding that piece');
+  const placed = snap(withTurns(on, 1, 0), 1, 1);
+  assert.equal(refused(placed, 1, { type: 'turn', piece: 1 }), 'That piece is locked in place');
+});
+
+test('turning is not recorded', () => {
+  const state = lobby(['Alice'], { rotation: true });
+  assert.equal(jigsaw.recordsAction!(state, 1, { type: 'turn', piece: 0 }), false);
+});
+
+test('a piece near home snaps only when upright, and a loose drop keeps its turns', () => {
+  let state = withTurns(lobby(['Alice'], { rotation: true }), 0, 2);
+  state = dropAt(state, 0);
+  assert.equal(state.board.pieces[0].placed, false);
+  assert.equal(turnsAt(state, 0), 2);
+  state = act(act(state, 1, { type: 'turn', piece: 0 }), 1, { type: 'turn', piece: 0 });
+  assert.equal(dropAt(state, 0).board.pieces[0].placed, true);
+});
+
+test('a piece saved without turns still snaps', () => {
+  const state = withTurns(lobby(['Alice'], { rotation: true }), 0, undefined);
+  assert.equal(dropAt(state, 0).board.pieces[0].placed, true);
+});
+
+test('undo my last move returns the piece upright', () => {
+  const state = dropAt(withTurns(lobby(['Alice', 'Bob'], { mode: 'together', rotation: true }), 0, 0), 0);
+  const undone = jigsaw.undoOwn!(state, 1);
+  if ('error' in undone) assert.fail(undone.error);
+  assert.equal(undone.state.board.pieces[0].placed, false);
+  assert.ok(!('turns' in undone.state.board.pieces[0]));
+});

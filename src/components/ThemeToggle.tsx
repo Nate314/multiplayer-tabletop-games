@@ -8,7 +8,7 @@ const STORAGE_KEY = 'theme';
 type Theme = 'light' | 'dark';
 
 // index.html applies the saved theme before first paint. Every toggle reads the theme back from the page, so the
-// header toggle and the one in Settings (on phones) always agree, even when storage is blocked.
+// landing page's toggle and the one in the game menu always agree, even when storage is blocked.
 const currentTheme = (): Theme => (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
 
 function subscribe(onChange: () => void): () => void {
@@ -26,7 +26,8 @@ function applyTheme(theme: Theme): void {
   writeText(() => localStorage, STORAGE_KEY, theme);
 }
 
-export default function ThemeToggle() {
+// The label names the mode it switches to, so the visible text is inside the accessible name
+export default function ThemeToggle({ withLabel = false }: { withLabel?: boolean }) {
   const theme = useSyncExternalStore(subscribe, currentTheme);
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
@@ -38,6 +39,7 @@ export default function ThemeToggle() {
       aria-label={`Switch to ${nextTheme} mode`}
     >
       <ServerSvg url={svgUrl('icon', theme === 'dark' ? 'sun' : 'moon')} className="header-icon" />
+      {withLabel && <span className="menu-label">{nextTheme === 'dark' ? 'Dark mode' : 'Light mode'}</span>}
     </button>
   );
 }

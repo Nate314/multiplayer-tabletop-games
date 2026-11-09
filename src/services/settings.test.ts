@@ -148,7 +148,7 @@ test('history sounds default to off and round-trip', () => {
 test('landing filters default to everything shown and round-trip', () => {
   installStorage()
   assert.deepEqual(loadLandingFilters(), DEFAULT_FILTERS)
-  const filters = { search: 'uno', sort: 'name' as const, categories: ['card' as const, 'dice' as const], players: 4 }
+  const filters = { search: 'eights', sort: 'name' as const, categories: ['card' as const, 'dice' as const], players: 4 }
   saveLandingFilters(filters)
   assert.deepEqual(loadLandingFilters(), filters)
 })

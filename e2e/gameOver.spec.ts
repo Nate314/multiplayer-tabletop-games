@@ -6,9 +6,9 @@ import { expect, seeTable, test, type Seat } from './fixtures.ts';
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const rows = (page: Page) => gameOver(page).locator('.game-over-standings li');
 
-// Connect Four after two discs, ended with `winners`
-async function finishedConnectFour(seat: Seat, winners: number[]) {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+// Four in a Row after two discs, ended with `winners`
+async function finishedFourInARow(seat: Seat, winners: number[]) {
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const [alice, bob] = table.pages;
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
   await bob.getByRole('button', { name: 'Drop in column 2' }).click();
@@ -17,11 +17,11 @@ async function finishedConnectFour(seat: Seat, winners: number[]) {
 }
 
 test('the game-over screen names the winner, the game, its ID and length, and the standings', async ({ seat }) => {
-  const { table, alice } = await finishedConnectFour(seat, [1]);
+  const { table, alice } = await finishedFourInARow(seat, [1]);
   const dialog = gameOver(alice);
   await expect(dialog.getByRole('heading')).toHaveText('Alice wins');
   const meta = dialog.locator('.game-over-meta');
-  await expect(meta).toContainText('Connect Four');
+  await expect(meta).toContainText('Four in a Row');
   await expect(meta).toContainText(table.gameId);
   await expect(meta).toContainText('moves');
   await expect(rows(alice)).toHaveText(['1st Alice (you)', '2nd Bob']);
@@ -32,13 +32,13 @@ test('the game-over screen names the winner, the game, its ID and length, and th
 });
 
 test('a draw says Draw', async ({ seat }) => {
-  const { alice } = await finishedConnectFour(seat, []);
+  const { alice } = await finishedFourInARow(seat, []);
   await expect(gameOver(alice).getByRole('heading')).toHaveText('Draw');
   await expect(rows(alice)).toHaveText(['1st Alice (you)', '1st Bob']);
 });
 
 test("scores show in the game's own terms", async ({ seat }) => {
-  const table = await seat('yahtzee', ['Alice', 'Bob']);
+  const table = await seat('fivedice', ['Alice', 'Bob']);
   const [alice] = table.pages;
   await table.patch({
     sheets: { 1: { chance: 30 }, 2: { chance: 20 } }, isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!'
@@ -47,7 +47,7 @@ test("scores show in the game's own terms", async ({ seat }) => {
 });
 
 test('See the table closes it and Game summary opens it again', async ({ seat }) => {
-  const { alice } = await finishedConnectFour(seat, [1]);
+  const { alice } = await finishedFourInARow(seat, [1]);
   await gameOver(alice).getByRole('button', { name: 'See the table' }).click();
   await expect(gameOver(alice)).toHaveCount(0);
   await alice.getByRole('button', { name: 'Game summary' }).click();
@@ -57,7 +57,7 @@ test('See the table closes it and Game summary opens it again', async ({ seat })
 });
 
 test('History opens above it and closing History returns to it', async ({ seat }) => {
-  const { alice } = await finishedConnectFour(seat, [1]);
+  const { alice } = await finishedFourInARow(seat, [1]);
   await gameOver(alice).getByRole('button', { name: 'History' }).click();
   const history = alice.getByRole('dialog', { name: 'History' });
   await expect(history.locator('.history-slider')).toBeVisible();
@@ -73,13 +73,13 @@ test('History opens above it and closing History returns to it', async ({ seat }
 });
 
 test('Back to games goes to the game list', async ({ seat }) => {
-  const { alice } = await finishedConnectFour(seat, [1]);
+  const { alice } = await finishedFourInARow(seat, [1]);
   await gameOver(alice).getByRole('button', { name: 'Back to games' }).click();
   await expect(alice.locator('.lobby-game').first()).toBeVisible();
 });
 
 test('a game that ends again shows the screen again, not the Game summary button', async ({ seat }) => {
-  const { table, alice } = await finishedConnectFour(seat, [1]);
+  const { table, alice } = await finishedFourInARow(seat, [1]);
   await gameOver(alice).getByRole('button', { name: 'See the table' }).click();
   await expect(alice.getByRole('button', { name: 'Game summary' })).toBeVisible();
   await table.patch({ isGameOver: false, currentPlayer: 1, winners: [], gameStatus: '' });
@@ -90,13 +90,13 @@ test('a game that ends again shows the screen again, not the Game summary button
 });
 
 test('every player sees it', async ({ seat }) => {
-  const { bob } = await finishedConnectFour(seat, [1]);
+  const { bob } = await finishedFourInARow(seat, [1]);
   await expect(gameOver(bob).getByRole('heading')).toHaveText('Alice wins');
   await expect(rows(bob)).toHaveText(['1st Alice', '2nd Bob (you)']);
 });
 
 test('it steps aside while an undo vote runs, so the other player can answer, and returns after a decline', async ({ seat }) => {
-  const { alice, bob } = await finishedConnectFour(seat, [1]);
+  const { alice, bob } = await finishedFourInARow(seat, [1]);
   await seeTable(alice);
   await alice.getByRole('button', { name: 'Undo' }).click();
   await expect(bob.locator('.undo-vote')).toBeVisible();

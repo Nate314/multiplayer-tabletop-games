@@ -25,7 +25,7 @@ Pass three cards, then dodge the hearts and the queen of spades in tricks, or ta
 - After each hand, read the scoring screen and click Continue; the last hand's scoring is on the game-over screen
 - Click Undo to ask everyone to undo the last card played
 - With a table screen connected, on Hand only (the default) the seats and the trick are hidden
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

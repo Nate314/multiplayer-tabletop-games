@@ -39,7 +39,7 @@ for (const game of GAMES) {
       const own = JSON.stringify(game.privateSeatView?.(room.state, seat) ?? null);
       for (const other of room.state.activePlayers.filter(candidate => candidate !== seat)) {
         const hand = JSON.stringify(game.privateSeatView?.(room.state, other) ?? null);
-        // a hand equal to the seat's own (a freshly dealt splendor board) shows nothing the seat lacks
+        // a hand equal to the seat's own (a freshly dealt jewelguild board) shows nothing the seat lacks
         if (hand.length >= 12 && hand !== own) assert.ok(!plain.includes(hand), `seat ${other}'s hand leaked`);
       }
       assert.deepEqual(parsePauseFile(JSON.stringify(file), [id]), { file: JSON.parse(JSON.stringify(file)) });

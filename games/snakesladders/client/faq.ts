@@ -20,6 +20,11 @@ export const FAQS: FaqItem[] = [
       'pass 100 does not move your token at all, and you need the exact number to land on 100. A 6 still rolls again.'
   },
   {
+    question: 'What does Auto-roll do?',
+    answer: 'Auto-roll (beside Roll) rolls for you one second after your turn comes up. It is kept only in this ' +
+      'browser tab and is off after a reload.'
+  },
+  {
     question: 'Can two tokens share a square?',
     answer: 'Yes. Any number of tokens can stand on one square; nobody is sent back and nothing is captured. ' +
       'Tokens on the same square are drawn side by side inside it.'
@@ -27,12 +32,12 @@ export const FAQS: FaqItem[] = [
   {
     question: 'What do Undo and History do?',
     answer: 'Undo asks everyone to take back the last roll; it happens only if every player still in the game ' +
-      'approves. An undone roll is rolled again fresh, so the die may show a different number. History, at the ' +
-      'top of the page, steps through every roll so far, with the squares the token left and reached outlined.'
+      'approves. An undone roll is rolled again fresh, so the die may show a different number. History, in the ' +
+      '☰ menu, steps through every roll so far, with the squares the token left and reached outlined.'
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
     answer: 'Yes. Turn on Color-blind symbols in Settings and each color also shows its shape: red circle, blue ' +
-      'square, green triangle, orange hexagon, purple cross, cyan pentagon. Tokens and the player list show it.'
+      'square, green triangle, yellow star, purple cross, orange hexagon. Tokens and the player list show it.'
   }
 ];

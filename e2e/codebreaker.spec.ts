@@ -2,8 +2,7 @@ import { readFile } from 'node:fs/promises';
 import type { Locator, Page } from '@playwright/test';
 import {
   agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, setPreference, test, undo,
-  watch, type Seat
-} from './fixtures.ts';
+  watch, type Seat, headerButton } from './fixtures.ts';
 import { feedback } from '../games/codebreaker/feedback.ts';
 import type { Color, Guess } from '../games/codebreaker/types.ts';
 
@@ -178,7 +177,7 @@ test.describe('Code Breaker rules', () => {
       await expect(answer(bob, 1)).toHaveAttribute('title', textOf(CODE, pegs));
       await expect(answer(alice, 1)).toHaveAttribute('title', '1 right place, 2 right color');
       // History, read by the breaker mid-round, keeps the code covered too
-      await bob.getByRole('button', { name: 'History' }).click();
+      await (await headerButton(bob, 'History')).click();
       const history = bob.getByRole('dialog', { name: 'History' });
       await expect(history.getByRole('group', { name: 'Code, hidden' })).toBeVisible();
       await expect.poll(() => bodies.length).toBeGreaterThan(0);
@@ -447,7 +446,7 @@ test.describe('Code Breaker endings, leaving and hidden code', () => {
     });
     await enter(alice, CODE, 'Set code');
     await guess(bob, ['purple', 'yellow', 'orange', 'red'], 1);
-    await bob.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(bob, 'History')).click();
     const history = bob.getByRole('dialog', { name: 'History' });
     const move = history.locator('.history-move');
     await expect(move).toHaveText('Move 2 of 2: Bob guessed: 1 right place, 2 right color');
@@ -463,7 +462,7 @@ test.describe('Code Breaker endings, leaving and hidden code', () => {
     expect(await file.text()).toContain('The game is not over yet');
     // Paused mid-round, the breaker's own pause file does not hold the code in the clear; the maker's does, in their hand,
     // which shows the checks below would see a leak
-    await alice.locator('.game-header').getByRole('button', { name: 'Pause', exact: true }).click();
+    await (await headerButton(alice, 'Pause')).click();
     await bob.getByRole('button', { name: 'Approve' }).click();
     type PauseFile = { seat: number; table: { code: unknown }; hand: { code: unknown }; history: { code: unknown }[] };
     const pauseFile = async (page: Page): Promise<{ text: string; file: PauseFile }> => {
@@ -614,7 +613,7 @@ test.describe('Code Breaker controls', () => {
     const { pages: [alice, bob] } = await start(seat, ['Alice', 'Bob'], { mode: 'race', code: CODE });
     await guess(alice, WRONG, 1, 'Your guesses');
     await guess(bob, ['purple', 'red', 'red', 'red'], 1, 'Your guesses');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history.getByRole('list', { name: 'Race progress' })).toBeVisible();
     await expect(history.getByRole('list', { name: 'Race progress' }).getByRole('listitem')).toHaveCount(2);

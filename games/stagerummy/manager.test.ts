@@ -1,0 +1,196 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createGameManager } from '../../server/games.ts';
+import { agreeAll, rememberingKeys, stepsOf } from '../../server/testing.ts';
+import { stagerummy } from './index.ts';
+import { buildGroup, hasLaidDown, layablePhases, phaseRequirements } from './rules.ts';
+import type { Card, PublicGameState } from './types.ts';
+import type { Result, Seat } from '../../shared/types.ts';
+
+type Manager = ReturnType<typeof createGameManager>;
+
+const ROOM = 'stagerummy/g1';
+const drawPile = { type: 'draw', source: 'pile' };
+
+// A repeatable random, so every run deals the same cards
+function seeded(seed: number): () => number {
+  let value = seed;
+  return () => {
+    value = (value * 1103515245 + 12345) % 2147483648;
+    return value / 2147483648;
+  };
+}
+
+function gameWith(...names: string[]): Manager {
+  const manager = rememberingKeys(createGameManager([stagerummy], seeded(42)));
+  for (const name of names) manager.join('stagerummy', 'g1', name);
+  agreeAll(manager, ROOM);
+  return manager;
+}
+
+// The manager is generic over games, so tests narrow the public state to Stage Rummy's
+function ok(result: Result<unknown>): PublicGameState {
+  if ('error' in result) assert.fail(result.error);
+  return result.state as PublicGameState;
+}
+
+function viewOf(manager: Manager, viewer: Seat | null): PublicGameState {
+  const state = manager.getState(ROOM, viewer);
+  assert.ok(state, 'expected the game to exist');
+  return state as PublicGameState;
+}
+
+// Draws from the pile and discards the first card that is not a Skip, as `seat` sees their own hand
+function playTurn(manager: Manager, seat: Seat): PublicGameState {
+  const drawn = ok(manager.move(ROOM, seat, drawPile));
+  const card = drawn.myHand.find(candidate => candidate.kind !== 'skip') ?? drawn.myHand[0];
+  const skip = card.kind === 'skip' ? drawn.activePlayers.find(other => other !== seat) ?? null : null;
+  return ok(manager.move(ROOM, seat, { type: 'discard', card: card.id, skip }));
+}
+
+test('each player sees only their own hand, and the history sees no hand', () => {
+  const manager = gameWith('A', 'B');
+  const alice = viewOf(manager, 1);
+  const bob = viewOf(manager, 2);
+  assert.equal(alice.myHand.length, 10);
+  assert.equal(bob.myHand.length, 10);
+  const aliceIds = new Set(alice.myHand.map(card => card.id));
+  assert.ok(bob.myHand.every(card => !aliceIds.has(card.id)));
+  assert.deepEqual(alice.handCounts, { 1: 10, 2: 10 });
+  assert.equal(alice.drawCount, 108 - 21);
+  for (const view of [alice, bob, viewOf(manager, null)]) {
+    assert.equal('hands' in view, false);
+    assert.equal('drawPile' in view, false);
+    assert.equal('discardPile' in view, false);
+  }
+
+  playTurn(manager, 1);
+  const history = stepsOf(manager, 'stagerummy');
+  assert.ok(history);
+  assert.equal(history.length, 3);
+  for (const step of history as unknown as PublicGameState[]) {
+    assert.deepEqual(step.myHand, []);
+    assert.equal('hands' in step, false);
+  }
+  // A card drawn from the pile is not named in the history
+  assert.deepEqual((history[1] as unknown as PublicGameState).lastMove, { playerNumber: 1, type: 'draw', source: 'pile' });
+});
+
+test('a turn stays with the player until they discard', () => {
+  const manager = gameWith('A', 'B');
+  assert.deepEqual(manager.move(ROOM, 2, drawPile), { error: 'Not your turn' });
+  const drawn = ok(manager.move(ROOM, 1, drawPile));
+  assert.equal(drawn.currentPlayer, 1);
+  assert.equal(drawn.started, true);
+  assert.equal(viewOf(manager, 1).myHand.length, 11);
+  assert.equal(viewOf(manager, 2).handCounts[1], 11);
+
+  const card = viewOf(manager, 1).myHand.find(candidate => candidate.kind !== 'skip');
+  assert.ok(card);
+  const discarded = ok(manager.move(ROOM, 1, { type: 'discard', card: card.id, skip: null }));
+  assert.equal(discarded.currentPlayer, 2);
+  assert.equal(discarded.discardTop?.id, card.id);
+});
+
+test('undo restores the state before a move', () => {
+  const manager = gameWith('A', 'B');
+  const before = viewOf(manager, 1);
+  ok(manager.move(ROOM, 1, drawPile));
+  ok(manager.requestUndo(ROOM, 1));
+  ok(manager.voteUndo(ROOM, 2, true));
+  const restored = viewOf(manager, 1);
+  assert.deepEqual(restored.myHand, before.myHand);
+  assert.equal(restored.drawnBy, null);
+  assert.equal(restored.drawCount, before.drawCount);
+});
+
+test('several turns pass around the table', () => {
+  const manager = gameWith('A', 'B', 'C');
+  for (let turn = 0; turn < 9; turn++) {
+    const state = viewOf(manager, null);
+    if (state.currentPlayer === null) assert.fail('nobody to move');
+    playTurn(manager, state.currentPlayer);
+  }
+  const state = viewOf(manager, 1);
+  assert.equal(Object.values(state.handCounts).reduce((sum, count) => sum + count, 0), 30);
+});
+
+test('an unknown action is refused, and there is nothing to continue mid-hand', () => {
+  const manager = gameWith('A', 'B');
+  assert.deepEqual(manager.action(ROOM, 1, { type: 'nonsense' }), { error: 'Unknown action' });
+  assert.deepEqual(manager.action(ROOM, 1, { type: 'acknowledgeHand' }), { error: 'Nothing to continue' });
+});
+
+// The groups of cards that make `phase` from this hand, as card ids per part, or null
+function findPhase(hand: Card[], phase: number, seat: Seat): number[][] | null {
+  const parts = phaseRequirements(phase);
+  const search = (index: number, left: Card[]): number[][] | null => {
+    if (index === parts.length) return [];
+    const { size } = parts[index];
+    const pick = (start: number, chosen: Card[]): number[][] | null => {
+      if (chosen.length === size) {
+        if (!buildGroup(seat, parts[index], chosen)) return null;
+        const rest = search(index + 1, left.filter(card => !chosen.includes(card)));
+        return rest && [chosen.map(card => card.id), ...rest];
+      }
+      for (let at = start; at < left.length; at++) {
+        const found = pick(at + 1, [...chosen, left[at]]);
+        if (found) return found;
+      }
+      return null;
+    };
+    return pick(0, []);
+  };
+  return search(0, hand);
+}
+
+// Draws, lays down any phase it can, hits every card that fits a group on the table, then discards the card that helps least
+function laidTurn(manager: Manager, seat: Seat): PublicGameState {
+  let state = ok(manager.move(ROOM, seat, drawPile));
+  if (!hasLaidDown(state, seat)) {
+    for (const phase of layablePhases(state, seat)) {
+      const groups = findPhase(state.myHand, phase, seat);
+      if (groups) { state = ok(manager.move(ROOM, seat, { type: 'layDown', groups, phase })); break; }
+    }
+  }
+  if (hasLaidDown(state, seat)) {
+    for (let hitOne = true; hitOne && state.myHand.length > 0;) {
+      hitOne = false;
+      for (const card of state.myHand) {
+        for (let group = 0; group < state.groups.length && !hitOne; group++) {
+          const result = manager.move(ROOM, seat, { type: 'hit', group, cards: [card.id] });
+          if (!('error' in result)) { state = ok(result); hitOne = true; }
+        }
+        if (hitOne) break;
+      }
+    }
+    if (state.myHand.length === 0) return state;
+  }
+  const counts = new Map<number, number>();
+  for (const card of state.myHand) if (card.kind === 'number') counts.set(card.value, (counts.get(card.value) ?? 0) + 1);
+  const rank = (card: Card) => card.kind === 'wild' ? 1000 : card.kind === 'skip' ? 500 : (counts.get(card.value) ?? 0) * 100 - card.value;
+  const card = [...state.myHand].sort((a, b) => rank(a) - rank(b))[0];
+  const skip = card.kind === 'skip' ? state.activePlayers.find(other => other !== seat) ?? null : null;
+  return ok(manager.move(ROOM, seat, { type: 'discard', card: card.id, skip }));
+}
+
+test('a full game at 8 players is dealt ten cards each and plays to a winner', () => {
+  const manager = rememberingKeys(createGameManager([stagerummy], seeded(5)));
+  manager.join('stagerummy', 'g1', 'P1');
+  ok(manager.setHouseRules(ROOM, 1, { values: { anyOrder: true }, maxPlayers: 8 }));
+  for (let seat = 2; seat <= 8; seat++) manager.join('stagerummy', 'g1', `P${seat}`);
+  agreeAll(manager, ROOM);
+  let state = viewOf(manager, null);
+  assert.equal(state.activePlayers.length, 8);
+  assert.ok(Object.values(state.handCounts).every(count => count === 10));
+  for (let steps = 0; steps < 100000 && !state.isGameOver; steps++) {
+    if (state.handSummary) {
+      for (const seat of state.activePlayers) ok(manager.action(ROOM, seat, { type: 'acknowledgeHand' }));
+    } else if (state.currentPlayer === null) assert.fail('nobody to move');
+    else laidTurn(manager, state.currentPlayer);
+    state = viewOf(manager, null);
+  }
+  assert.equal(state.isGameOver, true);
+  assert.ok(state.winners.length >= 1);
+  assert.ok(state.handNumber > 1);
+});

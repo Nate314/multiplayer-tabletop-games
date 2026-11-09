@@ -9,7 +9,7 @@ function file(): PauseFile {
   return {
     format: PAUSE_FILE_FORMAT,
     version: 1,
-    gameType: 'uno',
+    gameType: 'rainboweights',
     gameId: 'g1',
     pausedAt: '2026-10-31T12:00:00.000Z',
     seat: 1,
@@ -23,7 +23,7 @@ function file(): PauseFile {
   };
 }
 
-const parse = (value: unknown) => parsePauseFile(typeof value === 'string' ? value : JSON.stringify(value), ['uno']);
+const parse = (value: unknown) => parsePauseFile(typeof value === 'string' ? value : JSON.stringify(value), ['rainboweights']);
 
 test('parsePauseFile accepts a built file', () => {
   assert.deepEqual(parse(file()), { file: file() });
@@ -56,8 +56,8 @@ test('parsePauseFile refuses an unknown game type', () => {
 });
 
 test('pauseFileName names the file for its game and player', () => {
-  assert.equal(pauseFileName('uno', 'g1', 'Alice'), 'uno-g1-Alice-paused.json');
-  assert.equal(pauseFileName('uno', 'g/1', 'A b'), 'uno-g-1-A-b-paused.json');
+  assert.equal(pauseFileName('rainboweights', 'g1', 'Alice'), 'rainboweights-g1-Alice-paused.json');
+  assert.equal(pauseFileName('rainboweights', 'g/1', 'A b'), 'rainboweights-g-1-A-b-paused.json');
 });
 
 test('parsePauseFile round-trips images and refuses broken ones', () => {
@@ -67,4 +67,25 @@ test('parsePauseFile round-trips images and refuses broken ones', () => {
     { '0123456789abcdef0123456789abcdef': { mime: 'image/png', data: 'iVBO");' } }]) {
     assert.deepEqual(parse({ ...file(), images: bad }), { error: NOT_A_PAUSE_FILE }, JSON.stringify(bad));
   }
+});
+
+const LEGACY = { oldgame: { id: 'newgame', keepsSaves: true }, oldmap: { id: 'newmap', keepsSaves: false } };
+
+test('a pause file saved under an old id opens as the new game', () => {
+  const f = { ...file(), gameType: 'oldgame' };
+  assert.deepEqual(parsePauseFile(JSON.stringify(f), ['newgame'], LEGACY), { file: { ...f, gameType: 'newgame' } });
+});
+
+test('a pause file of a reshaped old game is refused', () => {
+  const f = { ...file(), gameType: 'oldmap' };
+  assert.deepEqual(parsePauseFile(JSON.stringify(f), ['newmap'], LEGACY), {
+    error: 'This pause file is from before this game got its new map and cannot be resumed'
+  });
+});
+
+test('a pause file named __proto__ is an unknown game', () => {
+  const f = { ...file(), gameType: '__proto__' };
+  assert.deepEqual(parsePauseFile(JSON.stringify(f), ['newgame'], LEGACY), {
+    error: 'This pause file is for a game this site does not have'
+  });
 });

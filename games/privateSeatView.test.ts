@@ -14,30 +14,31 @@ const NAVAL_SHOTS = { 1: [{ row: 0, col: 0, result: 'miss' }], 2: [{ row: 4, col
 const CASES: Record<string, (s: Loose) => Loose[]> = {
   hearts: s => [{ ...s, passes: { 1: s.hands[1].slice(0, 3) } }],
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
-  rook: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
-  thecrew: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
-  uno: s => [
+  nest: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
+  missiontricks: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
+  rainboweights: s => [
     { ...s, currentPlayer: 1, drawnCard: s.hands[1][0] },
     { ...s, revealed: { to: 2, of: 1, hand: s.hands[1] } }
   ],
   gofish: s => [{ ...s, lastMove: { asker: 1, fished: 'other' }, fishedCard: s.hands[1][0] }],
-  racko: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
-  catan: s => [{
+  inorder: s => [{ ...s, held: { by: 1, card: 5, from: 'discard' } }],
+  hexisland: s => [{
     ...s,
     steal: { thief: 1, victim: 2, resource: 'wood' },
     turnHolder: 1,
     devCards: { ...s.devCards, 1: ['victoryPoint'] },
     boughtThisTurn: ['victoryPoint']
   }],
-  risk: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
-  splendor: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
-  tickettoride: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
+  territories: s => [{ ...s, hands: { ...s.hands, 1: [3, 42] } }],
+  jewelguild: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], reserved: [{ card: 3, fromDeck: true }] } } }],
+  railroutes: s => [{ ...s, players: { ...s.players, 1: { ...s.players[1], offered: [0, 1, 2] } } }],
+  tradingfloor: s => [{ ...s, offers: [{ id: 1, seat: 1, cards: s.hands[1].slice(0, 2).map((c: { id: number }) => c.id) }], nextOfferId: 2 }],
   naval: s => [
     { ...s, started: true, fleets: { 1: NAVAL_FLEETS[1] }, gameStatus: 'Alice is ready' },
     { ...s, started: true, phase: 'firing', currentPlayer: 1, fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS },
     { ...s, started: true, phase: 'firing', currentPlayer: null, isGameOver: true, winners: [1], fleets: NAVAL_FLEETS, shots: NAVAL_SHOTS }
   ],
-  pictionary: s => [
+  drawandguess: s => [
     { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['cat', 'dog', 'owl'] },
     {
       ...s, started: true, phase: 'drawing', drawer: 1, word: 'cat', guessed: [2],
@@ -46,6 +47,41 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
         { id: 2, kind: 'chat', seat: 2, text: 'easy', audience: 'guessed' },
         { id: 3, kind: 'close', seat: 1, text: 'So close!', audience: 1 }
       ]
+    }
+  ],
+  whodunit: s => [
+    { ...s, seen: [{ suggestion: 0, from: 2, to: 1, card: s.hands[2][0] }], notes: { ...s.notes, 1: { [s.hands[1][0]]: 'no' } } },
+    { ...s, phase: 'showing', suggestions: [{ suspect: 'miss-gull', object: 'boat-oar', room: 'galley', by: 1, passed: [], shownBy: null, awaiting: 2 }] }
+  ],
+  categories: s => [
+    { ...s, started: true, phase: 'answering', letter: 'B', list: ['Fruits', 'Animals'], answers: { 1: ['Banana', 'Bat'], 2: ['Berry', ''] } },
+    { ...s, started: true, phase: 'review', letter: 'B', list: ['Fruits', 'Animals'], review: { acknowledged: [] }, answers: { 1: ['Banana', 'Bat'], 2: ['Berry', ''] } }
+  ],
+  hintgrid: s => [{
+    ...s, started: true, phase: 'guessing', turn: 'red', currentPlayer: 2,
+    roles: { 1: { team: 'red', clueGiver: true }, 2: { team: 'red', clueGiver: false }, 3: { team: 'blue', clueGiver: true }, 4: { team: 'blue', clueGiver: false } },
+    revealed: s.revealed.map((_: boolean, i: number) => i < 2)
+  }],
+  charades: s => [
+    { ...s, started: true, phase: 'choosing', drawer: 1, wordChoices: ['yawning', 'clapping', 'sneezing'] },
+    {
+      ...s, started: true, phase: 'drawing', drawer: 1, word: 'yawning', guessed: [2],
+      chat: [
+        { id: 1, kind: 'guessed', seat: 2, text: 'Bob guessed the prompt', audience: 'all' },
+        { id: 2, kind: 'chat', seat: 2, text: 'easy', audience: 'guessed' },
+        { id: 3, kind: 'close', seat: 1, text: 'So close!', audience: 1 }
+      ]
+    }
+  ],
+  fictionary: s => [
+    { ...s, started: true, phaseStartedAt: 1, submissions: { 1: 'a small bird', 2: 'a kind of pastry' } },
+    {
+      ...s, started: true, phaseStartedAt: 1, phase: 'voting', submissions: { 1: 'a small bird', 2: 'a kind of pastry', 3: 'a river boat' },
+      choices: [
+        { text: 'a kind of pastry', authors: [2], real: false }, { text: s.definition, authors: [], real: true },
+        { text: 'a small bird', authors: [1], real: false }, { text: 'a river boat', authors: [3], real: false }
+      ],
+      votes: { 2: 1 }
     }
   ],
   codebreaker: s => [
@@ -60,9 +96,9 @@ const CASES: Record<string, (s: Loose) => Loose[]> = {
   ]
 };
 
-// Fields of a seat's view that show another seat's secrets (UNO's challenged hand): privateSeatView leaves them out,
+// Fields of a seat's view that show another seat's secrets (Rainbow Eights' challenged hand): privateSeatView leaves them out,
 // so a spectator allowed on one seat never learns another's, and the table view's value stands
-const OTHER_SEATS_SECRETS: Record<string, string[]> = { uno: ['revealed'] };
+const OTHER_SEATS_SECRETS: Record<string, string[]> = { rainboweights: ['revealed'] };
 
 for (const game of GAMES) {
   const id = game.info.id;
@@ -127,8 +163,8 @@ for (const game of GAMES) {
   });
 }
 
-test('a Pictionary spectator sees the word being drawn, and a table screen sees only the blanks', () => {
-  const game = GAMES.find(candidate => candidate.info.id === 'pictionary')!;
+test('a Draw and Guess spectator sees the word being drawn, and a table screen sees only the blanks', () => {
+  const game = GAMES.find(candidate => candidate.info.id === 'drawandguess')!;
   const s: Loose = { ...dealt(game), started: true, phase: 'drawing', drawer: 1, word: 'cat' };
   assert.equal((spectatorView(game, s, EVE) as Loose).word, 'cat');
   assert.equal((spectatorView(game, s, { ...EVE, tableScreen: true }) as Loose).word, null);

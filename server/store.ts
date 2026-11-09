@@ -35,6 +35,8 @@ export type GameStore = {
   countRoomImages(roomId: string): number;
   // Deletes the room's images, except those an archived game shows: they stay until pruneArchive drops that archive
   deleteRoomImages(roomId: string): void;
+  // Moves the rooms and archives of an old game id to a new one, with their steps and images; one whose new id is taken stays
+  renameGameType(from: string, to: string): number;
 };
 
 export type ImageMime = 'image/jpeg' | 'image/png';
@@ -101,6 +103,23 @@ export function openGameStore(file: string): GameStore {
   // A lobby is never saved, so on load the images of any room not in `rooms` belong to a room that is gone
   const deleteUnsavedImages = db.prepare(`DELETE FROM images WHERE room_id NOT IN (SELECT id FROM rooms) AND ${UNARCHIVED}`);
   const detachUnsavedImages = db.prepare('UPDATE images SET room_id = NULL WHERE room_id NOT IN (SELECT id FROM rooms)');
+
+  // Room, archive and image ids all start `<gameType>/`; `$from` and `$to` are the old and new game type
+  const hasOldPrefix = (column: string) => `substr(${column}, 1, length($from) + 1) = $from || '/'`;
+  const newId = (column: string) => `$to || substr(${column}, length($from) + 1)`;
+  const renameRooms = db.prepare(
+    `UPDATE OR IGNORE rooms SET id = ${newId('id')}, game_type = $to WHERE game_type = $from AND ${hasOldPrefix('id')}`
+  );
+  // Only ids whose room moved: the new id exists and the old one is gone
+  const moved = (table: string, column: string, ids: string) =>
+    `UPDATE OR IGNORE ${table} SET ${column} = ${newId(column)} WHERE ${hasOldPrefix(column)} ` +
+    `AND ${newId(column)} IN (SELECT id FROM ${ids}) AND ${column} NOT IN (SELECT id FROM ${ids})`;
+  const renameSteps = db.prepare(moved('room_steps', 'room_id', 'rooms'));
+  const renameImages = db.prepare(moved('images', 'room_id', 'rooms'));
+  const renameArchives = db.prepare(
+    `UPDATE OR IGNORE archived_games SET id = ${newId('id')}, game_type = $to WHERE game_type = $from AND ${hasOldPrefix('id')}`
+  );
+  const renameArchiveImages = db.prepare(moved('archive_images', 'archive_id', 'archived_games'));
 
   function transaction(write: () => void): void {
     db.exec('BEGIN');
@@ -232,6 +251,18 @@ export function openGameStore(file: string): GameStore {
         deleteRoomImages.run(roomId);
         detachRoomImages.run(roomId);
       });
+    },
+
+    renameGameType(from, to) {
+      let renamed = 0;
+      transaction(() => {
+        renamed = Number(renameRooms.run({ from, to }).changes);
+        renameSteps.run({ from, to });
+        renameImages.run({ from, to });
+        renameArchives.run({ from, to });
+        renameArchiveImages.run({ from, to });
+      });
+      return renamed;
     }
   };
 }

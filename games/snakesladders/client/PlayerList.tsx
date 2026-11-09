@@ -1,6 +1,6 @@
 import YouTag from '../../../src/components/YouTag.tsx';
 import ColorSymbol from '../../../src/components/ColorSymbol.tsx';
-import { SEAT_SYMBOLS } from './seatSymbols.ts';
+import { SEAT_SYMBOL_COLORS } from '../../../src/components/seatColors.ts';
 import type { PublicGameState, Seat } from '../types.ts';
 
 type PlayerListProps = {
@@ -24,7 +24,7 @@ export default function PlayerList({ gameState, playerNumber }: PlayerListProps)
         if (square === undefined) classNames.push('sl-player-left');
         return (
           <div key={seat} className={classNames.join(' ')} aria-current={seat === currentPlayer ? 'true' : undefined}>
-            <span className={`sl-player-dot sl-seat${seat}`}><ColorSymbol color={SEAT_SYMBOLS[seat]} className="sl-dot-symbol" /></span>
+            <span className={`sl-player-dot sl-seat${seat}`}><ColorSymbol color={SEAT_SYMBOL_COLORS[seat]} className="sl-dot-symbol" /></span>
             <span className="sl-player-name">
               {playerNames[seat]}
               <YouTag when={seat === playerNumber} />

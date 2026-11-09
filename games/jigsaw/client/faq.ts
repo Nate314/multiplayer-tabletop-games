@@ -18,6 +18,10 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Press a piece, drag it and let go. Drop it close to its spot on the board and it snaps in and locks there; anywhere else it stays where you left it. Placed pieces cannot be moved again.'
   },
   {
+    question: 'How do I turn a piece?',
+    answer: 'Only with the Rotate pieces house rule on. Touch a piece and a ↻ handle appears at its top right corner: press it to turn the piece 90 degrees clockwise. While you hold a piece, R or a right-click turns it too. A turned piece snaps into its spot only once it is the right way up. Turning is not a History step and Undo does not take it back (in Solo, Undo also puts back turns and loose moves made since the last snap).'
+  },
+  {
     question: 'Why can I not pick up a piece?',
     answer: 'Someone else is holding it: it has their color around it and their name above it. You can take it once they let go. If you both press the same piece at the same moment, the first one to reach the server gets it and it slips out of the other\'s hand.'
   },

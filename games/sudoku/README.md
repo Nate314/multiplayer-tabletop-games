@@ -30,7 +30,7 @@ Fill the grid so every row, column and box holds 1 to 9, alone, together or as a
 - Whenever more than one Race board is in view (a spectator during the race, anyone once it is over, the last step of History), buttons above the grid name each player with their progress, such as "Alice 40%"; click one to show that player's board. You start on your own board, or with none, on the board of whoever moved last. The square changed last is outlined only on the board of the player who changed it
 - In a race the side panel lists every other racer's progress, and says "Your board is full, but something is wrong" when yours is
 - The side panel shows the status, the mode and difficulty, and in Together who is playing (a player who left is marked "(left)")
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide to the rules and controls
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide to the rules and controls
 
 ## Differences from Wikipedia
 

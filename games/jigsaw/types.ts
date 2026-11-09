@@ -8,7 +8,11 @@ export type { Result, Seat } from '../../shared/types.ts';
 
 export type Picture = { kind: 'builtin'; name: PictureName } | { kind: 'photo'; id: string }; // id: 32 lowercase hex
 // x, y: the piece's top left on the table
-export type Piece = { x: number; y: number; placed: boolean; heldBy: Seat | null; placedBy: Seat | null };
+export type Turns = 0 | 1 | 2 | 3;
+export type Piece = {
+  x: number; y: number; placed: boolean; heldBy: Seat | null; placedBy: Seat | null;
+  turns?: Turns; // quarter turns clockwise; absent is 0 (the rule off, or a state saved before it)
+};
 export type Board = { pieces: Piece[] }; // index = piece id
 export type LastMove = { type: 'snap' | 'unsnap'; playerNumber: Seat; piece: number } | null;
 

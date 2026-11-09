@@ -1,0 +1,294 @@
+[data-game="steadyhand"] {
+  /* Steady Hand's repair bay theme. Every rule is scoped to data-game="steadyhand", so none of it reaches other games.
+   The header, dialogs and vote panels use the platform defaults through the --platform-* variables. */
+  color-scheme: light;
+  --page-bg: #e9eef2;
+  --text: #1d2a33;
+  --muted: #56656f;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(29, 42, 51, 0.16);
+  --button-bg: #2f6f8f;
+  --button-hover-bg: #245870;
+  --button-text: #ffffff;
+  --status-bg: #dde8ef;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #e08a00;
+  --floor: #c9d3da;
+  --wall: #44525c;
+  --slot: #f4f7f9;
+  --exit: #2e9d5b;
+  --part: #c47a2c;
+  --part-edge: #5a3612;
+  --part-mark: #fff3e0;
+  --buzz: #d0342c;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #11171c;
+    --text: #e3eaef;
+    --muted: #9aa9b3;
+    --panel-bg: #1c252c;
+    --panel-border: rgba(227, 234, 239, 0.14);
+    --button-bg: #3f8bb0;
+    --button-hover-bg: #52a0c6;
+    --status-bg: #22323d;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --highlight: #ffb020;
+    --floor: #26323b;
+    --wall: #8fa2af;
+    --slot: #0d1317;
+    --exit: #3fbf74;
+    --part: #d98c3c;
+    --part-edge: #2a1806;
+    --part-mark: #3a2410;
+    --buzz: #ff5a4f;
+  }
+
+  .sh-screen {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-status {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    text-align: center;
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .sh-turn,
+  .sh-hint,
+  .sh-empty {
+    margin: 0;
+    text-align: center;
+  }
+
+  .sh-turn:empty {
+    display: none;
+  }
+
+  .sh-hint,
+  .sh-empty {
+    color: var(--muted);
+  }
+
+  .sh-seats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sh-seat {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 4px 10px;
+    border: 2px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+  }
+
+  .sh-seat-turn {
+    border-color: var(--highlight);
+  }
+
+  .sh-seat-name {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .sh-seat-buzzes {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* The bay with its tray beside it, or below it when the window is narrow */
+
+  .sh-bay-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .sh-bay {
+    display: block;
+    flex: 1 1 560px;
+    min-width: 0;
+    width: 100%;
+    height: auto;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .sh-bay-interactive {
+    cursor: grab;
+  }
+
+  .sh-tray {
+    flex: 1 1 180px;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  }
+
+  .sh-tray-heading {
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .sh-tray-part {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+
+    svg {
+      flex: none;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .sh-floor {
+    fill: var(--floor);
+  }
+
+  .sh-slot polyline {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sh-slot-wall {
+    stroke: var(--wall);
+  }
+
+  .sh-slot-floor {
+    stroke: var(--slot);
+  }
+
+  .sh-slot-empty {
+    opacity: 0.35;
+  }
+
+  .sh-exit {
+    fill: var(--exit);
+  }
+
+  .sh-value {
+    fill: var(--text);
+    font: 700 22px sans-serif;
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  .sh-part-body {
+    fill: var(--part);
+    stroke: var(--part-edge);
+    stroke-width: 2;
+  }
+
+  .sh-part-mark {
+    fill: var(--part-mark);
+  }
+
+  /* Watchers see the part glide between streamed positions, at most 50 ms apart */
+  .sh-part-watched {
+    transition: transform 50ms linear;
+  }
+
+  .sh-part-highlight .sh-part-body,
+  .sh-tray-part.sh-part-highlight .sh-part-body {
+    stroke: var(--highlight);
+    stroke-width: 4;
+  }
+
+  .sh-tray-part.sh-part-highlight span {
+    font-weight: 700;
+  }
+
+  .sh-buzz-mark {
+    fill: none;
+    stroke: var(--buzz);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+
+  .sh-shake {
+    animation: sh-shake 0.3s linear;
+  }
+
+  @keyframes sh-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sh-shake {
+      animation-duration: 0.01s;
+    }
+  }
+
+  .sh-bar {
+    display: flex;
+    justify-content: center;
+  }
+
+  .sh-bar button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sh-bar button:hover:enabled {
+    background: var(--button-hover-bg);
+  }
+
+  .sh-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* The history dialog sizes to its content, so the board asks for a width of its own */
+  .sh-history {
+    width: min(860px, calc(100vw - 96px));
+  }
+}

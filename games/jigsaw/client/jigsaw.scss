@@ -308,6 +308,40 @@
     }
   }
 
+  /* The table box: the turn handle sits in it in percents, and sizes itself from its width (cqw) */
+  .jigsaw-zoomed {
+    position: relative;
+    container-type: inline-size;
+  }
+
+  /* The turn handle: the player's color ringed in the panel color, so it shows on the felt and on the picture in light and dark.
+     At least 32px for a finger, its bottom left on the piece's top right corner, kept inside the table box */
+  .jigsaw-turn {
+    --size: max(32px, var(--cell));
+    position: absolute;
+    z-index: 1;
+    left: clamp(0px, var(--x), 100% - var(--size));
+    top: clamp(0px, var(--y) - var(--size), 100% - var(--size));
+    width: var(--size);
+    height: var(--size);
+    padding: 0;
+    border: 3px solid var(--panel-bg);
+    border-radius: 50%;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: 700 calc(var(--size) * 0.55) / 1 system-ui, sans-serif;
+    touch-action: none;
+
+    &:hover {
+      background: var(--button-hover-bg);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--highlight);
+      outline-offset: 1px;
+    }
+  }
+
   .jigsaw-holder {
     font: 600 28px system-ui, sans-serif;
     fill: var(--holder);

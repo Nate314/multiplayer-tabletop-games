@@ -1,4 +1,4 @@
-import { expect, joinGame, newPlayer, openJoinDialog, tableScreen, test } from './fixtures.ts';
+import { expect, joinGame, newPlayer, openJoinDialog, tableScreen, test, headerButton } from './fixtures.ts';
 import type { Browser, Page } from '@playwright/test';
 
 // A table screen joins as a spectator that only ever sees the table
@@ -33,7 +33,7 @@ test('the table screen rejoins after a refresh', async ({ seat }) => {
 });
 
 test('game over on the table screen has no Rematch', async ({ seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
   const tv = await tableScreen(table);
   await table.patch({ isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!' });
@@ -66,7 +66,7 @@ test('phones get the switch only while a table screen is connected', async ({ se
 });
 
 test('the choice is remembered', async ({ seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const phone = table.pages[0];
   await phone.getByRole('button', { name: 'Drop in column 1' }).click(); // a refresh rejoins only once the game started
   await tableScreen(table);
@@ -76,23 +76,23 @@ test('the choice is remembered', async ({ seat }) => {
   await expect(phone.getByRole('button', { name: 'Board and hand' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('pictionary: the table screen never shows the word', async ({ seat }) => {
-  const table = await seat('pictionary', ['Alice', 'Bob', 'Cara']);
+test('drawandguess: the table screen never shows the word', async ({ seat }) => {
+  const table = await seat('drawandguess', ['Alice', 'Bob', 'Cara']);
   const [alice, bob] = table.pages;
   await table.patch({ wordChoices: ['xylophone', 'quokka', 'zeppelin'] });
   await alice.getByRole('group', { name: 'Choose a word' }).getByRole('button', { name: 'xylophone' }).click();
   await table.patch({ word: 'red apple' });
   const tv = await tableScreen(table);
   const say = async (text: string) => {
-    await bob.locator('#pictionary-chat-input').fill(text);
-    await bob.locator('#pictionary-chat-input').press('Enter');
+    await bob.locator('#drawandguess-chat-input').fill(text);
+    await bob.locator('#drawandguess-chat-input').press('Enter');
   };
   await say('blue pear'); // a public, wrong guess
   await say('red apple');
   await say('only for guessers');
   await expect(alice.locator('.chat-line', { hasText: 'only for guessers' })).toHaveCount(1); // delivered to those allowed
   await expect(tv.locator('.chat-line', { hasText: 'Bob: blue pear' })).toHaveCount(1);
-  await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: 8 letters');
+  await expect(tv.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: 8 letters');
   await expect(tv.locator('.table-screen-status')).toContainText('Bob guessed the word');
   const shown = () => tv.locator('body').innerText();
   expect(await shown()).not.toContain('red apple');
@@ -100,7 +100,7 @@ test('pictionary: the table screen never shows the word', async ({ seat }) => {
 
   // When the turn runs out the reveal shows the word to everyone, the table screen included
   await table.patch({ phaseStartedAt: Date.now() - 89_500 });
-  await expect(tv.locator('.pictionary-blanks')).toHaveAccessibleName('Word: red apple');
+  await expect(tv.locator('.drawandguess-blanks')).toHaveAccessibleName('Word: red apple');
   expect(await shown()).toContain('red apple');
 });
 
@@ -142,7 +142,7 @@ test('the table screen shows the QR code from the header during play', async ({ 
   const tv = await tableScreen(table);
   await table.patch({ started: true });
   await expect(tv.locator('.table-screen-board')).toBeVisible();
-  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await (await headerButton(tv, 'Show QR code')).click();
   const dialog = tv.getByRole('dialog', { name: 'Scan to join' });
   await expect(dialog.locator('.table-screen-qr svg')).toBeVisible();
   await expect(dialog.locator('.table-screen-link')).toHaveText(new RegExp(`/join/hearts/${table.gameId}$`));
@@ -162,25 +162,27 @@ test('the table screen shows the QR code from the header during play', async ({ 
   }
   await dialog.getByRole('button', { name: 'Close' }).click();
   await expect(dialog).toBeHidden();
-  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await (await headerButton(tv, 'Show QR code')).click();
   await expect(dialog).toBeVisible();
   await tv.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(tv.locator('.table-screen-board')).toBeVisible();
-  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+  await expect(await headerButton(table.pages[0], 'Show QR code')).toHaveCount(0);
+  await table.pages[0].keyboard.press('Escape');
 });
 
 test('the QR button is there in the lobby and after the game ends', async ({ seat }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
   const tv = await tableScreen(table);
-  await expect(tv.getByRole('button', { name: 'Show QR code' })).toBeVisible();
+  await expect(await headerButton(tv, 'Show QR code')).toBeVisible();
   await table.patch({ isGameOver: true, currentPlayer: null, winners: [1], gameStatus: 'Alice wins!' });
   await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
-  await tv.getByRole('button', { name: 'Show QR code' }).click();
+  await (await headerButton(tv, 'Show QR code')).click();
   await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeVisible();
   await tv.keyboard.press('Escape');
   await expect(tv.getByRole('dialog', { name: 'Scan to join' })).toBeHidden();
   await expect(tv.getByRole('dialog', { name: 'Game over' })).toBeVisible();
-  await expect(table.pages[0].getByRole('button', { name: 'Show QR code' })).toHaveCount(0);
+  // The Game over dialog blocks the menu button, so look in the closed menu panel too
+  await expect(table.pages[0].getByRole('button', { name: 'Show QR code', includeHidden: true })).toHaveCount(0);
 });

@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect, test } from './fixtures.ts';
+import { expect, test, headerButton } from './fixtures.ts';
 import { GAMES } from '../games/registry.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
 import { boardFromLine } from '../games/dominoes/board.ts';
@@ -25,7 +25,7 @@ for (const { info } of GAMES) {
     const { pages: [alice] } = await seat(info.id, names);
     for (const size of [{ width: 375, height: 667 }, { width: 1280, height: 800 }]) {
       await alice.setViewportSize(size);
-      await alice.getByRole('button', { name: 'History' }).click();
+      await (await headerButton(alice, 'History')).click();
       const dialog = history(alice);
       await expect(dialog.locator('.history-slider')).toBeVisible();
       const box = (await dialog.boundingBox())!;
@@ -51,7 +51,7 @@ test('stepping through History never enlarges the board or moves its top edge, a
     await page.getByRole('region', { name: 'Your hand' }).getByRole('button', { name: pipsName([Math.min(a, b), Math.max(a, b)]), exact: true }).click();
   }
   await alice.setViewportSize({ width: 375, height: 667 });
-  await alice.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(alice, 'History')).click();
   const dialog = history(alice);
   const slider = dialog.getByRole('slider', { name: 'Step' });
   await expect(dialog.locator('.history-move')).toContainText('Move 4 of 4');
@@ -72,18 +72,18 @@ test('stepping through History never enlarges the board or moves its top edge, a
   await expect.poll(() => scaleOf(dialog)).toBeGreaterThan(scale);
 });
 
-// Connect Four with three discs dropped: four steps to move through
-async function openConnectFourHistory(seat: Parameters<Parameters<typeof test>[2]>[0]['seat']) {
-  const { pages: [alice, bob] } = await seat('connectfour', ['Alice', 'Bob']);
+// Four in a Row with three discs dropped: four steps to move through
+async function openFourInARowHistory(seat: Parameters<Parameters<typeof test>[2]>[0]['seat']) {
+  const { pages: [alice, bob] } = await seat('fourinarow', ['Alice', 'Bob']);
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
   await bob.getByRole('button', { name: 'Drop in column 2' }).click();
   await alice.getByRole('button', { name: 'Drop in column 1' }).click();
-  await alice.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(alice, 'History')).click();
   return { alice, dialog: history(alice) };
 }
 
 test('the row under the board is Play, the slider and the settings gear, and the dialog keeps its size between steps', async ({ seat }) => {
-  const { dialog } = await openConnectFourHistory(seat);
+  const { dialog } = await openFourInARowHistory(seat);
   const board = (await dialog.locator('.history-board').boundingBox())!;
   const play = (await dialog.locator('.history-play').boundingBox())!;
   const slider = (await dialog.locator('.history-slider').boundingBox())!;
@@ -102,7 +102,7 @@ test('the row under the board is Play, the slider and the settings gear, and the
 });
 
 test('the gear holds Animations, Sounds and Speed, and the live game has no View as', async ({ seat }) => {
-  const { dialog } = await openConnectFourHistory(seat);
+  const { dialog } = await openFourInARowHistory(seat);
   const settings = dialog.getByRole('group', { name: 'Playback settings' });
   await expect(settings).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
@@ -116,7 +116,7 @@ test('the gear holds Animations, Sounds and Speed, and the live game has no View
 });
 
 test('Escape closes the open gear panel first and a second Escape closes the dialog', async ({ seat }) => {
-  const { dialog } = await openConnectFourHistory(seat);
+  const { dialog } = await openFourInARowHistory(seat);
   const settings = dialog.getByRole('group', { name: 'Playback settings' });
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await expect(settings).toBeVisible();
@@ -128,12 +128,12 @@ test('Escape closes the open gear panel first and a second Escape closes the dia
 });
 
 test('speed and animations are remembered, and 4x plays a step every 375 ms', async ({ seat }) => {
-  const { alice, dialog } = await openConnectFourHistory(seat);
+  const { alice, dialog } = await openFourInARowHistory(seat);
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await dialog.getByLabel('Speed').selectOption({ label: '4x' });
   await dialog.getByLabel('Animations').check();
   await dialog.getByRole('button', { name: 'Close' }).click();
-  await alice.getByRole('button', { name: 'History' }).click();
+  await (await headerButton(alice, 'History')).click();
   await dialog.getByRole('button', { name: 'Playback settings' }).click();
   await expect(dialog.getByLabel('Speed')).toHaveValue('4');
   await expect(dialog.getByLabel('Animations')).toBeChecked();
@@ -150,13 +150,13 @@ test('speed and animations are remembered, and 4x plays a step every 375 ms', as
 });
 
 test('history without the seat key is not available', async ({ seat, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const [alice] = table.pages;
-  const url = `${server.url}/api/history/connectfour/${table.gameId}`;
+  const url = `${server.url}/api/history/fourinarow/${table.gameId}`;
   const response = await alice.request.get(url);
   expect(response.status()).toBe(404);
   expect(await response.json()).toEqual({ error: 'This game is not available' });
-  expect((await alice.request.get(`${server.url}/api/game-file/connectfour/${table.gameId}`)).status()).toBe(404);
+  expect((await alice.request.get(`${server.url}/api/game-file/fourinarow/${table.gameId}`)).status()).toBe(404);
   expect((await alice.request.get(url, { headers: { Authorization: 'Bearer nope' } })).status()).toBe(404);
   expect((await alice.request.get(`${url}/x`)).status()).toBe(404);
 });

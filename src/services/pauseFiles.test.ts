@@ -10,9 +10,9 @@ test('fetchPauseFile sends the device ID and returns null on a 404', async (t) =
     calls.push({ url, init });
     return new Response('{"error":"Not available"}', { status: 404 });
   });
-  assert.equal(await fetchPauseFile('uno', 'fri day/#1', 2), null);
+  assert.equal(await fetchPauseFile('rainboweights', 'fri day/#1', 2), null);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, '/api/pause-file/uno/fri%20day%2F%231/2');
+  assert.equal(calls[0].url, '/api/pause-file/rainboweights/fri%20day%2F%231/2');
   assert.deepEqual(calls[0].init?.headers, { Authorization: `Bearer ${deviceId()}` });
 });
 
@@ -22,31 +22,31 @@ test('fetchPauseFile sends the seat key when there is one', async (t) => {
     calls.push(init);
     return new Response('{"error":"Not available"}', { status: 404 });
   });
-  await fetchPauseFile('uno', 'g', 2, 'seat-key-2');
+  await fetchPauseFile('rainboweights', 'g', 2, 'seat-key-2');
   assert.deepEqual(calls[0]?.headers, { Authorization: 'Bearer seat-key-2' });
 });
 
 test('fetchPauseFile returns the file, and null when the request fails', async (t) => {
   const file = { format: 'multiplayer-tabletop-games-pause', seat: 1 };
   const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json(file));
-  assert.deepEqual(await fetchPauseFile('uno', 'g', 1), file);
+  assert.deepEqual(await fetchPauseFile('rainboweights', 'g', 1), file);
   fetchMock.mock.mockImplementation(async () => { throw new TypeError('offline'); });
-  assert.equal(await fetchPauseFile('uno', 'g', 1), null);
+  assert.equal(await fetchPauseFile('rainboweights', 'g', 1), null);
 });
 
 const upload = (seat: number, playerName: string, seatKey: string): ResumeUpload => ({
-  gameType: 'uno', gameId: 'g1', players: [], ready: false, error: null, seat, seatKey, playerName
+  gameType: 'rainboweights', gameId: 'g1', players: [], ready: false, error: null, seat, seatKey, playerName
 });
 
 test('sessionForResume rejoins one upload as a player', () => {
   assert.deepEqual(sessionForResume([upload(2, 'Bob', 'k2')]), {
-    gameType: 'uno', gameId: 'g1', playerName: 'Bob', seatKey: 'k2', inGame: true
+    gameType: 'rainboweights', gameId: 'g1', playerName: 'Bob', seatKey: 'k2', inGame: true
   });
 });
 
 test('sessionForResume rejoins several uploads as pass and play, in seat order', () => {
   assert.deepEqual(sessionForResume([upload(2, 'Bob', 'k2'), upload(1, 'Alice', 'k1')]), {
-    gameType: 'uno', gameId: 'g1', playerName: 'Alice', role: 'passAndPlay', inGame: true,
+    gameType: 'rainboweights', gameId: 'g1', playerName: 'Alice', role: 'passAndPlay', inGame: true,
     localSeats: [{ playerName: 'Alice', seatKey: 'k1' }, { playerName: 'Bob', seatKey: 'k2' }]
   });
 });
@@ -78,9 +78,9 @@ test('fetchResumeStatus sends the seat key and returns null on a 404', async (t)
     calls.push({ url, init });
     return Response.json(status);
   });
-  assert.deepEqual(await fetchResumeStatus('uno', 'fri day', 'k1'), status);
-  assert.equal(calls[0].url, '/api/resume/uno/fri%20day');
+  assert.deepEqual(await fetchResumeStatus('rainboweights', 'fri day', 'k1'), status);
+  assert.equal(calls[0].url, '/api/resume/rainboweights/fri%20day');
   assert.deepEqual(calls[0].init?.headers, { Authorization: 'Bearer k1' });
   fetchMock.mock.mockImplementation(async () => Response.json({ error: 'Not available' }, { status: 404 }));
-  assert.equal(await fetchResumeStatus('uno', 'g1', 'k1'), null);
+  assert.equal(await fetchResumeStatus('rainboweights', 'g1', 'k1'), null);
 });

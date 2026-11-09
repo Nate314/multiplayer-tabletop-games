@@ -1,3 +1,4 @@
+import type { DragSourceProps } from '../../../src/drag/useDrag.ts';
 import { GRID_SIZE, cellName, shipCells } from '../fleet.ts';
 import type { Cell, Ship, Shot } from '../types.ts';
 
@@ -8,6 +9,7 @@ type GridProps = {
   cells?: Cell[];                // squares marked as selected: the picked ship, a drop preview, a salvo's targets
   onCell?: (cell: Cell) => void; // absent: no square can be clicked
   dropTarget?: boolean;          // every square is a data-drop target for a dragged ship
+  dragSource?: (cell: Cell) => DragSourceProps | undefined; // makes a square something to drag, e.g. a placed ship
 };
 
 const ROWS = 'ABCDEFGHIJ';
@@ -29,7 +31,7 @@ function shipClasses(ships: Ship[]): Map<string, string[]> {
 }
 
 // A 10x10 board with A to J down the side and 1 to 10 across the top; each square is a button named like B7
-export default function Grid({ label, ships, shots, cells = [], onCell, dropTarget = false }: GridProps) {
+export default function Grid({ label, ships, shots, cells = [], onCell, dropTarget = false, dragSource }: GridProps) {
   const onShip = shipClasses(ships);
   const shotAt = new Map(shots.map(shot => [cellName(shot), shot.result]));
   const selected = new Set(cells.map(cellName));
@@ -56,6 +58,7 @@ export default function Grid({ label, ships, shots, cells = [], onCell, dropTarg
               data-drop={dropTarget ? `cell-${row}-${col}` : undefined}
               disabled={!onCell}
               onClick={() => onCell?.({ row, col })}
+              {...dragSource?.({ row, col })}
             />
           );
         })

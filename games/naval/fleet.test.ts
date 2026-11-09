@@ -52,3 +52,7 @@ test('shotsText names every result and the sunk length', () => {
     'B7, C7 and D7: hit, miss, sank a ship of length 3',
   );
 });
+
+test('shotsText names the length on a first hit', () => {
+  assert.equal(shotsText([{ row: 5, col: 0, result: 'hit', hitLength: 3 }]), 'F1: hit a ship of length 3');
+});

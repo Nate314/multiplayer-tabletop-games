@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDrag } from '../../../src/drag/useDrag.ts';
 import { FLEET, randomFleet, shipCells } from '../fleet.ts';
 import Grid from './Grid';
-import { complete, emptyDraft, placeAt, rotate, type Draft } from './draft.ts';
+import { complete, emptyDraft, placeAt, removeShip, rotate, type Draft } from './draft.ts';
 import type { Cell, Ship } from '../types.ts';
 
 type PlacementProps = {
@@ -33,13 +33,20 @@ export default function Placement({ onConfirm }: PlacementProps) {
   const tryPlace = (index: number, cell: Cell) => placeAt(draft, index, cell, orientationOf(index));
 
   const drag = useDrag({
-    canLift: id => draft[Number(id)] === null,
+    canLift: () => true,
     canDrop: (id, target) => {
+      if (target === 'tray') return draft[Number(id)] !== null;
+      if (draft[Number(id)] !== null) return false;
       const cell = targetCell(target);
       return cell !== null && tryPlace(Number(id), cell) !== draft;
     },
     onLift: id => setSelected(Number(id)),
     onDrop: (id, target) => {
+      if (target === 'tray') {
+        setDraft(removeShip(draft, Number(id)));
+        setSelected(Number(id));
+        return;
+      }
       setDraft(tryPlace(Number(id), targetCell(target)!));
       setSelected(Number(id));
     }
@@ -67,8 +74,9 @@ export default function Placement({ onConfirm }: PlacementProps) {
 
   return (
     <div className="naval-placement">
-      <Grid label="Your fleet" ships={draft.filter((ship): ship is Ship => ship !== null)} shots={[]} cells={marked} onCell={onCell} dropTarget />
-      <div className={`ship-tray ship-tray-${trayOrientation}`}>
+      <Grid label="Your fleet" ships={draft.filter((ship): ship is Ship => ship !== null)} shots={[]} cells={marked} onCell={onCell} dropTarget
+        dragSource={cell => { const slot = slotAt(draft, cell); return slot === -1 ? undefined : drag.source(String(slot)); }} />
+      <div className={`ship-tray ship-tray-${trayOrientation}`} data-drop="tray">
         {FLEET.map((length, index) => draft[index] === null && (
           <button
             key={index}
@@ -85,6 +93,7 @@ export default function Placement({ onConfirm }: PlacementProps) {
       </div>
       <div className="placement-buttons">
         <button type="button" onClick={onRotate}>Rotate</button>
+        <button type="button" disabled={selected === null || draft[selected] === null} onClick={() => setDraft(removeShip(draft, selected!))}>Remove</button>
         <button type="button" onClick={() => { setDraft(randomFleet(Math.random)); setSelected(null); }}>Random placement</button>
         <button type="button" onClick={() => { setDraft(emptyDraft()); setSelected(null); }}>Clear</button>
         <button type="button" disabled={!ships} onClick={() => ships && onConfirm(ships)}>Confirm fleet</button>

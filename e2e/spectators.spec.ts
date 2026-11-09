@@ -11,7 +11,7 @@ async function protocol(page: Page, gameId: string, join: Record<string, unknown
     const ws = new WebSocket(`ws://${window.location.host}`);
     let joined: Received | undefined;
     const errors: string[] = [];
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'JOIN_GAME', gameType: 'connectfour', gameId, ...join }));
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'JOIN_GAME', gameType: 'fourinarow', gameId, ...join }));
     ws.onmessage = event => {
       const message: Received = JSON.parse(event.data);
       if (message.type === 'GAME_JOINED') {
@@ -27,7 +27,7 @@ async function protocol(page: Page, gameId: string, join: Record<string, unknown
 }
 
 test('a spectator cannot move or act', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/');
   const refused: Sent[] = [
@@ -50,7 +50,7 @@ test('a spectator cannot move or act', async ({ seat, browser, server }) => {
 });
 
 test('a player cannot ask to see a hand or switch to player', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice']); // still a lobby, so a second player can take a seat
+  const table = await seat('fourinarow', ['Alice']); // still a lobby, so a second player can take a seat
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/');
   const { errors } = await protocol(visitor, table.gameId, { playerName: 'Eli' }, [
@@ -63,8 +63,8 @@ test('a player cannot ask to see a hand or switch to player', async ({ seat, bro
 test('the switch picks Join or Watch and is remembered', async ({ browser, server }) => {
   const visitor = await newPlayer(browser, server);
   await visitor.goto('/');
-  await visitor.locator('.lobby-game', { hasText: 'Connect Four' }).click();
-  const dialog = visitor.getByRole('dialog', { name: 'Join Connect Four' });
+  await visitor.locator('.lobby-game', { hasText: 'Four in a Row' }).click();
+  const dialog = visitor.getByRole('dialog', { name: 'Join Four in a Row' });
   await expect(dialog.getByRole('button', { name: 'Join', exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Player' })).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)'); // the pressed one is filled
   await dialog.getByRole('button', { name: 'Spectator' }).click();
@@ -75,16 +75,16 @@ test('the switch picks Join or Watch and is remembered', async ({ browser, serve
   await dialog.getByLabel('Your name').fill('Dana');
   await dialog.getByRole('button', { name: 'Watch', exact: true }).click(); // saves the form, then is refused: no such game
   await visitor.reload();
-  await visitor.locator('.lobby-game', { hasText: 'Connect Four' }).click();
+  await visitor.locator('.lobby-game', { hasText: 'Four in a Row' }).click();
   await expect(visitor.getByRole('dialog').getByRole('button', { name: 'Spectator' })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('a started game offers to watch instead', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
   const visitor = await newPlayer(browser, server);
-  await visitor.goto(`/join/connectfour/${encodeURIComponent(table.gameId)}`);
-  const dialog = visitor.getByRole('dialog', { name: 'Join Connect Four' });
+  await visitor.goto(`/join/fourinarow/${encodeURIComponent(table.gameId)}`);
+  const dialog = visitor.getByRole('dialog', { name: 'Join Four in a Row' });
   await dialog.getByLabel('Your name').fill('Cara');
   await dialog.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(dialog.getByText('Game already in progress', { exact: true })).toBeVisible();
@@ -95,9 +95,9 @@ test('a started game offers to watch instead', async ({ seat, browser, server })
 });
 
 test('a spectator\'s reaction countdown sits in the reaction picker, not beside the turn clock', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
+  const table = await seat('fourinarow', ['Alice', 'Bob'], { houseRules: { turnTimer: 30 } });
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
-  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  const dana = await watch(browser, server, 'fourinarow', table.gameId, 'Dana');
   const bar = dana.locator('.presence-bar');
   const timer = bar.locator('.presence-timer');
   await expect(timer).toContainText('Bob');
@@ -139,9 +139,9 @@ test('a spectator sees the table and no hand', async ({ seat, browser, server })
   await expect(dana.getByRole('button', { name: 'Dismiss' })).toHaveCount(0);
 });
 
-test('a Pictionary spectator sees everything, so no seat to pick or ask for', async ({ seat, browser, server }) => {
-  const table = await seat('pictionary', ['Alice', 'Bob']);
-  const dana = await watch(browser, server, 'pictionary', table.gameId, 'Dana');
+test('a Draw and Guess spectator sees everything, so no seat to pick or ask for', async ({ seat, browser, server }) => {
+  const table = await seat('drawandguess', ['Alice', 'Bob']);
+  const dana = await watch(browser, server, 'drawandguess', table.gameId, 'Dana');
   await expect(dana.locator('.spectator-status')).toBeVisible();
   await expect(dana.locator('.spectator-seats')).toHaveCount(0);
   await expect(dana.locator('.spectator-ask')).toHaveCount(0);
@@ -180,15 +180,15 @@ test('a no can be asked again', async ({ seat, browser, server }) => {
 });
 
 test('nothing to ask in a game with nothing private', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
-  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
+  const dana = await watch(browser, server, 'fourinarow', table.gameId, 'Dana');
   await expect(dana.locator('.spectator-status')).toBeVisible();
   await expect(dana.locator('.spectator-seats')).toHaveCount(0);
 });
 
 test('play instead in the lobby', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice']);
-  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  const table = await seat('fourinarow', ['Alice']);
+  const dana = await watch(browser, server, 'fourinarow', table.gameId, 'Dana');
   await dana.getByRole('button', { name: 'Play instead' }).click();
   await expect(dana.getByRole('button', { name: 'Play instead' })).toHaveCount(0);
   await expect(table.pages[0].locator('.presence-watching')).toHaveCount(0);
@@ -196,9 +196,9 @@ test('play instead in the lobby', async ({ seat, browser, server }) => {
 });
 
 test('spectators get no votes', async ({ seat, browser, server }) => {
-  const table = await seat('connectfour', ['Alice', 'Bob']);
+  const table = await seat('fourinarow', ['Alice', 'Bob']);
   await table.pages[0].getByRole('button', { name: 'Drop in column 1' }).click();
-  const dana = await watch(browser, server, 'connectfour', table.gameId, 'Dana');
+  const dana = await watch(browser, server, 'fourinarow', table.gameId, 'Dana');
   await table.pages[0].getByRole('button', { name: 'Undo' }).click();
   await expect(table.pages[1].getByRole('button', { name: 'Approve' })).toBeVisible();
   await expect(dana.getByRole('button', { name: 'Approve' })).toHaveCount(0);

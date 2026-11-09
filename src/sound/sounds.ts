@@ -8,7 +8,7 @@ const ROLLING_MOVES = ['roll', 'attack', 'blitz'];
 const isTurn = (s: BasePublicState, viewer: Seat): boolean =>
   s.currentPlayer === viewer && s.activePlayers.length >= 2 && !s.isGameOver;
 
-// Parchisi rolls for the next turn by itself: fresh unused dice that differ from the last ones
+// Pachisi rolls for the next turn by itself: fresh unused dice that differ from the last ones
 function rolledAutomatically(previous: Loose, next: Loose): boolean {
   const dice = next.dice;
   return Array.isArray(dice) && dice.length > 0

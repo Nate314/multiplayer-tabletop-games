@@ -1,5 +1,6 @@
 import { readJson, removeKey, writeJson } from './storage.ts'
 import type { JoinRole } from '../../shared/types.ts'
+import { currentId, LEGACY_IDS, type LegacyIds } from '../../games/legacyIds.ts'
 
 // The most recent game this tab joined, so a refresh can rejoin it and the list can offer it again
 // `seatKey` is the secret the server gave the seat, which taking it back needs
@@ -21,7 +22,7 @@ const IN_GAME_KEY = 'inGame';
 const isLocalSeats = (value: unknown): value is LocalSeatKey[] =>
   Array.isArray(value) && value.length > 0 && value.every(item => typeof item?.playerName === 'string' && typeof item.seatKey === 'string')
 
-function read(storage: () => Storage, key: string): SavedGame | null {
+function read(storage: () => Storage, key: string, legacy: LegacyIds = LEGACY_IDS): SavedGame | null {
   const saved = readJson(storage, key) as Partial<SavedGame> | null
   if (typeof saved?.gameType !== 'string' || typeof saved.gameId !== 'string' || typeof saved.playerName !== 'string') {
     return null
@@ -30,7 +31,7 @@ function read(storage: () => Storage, key: string): SavedGame | null {
   // A pass-and-play entry without usable seats falls back to a normal session
   const localSeats = saved.role === 'passAndPlay' && isLocalSeats(saved.localSeats) ? saved.localSeats : undefined
   const role = saved.role === 'spectator' || saved.role === 'tableScreen' ? saved.role : localSeats && 'passAndPlay'
-  return { gameType: saved.gameType, gameId: saved.gameId, playerName: saved.playerName, seatKey, role, localSeats }
+  return { gameType: currentId(saved.gameType, legacy), gameId: saved.gameId, playerName: saved.playerName, seatKey, role, localSeats }
 }
 
 const local = () => localStorage;
@@ -40,10 +41,10 @@ function sameGame(a: SavedGame, b: SavedGame): boolean {
   return a.gameType === b.gameType && a.gameId === b.gameId && a.playerName === b.playerName;
 }
 
-export function loadSession(): Session | null {
-  const inGame = read(perTab, IN_GAME_KEY);
+export function loadSession(legacy: LegacyIds = LEGACY_IDS): Session | null {
+  const inGame = read(perTab, IN_GAME_KEY, legacy);
   if (inGame) return { ...inGame, inGame: true };
-  const lastGame = read(local, LAST_GAME_KEY);
+  const lastGame = read(local, LAST_GAME_KEY, legacy);
   return lastGame && { ...lastGame, inGame: false };
 }
 

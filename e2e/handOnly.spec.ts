@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, nameOf, tableScreen, test, type Table } from './fixtures.ts';
+import { headerButton, expect, nameOf, tableScreen, test, type Table } from './fixtures.ts';
 import { GAMES } from '../games/registry.ts';
 
 // While a table screen is connected, a phone on Hand only keeps what the player acts on and hides what the TV shows.
@@ -41,12 +41,12 @@ const HAND_ONLY: Record<string, Row> = {
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }
   },
-  rook: {
+  nest: {
     keep: TRICK_KEEP,
     hide: TRICK_HIDE,
     move: async page => { await button(page, 'Pass').click(); }
   },
-  thecrew: {
+  missiontricks: {
     keep: ['.hand', '.turn-message', you('.seat'), '.task-pool'], // the open tasks and your own tasks are your goal
     hide: [others('.seat'), '.trick'],
     move: async page => { await button(page, /^Take task/).first().click(); }
@@ -70,12 +70,12 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.holdem-seat'), '.holdem-board'],
     move: async page => { await button(page, /^(Check|Call)/).click(); }
   },
-  uno: {
-    keep: ['.hand', '.turn-message', '.uno-button', '.piles', you('.player')], // UNO! is open to everyone; the catch button shows only while a call is owed
+  rainboweights: {
+    keep: ['.hand', '.turn-message', '.last-card-button', '.piles', you('.player')], // Last card! is open to everyone; the catch button shows only while a call is owed
     hide: [others('.player')],
     move: async page => { await button(page, 'Draw').click(); }
   },
-  phase10: {
+  stagerummy: {
     keep: ['.my-hand', '.turn-message', '.piles', you('.seat')],
     hide: [others('.seat') + ' .seat-details'],
     board: '.table .groups', // Bob's laid set, which Alice can hit
@@ -85,7 +85,7 @@ const HAND_ONLY: Record<string, Row> = {
     },
     move: async page => { await page.locator('.piles .pile').first().click(); }
   },
-  skipbo: {
+  spiteandmalice: {
     keep: ['.my-hand', '.turn-message', '.my-area .stock', '.my-area .discard-piles'],
     hide: ['.other-seats'],
     board: '.board',
@@ -95,12 +95,12 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Discard here on pile 1 and end your turn').click();
     }
   },
-  racko: {
+  inorder: {
     keep: ['.my-rack', '.turn-message', '.piles .pile'],
     hide: ['.other-racks'],
     move: async page => { await button(page, /^Draw pile/).click(); }
   },
-  rummikub: {
+  rummytiles: {
     keep: ['.rk-rack-area', '.rk-turn-message', '.rk-turn-buttons', you('.rk-player')],
     hide: [others('.rk-player'), '.rk-pool'],
     board: '.rk-table',
@@ -112,19 +112,19 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board',
     move: async page => { await page.locator('.hand-tiles .tile-playable').first().click(); }
   },
-  scrabble: {
+  lettergrid: {
     keep: ['.rack', '.turn-message', '.turn-buttons', you('.score-row')],
     hide: [others('.score-row'), '.bag-count'],
     board: '.board-wrap',
     move: async page => { await button(page, 'Pass').click(); }
   },
-  catan: {
+  hexisland: {
     keep: ['.turn-message', '.hand-panel', you('.player-row')],
     hide: [others('.player-row'), '.bank-line'],
     board: '.board-area', // setup: the board is there on your turn to place
     move: async page => { await page.getByRole('button', { name: /^Intersection \d+$/ }).first().click(); }
   },
-  risk: {
+  territories: {
     keep: ['.turn-message', '.phase-panel', you('.player-row'), '.deck-line'],
     hide: [others('.player-row')],
     board: '.map-area',
@@ -134,13 +134,13 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Place all').click();
     }
   },
-  tickettoride: {
+  railroutes: {
     keep: ['.turn-message', '.hand-panel', '.ticket-choice', you('.player-row')], // the ticket choice is open before your turn
     hide: [others('.player-row')],
     board: '.map-frame',
     move: async page => { await button(page, /^Keep \d+ tickets?$/).click(); }
   },
-  splendor: {
+  jewelguild: {
     keep: ['.turn-message', '.player-me', '.player-me .player-tokens'],
     hide: ['.player:not(.player-me)'],
     board: 'section.table',
@@ -149,13 +149,13 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Take gems').click();
     }
   },
-  monopoly: {
+  streetdeeds: {
     keep: ['.turn-message', '.turn-panel', you('.player-row')],
     hide: [others('.player-row')],
     board: '.board-area',
     move: async page => { await button(page, 'Roll the dice').click(); }
   },
-  carcassonne: {
+  roadsandfields: {
     keep: ['.cc-turn-message', '.cc-turn', you('.cc-player')],
     hide: [others('.cc-player')],
     board: '.cc-board-area',
@@ -164,7 +164,7 @@ const HAND_ONLY: Record<string, Row> = {
       await button(page, 'Place tile').click();
     }
   },
-  azul: {
+  palacewalls: {
     keep: ['.turn-message', '.board-mine'],
     hide: ['.board-other'],
     board: '.table',
@@ -191,7 +191,7 @@ const HAND_ONLY: Record<string, Row> = {
       await page.locator('.square.target').first().click();
     }
   },
-  connectfour: {
+  fourinarow: {
     keep: ['.turn-message', '.player-list', 'button:has-text("Undo")', 'button:has-text("Resign")'],
     hide: [],
     board: '.board-frame',
@@ -212,7 +212,7 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board-wrap',
     move: async page => { await page.locator('.pit-bottom').first().click(); }
   },
-  parchisi: {
+  pachisi: {
     keep: ['.turn-message', '.dice-tray', '.undo-button', '.player-list'],
     hide: [],
     board: '.board-area .board',
@@ -227,7 +227,7 @@ const HAND_ONLY: Record<string, Row> = {
       await page.locator('.board > .square', { has: page.locator('.destination-badge') }).first().click();
     }
   },
-  quoridor: {
+  pawnsandwalls: {
     keep: ['.game-info', '.action-buttons', '.piece-tray'],
     hide: [],
     board: '.board-frame',
@@ -238,21 +238,21 @@ const HAND_ONLY: Record<string, Row> = {
     hide: ['.farkle-score.hand-only-hide'],
     move: async page => { await button(page, 'Roll').click(); }
   },
-  yahtzee: {
-    keep: ['.turn-message', '.yz-turn', '.yz-sheet', '.yz-total td:not(.hand-only-hide)'],
-    hide: ['.yz-player.hand-only-hide'],
+  fivedice: {
+    keep: ['.turn-message', '.fivedice-turn', '.fivedice-sheet', '.fivedice-total td:not(.hand-only-hide)'],
+    hide: ['.fivedice-player.hand-only-hide'],
     move: async page => { await button(page, /^Roll/).click(); }
   },
-  pictionary: {
-    keep: ['.turn-message', '.pictionary-chat', '#pictionary-chat-input', you('.score-row')],
+  drawandguess: {
+    keep: ['.turn-message', '.drawandguess-chat', '#drawandguess-chat-input', you('.score-row')],
     hide: [others('.score-row')],
-    board: '.pictionary-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
+    board: '.drawandguess-paper', // the drawer's canvas and tools; the TV shows the picture to the guessers
     move: async page => { await page.getByRole('group', { name: 'Choose a word' }).getByRole('button').first().click(); }
   },
-  jenga: {
-    keep: ['.jenga-status', '.jenga-undo'],
+  blocktower: {
+    keep: ['.blocktower-status', '.blocktower-undo'],
     hide: [],
-    board: '.jenga-controls',
+    board: '.blocktower-controls',
     setup: async table => { // Alice has pulled block 49 out, so the move is placing it, which needs no physics from the test
       const { blocks } = await table.state<{ blocks: { id: number }[] }>();
       await table.patch({ started: true, blocks: blocks.filter(block => block.id !== 49), held: 49, phase: 'place', pull: { seat: 1, block: 49 } });
@@ -301,7 +301,7 @@ for (const [id, row] of Object.entries(HAND_ONLY)) {
 }
 
 test('History shows the whole table in Hand only', async ({ seat }) => {
-  const table = await seat('scrabble', NAMES.slice(0, 2));
+  const table = await seat('lettergrid', NAMES.slice(0, 2));
   await tableScreen(table);
   const current = (await table.state<{ currentPlayer: number }>()).currentPlayer;
   const page = table.pages[current - 1];
@@ -309,34 +309,34 @@ test('History shows the whole table in Hand only', async ({ seat }) => {
   // This phone is now off turn, so both hiding rules apply outside History
   await expect(page.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(page.locator('.score-row >> visible=true')).toHaveCount(1);
-  await button(page, 'History').click();
+  await (await headerButton(page, 'History')).click();
   const history = page.getByRole('dialog', { name: 'History' });
   await expect(history.locator('.board-wrap')).toBeVisible();
   await expect(history.locator('.score-row >> visible=true')).toHaveCount(2);
 });
 
-test('Catan trade offers and Monopoly auctions can be answered out of turn in Hand only', async ({ seat }) => {
-  const catan = await seat('catan', NAMES.slice(0, 3));
+test('Hex Island trade offers and Street Deeds auctions can be answered out of turn in Hand only', async ({ seat }) => {
+  const hexisland = await seat('hexisland', NAMES.slice(0, 3));
   const noCards = { wood: 0, brick: 0, sheep: 0, wheat: 0, ore: 0 };
-  await catan.patch({
+  await hexisland.patch({
     started: true, setup: null, rolled: true, turnHolder: 1, currentPlayer: 1,
     trade: { from: 1, to: null, give: { ...noCards, wood: 1 }, get: { ...noCards, ore: 1 }, declined: [] }
   });
-  await tableScreen(catan);
-  const bob = catan.pages[1];
+  await tableScreen(hexisland);
+  const bob = hexisland.pages[1];
   await expect(bob.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(bob.locator('.board-area >> visible=true')).toHaveCount(0);
   await expect(button(bob, 'Accept')).toBeVisible();
   await expect(button(bob, 'Decline')).toBeVisible();
 
-  const monopoly = await seat('monopoly', NAMES.slice(0, 2));
-  await tableScreen(monopoly);
-  const first = (await monopoly.state<{ currentPlayer: number }>()).currentPlayer; // the roll-off picks who starts
-  const roller = monopoly.pages[first - 1];
-  await monopoly.dice(1, 2); // Baltic Avenue, which the roller declines
+  const streetdeeds = await seat('streetdeeds', NAMES.slice(0, 2));
+  await tableScreen(streetdeeds);
+  const first = (await streetdeeds.state<{ currentPlayer: number }>()).currentPlayer; // the roll-off picks who starts
+  const roller = streetdeeds.pages[first - 1];
+  await streetdeeds.dice(1, 2); // Cinder Lane, which the roller declines
   await button(roller, 'Roll the dice').click();
   await button(roller, 'Decline and auction').click();
-  const other = monopoly.pages[2 - first];
+  const other = streetdeeds.pages[2 - first];
   await expect(other.locator('.game-root[data-hand-only]:not([data-my-turn])')).toHaveCount(1);
   await expect(other.locator('.board-area >> visible=true')).toHaveCount(0);
   await expect(other.getByRole('region', { name: 'Auction' })).toBeVisible();

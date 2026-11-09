@@ -5,10 +5,12 @@ type RollPanelProps = {
   gameState: PublicGameState;
   canRoll: boolean;
   onRoll: () => void;
+  autoRoll: boolean;
+  onAutoRoll: (on: boolean) => void;
 };
 
-// The last roll and the Roll button, which only the player on turn can press
-export default function RollPanel({ gameState, canRoll, onRoll }: RollPanelProps) {
+// The last roll, the Roll button, which only the player on turn can press, and this tab's Auto-roll
+export default function RollPanel({ gameState, canRoll, onRoll, autoRoll, onAutoRoll }: RollPanelProps) {
   const { lastMove, playerNames } = gameState;
   return (
     <div className="sl-roll-panel">
@@ -25,6 +27,10 @@ export default function RollPanel({ gameState, canRoll, onRoll }: RollPanelProps
       <button type="button" className="sl-button sl-roll-button" onClick={onRoll} disabled={!canRoll}>
         Roll
       </button>
+      <label className="sl-auto-roll">
+        <input type="checkbox" checked={autoRoll} onChange={event => onAutoRoll(event.target.checked)} />
+        Auto-roll
+      </label>
     </div>
   );
 }

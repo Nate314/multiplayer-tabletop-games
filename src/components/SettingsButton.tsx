@@ -4,18 +4,30 @@ import SettingsDialog from './SettingsDialog';
 import ServerSvg from '../assets/ServerSvg.tsx';
 import { svgUrl } from '../assets/svgCache.ts';
 
-// `phoneControls` are header buttons that phones show in Settings instead, as the header has no room for them.
-// A function gets the dialog's close, for a control whose result shows under the dialog (Pause)
-export default function SettingsButton({ phoneControls }: { phoneControls?: ReactNode | ((close: () => void) => ReactNode) }) {
-  const [open, setOpen] = useState(false);
+// The Settings dialog and what opens it, so the game menu can hold the button while the dialog lives outside the menu
+// eslint-disable-next-line react-refresh/only-export-components -- the hook belongs with its button; fast refresh reloads this file in full
+export function useSettingsDialog(): { open: () => void; dialog: ReactNode } {
+  const [isOpen, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
+  return { open: () => setOpen(true), dialog: isOpen && <SettingsDialog onClose={close} /> };
+}
 
+export function SettingsTrigger({ onOpen, withLabel = false }: { onOpen: () => void; withLabel?: boolean }) {
+  return (
+    <button type="button" className="settings-button" aria-label="Settings" onClick={onOpen}>
+      <ServerSvg url={svgUrl('icon', 'gear')} className="header-icon" />
+      {withLabel && <span className="menu-label">Settings</span>}
+    </button>
+  );
+}
+
+// The landing page's gear; the game header puts SettingsTrigger in its menu
+export default function SettingsButton() {
+  const settings = useSettingsDialog();
   return (
     <>
-      <button type="button" className="settings-button" aria-label="Settings" onClick={() => setOpen(true)}>
-        <ServerSvg url={svgUrl('icon', 'gear')} className="header-icon" />
-      </button>
-      {open && <SettingsDialog onClose={close} phoneControls={typeof phoneControls === 'function' ? phoneControls(close) : phoneControls} />}
+      <SettingsTrigger onOpen={settings.open} />
+      {settings.dialog}
     </>
   );
 }

@@ -16,7 +16,7 @@ export function seeded(seed: number): Random {
   };
 }
 
-export const FOUR_SEATS = ['hearts', 'spades', 'euchre', 'rook', 'thecrew'];
+export const FOUR_SEATS = ['hearts', 'spades', 'euchre', 'nest', 'missiontricks'];
 export const NAMES = ['Alice', 'Bob', 'Cara', 'Dan'];
 
 export function dealt(game: (typeof GAMES)[number]): Loose {

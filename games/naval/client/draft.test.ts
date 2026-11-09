@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { complete, emptyDraft, placeAt, rotate } from './draft.ts';
+import { complete, emptyDraft, placeAt, removeShip, rotate } from './draft.ts';
 
 test('placeAt puts a ship by its top left end', () => {
   const draft = placeAt(emptyDraft(), 0, { row: 1, col: 6 }, 'down');
@@ -32,4 +32,14 @@ test('complete is null until every ship is placed', () => {
   assert.equal(complete(draft), null);
   draft = placeAt(draft, 4, { row: 8, col: 0 }, 'across');
   assert.deepEqual(complete(draft)?.map(ship => ship.length), [5, 4, 3, 3, 2]);
+});
+
+test('removeShip puts one ship back in the tray and leaves the others', () => {
+  const draft = placeAt(placeAt(emptyDraft(), 0, { row: 0, col: 0 }, 'across'), 2, { row: 2, col: 0 }, 'across');
+  const removed = removeShip(draft, 0);
+  assert.equal(removed[0], null);
+  assert.deepEqual(removed[2], draft[2]);
+  assert.equal(complete(removed), null);
+  const empty = emptyDraft();
+  assert.equal(removeShip(empty, 1), empty);
 });

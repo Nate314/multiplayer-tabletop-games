@@ -16,7 +16,7 @@ type PieceTrayProps = {
   selected: string | null;       // shown with aria-pressed
   onTap: (id: string) => void;
   drag: Drag;                    // each piece button spreads drag.source(piece.id)
-  leading?: ReactNode;           // a control shown before the pieces, such as Quoridor's Move
+  leading?: ReactNode;           // a control shown before the pieces, such as Pawns and Walls's Move
 };
 
 export default function PieceTray({ label, pieces, selected, onTap, drag, leading }: PieceTrayProps) {

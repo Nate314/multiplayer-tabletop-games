@@ -10,6 +10,7 @@ One to eight players. The host picks the picture. The host is the first player s
 - **Modes** (the Mode house rule): Solo is one player with the whole puzzle. Together (the standard with two or more players) shares one table, and everyone moves pieces at the same time. Race gives every player the same puzzle, cut and scattered the same way, on a table of their own
 - **Pieces** (the Pieces house rule): 24 (6 by 4), 48 (8 by 6, the standard), 96 (12 by 8) or 150 (15 by 10). Each piece is one cell of the grid with a tab or a blank on every inner side; pieces on the picture's edge are straight there. The pieces start scattered around the table, beside the board
 - **Snapping and locking.** Drop a piece close to its own spot on the board (within 0.3 of the cell's shorter side) and it snaps in and locks there for good. Dropped anywhere else, it stays loose where you let go
+- **Rotate pieces** (a house rule, off by default, in Solo, Together and Race): every piece starts turned 0, 90, 180 or 270 degrees, the same on every Race board. A piece snaps only when it is near its spot and turned the right way up; dropped there turned any other way, it stays loose and keeps its turn. Turning a piece is not a step in History, and Undo does not take it back (in Solo, Undo also puts back turns and loose moves made since the last snap)
 - **Holding.** Pressing a piece picks it up, and you hold one piece at a time. In Together, a piece someone holds shows their color and name and nobody else can take it until they let go. If two players press the same piece at once, the first to reach the server gets it and it slips out of the other's hand. A player who disconnects or leaves lets go of their piece where it lay
 - **In a Race** you see only your own table, plus each player's percentage placed. Once the race is over everyone's table can be seen
 - **Ending.** In Solo and Together the puzzle is done when the last piece is placed, and everyone still seated wins together. In a Race the first player to finish wins and the game ends there
@@ -21,19 +22,20 @@ One to eight players. The host picks the picture. The host is the first player s
 ## Controls
 
 - Press a piece, drag it with the mouse or a finger, and let go. A piece you cannot pick up (placed, or held by someone else) does not move
+- With Rotate pieces on, a ↻ handle sits at the top right corner of the piece you last touched; press it (or focus it and press Enter or Space) to turn the piece 90 degrees clockwise. While you hold a piece, R or a right-click turns it too. Dragging the piece itself never turns it. Only you see the handle on your piece, and a piece someone else holds shows none
 - In the lobby the host clicks a picture beside the table, or Upload a photo. Other players see "Alice picks the picture" (the host's name). The picker stays until the first drag of the game ends
 - The picture beside the table is the finished puzzle to work from. Show picture guide draws it faintly on the board
 - Zoom in and Zoom out (1, 2 or 3 times) make small pieces big enough to grab on a phone; scroll the table on an empty spot
 - Below the picture: how many pieces of your table are placed, then in Together each player's placed count, or in a Race each player's percentage
 - Undo (Solo) or Undo my last move (Together and Race) sits below the counts
 - History shows each placed piece, outlined, with who placed it and how many were placed by then
-- Click Rules at the top of the page for these rules, and FAQ in it for a short guide
+- Open the ☰ menu and choose Rules for these rules, and FAQ in it for a short guide
 
 ## Differences from Wikipedia
 
 These follow [Wikipedia's Jigsaw puzzle article](https://en.wikipedia.org/wiki/Jigsaw_puzzle). What is different:
 
-- **No rotation.** Pieces never rotate: every piece lies face up and upright
+- **Rotation is a house rule.** Off by default, pieces lie upright; with Rotate pieces on they start turned and snap only the right way up. Pieces are never flipped face down
 - **One cut style.** There are no straight-cut or edge-only styles and no whimsies (pieces in the shapes of objects or animals). Every piece is a grid cell with tabs and blanks
 - **Locking.** A piece locks only into its true spot on the board. Pieces never join each other off the board
 - **Competition.** Wikipedia gives no competitive rules, so Together shares the win and Race goes to the first to finish

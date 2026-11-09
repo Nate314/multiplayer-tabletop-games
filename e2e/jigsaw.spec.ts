@@ -2,10 +2,9 @@ import type { Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
 import {
   agreeToHouseRules, dismiss, drag, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, test, touchDrag, undo, watch,
-  type Seat, type Table
-} from './fixtures.ts';
+  type Seat, type Table, headerButton } from './fixtures.ts';
 import { gridOf, homeOf, type PieceCount } from '../games/jigsaw/cut.ts';
-import type { Board, GameState, Piece } from '../games/jigsaw/types.ts';
+import type { Board, GameState, Piece, Turns } from '../games/jigsaw/types.ts';
 
 // One test per rule, control and difference in games/jigsaw/README.md. Seat 1 is Alice, the host; seat 2 is Bob.
 // The scatter is random, so a test first lays the table out: the pieces it drags lie apart beside the board (SLOTS)
@@ -39,8 +38,23 @@ const placedCount = (page: Page) => page.locator('.jigsaw-count');
 const preview = (page: Page) => page.locator('.jigsaw-preview');
 const picker = (page: Page) => page.getByRole('group', { name: 'Choose a picture' });
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+const handle = (page: Page) => page.getByRole('button', { name: 'Turn piece' });
 const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
 const standing = (page: Page, name: string) => gameOver(page).locator('.game-over-standings li', { hasText: name });
+
+// `board` with some pieces turned
+function turned(board: Board, turns: Record<number, Turns>): Board {
+  return { pieces: board.pieces.map((each, n) => n in turns ? { ...each, turns: turns[n] } : each) };
+}
+
+// Piece `n`'s quarter turns on the shared (or Solo) board
+const turnsOn = async (table: Table, n: number) => (await table.state<GameState>()).board.pieces[n].turns ?? 0;
+
+// `page` presses piece `n` and lets go about where it lay, so it is touched but stays loose
+async function touch(page: Page, n: number): Promise<void> {
+  await lift(page, piece(page, n), { x: 4, y: 0 });
+  await page.mouse.up();
+}
 
 // Waits until every open page shows the laid out table
 async function lay(table: Table, fields: Partial<GameState>): Promise<void> {
@@ -447,7 +461,7 @@ test.describe('Jigsaw controls', () => {
     await place(alice, 0);
     await place(alice, 1);
     await expect(placedCount(alice)).toHaveText('2 of 48 placed');
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const history = alice.getByRole('dialog', { name: 'History' });
     await expect(history.locator('.history-move')).toContainText('Alice placed a piece (2 of 48)');
     await expect(history.locator('.jigsaw-piece.highlighted')).toHaveAttribute('data-piece', '1');
@@ -463,5 +477,198 @@ test.describe('Jigsaw controls', () => {
     await expect(faq).toContainText('What are Solo, Together and Race?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+  });
+});
+
+test.describe('Jigsaw Rotate pieces', () => {
+  const rotating = (seat: Seat, names: string[], touch = false) => seat('jigsaw', names, { touch, houseRules: { rotation: true } });
+
+  test('Rotate pieces: pieces start turned, and a Race gives every board the same turns', async ({ seat }) => {
+    const table = await seat('jigsaw', ['Alice', 'Bob']);
+    const [alice, bob] = table.pages;
+    await setHouseRules(alice, 'jigsaw', { mode: 'race', rotation: true });
+    await agreeToHouseRules(alice, bob);
+    const turns = (board: Board | undefined) => board?.pieces.map(each => each.turns ?? 0) ?? [];
+    await expect.poll(async () => turns((await table.state<GameState>()).boards[1]).some(each => each > 0)).toBe(true);
+    const { boards } = await table.state<GameState>();
+    expect(turns(boards[2])).toEqual(turns(boards[1]));
+    const n = turns(boards[1]).findIndex(each => each > 0);
+    await expect(piece(alice, n)).toHaveAttribute('transform', new RegExp(`rotate\\(${turns(boards[1])[n] * 90},`));
+  });
+
+  test('the ↻ handle appears after you touch a piece and turns it 90 degrees clockwise', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice']);
+    const [alice] = table.pages;
+    await lay(table, { board: layout(48, [0]) });
+    await expect(handle(alice)).toHaveCount(0);
+    await touch(alice, 0);
+    await expect(handle(alice)).toBeVisible();
+    await handle(alice).click();
+    await expect.poll(() => turnsOn(table, 0)).toBe(1);
+    await expect(piece(alice, 0)).toHaveAttribute('transform', /rotate\(90,/);
+    for (let press = 0; press < 3; press++) await handle(alice).click();
+    await expect.poll(() => turnsOn(table, 0)).toBe(0);
+    await expect(piece(alice, 0)).toHaveAttribute('transform', /^translate\([-\d.]+,[-\d.]+\)$/);
+  });
+
+  test('dragging the piece body never turns it', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice']);
+    const [alice] = table.pages;
+    await lay(table, { board: turned(layout(48, [0]), { 0: 1 }) });
+    for (const to of [47, 46, 39]) {
+      await drag(alice, piece(alice, 0), spot(alice, to));
+      await expect(handle(alice)).toBeVisible();
+    }
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].x).not.toBe(SLOTS[0].x);
+    expect(await turnsOn(table, 0)).toBe(1);
+    await expect(piece(alice, 0)).toHaveAttribute('transform', /rotate\(90,/);
+  });
+
+  test('a turned piece dropped on its spot stays loose; turned upright it snaps', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice']);
+    const [alice] = table.pages;
+    await lay(table, { board: turned(layout(48, [0]), { 0: 3 }) });
+    await drag(alice, piece(alice, 0), spot(alice, 0));
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].x).not.toBe(SLOTS[0].x);
+    await expect(piece(alice, 0)).toHaveAttribute('data-drag', '');
+    await expect(placedCount(alice)).toHaveText('0 of 48 placed');
+    expect(await turnsOn(table, 0)).toBe(3);
+    await handle(alice).click();
+    await expect.poll(() => turnsOn(table, 0)).toBe(0);
+    await place(alice, 0);
+    await expect(placedCount(alice)).toHaveText('1 of 48 placed');
+  });
+
+  test('R and a right-click turn the piece being held', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice']);
+    const [alice] = table.pages;
+    await lay(table, { board: layout(48, [0]) });
+    await lift(alice, piece(alice, 0));
+    await alice.keyboard.press('r');
+    await expect.poll(() => turnsOn(table, 0)).toBe(1);
+    await alice.mouse.down({ button: 'right' });
+    await alice.mouse.up({ button: 'right' });
+    await expect.poll(() => turnsOn(table, 0)).toBe(2);
+    // Still held: the drag goes on and ends with the left button
+    expect((await table.state<GameState>()).board.pieces[0].heldBy).toBe(1);
+    await alice.mouse.up();
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBeNull();
+    expect(await turnsOn(table, 0)).toBe(2);
+  });
+
+  test('only the player who touched a piece sees its handle, and a piece held by someone else shows none', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice', 'Bob']);
+    const [alice, bob] = table.pages;
+    await lay(table, { board: layout(48, [0]) });
+    await touch(alice, 0);
+    await expect(handle(alice)).toBeVisible();
+    await expect(handle(bob)).toHaveCount(0);
+    await lift(bob, piece(bob, 0));
+    await expect(piece(alice, 0)).toHaveAttribute('data-held-by', '2');
+    await expect(handle(alice)).toHaveCount(0);
+    await expect(handle(bob)).toBeVisible();
+    await bob.mouse.up();
+    // Bob touched it last, so the handle stays his after he lets go
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBeNull();
+    await expect(handle(bob)).toBeVisible();
+    await expect(handle(alice)).toHaveCount(0);
+  });
+
+  test('turning is not a History step and Undo my last move does not take it back', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice', 'Bob']);
+    const [alice] = table.pages;
+    await lay(table, { board: layout(48, [0, 1]) });
+    await touch(alice, 0);
+    await handle(alice).click();
+    await expect.poll(() => turnsOn(table, 0)).toBe(1);
+    await place(alice, 1);
+    await expect(placedCount(alice)).toHaveText('1 of 48 placed');
+    await (await headerButton(alice, 'History')).click();
+    const history = alice.getByRole('dialog', { name: 'History' });
+    await expect(history.getByRole('slider', { name: 'Step' })).toHaveAttribute('max', '1');
+    await expect(history.locator('.history-move')).toContainText('Alice placed a piece (1 of 48)');
+    await alice.keyboard.press('Escape');
+    await expect(history).toHaveCount(0);
+    await button(alice, 'Undo my last move').click();
+    await expect(piece(alice, 1)).toHaveAttribute('data-drag', '');
+    await expect(placedCount(alice)).toHaveText('0 of 48 placed');
+    expect(await turnsOn(table, 0)).toBe(1);
+  });
+
+  test('with Rotate pieces off there is no handle', async ({ seat }) => {
+    const { table, alice } = await solo(seat);
+    await lay(table, { board: layout(48, [0]) });
+    await touch(alice, 0);
+    await expect.poll(async () => (await table.state<GameState>()).started).toBe(true);
+    await expect(handle(alice)).toHaveCount(0);
+  });
+
+  test('turning works with a finger', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice'], true);
+    const [alice] = table.pages;
+    await lay(table, { board: layout(48, [0]) });
+    await piece(alice, 0).scrollIntoViewIfNeeded();
+    await touchDrag(alice, piece(alice, 0), spot(alice, 47));
+    await expect(handle(alice)).toBeVisible();
+    await handle(alice).tap();
+    await expect.poll(() => turnsOn(table, 0)).toBe(1);
+  });
+
+  test('on a phone the handle is finger-sized at zoom 1 and 2 and leaves the piece body free to drag', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice'], true);
+    const [alice] = table.pages;
+    await alice.setViewportSize({ width: 390, height: 844 });
+    await lay(table, { board: layout(48, [0]) });
+    await piece(alice, 0).scrollIntoViewIfNeeded();
+    await touchDrag(alice, piece(alice, 0), piece(alice, 0));
+    for (const zoom of [1, 2]) {
+      if (zoom === 2) await button(alice, 'Zoom in').click();
+      await piece(alice, 0).scrollIntoViewIfNeeded();
+      const box = (await handle(alice).boundingBox())!;
+      const body = (await piece(alice, 0).boundingBox())!;
+      const centre = { x: body.x + body.width / 2, y: body.y + body.height / 2 };
+      expect(box.width).toBeGreaterThanOrEqual(32);
+      expect(box.height).toBeGreaterThanOrEqual(32);
+      const covers = centre.x >= box.x && centre.x <= box.x + box.width && centre.y >= box.y && centre.y <= box.y + box.height;
+      expect(covers).toBe(false);
+    }
+    await touchDrag(alice, piece(alice, 0), spot(alice, 47));
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].x).not.toBe(SLOTS[0].x);
+    expect(await turnsOn(table, 0)).toBe(0);
+  });
+
+  test('a long press with a finger never turns the held piece', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice'], true);
+    const [alice] = table.pages;
+    await lay(table, { board: layout(48, [0]) });
+    await piece(alice, 0).scrollIntoViewIfNeeded();
+    const box = (await piece(alice, 0).boundingBox())!;
+    const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const cdp = await alice.context().newCDPSession(alice);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: at.x + 4, y: at.y }] });
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBe(1);
+    // What Chrome on Android fires after a still finger: a contextmenu from a touch pointer
+    const prevented = await alice.evaluate(() =>
+      !window.dispatchEvent(new PointerEvent('contextmenu', { pointerType: 'touch', bubbles: true, cancelable: true })));
+    expect(prevented).toBe(true);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBeNull();
+    expect(await turnsOn(table, 0)).toBe(0);
+  });
+
+  test('a press on the handle over another piece turns only the touched piece', async ({ seat }) => {
+    const table = await rotating(seat, ['Alice']);
+    const [alice] = table.pages;
+    // Piece 1 lies under the top right corner of piece 0 (in SLOTS[0]), where its handle sits
+    const under = { x: SLOTS[0].x + gridOf(48).w - 20, y: SLOTS[0].y - 60 };
+    const board = layout(48, [0]);
+    board.pieces[1] = { ...loose(under.x, under.y), turns: 2 };
+    await lay(table, { board });
+    await touch(alice, 0);
+    await handle(alice).click();
+    await expect.poll(() => turnsOn(table, 0)).toBe(1);
+    expect((await table.state<GameState>()).board.pieces[1]).toEqual({ ...loose(under.x, under.y), turns: 2 });
   });
 });

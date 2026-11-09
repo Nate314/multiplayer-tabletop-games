@@ -13,6 +13,8 @@ export type PushStore = {
   removeRoom(roomId: string): void;
   removeEndpoint(endpoint: string): void;
   roomIds(): string[];
+  // Moves the subscriptions of an old game id to a new one; a room whose new id already has subscriptions stays
+  renameGameType(from: string, to: string): number;
   close(): void;
 };
 
@@ -39,6 +41,11 @@ export function openPushStore(file: string): PushStore {
   const removeRoom = db.prepare('DELETE FROM push_subscriptions WHERE room_id = ?');
   const removeEndpoint = db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?');
   const roomIds = db.prepare('SELECT DISTINCT room_id FROM push_subscriptions');
+  const prefixRooms = db.prepare(
+    "SELECT DISTINCT room_id FROM push_subscriptions WHERE substr(room_id, 1, length(?1) + 1) = ?1 || '/'"
+  );
+  const roomTaken = db.prepare('SELECT 1 FROM push_subscriptions WHERE room_id = ?');
+  const renameRoom = db.prepare('UPDATE OR IGNORE push_subscriptions SET room_id = ?2 WHERE room_id = ?1');
   return {
     getSetting: (key) => (getSetting.get(key) as { value: string } | undefined)?.value ?? null,
     setSetting: (key, value) => void setSetting.run(key, value),
@@ -51,6 +58,14 @@ export function openPushStore(file: string): PushStore {
     removeRoom: (roomId) => void removeRoom.run(roomId),
     removeEndpoint: (endpoint) => void removeEndpoint.run(endpoint),
     roomIds: () => (roomIds.all() as { room_id: string }[]).map((row) => row.room_id),
+    renameGameType: (from, to) => {
+      let renamed = 0;
+      for (const { room_id } of prefixRooms.all(from) as { room_id: string }[]) {
+        const next = to + room_id.slice(from.length);
+        if (!roomTaken.get(next)) renamed += Number(renameRoom.run(room_id, next).changes);
+      }
+      return renamed;
+    },
     close: () => db.close()
   };
 }

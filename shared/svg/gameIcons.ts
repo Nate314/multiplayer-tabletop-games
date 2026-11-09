@@ -1,5 +1,5 @@
 import { el, type SvgAsset } from './svg.ts';
-import { lineIcon, rocketIcon, solid } from './icons.ts';
+import { lineIcon, solid } from './icons.ts';
 
 const pip = (cx: number, cy: number, r = 1.1) => solid('circle', { cx, cy, r });
 const label = (text: string, x: number, y: number, size: number) =>
@@ -7,59 +7,74 @@ const label = (text: string, x: number, y: number, size: number) =>
 
 // One outline drawing per game for the landing page, in currentColor
 const GAME_ICONS: Record<string, () => string> = {
-  azul: () => lineIcon(el('path', { d: 'M12 3l9 9-9 9-9-9z' }), solid('path', { d: 'M12 8l4 4-4 4-4-4z' })),
+  palacewalls: () => lineIcon(el('rect', { x: 3, y: 3, width: 5, height: 5 }), el('rect', { x: 9.5, y: 3, width: 5, height: 5 }), el('rect', { x: 16, y: 3, width: 5, height: 5 }), el('rect', { x: 3, y: 9.5, width: 5, height: 5 }), el('rect', { x: 16, y: 9.5, width: 5, height: 5 }), el('rect', { x: 3, y: 16, width: 5, height: 5 }), el('rect', { x: 9.5, y: 16, width: 5, height: 5 }), el('rect', { x: 16, y: 16, width: 5, height: 5 }), solid('rect', { x: 9.5, y: 9.5, width: 5, height: 5 })),
   backgammon: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 1.5 }),
     el('path', { d: 'M5.5 4l2 6.5 2-6.5M14.5 4l2 6.5 2-6.5M5.5 20l2-6.5 2 6.5M14.5 20l2-6.5 2 6.5' })),
-  carcassonne: () => lineIcon(el('path', { d: 'M4 21V6h3v3h3V6h4v3h3V6h3v15z' }), el('path', { d: 'M10 21v-4a2 2 0 0 1 4 0v4' })),
-  catan: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
+  roadsandfields: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18 }), el('path', { d: 'M3 8a13 13 0 0 1 13 13M3 14a7 7 0 0 1 7 7' })),
+  // Three lines beside a large letter
+  categories: () => lineIcon(el('path', { d: 'M14 6h7M14 12h7M14 18h7' }), label('B', 7.5, 18, 17)),
+  hexisland: () => lineIcon(el('path', { d: 'M12 2l8.7 5v10L12 22l-8.7-5V7z' }), el('circle', { cx: 12, cy: 12, r: 3.5 })),
+  charades: () => lineIcon(el('circle', { cx: 12, cy: 5, r: 2.5 }), el('path', { d: 'M12 8v7M12 10L6 4M12 10l6-6M12 15l-4 6M12 15l4 6' })),
   checkers: () => lineIcon(el('ellipse', { cx: 12, cy: 8, rx: 8, ry: 3 }), el('path', { d: 'M4 8v4a8 3 0 0 0 16 0V8M4 12v4a8 3 0 0 0 16 0v-4' })),
   chinesecheckers: () => lineIcon(el('path', { d: 'M12 2l2.9 5h5.8l-2.9 5 2.9 5h-5.8L12 22l-2.9-5H3.3l2.9-5-2.9-5h5.8z' }), pip(12, 12, 1.6)),
   chess: () => lineIcon(el('path', { d: 'M12 2v5M9.5 4.5h5M8 10h8l-1.5 8h-5zM6 21h12v-3H6zM8 10a4 3 0 0 1 8 0' })),
   // A row of four pegs over two small answer pegs
   codebreaker: () => lineIcon(...[4.5, 9.5, 14.5, 19.5].map(x => el('circle', { cx: x, cy: 9, r: 2.2 })), pip(9.5, 16.5, 1.4), el('circle', { cx: 14.5, cy: 16.5, r: 1.4 })),
-  connectfour: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 2 }),
+  fourinarow: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 2 }),
     ...[7.5, 12, 16.5].flatMap(x => [el('circle', { cx: x, cy: 9.5, r: 1.6 }), x === 12 ? solid('circle', { cx: x, cy: 14.5, r: 1.6 }) : el('circle', { cx: x, cy: 14.5, r: 1.6 })])),
+  corners: () => lineIcon(...[3, 7.5, 12, 16.5].map(n => el('rect', { x: n, y: n, width: 4.5, height: 4.5 }))),
   dominoes: () => lineIcon(el('rect', { x: 7, y: 2, width: 10, height: 20, rx: 2 }), el('path', { d: 'M7 12h10' }),
     pip(10, 5.5), pip(14, 8.5), pip(10, 15), pip(12, 17), pip(14, 19)),
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),
     el('rect', { x: 10, y: 4, width: 10, height: 14, rx: 1.5, transform: 'rotate(10 15 11)' }), label('J', 15, 14, 7)),
   farkle: () => lineIcon(el('path', { d: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z' })),
+  fictionary: () => lineIcon(el('path', { d: 'M12 6c-2-1.5-5-2-9-1.5v14c4-.5 7 0 9 1.5 2-1.5 5-2 9-1.5v-14c-4-.5-7 0-9 1.5zM12 6v14' }), el('path', { d: 'M5.5 9.5a1.75 1.75 0 1 1 2.2 1.7c-.4.2-.7.5-.7 1v.8' }), pip(7, 15.2, 0.8)),
   go: () => lineIcon(el('path', { d: 'M4 8h16M4 16h16M8 4v16M16 4v16' }), solid('circle', { cx: 8, cy: 8, r: 2.5 }), el('circle', { cx: 16, cy: 16, r: 2.5 })),
   gofish: () => lineIcon(el('path', { d: 'M6 12c2.5-3.5 6-5 9-5s6 2.5 7 5c-1 2.5-4 5-7 5s-6.5-1.5-9-5zM6 12L2 8v8z' }), pip(17, 11, 0.9)),
+  // A 3 by 3 grid of squares, two filled
+  hintgrid: () => lineIcon(...[4, 9.5, 15].flatMap(x => [4, 9.5, 15].map(y => (x === 4 && y === 4) || (x === 15 && y === 9.5) ? solid('rect', { x, y, width: 5, height: 5 }) : el('rect', { x, y, width: 5, height: 5 })))),
   hearts: () => lineIcon(solid('path', { d: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z' })),
   holdem: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('circle', { cx: 12, cy: 12, r: 5 }), el('path', { d: 'M12 3v4M12 17v4M3 12h4M17 12h4' })),
   // Three courses of bricks, the middle one pulled halfway out to the right
-  jenga: () => lineIcon(el('path', { d: 'M3 3h14v6H3zM7.7 3v6M12.3 3v6M7 9h14v6H7zM3 15h14v6H3zM7.7 15v6M12.3 15v6' })),
+  blocktower: () => lineIcon(el('path', { d: 'M3 3h14v6H3zM7.7 3v6M12.3 3v6M7 9h14v6H7zM3 15h14v6H3zM7.7 15v6M12.3 15v6' })),
   // One piece with a tab on top and on the right
   jigsaw: () => lineIcon(el('path', { d: 'M4 8h4a2.2 2.2 0 1 1 4 0h4v4a2.2 2.2 0 1 1 0 4v4H4z' })),
   mancala: () => lineIcon(el('rect', { x: 2, y: 7, width: 20, height: 10, rx: 5 }),
     ...[8.5, 12, 15.5].flatMap(x => [el('circle', { cx: x, cy: 10.2, r: 1.2 }), el('circle', { cx: x, cy: 13.8, r: 1.2 })])),
-  monopoly: () => lineIcon(el('path', { d: 'M3 18c0 1.5 4 2.5 9 2.5s9-1 9-2.5M6 18.5V6c0-1 2.7-2 6-2s6 1 6 2v12.5M6 14c2 .7 4 1 6 1s4-.3 6-1' })),
+  // A house with a key
+  streetdeeds: () => lineIcon(el('path', { d: 'M3 11.5 12 4l9 7.5M5.5 9.5V20H12M18.5 9.5V13M17 16.5h4.5V19M19.5 16.5V18.5' }), el('circle', { cx: 14.5, cy: 16.5, r: 2.5 })),
   naval: () => lineIcon(el('path', { d: 'M2 15h20l-3 5H5z' }), el('path', { d: 'M12 15V3l6 9h-6' })),
-  parchisi: () => lineIcon(el('path', { d: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z' }), el('path', { d: 'M12 9l3 3-3 3-3-3z' })),
-  phase10: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 18, rx: 2 }), label('10', 12, 15.5, 9)),
-  pictionary: () => lineIcon(el('path', { d: 'M3 21l3.5-1 11-11-2.5-2.5-11 11zM14 5.5l2.5 2.5M3 15c2-3 4 1 6-2' })),
-  quoridor: () => lineIcon(el('circle', { cx: 12, cy: 6, r: 3 }), el('path', { d: 'M9.5 11h5l1.5 7H8zM6 21h12v-3H6z' })),
-  racko: () => lineIcon(el('path', { d: 'M4 21v-5M9 21v-9M14 21v-13M19 21V3' })),
-  risk: () => lineIcon(el('circle', { cx: 12, cy: 12, r: 9 }), el('ellipse', { cx: 12, cy: 12, rx: 4, ry: 9 }), el('path', { d: 'M3 12h18' })),
-  rook: () => lineIcon(el('path', { d: 'M3 16c4 0 6-2 7-5s3-6 7-6c2 0 3 1 3.5 2l2 1-2 1c0 6-4 10-10 10H7l2-3c-2.5 0-4.5-.5-6-1z' }), pip(17, 7, 0.8)),
-  rummikub: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), label('7', 12, 14, 9), el('circle', { cx: 12, cy: 17.5, r: 1 })),
-  scrabble: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), label('A', 11, 16.5, 12), label('1', 17.5, 19, 5)),
-  skipbo: () => lineIcon(el('rect', { x: 8, y: 3, width: 12, height: 16, rx: 1.5 }), el('path', { d: 'M5 6v13a2 2 0 0 0 2 2h9' })),
+  pachisi: () => lineIcon(el('path', { d: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z' }), el('path', { d: 'M12 9l3 3-3 3-3-3z' })),
+  stagerummy: () => lineIcon(el('path', { d: 'M3 21v-5h6v-5h6V6h6v15z' })),
+  drawandguess: () => lineIcon(el('path', { d: 'M3 21l3.5-1 11-11-2.5-2.5-11 11zM14 5.5l2.5 2.5M3 15c2-3 4 1 6-2' })),
+  pawnsandwalls: () => lineIcon(el('circle', { cx: 12, cy: 6, r: 3 }), el('path', { d: 'M9.5 11h5l1.5 7H8zM6 21h12v-3H6z' })),
+  inorder: () => lineIcon(el('path', { d: 'M4 21v-5M9 21v-9M14 21v-13M19 21V3' })),
+  // A playing card with a check mark: a mission done
+  missiontricks: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), el('path', { d: 'M9 12.5l2 2 4-4.5' })),
+  roadtoretirement: () => lineIcon(el('path', { d: 'M3 21c5 0 3-5 8-6s5-4 7-6' }), el('path', { d: 'M14.5 9V5.5L18 2.5l3.5 3V9z' })),
+  nest: () => lineIcon(el('path', { d: 'M2.5 12c0 5 4 8.5 9.5 8.5s9.5-3.5 9.5-8.5' }), el('ellipse', { cx: 7.5, cy: 9.5, rx: 2.2, ry: 2.8 }), el('ellipse', { cx: 12, cy: 8.5, rx: 2.2, ry: 2.8 }), el('ellipse', { cx: 16.5, cy: 9.5, rx: 2.2, ry: 2.8 })),
+  rummytiles: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), label('7', 12, 14, 9), el('circle', { cx: 12, cy: 17.5, r: 1 })),
+  lettergrid: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), label('A', 11, 16.5, 12), label('1', 17.5, 19, 5)),
+  spiteandmalice: () => lineIcon(el('rect', { x: 8, y: 3, width: 12, height: 16, rx: 1.5 }), el('path', { d: 'M5 6v13a2 2 0 0 0 2 2h9' })),
   snakesladders: () => lineIcon(el('path', { d: 'M5 21V3M10 21V3M5 8h5M5 13h5M5 18h5' }), el('path', { d: 'M20 3c-4 2 0 5-3 8s1 6-3 10' })),
   spades: () => lineIcon(solid('path', { d: 'M12 2C9 6 4 9 4 13a4 4 0 0 0 7 2.6L10 21h4l-1-5.4A4 4 0 0 0 20 13c0-4-5-7-8-11z' })),
-  splendor: () => lineIcon(el('path', { d: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M8 9l4 12 4-12' })),
+  jewelguild: () => lineIcon(el('path', { d: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M8 9l4 12 4-12' })),
+  steadyhand: () => lineIcon(el('path', { d: 'M3 20h6v-6H5V8h8V4h8' }), el('circle', { cx: 3.5, cy: 20, r: 2 })),
   sudoku: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), label('5', 12, 14.5, 6)),
-  thecrew: rocketIcon,
-  tickettoride: () => lineIcon(el('rect', { x: 5, y: 3, width: 14, height: 14, rx: 3 }), el('rect', { x: 7.5, y: 6, width: 9, height: 4.5, rx: 1 }),
-    pip(9, 14), pip(15, 14), el('path', { d: 'M8 17l-2 4M16 17l2 4' })),
+  // Two railway lines, drawn with their ties, crossing at a city
+  railroutes: () => lineIcon(el('path', { d: 'M2 15L22 9M9 2.5L15 21.5M4.9 11.8l1.2 4.2M17.9 7.9l1.2 4.2M7.9 6.2l4.2-1.3M12 19.2l4.2-1.3' }),
+    solid('circle', { cx: 12, cy: 12, r: 3.2 })),
+  // A flag planted on a hill
+  territories: () => lineIcon(el('path', { d: 'M2 20c3-4 6.5-6 10-6s7 2 10 6z' }), el('path', { d: 'M12 14V3h7l-2 2.5 2 2.5h-7' })),
   tictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18M10.5 10.5l3 3M13.5 10.5l-3 3' })),
+  tradingfloor: () => lineIcon(el('path', { d: 'M3 11l6-2 3 10-6 2zM21 11l-6-2-3 10 6 2zM7 6c3-3 7-3 10 0M17 6l-3 .5M17 6l-.5-3M7 6l3 .5M7 6l.5-3' })),
   // A # grid with a small, thinner # in each of its nine boards
   ultimatetictactoe: () => lineIcon(el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), el('path', { 'stroke-width': 0.8,
     d: [6, 12, 18].flatMap(x => [6, 12, 18].map(y => `M${x - 1} ${y - 2}v4M${x + 1} ${y - 2}v4M${x - 2} ${y - 1}h4M${x - 2} ${y + 1}h4`)).join('') })),
-  uno: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), el('ellipse', { cx: 12, cy: 12, rx: 3.5, ry: 6.5, transform: 'rotate(30 12 12)' })),
+  rainboweights: () => lineIcon(el('rect', { x: 6, y: 3, width: 12, height: 18, rx: 2 }), el('circle', { cx: 12, cy: 9.5, r: 2.5 }), el('circle', { cx: 12, cy: 14.5, r: 3 })),
   war: () => lineIcon(el('path', { d: 'M4 4l11 11M20 4L9 15M12.5 17.5l5-5M6.5 12.5l5 5M16 16l4 4M8 16l-4 4' })),
-  yahtzee: () => lineIcon(el('rect', { x: 3, y: 10, width: 10, height: 10, rx: 2 }), pip(6, 13), pip(10, 17),
+  whodunit: () => lineIcon(el('circle', { cx: 10, cy: 10, r: 6.5 }), el('path', { d: 'M14.8 14.8L21 21M7.5 10a2 2 0 1 1 4 0 2 2 0 0 1-4 0zM11.5 10h2.5v2M13 10v1.5' })),
+  fivedice: () => lineIcon(el('rect', { x: 3, y: 10, width: 10, height: 10, rx: 2 }), pip(6, 13), pip(10, 17),
     el('rect', { x: 12, y: 3, width: 9, height: 9, rx: 2 }), pip(14.5, 5.5), pip(16.5, 7.5), pip(18.5, 9.5)),
 };
 

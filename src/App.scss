@@ -25,6 +25,33 @@
   --piece-tray-border-default: #d9d9d4;
   --piece-tray-text-default: #1d1d1b;
   --piece-tray-selected-default: #2d6a4f;
+  /* The shared seat palette (shared/seatColors.ts): seat N is --seat-color-N in every pawn-and-piece game.
+     Light fills like yellow need --seat-stroke-N as an outline to read on a light board */
+  --seat-color-1: #d1242f; /* red */
+  --seat-color-2: #1f63d1; /* blue */
+  --seat-color-3: #1f8a3c; /* green */
+  --seat-color-4: #f2c200; /* yellow */
+  --seat-color-5: #8240c9; /* purple */
+  --seat-color-6: #e86a10; /* orange */
+  --seat-color-7: #0fa3b8; /* cyan */
+  --seat-color-8: #e0499b; /* pink */
+  --seat-stroke-1: #7a1218;
+  --seat-stroke-2: #0f3a80;
+  --seat-stroke-3: #0f5122;
+  --seat-stroke-4: #7a5c00;
+  --seat-stroke-5: #4a1f7a;
+  --seat-stroke-6: #8a3a05;
+  --seat-stroke-7: #075f6b;
+  --seat-stroke-8: #85215a;
+  /* Ink for a symbol or letter drawn on seat N's piece: white, but the dark stroke on light yellow */
+  --seat-ink-1: #FFFFFF;
+  --seat-ink-2: #FFFFFF;
+  --seat-ink-3: #FFFFFF;
+  --seat-ink-4: var(--seat-stroke-4);
+  --seat-ink-5: #FFFFFF;
+  --seat-ink-6: #FFFFFF;
+  --seat-ink-7: #FFFFFF;
+  --seat-ink-8: #FFFFFF;
 }
 
 :root[data-theme="dark"] {
@@ -52,6 +79,24 @@
   --piece-tray-border-default: #3a3a38;
   --piece-tray-text-default: #ededea;
   --piece-tray-selected-default: #4ba67d;
+  /* Brighter seat fills for dark boards; the strokes stay the same */
+  --seat-color-1: #f0524f; /* red */
+  --seat-color-2: #4d8ff5; /* blue */
+  --seat-color-3: #3fbf62; /* green */
+  --seat-color-4: #f7d23d; /* yellow */
+  --seat-color-5: #b07cf0; /* purple */
+  --seat-color-6: #f78b38; /* orange */
+  --seat-color-7: #33d1e0; /* cyan */
+  --seat-color-8: #f57dc0; /* pink */
+  /* The brighter dark fills read better under the dark stroke as ink */
+  --seat-ink-1: var(--seat-stroke-1);
+  --seat-ink-2: var(--seat-stroke-2);
+  --seat-ink-3: var(--seat-stroke-3);
+  --seat-ink-4: var(--seat-stroke-4);
+  --seat-ink-5: var(--seat-stroke-5);
+  --seat-ink-6: var(--seat-stroke-6);
+  --seat-ink-7: var(--seat-stroke-7);
+  --seat-ink-8: var(--seat-stroke-8);
 }
 
 /* Browsers that support AccentColor (Firefox, Safari, recent Chrome) show the OS accent as the browser exposes it; older ones keep the green above. color-mix is checked too so hover never stays green */
@@ -458,9 +503,25 @@
 
 :where([data-game] .game-header h1) {
   flex: 1;
+  /* A long title shrinks, then wraps, instead of pushing the menu button off a phone screen */
+  min-width: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
   margin: 0;
-  font-size: 1.5rem;
+  font-size: clamp(1.125rem, 0.6rem + 3vw, 1.5rem);
   text-align: center;
+}
+
+/* On a phone the back button keeps only its arrow, so a long game name fits without breaking inside a word */
+@media (max-width: 420px) {
+  :where([data-game] .back-button-label) {
+    display: none;
+  }
+
+  :where([data-game] .back-button) {
+    min-width: 2.75rem;
+    padding: 0 0.75rem;
+  }
 }
 
 /* The game ID beside the title, quieter than the name */
@@ -483,7 +544,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .game-header .settings-button, [data-game] .hide-button, [data-game] .theme-toggle) {
+:where([data-game] .game-header .settings-button, [data-game] .hide-button, [data-game] .theme-toggle, [data-game] .game-menu-button) {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -508,8 +569,81 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .pause-button:hover:enabled, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .pause-button:hover:enabled, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover, [data-game] .game-menu-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
+}
+
+/* The ☰ button on the right of the header, and the panel of controls that unfolds under it */
+:where([data-game] .game-menu) {
+  position: relative;
+  margin-left: auto;
+}
+
+:where([data-game] .game-menu-button) {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+:where([data-game] .game-menu-panel) {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  right: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2rem);
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: var(--platform-panel-bg, var(--lobby-surface));
+  color: var(--platform-panel-text, var(--lobby-text));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform-origin: top right;
+  visibility: hidden;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 150ms, transform 150ms, visibility 0s 150ms;
+}
+
+:where([data-game] .game-menu-panel[data-open]) {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-game] .game-menu-panel) {
+    transition: none;
+  }
+}
+
+/* Each control is a labeled row. Outside :where() and heavier than the game stylesheets' header button rules,
+   so none of them can shrink a row back to a round icon */
+[data-game].game-root .game-menu-panel :is(button, a, .share-wrapper) {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  width: auto;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 1.25rem;
+  white-space: nowrap;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+[data-game].game-root .game-menu-panel .share-wrapper {
+  padding: 0;
+}
+
+[data-game].game-root .game-menu-panel .share-wrapper > .share-button {
+  flex: 1;
 }
 
 /* The status and the copy-by-hand panel hang under the button so the header never reflows */
@@ -547,65 +681,6 @@
 
 :where([data-game] .share-panel input) {
   min-width: 0;
-}
-
-/* Up to the width where every header button fits beside the title (Quoridor's is the widest), the header is compact */
-$compact-header: 860px;
-
-/* Phones and tablets: the title takes its own row with Hide at its end, and Back to games, History, Rules and Settings fit one row under it.
-   Share, Pause and the theme toggle move into Settings and the GitHub link stays on the landing page only.
-   Outside :where(), so no game's header rule can show them again. */
-@media (max-width: $compact-header) {
-  [data-game] .game-header > .share-wrapper,
-  [data-game] .game-header > .pause-button,
-  [data-game] .game-header > .github-link,
-  [data-game] .game-header > .theme-toggle {
-    display: none;
-  }
-
-  :where([data-game] .game-header) {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.375rem;
-  }
-
-  :where([data-game] .game-header h1) {
-    flex-basis: 100%;
-    order: -1;
-  }
-
-  /* Outside :where(), so the card games' wider header gap and button padding cannot push the row onto two lines */
-  [data-game].game-root > .game-header {
-    column-gap: 0.375rem;
-  }
-
-  [data-game] .game-header > :is(.back-button, .history-button, .rules-button) {
-    padding: 0 0.6rem;
-  }
-
-  /* Hide sits at the end of the title row; the padding balances it so the title stays centered.
-     Outside :where(), so Azul's and Quoridor's own header rules cannot undo it. */
-  [data-game].game-root > .game-header > h1 {
-    flex: 1 0 calc(100% - 4rem);
-    box-sizing: border-box;
-    padding-left: 2.875rem;
-  }
-
-  [data-game].game-root > .game-header > .hide-button {
-    order: -1;
-  }
-}
-
-/* The narrowest phones (320 px): tighter text buttons keep Back to games, History, Rules and Settings on one row.
-   Outside :where(), so the games with their own header rules (Azul, Quoridor) get it too */
-@media (max-width: 360px) {
-  [data-game].game-root > .game-header {
-    column-gap: 0.25rem;
-  }
-
-  [data-game] .game-header > :is(.back-button, .history-button, .rules-button) {
-    padding: 0 0.375rem;
-  }
 }
 
 /* Before the first move there is no history */
@@ -1351,11 +1426,11 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 /* Rules marks itself while this device still has to agree; the note is for screen readers only */
-:where([data-game] .rules-button[data-attention]) {
+:where([data-game] .rules-button[data-attention], [data-game] .game-menu-button[data-attention]) {
   position: relative;
 }
 
-:where([data-game] .rules-button[data-attention])::after {
+:where([data-game] .rules-button[data-attention], [data-game] .game-menu-button[data-attention])::after {
   content: "";
   position: absolute;
   top: -2px;
@@ -1924,17 +1999,6 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
   margin-bottom: 0;
 }
 
-/* Share, Pause and the theme toggle, shown here only where the game header is compact and has no room for them */
-:where([data-game] .settings-phone-controls) {
-  display: none;
-}
-
-@media (max-width: $compact-header) {
-  :where([data-game] .settings-phone-controls) {
-    display: flex;
-  }
-}
-
 :where([data-game] .settings-row) {
   display: flex;
   align-items: center;
@@ -2257,7 +2321,7 @@ $text-inputs: ':not([type]), [type="text"], [type="search"], [type="number"]';
 }
 
 /* Above the game-over backdrop, so the code can be shown to late joiners from the end screen */
-:where([data-table-screen] .qr-button) {
+:where([data-table-screen] .game-menu) {
   position: relative;
   z-index: 21;
 }

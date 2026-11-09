@@ -1,4 +1,4 @@
-import { expect, newPlayer, test } from './fixtures.ts';
+import { expect, headerButton, newPlayer, test } from './fixtures.ts';
 
 async function chessJoinDialog(browser: Parameters<typeof newPlayer>[0], server: Parameters<typeof newPlayer>[1]) {
   const page = await newPlayer(browser, server);
@@ -33,7 +33,7 @@ test('links open on the web or on GitHub in a new tab, anchors and other schemes
   const page = await chessJoinDialog(browser, server);
   await page.route('**/api/rules/chess', route => route.fulfill({
     contentType: 'text/markdown; charset=utf-8',
-    body: '# Chess\n\nSee [the web](https://example.com/a_(b)), [the map](map.ts), [Catan](../catan/README.md) and [below](#rules), [bad](javascript:void(0)).\n\n<script>window.hacked = 1</script> <b>bold?</b>'
+    body: '# Chess\n\nSee [the web](https://example.com/a_(b)), [the map](map.ts), [Hex Island](../hexisland/README.md) and [below](#rules), [bad](javascript:void(0)).\n\n<script>window.hacked = 1</script> <b>bold?</b>'
   }));
   await page.getByRole('button', { name: 'Rules', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Chess rules' });
@@ -43,8 +43,8 @@ test('links open on the web or on GitHub in a new tab, anchors and other schemes
   await expect(web).toHaveAttribute('rel', 'noreferrer');
   await expect(dialog.getByRole('link', { name: 'the map' }))
     .toHaveAttribute('href', 'https://github.com/Nate314/multiplayer-tabletop-games/blob/master/games/chess/map.ts');
-  await expect(dialog.getByRole('link', { name: 'Catan' }))
-    .toHaveAttribute('href', 'https://github.com/Nate314/multiplayer-tabletop-games/blob/master/games/catan/README.md');
+  await expect(dialog.getByRole('link', { name: 'Hex Island' }))
+    .toHaveAttribute('href', 'https://github.com/Nate314/multiplayer-tabletop-games/blob/master/games/hexisland/README.md');
   await expect(dialog.getByRole('link', { name: 'below' })).toHaveCount(0);
   await expect(dialog.getByText('below')).toBeVisible();
   await expect(dialog.getByRole('link', { name: 'bad' })).toHaveCount(0);
@@ -75,6 +75,6 @@ test('the game header has Rules and no FAQ button', async ({ seat }) => {
   const { pages: [alice] } = await seat('chess', ['Alice', 'Bob']);
   const header = alice.locator('.game-header');
   await expect(header.getByRole('button', { name: 'FAQ' })).toHaveCount(0);
-  await header.getByRole('button', { name: 'Rules', exact: true }).click();
+  await (await headerButton(alice, 'Rules')).click();
   await expect(alice.getByRole('dialog', { name: 'Chess rules' }).getByRole('heading', { name: 'Controls' })).toBeVisible();
 });

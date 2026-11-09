@@ -2,6 +2,7 @@
 import { asRecord } from './messages.ts';
 import { MAX_NAME_LENGTH } from './types.ts';
 import type { HistoryStep } from './types.ts';
+import { currentId, keepsSaves, LEGACY_IDS, type LegacyIds } from '../games/legacyIds.ts';
 
 export const GAME_FILE_FORMAT = 'multiplayer-tabletop-games';
 export const GAME_FILE_VERSION = 2;
@@ -85,7 +86,9 @@ function isGameFile(value: unknown): value is GameFile {
   );
 }
 
-export function parseGameFile(text: string, knownGameTypes: readonly string[]): { file: GameFile } | { error: string } {
+export function parseGameFile(
+  text: string, knownGameTypes: readonly string[], legacy: LegacyIds = LEGACY_IDS
+): { file: GameFile } | { error: string } {
   let value: unknown;
   try {
     value = JSON.parse(text);
@@ -93,8 +96,12 @@ export function parseGameFile(text: string, knownGameTypes: readonly string[]): 
     return { error: NOT_A_SAVED_GAME };
   }
   if (!isGameFile(value)) return { error: NOT_A_SAVED_GAME };
-  if (!knownGameTypes.includes(value.gameType)) {
+  if (!keepsSaves(value.gameType, legacy)) {
+    return { error: 'This saved game is from before this game got its new map and cannot be opened' };
+  }
+  const gameType = currentId(value.gameType, legacy);
+  if (!knownGameTypes.includes(gameType)) {
     return { error: 'This saved game is for a game this site does not have' };
   }
-  return { file: value };
+  return { file: { ...value, gameType } };
 }

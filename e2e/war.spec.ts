@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, seeTable, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, joinGame, leave, newPlayer, openFaq, seeTable, test, undo, type Seat, headerButton } from './fixtures.ts';
 import { sameCard, standardDeck, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState } from '../games/war/types.ts';
 
@@ -198,7 +198,7 @@ test.describe('War rules', () => {
     await expect(alice.locator('.turn-message')).toHaveText('Game over: Alice wins');
 
     await seeTable(alice);
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     const slider = dialog.getByRole('slider', { name: 'Step' });
     const steps = Number(await slider.getAttribute('max'));
@@ -335,7 +335,7 @@ test.describe('War controls', () => {
     const { alice, bob, piles } = await start(seat);
     await piles([card('5', 'clubs'), card('9', 'clubs')], [card('3', 'hearts'), card('2', 'hearts')]);
     await flips(alice, bob);
-    await alice.getByRole('button', { name: 'History' }).click();
+    await (await headerButton(alice, 'History')).click();
     const dialog = alice.getByRole('dialog', { name: 'History' });
     await expect(dialog.locator('.history-move')).toHaveText('Move 2 of 2: Bob turned up the 3 of hearts and Alice wins the battle, taking 2 cards');
     await dialog.getByRole('slider', { name: 'Step' }).fill('1');

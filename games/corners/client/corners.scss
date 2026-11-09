@@ -1,0 +1,301 @@
+/* Corners uses the platform's neutral lobby palette (src/App.scss), so light and dark both follow the theme.
+   Only the four piece colors are its own, chosen to read on both the light and the dark cells. */
+
+[data-game="corners"] {
+  --corners-blue: #2F6FDB;
+  --corners-yellow: #E9B000;
+  --corners-red: #D93636;
+  --corners-green: #2E9E4F;
+
+  .corners-c0 { --piece: var(--corners-blue); }
+  .corners-c1 { --piece: var(--corners-yellow); }
+  .corners-c2 { --piece: var(--corners-red); }
+  .corners-c3 { --piece: var(--corners-green); }
+
+  /* White is about 2:1 on Yellow, so its symbols take dark ink */
+  .corners-c1 .corners-symbol,
+  .corners-c1 .corners-swatch-symbol { color: #15191E; }
+
+  .corners-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    max-width: 100%;
+    padding: 16px 0;
+  }
+
+  .corners-board-area {
+    position: relative;
+    flex: 0 1 auto;
+    width: min(640px, 80vh);
+    min-width: 0;
+  }
+
+  .corners-board {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .corners-cell polygon {
+    fill: var(--lobby-surface);
+    stroke: var(--lobby-border);
+    stroke-width: 0.04;
+    stroke-linejoin: round;
+  }
+
+  .corners-cell.corners-fill polygon,
+  .corners-piece-shape .corners-fill {
+    fill: var(--piece);
+    stroke: rgba(0, 0, 0, 0.35);
+    stroke-width: 0.04;
+  }
+
+  .corners-cell.corners-preview polygon {
+    fill-opacity: 0.55;
+  }
+
+  .corners-cell[role="button"] {
+    cursor: pointer;
+    outline: none;
+  }
+
+  /* Each legal spot: a dashed outline on the cell the piece's first cell would cover */
+  .corners-cell.corners-spot polygon {
+    stroke: var(--lobby-accent);
+    stroke-width: 0.1;
+    stroke-dasharray: 0.2 0.12;
+  }
+
+  .corners-cell.corners-spot:focus-visible polygon {
+    stroke: var(--lobby-text);
+    stroke-width: 0.14;
+    stroke-dasharray: none;
+  }
+
+  .corners-cell.corners-last polygon {
+    stroke: var(--lobby-text);
+    stroke-width: 0.1;
+  }
+
+  .corners-start {
+    fill: var(--piece, var(--lobby-muted));
+    pointer-events: none;
+  }
+
+  .corners-symbol {
+    color: #FFF;
+    pointer-events: none;
+  }
+
+  /* Side panel */
+
+  .corners-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    flex: none;
+    width: 320px;
+    padding: 16px;
+    border: 1px solid var(--lobby-border);
+    border-radius: 8px;
+    background: var(--lobby-surface);
+    text-align: center;
+  }
+
+  .corners-status {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--lobby-bg);
+    font-weight: bold;
+  }
+
+  .corners-status-error {
+    background: var(--lobby-error-bg);
+    color: var(--lobby-error-text);
+  }
+
+  .corners-turn {
+    font-weight: 600;
+  }
+
+  .corners-panel button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    background: var(--lobby-accent);
+    color: var(--lobby-accent-text);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .corners-panel button:hover:enabled {
+    background: var(--lobby-accent-hover);
+  }
+
+  .corners-panel button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .corners-tray {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .corners-tray-pieces {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .corners-panel .corners-tray-piece {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 4px;
+    border: 2px solid var(--lobby-border);
+    border-radius: 6px;
+    background: var(--lobby-bg);
+  }
+
+  .corners-panel .corners-tray-piece:hover:enabled {
+    background: var(--lobby-bg);
+    border-color: var(--lobby-muted);
+  }
+
+  .corners-panel .corners-tray-piece[aria-pressed="true"] {
+    border-color: var(--lobby-accent);
+    box-shadow: 0 0 0 2px var(--lobby-accent);
+  }
+
+  .corners-piece-shape {
+    width: 100%;
+    height: 100%;
+  }
+
+  .corners-tray-buttons,
+  .corners-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .corners-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .corners-color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: var(--lobby-bg);
+  }
+
+  .corners-color-row.to-move {
+    border-color: var(--lobby-accent);
+  }
+
+  .corners-color-row.corners-out,
+  .player-left {
+    opacity: 0.55;
+  }
+
+  .corners-swatch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--piece);
+  }
+
+  .corners-swatch-symbol {
+    width: 12px;
+    height: 12px;
+    color: #FFF;
+  }
+
+  .corners-color-name {
+    flex: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .corners-score {
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The undo vote covers the board while it runs */
+  .undo-vote {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  /* History: a fixed size that the dialog scales to fit */
+  .corners-history {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    align-items: flex-start;
+    width: 760px;
+  }
+
+  .corners-history-board {
+    width: 460px;
+  }
+
+  .corners-history-score {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 280px;
+  }
+
+  /* Phones: the board on top at full width, the panel below with the tray scrolling sideways */
+  @media (max-width: 639px) {
+    .corners-layout {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .corners-board-area,
+    .corners-panel {
+      width: 100%;
+    }
+
+    .corners-tray-pieces {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+  }
+}

@@ -16,8 +16,8 @@ const day = (n: number) => NOW - n * 24 * 60 * MINUTE;
 
 // Ann wins twice, then Bo wins the latest; 'ann' is Ann in another spelling
 const games = [
-  game('connectfour', day(1), [['Ann', 2], ['Bo', 1]], 4),
-  game('connectfour', day(2), [['ann', 1], ['Bo', 2]], 8),
+  game('fourinarow', day(1), [['Ann', 2], ['Bo', 1]], 4),
+  game('fourinarow', day(2), [['ann', 1], ['Bo', 2]], 8),
   game('chess', day(3), [['Ann', 1], ['Former player', 2]], 30)
 ];
 
@@ -30,13 +30,13 @@ test('people: wins, win rate, streak and favorite game, names grouped ignoring c
   assert.equal(ann?.wins, 2);
   assert.equal(ann?.winRate, 2 / 3);
   assert.equal(ann?.streak, 0);
-  assert.equal(ann?.favoriteGame, 'connectfour');
+  assert.equal(ann?.favoriteGame, 'fourinarow');
   assert.equal(bo?.streak, 1);
   assert.equal(bo?.wins, 1);
 });
 
 test('people: shown in the spelling of the most recent game, favorite ties go to the most recent', () => {
-  const people = peopleStats([game('chess', day(1), [['ANN', 1], ['Bo', 2]]), game('uno', day(2), [['ann', 1], ['Bo', 2]])]);
+  const people = peopleStats([game('chess', day(1), [['ANN', 1], ['Bo', 2]]), game('rainboweights', day(2), [['ann', 1], ['Bo', 2]])]);
   assert.equal(people.find(p => p.name === 'ANN')?.favoriteGame, 'chess');
 });
 
@@ -46,7 +46,7 @@ test('people: Former player is left out', () => {
 
 test('games: played count and the median length in whole minutes', () => {
   const stats = gameStats(games);
-  const four = stats.find(s => s.gameType === 'connectfour');
+  const four = stats.find(s => s.gameType === 'fourinarow');
   assert.equal(four?.played, 2);
   assert.equal(four?.usualMinutes, 6);
   assert.equal(stats.find(s => s.gameType === 'chess')?.usualMinutes, 30);
@@ -54,11 +54,11 @@ test('games: played count and the median length in whole minutes', () => {
 
 test('games: a high score only where the winner always holds the largest score', () => {
   const hearts = [game('hearts', day(1), [['Ann', 1, '12'], ['Bo', 2, '80']]), game('hearts', day(2), [['Ann', 1, '20'], ['Bo', 2, '101']])];
-  const yahtzee = [game('yahtzee', day(1), [['Ann', 1, '250'], ['Bo', 2, '200']]), game('yahtzee', day(2), [['Ann', 2, '180 points'], ['Bo', 1, '301 points']])];
-  const stats = gameStats([...hearts, ...yahtzee, ...games]);
+  const fivedice = [game('fivedice', day(1), [['Ann', 1, '250'], ['Bo', 2, '200']]), game('fivedice', day(2), [['Ann', 2, '180 points'], ['Bo', 1, '301 points']])];
+  const stats = gameStats([...hearts, ...fivedice, ...games]);
   assert.equal(stats.find(s => s.gameType === 'hearts')?.highScore, undefined);
-  assert.deepEqual(stats.find(s => s.gameType === 'yahtzee')?.highScore, { score: 301, name: 'Bo' });
-  assert.equal(stats.find(s => s.gameType === 'connectfour')?.highScore, undefined);
+  assert.deepEqual(stats.find(s => s.gameType === 'fivedice')?.highScore, { score: 301, name: 'Bo' });
+  assert.equal(stats.find(s => s.gameType === 'fourinarow')?.highScore, undefined);
 });
 
 test('head to head counts only the games both played', () => {
@@ -72,7 +72,7 @@ test('head to head counts a shared first place for neither player', () => {
 });
 
 test('filter by game type and this calendar month', () => {
-  const lastMonth = game('connectfour', new Date(2026, 8, 30, 23).getTime(), [['Ann', 1], ['Bo', 2]]);
+  const lastMonth = game('fourinarow', new Date(2026, 8, 30, 23).getTime(), [['Ann', 1], ['Bo', 2]]);
   const all = [...games, lastMonth];
   assert.equal(filterGames(all, { gameType: null, range: 'all' }, NOW).length, 4);
   assert.deepEqual(filterGames(all, { gameType: null, range: 'month' }, NOW), games);

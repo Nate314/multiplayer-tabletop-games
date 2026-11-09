@@ -1,0 +1,156 @@
+import { useEffect, useRef, useState } from 'react';
+import gameService from '../../../src/services/gameService';
+import UndoVote from '../../../src/components/UndoVote';
+import { useMoveAnimation } from '../../../src/animation/useMoveAnimation.ts';
+import Card from './Card';
+import CallPartner from './CallPartner';
+import RoundSummary from './RoundSummary';
+import Table from './Table';
+import animateMove, { sortedHand } from './animateMove.ts';
+import { handKey } from '../../../src/animation/animKeys.ts';
+import { BID_STEP, COLORS, MAX_BID, MIN_BID, MIN_PLAYERS, calledCount, canPlayCard, nestSize, sameCard, seatsInPlay } from '../rules.ts';
+import type { GameScreenProps } from '../../../src/clientGames.ts';
+import type { Card as CardData, PublicGameState } from '../types.ts';
+
+export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
+  const [chosen, setChosen] = useState<CardData[]>([]); // cards picked to lay aside
+  const [amount, setAmount] = useState(MIN_BID);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const {
+    currentPlayer, activePlayers, playerNames, isGameOver, undoVote, dismissVote, undoAvailable, started,
+    hand, phase, bidding, trick, trump, discards, roundSummary, gameStatus
+  } = gameState;
+  const full = activePlayers.length >= MIN_PLAYERS;
+  const laying = nestSize(gameState); // how many cards the bid winner lays aside
+  const isMyTurn = currentPlayer === playerNumber && full && !isGameOver && !undoVote && !dismissVote;
+  const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && full;
+  const lowestBid = bidding.high ? bidding.high.amount + BID_STEP : MIN_BID;
+  const bids: number[] = [];
+  for (let value = lowestBid; value <= MAX_BID; value += BID_STEP) bids.push(value);
+  const showSummary = roundSummary !== null && !isGameOver;
+
+  useMoveAnimation(screenRef, gameState, animateMove);
+
+  useEffect(() => {
+    // A new turn or step starts with nothing picked and the lowest bid offered
+    setChosen([]);
+    setAmount(lowestBid);
+  }, [currentPlayer, phase, lowestBid]);
+
+  const isChosen = (card: CardData) => chosen.some(other => sameCard(other, card));
+  function toggle(card: CardData) {
+    setChosen(picked => isChosen(card) ? picked.filter(other => !sameCard(other, card))
+      : picked.length < laying ? [...picked, card] : picked);
+  }
+
+  const discarding = isMyTurn && phase === 'discard';
+  const playing = isMyTurn && phase === 'play';
+  const clickable = (card: CardData) =>
+    discarding ? (isChosen(card) || chosen.length < laying) : playing && canPlayCard(hand, card, trick, trump);
+  function pick(card: CardData) {
+    if (discarding) toggle(card);
+    else gameService.makeMove({ type: 'play', card });
+  }
+
+  let hint: string | null = null;
+  if (isGameOver) hint = null;
+  else if (!full) hint = `Nest needs at least ${MIN_PLAYERS} players (${activePlayers.length} seated)`;
+  else if (isMyTurn) {
+    if (phase === 'bidding') hint = bidding.high ? `Bid more than ${bidding.high.amount}, or pass for this hand` : `Open the bidding at ${MIN_BID} or more, or pass`;
+    else if (phase === 'discard') hint = `The nest is in your hand: pick ${laying} cards to lay aside`;
+    else if (phase === 'trump') hint = 'Name trump';
+    else if (phase === 'callPartner') {
+      const count = calledCount(seatsInPlay(gameState).length);
+      hint = count === 1
+        ? 'Call 1 card: whoever holds it is your partner for this hand, kept secret until it is played'
+        : `Call ${count} cards: whoever holds one is your partner for this hand, kept secret until it is played`;
+    }
+    else if (trick.length === 0) hint = 'Lead any card';
+    else hint = 'Follow suit if you can; the Bird may be played at any time';
+  }
+
+  let turn = '';
+  if (isGameOver) turn = 'Game over';
+  else if (roundSummary) turn = 'The hand is over';
+  else if (full && currentPlayer !== null) {
+    turn = currentPlayer === playerNumber ? 'Your turn' : `${playerNames[currentPlayer]}'s turn`;
+    if (!started) turn += '. Joining closes after the first move.';
+  }
+
+  return (
+    <>
+      <div className="game-screen" ref={screenRef}>
+        <div className="game-info">
+          <div className="player-info">You are {playerNames[playerNumber]} (Player {playerNumber})</div>
+          {(error || gameStatus) && (
+            <div className={error ? 'game-status game-status-error' : 'game-status'}>{error || gameStatus}</div>
+          )}
+          <div className="turn-message">{turn}</div>
+          <div className="hint">{hint}</div>
+          <div className="action-buttons">
+            {isMyTurn && phase === 'bidding' && (
+              <>
+                <label className="bid-amount">
+                  Bid{' '}
+                  <select value={amount} onChange={event => setAmount(Number(event.target.value))}>
+                    {bids.map(value => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                </label>
+                <button type="button" onClick={() => gameService.makeMove({ type: 'bid', amount })}>Bid {amount}</button>
+                <button type="button" onClick={() => gameService.makeMove({ type: 'pass' })}>Pass</button>
+              </>
+            )}
+            {discarding && (
+              <button type="button" disabled={chosen.length !== laying}
+                onClick={() => gameService.makeMove({ type: 'discard', cards: chosen })}>
+                Lay aside {chosen.length}/{laying}
+              </button>
+            )}
+            <button type="button" onClick={() => gameService.requestUndo()} disabled={!canUndo}>Undo</button>
+          </div>
+          {isMyTurn && phase === 'trump' && (
+            <div className="color-picker" role="group" aria-label="Name trump">
+              {COLORS.map(color => (
+                <button key={color} type="button" className={`color-choice choice-${color}`}
+                  onClick={() => gameService.makeMove({ type: 'nameTrump', color })}>
+                  {color}
+                </button>
+              ))}
+            </div>
+          )}
+          {isMyTurn && phase === 'callPartner' && (
+            <CallPartner hand={hand} laidAside={discards} count={calledCount(seatsInPlay(gameState).length)}
+              onCall={cards => gameService.makeMove({ type: 'callPartner', cards })} />
+          )}
+        </div>
+        <Table gameState={gameState} viewer={playerNumber} />
+        <section className={isMyTurn ? 'hand' : 'hand hand-waiting'} aria-label="Your hand">
+          <header className="hand-header">Your hand ({hand.length})</header>
+          <div className="hand-cards">
+            {sortedHand(hand).map((card, slot) => (
+              <Card key={slot} card={card} animKey={handKey(slot)} playable={clickable(card)} selected={isChosen(card)}
+                onClick={() => pick(card)} />
+            ))}
+          </div>
+          {discards.length > 0 && (
+            <div className="discards">
+              <span className="discards-label">Laid aside (only you see these; they go with the last trick):</span>
+              <div className="hand-cards">
+                {sortedHand(discards).map((card, slot) => <Card key={slot} card={card} small />)}
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+      {showSummary && (
+        <RoundSummary
+          summary={roundSummary}
+          gameState={gameState}
+          playerNumber={playerNumber}
+          onContinue={() => gameService.sendAction({ type: 'acknowledgeRound' })}
+        />
+      )}
+      <UndoVote gameState={gameState} playerNumber={playerNumber} onVote={approve => gameService.voteUndo(approve)} />
+    </>
+  );
+}
