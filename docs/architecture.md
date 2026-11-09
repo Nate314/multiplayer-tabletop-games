@@ -2,6 +2,8 @@
 
 One Express and WebSocket server hosts every game. The platform handles seating, turn order, undo, and the browser shell. Each game supplies its rules and its screen, and is registered once on the server and once in the browser, where the landing page has only each game's metadata and a game's code downloads when it is opened.
 
+[Screenshots](screenshots.md) shows every game mid-play in light and dark theme.
+
 ```mermaid
 flowchart TD
     subgraph "Client Browser"
@@ -219,7 +221,8 @@ Draw and Guess's word list never reaches a browser: `games/drawandguess/words.ts
 - `/src/components/colorSymbols.ts` is the table: `COLOR_SYMBOLS` maps each player color to a shape. It has no React, so `node --test` can import it. `shared/svg/symbols.ts` holds each shape's SVG path in a 24 by 24 box (`SHAPE_PATHS`) and serves it as `color-symbol/<shape>`
 - `/src/components/ColorSymbol.tsx` shows the shape for a color through `ServerSvg`, as a `<span class="color-symbol color-symbol-<shape>">` (or, given `svgProps`, a nested `<svg>` placed inside a board). It reads `colorSymbols` from `usePreferences()` and renders nothing while the setting is off or the color is not set (`null` or `undefined`), so a game passes its seat color and positions the symbol itself
 - Its default look is in `App.scss`: the symbol takes `currentColor` and a 1 px stroke (`--color-symbol-stroke`) so it reads on any fill
-- Games told apart by light against dark (Checkers' red against cream) or by a printed symbol get nothing. Pawns and Walls, Roads and Fields, Street Deeds, Rail Routes and Chinese Checkers tell players apart by color alone, so they show their seat colors' shapes (Street Deeds' seventh and eighth tokens, brown and slate, have no shape and keep their initial; a claimed Rail Routes route shows its owner's shape, not the route color's). Code Breaker's pegs are told apart by color alone, so every peg shows its color's shape
+- Seat colors are one palette for every pawn-and-piece game: seat 1 red, then blue, green, yellow, purple, orange, cyan and pink. `shared/seatColors.ts` names them (`seatColorName`, usable from rules code), `src/components/seatColors.ts` gives each seat its symbol (`SEAT_SYMBOL_COLORS`), and `App.scss` holds the only hexes: `--seat-color-N` (brighter in dark theme), `--seat-stroke-N` (the outline that lets yellow read on a light board) and `--seat-ink-N` (the symbol or letter drawn on the piece). Street Deeds, Snakes and Ladders, Road to Retirement, Chinese Checkers, Pachisi, Pawns and Walls, Territories, Hex Island, Rail Routes and Roads and Fields use it, so every seat has a shape (a claimed Rail Routes route shows its owner's shape, not the route color's)
+- Games told apart by light against dark (Checkers' red against cream) or by a printed symbol get nothing. Code Breaker's pegs are told apart by color alone, so every peg shows its color's shape
 
 | Color | Symbol | Also covers |
 |---|---|---|
@@ -227,7 +230,7 @@ Draw and Guess's word list never reaches a browser: `games/drawandguess/words.ts
 | blue | square | |
 | green | triangle | |
 | yellow | star | Jewel Guild gold |
-| black | diamond | Territories' and Roads and Fields' dark gray seats |
+| black | diamond | |
 | white | ring | |
 | orange | hexagon | |
 | pink | heart | |
