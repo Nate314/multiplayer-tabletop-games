@@ -41,3 +41,9 @@ Auto-mark also auto-claims; no penalty for a false claim; ties share a place; pl
 ## Left to the builder
 
 Card generation details, highlight styling, the exact Auto-call delay (about one second, as in War), and test cases.
+
+## Settled after the builder check (Claude's calls)
+
+- **Places close on a timer.** A valid claim is confirmed and shown at once. The place stays open for claims until the next Call or 3 seconds after the first valid claim, whichever comes first (a platform `deadline`), so a game that is already decided never waits for someone to press Call.
+- **Pass and play.** A shared device shows every local seat's cards, each section labelled with the player's name. Auto-call and Auto-mark apply to all local seats on that device.
+- **Undo.** Marks are unrecorded actions (`applyAction`, `recordsAction` false). Calls and claims are recorded moves, so the undo vote takes back a call or a claim, never a mark. Undoing a call restores the state before it, including any places awarded after it.

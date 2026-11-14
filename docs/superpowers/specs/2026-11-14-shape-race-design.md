@@ -39,3 +39,9 @@ Add Shape Race (`shaperace`, display name "Shape Race"), a timed shape-sorting r
 ## Left to the builder
 
 The shape set, the rotation step and tolerance, board layout per size at phone width, the pop animation, and how Race again restarts (a new game in the same room, as other games do after game over).
+
+## Settled after the builder check (Claude's calls)
+
+- **Solo.** No stored personal best. A solo race shows your time; you win by filling the board before the pop. This replaces "a race against your own best time" above.
+- **Close finishes.** Server arrival order decides; no client timestamps. Finishes the server receives in the same tick share the place.
+- **No own-move undo.** A wrong drop already springs back, so there is no `undoOwn` either.

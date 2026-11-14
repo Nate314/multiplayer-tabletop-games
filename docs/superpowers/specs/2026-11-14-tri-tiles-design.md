@@ -40,3 +40,8 @@ Deal sizes, 2-6 players, opening rule, blocked-round scoring, the rotate control
 ## Left to the builder
 
 Triangle-grid coordinates and rendering, exact bonus detection, and test cases. Check the classic opening, bridge and hexagon values against Wikipedia's Triominoes article and record any difference in the README.
+
+## Settled after the builder check (Claude's calls)
+
+- **Game end.** The target is checked when a round ends, not mid-round. If several players pass it in the same round, the highest total wins; equal totals share the win.
+- **Opening in later rounds.** The opening rule (highest triple, then highest sum) applies every round, so the triple bonus can come up in any round.

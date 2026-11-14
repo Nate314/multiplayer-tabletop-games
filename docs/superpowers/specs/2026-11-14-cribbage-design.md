@@ -38,3 +38,8 @@ Add Cribbage (`cribbage`, display name "Cribbage") as a new card game. The owner
 ## Left to the builder
 
 The Muggins window length, the board's visual design, and what leaving does at 3 or 4 players, chosen from the existing card games.
+
+## Settled after the builder check (Claude's calls)
+
+- **Muggins with several opponents.** At 3 players, the first opponent to press takes the points. At 4, the points go to the pressing player's partnership.
+- **Nobody presses.** The owner keeps only what they claimed, the traditional rule, so a missed point is lost even without a Muggins press.
