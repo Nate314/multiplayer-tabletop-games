@@ -2,7 +2,8 @@ import type { HouseRulesState } from './houseRules.ts';
 import type { Reaction, RecordedReaction } from './reactions.ts';
 import type { PauseRecord } from './pauseFile.ts';
 
-export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
+export const MAX_NAME_LENGTH = 20; // applies to player names
+export const MAX_GAME_ID_LENGTH = 36; // the length of a GUID
 
 export type Seat = number; // 1-based, seated in join order
 export type Result<T> = { state: T } | { error: string };

@@ -1,6 +1,6 @@
 import { asRecord } from './messages.ts';
 import { gameFileName, isEmbeddedImages, type EmbeddedImages } from './gameFile.ts';
-import { MAX_NAME_LENGTH } from './types.ts';
+import { MAX_GAME_ID_LENGTH } from './types.ts';
 import { currentId, keepsSaves, LEGACY_IDS, type LegacyIds } from '../games/legacyIds.ts';
 import type { BasePublicState, HistoryStep, Seat } from './types.ts';
 
@@ -74,7 +74,7 @@ function isPauseFile(value: unknown): value is PauseFile {
   if (
     file.format !== PAUSE_FILE_FORMAT || file.version !== PAUSE_FILE_VERSION ||
     typeof file.gameType !== 'string' ||
-    typeof file.gameId !== 'string' || file.gameId.length === 0 || file.gameId.length > MAX_NAME_LENGTH ||
+    typeof file.gameId !== 'string' || file.gameId.length === 0 || file.gameId.length > MAX_GAME_ID_LENGTH ||
     typeof file.pausedAt !== 'string' || typeof file.playerName !== 'string' || typeof file.share !== 'string' ||
     !Number.isInteger(file.seat) || !isStringRecord(file.players) ||
     table === null || Array.isArray(file.table) || !Array.isArray(file.history) || !isPauseSeal(file.seal) ||
