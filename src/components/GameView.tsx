@@ -162,7 +162,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           <>
             {localSeats && <PassAndPlayBar name={gameState.playerNames[playerNumber]} onPass={() => onShowSeat(null)} />}
             {/* Remounted per shown seat, so nothing one player picked (a pass, a rack order) shows to the next */}
-            <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} />
+            <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} localSeats={localSeats?.map(local => local.seat)} />
             <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
             <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
           </>

@@ -4,7 +4,10 @@ import type { MoveChange } from './animation/useMoveAnimation.ts';
 
 export type FaqItem = { question: string; answer: string };
 
-export type GameScreenProps<P extends BasePublicState> = { gameState: P; playerNumber: Seat; error: string | null };
+export type GameScreenProps<P extends BasePublicState> = {
+  gameState: P; playerNumber: Seat; error: string | null;
+  localSeats?: Seat[]; // the seats a shared pass-and-play device holds, absent for any other join
+};
 
 // Everything the browser needs to show a game, loaded on demand; GameInfo in games/<id>/info.ts holds the rest
 export type ClientGame = {
