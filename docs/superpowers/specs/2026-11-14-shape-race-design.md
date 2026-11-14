@@ -45,3 +45,8 @@ The shape set, the rotation step and tolerance, board layout per size at phone w
 - **Solo.** No stored personal best. A solo race shows your time; you win by filling the board before the pop. This replaces "a race against your own best time" above.
 - **Close finishes.** Server arrival order decides; no client timestamps. Finishes the server receives in the same tick share the place.
 - **No own-move undo.** A wrong drop already springs back, so there is no `undoOwn` either.
+
+## Race end (owner's decision: a house rule)
+
+- **Keep racing (default).** The first to fill their board wins; the others keep racing until they finish or the board pops. Places go by finish time, then by shapes placed. The race ends early once everyone has finished.
+- **First finish.** The race ends the moment someone fills their board; everyone else is ranked by shapes placed.

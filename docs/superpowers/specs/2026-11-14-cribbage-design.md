@@ -43,3 +43,11 @@ The Muggins window length, the board's visual design, and what leaving does at 3
 
 - **Muggins with several opponents.** At 3 players, the first opponent to press takes the points. At 4, the points go to the pressing player's partnership.
 - **Nobody presses.** The owner keeps only what they claimed, the traditional rule, so a missed point is lost even without a Muggins press.
+
+## Muggins style (owner's decision: a house rule)
+
+Offered only when Muggins is on. Choices:
+
+- **Name the points (default).** During the window opponents see only the hand and the claimed number. Pressing Muggins! opens the hand; the presser taps cards forming a missed combination (fifteen, pair, run, flush, nobs) and takes its points. A wrong selection is refused with no cost.
+- **Single press.** One press takes the whole difference between the claim and the true total. A press when nothing was missed costs the presser 2 points.
+- **Shown total.** The breakdown is shown during the window, and the first opponent to press takes the missed points.
