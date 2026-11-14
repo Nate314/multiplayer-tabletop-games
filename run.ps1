@@ -10,5 +10,8 @@ if (-not (Test-Path compose-launcher/run.ps1)) {
         exit 1
     }
 }
-& ./compose-launcher/run.ps1 @args
+# -ShowOpenGames is consumed here and sets the server flag for this run only.
+$rest = @($args | Where-Object { $_ -isnot [string] -or $_ -ine '-ShowOpenGames' })
+$env:SHOW_OPEN_GAMES = if ($args.Count -gt $rest.Count) { 'true' } else { 'false' }
+& ./compose-launcher/run.ps1 @rest
 exit $LASTEXITCODE

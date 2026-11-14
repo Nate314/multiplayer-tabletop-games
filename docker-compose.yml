@@ -7,6 +7,9 @@ services:
       # The server always listens on 3000 inside the container. The browser builds its
       # WebSocket URL from the page address, so any host port works.
       - "${APP_PORT:-3000}:3000"
+    environment:
+      # Set per run by run.ps1 -ShowOpenGames or run.sh --show-open-games
+      SHOW_OPEN_GAMES: ${SHOW_OPEN_GAMES:-false}
     restart: unless-stopped
     # Forwards SIGTERM to node (which ignores it as PID 1), so `docker compose down` is immediate.
     init: true
