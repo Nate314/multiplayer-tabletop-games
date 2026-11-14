@@ -39,7 +39,8 @@ export function resetLobby(state: GameState, random: Random): GameState {
 const nameOf = (state: GameState, seat: Seat): string => state.playerNames[seat];
 
 function endGame(state: GameState): GameState {
-  const winners = state.activePlayers.filter(seat => state.places[seat] === 1);
+  // A seat that left keeps the place it won, so it counts here though no longer active
+  const winners = Object.keys(state.places).map(Number).filter(seat => state.places[seat] === 1);
   const gameStatus = winners.length ? `${winners.map(seat => nameOf(state, seat)).join(' and ')} won` : 'Nobody got a Bingo';
   return { ...state, openPlace: null, finalUntil: null, currentPlayer: null, isGameOver: true, winners, gameStatus };
 }
@@ -138,7 +139,7 @@ export const onUndo = (state: GameState, random: Random): GameState => ({ ...sta
 export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   const omit = <T>(record: Record<Seat, T>): Record<Seat, T> =>
     Object.fromEntries(Object.entries(record).filter(([key]) => Number(key) !== seat));
-  const left = { ...state, cards: omit(state.cards), marks: omit(state.marks), places: omit(state.places) };
+  const left = { ...state, cards: omit(state.cards), marks: omit(state.marks) };
   return everyonePlaced(left) ? endGame(left) : left;
 }
 

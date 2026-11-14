@@ -96,7 +96,7 @@ test('claims inside the window share the place', () => {
   state = ok(applyAction(state, 2, BINGO, seeded(1), NOW + 2000));
   assert.equal(state.places[2], 1);
   assert.equal(deadline(state), NOW + 3000);
-  state = onDeadline(state, NOW + 3000, seeded(1));
+  state = onDeadline(state);
   assert.equal(state.openPlace, null);
   state = ok(applyAction(state, 3, BINGO, seeded(1), NOW + 4000));
   assert.equal(state.places[3], 2);
@@ -115,17 +115,17 @@ test('play until ends the game', () => {
   let one = game(3, [1, 2, 3, 4, 5]);
   one = ok(applyAction(markAll(one, 2, LINE_SQUARES), 2, BINGO, seeded(1), NOW));
   assert.equal(one.isGameOver, false);
-  one = onDeadline(one, NOW + 3000, seeded(1));
+  one = onDeadline(one);
   assert.equal(one.isGameOver, true);
   assert.deepEqual(one.winners, [2]);
 
   let three = game(3, [1, 2, 3, 4, 5], { playUntil: 3 });
   for (const seat of [1, 2, 3]) three = markAll(three, seat, LINE_SQUARES);
   three = ok(applyAction(three, 1, BINGO, seeded(1), NOW));
-  three = onDeadline(three, NOW + 3000, seeded(1));
+  three = onDeadline(three);
   assert.equal(three.isGameOver, false);
   three = ok(applyAction(three, 2, BINGO, seeded(1), NOW + 4000));
-  three = onDeadline(three, NOW + 7000, seeded(1));
+  three = onDeadline(three);
   assert.equal(three.isGameOver, false);
   three = ok(applyAction(three, 3, BINGO, seeded(1), NOW + 8000));
   assert.equal(three.isGameOver, true, 'everyone has placed');
@@ -148,7 +148,7 @@ test('the last call opens a final window', () => {
   assert.equal(state.called.length, 75);
   assert.equal(deadline(state), NOW + FINAL_WINDOW_MS);
   assert.deepEqual(applyMove(state, 1, CALL, seeded(1), NOW), { error: 'No numbers left' });
-  const ended = onDeadline(state, NOW + FINAL_WINDOW_MS, seeded(1));
+  const ended = onDeadline(state);
   assert.equal(ended.isGameOver, true);
   assert.deepEqual(ended.winners, []);
 });
