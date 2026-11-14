@@ -15,6 +15,7 @@ import SettingsButton from './components/SettingsButton'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJoinForm, saveJoinForm } from './services/settings.ts'
 import { joinRoleFor } from './services/openGames.ts'
+import { gameIdForJoin } from '../shared/gameId.ts'
 import { parseJoinLink } from './services/share.ts'
 import './App.scss'
 
@@ -126,8 +127,10 @@ function App() {
           localNames={localNames}
           onLocalNamesChange={setLocalNames}
           onJoin={(joinRole = role) => {
-            saveJoinForm({ playerName, gameId, role: joinRole, localNames })
-            join(selected.id, gameId, joinRole === 'tableScreen' ? 'Table screen' : playerName, joinRole, localNames)
+            const id = gameIdForJoin(gameId, joinRole)
+            setGameId(id)
+            saveJoinForm({ playerName, gameId: id, role: joinRole, localNames })
+            join(selected.id, id, joinRole === 'tableScreen' ? 'Table screen' : playerName, joinRole, localNames)
           }}
           onCancel={closeDialog}
         />
