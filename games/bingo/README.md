@@ -13,7 +13,7 @@ Take turns calling numbers, mark your cards and shout Bingo first, for 2 to 12 p
 - **House rules.** Cards per player (1 to 12, standard 1). Pattern: Line (any full row, column or either diagonal, standard), Four corners or Blackout (every square). Play until 1st place (standard), 2nd place or 3rd place
 - Cards are not secret, so a shared device can play for several players
 - Any player can ask to undo the last call or Bingo. It is undone only if every connected player approves. Marks are never undo steps. An undone call puts the uncalled numbers in a new order, so undo never shows what comes next
-- The game goes on while two or more players remain
+- **Leaving.** The game goes on while two or more players remain. A leaver's cards go with them, and a placed player who leaves keeps their place. If everyone left has a place, the game ends
 
 ## Controls
 
