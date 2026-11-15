@@ -52,7 +52,7 @@ export default function ShowPanel({ gameState, viewer, controls }: ShowPanelProp
       </div>
       {show.items && <div className="show-breakdown">{describeItems(show.items)}</div>}
       {show.claimed !== null && <div className="show-claim">{owner} claimed {show.claimed}</div>}
-      {show.claimed === null && !isOwner && <div className="show-claim">Waiting for {owner} to count</div>}
+      {show.claimed === null && !isOwner && !gameState.isGameOver && houseRule(gameState, MUGGINS_RULE) && <div className="show-claim">Waiting for {owner} to count</div>}
       {show.muggins.map(({ by, points: taken }, i) => (
         <div key={i} className="show-press">
           {playerNames[by]} called Muggins! {taken < 0 ? `Nothing was missed: it cost ${-taken}` : `and took ${taken}`}

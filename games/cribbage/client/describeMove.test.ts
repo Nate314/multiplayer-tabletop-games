@@ -30,7 +30,7 @@ test('describes counts, claims and Muggins', () => {
   assert.equal(describe({ type: 'count', playerNumber: 1, crib: true, points: 6, items: six }),
     'Alice counted 6 in the crib: Fifteen two, fifteen four, and a pair is six');
   assert.equal(describe({ type: 'count', playerNumber: 3, crib: false, points: 4, items: six }),
-    'Cara scored the 4 claimed: Fifteen two, fifteen four, and a pair is six');
+    'Cara claimed 4 of 6: Fifteen two, fifteen four, and a pair is six');
   assert.equal(describe({ type: 'claim', playerNumber: 3, crib: false, points: 4 }), 'Cara claimed 4 for their hand');
   assert.equal(describe({ type: 'claim', playerNumber: 1, crib: true, points: 0 }), 'Alice claimed 0 for the crib');
   assert.equal(describe({ type: 'muggins', playerNumber: 4, points: 2 }), 'Dan called Muggins and took 2');

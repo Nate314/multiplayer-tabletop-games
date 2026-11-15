@@ -19,7 +19,8 @@ export function describeMove({ lastMove, playerNames, dealer }: Pick<PublicGameS
       return `${name} claimed ${lastMove.points} for ${lastMove.crib ? 'the crib' : 'their hand'}`;
     case 'count': {
       // Under Muggins the owner scores only their claim, which can be less than the true count
-      const scored = lastMove.points === totalOf(lastMove.items) ? `counted ${lastMove.points}` : `scored the ${lastMove.points} claimed`;
+      const total = totalOf(lastMove.items);
+      const scored = lastMove.points === total ? `counted ${lastMove.points}` : `claimed ${lastMove.points} of ${total}`;
       return `${name} ${scored}${lastMove.crib ? ' in the crib' : ''}: ${describeItems(lastMove.items)}`;
     }
     case 'muggins':

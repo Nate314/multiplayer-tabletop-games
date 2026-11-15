@@ -18,7 +18,7 @@ const MISSED_NOTHING_COST = 2;
 
 const muggins = (state: GameState) => houseRule(state, MUGGINS_RULE);
 const dealerOf = (state: GameState): Seat => state.dealer ?? state.activePlayers[0];
-const whose = (state: GameState, show: Show) => (show.crib ? 'the crib' : `${state.playerNames[show.owner]}'s hand`);
+const whose = (state: GameState, show: Show) => (show.crib ? 'The crib' : `${state.playerNames[show.owner]}'s hand`);
 
 // The seats after the dealer, the dealer, then the crib
 function showOrder(state: GameState): { owner: Seat; crib: boolean }[] {
