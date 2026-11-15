@@ -72,7 +72,7 @@ test('player counts are whole numbers from 1 to 99', () => {
 });
 
 test('every registered game is shown with the default filters', () => {
-  assert.equal(arrangeGames(GAMES, DEFAULT_FILTERS).flatMap(s => s.games).length, 53);
+  assert.equal(arrangeGames(GAMES, DEFAULT_FILTERS).flatMap(s => s.games).length, 54);
 });
 
 test('seven players lists the eighteen games that seat seven, two of them only as a house rule', () => {

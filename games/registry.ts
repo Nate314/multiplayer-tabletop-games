@@ -9,6 +9,7 @@ import { chinesecheckers } from './chinesecheckers/index.ts';
 import { codebreaker } from './codebreaker/index.ts';
 import { corners } from './corners/index.ts';
 import { cribbage } from './cribbage/index.ts';
+import { tritiles } from './tritiles/index.ts';
 import { dominoes } from './dominoes/index.ts';
 import { drawandguess } from './drawandguess/index.ts';
 import { euchre } from './euchre/index.ts';
@@ -57,5 +58,5 @@ import { whodunit } from './whodunit/index.ts';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
   palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, cribbage, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, missiontricks, streetdeeds, naval, pachisi, stagerummy, drawandguess,
-  pawnsandwalls, inorder, roadtoretirement, nest, rummytiles, lettergrid, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, territories, holdem, tictactoe, railroutes, tradingfloor, ultimatetictactoe, rainboweights, war, whodunit, fivedice, bingo
+  pawnsandwalls, inorder, roadtoretirement, nest, rummytiles, lettergrid, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, territories, holdem, tictactoe, railroutes, tradingfloor, tritiles, ultimatetictactoe, rainboweights, war, whodunit, fivedice, bingo
 ];

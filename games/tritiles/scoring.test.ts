@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { TILES, tileSum } from './tiles.ts';
+import { TILES } from './tiles.ts';
 import { cellKey, verticesOf } from './grid.ts';
 import type { Board, Cell } from './grid.ts';
 import { openingScore, playScore, roundEndScores } from './scoring.ts';

@@ -23,7 +23,7 @@ test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
     card: ['cribbage', 'euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'spiteandmalice', 'spades', 'holdem', 'missiontricks', 'tradingfloor', 'rainboweights', 'war'],
     dice: ['farkle', 'fivedice'],
-    tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid'],
+    tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid', 'tritiles'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'pachisi', 'pawnsandwalls', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
     strategy: ['hexisland', 'corners', 'go', 'streetdeeds', 'jewelguild', 'territories', 'railroutes'],
@@ -33,6 +33,6 @@ test('every registered game has the spec\'s category', () => {
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
   assert.deepEqual(actual, sorted);
   const grouped = groupByCategory(GAMES).flatMap(g => g.games.map(game => game.info.id));
-  assert.equal(grouped.length, 53);
-  assert.equal(new Set(grouped).size, 53);
+  assert.equal(grouped.length, 54);
+  assert.equal(new Set(grouped).size, 54);
 });

@@ -261,6 +261,22 @@ test('the bridge bonus follows the house rule', () => {
   assert.equal(ok(move({ ...state, houseRules: off }, 1, play)).scores[1], 14);
 });
 
+test('a tile with three different numbers cannot be laid in mirrored order', () => {
+  const state = game({ board: [], leadTile: null, hands: { 1: [t(0, 1, 2)], 2: [t(1, 1, 1)], 3: [t(2, 2, 2)] } });
+  assert.deepEqual(move(state, 1, { type: 'play', tile: t(0, 1, 2), cell: origin, corners: [0, 2, 1] }), { error: 'Those corners are not that tile' });
+});
+
+test('the hexagon bonus follows the house rule', () => {
+  // Five 1-1-1 tiles around a lattice point leave one cell open; a sixth 1-1-1 there completes the hexagon
+  const ring: Cell[] = [{ x: 0, y: 0, up: true }, { x: -1, y: -1, up: true }, { x: 0, y: -1, up: true }, { x: -1, y: 0, up: false }, { x: -1, y: -1, up: false }];
+  const board: Board = ring.map(cell => ({ tile: t(1, 1, 1), cell, corners: [1, 1, 1] }));
+  const state = game({ board, hands: { 1: [t(1, 1, 1), t(0, 0, 0)], 2: [t(2, 2, 2)], 3: [t(3, 3, 3)] } });
+  const play = { type: 'play', tile: t(1, 1, 1), cell: { x: 0, y: 0, up: false }, corners: [1, 1, 1] };
+  assert.equal(ok(move(state, 1, play)).scores[1], 3 + 50);
+  const off = { host: 1, values: { hexagon: false, bridge: true, targetScore: 400 }, maxPlayers: null, agreed: [1, 2, 3], revision: 1 };
+  assert.equal(ok(move({ ...state, houseRules: off }, 1, play)).scores[1], 3);
+});
+
 test('undo reshuffles the pool', () => {
   const state = game({ pool: [1, 2, 3, 4, 5, 6, 7, 8] });
   const undone = tritiles.onUndo?.(state, seeded(4)) ?? assert.fail('Tri-Tiles has onUndo');

@@ -9,6 +9,7 @@ import { chinesecheckersInfo } from './chinesecheckers/info.ts';
 import { codebreakerInfo } from './codebreaker/info.ts';
 import { cornersInfo } from './corners/info.ts';
 import { cribbageInfo } from './cribbage/info.ts';
+import { tritilesInfo } from './tritiles/info.ts';
 import { dominoesInfo } from './dominoes/info.ts';
 import { drawandguessInfo } from './drawandguess/info.ts';
 import { euchreInfo } from './euchre/info.ts';
@@ -57,5 +58,5 @@ import { whodunitInfo } from './whodunit/info.ts';
 export const GAME_INFOS: GameInfo[] = [
   palacewallsInfo, backgammonInfo, roadsandfieldsInfo, hexislandInfo, charadesInfo, checkersInfo, chinesecheckersInfo, chessInfo, categoriesInfo, codebreakerInfo, fourinarowInfo, cornersInfo, cribbageInfo, dominoesInfo, euchreInfo, farkleInfo, fictionaryInfo,
   goInfo, gofishInfo, heartsInfo, hintgridInfo, blocktowerInfo, jigsawInfo, mancalaInfo, missiontricksInfo, streetdeedsInfo, navalInfo, pachisiInfo, stagerummyInfo, drawandguessInfo, pawnsandwallsInfo, inorderInfo, roadtoretirementInfo, nestInfo, rummytilesInfo,
-  lettergridInfo, spiteandmaliceInfo, snakesladdersInfo, spadesInfo, jewelguildInfo, steadyhandInfo, sudokuInfo, territoriesInfo, holdemInfo, tictactoeInfo, railroutesInfo, tradingfloorInfo, ultimatetictactoeInfo, rainboweightsInfo, warInfo, whodunitInfo, fivediceInfo, bingoInfo
+  lettergridInfo, spiteandmaliceInfo, snakesladdersInfo, spadesInfo, jewelguildInfo, steadyhandInfo, sudokuInfo, territoriesInfo, holdemInfo, tictactoeInfo, railroutesInfo, tradingfloorInfo, tritilesInfo, ultimatetictactoeInfo, rainboweightsInfo, warInfo, whodunitInfo, fivediceInfo, bingoInfo
 ];

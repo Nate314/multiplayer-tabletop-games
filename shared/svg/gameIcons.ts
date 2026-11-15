@@ -29,6 +29,8 @@ const GAME_ICONS: Record<string, () => string> = {
   cribbage: () => lineIcon(el('rect', { x: 2, y: 11, width: 20, height: 8, rx: 2 }), pip(5.5, 15, 0.9), pip(12.5, 15, 0.9), pip(19.5, 15, 0.9), el('path', { d: 'M9 15V7M16 15V9' }), solid('circle', { cx: 9, cy: 5.5, r: 1.8 }), solid('circle', { cx: 16, cy: 7.5, r: 1.8 })),
   dominoes: () => lineIcon(el('rect', { x: 7, y: 2, width: 10, height: 20, rx: 2 }), el('path', { d: 'M7 12h10' }),
     pip(10, 5.5), pip(14, 8.5), pip(10, 15), pip(12, 17), pip(14, 19)),
+  // A triangle with a dot in each corner
+  tritiles: () => lineIcon(el('path', { d: 'M12 3L22 20H2z' }), pip(12, 8, 1.2), pip(7, 16.5, 1.2), pip(17, 16.5, 1.2)),
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),
     el('rect', { x: 10, y: 4, width: 10, height: 14, rx: 1.5, transform: 'rotate(10 15 11)' }), label('J', 15, 14, 7)),
   farkle: () => lineIcon(el('path', { d: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z' })),
