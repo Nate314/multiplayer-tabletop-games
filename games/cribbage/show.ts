@@ -82,7 +82,7 @@ const ROUND: RoundAccess<GameState, RoundSummary> = {
 };
 
 function endRound(state: GameState): GameState {
-  const counts = state.shows.map(({ owner, crib, items, total }) => ({ owner, crib, items, total }));
+  const counts = state.shows.map(({ owner, crib, items, total, claimed, muggins }) => ({ owner, crib, items, total, claimed, muggins }));
   const change = Object.fromEntries(Object.entries(state.scores).map(([side, score]) => [side, score - (state.handStartScores[Number(side)] ?? 0)]));
   const roundSummary: RoundSummary = { handNumber: state.handNumber, dealer: dealerOf(state), counts, change, acknowledged: [] };
   return { ...state, phase: 'roundOver', currentPlayer: null, roundSummary };

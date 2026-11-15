@@ -28,14 +28,14 @@ const HAND_AFTER_DISCARD = 4;
 const handSize = (state: GameState) => (state.activePlayers.length === 2 ? 6 : 5);
 
 // Partnerships at 4. A seat that left keeps its name, so a broken partnership still ranks by team.
-const partnerships = (state: Pick<GameState, 'playerNames'>) => Object.keys(state.playerNames).length === 4;
+export const partnerships = (state: Pick<GameState, 'playerNames'>) => Object.keys(state.playerNames).length === 4;
 
 export function sideOf(state: Pick<GameState, 'playerNames'>, seat: Seat): Side {
   return partnerships(state) ? teamOf(seat) : seat;
 }
 
 const sidesOf = (state: GameState): Side[] => (partnerships(state) ? [0, 1] : state.activePlayers);
-const sideName = (state: GameState, side: Side) => (partnerships(state) ? teamNames(side === 0 ? 0 : 1, state.playerNames) : state.playerNames[side]);
+export const sideName = (state: Pick<GameState, 'playerNames'>, side: Side) => (partnerships(state) ? teamNames(side === 0 ? 0 : 1, state.playerNames) : state.playerNames[side]);
 
 // Everything that lasts only for one hand
 const HAND_START = {

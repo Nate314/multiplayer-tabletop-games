@@ -82,9 +82,8 @@ const word = (n: number) => WORDS[n] ?? String(n);
 
 const PAIRS = ['', '', 'a pair', 'a pair royal', 'a double pair royal'];
 
-// "Fifteen two, fifteen four, and a pair is six"; fifteens read as the running total
-export function describeItems(items: ScoreItem[]): string {
-  if (!items.length) return 'No points';
+// "fifteen two, fifteen four, and a pair"; fifteens read as the running total
+export function itemsList(items: ScoreItem[]): string {
   let running = 0;
   const parts = items.map(({ kind, cards, points }) => {
     running += points;
@@ -102,6 +101,15 @@ export function describeItems(items: ScoreItem[]): string {
       case 'muggins': return 'muggins';
     }
   });
-  const list = parts.length < 3 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
-  return `${list[0].toUpperCase()}${list.slice(1)} is ${word(running)}`;
+  return parts.length < 3 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
 }
+
+// "Fifteen two, fifteen four, and a pair is six"
+export function describeItems(items: ScoreItem[]): string {
+  if (!items.length) return 'No points';
+  const list = itemsList(items);
+  return `${list[0].toUpperCase()}${list.slice(1)} is ${word(totalOf(items))}`;
+}
+
+// A hand in rank order, ace low, so runs and pairs sit together
+export const sortedHand = (hand: Card[]): Card[] => [...hand].sort((a, b) => rankIndex(a) - rankIndex(b));

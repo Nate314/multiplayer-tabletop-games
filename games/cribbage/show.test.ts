@@ -138,6 +138,14 @@ test('a press takes the whole difference', () => {
   assert.deepEqual(state.scores, { 1: 4, 2: 4 });
 });
 
+test('the round summary keeps each claim and press beside the true total', () => {
+  let state = press(claim(atShow(2, SINGLE), 1, 4), 2);
+  state = pass(claim(state, 2, 9), 1);
+  state = pass(claim(state, 2, 6), 1);
+  const summary = state.roundSummary ?? assert.fail('expected a round summary');
+  assert.deepEqual(summary.counts.map(c => [c.claimed, c.total, c.muggins]), [[4, 8, [{ by: 2, points: 4 }]], [9, 9, []], [6, 6, []]]);
+});
+
 test('a press when nothing was missed costs 2, not below 0', () => {
   assert.deepEqual(press(claim(atShow(2, SINGLE, { 1: 0, 2: 5 }), 1, 8), 2).scores, { 1: 8, 2: 3 });
   assert.deepEqual(press(claim(atShow(2, SINGLE, { 1: 0, 2: 1 }), 1, 8), 2).scores, { 1: 8, 2: 0 });

@@ -25,6 +25,8 @@ const GAME_ICONS: Record<string, () => string> = {
   fourinarow: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 2 }),
     ...[7.5, 12, 16.5].flatMap(x => [el('circle', { cx: x, cy: 9.5, r: 1.6 }), x === 12 ? solid('circle', { cx: x, cy: 14.5, r: 1.6 }) : el('circle', { cx: x, cy: 14.5, r: 1.6 })])),
   corners: () => lineIcon(...[3, 7.5, 12, 16.5].map(n => el('rect', { x: n, y: n, width: 4.5, height: 4.5 }))),
+  // A pegging board strip with two pegs standing in its holes
+  cribbage: () => lineIcon(el('rect', { x: 2, y: 11, width: 20, height: 8, rx: 2 }), pip(5.5, 15, 0.9), pip(12.5, 15, 0.9), pip(19.5, 15, 0.9), el('path', { d: 'M9 15V7M16 15V9' }), solid('circle', { cx: 9, cy: 5.5, r: 1.8 }), solid('circle', { cx: 16, cy: 7.5, r: 1.8 })),
   dominoes: () => lineIcon(el('rect', { x: 7, y: 2, width: 10, height: 20, rx: 2 }), el('path', { d: 'M7 12h10' }),
     pip(10, 5.5), pip(14, 8.5), pip(10, 15), pip(12, 17), pip(14, 19)),
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),

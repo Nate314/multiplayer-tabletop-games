@@ -62,8 +62,8 @@ export type LastMove =
   | { type: 'muggins'; playerNumber: Seat; points: number } // the points the presser took (negative cost for a wrong Single press)
   | { type: 'noMuggins'; playerNumber: Seat };
 
-// One count as the round summary lists it
-export type CountSummary = { owner: Seat; crib: boolean; items: ScoreItem[]; total: number };
+// One count as the round summary lists it; `claimed` and `muggins` as on the Show
+export type CountSummary = Pick<Show, 'owner' | 'crib' | 'items' | 'total' | 'claimed' | 'muggins'>;
 
 // How one round went
 export type RoundSummary = {

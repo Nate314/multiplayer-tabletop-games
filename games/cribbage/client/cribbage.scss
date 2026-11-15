@@ -1,0 +1,633 @@
+[data-game="cribbage"] {
+  /* A wooden board on green felt. Every rule is scoped to data-game="cribbage", so none of it reaches other pages. */
+
+  color-scheme: light;
+  color: var(--text);
+  --page-bg-start: #efe4cf;
+  --page-bg-end: #c9a77a;
+  --text: #2a1d10;
+  --muted: #6b5843;
+  --panel-bg: rgba(255, 252, 245, 0.94);
+  --panel-border: rgba(42, 29, 16, 0.16);
+  --modal-bg: #fffaf0;
+  --wood: #b07a43;
+  --wood-hole: #3b2412;
+  --felt: #2c6a44;
+  --felt-text: #f2fbf4;
+  --button-bg: #7a4a1f;
+  --button-hover-bg: #5a3414;
+  --button-text: #fff;
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --status-bg: #f4ead8;
+  --status-text: #2a1d10;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --highlight: #d9480f;
+  --card-w: 60px;
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg-start: #21180f;
+    --page-bg-end: #110c07;
+    --text: #f3e9da;
+    --muted: #bba78e;
+    --panel-bg: rgba(46, 34, 22, 0.95);
+    --panel-border: rgba(243, 233, 218, 0.14);
+    --modal-bg: #2e2216;
+    --wood: #6e4a28;
+    --wood-hole: #1a0f06;
+    --felt: #1d4a2e;
+    --button-bg: #b0743a;
+    --button-hover-bg: #c98a4c;
+    --status-bg: #3a2c1d;
+    --status-text: #f3e9da;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --highlight: #ff8a3d;
+  }
+}
+
+.game-root[data-game="cribbage"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--page-bg-start), var(--page-bg-end)) fixed;
+}
+
+[data-game="cribbage"] {
+  .game-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem 0 12px;
+  }
+
+  .game-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+  }
+
+  .back-button,
+  .history-button,
+  .rules-button {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 1.25rem;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .hide-button,
+  .settings-button,
+  .theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--button-bg);
+    font-size: 1.2rem;
+  }
+
+  .back-button:hover,
+  .history-button:hover:enabled,
+  .rules-button:hover,
+  .hide-button:hover,
+  .settings-button:hover,
+  .theme-toggle:hover {
+    background: var(--button-hover-bg);
+  }
+
+  /* Game screen: status, the board, the table, the show, the hand. Stacked and scrolling on phones. */
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .game-info,
+  .peg-board,
+  .table,
+  .show-panel,
+  .hand {
+    box-sizing: border-box;
+    max-width: 100%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .game-info {
+    padding: 14px 20px;
+  }
+
+  /* Laptop width: the status beside the board, the table below them */
+
+  @media (min-width: 720px) {
+    .game-screen {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      align-items: start;
+    }
+
+    .table,
+    .show-panel,
+    .hand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .player-info {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+    color: var(--status-text);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  .hint {
+    color: var(--highlight);
+    font-weight: 600;
+    margin-top: 4px;
+    min-height: 1.5em;
+  }
+
+  .action-buttons,
+  .show-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .primary-button,
+  .action-buttons button,
+  .show-actions button,
+  .undo-vote-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .primary-button:hover,
+  .action-buttons button:not(:disabled):hover,
+  .show-actions button:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .action-buttons button:disabled,
+  .show-actions button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .show-actions input {
+    width: 4.5em;
+    margin-left: 6px;
+    padding: 6px;
+    font-size: 1rem;
+  }
+
+  /* Cards */
+
+  .playing-card {
+    --card-width: var(--card-w);
+    --playing-card-highlight: var(--highlight);
+  }
+
+  .playing-card-small {
+    --card-width: 44px;
+  }
+
+  .hand-waiting button.playing-card:disabled {
+    opacity: 1;
+  }
+
+  .hand button.playing-card:not(:disabled),
+  .show-cards button.playing-card {
+    outline: 3px solid var(--highlight);
+    outline-offset: 1px;
+  }
+
+  .hand button.playing-card:not(:disabled):hover {
+    transform: translateY(-4px);
+  }
+
+  .hand .playing-card-selected,
+  .show-cards .playing-card-selected {
+    outline: 3px solid var(--highlight);
+    transform: translateY(-12px);
+  }
+
+  /* The peg board: a wooden track, one lane per side, the scores beside it */
+
+  .peg-board {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    min-width: 0;
+  }
+
+  .peg-scores {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .peg-score {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .peg-score-winner {
+    outline: 2px solid var(--highlight);
+  }
+
+  .peg-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid var(--wood-hole);
+  }
+
+  .peg-name {
+    font-weight: 600;
+  }
+
+  .peg-points {
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+
+  .peg-target {
+    align-self: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .peg-track {
+    overflow-x: auto;
+    border-radius: 8px;
+    background: var(--wood);
+  }
+
+  .peg-track svg {
+    display: block;
+    width: 100%;
+    min-width: 520px;
+    height: auto;
+    max-height: 240px; /* the drawing keeps its shape, centered, when a wide screen would make it tall */
+  }
+
+  .peg-hole {
+    fill: var(--wood-hole);
+  }
+
+  .peg {
+    stroke: #fff;
+    stroke-width: 0.8;
+  }
+
+  .peg-back {
+    opacity: 0.6;
+  }
+
+  /* The table: seats, starter and crib, the pegging pile */
+
+  .table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .seats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .seat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 90px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 2px solid var(--panel-border);
+    background: var(--status-bg);
+  }
+
+  .seat-current {
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 2px var(--highlight);
+  }
+
+  .seat-name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .seat-count,
+  .table-label {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .seat-note {
+    padding: 0 8px;
+    border-radius: 10px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .table-middle {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }
+
+  .starter,
+  .crib {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--felt);
+    color: var(--felt-text);
+  }
+
+  .pile-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    min-height: calc(44px * 1.4);
+  }
+
+  .pile-count {
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  /* The show */
+
+  .show-panel {
+    padding: 12px;
+  }
+
+  .show-title {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+  }
+
+  .show-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .show-breakdown {
+    font-weight: 600;
+  }
+
+  .show-claim,
+  .show-press,
+  .show-clock {
+    margin-top: 4px;
+  }
+
+  .show-clock {
+    color: var(--highlight);
+    font-weight: 700;
+  }
+
+  .show-hint {
+    flex-basis: 100%;
+    color: var(--muted);
+  }
+
+  /* Your hand */
+
+  .hand {
+    padding: 12px 12px 16px;
+  }
+
+  .hand-header {
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .hand-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Hand scoring, the undo vote and the FAQ */
+
+  .overlay,
+  .undo-vote {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal,
+  .undo-vote-panel {
+    box-sizing: border-box;
+    width: min(480px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: 10px;
+    background: var(--modal-bg);
+    color: var(--text);
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal h2 {
+    margin: 0 0 12px;
+    text-align: center;
+  }
+
+  .history-board .peg-board,
+  .history-board .table,
+  .history-board .show-panel,
+  .history-board .hand {
+    margin-top: 10px;
+    box-shadow: none;
+  }
+
+  .summary-result {
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .summary-counts,
+  .summary-sides {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .summary-count {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--status-bg);
+  }
+
+  .summary-side {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--status-bg);
+  }
+
+  .summary-name {
+    font-weight: 600;
+  }
+
+  .summary-points {
+    font-weight: 800;
+  }
+
+  .summary-reason {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .summary-target,
+  .summary-waiting {
+    margin-bottom: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .round-summary .primary-button {
+    display: block;
+    margin: 0 auto;
+  }
+
+  .undo-vote-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .undo-vote-list {
+    margin: 0 0 12px;
+    padding-left: 20px;
+  }
+
+  .undo-vote-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .faq dl {
+    margin: 0;
+  }
+
+  .faq dt {
+    font-weight: 600;
+    margin-top: 12px;
+  }
+
+  .faq dd {
+    margin: 4px 0 0;
+  }
+
+  @media (max-width: 560px) {
+    & {
+      --card-w: 48px;
+    }
+
+    .game-header h1 {
+      font-size: 1.4rem;
+    }
+  }
+}
