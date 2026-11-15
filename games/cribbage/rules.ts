@@ -19,6 +19,7 @@ import { shuffle } from '../../shared/shuffle.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import { cardValue, describeItems, pegItems, playable, totalOf } from './scoring.ts';
 import { TARGET_RULE } from './options.ts';
+import { applyShowMove, publicShow, startShow } from './show.ts';
 import type { Card, GameState, LastMove, Move, PublicGameState, Result, ScoreItem, Seat, Side } from './types.ts';
 
 export const targetScore = (state: Pick<GameState, 'houseRules'>): number => houseRule(state, TARGET_RULE);
@@ -52,11 +53,11 @@ const HAND_START = {
 } satisfies Partial<GameState>;
 
 export function createGameState(gameId: string): GameState {
-  return { ...baseGameState(gameId), ...HAND_START, handNumber: 1, dealer: null, hands: {}, played: {}, scores: {}, pegs: {} };
+  return { ...baseGameState(gameId), ...HAND_START, handNumber: 1, dealer: null, hands: {}, played: {}, scores: {}, handStartScores: {}, pegs: {} };
 }
 
 // A fresh shuffle. At 3 players the deck's top card starts the crib. Everyone discards at once, so no one has the turn.
-function dealHand(state: GameState, dealer: Seat, random: Random): GameState {
+export function dealHand(state: GameState, dealer: Seat, random: Random): GameState {
   const deck = shuffle(standardDeck(), random);
   const seats = state.activePlayers;
   const size = handSize(state);
@@ -64,7 +65,7 @@ function dealHand(state: GameState, dealer: Seat, random: Random): GameState {
   const rest = deck.slice(seats.length * size);
   const crib = seats.length === 3 ? rest.splice(0, 1) : [];
   const played = Object.fromEntries(seats.map(seat => [seat, []]));
-  return { ...state, ...HAND_START, dealer, hands, crib, deck: rest, played, currentPlayer: null };
+  return { ...state, ...HAND_START, dealer, hands, crib, deck: rest, played, handStartScores: state.scores, currentPlayer: null };
 }
 
 // Each seat is dealt one card and the lowest deals (ace low); a tie deals again
@@ -96,10 +97,11 @@ export function resetLobby(state: GameState, random: Random): GameState {
 
 export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null): Omit<PublicGameState, 'moveCount'> {
   const { hands, crib, deck: _deck, ...view } = state;
-  return { ...view, hand: viewHand(hands, viewer), handCounts: handCounts(hands), cribCount: crib.length, undoAvailable };
+  const shows = state.shows.map(show => publicShow(state, show));
+  return { ...view, shows, hand: viewHand(hands, viewer), handCounts: handCounts(hands), cribCount: crib.length, undoAvailable };
 }
 
-function parseCard(value: unknown): Card | null {
+export function parseCard(value: unknown): Card | null {
   const input = asRecord(value);
   const rank = RANKS.find(candidate => candidate === input?.rank);
   const suit = SUITS.find(candidate => candidate === input?.suit);
@@ -122,6 +124,8 @@ function parseMove(move: unknown): Move | null {
       const card = parseCard(input.card);
       return card ? { type: 'play', card } : null;
     }
+    case 'claim':
+      return Number.isInteger(input.points) && typeof input.points === 'number' && input.points >= 0 ? { type: 'claim', points: input.points } : null;
     default:
       return null;
   }
@@ -199,7 +203,7 @@ const allPlayedOut = (state: GameState) => state.activePlayers.every(seat => !st
 // After a play or a Go: a reset clears the count, and once every hand is played out the show follows
 function continuePegging(state: GameState, from: Seat, reset: boolean): GameState {
   const next = reset ? { ...state, pile: [], count: 0, saidGo: [] } : state;
-  if (allPlayedOut(next)) return { ...next, phase: 'show', currentPlayer: null };
+  if (allPlayedOut(next)) return startShow(next);
   return { ...next, currentPlayer: nextToPlay(next, from) };
 }
 
@@ -234,14 +238,14 @@ function sayGo(state: GameState, seat: Seat): Result<GameState> {
   const name = state.playerNames[seat];
   const next = nextToPlay(after, seat);
   if (next !== null) return { state: recorded({ ...after, currentPlayer: next }, { type: 'go', playerNumber: seat, lastCard: false }, `${name} says Go`) };
-  const last = state.pile[state.pile.length - 1].seat;
+  const { seat: last, card } = state.pile[state.pile.length - 1];
   const status = `${name} says Go. ${state.playerNames[last]} scores 1 for the go`;
-  const goItem: ScoreItem = { kind: 'go', cards: [], points: 1 };
+  const goItem: ScoreItem = { kind: 'go', cards: [card], points: 1 };
   const scored = addPoints(recorded(after, { type: 'go', playerNumber: seat, lastCard: true }, status), sideOf(state, last), [goItem]);
   return { state: scored.isGameOver ? scored : continuePegging(scored, last, true) };
 }
 
-export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random): Result<GameState> {
+export function applyMove(state: GameState, seat: Seat, move: unknown, random: Random, now: number): Result<GameState> {
   const parsed = parseMove(move);
   if (!parsed) return { error: 'Invalid move' };
   switch (parsed.type) {
@@ -258,7 +262,8 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, random: R
       if (state.phase !== 'pegging') return { error: 'Pegging has not started' };
       return sayGo(state, seat);
     case 'claim':
-      return { error: 'Invalid move' };
+      if (state.phase !== 'show') return { error: 'It is not time to count' };
+      return applyShowMove(state, seat, parsed, now);
   }
 }
 

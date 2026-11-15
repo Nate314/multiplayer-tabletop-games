@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withRules } from '../../server/testing.ts';
 import { seeded } from '../testStates.ts';
 import {
   addPoints, allowsOutOfTurn, applyMove, createGameState, onPlayerLeft, onUndo, resetLobby, sideOf, toPublicState, waitingOn
@@ -16,7 +17,7 @@ function ok(result: Result<GameState>): GameState {
   if ('error' in result) assert.fail(result.error);
   return result.state;
 }
-const move = (state: GameState, seat: Seat, m: Move) => applyMove(state, seat, m, seeded(3));
+const move = (state: GameState, seat: Seat, m: Move) => applyMove(state, seat, m, seeded(3), 0);
 const play = (state: GameState, seat: Seat, code: string) => ok(move(state, seat, { type: 'play', card: parse(code)[0] }));
 const go = (state: GameState, seat: Seat) => ok(move(state, seat, { type: 'go' }));
 
@@ -134,8 +135,10 @@ test('pegging fifteen, pairs and runs score as played', () => {
 });
 
 test('go and last card', () => {
-  // Three players, count 28: nobody can play, so each says Go and Alice, who played last, scores 1
-  let state = pegging(['KH 2C', 'QH', '9C'], { pile: [{ seat: 1, card: parse('8S')[0] }], count: 28, currentPlayer: 2 });
+  // Three players, count 28: nobody can play, so each says Go and Alice, who played last, scores 1.
+  // With Muggins on, the show waits for the first count's claim.
+  const muggins = withRules({ muggins: true });
+  let state = pegging(['KH 2C', 'QH', '9C'], { pile: [{ seat: 1, card: parse('8S')[0] }], count: 28, currentPlayer: 2, houseRules: muggins });
   assert.deepEqual(move(state, 2, { type: 'play', card: parse('QH')[0] }), { error: 'That card would take the count past 31' });
   state = go(state, 2);
   assert.equal(state.currentPlayer, 3);
@@ -154,15 +157,26 @@ test('go and last card', () => {
   state = play(state, 1, 'KH'); // the last card of the round: 29, 1 point
   assert.equal(state.scores[1], 2);
   assert.equal(state.phase, 'show');
-  assert.equal(state.currentPlayer, null);
+  assert.equal(state.currentPlayer, 1); // the seat after the dealer counts first
 
   // A 31 scores 2 and no Go point, and play goes on from the next seat
-  let thirty = pegging(['7C 5H', '9D'], { pile: [{ seat: 2, card: parse('KS')[0] }], count: 24 });
+  let thirty = pegging(['7C 5H', '9D'], { pile: [{ seat: 2, card: parse('KS')[0] }], count: 24, houseRules: muggins });
   thirty = play(thirty, 1, '7C');
   assert.deepEqual([thirty.scores[1], thirty.count, thirty.currentPlayer], [2, 0, 2]);
   thirty = play(thirty, 2, '9D');
   thirty = play(thirty, 1, '5H'); // last card, 14
   assert.deepEqual([thirty.scores[1], thirty.phase], [3, 'show']);
+});
+
+test('a Go chain at four players scores for the partnership and play resumes after the last to play', () => {
+  const teams = { scores: { 0: 0, 1: 0 }, pegs: { 0: { front: 0, back: 0 }, 1: { front: 0, back: 0 } } };
+  let state = pegging(['6C 2D', 'QH', 'KD', 'JC'], { pile: [{ seat: 4, card: parse('8S')[0] }], count: 24, ...teams });
+  state = play(state, 1, '6C'); // 30
+  for (const seat of [2, 3, 4]) state = go(state, seat);
+  assert.equal(state.currentPlayer, 1);
+  state = go(state, 1); // Alice cannot play the 2 either
+  assert.deepEqual(state.lastMove, { type: 'go', playerNumber: 1, lastCard: true });
+  assert.deepEqual([state.scores, state.count, state.saidGo, state.currentPlayer], [{ 0: 1, 1: 0 }, 0, [], 2]);
 });
 
 test('a card that would pass 31 is refused', () => {

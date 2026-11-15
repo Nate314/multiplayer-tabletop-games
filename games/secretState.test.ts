@@ -5,7 +5,7 @@ import { dealt } from './testStates.ts';
 
 const WITH_SECRET = [
   'palacewalls', 'roadsandfields', 'hexisland', 'charades', 'categories', 'codebreaker', 'sudoku', 'dominoes', 'euchre', 'fictionary', 'gofish', 'hintgrid', 'holdem', 'blocktower', 'streetdeeds', 'stagerummy', 'drawandguess',
-  'inorder', 'nest', 'rummytiles', 'lettergrid', 'spiteandmalice', 'jewelguild', 'territories', 'missiontricks', 'railroutes', 'rainboweights', 'war', 'whodunit', 'bingo'
+  'inorder', 'nest', 'rummytiles', 'lettergrid', 'spiteandmalice', 'jewelguild', 'territories', 'missiontricks', 'railroutes', 'rainboweights', 'war', 'whodunit', 'bingo', 'cribbage'
 ];
 
 const isEmpty = (value: unknown) => Array.isArray(value) ? value.length === 0

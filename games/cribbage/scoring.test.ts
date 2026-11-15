@@ -70,3 +70,16 @@ test('matchCombination', () => {
   assert.equal(matchCombination(items, parse('5C 5D'), [pairAt]), null);
   assert.equal(matchCombination(items, parse('2S 9H'), []), null);
 });
+
+test('matchCombination takes the highest-scoring match first', () => {
+  const items = scoreShow(parse('4C 6D 9H QS'), one('5S'), false);
+  const first = matchCombination(items, parse('4C 5S 6D'), []) ?? assert.fail('expected a match');
+  assert.deepEqual([items[first].kind, items[first].points], ['run', 3]);
+  const second = matchCombination(items, parse('6D 5S 4C'), [first]) ?? assert.fail('expected a match');
+  assert.equal(items[second].kind, 'fifteen');
+});
+
+test('describeItems spells run and flush lengths', () => {
+  assert.equal(describeItems([{ kind: 'run', cards: parse('4C 5S 6D'), points: 3 }]), 'A run of three is three');
+  assert.equal(describeItems([{ kind: 'flush', cards: parse('AH 3H 7H 9H'), points: 4 }]), 'A flush of four is four');
+});

@@ -17,7 +17,8 @@ export type Pegs = { front: number; back: number };
 export type Phase = 'discard' | 'cut' | 'pegging' | 'show' | 'roundOver';
 
 export type ScoreItem = {
-  kind: 'fifteen' | 'pair' | 'run' | 'flush' | 'nobs' | 'heels' | 'thirtyOne' | 'go' | 'lastCard';
+  // 'claim': the part of a count its owner claimed under Muggins; 'muggins': points an opponent took by pressing
+  kind: 'fifteen' | 'pair' | 'run' | 'flush' | 'nobs' | 'heels' | 'thirtyOne' | 'go' | 'lastCard' | 'claim' | 'muggins';
   cards: Card[];
   points: number;
 };
@@ -31,8 +32,9 @@ export type Show = {
   items: ScoreItem[];
   total: number;
   claimed: number | null;
-  muggins: { by: Seat; points: number }[];
+  muggins: { by: Seat; points: number }[]; // points is -2 for a Single press when nothing was missed
   passed: Seat[]; // opponents who pressed No Muggins
+  taken: number[]; // the indexes of `items` already named by a Name-the-points press
   closesAt: number | null;
 };
 
@@ -55,6 +57,7 @@ export type LastMove =
   | { type: 'cut'; playerNumber: Seat; starter: Card; heels: boolean }
   | { type: 'play'; playerNumber: Seat; card: Card; items: ScoreItem[] }
   | { type: 'go'; playerNumber: Seat; lastCard: boolean } // lastCard: the Go scored its point
+  | { type: 'claim'; playerNumber: Seat; crib: boolean; points: number }
   | { type: 'count'; playerNumber: Seat; crib: boolean; points: number; items: ScoreItem[] }
   | { type: 'muggins'; playerNumber: Seat; points: number } // the points the presser took (negative cost for a wrong Single press)
   | { type: 'noMuggins'; playerNumber: Seat };
@@ -85,6 +88,7 @@ export type GameState = BaseGameState & {
   played: Record<Seat, Card[]>; // each seat's pegging cards this round, kept for the show
   saidGo: Seat[];
   scores: Record<Side, number>;
+  handStartScores: Record<Side, number>; // the scores when the hand was dealt, for the round summary's change
   pegs: Record<Side, Pegs>;
   shows: Show[];
   showIndex: number;
@@ -92,8 +96,9 @@ export type GameState = BaseGameState & {
   lastMove: LastMove | null;
 };
 
-// While a Muggins window is open, and the style is not 'shown', a show carries no items or total
-export type PublicShow = Omit<Show, 'items' | 'total'> & { items?: ScoreItem[]; total?: number };
+// Until its owner has claimed, and while a Muggins window is open in a style other than 'shown', a show carries no
+// items, total or taken
+export type PublicShow = Omit<Show, 'items' | 'total' | 'taken'> & Partial<Pick<Show, 'items' | 'total' | 'taken'>>;
 
 // The game state as the server sends it to one browser: only that player's own hand
 export type PublicGameState =

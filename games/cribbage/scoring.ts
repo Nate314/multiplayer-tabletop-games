@@ -65,11 +65,14 @@ export function playable(hand: Card[], count: number): Card[] {
   return hand.filter(card => count + cardValue(card.rank) <= 31);
 }
 
-// The unclaimed item whose cards are exactly the selection
+// The highest-scoring unclaimed item whose cards are exactly the selection (4 5 6 is the run before the fifteen)
 export function matchCombination(items: ScoreItem[], selection: Card[], taken: number[]): number | null {
-  const index = items.findIndex((item, i) =>
-    !taken.includes(i) && item.cards.length === selection.length && item.cards.every(c => selection.some(s => sameCard(s, c))));
-  return index === -1 ? null : index;
+  let best: number | null = null;
+  items.forEach((item, i) => {
+    const matches = !taken.includes(i) && item.cards.length === selection.length && item.cards.every(c => selection.some(s => sameCard(s, c)));
+    if (matches && (best === null || item.points > items[best].points)) best = i;
+  });
+  return best;
 }
 
 const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen',
@@ -88,13 +91,15 @@ export function describeItems(items: ScoreItem[]): string {
     switch (kind) {
       case 'fifteen': return `fifteen ${word(running)}`;
       case 'pair': return PAIRS[cards.length] || 'a pair';
-      case 'run': return `a run of ${cards.length}`;
-      case 'flush': return `a flush of ${cards.length}`;
+      case 'run': return `a run of ${word(cards.length)}`;
+      case 'flush': return `a flush of ${word(cards.length)}`;
       case 'nobs': return 'his nobs';
       case 'heels': return 'his heels';
       case 'thirtyOne': return 'thirty-one';
       case 'go': return 'a go';
       case 'lastCard': return 'last card';
+      case 'claim': return `a claim of ${word(points)}`;
+      case 'muggins': return 'muggins';
     }
   });
   const list = parts.length < 3 ? parts.join(' and ') : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
