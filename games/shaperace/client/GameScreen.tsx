@@ -1,0 +1,119 @@
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import gameService from '../../../src/services/gameService';
+import { formatClock, useCountdown } from '../../../src/hooks/useCountdown.ts';
+import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
+import { fits } from '../board.ts';
+import { clock } from '../rules.ts';
+import RaceBoard from './RaceBoard';
+import ShapeArt from './ShapeArt';
+import { shapeLabel } from '../shapes.ts';
+import { Progress } from './HistoryBoard';
+import type { GameScreenProps } from '../../../src/clientGames.ts';
+import type { PublicGameState, SeatBoard } from '../types.ts';
+
+// A press that moves less than this is a tap, which turns the shape
+const DRAG_PX = 6;
+const NO_BOARD: SeatBoard = { placed: {}, turns: [] };
+
+// Where the pop throws each unplaced shape: a fixed spread from its tray index
+const scatter = (i: number) => ({ '--dx': `${((i * 37) % 11 - 5) * 8}px`, '--dy': `${((i * 23) % 7 - 3) * 8}px`, '--spin': `${i * 53}deg` }) as CSSProperties;
+
+type Drag = { shape: number; pointerId: number; x0: number; y0: number; dx: number; dy: number; moved: boolean };
+
+export default function GameScreen({ gameState, playerNumber, error }: GameScreenProps<PublicGameState>) {
+  const { layout, boards, activePlayers, finishTimes, endsAt, serverTime, popped, isGameOver, raceStartedAt, gameStatus } = gameState;
+  const board = boards[playerNumber] ?? NO_BOARD;
+  const timeLeft = useCountdown(endsAt, serverTime);
+  const myTime = finishTimes[playerNumber];
+  const racing = raceStartedAt !== null && !isGameOver && myTime === undefined && activePlayers.includes(playerNumber);
+  const [drag, setDrag] = useState<Drag | null>(null);
+  // A fitting drop sits in its hole until the server's answer arrives; a refusal (the error) lets it go
+  const [landed, setLanded] = useState<{ shape: number; hole: number } | null>(null);
+  useEffect(() => { if (error) setLanded(null); }, [error]);
+  // The pop or a finish mid-drag lets go: a disabled button hears no release
+  useEffect(() => { if (!racing) setDrag(null); }, [racing]);
+  const boardRef = useRef<SVGSVGElement>(null);
+
+  if (!layout) return <div className="sr-screen"><div className="game-status">{gameStatus || 'Waiting for players'}</div></div>;
+  const placed = landed && board.placed[landed.hole] === undefined ? { ...board.placed, [landed.hole]: landed.shape } : board.placed;
+  const inPlace = new Set(Object.values(placed));
+
+  // The hole under a point on screen, or null off the board
+  const holeAt = (x: number, y: number): number | null => {
+    const rect = boardRef.current?.getBoundingClientRect();
+    if (!rect || x < rect.left || y < rect.top || x >= rect.right || y >= rect.bottom) return null;
+    const n = Math.sqrt(layout.size);
+    return Math.floor(((y - rect.top) / rect.height) * n) * n + Math.floor(((x - rect.left) / rect.width) * n);
+  };
+
+  const onPointerDown = (shape: number) => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (drag || !racing || event.button !== 0) return;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // A pointer that already ended cannot be captured; its pointerup still lets go
+    }
+    setDrag({ shape, pointerId: event.pointerId, x0: event.clientX, y0: event.clientY, dx: 0, dy: 0, moved: false });
+  };
+  const onPointerMove = (event: ReactPointerEvent) => {
+    if (drag?.pointerId !== event.pointerId) return;
+    const dx = event.clientX - drag.x0, dy = event.clientY - drag.y0;
+    setDrag({ ...drag, dx, dy, moved: drag.moved || Math.hypot(dx, dy) > DRAG_PX });
+  };
+  // Release over the matching hole the right way up places it; anywhere else it springs back and nothing is sent
+  const onPointerUp = (event: ReactPointerEvent) => {
+    if (drag?.pointerId !== event.pointerId) return;
+    setDrag(null);
+    // Judged from the release point too: a fast drag can end before the render that saw it move
+    if (!drag.moved && Math.hypot(event.clientX - drag.x0, event.clientY - drag.y0) <= DRAG_PX) return; // a tap: the click that follows turns it
+    swallowNextClick();
+    const hole = holeAt(event.clientX, event.clientY);
+    if (hole === null || !fits(layout, placed, drag.shape, hole, board.turns[drag.shape])) return;
+    setLanded({ shape: drag.shape, hole });
+    gameService.sendAction({ type: 'place', shape: drag.shape, hole });
+  };
+  const onPointerCancel = (event: ReactPointerEvent) => {
+    if (drag?.pointerId === event.pointerId) setDrag(null);
+  };
+
+  return (
+    <div className="sr-screen">
+      {(error || gameStatus) && <div className={error ? 'game-status game-status-error' : 'game-status'} role="status">{error || gameStatus}</div>}
+      <div className="sr-top">
+        {timeLeft !== null && <div className="sr-timer" role="timer" aria-label="Time left">{formatClock(timeLeft)}</div>}
+        {raceStartedAt === null && !isGameOver && <p className="sr-note">The clock starts once everyone agrees to the house rules</p>}
+        {myTime !== undefined && <p className="sr-note">You filled the board in {clock(myTime)}</p>}
+      </div>
+      <Progress gameState={gameState} seats={activePlayers.filter(seat => seat !== playerNumber)} />
+      <RaceBoard layout={layout} placed={placed} popped={popped && isGameOver} svgRef={boardRef} label="Your board" />
+      <ul className={popped && isGameOver ? 'sr-tray sr-scatter' : 'sr-tray'} aria-label="Shapes">
+        {layout.tray.map((id, shape) => {
+          const turns = board.turns[shape] ?? 0;
+          const held = drag?.shape === shape;
+          return (
+            <li key={shape} style={scatter(shape)}>
+              {!inPlace.has(shape) && (
+                <button
+                  type="button"
+                  className={held && drag.moved ? 'sr-shape sr-dragging' : 'sr-shape'}
+                  aria-label={`${shapeLabel(id)}, turned ${turns * 45} degrees`}
+                  disabled={!racing}
+                  onClick={() => gameService.sendAction({ type: 'turn', shape })}
+                  onPointerDown={onPointerDown(shape)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerCancel={onPointerCancel}
+                >
+                  <svg viewBox="0 0 100 100" style={held ? { transform: `translate(${drag.dx}px, ${drag.dy}px)` } : undefined}>
+                    <ShapeArt id={id} turns={turns} className="sr-piece" />
+                  </svg>
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {racing && <p className="sr-note">Tap a shape to turn it, then drag it into its hole</p>}
+    </div>
+  );
+}

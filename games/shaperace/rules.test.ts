@@ -112,7 +112,9 @@ test('turn changes only the sender\'s shape', () => {
 test('a fitting placement is recorded and a wrong one is refused', () => {
   const { state, shape } = ready(race(2), 1, 0);
   assert.equal(shaperace.recordsAction!(state, 1, { type: 'place', shape, hole: 0 }), true);
-  assert.equal(act(state, 1, { type: 'place', shape, hole: 0 }).boards[1]!.placed[0], shape);
+  const placed = act(state, 1, { type: 'place', shape, hole: 0 });
+  assert.equal(placed.boards[1]!.placed[0], shape);
+  assert.deepEqual(placed.lastMove, { playerNumber: 1, shape, hole: 0 });
   assert.equal(refused(state, 1, { type: 'place', shape, hole: 1 }), 'That shape does not fit there');
   assert.equal(shaperace.recordsAction!(state, 1, { type: 'place', shape, hole: 1 }), false);
 });

@@ -14,7 +14,7 @@ import { END_RULE, SIZE_RULE, TIMER_RULE } from './options.ts';
 import type { GameState, PublicGameState, Result, Seat, SeatBoard } from './types.ts';
 
 export function createGameState(gameId: string): GameState {
-  return { ...baseGameState(gameId), layout: null, boards: {}, raceStartedAt: null, finishTimes: {}, popped: false };
+  return { ...baseGameState(gameId), layout: null, boards: {}, raceStartedAt: null, finishTimes: {}, popped: false, lastMove: null };
 }
 
 // Before the start, after anyone joins or leaves: one new layout, the same for every seat
@@ -27,6 +27,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
     raceStartedAt: null,
     finishTimes: {},
     popped: false,
+    lastMove: null,
     currentPlayer: null // no turns: everyone races at once
   };
 }
@@ -84,7 +85,7 @@ export function applyAction(state: GameState, seat: Seat, action: unknown, _rand
   const hole = indexBelow(input.hole, layout.size);
   if (hole === null) return { error: 'No such hole' };
   if (!fits(layout, board.placed, shape, hole, board.turns[shape])) return { error: 'That shape does not fit there' };
-  const placed = withBoard({ ...board, placed: { ...board.placed, [hole]: shape } });
+  const placed = { ...withBoard({ ...board, placed: { ...board.placed, [hole]: shape } }), lastMove: { playerNumber: seat, shape, hole } };
   if (placedCount(placed.boards[seat]) < layout.size) return { state: placed };
   return {
     state: settle({
@@ -124,7 +125,8 @@ export function onPlayerLeft(state: GameState, seat: Seat): GameState {
   return settle({ ...state, boards, finishTimes });
 }
 
-function clock(ms: number): string {
+// m:ss.t, e.g. 0:42.3
+export function clock(ms: number): string {
   const tenths = Math.floor(ms / 100);
   return `${Math.floor(tenths / 600)}:${((tenths % 600) / 10).toFixed(1).padStart(4, '0')}`;
 }

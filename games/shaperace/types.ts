@@ -15,6 +15,7 @@ export type GameState = BaseGameState & {
   raceStartedAt: number | null; // server ms the clock started
   finishTimes: Partial<Record<Seat, number>>; // ms after raceStartedAt each seat filled its board
   popped: boolean; // the race ended on the timer
+  lastMove: { playerNumber: Seat; shape: number; hole: number } | null; // the last placement, for the history
 };
 
 export type PublicGameState = BasePublicState & GameState & {

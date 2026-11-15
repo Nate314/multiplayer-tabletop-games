@@ -30,6 +30,8 @@ export const SHAPES: { id: ShapeId; label: string; period: 1 | 2 | 4 | 8; path: 
   { id: 'chevron', label: 'Chevron', period: 8, path: polygon([[8, 20], [32, 20], [50, 58], [68, 20], [92, 20], [50, 92]]) }
 ];
 
+export const shapeLabel = (id: ShapeId): string => SHAPES.find((s) => s.id === id)?.label ?? id;
+
 type Point = [number, number];
 
 function polygon(points: Point[]): string {

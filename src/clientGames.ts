@@ -60,6 +60,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),
   blocktower: () => import('../games/blocktower/client/index.ts').then(m => m.loadBlocktowerClient()),
   jigsaw: () => import('../games/jigsaw/client/index.ts').then(m => m.jigsawClient),
+  shaperace: () => import('../games/shaperace/client/index.ts').then(m => m.shaperaceClient),
   mancala: () => import('../games/mancala/client/index.ts').then(m => m.mancalaClient),
   streetdeeds: () => import('../games/streetdeeds/client/index.ts').then(m => m.streetdeedsClient),
   naval: () => import('../games/naval/client/index.ts').then(m => m.navalClient),

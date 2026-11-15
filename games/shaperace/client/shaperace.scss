@@ -1,0 +1,259 @@
+[data-game="shaperace"] {
+  /* Shape Race's toy board theme. Every rule is scoped to data-game="shaperace", so none of it reaches other games.
+   The header, dialogs and vote panels use the platform defaults through the --platform-* variables. */
+  color-scheme: light;
+  --page-bg: #fdf6e3;
+  --text: #2b2118;
+  --muted: #6b5d4f;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(43, 33, 24, 0.16);
+  --button-bg: #c2410c;
+  --button-hover-bg: #9a3412;
+  --button-text: #ffffff;
+  --status-bg: #fde7c8;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --face: #f59e0b;
+  --face-edge: #b45309;
+  --hole: #5b3a12;
+  --piece: #2563eb;
+  --piece-edge: #1e3a8a;
+  --highlight: #16a34a;
+  --platform-page-bg: var(--page-bg);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+  color: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --page-bg: #1a1510;
+    --text: #f2e8dc;
+    --muted: #b3a493;
+    --panel-bg: #261f18;
+    --panel-border: rgba(242, 232, 220, 0.14);
+    --button-bg: #ea580c;
+    --button-hover-bg: #f97316;
+    --status-bg: #3a2a18;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --face: #b45309;
+    --face-edge: #78350f;
+    --hole: #1c1006;
+    --piece: #60a5fa;
+    --piece-edge: #1e3a8a;
+    --highlight: #4ade80;
+  }
+
+  .sr-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .game-status {
+    align-self: stretch;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--status-bg);
+    text-align: center;
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .sr-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px 16px;
+  }
+
+  .sr-timer {
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sr-note {
+    margin: 0;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .sr-progress {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sr-progress li {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .sr-progress-text {
+    overflow-wrap: anywhere;
+  }
+
+  .sr-progress progress {
+    width: 110px;
+    accent-color: var(--piece);
+  }
+
+  .sr-board {
+    display: block;
+    width: min(100%, 420px);
+    height: auto;
+  }
+
+  .sr-board-face {
+    fill: var(--face);
+    stroke: var(--face-edge);
+    stroke-width: 4;
+  }
+
+  .sr-hole {
+    fill: var(--hole);
+  }
+
+  .sr-piece {
+    fill: var(--piece);
+    stroke: var(--piece-edge);
+    stroke-width: 3;
+    stroke-linejoin: round;
+  }
+
+  .sr-highlight {
+    fill: none;
+    stroke: var(--highlight);
+    stroke-width: 6;
+  }
+
+  .sr-tray {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap: 6px;
+    width: 100%;
+    max-width: 520px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sr-tray li {
+    aspect-ratio: 1;
+  }
+
+  .sr-shape {
+    width: 100%;
+    height: 100%;
+    padding: 4px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .sr-shape:disabled {
+    cursor: default;
+  }
+
+  /* Letting go springs the shape back to its place in the tray */
+  .sr-shape svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transition: transform 0.2s ease-out;
+  }
+
+  .sr-dragging {
+    position: relative;
+    z-index: 10;
+    cursor: grabbing;
+  }
+
+  .sr-dragging svg {
+    transition: none;
+  }
+
+  /* The pop: placed shapes spring up out of their holes, and the tray scatters */
+  .sr-popped .sr-placed {
+    animation: sr-spring 0.5s ease-out both;
+  }
+
+  .sr-scatter .sr-shape svg {
+    animation: sr-scatter 0.6s ease-out forwards;
+  }
+
+  @keyframes sr-spring {
+    0% { transform: translateY(0); }
+    40% { transform: translateY(-14px); }
+    70% { transform: translateY(4px); }
+    100% { transform: translateY(0); }
+  }
+
+  /* Each shape flies its own way, set on its tray slot */
+  @keyframes sr-scatter {
+    to {
+      transform: translate(var(--dx), var(--dy)) rotate(var(--spin));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sr-shape svg {
+      transition: none;
+    }
+
+    .sr-popped .sr-placed,
+    .sr-scatter .sr-shape svg {
+      animation: none;
+    }
+  }
+
+  .sr-history {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Spectators: every board, small and side by side */
+  .sr-boards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sr-boards li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 160px;
+  }
+
+  .sr-board-label {
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+}
