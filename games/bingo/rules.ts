@@ -68,7 +68,7 @@ export function applyMove(state: GameState, seat: Seat, move: unknown, _random: 
       finalUntil: pool.length === 0 ? now + FINAL_WINDOW_MS : closed.finalUntil,
       currentPlayer: nextActivePlayer(closed, seat),
       lastMove: { type: 'call', seat, number },
-      gameStatus: `${nameOf(closed, seat)} called ${letterOf(number)}${number}`
+      gameStatus: `${nameOf(closed, seat)} called ${letterOf(number)} ${number}`
     }
   };
 }

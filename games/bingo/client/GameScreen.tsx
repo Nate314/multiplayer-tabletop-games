@@ -76,8 +76,19 @@ export default function GameScreen({ gameState, playerNumber, error, localSeats 
     return () => clearTimeout(timer);
   }, [autoCall, canCall, call]);
 
+  // A refused send (a pause, an undo in flight, a seat switched under it) never lands, so whenever the error changes, every
+  // send still waiting is forgotten and the effect below sends again only what is still missing. Clearing also when the
+  // error goes away covers a retry refused with the same message (still paused), which sets no new error.
+  // Declared before that effect so it runs first; a remount starts level with the current error, so it clears nothing
+  const seenError = useRef(error);
+  useEffect(() => {
+    if (seenError.current === error) return;
+    seenError.current = error;
+    autoOf(gameId).sent.clear();
+  }, [error, gameId]);
+
   // Marks every called number on every unplaced local seat's cards, then claims for a seat once a card has the pattern.
-  // A sent mark or claim is not sent again until it lands, so the states arriving in between never repeat it
+  // A sent mark or claim is not sent again until it lands or an error arrives, so the states in between never repeat it
   useEffect(() => {
     if (!autoMark || isGameOver) return;
     const { sent } = autoOf(gameId);
@@ -102,7 +113,7 @@ export default function GameScreen({ gameState, playerNumber, error, localSeats 
         send(shared, seat, { type: 'bingo' });
       }
     }
-  }, [autoMark, isGameOver, gameId, gameNumber, localSeats, playerNumber, cards, marks, places, called, pattern, shared]);
+  }, [autoMark, isGameOver, gameId, gameNumber, localSeats, playerNumber, cards, marks, places, called, pattern, shared, error]);
 
   const tick = (key: 'call' | 'mark', on: boolean) => {
     autoOf(gameId)[key] = on;
@@ -121,7 +132,7 @@ export default function GameScreen({ gameState, playerNumber, error, localSeats 
           <div className="bingo-calls">
             <div className="bingo-last" aria-label="Last call">{last === undefined ? 'No call yet' : `${letterOf(last)} ${last}`}</div>
             <ol className="bingo-called" aria-label="Called so far">
-              {called.map(number => <li key={number}>{letterOf(number)}{number}</li>)}
+              {called.map(number => <li key={number}>{letterOf(number)} {number}</li>)}
             </ol>
           </div>
           <div className="bingo-pattern">Pattern: {PATTERN_RULE.choices.find(choice => choice.value === pattern)?.label}</div>

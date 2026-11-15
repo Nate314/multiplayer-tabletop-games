@@ -54,6 +54,32 @@ test.describe('Bingo', () => {
     expect(Object.keys(state.places).length).toBeGreaterThan(0);
   });
 
+  test('auto-mark sends again a mark the server refused', async ({ seat }) => {
+    const table = await seat('bingo', ['Alice', 'Bob']);
+    const [alice] = table.pages;
+    await table.patch({ cards: { 1: [card(1)], 2: [card(6)] }, marks: { 1: [[]], 2: [[]] }, pool: poolOf(...TOP_ROW) });
+    await call(alice, 1); // started, so the reload below takes the seat back
+    // Alice's first mark reaches the server pointing at a square that does not exist, so it is refused
+    let forged = false;
+    await alice.routeWebSocket(/./, ws => {
+      const server = ws.connectToServer();
+      ws.onMessage(message => {
+        const data = JSON.parse(String(message));
+        if (!forged && data.type === 'GAME_ACTION' && data.payload.action.type === 'mark') {
+          forged = true;
+          data.payload.action.square = 99;
+          server.send(JSON.stringify(data));
+        } else {
+          server.send(message);
+        }
+      });
+    });
+    await alice.reload();
+    await alice.getByLabel('Auto-mark').check();
+    await expect(square(alice, 'Alice', 1)).toHaveClass(/bingo-marked/);
+    expect(forged).toBe(true);
+  });
+
   test('a false claim says Not a Bingo yet', async ({ seat }) => {
     const table = await seat('bingo', ['Alice', 'Bob']);
     const [alice] = table.pages;

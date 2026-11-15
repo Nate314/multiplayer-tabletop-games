@@ -69,6 +69,8 @@ test('a call draws the next number and passes the turn', () => {
   assert.deepEqual(after.called, [next]);
   assert.equal(after.currentPlayer, 2);
   assert.deepEqual(after.lastMove, { type: 'call', seat: 1, number: next });
+  // The same 'N 42' form as the last call shown above the cards
+  assert.match(after.gameStatus, / called [BINGO] \d+$/);
 });
 
 test('forged and early marks are refused', () => {
