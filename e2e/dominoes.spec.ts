@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import {
-  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
+  agreeToHouseRules, dismiss, expect, inHouseRules, leave, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
 import { EMPTY_BOARD, boardFromLine, lay } from '../games/dominoes/board.ts';
 import type { Board, Layout } from '../games/dominoes/board.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
@@ -108,10 +108,13 @@ test.describe('Dominoes rules', () => {
     const table = await seat('dominoes', ['Alice', 'Bob'], { agree: false });
     const [alice, bob] = table.pages;
     await setHouseRules(alice, 'dominoes', { branching: 'none', set: 9 });
-    const bobsSet = bob.getByLabel('Set', { exact: true });
-    await expect(bobsSet).toHaveValue('9');
-    await expect(bobsSet).toBeDisabled();
-    await expect(bobsSet.locator('option:checked')).toHaveText('Double-nine (55 tiles)');
+    // The rules live in the Rules dialog's House rules tab, read-only for everyone but the host
+    await inHouseRules(bob, async dialog => {
+      const bobsSet = dialog.getByLabel('Set', { exact: true });
+      await expect(bobsSet).toHaveValue('9');
+      await expect(bobsSet).toBeDisabled();
+      await expect(bobsSet.locator('option:checked')).toHaveText('Double-nine (55 tiles)');
+    });
 
     const cara = await table.join('Cara');
     await expect(hand(cara).getByRole('button')).toHaveCount(9);

@@ -50,7 +50,8 @@ test.describe('House rules lobby', () => {
 
   test('Rules is marked while this player still has to agree, and opens on House rules', async ({ seat }) => {
     const { pages: [alice, bob] } = await seat('farkle', ['Alice', 'Bob'], { agree: false });
-    for (const page of [alice, bob]) await expect(await rulesButton(page)).not.toHaveAttribute('data-attention');
+    // Nobody has agreed yet, so both are marked from the start, and a change keeps them marked
+    for (const page of [alice, bob]) await expect(await rulesButton(page)).toHaveAttribute('data-attention', '');
     await setHouseRules(alice, 'farkle', { targetScore: 5000 });
     for (const page of [alice, bob]) {
       await expect(await rulesButton(page)).toHaveAttribute('data-attention', '');

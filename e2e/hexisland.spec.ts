@@ -1133,9 +1133,10 @@ test.describe('Hex Island controls', () => {
 
   test('the special build phase is offered only with five or more seated', async ({ seat }) => {
     const table = await seat('hexisland', FOUR, { agree: false });
-    await expect(table.pages[0].getByLabel('Special build phase')).toHaveCount(0);
+    // The rules live in the Rules dialog's House rules tab
+    await inHouseRules(table.pages[0], dialog => expect(dialog.getByLabel('Special build phase')).toHaveCount(0));
     await table.join('Eve');
-    await expect(table.pages[0].getByLabel('Special build phase')).not.toBeChecked();
+    await inHouseRules(table.pages[0], dialog => expect(dialog.getByLabel('Special build phase')).not.toBeChecked());
   });
 
   test('with the special build phase on, each other player in turn order gets a build chance, builds or buys without trading or playing cards, and Done building passes it on', async ({ seat }) => {

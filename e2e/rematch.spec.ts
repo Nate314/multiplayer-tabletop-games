@@ -116,8 +116,10 @@ test('house rules carry over', async ({ seat }) => {
   await table.patch(ended);
   await gameOver(alice).getByRole('button', { name: 'Rematch' }).click();
   await bob.getByRole('button', { name: 'Join', exact: true }).click();
-  await expect(alice.getByLabel('Clock', { exact: true })).toHaveValue('5');
-  await expect(bob.getByLabel('Clock', { exact: true })).toHaveValue('5');
-  await expect(bob.getByRole('button', { name: 'Agree', exact: true })).toBeVisible();
-  await expect(alice.getByRole('button', { name: 'Agree', exact: true })).toBeVisible();
+  // The rules live in the Rules dialog's House rules tab, and the new game asks everyone to agree again
+  for (const page of [alice, bob]) {
+    const dialog = await openHouseRules(page);
+    await expect(dialog.getByLabel('Clock', { exact: true })).toHaveValue('5');
+    await expect(dialog.getByRole('button', { name: 'Agree', exact: true })).toBeVisible();
+  }
 });
