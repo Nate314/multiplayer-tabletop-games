@@ -74,7 +74,7 @@ export default function GameScreen({ gameState, playerNumber, error, localSeats 
     return () => clearTimeout(timer);
   }, [autoCall, canCall, call]);
 
-  // A refused send (a pause, an undo in flight, a seat switched under it) never lands, so whenever the error changes, every
+  // A refused send (a pause, an undo in flight) never lands, so whenever the error changes, every
   // send still waiting is forgotten and the effect below sends again only what is still missing. Clearing also when the
   // error goes away covers a retry refused with the same message (still paused), which sets no new error.
   // Declared before that effect so it runs first; a remount starts level with the current error, so it clears nothing

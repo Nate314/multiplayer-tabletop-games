@@ -163,7 +163,7 @@ test.describe('Bingo', () => {
     expect((await table.state<GameState>()).called).toEqual([1]);
     expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: MARK }, seat: 2 } })).toEqual([]);
     expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[MARK]] });
-    expect(await shown()).toBe(2); // the handoff still applies: seat 2 calls next
+    expect(await shown()).toBe(2); // the state after a named action carries the handoff seat: seat 2 calls next
 
     for (const wrong of [9, '2']) {
       const errors = await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: MARK }, seat: wrong } });

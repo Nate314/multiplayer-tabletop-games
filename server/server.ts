@@ -306,19 +306,19 @@ function handleLocalMessage(
   ws: WebSocket, connection: LocalConnection, type: unknown, payload: Record<string, unknown> | null
 ): boolean {
   const { roomId, localSeats } = connection;
-  const seat = payload?.seat === null ? null : localSeats.find(local => local === payload?.seat);
+  const named = payload?.seat === null ? null : localSeats.find(local => local === payload?.seat);
   // A move or action may name the seat it is for, so it does not depend on which seat is shown
   if ((type === MESSAGE_TYPES.MAKE_MOVE || type === MESSAGE_TYPES.GAME_ACTION) && payload?.seat !== undefined) {
-    if (seat === undefined || seat === null) sendError(ws, "Not one of this device's players");
-    else if (type === MESSAGE_TYPES.MAKE_MOVE) respond(ws, roomId, manager.move(roomId, seat, payload.move, payload.moveCount));
-    else respond(ws, roomId, manager.action(roomId, seat, payload.action));
+    if (named === undefined || named === null) sendError(ws, "Not one of this device's players");
+    else if (type === MESSAGE_TYPES.MAKE_MOVE) respond(ws, roomId, manager.move(roomId, named, payload.move, payload.moveCount));
+    else respond(ws, roomId, manager.action(roomId, named, payload.action));
     return true;
   }
   if (type === MESSAGE_TYPES.SHOW_SEAT) {
-    if (seat === undefined) {
+    if (named === undefined) {
       sendError(ws, "Not one of this device's players");
     } else {
-      connection.seat = seat;
+      connection.seat = named;
       sendState(ws, connection, false); // an explicit "I'm <name>" is consent, so no handoff overrides it until the state changes
     }
     return true;
