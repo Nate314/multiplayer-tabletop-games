@@ -124,8 +124,9 @@ function parseMove(move: unknown): Move | null {
       const card = parseCard(input.card);
       return card ? { type: 'play', card } : null;
     }
-    case 'claim':
-      return Number.isInteger(input.points) && typeof input.points === 'number' && input.points >= 0 ? { type: 'claim', points: input.points } : null;
+    case 'claim': // 29 is the highest possible count
+      return typeof input.points === 'number' && Number.isInteger(input.points) && input.points >= 0 && input.points <= 29
+        ? { type: 'claim', points: input.points } : null;
     default:
       return null;
   }

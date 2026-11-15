@@ -91,6 +91,12 @@ test('an overclaim is corrected to the true total', () => {
   assert.deepEqual([state.shows[0].closesAt, state.shows.length, state.currentPlayer], [null, 2, 2]);
 });
 
+test('a claim is a whole number from 0 to 29', () => {
+  const state = atShow(2, NAME);
+  for (const points of [-1, 2.5, 30, 1e300]) assert.ok('error' in applyMove(state, 1, { type: 'claim', points }, seeded(1), NOW), String(points));
+  assert.equal(claim(state, 1, 29).shows[0].claimed, 29);
+});
+
 test('an underclaim with no press keeps only the claim', () => {
   const state = onDeadline(claim(atShow(2, NAME), 1, 6));
   assert.deepEqual(state.scores, { 1: 6, 2: 0 });
