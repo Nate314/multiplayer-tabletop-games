@@ -95,6 +95,10 @@ test('resumeClock starts the race only once everyone agreed', () => {
   const over = shaperace.onDeadline!(running, START + 60_000, seeded(1));
   assert.equal(shaperace.resumeClock!(over, 99_999), over);
   assert.equal(shaperace.deadline!(over), null);
+  // A paused race keeps its start until the resume, which moves it on by the paused time
+  const paused = { ...running, paused: true, pausedAt: START + 20_000 };
+  assert.equal(shaperace.resumeClock!(paused, START + 50_000), paused);
+  assert.equal(shaperace.resumeClock!({ ...paused, paused: false }, START + 50_000).raceStartedAt, START + 30_000);
 });
 
 test('turn changes only the sender\'s shape', () => {
@@ -185,6 +189,13 @@ test('the pop ends the race', () => {
   assert.equal(popped.popped, true);
   assert.deepEqual(popped.winners, [1, 2]);
   assert.deepEqual(rows(popped), [[1, 1, '3/16'], [2, 1, '3/16'], [3, 2, '1/16']]);
+  assert.equal(popped.gameStatus, 'The board popped! Alice and Bob placed the most');
+
+  const tied = shaperace.onDeadline!(fill(fill(fill(race(3), 1, START, 1), 2, START, 1), 3, START, 1), START + 60_000, seeded(1));
+  assert.equal(tied.gameStatus, 'The board popped! Alice, Bob and Cara placed the most');
+  const empty = shaperace.onDeadline!(race(3), START + 60_000, seeded(1));
+  assert.deepEqual(empty.winners, [1, 2, 3]);
+  assert.equal(empty.gameStatus, 'The board popped! Nobody placed a shape');
 
   const finished = fill(fill(race(3), 1, START + 2000), 2, START, 3);
   assert.deepEqual(shaperace.onDeadline!(finished, START + 60_000, seeded(1)).winners, [1]);

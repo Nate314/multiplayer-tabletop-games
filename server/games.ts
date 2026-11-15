@@ -1150,14 +1150,16 @@ export function createGameManager(
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
-      const { pause: _pause, pausedAt: _pausedAt, ...state } = room.state;
+      const { state } = room;
       if (!state.paused) return { error: 'The game is not paused' };
       if (state.disconnected.length > 0) {
         return { error: `Waiting for ${state.disconnected.map(missing => state.playerNames[missing]).join(', ')}` };
       }
       let next: BaseGameState = { ...state, pauseVote: null, paused: false, turnStartedAt: null };
+      // resumeClock still sees pausedAt, so a game clock can keep the time it had left
       if (room.game.resumeClock) next = room.game.resumeClock(next, now());
-      room.state = { ...next, gameStatus: 'Play resumed' };
+      const { pause: _pause, pausedAt: _pausedAt, ...resumed } = next;
+      room.state = { ...resumed, gameStatus: 'Play resumed' };
       save(roomId, room);
       return { state: view(room, seat) };
     },

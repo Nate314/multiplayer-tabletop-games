@@ -6,6 +6,7 @@ import { visibleBoards } from '../../shared/puzzleModes.ts';
 import { baseGameState } from '../../shared/seating.ts';
 import { seatFields } from '../../shared/spectators.ts';
 import { rankStandings } from '../../shared/standings.ts';
+import { listOf } from '../../shared/text.ts';
 import type { Random, Standing } from '../../shared/types.ts';
 import { dealLayout, fits, turnOnce } from './board.ts';
 import { shaperaceInfo } from './info.ts';
@@ -33,7 +34,7 @@ export function resetLobby(state: GameState, random: Random): GameState {
 const placedCount = (board: SeatBoard | undefined) => board ? Object.keys(board.placed).length : 0;
 // Finishes the server receives in the same tick share the place
 const tick = (ms: number) => Math.floor(ms / SIMULATION_TICK_MS);
-const names = (state: GameState, seats: Seat[]) => seats.map(seat => state.playerNames[seat]).join(' and ');
+const names = (state: GameState, seats: Seat[]) => listOf(seats.map(seat => state.playerNames[seat]));
 
 export const deadline = (state: GameState): number | null =>
   state.raceStartedAt === null || state.isGameOver ? null : state.raceStartedAt + houseRule(state, TIMER_RULE) * 1000;
@@ -47,7 +48,8 @@ function end(state: GameState, popped: boolean): GameState {
     : state.activePlayers.length === 1 ? []
       : state.activePlayers.filter(seat => placedCount(state.boards[seat]) === most);
   const gameStatus = finishers.length > 0 ? `${names(state, winners)} finished first!`
-    : winners.length > 0 ? `The board popped! ${names(state, winners)} placed the most` : 'The board popped!';
+    : most === 0 ? 'The board popped! Nobody placed a shape'
+      : winners.length > 0 ? `The board popped! ${names(state, winners)} placed the most` : 'The board popped!';
   return { ...state, isGameOver: true, currentPlayer: null, winners, popped, gameStatus };
 }
 
@@ -107,7 +109,9 @@ export const onDeadline = (state: GameState): GameState => state.isGameOver || s
 // The clock starts on the last agreement; `started` stops a join or a leave from dealing a new layout mid-race
 // shortcut: a server restart gives the race its full time again, store elapsed time if that ever matters
 export function resumeClock(state: GameState, now: number): GameState {
-  if (state.isGameOver || !(state.started || everyoneAgreed(shaperaceInfo, state))) return state;
+  // While paused the clock is stopped; resuming moves the start on by the paused time, so the race keeps the time it had left
+  if (state.isGameOver || state.paused || !(state.started || everyoneAgreed(shaperaceInfo, state))) return state;
+  if (state.raceStartedAt !== null && state.pausedAt !== undefined) return { ...state, raceStartedAt: state.raceStartedAt + now - state.pausedAt };
   return { ...state, started: true, raceStartedAt: now };
 }
 
