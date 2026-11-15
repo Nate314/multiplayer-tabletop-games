@@ -38,6 +38,7 @@ import { rainboweights } from './rainboweights/index.ts';
 import { roadtoretirement } from './roadtoretirement/index.ts';
 import { roadsandfields } from './roadsandfields/index.ts';
 import { rummytiles } from './rummytiles/index.ts';
+import { shaperace } from './shaperace/index.ts';
 import { snakesladders } from './snakesladders/index.ts';
 import { spades } from './spades/index.ts';
 import { spiteandmalice } from './spiteandmalice/index.ts';
@@ -58,5 +59,5 @@ import { whodunit } from './whodunit/index.ts';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: GameDefinition<any, any>[] = [
   palacewalls, backgammon, roadsandfields, hexisland, charades, checkers, chinesecheckers, chess, categories, codebreaker, fourinarow, corners, cribbage, dominoes, euchre, farkle, fictionary, go, gofish, hearts, hintgrid, blocktower, jigsaw, mancala, missiontricks, streetdeeds, naval, pachisi, stagerummy, drawandguess,
-  pawnsandwalls, inorder, roadtoretirement, nest, rummytiles, lettergrid, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, territories, holdem, tictactoe, railroutes, tradingfloor, tritiles, ultimatetictactoe, rainboweights, war, whodunit, fivedice, bingo
+  pawnsandwalls, inorder, roadtoretirement, nest, rummytiles, lettergrid, shaperace, spiteandmalice, snakesladders, spades, jewelguild, steadyhand, sudoku, territories, holdem, tictactoe, railroutes, tradingfloor, tritiles, ultimatetictactoe, rainboweights, war, whodunit, fivedice, bingo
 ];

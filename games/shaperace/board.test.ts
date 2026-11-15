@@ -36,6 +36,13 @@ test('each polygon shape has exactly the period its path has', () => {
   }
 });
 
+test('no two polygon shapes are the same shape turned', () => {
+  const polygons = SHAPES.filter((s) => isPolygon(s.path));
+  for (const [i, a] of polygons.entries()) for (const b of polygons.slice(i + 1)) {
+    for (let k = 0; k < 8; k++) assert.ok(!sameSet(vertices(a.path), rotated(vertices(b.path), k)), `${a.id} is ${b.id} turned ${k}`);
+  }
+});
+
 test('curved shapes carry their period by construction', () => {
   const curved = SHAPES.filter((s) => !isPolygon(s.path));
   assert.ok(curved.length > 0);
