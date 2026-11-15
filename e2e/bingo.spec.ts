@@ -1,0 +1,93 @@
+import type { Page } from '@playwright/test';
+import { agreeToHouseRules, expect, joinPassAndPlay, newPlayer, test } from './fixtures.ts';
+import type { Card, GameState } from '../games/bingo/types.ts';
+
+// Seat 1 calls first. Crafted cards hold c * 15 + row + offset in column c, so card(1) has 1, 16, 31, 46 and 61 on its top row
+// and card(6) shares no number with it.
+
+const card = (offset: number): Card =>
+  Array.from({ length: 25 }, (_, index) => (index === 12 ? 0 : (index % 5) * 15 + Math.floor(index / 5) + offset));
+const TOP_ROW = [1, 16, 31, 46, 61];
+// The calls in order: the given numbers, then the rest
+const poolOf = (...first: number[]) => [...first, ...Array.from({ length: 75 }, (_, i) => i + 1).filter(n => !first.includes(n))];
+const LETTERS = 'BINGO';
+const squareName = (n: number) => `${LETTERS[Math.floor((n - 1) / 15)]} ${n}`;
+
+const cards = (page: Page, name: string) => page.getByRole('region', { name: `${name}'s cards` });
+const square = (page: Page, name: string, n: number) => cards(page, name).getByRole('button', { name: squareName(n), exact: true });
+const callButton = (page: Page) => page.getByRole('button', { name: 'Call', exact: true });
+const lastCall = (page: Page) => page.getByLabel('Last call');
+const gameOver = (page: Page) => page.getByRole('dialog', { name: 'Game over' });
+
+async function call(page: Page, n: number) {
+  await callButton(page).click();
+  await expect(lastCall(page)).toHaveText(squareName(n));
+}
+
+test.describe('Bingo', () => {
+  test('two players call, mark and claim', async ({ seat }) => {
+    const table = await seat('bingo', ['Alice', 'Bob']);
+    const [alice, bob] = table.pages;
+    await table.patch({ cards: { 1: [card(1)], 2: [card(6)] }, marks: { 1: [[]], 2: [[]] }, pool: poolOf(...TOP_ROW) });
+    await expect(callButton(bob)).toBeDisabled();
+    for (const [index, n] of TOP_ROW.entries()) {
+      await call(index % 2 === 0 ? alice : bob, n);
+      await expect(square(alice, 'Alice', n)).toHaveClass(/bingo-callable/);
+      await square(alice, 'Alice', n).click();
+      await expect(square(alice, 'Alice', n)).toHaveClass(/bingo-marked/);
+    }
+    await cards(alice, 'Alice').getByRole('button', { name: 'Bingo!' }).click();
+    await expect(cards(bob, 'Alice')).toHaveCount(0); // each player sees only their own cards
+    for (const page of [alice, bob]) await expect(gameOver(page).getByRole('heading')).toHaveText('Alice wins');
+  });
+
+  test('auto-call and auto-mark run the game', async ({ seat }) => {
+    test.setTimeout(150_000);
+    const table = await seat('bingo', ['Alice', 'Bob']);
+    for (const page of table.pages) {
+      await page.getByLabel('Auto-call').check();
+      await page.getByLabel('Auto-mark').check();
+    }
+    await expect(gameOver(table.pages[0])).toBeVisible({ timeout: 120_000 });
+    const state = await table.state<GameState>();
+    expect(state.called.length).toBeLessThanOrEqual(75);
+    expect(Object.keys(state.places).length).toBeGreaterThan(0);
+  });
+
+  test('a false claim says Not a Bingo yet', async ({ seat }) => {
+    const table = await seat('bingo', ['Alice', 'Bob']);
+    const [alice] = table.pages;
+    await call(alice, (await table.state<GameState>()).pool[0]);
+    await cards(alice, 'Alice').getByRole('button', { name: 'Bingo!' }).click();
+    await expect(alice.locator('.game-status')).toHaveText('Not a Bingo yet');
+    await expect(gameOver(alice)).toHaveCount(0);
+  });
+
+  test('pass and play marks for each local player', async ({ seat, browser, server }) => {
+    const table = await seat('bingo', [], { agree: false });
+    const device = await newPlayer(browser, server);
+    await joinPassAndPlay(device, 'bingo', table.gameId, ['Ann', 'Bo', 'Cy']);
+    await agreeToHouseRules(device); // one Agree on the device agrees for all three
+    // All three hold the same card, so one call lands on every card
+    await table.patch({ cards: { 1: [card(1)], 2: [card(1)], 3: [card(1)] }, marks: { 1: [[]], 2: [[]], 3: [[]] }, pool: poolOf(...TOP_ROW) });
+    for (const name of ['Ann', 'Bo', 'Cy']) await expect(cards(device, name)).toBeVisible();
+
+    // A tap on Bo's card marks only Bo's
+    await call(device, 1);
+    await square(device, 'Bo', 1).click();
+    await expect(square(device, 'Bo', 1)).toHaveClass(/bingo-marked/);
+    for (const name of ['Ann', 'Cy']) await expect(square(device, name, 1)).toHaveClass(/bingo-callable/);
+    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[0]], 3: [[]] });
+
+    // Auto-mark marks for every local player, and claims for each once their card has a line
+    await device.getByLabel('Auto-mark').check();
+    for (const name of ['Ann', 'Cy']) await expect(square(device, name, 1)).toHaveClass(/bingo-marked/);
+    for (const n of TOP_ROW.slice(1)) {
+      await call(device, n);
+      for (const name of ['Ann', 'Bo', 'Cy']) await expect(square(device, name, n)).toHaveClass(/bingo-marked/);
+    }
+    await expect(gameOver(device).getByRole('heading')).toHaveText('Ann, Bo and Cy win');
+    expect((await table.state<GameState>()).places).toEqual({ 1: 1, 2: 1, 3: 1 });
+    await device.context().close();
+  });
+});
