@@ -208,23 +208,29 @@ test.describe('Tri-Tiles rules', () => {
     await expect(turn(bob)).toHaveText('Your turn');
   });
 
-  test('a drawn tile that fits may be played at once; an undo of a draw puts the tile back', async ({ seat }) => {
+  test('a drawn tile that fits may be played at once', async ({ seat }) => {
     const { table, pages: [alice, bob] } = await start(seat);
     await deal(table, { hands: { 1: ids([0, 1, 2]), 2: ids([0, 0, 0]) }, pool: ids([1, 1, 1], [4, 5, 5]) });
     await button(alice, 'Draw').click();
     await expect(handTile(alice, id(4, 5, 5))).toBeEnabled();
     await expect(button(alice, 'Draw')).toBeDisabled();
     await expect(turn(alice)).toHaveText('Your turn');
+    await place(alice, opened(5, 5, 5), id(4, 5, 5), openPlacements(opened(5, 5, 5), id(4, 5, 5))[0].cell);
+    await expect(status(bob)).toHaveText('Alice played 4-5-5 for 14');
+    await expect(score(bob, 'Alice')).toHaveText('9 pts');
+  });
+
+  test('an undo of a draw puts the tile back and keeps the same tiles in the pool', async ({ seat }) => {
+    const { table, pages: [alice, bob] } = await start(seat);
+    await deal(table, { hands: { 1: ids([0, 1, 2]), 2: ids([0, 0, 0]) }, pool: ids([1, 1, 1], [0, 0, 3]) });
+    await button(alice, 'Draw').click();
+    await expect(hand(alice).getByRole('button')).toHaveCount(2);
     await undo(alice, bob);
     await expect(hand(alice).getByRole('button')).toHaveCount(1);
     await expect(pool(alice)).toHaveText('Pool: 2');
     await expect(score(alice, 'Alice')).toHaveText('0 pts');
-    await button(alice, 'Draw').click();
-    const drawn = (await table.state<GameState>()).hands[1].at(-1)!;
-    if (drawn === id(4, 5, 5)) {
-      await place(alice, opened(5, 5, 5), drawn, openPlacements(opened(5, 5, 5), drawn)[0].cell);
-      await expect(status(bob)).toHaveText('Alice played 4-5-5 for 14');
-    }
+    const { pool: left } = await table.state<GameState>();
+    expect([...left].sort((a, b) => a - b)).toEqual(ids([1, 1, 1], [0, 0, 3]).sort((a, b) => a - b));
   });
 
   test('with the pool empty and nothing playable, pass for 10', async ({ seat }) => {

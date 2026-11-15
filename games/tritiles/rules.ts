@@ -37,11 +37,12 @@ export function openingTile(hands: Record<Seat, number[]>): { seat: Seat; tile: 
   return held.reduce((best, next) => (worth(next.tile) > worth(best.tile) ? next : best));
 }
 
-// The tiles `seat` may play now: only the lead tile while the board is empty
-function playable(state: GameState, seat: Seat): number[] {
-  const hand = state.hands[seat] ?? [];
-  return state.board.length === 0 && state.leadTile !== null ? hand.filter(tile => tile === state.leadTile) : hand;
+// The tiles in `hand` that may be played now: only the lead tile while the board is empty
+export function playableTiles(board: Board, leadTile: number | null, hand: number[]): number[] {
+  return board.length === 0 && leadTile !== null ? hand.filter(tile => tile === leadTile) : hand;
 }
+
+const playable = (state: GameState, seat: Seat) => playableTiles(state.board, state.leadTile, state.hands[seat] ?? []);
 
 const canMove = (state: GameState, seat: Seat) => legalPlays(state.board, playable(state, seat)).length > 0;
 

@@ -112,6 +112,18 @@ const HAND_ONLY: Record<string, Row> = {
     board: '.board',
     move: async page => { await page.locator('.hand-tiles .tile-playable').first().click(); }
   },
+  tritiles: {
+    keep: ['.hand', '.turn-message', '.action-buttons', you('.player')],
+    hide: [others('.player'), '.pool'],
+    board: '.board-area',
+    move: async page => {
+      await page.locator('.hand-tile-playable').first().click();
+      await page.locator('.tri-space').first().click();
+      // A space that takes the opening tile more than one way waits for Confirm
+      const confirm = button(page, 'Confirm');
+      if (await confirm.isVisible()) await confirm.click();
+    }
+  },
   lettergrid: {
     keep: ['.rack', '.turn-message', '.turn-buttons', you('.score-row')],
     hide: [others('.score-row'), '.bag-count'],

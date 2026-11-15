@@ -4,7 +4,7 @@ import UndoVote from '../../../src/components/UndoVote';
 import { useDrag } from '../../../src/drag/useDrag.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import { cellKey } from '../grid.ts';
-import { legalPlays, stuckMove } from '../rules.ts';
+import { legalPlays, playableTiles, stuckMove } from '../rules.ts';
 import { MAX_DRAWS } from '../scoring.ts';
 import type { Move, PublicGameState, Seat } from '../types.ts';
 import Board from './Board';
@@ -37,10 +37,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [spot, setSpot] = useState<Spot | null>(null);
   const isMyTurn = currentPlayer === playerNumber && activePlayers.length >= 2 && !isGameOver && !undoVote && !dismissVote;
   const canUndo = undoAvailable && !undoVote && !dismissVote && activePlayers.includes(playerNumber) && activePlayers.length >= 2;
-  // The round opens with the lead tile only
   const opening = board.length === 0;
-  const playable = opening && leadTile !== null ? hand.filter(tile => tile === leadTile) : hand;
-  const plays = isMyTurn ? legalPlays(board, playable) as Play[] : [];
+  const plays = isMyTurn ? legalPlays(board, playableTiles(board, leadTile, hand)) as Play[] : [];
   const stuck = isMyTurn && !opening ? stuckMove(board, hand, poolCount, drawsThisTurn) : null;
 
   useEffect(() => {
