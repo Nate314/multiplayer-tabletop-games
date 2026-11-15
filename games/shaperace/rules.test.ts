@@ -226,6 +226,17 @@ test('leaving ends the race when everyone left has finished', () => {
   assert.equal(stillRacing.isGameOver, false);
 });
 
+test("another racer's placement shows only who placed until the race is over", () => {
+  const state = place(race(2), 1, 0);
+  const placed = state.lastMove!;
+  assert.deepEqual(shaperace.toPublicState(state, false, 2).lastMove, { playerNumber: 1 });
+  assert.deepEqual(shaperace.toPublicState(state, false, null).lastMove, { playerNumber: 1 });
+  assert.deepEqual(shaperace.toPublicState(state, false, 1).lastMove, placed);
+  assert.deepEqual(shaperace.spectatorState!(state, false, false).lastMove, placed);
+  const over = shaperace.onDeadline!(state, START + 60_000, seeded(1));
+  assert.deepEqual(shaperace.toPublicState(over, false, 2).lastMove, placed);
+});
+
 test('others see counts, not boards, during the race', () => {
   const state = place(race(3), 2, 0);
   const view = shaperace.toPublicState(state, false, 1);

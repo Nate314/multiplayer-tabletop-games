@@ -10,5 +10,7 @@ export function describeMove({ lastMove, playerNames, popped, finishTimes, layou
   const time = finishTimes[lastMove.playerNumber];
   // A finished seat places nothing more, so its last placement is the one that filled the board
   if (time !== undefined) return `${name} filled the board in ${clock(time)}`;
+  // Another racer's placement mid-race comes without its shape
+  if (lastMove.shape === undefined) return `${name} placed a shape`;
   return `${name} placed the ${shapeLabel(layout.tray[lastMove.shape]).toLowerCase()}`;
 }

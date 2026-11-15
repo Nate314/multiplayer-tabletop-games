@@ -150,8 +150,12 @@ function view(state: GameState, undoAvailable: boolean, boards: GameState['board
 }
 
 // During the race a seat sees only its own board, and the others' counts
-export const toPublicState = (state: GameState, undoAvailable: boolean, viewer: Seat | null) =>
-  view(state, undoAvailable, visibleBoards(state.boards, viewer, state.isGameOver));
+// Another racer's placement keeps only who placed, so its shape and hole cannot rebuild their board
+export function toPublicState(state: GameState, undoAvailable: boolean, viewer: Seat | null) {
+  const { lastMove, isGameOver } = state;
+  const hidden = lastMove && !isGameOver && lastMove.playerNumber !== viewer ? { playerNumber: lastMove.playerNumber } : lastMove;
+  return view({ ...state, lastMove: hidden }, undoAvailable, visibleBoards(state.boards, viewer, isGameOver));
+}
 
 // An ordinary spectator sees every board; a table screen sits in front of the racers and gets the null view
 export const spectatorState = (state: GameState, undoAvailable: boolean, tableScreen: boolean) =>

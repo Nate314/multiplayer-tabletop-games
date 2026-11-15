@@ -12,6 +12,10 @@ test('a recorded place names the shape', () => {
   assert.equal(describeMove(state({ lastMove: { playerNumber: 1, shape: 1, hole: 4 } })), 'Alice placed the five point star');
 });
 
+test("another racer's placement mid-race has no shape", () => {
+  assert.equal(describeMove(state({ lastMove: { playerNumber: 2 } })), 'Bob placed a shape');
+});
+
 test('the pop', () => {
   assert.equal(describeMove(state({ popped: true, lastMove: { playerNumber: 2, shape: 0, hole: 0 } })), 'Time ran out');
 });

@@ -28,7 +28,7 @@ export function Progress({ gameState, seats }: { gameState: PublicGameState; sea
 export default function HistoryBoard({ gameState, viewer }: { gameState: PublicGameState; viewer: Seat | null }) {
   const { layout, boards, playerNames, lastMove, activePlayers, popped, isGameOver } = gameState;
   if (!layout) return <Progress gameState={gameState} seats={activePlayers} />;
-  const highlight = (seat: Seat) => lastMove?.playerNumber === seat ? lastMove.hole : null;
+  const highlight = (seat: Seat) => lastMove?.playerNumber === seat ? lastMove.hole ?? null : null;
   const own = viewer === null ? undefined : boards[viewer];
   if (own) return <div className="sr-history"><RaceBoard layout={layout} placed={own.placed} highlight={highlight(viewer!)} /></div>;
   const seats = activePlayers.filter(seat => boards[seat]);

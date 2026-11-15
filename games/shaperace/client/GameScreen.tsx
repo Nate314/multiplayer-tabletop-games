@@ -30,12 +30,16 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // A fitting drop sits in its hole until the server's answer arrives; a refusal (the error) lets it go
   const [landed, setLanded] = useState<{ shape: number; hole: number } | null>(null);
   useEffect(() => { if (error) setLanded(null); }, [error]);
+  // A new race (Rematch), the end, or a finish lets it go too: Screen is not remounted between races
+  useEffect(() => { if (!racing) setLanded(null); }, [racing, raceStartedAt]);
   // The pop or a finish mid-drag lets go: a disabled button hears no release
   useEffect(() => { if (!racing) setDrag(null); }, [racing]);
   const boardRef = useRef<SVGSVGElement>(null);
 
   if (!layout) return <div className="sr-screen"><div className="game-status">{gameStatus || 'Waiting for players'}</div></div>;
-  const placed = landed && board.placed[landed.hole] === undefined ? { ...board.placed, [landed.hole]: landed.shape } : board.placed;
+  // Once the server shows the hole filled or the shape placed, the board itself answers for it
+  const pending = landed && board.placed[landed.hole] === undefined && !Object.values(board.placed).includes(landed.shape);
+  const placed = pending ? { ...board.placed, [landed.hole]: landed.shape } : board.placed;
   const inPlace = new Set(Object.values(placed));
 
   // The hole under a point on screen, or null off the board
@@ -48,6 +52,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   const onPointerDown = (shape: number) => (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (drag || !racing || event.button !== 0) return;
+    setLanded(null); // a drop the server never answered is not left in its hole
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
