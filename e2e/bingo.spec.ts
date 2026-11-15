@@ -118,6 +118,7 @@ test.describe('Bingo', () => {
   });
 
   test("a shared device's action names its seat", async ({ seat, browser, server }) => {
+    const MARK = card(1).indexOf(1); // the square holding the first call
     const table = await seat('bingo', [], { agree: false });
     const page = await newPlayer(browser, server);
     await page.goto('/');
@@ -127,7 +128,9 @@ test.describe('Bingo', () => {
       const ws = new WebSocket(`ws://${window.location.host}`);
       const replies: string[] = [];
       let waiting: ((errors: string[]) => void) | undefined;
+      let shownSeat: number | null | undefined;
       Object.assign(window, {
+        shownSeat: () => shownSeat,
         sendOnDevice: (message: object) => new Promise<string[]>(done => {
           waiting = done;
           ws.send(JSON.stringify(message));
@@ -137,7 +140,8 @@ test.describe('Bingo', () => {
       ws.onopen = () => ws.send(JSON.stringify({ type: 'JOIN_GAME', gameType: 'bingo', gameId, role: 'passAndPlay', playerNames: ['Ann', 'Bo'] }));
       ws.onmessage = event => {
         const message = JSON.parse(event.data);
-        if (message.type === 'GAME_JOINED') resolve(message.payload.gameState.houseRules.revision);
+        if (message.type === 'GAME_STATE') shownSeat = message.payload.shownSeat;
+        else if (message.type === 'GAME_JOINED') resolve(message.payload.gameState.houseRules.revision);
         else if (message.type === 'GAME_ERROR') {
           replies.push(message.payload.message);
           if (message.payload.message === 'Already in a game' && waiting) {
@@ -148,6 +152,7 @@ test.describe('Bingo', () => {
         }
       };
     }), table.gameId);
+    const shown = () => page.evaluate(() => (window as unknown as { shownSeat(): number | null | undefined }).shownSeat());
     const act = (message: object) => page.evaluate(
       sent => (window as unknown as { sendOnDevice(message: object): Promise<string[]> }).sendOnDevice(sent), message
     );
@@ -156,17 +161,23 @@ test.describe('Bingo', () => {
 
     expect(await act({ type: 'MAKE_MOVE', payload: { move: { type: 'call' }, seat: 1 } })).toEqual([]);
     expect((await table.state<GameState>()).called).toEqual([1]);
-    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: 0 }, seat: 2 } })).toEqual([]);
-    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[0]] });
+    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: MARK }, seat: 2 } })).toEqual([]);
+    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[MARK]] });
+    expect(await shown()).toBe(2); // the handoff still applies: seat 2 calls next
 
     for (const wrong of [9, '2']) {
-      const errors = await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: 0 }, seat: wrong } });
+      const errors = await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: MARK }, seat: wrong } });
       expect(errors).toEqual(["Not one of this device's players"]);
     }
-    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[0]] });
+    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[MARK]] });
     // Bingo has no private hand, so every state shows a seat; hand the device back to be shown none, then name none
     expect(await act({ type: 'SHOW_SEAT', payload: { seat: null } })).toEqual([]);
-    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: 0 } } })).toEqual(['Pass the device first']);
+    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: MARK } } })).toEqual(['Pass the device first']);
+    // A named action works with no seat shown, and the state that follows hands the device on as usual
+    expect(await shown()).toBeNull();
+    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: MARK }, seat: 1 } })).toEqual([]);
+    expect((await table.state<GameState>()).marks).toEqual({ 1: [[MARK]], 2: [[MARK]] });
+    expect(await shown()).toBe(2);
     await page.context().close();
   });
 });
