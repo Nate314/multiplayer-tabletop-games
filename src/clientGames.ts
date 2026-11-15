@@ -83,6 +83,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   railroutes: () => import('../games/railroutes/client/index.ts').then(m => m.railroutesClient),
   tictactoe: () => import('../games/tictactoe/client/index.ts').then(m => m.tictactoeClient),
   tradingfloor: () => import('../games/tradingfloor/client/index.ts').then(m => m.tradingfloorClient),
+  tritiles: () => import('../games/tritiles/client/index.ts').then(m => m.tritilesClient),
   ultimatetictactoe: () => import('../games/ultimatetictactoe/client/index.ts').then(m => m.ultimatetictactoeClient),
   rainboweights: () => import('../games/rainboweights/client/index.ts').then(m => m.rainboweightsClient),
   war: () => import('../games/war/client/index.ts').then(m => m.warClient),

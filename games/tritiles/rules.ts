@@ -127,14 +127,17 @@ function parseMove(move: unknown): Move | null {
   }
 }
 
-// How the status line and the history describe a move, e.g. 'Alice played 1-2-3 for 6 points'
+// How the status line and the history describe a move, e.g. 'Alice played 3-3-5 for 51 (hexagon)'
 export function describeMove(lastMove: LastMove, playerNames: Record<Seat, string>): string {
   const name = playerNames[lastMove.playerNumber];
   switch (lastMove.type) {
     case 'draw': return `${name} drew a tile (-${lastMove.penalty})`;
     case 'pass': return `${name} passed (-${lastMove.penalty})`;
-    case 'play':
-      return `${name} played ${lastMove.corners.join('-')} for ${pointsText(lastMove.score.points)}${lastMove.wentOut ? ' and went out' : ''}`;
+    case 'play': {
+      const bonuses = lastMove.score.lines.filter(line => line.label !== 'Tile').map(line => line.label.toLowerCase());
+      const extra = bonuses.length > 0 ? ` (${bonuses.join(', ')})` : '';
+      return `${name} played ${TILES[lastMove.tile].join('-')} for ${lastMove.score.points}${extra}${lastMove.wentOut ? ' and went out' : ''}`;
+    }
   }
 }
 

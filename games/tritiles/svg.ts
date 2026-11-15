@@ -3,10 +3,11 @@ import { el, svgDoc, type SvgAsset } from '../../shared/svg/svg.ts';
 // A Tri-Tiles tile's corner numbers, drawn on the server. The triangle's face and outline stay on the page element,
 // and the numbers paint with its --tile-pip
 
-// Each tile's corners in clockwise order: the numbers sit just inside their corner
+// Each tile's corners in clockwise order: the numbers sit inside their corner, clear of the edges (the triangle is
+// 100 wide and 86.6 tall, its point at the top or bottom of the box)
 const CORNERS = {
-  up: [[50, 38], [76, 76], [24, 76]],
-  down: [[24, 24], [76, 24], [50, 62]]
+  up: [[50, 34], [72, 70], [28, 70]],
+  down: [[28, 17], [72, 17], [50, 53]]
 };
 
 export function triTileSvg(a: string, b: string, c: string, up: string): string | null {
@@ -15,7 +16,7 @@ export function triTileSvg(a: string, b: string, c: string, up: string): string 
   return svgDoc('0 0 100 90', {},
     ...numbers.map((n, i) => el('text', {
       x: CORNERS[up][i][0], y: CORNERS[up][i][1], 'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-size': 22, 'font-weight': 700, style: 'fill: var(--tile-pip, #1b1b1b)'
+      'font-size': 24, 'font-weight': 700, style: 'fill: var(--tile-pip, #1b1b1b)'
     }, n)));
 }
 

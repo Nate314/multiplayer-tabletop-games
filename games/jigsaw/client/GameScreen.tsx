@@ -10,7 +10,7 @@ import SidePanel from './SidePanel';
 import Table from './Table';
 import { pictureUrl } from './pictureUrl.ts';
 import { lostHold, samePiece, usePieceDrag, type Dragging } from './usePieceDrag.ts';
-import { keepCentre } from './zoom.ts';
+import { keepCentre } from '../../../shared/zoom.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Board, Piece, PublicGameState } from '../types.ts';
 
