@@ -27,13 +27,17 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const myTime = finishTimes[playerNumber];
   const racing = raceStartedAt !== null && !isGameOver && myTime === undefined && activePlayers.includes(playerNumber);
   const [drag, setDrag] = useState<Drag | null>(null);
+  // The handlers read the drag from a ref: a press and release that arrive before the next render would otherwise
+  // see the state from before the press, never clear it, and leave every later drag blocked
+  const dragRef = useRef<Drag | null>(null);
+  const hold = (next: Drag | null) => { dragRef.current = next; setDrag(next); };
   // A fitting drop sits in its hole until the server's answer arrives; a refusal (the error) lets it go
   const [landed, setLanded] = useState<{ shape: number; hole: number } | null>(null);
   useEffect(() => { if (error) setLanded(null); }, [error]);
   // A new race (Rematch), the end, or a finish lets it go too: Screen is not remounted between races
   useEffect(() => { if (!racing) setLanded(null); }, [racing, raceStartedAt]);
   // The pop or a finish mid-drag lets go: a disabled button hears no release
-  useEffect(() => { if (!racing) setDrag(null); }, [racing]);
+  useEffect(() => { if (!racing) hold(null); }, [racing]);
   const boardRef = useRef<SVGSVGElement>(null);
 
   if (!layout) return <div className="sr-screen"><div className="game-status">{gameStatus || 'Waiting for players'}</div></div>;
@@ -51,24 +55,26 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   };
 
   const onPointerDown = (shape: number) => (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (drag || !racing || event.button !== 0) return;
+    if (dragRef.current || !racing || event.button !== 0) return;
     setLanded(null); // a drop the server never answered is not left in its hole
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
       // A pointer that already ended cannot be captured; its pointerup still lets go
     }
-    setDrag({ shape, pointerId: event.pointerId, x0: event.clientX, y0: event.clientY, dx: 0, dy: 0, moved: false });
+    hold({ shape, pointerId: event.pointerId, x0: event.clientX, y0: event.clientY, dx: 0, dy: 0, moved: false });
   };
   const onPointerMove = (event: ReactPointerEvent) => {
+    const drag = dragRef.current;
     if (drag?.pointerId !== event.pointerId) return;
     const dx = event.clientX - drag.x0, dy = event.clientY - drag.y0;
-    setDrag({ ...drag, dx, dy, moved: drag.moved || Math.hypot(dx, dy) > DRAG_PX });
+    hold({ ...drag, dx, dy, moved: drag.moved || Math.hypot(dx, dy) > DRAG_PX });
   };
   // Release over the matching hole the right way up places it; anywhere else it springs back and nothing is sent
   const onPointerUp = (event: ReactPointerEvent) => {
+    const drag = dragRef.current;
     if (drag?.pointerId !== event.pointerId) return;
-    setDrag(null);
+    hold(null);
     // Judged from the release point too: a fast drag can end before the render that saw it move
     if (!drag.moved && Math.hypot(event.clientX - drag.x0, event.clientY - drag.y0) <= DRAG_PX) return; // a tap: the click that follows turns it
     swallowNextClick();
@@ -78,7 +84,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     gameService.sendAction({ type: 'place', shape: drag.shape, hole });
   };
   const onPointerCancel = (event: ReactPointerEvent) => {
-    if (drag?.pointerId === event.pointerId) setDrag(null);
+    if (dragRef.current?.pointerId === event.pointerId) hold(null);
   };
 
   return (
