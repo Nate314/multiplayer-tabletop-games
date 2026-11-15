@@ -19,7 +19,7 @@ export type PauseSeal = {
   shareHashes: Record<Seat, string>;
 };
 
-export type PauseRecord = { seal: PauseSeal; shares: Record<Seat, string> };
+export type PauseRecord = { seal: PauseSeal; shares: Record<Seat, string>; restoredAt?: number }; // restoredAt: server ms, set by a restore from files
 
 // `hand` is the seat's own private view, null for a game without one; `table` carries the house rules
 export type PauseFile = {

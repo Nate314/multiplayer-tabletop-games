@@ -165,7 +165,8 @@ export function createGameManager(
   // Deletes every game paused for PAUSED_ROOM_TTL_MS, so abandoned pauses never fill the store
   function prunePausedRooms(): void {
     for (const [roomId, room] of rooms) {
-      if (room.state.paused && (room.state.pausedAt ?? now()) <= now() - PAUSED_ROOM_TTL_MS) deleteRoom(roomId);
+      const since = room.state.pause?.restoredAt ?? room.state.pausedAt ?? now(); // a restored game is kept from its restore
+      if (room.state.paused && since <= now() - PAUSED_ROOM_TTL_MS) deleteRoom(roomId);
     }
   }
 
@@ -733,11 +734,15 @@ export function createGameManager(
     const seatKeys = Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.seatKey]));
     const seatDevices = Object.fromEntries(uploads.flatMap(([seat, { device }]) => (device ? [[seat, device]] : [])));
     const rekeyed = (state: BaseGameState): BaseGameState => ({ ...state, seatKeys, seatDevices });
-    const pause = { seal: uploads[0][1].file.seal, shares: Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.file.share])) };
+    const pause = {
+      seal: uploads[0][1].file.seal, shares: Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.file.share])), restoredAt: now()
+    };
+    // The sealed pause time is untrusted JSON; a seal from before it was sealed, or a bad one, pauses from now
+    const { pausedAt } = sealed.state;
     const state: BaseGameState = {
       ...rekeyed(sealed.state),
       paused: true,
-      pausedAt: now(),
+      pausedAt: typeof pausedAt === 'number' && Number.isFinite(pausedAt) && pausedAt <= now() ? pausedAt : now(),
       disconnected: [...sealed.state.activePlayers].sort((a, b) => a - b),
       spectators: [],
       spectatorKeys: {},
