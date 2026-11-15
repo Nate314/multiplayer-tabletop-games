@@ -81,8 +81,8 @@ class GameService {
 
   // Each game validates its own moves and actions on the server
   // `moveCount` is only sent for an out-of-turn move, so the server can tell whether someone else moved first
-  makeMove(move: unknown, moveCount?: number): void {
-    this.send({ type: MESSAGE_TYPES.MAKE_MOVE, payload: { move, moveCount } });
+  makeMove(move: unknown, moveCount?: number, seat?: Seat): void {
+    this.send({ type: MESSAGE_TYPES.MAKE_MOVE, payload: { move, moveCount, seat } });
   }
 
   setHouseRules(proposal: HouseRulesProposal): void {
@@ -93,8 +93,8 @@ class GameService {
     this.send({ type: MESSAGE_TYPES.AGREE_HOUSE_RULES, payload: { revision } });
   }
 
-  sendAction(action: unknown): void {
-    this.send({ type: MESSAGE_TYPES.GAME_ACTION, payload: { action } });
+  sendAction(action: unknown, seat?: Seat): void {
+    this.send({ type: MESSAGE_TYPES.GAME_ACTION, payload: { action, seat } });
   }
 
   requestUndo(): void {

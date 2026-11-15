@@ -361,6 +361,8 @@ A pass-and-play device holds several seats on one connection but gets only the s
    Server -> Client: GAME_STATE (the view for the new shownSeat)
    ```
 
+   A `MAKE_MOVE` or `GAME_ACTION` from a shared device may carry `seat`, one of the device's players, and is made for that seat without changing the shown seat; any other `seat` fails with "Not one of this device's players".
+
 2. **Playing**
 
    ```

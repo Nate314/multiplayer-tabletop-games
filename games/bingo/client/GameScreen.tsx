@@ -22,11 +22,10 @@ function autoOf(gameId: string): Auto {
   return auto;
 }
 
-// A shared device's server acts for the seat it shows, which may have moved on since this state arrived, so every send
-// on one names its seat first
+// A shared device's server would act for the seat it shows, which may have moved on since this state arrived, so every
+// send on one names its seat
 function send(shared: boolean, seat: Seat, action: object): void {
-  if (shared) gameService.showSeat(seat);
-  gameService.sendAction(action);
+  gameService.sendAction(action, shared ? seat : undefined);
 }
 
 function turnMessage(state: PublicGameState, caller: Seat | null, shared: boolean): string {
@@ -60,8 +59,7 @@ export default function GameScreen({ gameState, playerNumber, error, localSeats 
   const call = useCallback(() => {
     if (caller === null || sentAt.current === moveCount) return;
     sentAt.current = moveCount;
-    if (shared) gameService.showSeat(caller);
-    gameService.makeMove({ type: 'call' });
+    gameService.makeMove({ type: 'call' }, undefined, shared ? caller : undefined);
   }, [caller, moveCount, shared]);
 
   // A new state (a call, an undo), a refused call or a vote lets the player call again

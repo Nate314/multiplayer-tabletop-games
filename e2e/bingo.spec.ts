@@ -116,4 +116,57 @@ test.describe('Bingo', () => {
     expect((await table.state<GameState>()).places).toEqual({ 1: 1, 2: 1, 3: 1 });
     await device.context().close();
   });
+
+  test("a shared device's action names its seat", async ({ seat, browser, server }) => {
+    const table = await seat('bingo', [], { agree: false });
+    const page = await newPlayer(browser, server);
+    await page.goto('/');
+    // A bare shared-device socket. Each send is followed by a second JOIN_GAME, whose error closes the reply, so
+    // the errors a message got are the ones before it
+    const revision = await page.evaluate(gameId => new Promise<number>(resolve => {
+      const ws = new WebSocket(`ws://${window.location.host}`);
+      const replies: string[] = [];
+      let waiting: ((errors: string[]) => void) | undefined;
+      Object.assign(window, {
+        sendOnDevice: (message: object) => new Promise<string[]>(done => {
+          waiting = done;
+          ws.send(JSON.stringify(message));
+          ws.send(JSON.stringify({ type: 'JOIN_GAME' }));
+        })
+      });
+      ws.onopen = () => ws.send(JSON.stringify({ type: 'JOIN_GAME', gameType: 'bingo', gameId, role: 'passAndPlay', playerNames: ['Ann', 'Bo'] }));
+      ws.onmessage = event => {
+        const message = JSON.parse(event.data);
+        if (message.type === 'GAME_JOINED') resolve(message.payload.gameState.houseRules.revision);
+        else if (message.type === 'GAME_ERROR') {
+          replies.push(message.payload.message);
+          if (message.payload.message === 'Already in a game' && waiting) {
+            const done = waiting;
+            waiting = undefined;
+            done(replies.splice(0).slice(0, -1));
+          }
+        }
+      };
+    }), table.gameId);
+    const act = (message: object) => page.evaluate(
+      sent => (window as unknown as { sendOnDevice(message: object): Promise<string[]> }).sendOnDevice(sent), message
+    );
+    expect(await act({ type: 'AGREE_HOUSE_RULES', payload: { revision } })).toEqual([]);
+    await table.patch({ cards: { 1: [card(1)], 2: [card(1)] }, marks: { 1: [[]], 2: [[]] }, pool: poolOf(...TOP_ROW) });
+
+    expect(await act({ type: 'MAKE_MOVE', payload: { move: { type: 'call' }, seat: 1 } })).toEqual([]);
+    expect((await table.state<GameState>()).called).toEqual([1]);
+    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: 0 }, seat: 2 } })).toEqual([]);
+    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[0]] });
+
+    for (const wrong of [9, '2']) {
+      const errors = await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: 0 }, seat: wrong } });
+      expect(errors).toEqual(["Not one of this device's players"]);
+    }
+    expect((await table.state<GameState>()).marks).toEqual({ 1: [[]], 2: [[0]] });
+    // Bingo has no private hand, so every state shows a seat; hand the device back to be shown none, then name none
+    expect(await act({ type: 'SHOW_SEAT', payload: { seat: null } })).toEqual([]);
+    expect(await act({ type: 'GAME_ACTION', payload: { action: { type: 'mark', card: 0, square: 0 } } })).toEqual(['Pass the device first']);
+    await page.context().close();
+  });
 });
