@@ -10,7 +10,7 @@ export default function PeggingArea({ gameState, viewer, showLastMove = false }:
   const lastPlayed = showLastMove && lastMove?.type === 'play' ? lastMove.card : null;
   return (
     <section className="table" aria-label="The table">
-      <ol className="seats">
+      <ol className="seats hand-only-hide">
         {activePlayers.map(seat => (
           <li key={seat} className={seat === currentPlayer ? 'seat seat-current' : 'seat'}>
             <span className="seat-name">{playerNames[seat]}<YouTag when={seat === viewer} /></span>
@@ -21,7 +21,7 @@ export default function PeggingArea({ gameState, viewer, showLastMove = false }:
         ))}
       </ol>
       <div className="table-middle">
-        <div className="starter">
+        <div className="starter hand-only-hide">
           <span className="table-label">Hand {handNumber}: starter</span>
           <PlayingCard card={starter} size="small" />
         </div>

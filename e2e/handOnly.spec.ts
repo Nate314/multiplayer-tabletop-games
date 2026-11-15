@@ -51,6 +51,14 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.seat'), '.trick'],
     move: async page => { await button(page, /^Take task/).first().click(); }
   },
+  cribbage: {
+    keep: ['.hand', '.hint', '.action-buttons'], // nobody has the turn while the crib is laid, so the hint leads
+    hide: ['.seats', '.starter'],
+    move: async page => { // everyone lays cards in the crib at once
+      for (let card = 0; card < 2; card++) await page.getByRole('region', { name: 'Your hand' }).getByRole('button').nth(card).click();
+      await button(page, 'Send to crib').click();
+    }
+  },
   war: {
     keep: ['.turn-message', '.flip-button', you('.war-seat'), you('.war-seat') + ' .war-seat-count'],
     hide: [others('.war-seat'), '.war-battle', '.war-summary'],
