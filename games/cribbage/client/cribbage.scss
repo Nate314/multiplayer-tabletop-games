@@ -137,6 +137,12 @@
     padding: 14px 20px;
   }
 
+  /* The pass and play handoff grid sizes its column to the board's 520px drawing unless the table may shrink */
+
+  .handoff-table {
+    min-width: 0;
+  }
+
   /* Laptop width: the status beside the board, the table below them */
 
   @media (min-width: 720px) {

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, setHouseRules, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinPassAndPlay, leave, newPlayer, openFaq, setHouseRules, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { scoreShow } from '../games/cribbage/scoring.ts';
 import type { Card, GameState, Rank, Show, Suit } from '../games/cribbage/types.ts';
 
@@ -392,6 +392,16 @@ test.describe('Cribbage rules', () => {
     await leave(bob);
     await dismiss('Bob', alice);
     await expect(gameOver(alice)).toBeVisible();
+  });
+
+  test('the pass and play handoff fits a phone without sideways scrolling', async ({ seat, browser, server }) => {
+    const table = await seat('cribbage', [], { agree: false });
+    const device = await newPlayer(browser, server);
+    await device.setViewportSize({ width: 390, height: 844 });
+    await joinPassAndPlay(device, 'cribbage', table.gameId, ['Ann', 'Bob']);
+    await agreeToHouseRules(device);
+    await expect(device.locator('.handoff-banner')).toBeVisible();
+    expect(await device.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });
 
   test('FAQ shows the rules and controls', async ({ seat }) => {
