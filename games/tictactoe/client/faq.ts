@@ -7,10 +7,6 @@ export const FAQS: FaqItem[] = [
       'for exactly two players, and nobody can join after the first move.'
   },
   {
-    question: 'How do I place a mark?',
-    answer: 'On your turn, click or tap an empty cell. A cell that already holds a mark cannot be chosen.'
-  },
-  {
     question: 'Who goes first?',
     answer: 'X always moves first. The first player to join plays X in the first game, and the marks swap on each ' +
       'rematch, so the other player moves first in the next game.'
@@ -22,17 +18,15 @@ export const FAQS: FaqItem[] = [
   {
     question: 'Can the game be drawn?',
     answer: 'Yes. If the grid fills up with no three in a row, the game is a draw. You can also agree to a draw: ' +
-      'click Offer draw at any time; your opponent sees Accept draw and Decline. The offer lapses if they decline ' +
-      'or make a move instead.'
+      'either player can offer one at any time. The offer lapses if the opponent declines or makes a move instead.'
   },
   {
     question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins. ' +
-      'Click Keep playing to change your mind.'
+    answer: 'At any time, on either player\'s turn. Your opponent wins.'
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last mark; it happens only if they approve.'
+    answer: 'It takes back the last mark, but only if your opponent approves.'
   },
   {
     question: 'What is highlighted on the board?',

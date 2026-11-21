@@ -4,6 +4,9 @@ import type { MoveChange } from './animation/useMoveAnimation.ts';
 
 export type FaqItem = { question: string; answer: string };
 
+// One row of the Controls dialog: what the player does, how with a mouse or by touch, and which keys
+export type ControlItem = { action: string; pointer?: string; keys?: string };
+
 export type GameScreenProps<P extends BasePublicState> = {
   gameState: P; playerNumber: Seat; error: string | null;
   localSeats?: Seat[]; // the seats a shared pass-and-play device holds, absent for any other join
@@ -16,6 +19,7 @@ export type ClientGame = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Screen: ComponentType<GameScreenProps<any>>;
   faq: FaqItem[];
+  controls?: ControlItem[]; // optional until every game has a list
   // A read-only board of one public state with its lastMove highlighted, for the history dialog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   HistoryBoard: ComponentType<{ gameState: any; viewer: Seat | null }>;

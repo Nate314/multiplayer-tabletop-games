@@ -229,6 +229,12 @@ export async function openFaq(page: Page) {
   return dialog;
 }
 
+// Opens Controls from the game menu and returns the dialog
+export async function openControls(page: Page) {
+  await (await headerButton(page, 'Controls')).click();
+  return page.getByRole('dialog', { name: / controls$/ });
+}
+
 export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Record<string, string> }>({
   // Extra environment for the worker's server, set per file with test.use
   serverEnv: [{}, { scope: 'worker', option: true }],

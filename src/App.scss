@@ -532,7 +532,7 @@
   overflow-wrap: anywhere; /* a 36-character ID wraps on a phone instead of widening the page */
 }
 
-:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button, [data-game] .pause-button) {
+:where([data-game] .back-button, [data-game] .history-button, [data-game] .rules-button, [data-game] .controls-button, [data-game] .pause-button) {
   height: 2.5rem;
   padding: 0 1rem;
   border: none;
@@ -569,7 +569,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .pause-button:hover:enabled, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover, [data-game] .game-menu-button:hover) {
+:where([data-game] .back-button:hover, [data-game] .history-button:hover:enabled, [data-game] .rules-button:hover, [data-game] .controls-button:hover, [data-game] .pause-button:hover:enabled, [data-game] .game-header .settings-button:hover, [data-game] .hide-button:hover, [data-game] .theme-toggle:hover, [data-game] .game-header .github-link:hover, [data-game] .share-button:hover, [data-game] .game-menu-button:hover) {
   background: var(--platform-button-hover-bg, var(--lobby-accent-hover));
 }
 
@@ -731,6 +731,51 @@
 
 :where([data-game] .faq dd) {
   margin: 4px 0 0;
+}
+
+/* Controls dialog: a table on wide screens; below 600px each row stacks, the action as a heading and the other two
+   cells under it with their heading from data-label. */
+:where([data-game] .modal.controls) {
+  text-align: left;
+}
+
+:where([data-game] .modal.controls table) {
+  width: 100%;
+  margin-bottom: 16px;
+  border-collapse: collapse;
+}
+
+:where([data-game] .modal.controls th, [data-game] .modal.controls td) {
+  padding: 6px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+
+:where([data-game] .modal.controls tbody tr) {
+  border-top: 1px solid currentColor;
+}
+
+@media (max-width: 600px) {
+  :where([data-game] .modal.controls thead) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  :where([data-game] .modal.controls tr, [data-game] .modal.controls th, [data-game] .modal.controls td) {
+    display: block;
+  }
+
+  :where([data-game] .modal.controls td:empty) {
+    display: none;
+  }
+
+  :where([data-game] .modal.controls td::before) {
+    content: attr(data-label) ': ';
+    font-weight: 600;
+  }
 }
 
 /* Rules dialog: the README or the FAQ scrolls between the title and Close, so Close stays in view on a phone.
