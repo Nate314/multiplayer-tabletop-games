@@ -26,7 +26,8 @@ export type TableProps = {
   keys?: {
     pieceFocus: number | null;
     onPieceKey(piece: number, event: KeyboardEvent): void;
-    spots?: { focused: number; onSpotKey(spot: number, event: KeyboardEvent): void };
+    onPieceClick(piece: number): void;
+    spots?: { focused: number; onSpotKey(spot: number, event: KeyboardEvent): void; onSpotClick(spot: number): void };
   };
 };
 
@@ -83,9 +84,11 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
           <rect key={piece} className="jigsaw-spot" data-spot={piece} x={home.x} y={home.y} width={grid.w} height={grid.h}
             {...(spots && {
               role: 'button',
-              'aria-label': `Spot row ${Math.floor(piece / grid.cols) + 1}, column ${(piece % grid.cols) + 1}`,
+              // A placed piece always lies in its own spot
+              'aria-label': `Spot row ${Math.floor(piece / grid.cols) + 1}, column ${(piece % grid.cols) + 1}${board.pieces[piece]?.placed ? ', filled' : ''}`,
               tabIndex: spots.focused === piece ? 0 : -1,
-              onKeyDown: (event: KeyboardEvent) => spots.onSpotKey(piece, event)
+              onKeyDown: (event: KeyboardEvent) => spots.onSpotKey(piece, event),
+              onClick: () => spots.onSpotClick(piece)
             })} />
         ))}
         {order.map(({ piece, index }) => {
@@ -115,6 +118,7 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
               label={keyed ? `Piece ${index + 1}, loose${turns > 0 ? `, turned ${turns * 90} degrees` : ''}` : undefined}
               tabIndex={keyed ? (keys.pieceFocus === index ? 0 : -1) : undefined}
               onKeyDown={keyed ? keys.onPieceKey : undefined}
+              onClick={keyed ? keys.onPieceClick : undefined}
             />
           );
         })}

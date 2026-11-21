@@ -12,7 +12,7 @@ type RaceBoardProps = {
   label?: string;
   svgRef?: Ref<SVGSVGElement>;
   // Makes the empty holes keyboard targets, one tab stop: `focused` is the one in the tab order
-  targets?: { focused: number; onFocus(hole: number): void; onKey(hole: number, event: KeyboardEvent): void };
+  targets?: { focused: number; onFocus(hole: number): void; onKey(hole: number, event: KeyboardEvent): void; onClick(hole: number): void };
 };
 
 // The holes on a square grid, row-major, with each placed shape sitting in its hole the right way up
@@ -32,7 +32,8 @@ export default function RaceBoard({ layout, placed, highlight = null, popped = f
             'aria-label': `Hole ${hole + 1} of ${layout.size}, ${shapeLabel(id)}`,
             'data-hole': hole,
             onFocus: () => targets.onFocus(hole),
-            onKeyDown: (event: KeyboardEvent) => targets.onKey(hole, event)
+            onKeyDown: (event: KeyboardEvent) => targets.onKey(hole, event),
+            onClick: () => targets.onClick(hole)
           })}
         >
           {targets && placed[hole] === undefined && <rect className="sr-ring" x="-8" y="-8" width="116" height="116" rx="10" />}

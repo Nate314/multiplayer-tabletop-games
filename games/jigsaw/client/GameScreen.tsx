@@ -12,7 +12,9 @@ import { pictureUrl } from './pictureUrl.ts';
 import { lostHold, samePiece, usePieceDrag, type Dragging } from './usePieceDrag.ts';
 import { keepCentre } from '../../../shared/zoom.ts';
 import { gridStep } from '../../../src/drag/gridStep.ts';
+import useAnnouncer from '../../../src/hooks/useAnnouncer.ts';
 import { gridOf, homeOf } from '../cut.ts';
+import { turnsOf } from '../rules.ts';
 import type { GameScreenProps } from '../../../src/clientGames.ts';
 import type { Board, Piece, PublicGameState } from '../types.ts';
 
@@ -65,7 +67,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const [pieceFocus, setPieceFocus] = useState<number | null>(null);
   // A piece to hand focus to once the table has rendered (else the first liftable one)
   const [refocus, setRefocus] = useState<number | null>(null);
-  const [announce, setAnnounce] = useState('');
+  const [announce, setAnnounce] = useAnnouncer();
   // A keyboard drop waiting for the state to say where the piece ended up
   const [pending, setPending] = useState<{ piece: number; spot: number; from: Piece } | null>(null);
   // A refused drop (or any refusal) lets go of the dropped piece, so no ghost stays where it was let go
@@ -112,11 +114,25 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   // An error still set from before must not undo a fresh pick-up
   const seenError = useRef(error);
+  const stillMine = hold !== null && board.pieces[hold.piece]?.heldBy === playerNumber;
   useEffect(() => {
     const fresh = error !== seenError.current;
     seenError.current = error;
-    if (hold !== null && (holdLost || (error && fresh))) { setHold(null); setRefocus(hold.piece); }
-  }, [hold, holdLost, error]);
+    if (hold === null || !(holdLost || (error && fresh))) return;
+    // Play goes on after an error, so the server must let go of the piece too
+    if (!holdLost && stillMine) gameService.sendAction({ type: 'drop', piece: hold.piece, ...hold.from });
+    setHold(null);
+    setRefocus(hold.piece);
+  }, [hold, holdLost, error, stillMine]);
+  // Says the new angle once the server has turned the held piece
+  const keyPiece = keyHold?.piece ?? null;
+  const keyTurns = keyPiece === null ? 0 : turnsOf(board.pieces[keyPiece]);
+  const turnedFrom = useRef<{ piece: number | null; turns: number }>({ piece: null, turns: 0 });
+  useEffect(() => {
+    const was = turnedFrom.current;
+    turnedFrom.current = { piece: keyPiece, turns: keyTurns };
+    if (keyPiece !== null && was.piece === keyPiece && was.turns !== keyTurns) setAnnounce(`Piece ${keyPiece + 1}, turned ${keyTurns * 90} degrees`);
+  }, [keyPiece, keyTurns, setAnnounce]);
   useEffect(() => { if (keyHold) show(scrollBox.current?.querySelector<SVGElement>(`[data-spot="${keyHold.spot}"]`)); }, [keyHold]);
   useEffect(() => {
     if (refocus === null) return;
@@ -135,7 +151,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       ? `Piece ${pending.piece + 1} placed`
       : `Piece ${pending.piece + 1} left loose at row ${Math.floor(pending.spot / grid.cols) + 1}, column ${(pending.spot % grid.cols) + 1}`);
     setPending(null);
-  }, [pending, board, grid.cols]);
+  }, [pending, board, grid.cols, setAnnounce]);
 
   const pickUp = (piece: number) => {
     if (keyHold) putBack(keyHold);
@@ -163,7 +179,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     if (escaped(event)) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      if (canLift(piece)) pickUp(piece);
+      onPieceClick(piece);
       return;
     }
     const step = STEPS[event.key];
@@ -172,24 +188,31 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     const to = step < 0 ? liftables.filter(index => index < piece).pop() : liftables.find(index => index > piece);
     if (to !== undefined) setRefocus(to);
   };
-  // Pieces are memoized, so they all get one handler that never changes and calls the latest one
-  const pieceKey = useRef(onPieceKey);
-  useEffect(() => { pieceKey.current = onPieceKey; });
-  const stablePieceKey = useCallback((piece: number, event: ReactKeyboardEvent) => pieceKey.current(piece, event), []);
+  // Enter, or a screen reader's click (detail 0; a mouse click is part of a drag)
+  const onPieceClick = (piece: number) => { if (canLift(piece)) pickUp(piece); };
+  // Pieces are memoized, so they all get handlers that never change and call the latest ones
+  const pieceHandlers = useRef({ onPieceKey, onPieceClick });
+  useEffect(() => { pieceHandlers.current = { onPieceKey, onPieceClick }; });
+  const stablePieceKey = useCallback((piece: number, event: ReactKeyboardEvent) => pieceHandlers.current.onPieceKey(piece, event), []);
+  const stablePieceClick = useCallback((piece: number) => pieceHandlers.current.onPieceClick(piece), []);
+  const dropOn = (spot: number) => {
+    if (!keyHold) return;
+    const { piece } = keyHold;
+    const home = homeOf(grid, spot);
+    setHold(null);
+    const at = board.pieces[piece];
+    // Where the piece already lies there is nothing to hold in place, and samePiece would keep the landing forever
+    if (at.x !== home.x || at.y !== home.y) setLanding({ piece, ...home, from: at });
+    setPending({ piece, spot, from: board.pieces[piece] });
+    gameService.sendAction({ type: 'drop', piece, ...home });
+    const others = liftables.filter(index => index !== piece);
+    setRefocus(others.find(index => index > piece) ?? others[0] ?? null);
+  };
   const onSpotKey = (spot: number, event: ReactKeyboardEvent) => {
     if (!keyHold || escaped(event)) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      const { piece } = keyHold;
-      const home = homeOf(grid, spot);
-      setHold(null);
-      const at = board.pieces[piece];
-      // Where the piece already lies there is nothing to hold in place, and samePiece would keep the landing forever
-      if (at.x !== home.x || at.y !== home.y) setLanding({ piece, ...home, from: at });
-      setPending({ piece, spot, from: board.pieces[piece] });
-      gameService.sendAction({ type: 'drop', piece, ...home });
-      const others = liftables.filter(index => index !== piece);
-      setRefocus(others.find(index => index > piece) ?? others[0] ?? null);
+      dropOn(spot);
       return;
     }
     const to = gridStep(spot, event.key, grid.cols, grid.cols * grid.rows);
@@ -267,11 +290,12 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               guide={guide}
               drag={{ dragging: shown, canLift, bind }}
               turnHandle={turnHandle}
-              keys={{
+              keys={liftables.length > 0 || keyHold ? {
                 pieceFocus: pieceFocus !== null && canLift(pieceFocus) ? pieceFocus : liftables[0] ?? null,
                 onPieceKey: stablePieceKey,
-                spots: keyHold ? { focused: keyHold.spot, onSpotKey } : undefined
-              }}
+                onPieceClick: stablePieceClick,
+                spots: keyHold ? { focused: keyHold.spot, onSpotKey, onSpotClick: dropOn } : undefined
+              } : undefined}
             />
           </div>
         </div>

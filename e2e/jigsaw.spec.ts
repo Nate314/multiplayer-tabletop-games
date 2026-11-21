@@ -735,6 +735,32 @@ test.describe('Jigsaw keyboard play', () => {
     await expect(live(alice)).toHaveText('Piece 1 left loose at row 2, column 6');
   });
 
+  test('a screen reader click picks a piece up and drops it on a spot', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    await piece(alice, 0).dispatchEvent('click');
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
+    await expect(live(alice)).toHaveText('Piece 1 picked up. Choose a spot, Escape puts it back');
+    await spotButton(alice, 0).dispatchEvent('click');
+    await expect.poll(async () => (await pieceOn(table, 0)).placed).toBe(true);
+  });
+
+  test('a spot that holds a placed piece is labeled filled', async ({ seat }) => {
+    const table = await seat('jigsaw', ['Alice'], { houseRules: { pieces: 24 } });
+    const board = keyboardBoard(24);
+    board.pieces[2] = { ...homeOf(grid, 2), placed: true, heldBy: null, placedBy: null };
+    await lay(table, { board });
+    await pickUp(table.pages[0]);
+    await expect(table.pages[0].getByRole('button', { name: 'Spot row 1, column 3, filled', exact: true })).toHaveCount(1);
+  });
+
+  test('a finished game shows the table as a picture', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    const svg = alice.locator('.jigsaw-main .jigsaw-table');
+    await expect(svg).toHaveAttribute('role', 'group');
+    await table.patch({ isGameOver: true });
+    await expect(svg).toHaveAttribute('role', 'img');
+  });
+
   test('arrow keys step through the pieces', async ({ seat }) => {
     const { alice } = await keyboardTable(seat);
     await tabIn(alice);
@@ -768,6 +794,7 @@ test.describe('Jigsaw keyboard play', () => {
     await alice.keyboard.press('r');
     await expect.poll(async () => (await pieceOn(table, 0)).turns).toBe(1);
     await expect(piece(alice, 0)).toHaveAttribute('aria-label', 'Piece 1, loose, turned 90 degrees');
+    await expect(live(alice)).toHaveText('Piece 1, turned 90 degrees');
   });
 
   test('R typed in an input does not turn a keyboard-held piece', async ({ seat }) => {
@@ -882,9 +909,11 @@ test.describe('Jigsaw keyboard play', () => {
     await alice.reload();
     await pickUp(alice);
     await expect(focusableSpots(alice)).toHaveCount(1);
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
     await alice.evaluate(() => (window as unknown as { sockets: WebSocket[] }).sockets[0].dispatchEvent(
       new MessageEvent('message', { data: JSON.stringify({ type: 'GAME_ERROR', payload: { message: 'Refused' } }) })));
-    await expect(status(alice)).toHaveText('Refused');
+    // The put-back it sends makes the server let go of the piece too, and its answer clears the error
+    await expect.poll(() => pieceOn(table, 0)).toEqual(loose(FROM.x, FROM.y));
     await expect(focusableSpots(alice)).toHaveCount(0);
     await expect(piece(alice, 0)).toHaveAttribute('transform', at(FROM));
     await expect(piece(alice, 0)).toBeFocused();

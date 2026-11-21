@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import gameService from '../../../src/services/gameService';
 import { formatClock, useCountdown } from '../../../src/hooks/useCountdown.ts';
+import useAnnouncer from '../../../src/hooks/useAnnouncer.ts';
 import { gridStep } from '../../../src/drag/gridStep.ts';
 import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
 import { fits } from '../board.ts';
@@ -43,7 +44,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // A shape picked up by keyboard, apart from the pointer drag, and the hole its arrow keys are on
   const [kept, setKept] = useState<number | null>(null);
   const [target, setTarget] = useState(0);
-  const [announce, setAnnounce] = useState('');
+  const [announce, setAnnounce] = useAnnouncer();
   // A tray shape to hand focus back to once the board has rendered without the hole targets
   const [refocus, setRefocus] = useState<number | null>(null);
   const paused = gameState.paused === true;
@@ -70,6 +71,14 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [kept]);
+  // Says the new angle once the server has turned the held shape
+  const keptTurns = kept === null ? 0 : board.turns[kept] ?? 0;
+  const turnedFrom = useRef<{ shape: number | null; turns: number }>({ shape: null, turns: 0 });
+  useEffect(() => {
+    const was = turnedFrom.current;
+    turnedFrom.current = { shape: kept, turns: keptTurns };
+    if (layout && kept !== null && was.shape === kept && was.turns !== keptTurns) setAnnounce(`${shapeLabel(layout.tray[kept])}, turned ${keptTurns * 45} degrees`);
+  }, [kept, keptTurns, layout, setAnnounce]);
 
   if (!layout) return <div className="sr-screen"><div className="game-status">{gameStatus || 'Waiting for players'}</div></div>;
   // Once the server shows the hole filled or the shape placed, the board itself answers for it
@@ -116,31 +125,42 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     gameService.sendAction({ type: 'place', shape: drag.shape, hole });
   };
   const pickUp = (shape: number) => {
+    const first = layout.holes.findIndex((_, hole) => placed[hole] === undefined);
+    // The same shape again sets no new state, so the focus effect would not run
+    if (kept === shape) boardRef.current?.querySelector<SVGElement>(`[data-hole="${first}"]`)?.focus();
     setLanded(null);
     setKept(shape);
-    setTarget(layout.holes.findIndex((_, hole) => placed[hole] === undefined));
+    setTarget(first);
     setAnnounce(`${shapeLabel(layout.tray[shape])} picked up. Choose a hole, R turns it, Escape puts it back`);
   };
+  // Escape on a tray shape or a hole puts the held shape back
+  const escaped = (event: ReactKeyboardEvent) => {
+    if (event.key !== 'Escape' || kept === null) return false;
+    setKept(null);
+    setRefocus(kept);
+    setAnnounce('Piece put back');
+    return true;
+  };
   const onShapeKey = (shape: number) => (event: ReactKeyboardEvent) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (escaped(event) || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault(); // so the click that Enter fires never turns it
     pickUp(shape);
   };
-  const onHoleKey = (hole: number, event: ReactKeyboardEvent) => {
+  const dropOn = (hole: number) => {
     if (kept === null) return;
-    if (event.key === 'Escape') {
-      setKept(null);
-      setRefocus(kept);
-      setAnnounce('Piece put back');
-    } else if (event.key === 'Enter' || event.key === ' ') {
+    if (!fits(layout, placed, kept, hole, board.turns[kept])) return setAnnounce('That shape does not fit there');
+    setLanded({ shape: kept, hole });
+    gameService.sendAction({ type: 'place', shape: kept, hole });
+    setAnnounce(`${shapeLabel(layout.tray[kept])} placed`);
+    setKept(null);
+    const left = layout.tray.map((_, i) => i).filter(i => i !== kept && !inPlace.has(i));
+    setRefocus(left.find(i => i > kept) ?? left[0] ?? null);
+  };
+  const onHoleKey = (hole: number, event: ReactKeyboardEvent) => {
+    if (kept === null || escaped(event)) return;
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      if (!fits(layout, placed, kept, hole, board.turns[kept])) return setAnnounce('That shape does not fit there');
-      setLanded({ shape: kept, hole });
-      gameService.sendAction({ type: 'place', shape: kept, hole });
-      setAnnounce(`${shapeLabel(layout.tray[kept])} placed`);
-      setKept(null);
-      const left = layout.tray.map((_, i) => i).filter(i => i !== kept && !inPlace.has(i));
-      setRefocus(left.find(i => i > kept) ?? left[0] ?? null);
+      dropOn(hole);
     } else {
       const n = Math.sqrt(layout.size);
       const to = gridStep(hole, event.key, n, layout.size);
@@ -165,7 +185,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         {myTime !== undefined && <p className="sr-note">You filled the board in {clock(myTime)}</p>}
       </div>
       <Progress gameState={gameState} seats={activePlayers.filter(seat => seat !== playerNumber)} />
-      <RaceBoard layout={layout} placed={placed} popped={popped && isGameOver} svgRef={boardRef} label="Your board" targets={kept === null ? undefined : { focused: target, onFocus: setTarget, onKey: onHoleKey }} />
+      <RaceBoard layout={layout} placed={placed} popped={popped && isGameOver} svgRef={boardRef} label="Your board" targets={kept === null ? undefined : { focused: target, onFocus: setTarget, onKey: onHoleKey, onClick: dropOn }} />
       <ul className={popped && isGameOver ? 'sr-tray sr-scatter' : 'sr-tray'} aria-label="Shapes">
         {layout.tray.map((id, shape) => {
           const turns = board.turns[shape] ?? 0;
@@ -178,7 +198,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
                   className={held && drag.moved ? 'sr-shape sr-dragging' : kept === shape ? 'sr-shape sr-held' : 'sr-shape'}
                   aria-label={`${shapeLabel(id)}, turned ${turns * 45} degrees`}
                   disabled={!racing}
-                  onClick={event => { if (event.detail > 0) gameService.sendAction({ type: 'turn', shape }); }}
+                  // A screen reader's click has detail 0; a keyboard Enter's click is stopped on keydown
+                  onClick={event => event.detail > 0 ? gameService.sendAction({ type: 'turn', shape }) : pickUp(shape)}
                   onKeyDown={onShapeKey(shape)}
                   onPointerDown={onPointerDown(shape)}
                   onPointerMove={onPointerMove}

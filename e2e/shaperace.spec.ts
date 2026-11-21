@@ -310,6 +310,7 @@ test.describe('Shape Race keyboard play', () => {
     await expect(hole(alice, layout, 0)).toBeFocused();
     await alice.keyboard.press('r');
     await expect.poll(() => turnsOf(table, 0)).toBe(0);
+    await expect(live(alice)).toHaveText(`${shapeLabel(layout.tray[0])}, turned 0 degrees`);
     await arrowTo(alice, 0, holeOf(layout, 0));
     await expect(hole(alice, layout, holeOf(layout, 0))).toBeFocused();
     await alice.keyboard.press('Enter');
@@ -338,6 +339,50 @@ test.describe('Shape Race keyboard play', () => {
     await alice.keyboard.press('Escape');
     await expect(live(alice)).toHaveText('Piece put back');
     await expect(shape(alice, 0)).toBeFocused();
+    await expect(focusable(alice)).toHaveCount(0);
+  });
+
+  test('a screen reader click picks a shape up and drops it in its hole', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const layout = await layoutOf(table);
+    await shape(alice, 0).dispatchEvent('click');
+    await expect(live(alice)).toHaveText(`${shapeLabel(layout.tray[0])} picked up. Choose a hole, R turns it, Escape puts it back`);
+    await hole(alice, layout, holeOf(layout, 0)).dispatchEvent('click');
+    await expect.poll(() => placedOf(table)).toEqual({ [holeOf(layout, 0)]: 0 });
+    expect(await turnsOf(table, 0)).toBe(0);
+  });
+
+  test('the same announcement twice is heard twice', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const layout = await layoutOf(table);
+    await pickUp(alice, 0);
+    await arrowTo(alice, 0, layout.holes.findIndex(id => id !== layout.tray[0]));
+    await alice.keyboard.press('Enter');
+    await expect(live(alice)).toHaveText('That shape does not fit there');
+    const first = await live(alice).textContent();
+    await alice.keyboard.press('Enter');
+    await expect.poll(() => live(alice).textContent()).not.toBe(first);
+    await expect(live(alice)).toHaveText('That shape does not fit there');
+  });
+
+  test('Enter on the held shape again goes back to the board', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const layout = await layoutOf(table);
+    await pickUp(alice, 0);
+    await expect(hole(alice, layout, 0)).toBeFocused();
+    await pickUp(alice, 0);
+    await expect(hole(alice, layout, 0)).toBeFocused();
+  });
+
+  test('Escape on the tray puts a keyboard-held shape back', async ({ seat }) => {
+    const [alice] = (await start(seat, ['Alice'])).pages;
+    await pickUp(alice, 0);
+    await shape(alice, 0).focus();
+    await alice.keyboard.press('Escape');
+    await expect(live(alice)).toHaveText('Piece put back');
     await expect(focusable(alice)).toHaveCount(0);
   });
 
