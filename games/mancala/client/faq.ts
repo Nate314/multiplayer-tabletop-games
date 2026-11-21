@@ -16,10 +16,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I move?',
-    answer: 'On your turn, click one of your pits that has stones; those pits are outlined. You pick up all its ' +
-      'stones and drop one stone in each following hole, counter-clockwise, as the arrows around the board show: ' +
-      'to the right along your row, into your bank, then right to left along your opponent\'s row and back around. ' +
-      'Your opponent\'s bank is skipped.'
+    answer: 'On your turn, you pick up all the stones in one of your pits that has stones and drop one stone in each ' +
+      'following hole, counter-clockwise, as the arrows around the board show: to the right along your row, into ' +
+      'your bank, then right to left along your opponent\'s row and back around. Your opponent\'s bank is skipped.'
   },
   {
     question: 'What happens when my last stone lands in a pit with stones?',
@@ -61,7 +60,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last turn; it happens only if they approve.'
+    answer: 'It takes back the last turn, but only if your opponent approves.'
   },
   {
     question: 'Can I tell the colors apart without seeing color?',

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import type { Locator, Page } from '@playwright/test';
 import {
-  agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, setPreference, test, undo,
+  agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openControls, openFaq, setHouseRules, setPreference, test, undo,
   watch, type Seat, headerButton } from './fixtures.ts';
 import { feedback } from '../games/codebreaker/feedback.ts';
 import type { Color, Guess } from '../games/codebreaker/types.ts';
@@ -621,10 +621,15 @@ test.describe('Code Breaker controls', () => {
     await expect(history.locator('.cb-answer')).toHaveCount(0);
   });
 
-  test('the FAQ opens from Rules', async ({ seat }) => {
+  test('the FAQ opens from Rules, and Controls from its own item', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, ['Alice']);
     const dialog = await openFaq(alice);
     await expect(dialog.getByText('What is the goal?')).toBeVisible();
     await expect(dialog.getByText('What do the answer pegs mean?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Build a guess');
+    await expect(controls).toContainText('Submit guess');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

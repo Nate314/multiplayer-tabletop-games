@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, recordTones, test, tones, touchDrag, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openControls, openFaq, recordTones, test, tones, touchDrag, undo, type Seat, type Table } from './fixtures.ts';
 import { positionKey } from '../games/chess/rules.ts';
 import type { Board, BoardState, CastlingRights, PieceType } from '../games/chess/types.ts';
 
@@ -519,13 +519,19 @@ test.describe('Chess controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('en passant');
-    await expect(faq).toContainText('Claim draw');
+    await expect(faq).toContainText('you can claim a draw');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Move a piece');
+    await expect(controls).toContainText('a dot for an empty square');
+    await expect(controls).toContainText('Choose a promotion piece');
+    await expect(controls).toContainText('Castle');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

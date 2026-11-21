@@ -8,11 +8,6 @@ export const FAQS: FaqItem[] = [
       'first; the second plays Yellow.'
   },
   {
-    question: 'How do I drop a disc?',
-    answer: 'On your turn, drag your disc from the tray above the board onto a column, or click the arrow above a ' +
-      'column, or click anywhere in the column. The disc falls to the lowest empty cell. A full column cannot be chosen, and its arrow is greyed out.'
-  },
-  {
     question: 'How do I win?',
     answer: 'Be the first to line up four of your discs in a row: across, up and down, or diagonally. The winning ' +
       'four are highlighted.'
@@ -20,17 +15,16 @@ export const FAQS: FaqItem[] = [
   {
     question: 'Can the game be drawn?',
     answer: 'Yes. If the board fills up with no four in a row, the game is a draw. You can also agree to a draw: ' +
-      'click Offer draw at any time; your opponent sees Accept draw and Decline. The offer lapses if they decline ' +
-      'or make a move instead.'
+      'either player can offer one at any time. The offer lapses if the opponent declines or makes a move ' +
+      'instead.'
   },
   {
     question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins. ' +
-      'Click Keep playing to change your mind.'
+    answer: 'At any time, on either player\'s turn. Your opponent wins.'
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last disc; it happens only if they approve.'
+    answer: 'It takes back the last disc, but only if your opponent approves.'
   },
   {
     question: 'What is highlighted on the board?',

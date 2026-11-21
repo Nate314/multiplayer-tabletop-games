@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openControls, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Board } from '../games/checkers/types.ts';
 
 // One test per rule and control in games/checkers/README.md. Seat 1 (Alice) plays Red from rows 5-7 and moves up the
@@ -317,13 +317,18 @@ test.describe('Checkers controls', () => {
     await expect(status(alice)).toHaveText('Bob resigned. Alice wins!');
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('multi-jumps');
     await expect(faq).toContainText('glow orange');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Move a piece');
+    await expect(controls).toContainText('Click the piece again to let it go');
+    await expect(controls).toContainText('Offer a draw');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

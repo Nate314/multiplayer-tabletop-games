@@ -19,12 +19,6 @@ export const FAQS: FaqItem[] = [
       'Hover over the answer pegs to read them in words, for example 2 right place, 1 right color.'
   },
   {
-    question: 'How do I make a guess?',
-    answer: 'Click the colors under Your guess: each fills the first empty slot of the row. Click a peg in the row to empty ' +
-      'it, or Clear to empty the whole row. Submit guess sends the row once every slot is filled. The row you are building ' +
-      'is only on your screen until you send it.'
-  },
-  {
     question: 'What are the modes?',
     answer: 'Solo is for one player. Classic is for exactly two: you take turns making the code and breaking it. Together and ' +
       'Race are for two or more. In Together everyone guesses on one shared board, at any time, and each guess shows who made ' +
@@ -52,9 +46,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does Undo do?',
-    answer: 'In Classic, Undo asks the other player to take back the last move, and it happens only if they approve. In Solo ' +
-      'it takes back your last guess at once. In Together and Race, Undo my last move takes back your own latest guess with ' +
-      'no vote. A finished Race board cannot be undone.'
+    answer: 'In Classic, it takes back the last move, and only if the other player approves. In Solo it takes back ' +
+      'your last guess at once. In Together and Race, you take back only your own latest guess, with no vote. A ' +
+      'finished Race board cannot be undone.'
   },
   {
     question: 'What are the shapes on the pegs?',

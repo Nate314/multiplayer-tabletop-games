@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, tableScreen, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, tableScreen, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Cells } from '../games/tictactoe/lines.ts';
 
 // One test per rule and control in games/ultimatetictactoe/README.md. In game 1 seat 1 (Alice) plays X and moves first,
@@ -311,7 +311,7 @@ test.describe('Ultimate Tic-Tac-Toe controls', () => {
     await expect(alice.locator('.big-board')).toBeHidden();
   });
 
-  test('FAQ shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Where can I play?');
@@ -319,5 +319,9 @@ test.describe('Ultimate Tic-Tac-Toe controls', () => {
     await expect(faq).toContainText('three boards in a row');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Place a mark');
+    await expect(controls).toContainText('click or tap an empty cell in a highlighted board');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
