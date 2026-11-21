@@ -2,10 +2,6 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 
 export const QUESTIONS: FaqItem[] = [
   {
-    question: 'How do I place a word?',
-    answer: 'On your turn, click a tile on your rack, then click an empty square on the board. Repeat for each letter. Click a tile you placed this turn to put it back on your rack, or click Recall to take them all back. You can also drag a tile from your rack onto an empty square, drag a placed tile to another empty square to move it, or drag it onto your rack to take it back. When the word is ready, click Play.'
-  },
-  {
     question: 'Where can tiles go?',
     answer: 'All the tiles you place in one turn go in a single row or a single column, with no gaps except squares already filled. The first word must cover the center star and use at least two tiles. Every later word must touch a tile already on the board.'
   },
@@ -23,15 +19,15 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do blank tiles work?',
-    answer: 'There are two blanks, worth 0 points. When you place one, pick the letter it stands for from the letters shown under your rack. It stays that letter for the rest of the game and is shown in a different color.'
+    answer: 'There are two blanks, worth 0 points. When you place one, you choose the letter it stands for. It stays that letter for the rest of the game and is shown in a different color.'
   },
   {
     question: 'Can I swap tiles?',
-    answer: 'Yes, while the bag holds at least 7 tiles. Click Exchange, select the tiles to swap, then click the Exchange button again to confirm. You draw new tiles first and the old ones go back in the bag. An exchange uses your turn and scores nothing. You can also click Pass to skip your turn.'
+    answer: 'Yes, while the bag holds at least 7 tiles. You pick the tiles to swap. You draw new tiles first and the old ones go back in the bag. An exchange uses your turn and scores nothing. You can also pass to skip your turn.'
   },
   {
     question: 'What does Shuffle do?',
-    answer: 'It mixes the order of the tiles on your rack, to help you spot words. Only you see it, and you can shuffle at any time. To put a tile in a place of your choosing, drag it to that place on your rack, even when it is not your turn.'
+    answer: 'It mixes the order of the tiles on your rack, to help you spot words. Only you see it, and you can shuffle at any time.'
   },
   {
     question: 'How many tiles are there?',
@@ -39,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'When does the game end?',
-    answer: 'When a player uses their last tile while the bag is empty, that player adds the value of every other rack to their score, and each other player loses the value of their own rack. After six scoreless turns in a row (passes, exchanges or plays worth 0), any player may click End game, and then everyone loses the value of their rack; until someone does, play goes on. The highest score wins; tied players share the win.'
+    answer: 'When a player uses their last tile while the bag is empty, that player adds the value of every other rack to their score, and each other player loses the value of their own rack. After six scoreless turns in a row (passes, exchanges or plays worth 0), any player may end the game, and then everyone loses the value of their rack; until someone does, play goes on. The highest score wins; tied players share the win.'
   },
   {
     question: 'Who goes first?',
@@ -55,7 +51,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last turn. It is undone only if every player still in the game approves.'
+    answer: 'Undo asks everyone to undo the last turn. It is undone only if every player still in the game approves.'
   },
   {
     question: 'What happens if someone leaves?',

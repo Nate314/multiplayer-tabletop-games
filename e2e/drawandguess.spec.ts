@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, test, touchDrag, undo, headerButton } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, drag, expect, inHouseRules, joinGame, leave, newPlayer, openControls, openFaq, type Seat, type SeatOptions, test, touchDrag, undo, headerButton } from './fixtures.ts';
 import type { GameState } from '../games/drawandguess/types.ts';
 
 // One test per rule and control in games/drawandguess/README.md. Alice (seat 1) draws first; Bob and Cara guess.
@@ -300,9 +300,13 @@ test.describe('Draw and Guess rules', () => {
   test('the FAQ opens from Rules', async ({ seat }) => {
     const { alice } = await seated(seat);
     const faq = await openFaq(alice);
-    await expect(faq).toContainText('How do I draw?');
+    await expect(faq).toContainText('What may I draw?');
     await expect(faq).toContainText('What does "So close!" mean?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Draw a line');
+    await expect(controls).toContainText('Fill an area');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

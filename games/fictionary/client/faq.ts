@@ -6,16 +6,16 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Everyone sees the same rare word at the top of the screen. Each player writes a made-up definition that sounds real. The game holds the real one. Once writing ends, every definition is shown in a shuffled list, with no names, and everyone votes for the one they think is real. Then the reveal shows which one was real, who wrote each fake, who voted for what and the points.'
   },
   {
-    question: 'How do I write a definition?',
-    answer: 'Type it in the box labelled Your definition (up to 150 characters) and click Submit. You can change it until writing ends: type a new one and click Update. Nobody else sees what you wrote until the reveal; the others only see that you have written.'
+    question: 'What do I write?',
+    answer: 'A made-up definition of up to 150 characters. You can change it until writing ends. Nobody else sees what you wrote until the reveal; the others only see that you have written.'
   },
   {
     question: 'How long do we have?',
     answer: 'Writing lasts 2 minutes (1 minute, 90 seconds or 3 minutes as a house rule) and voting lasts 1 minute. Each ends early once everyone has written or voted. In the last 10 seconds a tick plays each second for anyone who has not written or voted yet, unless Timer warnings is off in Settings.'
   },
   {
-    question: 'How do I vote?',
-    answer: 'Click the definition you think is real. Your own fake is marked Yours and cannot be picked. You can change your vote by clicking another one until everyone has voted or the time runs out.'
+    question: 'What can I vote for?',
+    answer: 'The definition you think is real. Your own fake is marked Yours and cannot be picked. You can change your vote until everyone has voted or the time runs out.'
   },
   {
     question: 'How is it scored?',
@@ -35,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'When does the game end?',
-    answer: 'After 8 words (5 or 10 as a house rule). Everyone clicks Continue after each reveal to start the next word. The highest score wins; players with equal scores share the win.'
+    answer: 'After 8 words (5 or 10 as a house rule). Everyone continues after each reveal to start the next word. The highest score wins; players with equal scores share the win.'
   },
   {
     question: 'Can I take back a move?',

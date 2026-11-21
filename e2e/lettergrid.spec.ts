@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, ghostsSeen, leave, lift, openFaq, recordGhosts, recordTones, test, tones, undo, type Seat, type SeatOptions } from './fixtures.ts';
+import { dismiss, drag, expect, ghostsSeen, leave, lift, openControls, openFaq, recordGhosts, recordTones, test, tones, undo, type Seat, type SeatOptions } from './fixtures.ts';
 import { BLANK, emptyBoard } from '../games/lettergrid/rules.ts';
 import type { GameState, Placement } from '../games/lettergrid/types.ts';
 
@@ -477,13 +477,17 @@ test.describe('Letter Grid controls', () => {
     await expect(bob.locator('.undo-vote')).toContainText('Alice wants to undo the last turn');
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Is there a dictionary?');
     await expect(faq).toContainText('What does Shuffle do?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Place a tile');
+    await expect(controls).toContainText('drag a rack tile onto an empty square');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

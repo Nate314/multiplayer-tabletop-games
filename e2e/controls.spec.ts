@@ -37,11 +37,4 @@ test.describe('Controls dialog', () => {
     await expect(await headerButton(tv, 'Rules')).toBeVisible();
     await expect(await headerButton(tv, 'Controls')).toHaveCount(0);
   });
-
-  // Deleted once every game has a list
-  test('a game with no list yet has no Controls button', async ({ seat }) => {
-    const [alice] = (await seat('whodunit', ['Alice'])).pages;
-    await expect(await headerButton(alice, 'Rules')).toBeVisible();
-    await expect(await headerButton(alice, 'Controls')).toHaveCount(0);
-  });
 });

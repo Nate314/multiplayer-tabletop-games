@@ -10,8 +10,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'This site shows the prompt, the chat and the scores, not a camera, so play where the others can see you: in the same room or on a video call. Your prompt shows in large type at the top of your screen. Act it out without speaking, mouthing words or pointing at written letters; gestures and mime are the only clue. You cannot chat while acting.'
   },
   {
-    question: 'How do I guess?',
-    answer: 'Type in the box under the chat, labelled Guess, and press Enter. A guess is correct when it holds the prompt as whole words, ignoring capitals, spaces, hyphens and apostrophes, so "are you riding a horse?" guesses "riding a horse". The correct guess is never shown; the chat says that you guessed the prompt. Guess as often as you like.'
+    question: 'What counts as a correct guess?',
+    answer: 'Everyone but the actor guesses in the chat. A guess is correct when it holds the prompt as whole words, ignoring capitals, spaces, hyphens and apostrophes, so "are you riding a horse?" guesses "riding a horse". The correct guess is never shown; the chat says that you guessed the prompt. Guess as often as you like.'
   },
   {
     question: 'What do the boxes at the top mean?',
@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last scored guess or turn change. It is undone only if everyone else approves.'
+    answer: 'Undo asks everyone to undo the last scored guess or turn change. It is undone only if everyone else approves.'
   },
   {
     question: 'What happens if someone leaves?',

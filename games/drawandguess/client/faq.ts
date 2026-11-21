@@ -6,12 +6,12 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Players draw in seat order. The drawer is offered 3 words (4 or 5 as a house rule) and clicks one; only the drawer sees them. From the second turn on, if 20 seconds pass without a choice, one is picked at random. The drawer then has 90 seconds (or the time per turn the host set) to draw it while everyone else guesses. Then the word is shown to everyone for 5 seconds and the next player chooses.'
   },
   {
-    question: 'How do I draw?',
-    answer: 'On your turn, drag on the paper with a mouse, a finger or a pen. Pick a color and a brush size (Small, Medium or Large) in the toolbar under the drawing. Eraser paints white, Fill fills the area you click with the chosen color, Take back removes your last line or fill, and Clear wipes the paper. Letters, numbers and spoken hints are not allowed; the picture is the only clue.'
+    question: 'What may I draw?',
+    answer: 'Draw on your turn. The eraser paints white and a fill covers the area around the point you choose. Letters, numbers and spoken hints are not allowed; the picture is the only clue.'
   },
   {
-    question: 'How do I guess?',
-    answer: 'Type in the box under the chat, labelled Guess, and press Enter. A guess is correct when it holds the word as whole words, ignoring capitals, spaces, hyphens and apostrophes, so "is it an ice-cream?" guesses "ice cream", but "catapult" does not guess "cat". The correct guess is never shown; the chat says that you guessed the word. Guess as often as you like.'
+    question: 'What counts as a correct guess?',
+    answer: 'Everyone but the drawer guesses in the chat. A guess is correct when it holds the word as whole words, ignoring capitals, spaces, hyphens and apostrophes, so "is it an ice-cream?" guesses "ice cream", but "catapult" does not guess "cat". The correct guess is never shown; the chat says that you guessed the word. Guess as often as you like.'
   },
   {
     question: 'What do the boxes above the drawing mean?',
@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last scored guess or turn change. It is undone only if everyone else approves, and any drawing since then is lost.'
+    answer: 'Undo asks everyone to undo the last scored guess or turn change. It is undone only if everyone else approves, and any drawing since then is lost.'
   },
   {
     question: 'What happens if someone leaves?',

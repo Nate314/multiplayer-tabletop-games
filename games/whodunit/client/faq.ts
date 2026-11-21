@@ -11,15 +11,15 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does a turn work?',
-    answer: 'Click Roll, then click one of the highlighted squares or rooms on the board. You move exactly the number rolled along the corridors, but you may enter a room early through its door. You cannot pass through another token or the same square twice. If the roll leads nowhere, click Stay put. Click End turn when you are done.'
+    answer: 'Roll the dice, then move exactly the number rolled along the corridors, but you may enter a room early through its door. You cannot pass through another token or the same square twice. If the roll leads nowhere, you stay put. End your turn when you are done.'
   },
   {
     question: 'What are secret passages?',
-    answer: 'Two pairs of corner rooms are joined by a secret passage. At the start of your turn in one of them you may click Secret passage instead of rolling, and you arrive in the other room.'
+    answer: 'Two pairs of corner rooms are joined by a secret passage. At the start of your turn in one of them you may use it instead of rolling, and you arrive in the other room.'
   },
   {
     question: 'How do I make a suggestion?',
-    answer: 'When you enter a room, click Suggest, pick a suspect and an object, and click Make suggestion. The room is the one you are in. The suspect\'s token and the object move into that room. The other players, in turn order after you, are asked in turn: the first who holds one of the three cards shows you one of them.'
+    answer: 'When you enter a room, you may suggest a suspect and an object. The room is the one you are in. The suspect\'s token and the object move into that room. The other players, in turn order after you, are asked in turn: the first who holds one of the three cards shows you one of them.'
   },
   {
     question: 'Who sees the card that was shown?',
@@ -27,15 +27,15 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What if a suggestion moves my token?',
-    answer: 'At the start of your next turn you may click Stay in and the room name to make a suggestion there without rolling.'
+    answer: 'At the start of your next turn you may stay in that room and make a suggestion there without rolling.'
   },
   {
     question: 'How do I accuse?',
-    answer: 'Click Accuse at the start of your turn or after moving, pick a suspect, an object and a room, and confirm. If all three are right you win. If not, you are out of turns, but you still show cards when asked. When only one player can still accuse, that player wins.'
+    answer: 'At the start of your turn or after moving, you may accuse by naming a suspect, an object and a room, and confirming. If all three are right you win. If not, you are out of turns, but you still show cards when asked. When only one player can still accuse, that player wins.'
   },
   {
     question: 'What is the notes sheet?',
-    answer: 'Every card is listed with a mark you can click to cycle through blank, yes, no and maybe. Only you see your notes, and they stay when you reload the page. Cards in your hand, and cards turned face up, are labeled.'
+    answer: 'Every card is listed with a mark: blank, yes, no or maybe. Only you see your notes, and they stay when you reload the page. Cards in your hand, and cards turned face up, are labeled.'
   },
   {
     question: 'What happens if a player leaves?',
