@@ -80,9 +80,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   const keyHold = holdLost ? null : hold;
   const grid = gridOf(count);
   const liftables = board.pieces.map((_, index) => index).filter(canLift);
+  // The hold never moved the piece on the server, so no landing is needed (one would outlive the answer, see samePiece)
   const putBack = ({ piece, from }: KeyHold) => {
     setHold(null);
-    setLanding({ piece, ...from, from: board.pieces[piece] });
     gameService.sendAction({ type: 'drop', piece, ...from });
   };
   const { dragging, bind, cancel } = usePieceDrag({
@@ -128,7 +128,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // A keyboard drop is announced once the state shows the piece placed, or loose and let go
   useEffect(() => {
     const now = pending && board.pieces[pending.piece];
-    if (!pending || !now || samePiece(now, pending.from) || (!now.placed && now.heldBy !== null)) return;
+    // The hold counts too: a drop where the piece already lay changes only that
+    const answered = now && (!samePiece(now, pending.from) || now.heldBy !== pending.from.heldBy);
+    if (!pending || !now || !answered || (!now.placed && now.heldBy !== null)) return;
     setAnnounce(now.placed
       ? `Piece ${pending.piece + 1} placed`
       : `Piece ${pending.piece + 1} left loose at row ${Math.floor(pending.spot / grid.cols) + 1}, column ${(pending.spot % grid.cols) + 1}`);
@@ -181,7 +183,9 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
       const { piece } = keyHold;
       const home = homeOf(grid, spot);
       setHold(null);
-      setLanding({ piece, ...home, from: board.pieces[piece] });
+      const at = board.pieces[piece];
+      // Where the piece already lies there is nothing to hold in place, and samePiece would keep the landing forever
+      if (at.x !== home.x || at.y !== home.y) setLanding({ piece, ...home, from: at });
       setPending({ piece, spot, from: board.pieces[piece] });
       gameService.sendAction({ type: 'drop', piece, ...home });
       const others = liftables.filter(index => index !== piece);

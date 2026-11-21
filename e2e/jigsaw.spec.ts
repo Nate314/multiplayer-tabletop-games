@@ -801,6 +801,35 @@ test.describe('Jigsaw keyboard play', () => {
     expect(sent.some(frame => frame.includes('"drop"'))).toBe(false);
   });
 
+  test('after Escape, someone else picking the piece up shows as theirs', async ({ seat }) => {
+    const { table, alice } = await together(seat);
+    await lay(table, { board: keyboardBoard(48) });
+    await pickUp(alice);
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
+    await alice.keyboard.press('Escape');
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBeNull();
+    const board = keyboardBoard(48);
+    board.pieces[0].heldBy = 2;
+    await table.patch({ board });
+    await expect(piece(alice, 0)).toHaveAttribute('data-held-by', '2');
+    await expect(piece(alice, 0)).not.toHaveAttribute('tabindex');
+  });
+
+  test('a keyboard drop where the piece already lies is announced and lets go of it', async ({ seat }) => {
+    const { table, alice } = await together(seat);
+    const board = layout(48, [1]);
+    const home = homeOf(gridOf(48), 11);
+    board.pieces[0] = loose(home.x, home.y); // on spot 11, row 2, column 4: its nearest spot
+    await lay(table, { board });
+    await pickUp(alice);
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
+    await alice.keyboard.press('Enter');
+    await expect(live(alice)).toHaveText('Piece 1 left loose at row 2, column 4');
+    board.pieces[0].heldBy = 2;
+    await table.patch({ board });
+    await expect(piece(alice, 0)).toHaveAttribute('data-held-by', '2');
+  });
+
   test('a mouse press on a piece puts the keyboard-held one back', async ({ seat }) => {
     const { table, alice } = await keyboardTable(seat);
     await pickUp(alice);
