@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, seeTable, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, seeTable, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
 import { cardName, sameCard, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState } from '../games/holdem/types.ts';
 
@@ -437,8 +437,12 @@ test.describe("Texas Hold'em controls", () => {
     await expect(dialog.locator('.history-move')).toHaveText('Move 1 of 2: Alice raised to 60');
     await dialog.getByRole('button', { name: 'Close' }).click();
     const faq = await openFaq(alice);
-    await expect(faq).toContainText('Raise to');
     await expect(faq).toContainText('closest to the left of the button');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Bet or raise');
+    await expect(controls).toContainText('type the total in Amount');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('new board cards slide in, and nothing animates with reduced motion', async ({ seat }) => {

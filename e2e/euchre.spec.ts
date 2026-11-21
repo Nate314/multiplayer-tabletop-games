@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { Card, GameState, Suit, TeamScores } from '../games/euchre/types.ts';
 
 // One test per rule and control in games/euchre/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
@@ -438,13 +438,17 @@ test.describe('Euchre controls', () => {
     await expect(button(alice, 'Approve')).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { pages: [alice] } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('24 cards');
     await expect(faq).toContainText('left bower');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Order up the turned card');
+    await expect(controls).toContainText('click or tap Order up');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

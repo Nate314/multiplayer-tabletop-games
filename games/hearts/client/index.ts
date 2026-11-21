@@ -4,6 +4,7 @@ import { FinalRound } from './RoundSummary';
 import { plural } from '../../../shared/text.ts';
 import HistoryBoard from './HistoryBoard';
 import { QUESTIONS } from './faq.ts';
+import { CONTROLS } from './controls.ts';
 import { describeMove } from './describeMove.ts';
 import animateMove from './animateMove.ts';
 import './hearts.scss';
@@ -12,6 +13,7 @@ export const heartsClient: ClientGame = {
   id: 'hearts',
   Screen: GameScreen,
   faq: QUESTIONS,
+  controls: CONTROLS,
   HistoryBoard,
   describeMove,
   animateMove,

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, newPlayer, openFaq, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, newPlayer, openControls, openFaq, seeTable, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Card, GameState, OrderToken, Task } from '../games/missiontricks/types.ts';
 import { LEGACY_IDS } from '../games/legacyIds.ts';
 
@@ -562,6 +562,11 @@ test.describe('Mission Tricks controls', () => {
     await expect(rules(alice).locator('li')).toHaveText(['5 tasks, order tokens 1', 'Disruption: nobody may communicate before trick 3']);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Who is the commander?');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Communicate');
+    await expect(controls).toContainText('click or tap Communicate');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

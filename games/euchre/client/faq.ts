@@ -23,11 +23,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I play a trick?',
-    answer: 'The player left of the dealer leads the first trick (the next player, if they sit out), and whoever takes a trick leads the next. Follow the suit led if you can; if you cannot, play anything. The highest trump takes the trick, otherwise the highest card of the suit led. Cards you may play are raised and outlined.'
+    answer: 'The player left of the dealer leads the first trick (the next player, if they sit out), and whoever takes a trick leads the next. Follow the suit led if you can; if you cannot, play anything. The highest trump takes the trick, otherwise the highest card of the suit led.'
   },
   {
     question: 'How is a hand scored?',
-    answer: 'If the team that made trump takes 3 or 4 tricks it scores 1 point, and all 5 (a march) scores 2, or 4 when going alone. If it takes fewer than 3 it is euchred and the other team scores 2. After the scoring, everyone clicks Continue for the next hand, and the deal passes to the left.'
+    answer: 'If the team that made trump takes 3 or 4 tricks it scores 1 point, and all 5 (a march) scores 2, or 4 when going alone. If it takes fewer than 3 it is euchred and the other team scores 2. The next hand is dealt once every connected player has continued, and the deal passes to the left.'
   },
   {
     question: 'What if a player leaves?',
@@ -35,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
+    answer: 'Undo takes back the last move, but only if every connected player approves. Continue is not a move, so an undo goes back past it.'
   },
   {
     question: 'Can the rules be changed?',

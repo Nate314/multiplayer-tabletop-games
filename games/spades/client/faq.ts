@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I play a trick?',
-    answer: 'The player left of the dealer leads the first trick, and whoever takes a trick leads the next. Follow the suit led if you can; if you cannot, play anything, a spade included. The highest spade takes the trick, otherwise the highest card of the suit led. Aces are high. Cards you may play are raised and outlined.'
+    answer: 'The player left of the dealer leads the first trick, and whoever takes a trick leads the next. Follow the suit led if you can; if you cannot, play anything, a spade included. The highest spade takes the trick, otherwise the highest card of the suit led. Aces are high.'
   },
   {
     question: 'When can I lead a spade?',
@@ -43,7 +43,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
+    answer: 'Undo takes back the last move, but only if every connected player approves. Continue is not a move, so an undo goes back past it.'
   },
   {
     question: 'Can the rules be changed?',

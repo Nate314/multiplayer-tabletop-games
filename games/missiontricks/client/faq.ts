@@ -15,11 +15,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How are tasks shared out?',
-    answer: 'The mission\'s task cards are laid out, and starting with the commander and going left, each player takes one until none are left. Click a task to take it. Some missions let the commander decide who takes the tasks instead.'
+    answer: 'The mission\'s task cards are laid out, and starting with the commander and going left, each player takes one until none are left. Some missions let the commander decide who takes the tasks instead.'
   },
   {
     question: 'How do I play a trick?',
-    answer: 'The commander leads the first trick and the winner of each trick leads the next. Follow the suit led if you can; otherwise play any card. Rockets are trump: the highest rocket wins, else the highest card of the suit led. Cards you may play are raised and outlined.'
+    answer: 'The commander leads the first trick and the winner of each trick leads the next. Follow the suit led if you can; otherwise play any card. Rockets are trump: the highest rocket wins, else the highest card of the suit led.'
   },
   {
     question: 'When is a task done?',
@@ -30,8 +30,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: '1 to 5: the task must be the first, second and so on of all the tasks to be done. Arrows (>, >>, >>>, >>>>) only order the arrow tasks among themselves. Ω: the task must be done last. Tasks with consecutive tokens done in the same trick both count.'
   },
   {
-    question: 'How do I communicate?',
-    answer: 'Once per mission, between tricks (before the first trick too), click Communicate, pick a color card from your hand and say whether it is your highest, lowest or only card of that color. Only true statements are offered (your only card of a color is always "only"), and rockets cannot be communicated. Talking about your cards is not allowed; the site has no chat.'
+    question: 'How does communicating work?',
+    answer: 'Once per mission, between tricks (before the first trick too), you may show a color card from your hand and say whether it is your highest, lowest or only card of that color. Only true statements are allowed (your only card of a color is always "only"), and rockets cannot be communicated. Talking about your cards is not allowed; the site has no chat.'
   },
   {
     question: 'What are dead spots and disruptions?',
@@ -43,7 +43,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens after a mission?',
-    answer: 'Everyone clicks Continue. After a success the next mission is dealt; after a failure the crew tries the same mission again and the attempt count goes up. Between missions anyone can vote to end the game; it ends when everyone connected votes yes, with the whole crew listed as winners.'
+    answer: 'Everyone has to continue. After a success the next mission is dealt; after a failure the crew tries the same mission again and the attempt count goes up. Between missions anyone can vote to end the game; it ends when everyone connected votes yes, with the whole crew listed as winners.'
   },
   {
     question: 'Can we start at a later mission?',
@@ -59,6 +59,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. A communication or a passed card is not a move; undoing the move before it takes it back too.'
+    answer: 'Undo takes back the last move, but only if every connected player approves. A communication or a passed card is not a move; undoing the move before it takes it back too.'
   }
 ];
