@@ -7,22 +7,16 @@ export const FAQS: FaqItem[] = [
       'players. The game needs at least two players, and nobody can join after the first move.'
   },
   {
-    question: 'How do I move?',
-    answer: 'On your turn, with Move selected, click one of the highlighted squares. Move is selected at the ' +
-      'start of every turn. You can move one square up, down, left or right, or jump straight over a pawn ' +
-      'next to you if the square behind it is free. If a wall, another pawn or the board edge is behind that ' +
-      'pawn, you can step diagonally to either side of it instead, as long as no wall or pawn is in the way. ' +
-      'You can never jump over a wall or over two pawns. You can also drag your pawn onto a highlighted square; ' +
-      'drop it anywhere else to put it back.'
+    question: 'How can I move?',
+    answer: 'You can move one square up, down, left or right, or jump straight over a pawn next to you if the square ' +
+      'behind it is free. If a wall, another pawn or the board edge is behind that pawn, you can step diagonally to ' +
+      'either side of it instead, as long as no wall or pawn is in the way. You can never jump over a wall or over two pawns.'
   },
   {
-    question: 'How do I place a wall?',
-    answer: 'On your turn, tap the wall in the Your action box to pick it up horizontal, and tap it again or press R ' +
-      'to turn it vertical. A dot on the bottom right corner of a square marks each place it can go, the middle of ' +
-      'the wall it would make; hover over the board to preview the wall and click to place it, or drag the wall ' +
-      'from the box onto the board. A horizontal wall runs under the square you click and the one to its right. A ' +
-      'vertical wall runs along the right of the square you click and the one below it. Placing a wall uses ' +
-      'your turn. Tap Move to put the wall down and move your pawn instead.'
+    question: 'How do walls work?',
+    answer: 'Instead of moving, you can place a wall. A horizontal wall runs under the square you pick and the one to ' +
+      'its right. A vertical wall runs along the right of the square you pick and the one below it. Placing a wall ' +
+      'uses your turn.'
   },
   {
     question: 'Where can walls go?',

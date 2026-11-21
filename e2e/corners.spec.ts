@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, setPreference, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, headerButton, inHouseRules, leave, openControls, openFaq, setPreference, test, undo, type Seat } from './fixtures.ts';
 import { PIECES, TRIANGLE_STARTS, boardCells, cellKey, corners, edgeTouch, orientations, transformed, type Cell } from '../games/corners/geometry.ts';
 
 // One test per rule, control and difference in games/corners/README.md. Seat 1 is Alice, seat 2 Bob, seat 3 Cara.
@@ -482,13 +482,16 @@ test.describe('Corners table controls', () => {
     await expect(alice.getByRole('dialog', { name: / rules$/ })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page covers the colors, placing and scoring', async ({ seat }) => {
+  test('FAQ at the top of the page covers the colors and scoring, and Controls the placing', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, 2);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Who plays which color?');
-    await expect(faq).toContainText('How do I place a piece?');
     await expect(faq).toContainText('How is it scored?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Place the piece');
+    await expect(controls).toContainText('Q turns it left and E turns it right.');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

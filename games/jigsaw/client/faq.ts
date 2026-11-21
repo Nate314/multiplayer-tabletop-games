@@ -3,11 +3,11 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'How do I pick the picture?',
-    answer: 'Before anyone moves a piece, the host clicks one of the 8 built-in pictures beside the table. Everyone sees the chosen picture in the lobby. Once the first piece is picked up, the picture is fixed for the game.'
+    answer: 'Before anyone moves a piece, the host chooses one of the 8 built-in pictures beside the table. Everyone sees the chosen picture in the lobby. Once the first piece is picked up, the picture is fixed for the game.'
   },
   {
     question: 'Can I use my own photo?',
-    answer: 'Yes. The host presses Upload a photo and chooses a JPEG or PNG. It is made smaller before it is sent, and a photo of any shape is cropped from the middle to the puzzle\'s 3:2 shape. If it cannot be used, the reason is shown under the button.'
+    answer: 'Yes. The host can upload a JPEG or PNG. It is made smaller before it is sent, and a photo of any shape is cropped from the middle to the puzzle\'s 3:2 shape. If it cannot be used, the reason is shown under the Upload a photo button.'
   },
   {
     question: 'What are Solo, Together and Race?',
@@ -15,11 +15,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I place a piece?',
-    answer: 'Press a piece, drag it and let go. Drop it close to its spot on the board and it snaps in and locks there; anywhere else it stays where you left it. Placed pieces cannot be moved again. With a keyboard, Tab to the table, use the arrow keys to choose a piece and press Enter to pick it up, then the arrow keys to choose a spot and Enter to drop it there. Escape puts it back.'
+    answer: 'Drop a piece close to its spot on the board and it snaps in and locks there; anywhere else it stays where you left it. Placed pieces cannot be moved again.'
   },
   {
     question: 'How do I turn a piece?',
-    answer: 'Only with the Rotate pieces house rule on. Touch a piece and a ↻ handle appears at its top right corner: press it to turn the piece 90 degrees clockwise. While you hold a piece, R or a right-click turns it too. A turned piece snaps into its spot only once it is the right way up. Turning is not a History step and Undo does not take it back (in Solo, Undo also puts back turns and loose moves made since the last snap).'
+    answer: 'Only with the Rotate pieces house rule on, and each turn is 90 degrees clockwise. A turned piece snaps into its spot only once it is the right way up. Turning is not a History step and Undo does not take it back (in Solo, Undo also puts back turns and loose moves made since the last snap).'
   },
   {
     question: 'Why can I not pick up a piece?',
@@ -31,6 +31,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'The pieces are tiny on my phone. What can I do?',
-    answer: 'Use Zoom in (up to 3 times) and scroll the table with a finger on an empty spot. Show picture guide draws the picture faintly on the board to help you find where pieces go.'
+    answer: 'Zoom in (up to 3 times) and scroll the table. Show picture guide draws the picture faintly on the board to help you find where pieces go.'
   }
 ];

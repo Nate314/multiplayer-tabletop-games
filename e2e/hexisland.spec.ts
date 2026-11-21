@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { headerButton, agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, type Seat, seeTable, setHouseRules, setPreference, type Table, test, undo } from './fixtures.ts';
+import { headerButton, agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, lift, newPlayer, openControls, openFaq, type Seat, seeTable, setHouseRules, setPreference, type Table, test, undo } from './fixtures.ts';
 import {
   EDGES, FIVE_SIX_BOARD, HEX_NEIGHBORS, HEX_VERTICES, NUMBER_TOKENS, RESOURCES, VERTEX_EDGES, VERTEX_HEXES, VERTEX_NEIGHBORS, pips, randomLayout
 } from '../games/hexisland/board.ts';
@@ -1122,13 +1122,16 @@ test.describe('Hex Island controls', () => {
     await expect(button(alice, 'Approve')).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ at the top of the page shows the rules, and Controls the controls', async ({ seat }) => {
     const { pages: [alice] } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Longest Road');
-    await expect(faq).toContainText('Click a highlighted intersection');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Place a settlement or road in setup');
+    await expect(controls).toContainText('Click or tap a highlighted intersection');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('the special build phase is offered only with five or more seated', async ({ seat }) => {

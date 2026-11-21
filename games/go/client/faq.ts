@@ -8,9 +8,8 @@ export const FAQS: FaqItem[] = [
       'can join after the first move.'
   },
   {
-    question: 'How do I place a stone?',
-    answer: 'On your turn, click or tap an empty point where the lines cross. With a mouse, a faint stone shows ' +
-      'where yours would go on every point you can play. Stones never move once placed.'
+    question: 'Do stones ever move?',
+    answer: 'No. Stones never move once placed.'
   },
   {
     question: 'How do captures work?',
@@ -32,20 +31,19 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I pass, and how does the game end?',
-    answer: 'Click Pass to skip your turn. When both players pass in a row, play stops and the game moves to ' +
-      'marking dead stones. A player can also resign at any time: click Resign, then Confirm resign. A player ' +
+    answer: 'Pass to skip your turn. When both players pass in a row, play stops and the game moves to ' +
+      'marking dead stones. A player can also resign at any time. A player ' +
       'who leaves during the game loses.'
   },
   {
-    question: 'How do I mark dead stones?',
-    answer: 'After both players pass, click a stone to mark its whole group dead, and click it again to bring it ' +
-      'back. Either player can mark any stone. Dead stones are drawn faded with a cross and count as captured ' +
-      'for scoring. When the marks look right, click Agree. Every change to the marks clears both agreements, ' +
-      'and the count happens once both players agree.'
+    question: 'How are dead stones marked?',
+    answer: 'After both players pass, either player can mark any stone dead, and its whole group is marked. Dead stones ' +
+      'are drawn faded with a cross and count as captured for scoring. Every change to the marks clears both ' +
+      'agreements, and the count happens once both players agree.'
   },
   {
     question: 'What if we disagree about which stones are dead?',
-    answer: 'Click Resume play. The marks and passes are cleared and play continues with the player who would ' +
+    answer: 'Either player can resume play. The marks and passes are cleared and play continues with the player who would ' +
       'have moved, so you can settle it on the board. Two more passes in a row bring you back to marking.'
   },
   {

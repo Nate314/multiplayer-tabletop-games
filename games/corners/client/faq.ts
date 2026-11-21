@@ -24,13 +24,6 @@ export const FAQS: FaqItem[] = [
       'the same color at a corner, and must never touch one along a side. Touching other colors is fine.'
   },
   {
-    question: 'How do I place a piece?',
-    answer: 'On your turn, pick a piece from your tray. Turn left, Turn right and Flip change its orientation; ' +
-      'on a keyboard Q and E turn it, F flips it and Escape puts it back. Outlined cells mark every place it ' +
-      'can go. With a mouse, the piece shows under the pointer and a click places it. On a phone, the first tap ' +
-      'shows the piece there and a second tap on it places it. Place also places the piece that is showing.'
-  },
-  {
     question: 'What if I cannot place anything?',
     answer: 'A color with no legal place for any of its pieces passes for the rest of the game, and its turns ' +
       'are skipped. The game ends when no color can place.'

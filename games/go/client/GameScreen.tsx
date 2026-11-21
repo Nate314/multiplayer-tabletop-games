@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import Board from './Board';
-import Controls from './Controls';
+import Controls from './Controls.tsx';
 import GameStatus from './GameStatus';
 import ScorePanel from './ScorePanel';
 import UndoVote from '../../../src/components/UndoVote';

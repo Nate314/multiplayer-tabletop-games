@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
 import {
-  agreeToHouseRules, dismiss, drag, expect, joinGame, leave, lift, newPlayer, openFaq, setHouseRules, test, touchDrag, undo, watch,
+  agreeToHouseRules, dismiss, drag, expect, joinGame, leave, lift, newPlayer, openControls, openFaq, setHouseRules, test, touchDrag, undo, watch,
   type Seat, type Table, headerButton } from './fixtures.ts';
 import { gridOf, homeOf, type PieceCount } from '../games/jigsaw/cut.ts';
 import type { Board, GameState, Piece, Turns } from '../games/jigsaw/types.ts';
@@ -477,6 +477,10 @@ test.describe('Jigsaw controls', () => {
     await expect(faq).toContainText('What are Solo, Together and Race?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Drop a piece');
+    await expect(controls).toContainText('Use the arrow keys to choose a spot, then Enter or Space drops it there.');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 
