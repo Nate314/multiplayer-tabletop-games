@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I place a piece?',
-    answer: 'Press a piece, drag it and let go. Drop it close to its spot on the board and it snaps in and locks there; anywhere else it stays where you left it. Placed pieces cannot be moved again.'
+    answer: 'Press a piece, drag it and let go. Drop it close to its spot on the board and it snaps in and locks there; anywhere else it stays where you left it. Placed pieces cannot be moved again. With a keyboard, Tab to the table, use the arrow keys to choose a piece and press Enter to pick it up, then the arrow keys to choose a spot and Enter to drop it there. Escape puts it back.'
   },
   {
     question: 'How do I turn a piece?',

@@ -672,3 +672,194 @@ test.describe('Jigsaw Rotate pieces', () => {
     expect((await table.state<GameState>()).board.pieces[1]).toEqual({ ...loose(under.x, under.y), turns: 2 });
   });
 });
+
+test.describe('Jigsaw keyboard play', () => {
+  const grid = gridOf(24);
+  const live = (page: Page) => page.locator('.jigsaw-main [aria-live="polite"]');
+  const spotButton = (page: Page, n: number) =>
+    page.getByRole('button', { name: `Spot row ${Math.floor(n / grid.cols) + 1}, column ${(n % grid.cols) + 1}`, exact: true });
+  const focusableSpots = (page: Page) => page.locator('.jigsaw-main .jigsaw-spot[tabindex="0"]');
+  const pieceOn = async (table: Table, n: number) => (await table.state<GameState>()).board.pieces[n];
+  const at = (point: { x: number; y: number }) => `translate(${point.x},${point.y})`;
+  // Piece 0 lies just right of the board's top right corner, so its nearest spot is 5, not its own. As far right as a drop can
+  // land with 24 pieces, so putting it back leaves it exactly there
+  const FROM = { x: 2000 - grid.w, y: 100 };
+  const keyboardBoard = (count: PieceCount) => {
+    const board = layout(count, [1]);
+    board.pieces[0] = loose(FROM.x, FROM.y);
+    return board;
+  };
+  async function keyboardTable(seat: Seat, rotation = false) {
+    const table = await seat('jigsaw', ['Alice'], { houseRules: { pieces: 24, ...rotation ? { rotation: true } : {} } });
+    await lay(table, { board: keyboardBoard(24) });
+    return { table, alice: table.pages[0] };
+  }
+  // From the zoom buttons into the table, which focuses its first liftable piece
+  async function tabIn(page: Page) {
+    await page.getByRole('button', { name: 'Zoom in' }).focus();
+    await page.keyboard.press('Tab');
+  }
+  async function pickUp(page: Page) {
+    await tabIn(page);
+    await page.keyboard.press('Enter');
+  }
+  async function press(page: Page, key: string, times: number) {
+    for (let i = 0; i < times; i++) await page.keyboard.press(key);
+  }
+
+  test('the keyboard alone snaps a piece into its spot', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    await tabIn(alice);
+    await expect(piece(alice, 0)).toBeFocused();
+    await expect(piece(alice, 0)).toHaveAttribute('aria-label', 'Piece 1, loose');
+    await alice.keyboard.press('Enter');
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
+    await expect(live(alice)).toHaveText('Piece 1 picked up. Choose a spot, Escape puts it back');
+    await expect(spotButton(alice, 5)).toBeFocused();
+    await press(alice, 'ArrowLeft', 5);
+    await expect(spotButton(alice, 0)).toBeFocused();
+    await expect(piece(alice, 0)).toHaveAttribute('transform', at(homeOf(grid, 0)));
+    await alice.keyboard.press('Enter');
+    await expect.poll(async () => (await pieceOn(table, 0)).placed).toBe(true);
+    await expect(live(alice)).toHaveText('Piece 1 placed');
+    await expect(piece(alice, 1)).toBeFocused();
+  });
+
+  test('a keyboard drop on another spot leaves the piece loose there', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    await pickUp(alice);
+    await alice.keyboard.press('ArrowDown');
+    await expect(spotButton(alice, 11)).toBeFocused();
+    await alice.keyboard.press('Enter');
+    await expect.poll(() => pieceOn(table, 0)).toEqual(loose(homeOf(grid, 11).x, homeOf(grid, 11).y));
+    await expect(live(alice)).toHaveText('Piece 1 left loose at row 2, column 6');
+  });
+
+  test('arrow keys step through the pieces', async ({ seat }) => {
+    const { alice } = await keyboardTable(seat);
+    await tabIn(alice);
+    await alice.keyboard.press('ArrowRight');
+    await expect(piece(alice, 1)).toBeFocused();
+    await alice.keyboard.press('ArrowDown');
+    await expect(piece(alice, 2)).toBeFocused();
+    await alice.keyboard.press('ArrowUp');
+    await press(alice, 'ArrowLeft', 2);
+    await expect(piece(alice, 0)).toBeFocused();
+    await alice.keyboard.press('Tab');
+    expect(await alice.evaluate(() => document.activeElement?.closest('svg') ?? null)).toBeNull();
+  });
+
+  test('Escape puts a keyboard-held piece back', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    await pickUp(alice);
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
+    await alice.keyboard.press('ArrowLeft');
+    await alice.keyboard.press('Escape');
+    await expect.poll(() => pieceOn(table, 0)).toEqual(loose(FROM.x, FROM.y));
+    await expect(live(alice)).toHaveText('Piece put back');
+    await expect(piece(alice, 0)).toBeFocused();
+    await expect(focusableSpots(alice)).toHaveCount(0);
+  });
+
+  test('R turns a keyboard-held piece', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat, true);
+    await pickUp(alice);
+    await expect(live(alice)).toHaveText('Piece 1 picked up. Choose a spot, R turns it, Escape puts it back');
+    await alice.keyboard.press('r');
+    await expect.poll(async () => (await pieceOn(table, 0)).turns).toBe(1);
+    await expect(piece(alice, 0)).toHaveAttribute('aria-label', 'Piece 1, loose, turned 90 degrees');
+  });
+
+  test('R typed in an input does not turn a keyboard-held piece', async ({ seat }) => {
+    const table = await seat('jigsaw', ['Alice', 'Bob'], { houseRules: { rotation: true } });
+    const [alice] = table.pages;
+    await lay(table, { board: keyboardBoard(48) });
+    await pickUp(alice);
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBe(1);
+    await alice.locator('.presence-bar').getByRole('button', { name: /^Bob/ }).click();
+    await alice.getByLabel('Any emoji').press('r');
+    await alice.waitForTimeout(300);
+    expect(await turnsOn(table, 0)).toBe(0);
+  });
+
+  test('someone else taking the piece ends a keyboard hold', async ({ seat }) => {
+    const { table, alice } = await together(seat);
+    const sent: string[] = [];
+    await lay(table, { board: keyboardBoard(48), started: true }); // a reload in the lobby would leave the game
+    alice.on('websocket', ws => ws.on('framesent', ({ payload }) => sent.push(String(payload))));
+    await alice.reload();
+    await pickUp(alice);
+    await expect.poll(async () => (await table.state<GameState>()).board.pieces[0].heldBy).toBe(1);
+    const board = keyboardBoard(48);
+    board.pieces[0].heldBy = 2;
+    await table.patch({ board });
+    await expect(focusableSpots(alice)).toHaveCount(0);
+    await expect(piece(alice, 0)).toHaveAttribute('data-held-by', '2');
+    await expect(piece(alice, 0)).toHaveAttribute('transform', at(FROM));
+    await alice.waitForTimeout(300);
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.some(frame => frame.includes('"drop"'))).toBe(false);
+  });
+
+  test('a mouse press on a piece puts the keyboard-held one back', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    await pickUp(alice);
+    await expect.poll(async () => (await pieceOn(table, 0)).heldBy).toBe(1);
+    await drag(alice, piece(alice, 1), spot(alice, 23));
+    await expect.poll(async () => (await pieceOn(table, 1)).x).not.toBe(SLOTS[0].x);
+    expect(await pieceOn(table, 0)).toEqual(loose(FROM.x, FROM.y));
+    await expect(focusableSpots(alice)).toHaveCount(0);
+  });
+
+  test('arrow keys at the grid edge stay put and never scroll the page', async ({ seat }) => {
+    const { alice } = await keyboardTable(seat);
+    await pickUp(alice);
+    await expect(spotButton(alice, 5)).toBeFocused();
+    const before = await alice.evaluate(() => [window.scrollX, window.scrollY]);
+    for (const key of ['ArrowUp', 'ArrowRight']) await alice.keyboard.press(key);
+    await expect(spotButton(alice, 5)).toBeFocused();
+    await press(alice, 'ArrowDown', 5);
+    await expect(spotButton(alice, 23)).toBeFocused();
+    expect(await alice.evaluate(() => [window.scrollX, window.scrollY])).toEqual(before);
+  });
+
+  // Each ends the hold from outside: no spot can take focus and, once the table shows again, the piece lies where it was
+  for (const [cause, fields, after] of [
+    ['the game ending', { isGameOver: true }, {}],
+    ['a pause', { paused: true }, { paused: false }],
+    ['an undo vote', { undoVote: { requestedBy: 1, votes: {} } }, { undoVote: null }]
+  ] as const) {
+    test(`${cause} ends a keyboard hold`, async ({ seat }) => {
+      const { table, alice } = await keyboardTable(seat);
+      await pickUp(alice);
+      await expect(focusableSpots(alice)).toHaveCount(1);
+      await table.patch(fields);
+      await expect(focusableSpots(alice)).toHaveCount(0);
+      await table.patch(after);
+      await expect(piece(alice, 0)).toHaveAttribute('transform', at(FROM));
+      await expect(focusableSpots(alice)).toHaveCount(0);
+    });
+  }
+
+  test('an error ends a keyboard hold, and a leftover one does not block the next pick-up', async ({ seat }) => {
+    const { table, alice } = await keyboardTable(seat);
+    await alice.addInitScript(() => {
+      const Native = window.WebSocket;
+      const sockets: WebSocket[] = [];
+      (window as unknown as { sockets: WebSocket[] }).sockets = sockets;
+      window.WebSocket = class extends Native { constructor(...args: ConstructorParameters<typeof Native>) { super(...args); sockets.push(this); } };
+    });
+    await lay(table, { board: keyboardBoard(24), started: true }); // a reload in the lobby would leave the game
+    await alice.reload();
+    await pickUp(alice);
+    await expect(focusableSpots(alice)).toHaveCount(1);
+    await alice.evaluate(() => (window as unknown as { sockets: WebSocket[] }).sockets[0].dispatchEvent(
+      new MessageEvent('message', { data: JSON.stringify({ type: 'GAME_ERROR', payload: { message: 'Refused' } }) })));
+    await expect(status(alice)).toHaveText('Refused');
+    await expect(focusableSpots(alice)).toHaveCount(0);
+    await expect(piece(alice, 0)).toHaveAttribute('transform', at(FROM));
+    await expect(piece(alice, 0)).toBeFocused();
+    await alice.keyboard.press('Enter');
+    await expect(focusableSpots(alice)).toHaveCount(1);
+  });
+});

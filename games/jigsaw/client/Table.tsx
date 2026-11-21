@@ -1,4 +1,4 @@
-import { useId, useMemo, type CSSProperties } from 'react';
+import { useId, useMemo, type CSSProperties, type KeyboardEvent } from 'react';
 import { BOARD_X, BOARD_Y, TABLE_H, TABLE_W, edgesOf, gridOf, homeOf, piecePath, type PieceCount } from '../cut.ts';
 import { PICTURE_H, PICTURE_W } from '../pictures.ts';
 import PieceShape from './PieceShape';
@@ -22,6 +22,12 @@ export type TableProps = {
   // Absent for a read-only table
   drag?: { dragging: Dragging | null; canLift(piece: number): boolean; bind(piece: number): PiecePointerProps };
   turnHandle?: { piece: number; onTurn: () => void }; // the ↻ on the piece this player last touched
+  // Keyboard play: the liftable pieces are one tab stop at `pieceFocus`; with `spots` (a piece held) the spots are another
+  keys?: {
+    pieceFocus: number | null;
+    onPieceKey(piece: number, event: KeyboardEvent): void;
+    spots?: { focused: number; onSpotKey(spot: number, event: KeyboardEvent): void };
+  };
 };
 
 // Bottom to top: placed, loose, held by others, held by the viewer
@@ -31,7 +37,7 @@ function layer(piece: Piece, viewer: Seat | null): number {
   return piece.heldBy === viewer ? 3 : 2;
 }
 
-export default function Table({ picture, count, seed, board, viewer, playerNames, guide, highlight, drag, turnHandle }: TableProps) {
+export default function Table({ picture, count, seed, board, viewer, playerNames, guide, highlight, drag, turnHandle, keys }: TableProps) {
   const fillPrefix = `jigsaw${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const url = pictureUrl(picture);
   // The cut changes only with a new seed or piece count, never during a drag
@@ -45,6 +51,7 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
   }, [count, seed]);
 
   const dragging = drag?.dragging ?? null;
+  const spots = keys?.spots;
   const order = board.pieces
     .map((piece, index) => ({ piece, index, layer: index === dragging?.piece ? 4 : layer(piece, viewer) }))
     .filter(({ index }) => index < cut.length)
@@ -65,7 +72,7 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
 
   return (
     <>
-      <svg className="jigsaw-table" viewBox={`${-PAD} ${-PAD} ${viewW} ${viewH}`} role="img" aria-label="Puzzle table">
+      <svg className="jigsaw-table" viewBox={`${-PAD} ${-PAD} ${viewW} ${viewH}`} role={keys ? 'group' : 'img'} aria-label="Puzzle table">
         <rect className="jigsaw-table-cloth" x={0} y={0} width={TABLE_W} height={TABLE_H} rx={24} />
         <rect className="jigsaw-board" x={BOARD_X} y={BOARD_Y} width={PICTURE_W} height={PICTURE_H} />
         {guide && (
@@ -73,13 +80,21 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
             preserveAspectRatio="xMidYMid slice" opacity={0.15} />
         )}
         {cut.map(({ home, grid }, piece) => (
-          <rect key={piece} className="jigsaw-spot" data-spot={piece} x={home.x} y={home.y} width={grid.w} height={grid.h} />
+          <rect key={piece} className="jigsaw-spot" data-spot={piece} x={home.x} y={home.y} width={grid.w} height={grid.h}
+            {...(spots && {
+              role: 'button',
+              'aria-label': `Spot row ${Math.floor(piece / grid.cols) + 1}, column ${(piece % grid.cols) + 1}`,
+              tabIndex: spots.focused === piece ? 0 : -1,
+              onKeyDown: (event: KeyboardEvent) => spots.onSpotKey(piece, event)
+            })} />
         ))}
         {order.map(({ piece, index }) => {
           const mine = dragging?.piece === index;
           // A read-only table (History) shows no holders: a step can catch someone mid-hold
           const heldByOther = drag !== undefined && !mine && piece.heldBy !== null && piece.heldBy !== viewer ? piece.heldBy : null;
           const liftable = drag !== undefined && (mine || drag.canLift(index));
+          const keyed = liftable && keys !== undefined;
+          const turns = turnsOf(piece);
           return (
             <PieceShape
               key={index}
@@ -88,7 +103,7 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
               y={shownAt(index).y}
               offset={cut[index].offset}
               cell={cut[index].grid}
-              turns={turnsOf(piece)}
+              turns={turns}
               path={cut[index].path}
               fillId={`${fillPrefix}-${index}`}
               url={url}
@@ -97,6 +112,9 @@ export default function Table({ picture, count, seed, board, viewer, playerNames
               holderName={heldByOther === null ? undefined : playerNames[heldByOther]}
               highlighted={highlight === index}
               pointer={liftable ? drag.bind(index) : undefined}
+              label={keyed ? `Piece ${index + 1}, loose${turns > 0 ? `, turned ${turns * 90} degrees` : ''}` : undefined}
+              tabIndex={keyed ? (keys.pieceFocus === index ? 0 : -1) : undefined}
+              onKeyDown={keyed ? keys.onPieceKey : undefined}
             />
           );
         })}
