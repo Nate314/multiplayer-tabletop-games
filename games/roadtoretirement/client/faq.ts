@@ -14,9 +14,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does a turn work on the road?',
-    answer: 'Press Spin and your token moves that many spaces. Every payday you pass or land on pays your salary. ' +
+    answer: 'A spin moves your token that many spaces. Every payday you pass or land on pays your salary. ' +
       'The space you land on then acts: a gain or a loss of money, a job, a house, family, or a risk. Turns go ' +
-      'around in seat order and skip anyone who has retired. The legend under the board names each color, and with a mouse, hovering over a space says what it does.'
+      'around in seat order and skip anyone who has retired. The legend under the board names each color.'
   },
   {
     question: 'College or straight to work?',
@@ -66,11 +66,11 @@ export const FAQS: FaqItem[] = [
       'cash sets the money everyone starts with: $10,000, $25,000 or $50,000.'
   },
   {
-    question: 'How do I move on the 1860 Checkered board?',
-    answer: 'Pieces stand only on the light squares and start on Infancy, bottom left. Press Spin: 1 moves up or ' +
+    question: 'How do pieces move on the 1860 Checkered board?',
+    answer: 'Pieces stand only on the light squares and start on Infancy, bottom left. On a spin, 1 moves up or ' +
       'down to the next light square in the same column, 2 left or right to the next one in the same row, 3 one ' +
       'square diagonally; 4, 5 and 6 move the same ways one or two squares. The squares you can reach are ' +
-      'highlighted; click one. With one choice you move there by yourself, and with none the turn passes.'
+      'highlighted. With one choice you move there by yourself, and with none the turn passes.'
   },
   {
     question: 'What do the named squares do?',

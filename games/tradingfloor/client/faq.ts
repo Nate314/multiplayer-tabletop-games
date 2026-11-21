@@ -6,12 +6,12 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Nobody\'s. Everyone trades at once, so make offers and accept them as fast as you like.'
   },
   {
-    question: 'How do I make an offer?',
-    answer: 'Tap 1 to 4 cards of one commodity in your hand, then press Offer. Everyone sees only how many cards you offer, such as "Alice: 3!". Your offered cards are shown raised. Press Withdraw to take the offer back, or pick other cards and press Offer again to replace it.'
+    question: 'What is an offer?',
+    answer: 'It is 1 to 4 cards of one commodity from your hand. Everyone sees only how many cards you offer, such as "Alice: 3!". Your offered cards are shown raised. You can take the offer back, or make a new one to replace it.'
   },
   {
-    question: 'How do I trade?',
-    answer: 'Put up an offer with the same number of cards as someone else\'s, then press Accept on theirs. The cards swap blind: you only find out what you got once it lands in your hand.'
+    question: 'How does a trade work?',
+    answer: 'Put up an offer with the same number of cards as someone else\'s, then accept theirs. The cards swap blind: you only find out what you got once it lands in your hand.'
   },
   {
     question: 'What does "Already taken" mean?',
@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I win a round?',
-    answer: 'Collect all 9 cards of one commodity and press Corner! to score the value printed on its cards; Saffron is worth the most at 100. The first to the target score, 500 unless the house rules say 250, wins the game.'
+    answer: 'Collect all 9 cards of one commodity and corner them to score the value printed on its cards; Saffron is worth the most at 100. The first to the target score, 500 unless the house rules say 250, wins the game.'
   },
   {
     question: 'What are the Bull and the Bear?',
@@ -27,6 +27,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens between rounds?',
-    answer: 'The round scoring shows the winning corner, its hand and every penalty. When everyone presses Continue, new hands are dealt.'
+    answer: 'The round scoring shows the winning corner, its hand and every penalty. When everyone continues, new hands are dealt.'
   }
 ];

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, nameOf, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, nameOf, newPlayer, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { at, START } from '../games/roadsandfields/testing.ts';
 import { TILES, TILE_TYPES } from '../games/roadsandfields/tiles.ts';
 import type { FeatureKind, GameState, Meeple } from '../games/roadsandfields/types.ts';
@@ -486,12 +486,16 @@ test.describe('Roads and Fields controls', () => {
     await expect(button(alice, 'Approve')).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows a short guide to the rules and controls', async ({ seat }) => {
+  test('FAQ shows a short guide to the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Where can a meeple go?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Choose a square for the tile');
+    await expect(controls).toContainText('drag the tile picture');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

@@ -7,11 +7,11 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does a turn work?',
-    answer: 'Click Roll to roll all five dice. You may then roll up to two more times. Before each roll, click the dice you want to keep to hold them (they get a green outline), and only the other dice are rolled. After your last roll, or sooner if you like, you must score the dice in one empty box on your score sheet.'
+    answer: 'A turn rolls all five dice, and you may roll up to two more times. Before each of those rolls you may hold dice you want to keep, and only the other dice are rolled. After your last roll, or sooner if you like, you must score the dice in one empty box on your score sheet.'
   },
   {
     question: 'How do I score?',
-    answer: 'After your first roll, each empty box in your column shows the points your dice would score there. Click one to write it in. You can score a zero in any box that does not fit your dice, and each box is filled only once. The game lasts 13 rounds, one for each box.'
+    answer: 'After your first roll, each empty box in your column shows the points your dice would score there, and you write one in. You can score a zero in any box that does not fit your dice, and each box is filled only once. The game lasts 13 rounds, one for each box.'
   },
   {
     question: 'What does each box score?',
@@ -35,6 +35,6 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask the other players to take back the last roll or score. It is undone only if they all approve. A roll that is taken back and made again may come out differently.'
+    answer: 'Undo asks the other players to take back the last roll or score. It is undone only if they all approve. A roll that is taken back and made again may come out differently.'
   }
 ];

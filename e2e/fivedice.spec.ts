@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, headerButton } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, test, undo, type Seat, headerButton } from './fixtures.ts';
 import { CATEGORIES } from '../games/fivedice/rules.ts';
 import type { Sheet } from '../games/fivedice/types.ts';
 
@@ -255,7 +255,7 @@ test.describe('Five Dice rules', () => {
     await expect(bob.locator('[data-anim-key="cell-1-chance"]')).toHaveText('10');
   });
 
-  test('History steps through every move, and FAQ shows the rules', async ({ seat }) => {
+  test('History steps through every move, FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { table, alice } = await start(seat);
     await table.dice(1, 2, 3, 4, 5);
     await rollButton(alice).click();
@@ -275,6 +275,10 @@ test.describe('Five Dice rules', () => {
     await expect(faq).toContainText('Joker rule');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Hold dice');
+    await expect(controls).toContainText('click or tap a die');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

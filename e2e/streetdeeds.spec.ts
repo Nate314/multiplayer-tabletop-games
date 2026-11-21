@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, newPlayer, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { BOARD, ownable } from '../games/streetdeeds/board.ts';
 import { DECKS } from '../games/streetdeeds/cards.ts';
 import type { DeckName, GameState } from '../games/streetdeeds/types.ts';
@@ -1024,12 +1024,16 @@ test.describe('Street Deeds controls', () => {
     await expect(button(alice, 'Approve')).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const game = await start(seat);
     const faq = await openFaq(game.pages[0]);
     await expect(faq).toContainText('Town Square is just a resting place');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(game.pages[0]);
+    await expect(controls).toContainText('Propose a trade');
+    await expect(controls).toContainText('Send offer');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 
