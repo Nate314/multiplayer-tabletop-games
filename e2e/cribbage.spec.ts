@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinPassAndPlay, leave, newPlayer, openFaq, setHouseRules, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinPassAndPlay, leave, newPlayer, openControls, openFaq, setHouseRules, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { scoreShow } from '../games/cribbage/scoring.ts';
 import type { Card, GameState, Rank, Show, Suit } from '../games/cribbage/types.ts';
 
@@ -409,5 +409,10 @@ test.describe('Cribbage rules', () => {
     const faq = await openFaq(alice);
     await expect(faq).toContainText('What is Muggins?');
     await expect(faq).toContainText('Name the points');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Lay cards in the crib');
+    await expect(controls).toContainText('click or tap Send to crib');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

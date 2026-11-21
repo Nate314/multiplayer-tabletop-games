@@ -14,12 +14,12 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'At the start each player is dealt one card and the lowest deals (ace is low); a tie deals again. After each hand the deal passes to the left. The crib belongs to the dealer.'
   },
   {
-    question: 'How do I lay cards in the crib?',
-    answer: 'Everyone discards at the same time. Tap the cards you want to give away, then click Send to crib. Once everyone has, the player after the dealer clicks Cut to turn up the starter. If the starter is a jack, the dealer scores 2 for his heels.'
+    question: 'How are cards laid in the crib?',
+    answer: 'Everyone discards at the same time. Once everyone has, the player after the dealer cuts to turn up the starter. If the starter is a jack, the dealer scores 2 for his heels.'
   },
   {
     question: 'How does pegging work?',
-    answer: 'Starting after the dealer, each player plays a card and the count goes up by its value (face cards are 10, aces 1). The count may never pass 31: cards that would take it past are greyed out, and when none of yours fit, click Go. A count of 15 or exactly 31 scores 2, a pair 2, three of a kind 6, four of a kind 12, and a run of three or more cards scores one per card. When nobody can play, the last player to play scores 1 for the go and the count starts again at 0. The very last card of the hand scores 1, unless it made 31.'
+    answer: 'Starting after the dealer, each player plays a card and the count goes up by its value (face cards are 10, aces 1). The count may never pass 31: cards that would take it past are greyed out, and when none of yours fit, you say Go. A count of 15 or exactly 31 scores 2, a pair 2, three of a kind 6, four of a kind 12, and a run of three or more cards scores one per card. When nobody can play, the last player to play scores 1 for the go and the count starts again at 0. The very last card of the hand scores 1, unless it made 31.'
   },
   {
     question: 'How are hands counted?',
@@ -27,11 +27,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is Muggins?',
-    answer: 'A house rule the host can turn on. You count your own hand and crib by entering a number and clicking Claim. If you claim too much, the score is corrected to the true total. If you claim too little, the opponents have 20 seconds to press Muggins! and take the points you missed, or No Muggins. If nobody presses, you keep only what you claimed. With 3 players the first opponent to press takes the points; with 4 they go to the presser\'s partnership. Pegging is always counted for you.'
+    answer: 'A house rule the host can turn on. You count your own hand and crib by claiming a number. If you claim too much, the score is corrected to the true total. If you claim too little, the opponents have 20 seconds to call Muggins! and take the points you missed, or pass. If nobody calls, you keep only what you claimed. With 3 players the first opponent to call takes the points; with 4 they go to the caller\'s partnership. Pegging is always counted for you.'
   },
   {
     question: 'What are the Muggins styles?',
-    answer: 'Name the points (the standard): the opponents see only your cards and your claim; after pressing Muggins! they tap the cards of a combination you missed and click Claim these, and a wrong choice is refused with no cost. Single press: one press takes the whole difference, but pressing when nothing was missed costs the presser 2 points (never below 0). Shown total: the breakdown is shown to everyone during the 20 seconds, and the first opponent to press takes the missed points.'
+    answer: 'Name the points (the standard): the opponents see only your cards and your claim; after calling Muggins! they choose the cards of a combination you missed, and a wrong choice is refused with no cost. Single press: one call takes the whole difference, but calling when nothing was missed costs the caller 2 points (never below 0). Shown total: the breakdown is shown to everyone during the 20 seconds, and the first opponent to call takes the missed points.'
   },
   {
     question: 'What if a player leaves?',
@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. The cards nobody has seen are shuffled again, so an undone cut turns up a new starter. Continue is not a move, so an undo goes back past it.'
+    answer: 'The last move can be undone only if every connected player approves. The cards nobody has seen are shuffled again, so an undone cut turns up a new starter. Continue is not a move, so an undo goes back past it.'
   },
   {
     question: 'Can the rules be changed?',

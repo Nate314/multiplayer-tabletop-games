@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import {
-  agreeToHouseRules, dismiss, expect, inHouseRules, leave, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
+  agreeToHouseRules, dismiss, expect, inHouseRules, leave, openControls, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
 import { EMPTY_BOARD, boardFromLine, lay } from '../games/dominoes/board.ts';
 import type { Board, Layout } from '../games/dominoes/board.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
@@ -328,7 +328,12 @@ test.describe('Dominoes rules', () => {
 
     const faq = await openFaq(bob);
     await expect(faq).toContainText('Double-six (28 tiles) or double-nine (55 tiles)');
-    await expect(faq).toContainText('Click Draw, or the boneyard');
+    await expect(faq).toContainText('You may draw only when no tile in your hand fits');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(bob);
+    await expect(controls).toContainText('Draw a tile');
+    await expect(controls).toContainText('click or tap Draw or the boneyard');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('the host can set a lower target', async ({ seat }) => {

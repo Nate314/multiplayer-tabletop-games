@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, openFaq, setPreference, test, touchDrag, undo, type Seat as SeatFixture } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openControls, openFaq, setPreference, test, touchDrag, undo, type Seat as SeatFixture } from './fixtures.ts';
 import type { Color, FloorItem, PlayerBoard } from '../games/palacewalls/types.ts';
 
 // One test per rule and control in games/palacewalls/README.md. Seat 1 (Alice) goes first. Two players get five factories,
@@ -385,9 +385,13 @@ test.describe('Palace Walls controls', () => {
   test('FAQ at the top of the page gives a short guide to the rules and controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
-    await expect(faq).toContainText('How do I take tiles?');
+    await expect(faq).toContainText('What happens when I take tiles?');
     await expect(faq).toContainText('How is a wall tile scored?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Take tiles');
+    await expect(controls).toContainText('click or tap a tile in a factory or in the center');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

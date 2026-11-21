@@ -28,14 +28,6 @@ export const FAQS: FaqItem[] = [
       'larger. If no move is possible at all the turn passes on by itself with a message.'
   },
   {
-    question: 'How do I move a pawn?',
-    answer: 'On your turn, the pawns you can move glow. Click one to select it: each square it can reach is ' +
-      'marked with the dice that get it there, such as 4 for one die, 2+3 for the total of both, or +20 for a ' +
-      'bonus. Click a marked square to move. Click the selected pawn again to unselect it. You can also drag a glowing pawn onto a marked ' +
-      'square, or into the center to go home; drop it anywhere else to put it back. The board is dimmed ' +
-      'when it is not your turn.'
-  },
-  {
     question: 'How do I get a pawn out of the nest?',
     answer: 'With a 5. Either die showing 5, or both dice adding up to 5 (1 and 4, or 2 and 3, which uses both), ' +
       'moves a pawn from your nest onto your entry square, the safe square in your color next to your nest. ' +
@@ -81,7 +73,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What do Undo and History do?',
-    answer: 'Undo asks everyone to take back the last move; it happens only if every player still in the game ' +
+    answer: 'Undo takes back the last move, but only if every player still in the game ' +
       'approves. An undone move that ended a turn may roll different dice when it is played again. History, in ' +
       'the ☰ menu, steps through every move so far with the moved pawn\'s squares outlined.'
   },

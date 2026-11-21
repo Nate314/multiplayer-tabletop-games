@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { isDeepStrictEqual } from 'node:util';
 import {
-  agreeToHouseRules, dismiss, headerButton, drag, expect, inHouseRules, joinGame, leave, lift, newPlayer, openFaq, seeTable, tableScreen, test,
+  agreeToHouseRules, dismiss, headerButton, drag, expect, inHouseRules, joinGame, leave, lift, newPlayer, openControls, openFaq, seeTable, tableScreen, test,
   touchDrag, undo, watch, type Seat, type Table
 } from './fixtures.ts';
 import type { Ship, Shot } from '../games/naval/types.ts';
@@ -550,7 +550,11 @@ test.describe('Naval Battle controls', () => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('one ship of each length: 5, 4, 3, 3 and 2');
-    await expect(faq).toContainText('Random placement');
     await expect(faq).toContainText('Salvo');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Place the whole fleet at once');
+    await expect(controls).toContainText('Click or tap Random placement');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
