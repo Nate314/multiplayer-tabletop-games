@@ -8,6 +8,10 @@ export const FAQS: FaqItem[] = [
       'first; the second plays Yellow.'
   },
   {
+    question: 'How do discs fall?',
+    answer: 'A disc dropped in a column falls to the lowest empty cell. A full column cannot be chosen.'
+  },
+  {
     question: 'How do I win?',
     answer: 'Be the first to line up four of your discs in a row: across, up and down, or diagonally. The winning ' +
       'four are highlighted.'
