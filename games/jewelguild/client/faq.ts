@@ -11,19 +11,19 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I take gems?',
-    answer: 'Click gems in the supply to pick them, then click Take gems. Click three different colors to take three. Click one color twice to take two of it; this only works when 4 or more of that color are left. When fewer than three colors are left, you take one of each color that remains. Click a picked gem again to put it back.'
+    answer: 'You take three gems of different colors, or two of one color; two works only when 4 or more of that color are left. When fewer than three colors are left, you take one of each color that remains.'
   },
   {
     question: 'How does buying work?',
-    answer: 'Click a face-up card, or one of your reserved cards, then click Buy. Each card you own gives a permanent bonus of its color, which lowers the price of later cards by one gem of that color. Your gems pay the rest, and gold pays for any color you are short of. The game pays with your colored gems first and uses gold only for what is missing. Cards you can afford are outlined.'
+    answer: 'You can buy a face-up card or one of your reserved cards. Each card you own gives a permanent bonus of its color, which lowers the price of later cards by one gem of that color. Your gems pay the rest, and gold pays for any color you are short of. The game pays with your colored gems first and uses gold only for what is missing. Cards you can afford are outlined.'
   },
   {
     question: 'How does reserving work?',
-    answer: 'Click a face-up card and then Reserve, or click a deck to reserve its top card without anyone seeing it. You also take a gold if any is left. You can hold at most 3 reserved cards, and the only way to get rid of one is to buy it. Others see your face-up reserved cards, but only the level of a card you took from a deck.'
+    answer: 'You can reserve a face-up card, or the top card of a deck without anyone seeing it. You also take a gold if any is left. You can hold at most 3 reserved cards, and the only way to get rid of one is to buy it. Others see your face-up reserved cards, but only the level of a card you took from a deck.'
   },
   {
     question: 'What if I have more than 10 tokens?',
-    answer: 'At the end of your turn you must give tokens back until you hold 10, gold included. A panel lets you pick which ones. Your turn does not pass until you do.'
+    answer: 'At the end of your turn you must give tokens back until you hold 10, gold included. You pick which ones. Your turn does not pass until you do.'
   },
   {
     question: 'When does a noble visit?',
@@ -47,7 +47,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. Giving back tokens and choosing a noble are moves of their own. The undo happens only if every player still in the game approves.'
+    answer: 'Yes. Giving back tokens and choosing a noble are moves of their own. The last move is undone only if every player still in the game approves.'
   },
   {
     question: 'Can the rules be changed?',

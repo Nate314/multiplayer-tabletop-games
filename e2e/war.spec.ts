@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
-import { dismiss, expect, joinGame, leave, newPlayer, openFaq, seeTable, test, undo, type Seat, headerButton } from './fixtures.ts';
+import { dismiss, expect, joinGame, leave, newPlayer, openControls, openFaq, seeTable, test, undo, type Seat, headerButton } from './fixtures.ts';
 import { sameCard, standardDeck, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState } from '../games/war/types.ts';
 
@@ -331,7 +331,7 @@ test.describe('War controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('History steps through every flip, and FAQ shows the rules and controls', async ({ seat }) => {
+  test('History steps through every flip, and FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice, bob, piles } = await start(seat);
     await piles([card('5', 'clubs'), card('9', 'clubs')], [card('3', 'hearts'), card('2', 'hearts')]);
     await flips(alice, bob);
@@ -347,9 +347,12 @@ test.describe('War controls', () => {
 
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Auto-flip');
-    await expect(faq).toContainText('Click Flip, or click your own pile');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Flip a card');
+    await expect(controls).toContainText('click or tap Flip, or your own pile');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('a flip slides the card from the pile, and nothing animates with reduced motion', async ({ seat }) => {

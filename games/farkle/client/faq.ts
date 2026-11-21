@@ -7,7 +7,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does a turn work?',
-    answer: 'Roll all six dice. Click the scoring dice you want to set aside, then roll the rest again or bank the points. Each roll after the first must set aside at least one scoring die. You can keep going as long as you like, but the points you have not banked are lost if a roll has nothing that scores.'
+    answer: 'Roll all six dice. Set aside the scoring dice you want, then roll the rest again or bank the points. Each roll after the first must set aside at least one scoring die. You can keep going as long as you like, but the points you have not banked are lost if a roll has nothing that scores.'
   },
   {
     question: 'What is a Farkle?',
@@ -35,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask to undo the last move. It is undone only if everyone approves. A roll that is undone may come out differently when you roll again.'
+    answer: 'Yes. The last move is undone only if everyone approves. A roll that is undone may come out differently when you roll again.'
   },
   {
     question: 'What happens if someone leaves?',

@@ -3,7 +3,7 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 export const QUESTIONS: FaqItem[] = [
   {
     question: 'How do I set up the teams?',
-    answer: 'Before the game, each player picks a team, Red or Blue, and a role: clue-giver or guesser. Each team needs exactly one clue-giver and at least one guesser. Even out balances the teams for you and keeps the clue-givers already chosen. The game starts when a clue-giver gives the first clue, once both teams are ready.'
+    answer: 'Before the game, each player picks a team, Red or Blue, and a role: clue-giver or guesser. Each team needs exactly one clue-giver and at least one guesser. The teams can also be balanced automatically, which keeps the clue-givers already chosen. The game starts when a clue-giver gives the first clue, once both teams are ready.'
   },
   {
     question: 'What is on the grid?',
@@ -11,11 +11,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What does the clue-giver do?',
-    answer: 'On your team\'s turn, type one word and pick a number from 1 to 9, then press Give clue. The word should lead your guessers to your team\'s words, and the number says how many. A clue that is a word on the grid is refused, and so is a clue of more than one word.'
+    answer: 'On your team\'s turn, give one word and a number from 1 to 9. The word should lead your guessers to your team\'s words, and the number says how many. A clue that is a word on the grid is refused, and so is a clue of more than one word.'
   },
   {
     question: 'What do the guessers do?',
-    answer: 'Any guesser on the team whose turn it is taps a word to turn it over. You get up to the number plus one guesses, and may press End guessing to stop early once you have turned over a word. Your own team\'s word lets you keep going. A bystander or the other team\'s word ends the turn.'
+    answer: 'Any guesser on the team whose turn it is turns over a word. You get up to the number plus one guesses, and may stop early once you have turned over a word. Your own team\'s word lets you keep going. A bystander or the other team\'s word ends the turn.'
   },
   {
     question: 'What is the trap?',
@@ -27,7 +27,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last clue, guess or End guessing. It is undone only if everyone else approves. A guess that ends the game cannot be undone, because it shows the key.'
+    answer: 'Yes. The last clue, guess or end of guessing is undone only if everyone else approves. A guess that ends the game cannot be undone, because it shows the key.'
   },
   {
     question: 'What happens if someone leaves?',

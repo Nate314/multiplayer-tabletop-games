@@ -27,15 +27,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What does Auto-flip do?',
-    answer: 'When it is ticked, your card is flipped for you one second after your turn comes up, so a long game can play itself. It works only in your own browser tab and is off again when you reload the page.'
-  },
-  {
-    question: 'How do I flip?',
-    answer: 'Click Flip, or click your own pile at the bottom of the table, when it is your turn.'
+    answer: 'When it is on, your card is flipped for you one second after your turn comes up, so a long game can play itself. It works only in your own browser tab and is off again when you reload the page.'
   },
   {
     question: 'Can I take back a flip?',
-    answer: 'Click Undo to ask to undo the last flip. It is undone only if both players approve.'
+    answer: 'Yes. The last flip is undone only if both players approve.'
   },
   {
     question: 'What happens if someone leaves?',

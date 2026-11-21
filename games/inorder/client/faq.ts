@@ -14,12 +14,12 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Take the top card of the draw pile or of the discard pile. Then swap it for the card in any one slot of your rack: the card you take out goes face up on the discard pile. A card from the draw pile may instead be discarded straight away. A card taken from the discard pile must go into your rack. Cards cannot be moved between slots, only replaced.'
   },
   {
-    question: 'How do I play a turn on the screen?',
-    answer: 'Click the draw pile or the discard pile. The card you took appears beside the piles, and every slot of your rack becomes a button: click one to swap. A card from the draw pile also has a Discard button. Only you can see a card you took from the draw pile.'
+    question: 'Who can see the card I took?',
+    answer: 'The card you took appears beside the piles. Only you can see a card you took from the draw pile.'
   },
   {
     question: 'How is a round scored?',
-    answer: 'The player who calls In Order scores 75 points. Every other player scores 5 points for each card in ascending order counting from slot 1, stopping where the order breaks. A scoring screen shows every rack, and the next round is dealt once every connected player has pressed Continue.'
+    answer: 'The player who calls In Order scores 75 points. Every other player scores 5 points for each card in ascending order counting from slot 1, stopping where the order breaks. A scoring screen shows every rack, and the next round is dealt once every connected player has continued.'
   },
   {
     question: 'What if the draw pile runs out?',
@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. The draw pile is reshuffled after an undo, so redrawing does not show what was coming.'
+    answer: 'Yes. The last move is undone only if every connected player approves. The draw pile is reshuffled after an undo, so redrawing does not show what was coming.'
   },
   {
     question: 'What happens if someone leaves?',

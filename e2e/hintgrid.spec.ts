@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, headerButton, joinGame, leave, newPlayer, openFaq, tableScreen, test, undo, watch, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, headerButton, joinGame, leave, newPlayer, openControls, openFaq, tableScreen, test, undo, watch, type Seat, type Table } from './fixtures.ts';
 import type { GameState } from '../games/hintgrid/types.ts';
 
 // One test per rule, control and difference in games/hintgrid/README.md.
@@ -312,11 +312,16 @@ test.describe('Hint Grid rules', () => {
     expect((await stateOf(table)).isGameOver).toBe(true);
   });
 
-  test('the FAQ opens', async ({ seat }) => {
+  test('the FAQ and Controls open', async ({ seat }) => {
     const table = await seat('hintgrid', FOUR);
     const faq = await openFaq(table.pages[0]);
     await expect(faq).toContainText('How do I set up the teams?');
     await expect(faq).toContainText('What is the trap?');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(table.pages[0]);
+    await expect(controls).toContainText('Give a clue');
+    await expect(controls).toContainText('In Clue, Enter gives the clue.');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('the grid fits at phone size', async ({ seat }) => {

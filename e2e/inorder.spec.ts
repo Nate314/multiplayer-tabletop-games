@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type SeatOptions } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, setPreference, test, undo, type Seat, type SeatOptions } from './fixtures.ts';
 import type { GameState } from '../games/inorder/types.ts';
 
 // One test per rule, control and difference in games/inorder/README.md. Seat 1 is Alice, 2 Bob, 3 Cara.
@@ -263,10 +263,15 @@ test.describe('In Order controls and platform', () => {
     expect(state.drawPile.length + state.discardPile.length + 20).toBe(50);
   });
 
-  test('the FAQ answers the rules questions', async ({ seat }) => {
+  test('the FAQ answers the rules questions, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('How is a round scored?');
     await expect(faq).toContainText('What if the draw pile runs out?');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Swap a card into your rack');
+    await expect(controls).toContainText('click or tap a slot in your rack');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

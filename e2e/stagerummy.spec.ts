@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, ghostsSeen, leave, recordGhosts, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table, headerButton } from './fixtures.ts';
+import { dismiss, expect, ghostsSeen, leave, recordGhosts, openControls, openFaq, setPreference, test, undo, type Seat as SeatFixture, type SeatOptions, type Table, headerButton } from './fixtures.ts';
 import { createDeck } from '../games/stagerummy/rules.ts';
 import type { Card, CardColor, GameState, Group } from '../games/stagerummy/types.ts';
 
@@ -645,14 +645,17 @@ test.describe('Stage Rummy controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page covers the rules, the ten phases and the controls', async ({ seat }) => {
+  test('FAQ at the top of the page covers the rules and the ten phases, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('What are the ten phases?');
     await expect(faq).toContainText('How does a turn work?');
-    await expect(faq).toContainText('How do I lay down my phase?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Lay down your phase');
+    await expect(controls).toContainText('Add selected to group 1');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

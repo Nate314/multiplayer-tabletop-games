@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, test, undo, type Seat } from './fixtures.ts';
 
 // One test per rule, control and difference in games/farkle/README.md. Seat 1 is Alice, 2 Bob and 3 Cara.
 
@@ -217,10 +217,15 @@ test.describe('Farkle controls', () => {
     await expect(cara.locator('.farkle-score')).toHaveCount(2);
   });
 
-  test('FAQ explains the scoring', async ({ seat }) => {
+  test('FAQ explains the scoring, and Controls the controls', async ({ seat }) => {
     const { pages: [alice] } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Each 1 is 100 and each 5 is 50');
     await expect(faq).toContainText('hot dice');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Set dice aside');
+    await expect(controls).toContainText('click or tap the scoring dice');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
