@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import gameService from '../../../src/services/gameService';
 import { formatClock, useCountdown } from '../../../src/hooks/useCountdown.ts';
+import { gridStep } from '../../../src/drag/gridStep.ts';
 import { swallowNextClick } from '../../../src/drag/swallowClick.ts';
 import { fits } from '../board.ts';
 import { clock } from '../rules.ts';
@@ -39,6 +40,30 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // The pop or a finish mid-drag lets go: a disabled button hears no release
   useEffect(() => { if (!racing) hold(null); }, [racing]);
   const boardRef = useRef<SVGSVGElement>(null);
+  // A shape picked up by keyboard, apart from the pointer drag, and the hole its arrow keys are on
+  const [kept, setKept] = useState<number | null>(null);
+  const [target, setTarget] = useState(0);
+  const [announce, setAnnounce] = useState('');
+  // A tray shape to hand focus back to once the board has rendered without the hole targets
+  const [refocus, setRefocus] = useState<number | null>(null);
+  const paused = gameState.paused === true;
+  useEffect(() => { if (kept !== null && (!racing || paused || error)) { setKept(null); setRefocus(kept); } }, [kept, racing, paused, error]);
+  useEffect(() => { if (kept !== null) boardRef.current?.querySelector<SVGElement>(`[data-hole="${target}"]`)?.focus(); }, [kept, target]);
+  useEffect(() => {
+    if (refocus === null) return;
+    document.querySelectorAll<HTMLElement>('.sr-tray li')[refocus]?.querySelector('button')?.focus();
+    setRefocus(null);
+  }, [refocus]);
+  useEffect(() => {
+    if (kept === null) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key.toLowerCase() !== 'r' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+      if ((event.target as Element | null)?.closest?.('input, textarea, select')) return;
+      gameService.sendAction({ type: 'turn', shape: kept });
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [kept]);
 
   if (!layout) return <div className="sr-screen"><div className="game-status">{gameStatus || 'Waiting for players'}</div></div>;
   // Once the server shows the hole filled or the shape placed, the board itself answers for it
@@ -56,6 +81,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
 
   const onPointerDown = (shape: number) => (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (dragRef.current || !racing || event.button !== 0) return;
+    setKept(null);
     setLanded(null); // a drop the server never answered is not left in its hole
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -83,6 +109,43 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
     setLanded({ shape: drag.shape, hole });
     gameService.sendAction({ type: 'place', shape: drag.shape, hole });
   };
+  const pickUp = (shape: number) => {
+    setLanded(null);
+    setKept(shape);
+    setTarget(layout.holes.findIndex((_, hole) => placed[hole] === undefined));
+    setAnnounce(`${shapeLabel(layout.tray[shape])} picked up. Choose a hole, R turns it, Escape puts it back`);
+  };
+  const onShapeKey = (shape: number) => (event: ReactKeyboardEvent) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault(); // so the click that Enter fires never turns it
+    pickUp(shape);
+  };
+  const onHoleKey = (hole: number, event: ReactKeyboardEvent) => {
+    if (kept === null) return;
+    if (event.key === 'Escape') {
+      setKept(null);
+      setRefocus(kept);
+      setAnnounce('Piece put back');
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (!fits(layout, placed, kept, hole, board.turns[kept])) return setAnnounce('That shape does not fit there');
+      setLanded({ shape: kept, hole });
+      gameService.sendAction({ type: 'place', shape: kept, hole });
+      setAnnounce(`${shapeLabel(layout.tray[kept])} placed`);
+      setKept(null);
+      const left = layout.tray.map((_, i) => i).filter(i => i !== kept && !inPlace.has(i));
+      setRefocus(left.find(i => i > kept) ?? left[0] ?? null);
+    } else {
+      const n = Math.sqrt(layout.size);
+      const to = gridStep(hole, event.key, n, layout.size);
+      if (to === null) return;
+      event.preventDefault();
+      // Over a filled hole, keep going the same way until an empty one or the edge
+      let at = hole, next = to;
+      while (next !== at && placed[next] !== undefined) { at = next; next = gridStep(at, event.key, n, layout.size)!; }
+      if (next !== at) setTarget(next);
+    }
+  };
   const onPointerCancel = (event: ReactPointerEvent) => {
     if (dragRef.current?.pointerId === event.pointerId) hold(null);
   };
@@ -96,7 +159,7 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
         {myTime !== undefined && <p className="sr-note">You filled the board in {clock(myTime)}</p>}
       </div>
       <Progress gameState={gameState} seats={activePlayers.filter(seat => seat !== playerNumber)} />
-      <RaceBoard layout={layout} placed={placed} popped={popped && isGameOver} svgRef={boardRef} label="Your board" />
+      <RaceBoard layout={layout} placed={placed} popped={popped && isGameOver} svgRef={boardRef} label="Your board" targets={kept === null ? undefined : { focused: target, onFocus: setTarget, onKey: onHoleKey }} />
       <ul className={popped && isGameOver ? 'sr-tray sr-scatter' : 'sr-tray'} aria-label="Shapes">
         {layout.tray.map((id, shape) => {
           const turns = board.turns[shape] ?? 0;
@@ -106,10 +169,11 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
               {!inPlace.has(shape) && (
                 <button
                   type="button"
-                  className={held && drag.moved ? 'sr-shape sr-dragging' : 'sr-shape'}
+                  className={held && drag.moved ? 'sr-shape sr-dragging' : kept === shape ? 'sr-shape sr-held' : 'sr-shape'}
                   aria-label={`${shapeLabel(id)}, turned ${turns * 45} degrees`}
                   disabled={!racing}
-                  onClick={() => gameService.sendAction({ type: 'turn', shape })}
+                  onClick={event => { if (event.detail > 0) gameService.sendAction({ type: 'turn', shape }); }}
+                  onKeyDown={onShapeKey(shape)}
                   onPointerDown={onPointerDown(shape)}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
@@ -124,7 +188,8 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
           );
         })}
       </ul>
-      {racing && <p className="sr-note">Tap a shape to turn it, then drag it into its hole</p>}
+      {racing && <p className="sr-note">Tap a shape to turn it, then drag it into its hole. Enter picks a shape up, R turns it, then choose its hole</p>}
+      <div className="visually-hidden" aria-live="polite">{announce}</div>
     </div>
   );
 }

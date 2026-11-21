@@ -144,6 +144,21 @@
     stroke-width: 6;
   }
 
+  .sr-target {
+    outline: none;
+  }
+
+  .sr-ring {
+    display: none;
+    fill: none;
+    stroke: var(--highlight);
+    stroke-width: 6;
+  }
+
+  .sr-target:focus .sr-ring {
+    display: block;
+  }
+
   .sr-tray {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
@@ -182,6 +197,11 @@
     height: 100%;
     overflow: visible;
     transition: transform 0.2s ease-out;
+  }
+
+  .sr-held {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
   }
 
   .sr-dragging {

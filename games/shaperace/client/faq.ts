@@ -7,7 +7,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I place a shape?',
-    answer: 'Press a shape in the tray, drag it over its hole on your board and let go. It drops in only if it is the shape the hole was cut for and it is turned the right way up, or turned so it looks the same as the hole.'
+    answer: 'Press a shape in the tray, drag it over its hole on your board and let go. It drops in only if it is the shape the hole was cut for and it is turned the right way up, or turned so it looks the same as the hole. With a keyboard, press Enter on a shape to pick it up, R to turn it, the arrow keys to choose a hole and Enter to drop it in. Escape puts it back.'
   },
   {
     question: 'What happens on a wrong drop?',

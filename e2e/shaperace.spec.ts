@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { dismiss, drag, expect, headerButton, leave, openFaq, openHouseRules, setHouseRules, test, touchDrag, watch, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { Layout } from '../games/shaperace/board.ts';
 import type { GameState } from '../games/shaperace/types.ts';
+import { shapeLabel } from '../games/shaperace/shapes.ts';
 
 // One test per rule and control in games/shaperace/README.md. Seat 1 is Alice, 2 Bob.
 // A table starts with 9 shapes, every shape turned so it fits (turns 0), so a test drags straight to the hole.
@@ -276,5 +277,110 @@ test.describe('Shape Race rules', () => {
   test('the FAQ opens from Rules', async ({ seat }) => {
     const [alice] = (await start(seat, ['Alice'])).pages;
     await expect(await openFaq(alice)).toContainText('How do I turn a shape?');
+  });
+});
+
+// Keyboard play: Enter picks a tray shape up, arrows choose a hole, Enter drops, Escape puts back
+test.describe('Shape Race keyboard play', () => {
+  const live = (page: Page) => page.locator('.sr-screen [aria-live="polite"]');
+  const hole = (page: Page, layout: Layout, n: number) => page.getByRole('button', { name: `Hole ${n + 1} of ${SIZE}, ${shapeLabel(layout.holes[n])}` });
+  const focusable = (page: Page) => page.locator('.sr-board [role="button"][tabindex="0"]');
+  const turnsOf = async (table: Table, n: number) => (await table.state<GameState>()).boards[1]!.turns[n];
+  // From the focused hole `from` to hole `to` with the arrow keys
+  async function arrowTo(page: Page, from: number, to: number) {
+    const side = Math.sqrt(SIZE);
+    for (let i = 0; i < Math.abs((to % side) - (from % side)); i++) await page.keyboard.press(to % side > from % side ? 'ArrowRight' : 'ArrowLeft');
+    for (let i = 0; i < Math.abs(Math.floor(to / side) - Math.floor(from / side)); i++) await page.keyboard.press(to / side > from / side ? 'ArrowDown' : 'ArrowUp');
+  }
+  async function pickUp(page: Page, n: number) {
+    await shape(page, n).focus();
+    await page.keyboard.press('Enter');
+  }
+
+  test('the keyboard alone places a shape', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const layout = await layoutOf(table);
+    const boards = await upright(table);
+    boards[1]!.turns[0] = 7;
+    await table.patch({ boards });
+    await pickUp(alice, 0);
+    await expect(live(alice)).toHaveText(`${shapeLabel(layout.tray[0])} picked up. Choose a hole, R turns it, Escape puts it back`);
+    expect(await turnsOf(table, 0)).toBe(7);
+    await expect(hole(alice, layout, 0)).toBeFocused();
+    await alice.keyboard.press('r');
+    await expect.poll(() => turnsOf(table, 0)).toBe(0);
+    await arrowTo(alice, 0, holeOf(layout, 0));
+    await expect(hole(alice, layout, holeOf(layout, 0))).toBeFocused();
+    await alice.keyboard.press('Enter');
+    await expect(live(alice)).toHaveText(`${shapeLabel(layout.tray[0])} placed`);
+    await expect.poll(() => placedOf(table)).toEqual({ [holeOf(layout, 0)]: 0 });
+    await expect(shape(alice, 1)).toBeFocused();
+  });
+
+  test('a keyboard drop on the wrong hole sends nothing', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const layout = await layoutOf(table);
+    const wrong = layout.holes.findIndex(id => id !== layout.tray[0]);
+    await pickUp(alice, 0);
+    await arrowTo(alice, 0, wrong);
+    await alice.keyboard.press('Enter');
+    await expect(live(alice)).toHaveText('That shape does not fit there');
+    await expect(hole(alice, layout, wrong)).toBeFocused();
+    expect(await placedOf(table)).toEqual({});
+    await expect(focusable(alice)).toHaveCount(1);
+  });
+
+  test('Escape puts a keyboard-held shape back', async ({ seat }) => {
+    const [alice] = (await start(seat, ['Alice'])).pages;
+    await pickUp(alice, 0);
+    await alice.keyboard.press('Escape');
+    await expect(live(alice)).toHaveText('Piece put back');
+    await expect(shape(alice, 0)).toBeFocused();
+    await expect(focusable(alice)).toHaveCount(0);
+  });
+
+  test('a click still turns a shape and Enter does not', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    await shape(alice, 0).click();
+    await expect.poll(() => turnsOf(table, 0)).toBe(1);
+    await pickUp(alice, 1);
+    await alice.waitForTimeout(300);
+    expect(await turnsOf(table, 1)).toBe(0);
+  });
+
+  test('arrow keys at the grid edge stay put and do not scroll the page', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const layout = await layoutOf(table);
+    await pickUp(alice, 0);
+    const before = await alice.evaluate(() => window.scrollY);
+    for (const key of ['ArrowLeft', 'ArrowUp']) await alice.keyboard.press(key);
+    await expect(hole(alice, layout, 0)).toBeFocused();
+    await alice.keyboard.press('ArrowDown');
+    await alice.keyboard.press('ArrowDown');
+    await alice.keyboard.press('ArrowDown');
+    await expect(hole(alice, layout, 6)).toBeFocused();
+    expect(await alice.evaluate(() => window.scrollY)).toBe(before);
+  });
+
+  test('the race ending lets go of a keyboard hold', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    await pickUp(alice, 0);
+    await table.patch({ isGameOver: true });
+    await expect(focusable(alice)).toHaveCount(0);
+    await expect(alice.locator('.sr-held')).toHaveCount(0);
+  });
+
+  test('a pause lets go of a keyboard hold', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    await pickUp(alice, 0);
+    await table.patch({ paused: true });
+    await expect(focusable(alice)).toHaveCount(0);
+    await expect(alice.locator('.sr-held')).toHaveCount(0);
   });
 });
