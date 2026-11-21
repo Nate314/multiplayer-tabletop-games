@@ -19,7 +19,7 @@ export type ClientGame = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Screen: ComponentType<GameScreenProps<any>>;
   faq: FaqItem[];
-  controls?: ControlItem[]; // optional until every game has a list
+  controls: ControlItem[];
   // A read-only board of one public state with its lastMove highlighted, for the history dialog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   HistoryBoard: ComponentType<{ gameState: any; viewer: Seat | null }>;

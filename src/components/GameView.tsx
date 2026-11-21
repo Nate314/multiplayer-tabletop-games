@@ -124,7 +124,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
             <ShareButton game={game} gameId={gameState.gameId} withLabel />
             {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
             <RulesTrigger agreeNeeded={agreeNeeded} onOpen={rulesDialog.open} />
-            {!tableScreen && client.controls && <ControlsTrigger onOpen={controlsDialog.open} />}
+            {!tableScreen && <ControlsTrigger onOpen={controlsDialog.open} />}
             {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} withLabel />}
             {canPause && <PauseButton disabled={pauseBlocked} onPause={() => gameService.requestPause()} />}
             <SettingsTrigger onOpen={settings.open} withLabel />
