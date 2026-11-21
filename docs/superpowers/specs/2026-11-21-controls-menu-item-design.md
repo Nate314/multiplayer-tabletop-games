@@ -63,7 +63,7 @@ in batches, and each batch updates its games' controls lists. This project descr
   or hand, keys, and each on-screen game action button (Roll, Pass, Draw, Offer a draw). Not the app's own items
   (the menu, reactions, undo and pause votes, Back to games).
 - `controls` is optional on `ClientGame` while the lists are being written and becomes required in the last task, once
-  all 64 games have one, so the build passes at every commit *(my call)*.
+  all 55 games have one, so the build passes at every commit *(my call)*.
 
 ### Dialog
 
@@ -105,5 +105,5 @@ in batches, and each batch updates its games' controls lists. This project descr
 
 - The dialog's exact markup and styling, matching the existing dialogs.
 - The icon.
-- Grouping the 64 games into batches for writing the lists.
+- Grouping the 55 games into batches for writing the lists.
 - Wording of each row, within the rules above.
