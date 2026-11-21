@@ -2,12 +2,12 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 
 export const QUESTIONS: FaqItem[] = [
   {
-    question: 'How do I turn a shape?',
-    answer: 'Tap it. Each tap turns it one eighth of a turn (45 degrees) clockwise. Shapes start turned at random, so most need a few taps before they fit. A round shape fits whichever way it faces.'
+    question: 'Why do shapes need turning?',
+    answer: 'Shapes start turned at random, so most need turning before they fit. A round shape fits whichever way it faces.'
   },
   {
-    question: 'How do I place a shape?',
-    answer: 'Press a shape in the tray, drag it over its hole on your board and let go. It drops in only if it is the shape the hole was cut for and it is turned the right way up, or turned so it looks the same as the hole. With a keyboard, press Enter on a shape to pick it up, R to turn it, the arrow keys to choose a hole and Enter to drop it in. Escape puts it back.'
+    question: 'When does a shape fit a hole?',
+    answer: 'It drops in only if it is the shape the hole was cut for and it is turned the right way up, or turned so it looks the same as the hole.'
   },
   {
     question: 'What happens on a wrong drop?',

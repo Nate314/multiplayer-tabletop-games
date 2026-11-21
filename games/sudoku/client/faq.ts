@@ -24,20 +24,19 @@ export const FAQS: FaqItem[] = [
       'fewer still and needs more than singles.'
   },
   {
-    question: 'How do I fill in a square?',
-    answer: 'Click or tap an empty square to select it, then click a digit on the pad or type it. Erase, Backspace, ' +
-      'Delete or 0 clears the square. The arrow keys move the selection. The selected square\'s row, column and box ' +
-      'are highlighted, and so is every other square holding the same digit.'
+    question: 'What is highlighted when I select a square?',
+    answer: 'The selected square\'s row, column and box are highlighted, and so is every other square holding the ' +
+      'same digit.'
   },
   {
     question: 'What are pencil marks?',
-    answer: 'Turn on Pencil (or press N) and the digits you pick become small notes in the square instead of an ' +
-      'entry; pick a digit again to remove its note. Your pencil marks are yours alone: nobody else sees them, even ' +
+    answer: 'Pencil marks are small notes in a square instead of an entry; adding a digit again removes its ' +
+      'note. Your pencil marks are yours alone: nobody else sees them, even ' +
       'in Together. Writing a digit in a square clears your notes there.'
   },
   {
     question: 'How do I see my mistakes?',
-    answer: 'In Solo, turn on Show mistakes to mark every entry that does not match the solution. In Together, wrong ' +
+    answer: 'In Solo, you can choose to mark every entry that does not match the solution. In Together, wrong ' +
       'entries are always marked. In Race nothing is marked, but when your board is full and something is wrong you ' +
       'are told so.'
   },
@@ -48,7 +47,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does Undo do?',
-    answer: 'In Solo, Undo takes back your last entry or erase. In Together and Race, Undo my last move takes back ' +
+    answer: 'In Solo, it takes back your last entry or erase. In Together and Race, it takes back ' +
       'your own last move that is still on the board; a move someone else has since changed is skipped.'
   },
   {

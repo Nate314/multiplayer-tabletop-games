@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, newPlayer, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, newPlayer, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { CITIES, ROUTES, TICKETS } from '../games/railroutes/map.ts';
 import type { Card, GameState, Hand, PlayerState } from '../games/railroutes/types.ts';
 
@@ -714,13 +714,16 @@ test.describe('Rail Routes controls', () => {
     await expect(bob.locator('.undo-vote-title')).toHaveText('Alice wants to undo the last turn');
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ at the top of the page shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('double routes');
-    await expect(faq).toContainText('Click the route on the map, then click a way to pay');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Claim a route');
+    await expect(controls).toContainText('click or tap the route on the map, then click or tap a way to pay');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

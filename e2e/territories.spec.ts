@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { headerButton, dismiss, drag, expect, leave, lift, newPlayer, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
+import { headerButton, dismiss, drag, expect, leave, lift, newPlayer, openControls, openFaq, seeTable, setPreference, test as base, type Table } from './fixtures.ts';
 import { ALL_CARDS, cardSymbol, territoriesOf } from '../games/territories/map.ts';
 import { game, ownership } from '../games/territories/testing.ts';
 import { LEGACY_IDS } from '../games/legacyIds.ts';
@@ -824,13 +824,17 @@ test.describe('Territories controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ at the top of the page shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Blitz');
     await expect(faq).toContainText('42 territories');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Attack');
+    await expect(controls).toContainText('Roll or Blitz');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

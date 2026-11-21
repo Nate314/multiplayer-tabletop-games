@@ -14,32 +14,31 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How does the setup work?',
     answer: 'Each player has 35 armies with three players, 30 with four, 25 with five and 20 with six, less the one on each ' +
-      'territory they were dealt. In turn order, each player places all their remaining armies in one move. Click your ' +
-      'territories to add armies (choose 1, 5 or All per click), take one back with -1, then click Place all. You can also drag armies from the Your armies tray onto a territory.'
+      'territory they were dealt. In turn order, each player places all their remaining armies in one move.'
   },
   {
     question: 'How does a turn go?',
     answer: 'First reinforce: you get a third of your territories (rounded down, at least 3) plus the bonus of every whole ' +
-      'continent you hold, plus any cards you trade. Place them by clicking your territories. Then attack as often as you ' +
+      'continent you hold, plus any cards you trade. Then attack as often as you ' +
       'like, then make one fortify move if you want, and the turn ends.'
   },
   {
     question: 'How do attacks work?',
-    answer: 'Click one of your territories with at least 2 armies, then a highlighted enemy territory next to it (lines on ' +
-      'the map are borders, dashed ones cross the sea). Choose 1 to 3 dice, ' +
-      'never more than your armies there minus one, and roll. The defender always rolls as many dice as allowed: 2, or 1 ' +
+    answer: 'Attack from one of your territories with at least 2 armies, against an enemy territory next to it (lines on ' +
+      'the map are borders, dashed ones cross the sea). You roll 1 to 3 dice, ' +
+      'never more than your armies there minus one. The defender always rolls as many dice as allowed: 2, or 1 ' +
       'with a single army. The highest dice are compared in pairs, each loses one army for the other side, and ties go to ' +
       'the defender. Blitz rolls the most dice again and again until the territory falls or you have 1 army left.'
   },
   {
     question: 'What happens when I capture a territory?',
-    answer: 'Move armies in with the slider: at least as many as the dice you rolled, and one must stay behind. If that was ' +
+    answer: 'You move armies in: at least as many as the dice you rolled, and one must stay behind. If that was ' +
       'the defender\'s last territory, they are eliminated and you take their cards.'
   },
   {
     question: 'How does fortifying work?',
-    answer: 'Click Stop attacking and fortify, then a territory of yours, then a highlighted one connected to it through your ' +
-      'own territories, choose how many armies with the slider and click Move. That ends your turn. You can also just click End turn.'
+    answer: 'After attacking you may move armies once, from one of your territories to another connected to it through your ' +
+      'own territories, leaving at least one behind. That ends your turn. You can also end your turn without it.'
   },
   {
     question: 'How do cards work?',
@@ -64,7 +63,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. ' +
+    answer: 'Everyone is asked to undo the last move. It is undone only if every player still in the game approves. ' +
       'An attack played again rolls new dice.'
   },
   {

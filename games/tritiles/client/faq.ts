@@ -11,15 +11,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Which tiles can I play?',
-    answer: 'A tile that shares an edge with a tile on the board and matches every corner it touches, including a corner that only touches another tile at a point. Playable tiles are raised and outlined; the rest are dimmed. Tap or drag one and every space it fits lights up. Tap a lit space or drop the tile on it.'
+    answer: 'A tile that shares an edge with a tile on the board and matches every corner it touches, including a corner that only touches another tile at a point. Playable tiles are raised and outlined; the rest are dimmed.'
   },
   {
-    question: 'What does Rotate do?',
-    answer: 'When a space takes your tile more than one way, the tile is shown on it. Rotate turns it to the next way that fits, Confirm plays it, and Cancel puts it back. A space that takes the tile only one way plays it at once.'
-  },
-  {
-    question: 'How do I see the whole board?',
-    answer: 'The board scrolls inside its box: drag it with a finger, or use the scroll wheel or scroll bars. Zoom in and Zoom out change its size and keep the middle of the box in place.'
+    question: 'What if a space takes my tile more than one way?',
+    answer: 'The tile is shown on the space, and you choose the way it faces before you play it. A space that takes the tile only one way plays it at once.'
   },
   {
     question: 'How does a tile score?',
@@ -27,11 +23,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What if nothing fits?',
-    answer: 'Click Draw to take a tile from the pool, losing 5 points. You may draw up to 3 tiles a turn and play a drawn tile that fits at once. If none fits after 3 draws, click Pass and lose 10 more. With the pool empty, Pass costs 10.'
+    answer: 'Draw a tile from the pool, losing 5 points. You may draw up to 3 tiles a turn and play a drawn tile that fits at once. If none fits after 3 draws, you pass and lose 10 more. With the pool empty, passing costs 10.'
   },
   {
     question: 'When does a round end, and how is it scored?',
-    answer: 'When a player plays their last tile, they score 25 plus the sum left in every other hand. When the pool is empty and nobody can play, the round is blocked: the player with the lowest sum left scores the difference to each other hand, and a tie for lowest scores nothing. A scoring screen shows the round, and the next round is dealt once every connected player clicks Continue.'
+    answer: 'When a player plays their last tile, they score 25 plus the sum left in every other hand. When the pool is empty and nobody can play, the round is blocked: the player with the lowest sum left scores the difference to each other hand, and a tie for lowest scores nothing. A scoring screen shows the round, and the next round is dealt once every connected player continues.'
   },
   {
     question: 'Can I see other players\' tiles or the pool?',
@@ -39,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. After an undo the pool is shuffled again, so an undone draw cannot show you which tile is next.'
+    answer: 'Everyone is asked to undo the last move. It is undone only if every player still in the game approves. After an undo the pool is shuffled again, so an undone draw cannot show you which tile is next.'
   },
   {
     question: 'What happens if someone leaves?',

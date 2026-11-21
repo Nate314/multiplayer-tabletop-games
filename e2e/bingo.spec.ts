@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, expect, joinPassAndPlay, newPlayer, test } from './fixtures.ts';
+import { agreeToHouseRules, expect, joinPassAndPlay, newPlayer, openControls, test } from './fixtures.ts';
 import type { Card, GameState } from '../games/bingo/types.ts';
 
 // Seat 1 calls first. Crafted cards hold c * 15 + row + offset in column c, so card(1) has 1, 16, 31, 46 and 61 on its top row
@@ -39,6 +39,14 @@ test.describe('Bingo', () => {
     await cards(alice, 'Alice').getByRole('button', { name: 'Bingo!' }).click();
     await expect(cards(bob, 'Alice')).toHaveCount(0); // each player sees only their own cards
     for (const page of [alice, bob]) await expect(gameOver(page).getByRole('heading')).toHaveText('Alice wins');
+  });
+
+  test('Controls lists the controls', async ({ seat }) => {
+    const [alice] = (await seat('bingo', ['Alice', 'Bob'])).pages;
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Mark a number');
+    await expect(controls).toContainText('Click or tap the square on your card');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('auto-call and auto-mark run the game', async ({ seat }) => {

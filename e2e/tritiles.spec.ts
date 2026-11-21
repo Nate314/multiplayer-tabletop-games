@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, headerButton, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, headerButton, leave, openControls, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { cellKey, openPlacements } from '../games/tritiles/grid.ts';
 import type { Board, Cell } from '../games/tritiles/grid.ts';
 import { TILES, tileSum } from '../games/tritiles/tiles.ts';
@@ -324,7 +324,12 @@ test.describe('Tri-Tiles rules', () => {
     await expect(history.locator('.tri-last')).toHaveCount(1);
     await bob.keyboard.press('Escape');
     const faq = await openFaq(bob);
-    await expect(faq).toContainText('Rotate turns it to the next way that fits');
+    await expect(faq).toContainText('Which tiles can I play?');
+    await bob.keyboard.press('Escape');
+    const controls = await openControls(bob);
+    await expect(controls).toContainText('Turn a tile that fits a space more than one way');
+    await expect(controls).toContainText('Click or tap Rotate');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

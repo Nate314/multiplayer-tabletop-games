@@ -15,11 +15,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I take train cards?',
-    answer: 'Click a face-up card or the deck, twice. A face-up locomotive is your whole draw, and you cannot take one as your second card. A locomotive from the deck counts as one card. When three face-up cards are locomotives, all five are discarded and five more are turned up. When the deck runs out, the discards are shuffled into a new one.'
+    answer: 'You take two cards, each from the face-up cards or the deck. A face-up locomotive is your whole draw, and you cannot take one as your second card. A locomotive from the deck counts as one card. When three face-up cards are locomotives, all five are discarded and five more are turned up. When the deck runs out, the discards are shuffled into a new one.'
   },
   {
     question: 'How do I claim a route?',
-    answer: 'Click the route on the map, then click a way to pay. A colored route takes cards of its color; a gray route takes any one color. Locomotives stand in for any color. You need as many cards and trains as the route has spaces. The route then shows in your seat color, outlined in white with a white dot on each car so it never looks like an open route of that card color.'
+    answer: 'A colored route takes cards of its color; a gray route takes any one color. Locomotives stand in for any color. You need as many cards and trains as the route has spaces. The route then shows in your seat color, outlined in white with a white dot on each car so it never looks like an open route of that card color.'
   },
   {
     question: 'What about double routes?',
@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I know which tickets are done?',
-    answer: 'Your tickets are listed under your hand, and a completed one has a check mark. Point at a ticket to ring its two cities on the map. Nobody else sees your tickets, only how many you hold, until the final scoring.'
+    answer: 'Your tickets are listed under your hand, and a completed one has a check mark. Nobody else sees your tickets, only how many you hold, until the final scoring.'
   },
   {
     question: 'When does the game end?',
@@ -55,6 +55,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. Each card drawn and each ticket choice is a move of its own. The undo happens only if every player still in the game approves.'
+    answer: 'Everyone is asked to undo the last move. Each card drawn and each ticket choice is a move of its own. The undo happens only if every player still in the game approves.'
   }
 ];

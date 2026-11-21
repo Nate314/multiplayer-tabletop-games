@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, openHouseRules, type Seat, type SeatOptions, setPreference, test, touchDrag, undo } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openControls, openFaq, openHouseRules, type Seat, type SeatOptions, setPreference, test, touchDrag, undo } from './fixtures.ts';
 import { COLORS, JOKERS, tileName } from '../games/rummytiles/rules.ts';
 import type { GameState, TileColor } from '../games/rummytiles/types.ts';
 
@@ -751,6 +751,10 @@ test.describe('Rummy Tiles controls', () => {
     await expect(faq).toContainText('What is the first meld?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Put a tile on the table');
+    await expect(controls).toContainText('click or tap a tile to pick it up');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

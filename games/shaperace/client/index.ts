@@ -3,12 +3,14 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { describeMove } from './describeMove.ts';
 import { QUESTIONS } from './faq.ts';
+import { CONTROLS } from './controls.ts';
 import './shaperace.scss';
 
 export const shaperaceClient: ClientGame = {
   id: 'shaperace',
   Screen: GameScreen,
   faq: QUESTIONS,
+  controls: CONTROLS,
   HistoryBoard,
   describeMove
 };

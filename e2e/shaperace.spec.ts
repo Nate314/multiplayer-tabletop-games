@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, headerButton, leave, openFaq, openHouseRules, setHouseRules, test, touchDrag, watch, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, headerButton, leave, openControls, openFaq, openHouseRules, setHouseRules, test, touchDrag, watch, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { Layout } from '../games/shaperace/board.ts';
 import type { GameState } from '../games/shaperace/types.ts';
 import { shapeLabel } from '../games/shaperace/shapes.ts';
@@ -274,9 +274,14 @@ test.describe('Shape Race rules', () => {
     await expect(alice.getByRole('button', { name: /undo/i })).toHaveCount(0);
   });
 
-  test('the FAQ opens from Rules', async ({ seat }) => {
+  test('the FAQ opens from Rules, and Controls lists the controls', async ({ seat }) => {
     const [alice] = (await start(seat, ['Alice'])).pages;
-    await expect(await openFaq(alice)).toContainText('How do I turn a shape?');
+    await expect(await openFaq(alice)).toContainText('How does the timer work?');
+    await alice.keyboard.press('Escape');
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Turn a shape');
+    await expect(controls).toContainText('Press R while you hold a shape');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 
