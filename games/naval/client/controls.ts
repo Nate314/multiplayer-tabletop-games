@@ -9,7 +9,7 @@ export const CONTROLS: ControlItem[] = [
   },
   {
     action: 'Move a placed ship',
-    pointer: 'Click or tap a placed ship to pick it, then an empty square to move it there. Or drag it onto a square. Click or tap it again to put it down.'
+    pointer: 'Click or tap a placed ship to pick it, then an empty square to move it there. Click or tap it again to put it down.'
   },
   { action: 'Turn a ship', pointer: 'Click or tap Rotate. It turns the picked ship about its end, or the ships still in the tray if none is picked.' },
   { action: 'Take a ship off the grid', pointer: 'Pick the ship and click or tap Remove, or drag it back onto the tray.' },
