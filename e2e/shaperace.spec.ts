@@ -375,6 +375,30 @@ test.describe('Shape Race keyboard play', () => {
     await expect(alice.locator('.sr-held')).toHaveCount(0);
   });
 
+  test('an error lets go of a keyboard hold, and a leftover one does not block the next pick-up', async ({ seat }) => {
+    const table = await start(seat, ['Alice']);
+    const [alice] = table.pages;
+    const refuse = () => alice.evaluate(() => (window as unknown as { sockets: WebSocket[] }).sockets[0].dispatchEvent(
+      new MessageEvent('message', { data: JSON.stringify({ type: 'GAME_ERROR', payload: { message: 'Refused' } }) })));
+    await alice.addInitScript(() => {
+      const Native = window.WebSocket;
+      const sockets: WebSocket[] = [];
+      (window as unknown as { sockets: WebSocket[] }).sockets = sockets;
+      window.WebSocket = class extends Native { constructor(...args: ConstructorParameters<typeof Native>) { super(...args); sockets.push(this); } };
+    });
+    await alice.reload();
+    await expect(alice.getByRole('timer')).toBeVisible();
+    await pickUp(alice, 0);
+    await expect(focusable(alice)).toHaveCount(1);
+    await refuse();
+    await expect(alice.locator('.game-status-error')).toHaveText('Refused');
+    await expect(focusable(alice)).toHaveCount(0);
+    await expect(shape(alice, 0)).toBeFocused();
+    await pickUp(alice, 0);
+    await expect(focusable(alice)).toHaveCount(1);
+    await expect(alice.locator('.sr-held')).toHaveCount(1);
+  });
+
   test('a pause lets go of a keyboard hold', async ({ seat }) => {
     const table = await start(seat, ['Alice']);
     const [alice] = table.pages;

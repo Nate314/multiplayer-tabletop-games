@@ -47,7 +47,13 @@ export default function GameScreen({ gameState, playerNumber, error }: GameScree
   // A tray shape to hand focus back to once the board has rendered without the hole targets
   const [refocus, setRefocus] = useState<number | null>(null);
   const paused = gameState.paused === true;
-  useEffect(() => { if (kept !== null && (!racing || paused || error)) { setKept(null); setRefocus(kept); } }, [kept, racing, paused, error]);
+  // A new error lets go; one still set from before must not undo a fresh pick-up
+  const seenError = useRef(error);
+  useEffect(() => {
+    const fresh = error !== seenError.current;
+    seenError.current = error;
+    if (kept !== null && (!racing || paused || (error && fresh))) { setKept(null); setRefocus(kept); }
+  }, [kept, racing, paused, error]);
   useEffect(() => { if (kept !== null) boardRef.current?.querySelector<SVGElement>(`[data-hole="${target}"]`)?.focus(); }, [kept, target]);
   useEffect(() => {
     if (refocus === null) return;
