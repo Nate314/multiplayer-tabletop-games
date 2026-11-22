@@ -7,6 +7,8 @@ test.describe('Controls dialog', () => {
     const [alice] = (await seat('tictactoe', ['Alice', 'Bob'])).pages;
     const dialog = await openControls(alice);
     await expect(dialog).toHaveAccessibleName('Tic-Tac-Toe controls');
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
     await expect(dialog).toContainText('Tab moves between buttons, and Enter or Space presses one.');
     for (const heading of ['To', 'Mouse or touch', 'Keys']) await expect(dialog.getByRole('columnheader', { name: heading, exact: true })).toBeVisible();
     await expect(dialog.locator('tbody tr')).toHaveCount(5);
@@ -29,6 +31,15 @@ test.describe('Controls dialog', () => {
     await expect(dialog).toBeVisible();
     expect(await alice.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
     expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    // Each cell carries its column heading in front of it on a narrow screen
+    expect(await dialog.locator('tbody td').first().evaluate(td => getComputedStyle(td, '::before').content)).toContain('Mouse or touch');
+  });
+
+  test('Close stays in view on a short screen with a long list', async ({ seat }) => {
+    const [alice] = (await seat('streetdeeds', ['Alice', 'Bob'])).pages;
+    await alice.setViewportSize({ width: 320, height: 480 });
+    const dialog = await openControls(alice);
+    await expect(dialog.getByRole('button', { name: 'Close' })).toBeInViewport({ ratio: 1 });
   });
 
   test('the table screen\'s menu has no Controls button', async ({ seat }) => {
@@ -36,5 +47,12 @@ test.describe('Controls dialog', () => {
     const tv = await tableScreen(table);
     await expect(await headerButton(tv, 'Rules')).toBeVisible();
     await expect(await headerButton(tv, 'Controls')).toHaveCount(0);
+  });
+
+  test('the FAQ on the game page points to Controls', async ({ seat }) => {
+    const [alice] = (await seat('tictactoe', ['Alice', 'Bob'])).pages;
+    await (await headerButton(alice, 'Rules')).click();
+    await alice.getByRole('button', { name: 'FAQ' }).click();
+    await expect(alice.getByRole('dialog', { name: /rules$/ })).toContainText('To see how to do things, open Controls in the menu.');
   });
 });

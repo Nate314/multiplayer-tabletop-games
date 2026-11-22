@@ -734,9 +734,20 @@
 }
 
 /* Controls dialog: a table on wide screens; below 600px each row stacks, the action as a heading and the other two
-   cells under it with their heading from data-label. */
-:where([data-game] .modal.controls) {
+   cells under it with their heading from data-label. Like .modal.rules, the body scrolls between the title and Close.
+   Outside :where() on purpose so no game's .modal rule lets it grow past the window */
+[data-game] .modal.controls {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden;
   text-align: left;
+}
+
+[data-game] .modal.controls .controls-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 :where([data-game] .modal.controls table) {
@@ -772,7 +783,7 @@
     display: none;
   }
 
-  :where([data-game] .modal.controls td::before) {
+  :where([data-game] .modal.controls td)::before {
     content: attr(data-label) ': ';
     font-weight: 600;
   }
