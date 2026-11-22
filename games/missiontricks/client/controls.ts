@@ -25,7 +25,7 @@ export const CONTROLS: ControlItem[] = [
   {
     action: 'Communicate',
     pointer: 'Between tricks, click or tap Communicate, then a color card in your hand, then the button that says what it is, ' +
-      'such as that it is your highest card of its color. Click or tap Cancel to stop.'
+      'such as that it is your highest card of its color. In a dead-spot mission, the button reads Communicate and the card instead. Click or tap Cancel to stop.'
   },
   {
     action: 'Send the distress signal',

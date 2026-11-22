@@ -21,5 +21,5 @@ export const CONTROLS: ControlItem[] = [
   { action: 'Give tokens back', pointer: 'When you hold more than 10, click or tap Return 1 on a color to give one back, or Keep to undo that, then click or tap Return.' },
   { action: 'Choose a noble', pointer: 'When several nobles want to visit, click or tap the one you want.' },
   { action: 'Pass', pointer: 'When you can do nothing else, click or tap Pass.' },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

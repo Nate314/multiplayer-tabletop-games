@@ -27,7 +27,7 @@ export const CONTROLS: ControlItem[] = [
     action: 'Draw a card',
     pointer: 'On your turn, click or tap Draw or the draw pile. With the drawing until you can play house rule, one click takes cards until one can be played.'
   },
-  { action: 'Keep a drawn card', pointer: 'After drawing, click or tap Pass to keep the card instead of playing it.' },
+  { action: 'Keep a drawn card', pointer: 'After drawing, click or tap Pass to keep the card instead of playing it. Pass also skips your turn when the draw pile is empty and you cannot play.' },
   {
     action: 'Call Last card',
     pointer: 'With two cards in hand, click or tap Last card! before playing your next-to-last card. Click or tap it again to take the call back. ' +
@@ -39,6 +39,6 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'Click or tap Accept and draw, or Challenge. With the stacking house rule you can also play a stackable card instead.'
   },
   { action: 'Answer a stack of draws', pointer: 'With the stacking house rule, click or tap a card that stacks, or Accept and draw.' },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' },
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' },
   { action: 'Go on to the next round', pointer: 'Click or tap Continue on the scoring screen.' }
 ];

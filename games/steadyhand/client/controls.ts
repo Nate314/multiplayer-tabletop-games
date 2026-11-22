@@ -11,5 +11,5 @@ export const CONTROLS: ControlItem[] = [
     action: 'Let go of a part',
     pointer: 'Release the mouse button or lift your finger. Before the exit the part goes back to its rest spot. Switching to another window also lets go.'
   },
-  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if everyone approves.' }
+  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

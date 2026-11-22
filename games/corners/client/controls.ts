@@ -11,5 +11,5 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'Outlined cells mark every place it can go. With a mouse, the piece shows under the pointer and a click places it. On a phone, the first tap shows the piece there and a second tap on it places it. Place also places the piece that is showing.',
     keys: 'Tab to an outlined cell, then Enter or Space shows the piece there, and Enter or Space again places it.'
   },
-  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

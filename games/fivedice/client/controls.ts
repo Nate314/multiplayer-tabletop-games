@@ -13,5 +13,5 @@ export const CONTROLS: ControlItem[] = [
     action: 'Score a box',
     pointer: 'After a roll, click or tap the number shown in an empty box of your own column. A dimmed number cannot be chosen.'
   },
-  { action: 'Ask to take back the last roll or score', pointer: 'Click or tap Undo. It happens only if the other players approve.' }
+  { action: 'Ask to take back the last roll or score', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

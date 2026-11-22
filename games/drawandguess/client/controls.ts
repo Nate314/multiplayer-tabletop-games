@@ -19,5 +19,5 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'Everyone but the drawer types in the box under the chat, then clicks or taps Send. The box says Guess until you have guessed the word.',
     keys: 'Enter sends what you typed.'
   },
-  { action: 'Ask to take back the last scored guess or turn change', pointer: 'Click or tap Undo. It happens only if everyone else approves.' }
+  { action: 'Ask to take back the last scored guess or turn change', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

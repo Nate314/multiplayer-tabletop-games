@@ -33,6 +33,6 @@ export const CONTROLS: ControlItem[] = [
     action: 'Discard a card',
     pointer: 'Pick one card, then click or tap Discard selected card. For a Skip, click or tap Discard Skip on the player who loses a turn.'
   },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' },
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' },
   { action: 'Go on to the next hand', pointer: 'Click or tap Continue on the scoring screen.' }
 ];

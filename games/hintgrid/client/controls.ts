@@ -15,5 +15,5 @@ export const CONTROLS: ControlItem[] = [
   },
   { action: 'Guess a word', pointer: 'As a guesser on the team whose turn it is, click or tap a word that is still face down.' },
   { action: 'Stop guessing', pointer: 'After you have turned over a word, click or tap End guessing.' },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if everyone else approves.' }
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

@@ -19,5 +19,5 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'Click or tap the picked marble again to let it go, or another of your marbles to pick that one instead.',
     keys: 'Tab to the marble, then Enter or Space.'
   },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

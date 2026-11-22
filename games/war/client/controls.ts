@@ -8,5 +8,5 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'Tick Auto-flip. Your card is then flipped for you shortly after your turn comes up. ' +
       'It works only in your own browser tab and is off again when you reload the page.'
   },
-  { action: 'Ask to take back the last flip', pointer: 'Click or tap Undo. It happens only if both players approve.' }
+  { action: 'Ask to take back the last flip', pointer: 'Click or tap Undo. It happens only if your opponent approves.' }
 ];

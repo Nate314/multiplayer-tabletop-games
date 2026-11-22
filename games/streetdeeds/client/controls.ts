@@ -33,6 +33,6 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'When you receive mortgaged property, tick each mortgage to lift now, then click or tap the Pay button. Tick none to keep them all mortgaged.'
   },
   { action: 'End your turn', pointer: 'When you have no roll or purchase pending, click or tap End turn.' },
-  { action: 'Declare bankruptcy', pointer: 'Click or tap Declare bankruptcy, then Confirm bankruptcy. Keep playing changes your mind.' },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Declare bankruptcy', pointer: 'Click or tap Declare bankruptcy, then Confirm bankruptcy. Click or tap Keep playing to cancel.' },
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

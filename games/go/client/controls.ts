@@ -17,5 +17,5 @@ export const CONTROLS: ControlItem[] = [
   { action: 'Agree to the marks', pointer: 'Click or tap Agree. Any change to the marks clears both agreements.' },
   { action: 'Disagree about the marks', pointer: 'Click or tap Resume play. The marks and passes are cleared and play continues.' },
   { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if your opponent approves.' },
-  { action: 'Resign', pointer: 'Click or tap Resign, then Confirm resign. Keep playing changes your mind.' }
+  { action: 'Resign', pointer: 'Click or tap Resign, then Confirm resign. Click or tap Keep playing to cancel.' }
 ];

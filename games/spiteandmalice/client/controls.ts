@@ -16,5 +16,5 @@ export const CONTROLS: ControlItem[] = [
   },
   { action: 'Put a card back', pointer: 'Click or tap Put back to unpick the card.' },
   { action: 'End your turn with an empty hand', pointer: 'When you have no cards in hand, click or tap End turn.' },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

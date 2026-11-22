@@ -10,5 +10,5 @@ export const CONTROLS: ControlItem[] = [
   { action: 'Buy a house', pointer: 'On the road, click or tap one of the houses offered, or No house.' },
   { action: 'Move on the 1860 Checkered board', pointer: 'After spinning, click or tap one of the highlighted squares to move there.' },
   { action: 'See what a space does', pointer: 'On the road, hover over a space with a mouse. The legend under the board names each color.' },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

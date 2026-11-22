@@ -4,7 +4,7 @@ import type { ControlItem } from '../../../src/clientGames.ts';
 // and RoundSummary.tsx via src/components/RoundSummaryDialog.tsx (Continue)
 export const CONTROLS: ControlItem[] = [
   { action: 'Bid', pointer: 'On your turn in the bidding, choose an amount in the Bid list, then click or tap Bid. The list starts at the lowest bid allowed.' },
-  { action: 'Pass in the bidding', pointer: 'On your turn in the bidding, click or tap Pass. A pass is final for that hand.' },
+  { action: 'Pass in the bidding', pointer: 'On your turn in the bidding, click or tap Pass.' },
   {
     action: 'Lay cards aside',
     pointer: 'If you won the bid, click or tap cards in your hand to pick them, as many as the nest held, and a picked card again to unpick it. Then click or tap Lay aside.'

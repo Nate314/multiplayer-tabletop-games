@@ -11,5 +11,5 @@ export const CONTROLS: ControlItem[] = [
     pointer: 'Click or tap a player who still has cards. With only one such player, they are picked for you.'
   },
   { action: 'Ask', pointer: 'Click or tap Ask once a rank and a player are picked.' },
-  { action: 'Ask to take back the last ask', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last ask', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];
