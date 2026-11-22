@@ -216,7 +216,9 @@ export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   for (const page of pages) {
     await inHouseRules(page, async dialog => {
       await dialog.getByRole('button', { name: 'Agree', exact: true }).click();
-      await expect(dialog.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
+      const agreed = dialog.locator('.house-rules-list li[aria-current].house-rules-agreed');
+      // Alone in a game that starts once everyone agrees (Shape Race), the list goes as the game starts
+      await expect.poll(async () => await agreed.count() > 0 || await dialog.locator('.house-rules-list').count() === 0).toBe(true);
     });
   }
 }

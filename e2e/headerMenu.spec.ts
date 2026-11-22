@@ -30,7 +30,7 @@ test('Menu lists the controls in order, with labels, the same on a phone and a l
     await expect(panel.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
     const theme = await alice.evaluate(() => document.documentElement.dataset.theme);
     const next = theme === 'dark' ? 'light' : 'dark';
-    expect(await names(alice)).toEqual(['History', 'Share', 'Rules', 'Hide', 'Pause', 'Settings', 'View source on GitHub', `Switch to ${next} mode`]);
+    expect(await names(alice)).toEqual(['History', 'Share', 'Rules', 'Controls', 'Hide', 'Pause', 'Settings', 'View source on GitHub', `Switch to ${next} mode`]);
     for (const text of ['Share', 'Hide', 'Settings', 'GitHub', next === 'dark' ? 'Dark mode' : 'Light mode']) await expect(panel).toContainText(text);
     await expect.poll(async () => {
       const box = (await panel.boundingBox())!;
