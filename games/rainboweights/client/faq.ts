@@ -19,15 +19,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Which cards can I play?',
-    answer: 'A card that matches the top of the discard pile by color, or by number or symbol. A Wild can be played on anything. A Wild Draw Four may be played only when you hold no card of the current color, but the game does not stop you: see the challenge question. The cards you can play are raised and outlined; the rest are dimmed.'
-  },
-  {
-    question: 'How do I play a Wild?',
-    answer: 'Click it, then click the color you want. The next player must match that color, or play a Wild. Click Cancel to put the Wild back.'
+    answer: 'A card that matches the top of the discard pile by color, or by number or symbol. A Wild can be played on anything. You name the color that the next player must match, or play a Wild on. A Wild Draw Four may be played only when you hold no card of the current color, but the game does not stop you: see the challenge question. The cards you can play are raised and outlined; the rest are dimmed.'
   },
   {
     question: 'What if I cannot or do not want to play?',
-    answer: 'Click Draw, or the draw pile, to take one card. If that card can be played you may play it right away, or click Pass to keep it. If it cannot be played, your turn ends by itself. You may draw even when you hold a playable card, but only one card per turn.'
+    answer: 'You may draw one card. If that card can be played you may play it right away, or pass to keep it. If it cannot be played, your turn ends by itself. You may draw even when you hold a playable card, but only one card per turn.'
   },
   {
     question: 'What do the action cards do?',
@@ -35,15 +31,15 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does a Wild Draw Four challenge work?',
-    answer: 'When a Wild Draw Four is played on you, click Accept to draw 4 and lose your turn, or Challenge. On a challenge you alone see the other player\'s hand. If they held a card of the color that was current before the Wild Draw Four, they draw 4 instead and you take your turn. If not, you draw 6 and lose your turn. Cards that match only the number, and Wilds, do not count.'
+    answer: 'When a Wild Draw Four is played on you, you can accept it, draw 4 and lose your turn, or challenge it. On a challenge you alone see the other player\'s hand. If they held a card of the color that was current before the Wild Draw Four, they draw 4 instead and you take your turn. If not, you draw 6 and lose your turn. Cards that match only the number, and Wilds, do not count.'
   },
   {
-    question: 'How do I call Last card?',
-    answer: 'When you hold two cards on your turn, click Last card! and then play your next-to-last card. If you forget, you can still click Last card! afterwards. Until the next player moves, any other player can click Catch while you have not called it, and you draw 2 cards. A player who called Last card shows a Last card! badge.'
+    question: 'What is the Last card call?',
+    answer: 'When you hold two cards on your turn, call Last card before you play your next-to-last card. If you forget, you can still call it afterwards. Until the next player moves, any other player can catch you while you have not called it, and you draw 2 cards. A player who called Last card shows a Last card! badge.'
   },
   {
     question: 'How is a round scored?',
-    answer: 'The player who goes out scores every card left in the other hands: number cards at face value, Skip, Reverse and Draw Two at 20, and Wild and Wild Draw Four at 50. If the last card is a Draw Two or Wild Draw Four, the next player draws those cards first and they count too. A scoring screen shows the round, and the next round is dealt once every connected player clicks Continue. Every player\'s score is shown on the table.'
+    answer: 'The player who goes out scores every card left in the other hands: number cards at face value, Skip, Reverse and Draw Two at 20, and Wild and Wild Draw Four at 50. If the last card is a Draw Two or Wild Draw Four, the next player draws those cards first and they count too. A scoring screen shows the round, and the next round is dealt once every connected player has continued. Every player\'s score is shown on the table.'
   },
   {
     question: 'What happens when the draw pile runs out?',
@@ -67,7 +63,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves, and every hand and pile goes back to how it was before that move. Calling Last card, catching and Continue are not moves, so an undo goes back past them too.'
+    answer: 'Yes. The last move is undone only if every player still in the game approves, and every hand and pile goes back to how it was before that move. Calling Last card, catching and Continue are not moves, so an undo goes back past them too.'
   },
   {
     question: 'What happens if someone leaves?',
@@ -79,11 +75,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How does stacking work?',
-    answer: 'When the host turns on stacking, a Draw Two or Wild Draw Four does not make the next player draw at once. They may play another Draw Two on a Draw Two, or a Wild Draw Four on either, and the count grows and passes to the next player. Or they click Accept, draw the whole count and lose their turn. A Draw Two cannot go on a Wild Draw Four, and a Wild Draw Four can be challenged only while it is the only card in the stack. The table shows how many cards are waiting.'
+    answer: 'When the host turns on stacking, a Draw Two or Wild Draw Four does not make the next player draw at once. They may play another Draw Two on a Draw Two, or a Wild Draw Four on either, and the count grows and passes to the next player. Or they accept, draw the whole count and lose their turn. A Draw Two cannot go on a Wild Draw Four, and a Wild Draw Four can be challenged only while it is the only card in the stack. The table shows how many cards are waiting.'
   },
   {
     question: 'How does 7-0 work?',
-    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice: click the 7, then click their name. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing. A player left with one card by a swap or a pass has no Last card to call and cannot be caught for it.'
+    answer: 'When the host turns on 7-0, playing a 7 swaps your hand with another player of your choice. Playing a 0 passes every hand one seat in the direction of play. A 7 or 0 that is your last card goes out and swaps nothing. A player left with one card by a swap or a pass has no Last card to call and cannot be caught for it.'
   },
   {
     question: 'What does drawing until you can play do?',

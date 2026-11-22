@@ -5,7 +5,7 @@ export const FAQS: FaqItem[] = [
     question: 'How do I play?',
     answer: 'Enter your name and a Game ID; anyone who enters the same Game ID joins the same game, up to six ' +
       'players. The game needs at least two, and nobody can join after the first roll. Seat 1 rolls first, then ' +
-      'the turn passes in join order. On your turn press Roll: the die is rolled for you and your token moves ' +
+      'the turn passes in join order. On your turn you roll the die and your token moves ' +
       'that many squares. A ladder\'s foot takes you up to its top and a snake\'s head takes you down to its tail. ' +
       'The first to reach 100 wins.'
   },
@@ -20,18 +20,13 @@ export const FAQS: FaqItem[] = [
       'pass 100 does not move your token at all, and you need the exact number to land on 100. A 6 still rolls again.'
   },
   {
-    question: 'What does Auto-roll do?',
-    answer: 'Auto-roll (beside Roll) rolls for you one second after your turn comes up. It is kept only in this ' +
-      'browser tab and is off after a reload.'
-  },
-  {
     question: 'Can two tokens share a square?',
     answer: 'Yes. Any number of tokens can stand on one square; nobody is sent back and nothing is captured. ' +
       'Tokens on the same square are drawn side by side inside it.'
   },
   {
     question: 'What do Undo and History do?',
-    answer: 'Undo asks everyone to take back the last roll; it happens only if every player still in the game ' +
+    answer: 'Undo takes back the last roll, but only if every player still in the game ' +
       'approves. An undone roll is rolled again fresh, so the die may show a different number. History, in the ' +
       '☰ menu, steps through every roll so far, with the squares the token left and reached outlined.'
   },

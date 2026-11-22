@@ -43,7 +43,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
+    answer: 'The last move can be undone only if every connected player approves. Continue is not a move, so an undo goes back past it.'
   },
   {
     question: 'Can the rules be changed?',
@@ -55,6 +55,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do partners work with five or seven players?',
-    answer: 'After naming trump the bidder calls one card (two with seven) that is not in their hand, using the list and Call. Whoever holds a called card is their partner for the hand, but nobody else knows who until the card is played. The bidder may call a card they laid aside and so play with fewer partners or alone. Each player keeps their own score: if the bidding side took its bid, each member scores what the side took, otherwise each loses the bid, and each defender scores what all the defenders took. Players with equal top totals at the target share the win.'
+    answer: 'After naming trump the bidder calls one card (two with seven) that is not in their hand. Whoever holds a called card is their partner for the hand, but nobody else knows who until the card is played. The bidder may call a card they laid aside and so play with fewer partners or alone. Each player keeps their own score: if the bidding side took its bid, each member scores what the side took, otherwise each loses the bid, and each defender scores what all the defenders took. Players with equal top totals at the target share the win.'
   }
 ];

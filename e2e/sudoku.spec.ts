@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import {
-  agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, tableScreen, test, watch,
+  agreeToHouseRules, dismiss, expect, inHouseRules, joinGame, leave, newPlayer, openControls, openFaq, setHouseRules, tableScreen, test, watch,
   type Seat, type Table, headerButton } from './fixtures.ts';
 import type { GameState } from '../games/sudoku/types.ts';
 
@@ -432,5 +432,10 @@ test.describe('Sudoku controls', () => {
     const dialog = await openFaq(alice);
     await expect(dialog.getByText('What are pencil marks?')).toBeVisible();
     await expect(dialog.getByText('What can I change in Together?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Turn pencil marks on or off');
+    await expect(controls).toContainText('Press N');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

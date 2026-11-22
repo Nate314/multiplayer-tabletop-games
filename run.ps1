@@ -10,5 +10,9 @@ if (-not (Test-Path compose-launcher/run.ps1)) {
         exit 1
     }
 }
-& ./compose-launcher/run.ps1 @args
+# -ShowOpenGames is consumed here and sets the server flag for this run only.
+$rest = @($args | Where-Object { $_ -isnot [string] -or $_ -ine '-ShowOpenGames' })
+$previous = $env:SHOW_OPEN_GAMES # put back afterwards, so a later docker compose in this shell does not inherit it
+$env:SHOW_OPEN_GAMES = if ($args.Count -gt $rest.Count) { 'true' } else { 'false' }
+try { & ./compose-launcher/run.ps1 @rest } finally { $env:SHOW_OPEN_GAMES = $previous }
 exit $LASTEXITCODE

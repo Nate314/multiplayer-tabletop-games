@@ -4,7 +4,13 @@ import type { MoveChange } from './animation/useMoveAnimation.ts';
 
 export type FaqItem = { question: string; answer: string };
 
-export type GameScreenProps<P extends BasePublicState> = { gameState: P; playerNumber: Seat; error: string | null };
+// One row of the Controls dialog: what the player does, how with a mouse or by touch, and which keys
+export type ControlItem = { action: string; pointer?: string; keys?: string };
+
+export type GameScreenProps<P extends BasePublicState> = {
+  gameState: P; playerNumber: Seat; error: string | null;
+  localSeats?: Seat[]; // the seats a shared pass-and-play device holds, absent for any other join
+};
 
 // Everything the browser needs to show a game, loaded on demand; GameInfo in games/<id>/info.ts holds the rest
 export type ClientGame = {
@@ -13,6 +19,7 @@ export type ClientGame = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Screen: ComponentType<GameScreenProps<any>>;
   faq: FaqItem[];
+  controls: ControlItem[];
   // A read-only board of one public state with its lastMove highlighted, for the history dialog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   HistoryBoard: ComponentType<{ gameState: any; viewer: Seat | null }>;
@@ -34,6 +41,7 @@ export type ClientGame = {
 export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   palacewalls: () => import('../games/palacewalls/client/index.ts').then(m => m.palacewallsClient),
   backgammon: () => import('../games/backgammon/client/index.ts').then(m => m.backgammonClient),
+  bingo: () => import('../games/bingo/client/index.ts').then(m => m.bingoClient),
   roadsandfields: () => import('../games/roadsandfields/client/index.ts').then(m => m.roadsandfieldsClient),
   categories: () => import('../games/categories/client/index.ts').then(m => m.categoriesClient),
   hexisland: () => import('../games/hexisland/client/index.ts').then(m => m.hexislandClient),
@@ -44,6 +52,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   codebreaker: () => import('../games/codebreaker/client/index.ts').then(m => m.codebreakerClient),
   fourinarow: () => import('../games/fourinarow/client/index.ts').then(m => m.fourinarowClient),
   corners: () => import('../games/corners/client/index.ts').then(m => m.cornersClient),
+  cribbage: () => import('../games/cribbage/client/index.ts').then(m => m.cribbageClient),
   dominoes: () => import('../games/dominoes/client/index.ts').then(m => m.dominoesClient),
   euchre: () => import('../games/euchre/client/index.ts').then(m => m.euchreClient),
   farkle: () => import('../games/farkle/client/index.ts').then(m => m.farkleClient),
@@ -55,6 +64,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   holdem: () => import('../games/holdem/client/index.ts').then(m => m.holdemClient),
   blocktower: () => import('../games/blocktower/client/index.ts').then(m => m.loadBlocktowerClient()),
   jigsaw: () => import('../games/jigsaw/client/index.ts').then(m => m.jigsawClient),
+  shaperace: () => import('../games/shaperace/client/index.ts').then(m => m.shaperaceClient),
   mancala: () => import('../games/mancala/client/index.ts').then(m => m.mancalaClient),
   streetdeeds: () => import('../games/streetdeeds/client/index.ts').then(m => m.streetdeedsClient),
   naval: () => import('../games/naval/client/index.ts').then(m => m.navalClient),
@@ -78,6 +88,7 @@ export const CLIENT_LOADERS: Record<string, () => Promise<ClientGame>> = {
   railroutes: () => import('../games/railroutes/client/index.ts').then(m => m.railroutesClient),
   tictactoe: () => import('../games/tictactoe/client/index.ts').then(m => m.tictactoeClient),
   tradingfloor: () => import('../games/tradingfloor/client/index.ts').then(m => m.tradingfloorClient),
+  tritiles: () => import('../games/tritiles/client/index.ts').then(m => m.tritilesClient),
   ultimatetictactoe: () => import('../games/ultimatetictactoe/client/index.ts').then(m => m.ultimatetictactoeClient),
   rainboweights: () => import('../games/rainboweights/client/index.ts').then(m => m.rainboweightsClient),
   war: () => import('../games/war/client/index.ts').then(m => m.warClient),

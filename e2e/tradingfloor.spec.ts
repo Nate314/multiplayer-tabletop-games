@@ -1,5 +1,5 @@
 import type { Locator, Page, WebSocketRoute } from '@playwright/test';
-import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, test, watch, type Seat, type SeatOptions } from './fixtures.ts';
+import { dismiss, expect, headerButton, inHouseRules, leave, openControls, openFaq, test, watch, type Seat, type SeatOptions } from './fixtures.ts';
 import type { Card, GameState } from '../games/tradingfloor/types.ts';
 
 // One test per rule, control and difference in games/tradingfloor/README.md. Seat 1 is Alice, 2 Bob, 3 Cara, 4 Dan.
@@ -400,10 +400,15 @@ test.describe('Trading Floor history, spectators, leaving and help', () => {
     for (const page of [alice, bob]) await expect(page.getByRole('button', { name: /Undo/ })).toHaveCount(0);
   });
 
-  test('the FAQ opens from Rules', async ({ seat }) => {
+  test('the FAQ opens from Rules, and Controls from its own item', async ({ seat }) => {
     const { alice } = await start(seat, null);
     const dialog = await openFaq(alice);
     await expect(dialog.getByText('Whose turn is it?')).toBeVisible();
     await expect(dialog.getByText('What does "Already taken" mean?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Pick cards to offer');
+    await expect(controls).toContainText('click or tap a card in your hand');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

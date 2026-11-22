@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, headerButton, joinGame, leave, newPlayer, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, headerButton, joinGame, leave, newPlayer, openControls, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { nameOf, type CardId, type ObjectId, type RoomId, type SuspectId } from '../games/whodunit/content.ts';
 import type { Position } from '../games/whodunit/board.ts';
 import type { GameState } from '../games/whodunit/types.ts';
@@ -395,5 +395,9 @@ test.describe('Whodunit leaving, undo and history', () => {
     await expect(faq).toContainText('What are secret passages?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Roll the dice');
+    await expect(controls).toContainText('Make a suggestion');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

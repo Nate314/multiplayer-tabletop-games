@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table, headerButton } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, setPreference, test, undo, type Table, headerButton } from './fixtures.ts';
 import { LADDERS, SNAKES } from '../games/snakesladders/board.ts';
 
 // One test per rule, control and difference in games/snakesladders/README.md. Seat 1 is Alice (red), seat 2 Bob
@@ -343,6 +343,10 @@ test.describe('Snakes and Ladders controls', () => {
     await expect(faq).toContainText('There is no limit on how many sixes in a row you can roll');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Roll the die');
+    await expect(controls).toContainText('click or tap Roll');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('Auto-roll rolls one second after your turn comes up, only in your own tab, and is off after a reload', async ({ seat }) => {

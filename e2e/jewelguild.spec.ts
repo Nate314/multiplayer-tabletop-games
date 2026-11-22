@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { CARDS, GEMS, NOBLES } from '../games/jewelguild/cards.ts';
 import type { GameState, Gem, Level, PlayerState, Reserved, Token, Tokens } from '../games/jewelguild/types.ts';
 
@@ -681,12 +681,16 @@ test.describe('Jewel Guild controls', () => {
     await expect(button(alice, 'Approve')).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows a short guide to the rules and controls', async ({ seat }) => {
+  test('FAQ at the top of the page shows a short guide to the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('What can I do on my turn?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Pick gems to take');
+    await expect(controls).toContainText('click or tap gems in the supply');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

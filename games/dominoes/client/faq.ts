@@ -15,7 +15,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Which tiles can I play?',
-    answer: 'A tile with a number that matches an open end of any arm of the line. It is flipped to fit, so the matching half touches the line. Playable tiles are raised and outlined; the rest are dimmed. Drag a tile onto a highlighted open end to play it there, or click it. The table lists the open ends, and on your turn the ends you may play on are highlighted on the board.'
+    answer: 'A tile with a number that matches an open end of any arm of the line. It is flipped to fit, so the matching half touches the line. Playable tiles are raised and outlined; the rest are dimmed. The table lists the open ends, and on your turn the ends you may play on are highlighted on the board.'
   },
   {
     question: 'What do the branching settings do?',
@@ -34,12 +34,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'When you cannot play, you draw one tile. If it fits you play it; if not, or if the boneyard is empty, you pass and your train opens, so anyone may play on it. It closes again when you play on your own train.'
   },
   {
-    question: 'What if a tile fits more than one end?',
-    answer: 'After you click it, the tile is selected and the ends it fits are marked on the board: click one of them, or one of the buttons that ask which end. Click Cancel, or the tile again, to put it back. A tile that fits only one end is played at once.'
-  },
-  {
     question: 'What if nothing fits?',
-    answer: 'Click Draw, or the boneyard, to take a tile. You may draw only when no tile in your hand fits, and you keep drawing, one tile per click, until one fits or the boneyard is empty. When nothing fits and the boneyard is empty, click Pass. With Trains you draw only one tile a turn: if it does not fit, click Pass, and your train opens.'
+    answer: 'You may draw only when no tile in your hand fits, and you keep drawing, one tile at a time, until one fits or the boneyard is empty. When nothing fits and the boneyard is empty, you pass. With Trains you draw only one tile a turn: if it does not fit, you pass, and your train opens.'
   },
   {
     question: 'When does a round end?',
@@ -55,7 +51,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves. After an undo the boneyard is shuffled again, so an undone draw cannot show you which tile is next. Continue is not a move, so an undo goes back past it too.'
+    answer: 'The last move can be undone only if every player still in the game approves. After an undo the boneyard is shuffled again, so an undone draw cannot show you which tile is next. Continue is not a move, so an undo goes back past it too.'
   },
   {
     question: 'What happens if someone leaves?',

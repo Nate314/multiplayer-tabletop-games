@@ -22,12 +22,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Each player has four. Any hand card can go on any of your own discard piles, but only as the move that ends your turn. Only the top card of a discard pile can be played, and only onto a building pile, never onto another discard pile. Everyone can see every card in every discard pile.'
   },
   {
-    question: 'How do I play a card?',
-    answer: 'On your turn, click a card in your hand, your stock top or the top of one of your discard piles. The building piles it fits light up; click one to play it. With a hand card picked, each of your discard piles shows a Pile button: click one to choose it, then Discard here to discard and end your turn. Click the card again or Put back to change your mind, or click another card to pick it instead.'
-  },
-  {
     question: 'What if the draw pile runs out?',
-    answer: 'Completed building piles go back into the draw pile, so it usually refills. If it is empty, you simply draw fewer cards. With no cards in your hand you cannot discard, so click End turn after playing what you can. If every player in a row has to end their turn this way without playing anything, and none of them could have played their stock top or a discard top, nobody can ever play again, and the players with the fewest stock cards left win.'
+    answer: 'Completed building piles go back into the draw pile, so it usually refills. If it is empty, you simply draw fewer cards. With no cards in your hand you cannot discard, so you end your turn after playing what you can. If every player in a row has to end their turn this way without playing anything, and none of them could have played their stock top or a discard top, nobody can ever play again, and the players with the fewest stock cards left win.'
   },
   {
     question: 'How do I read the screen?',
@@ -39,7 +35,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
+    answer: 'Undo takes back the last move, but only if every player still in the game approves.'
   },
   {
     question: 'What happens if someone leaves?',

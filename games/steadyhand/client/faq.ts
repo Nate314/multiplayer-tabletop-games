@@ -2,8 +2,8 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 
 export const QUESTIONS: FaqItem[] = [
   {
-    question: 'How do I take a turn?',
-    answer: 'On your turn, press a part that is still in its slot and drag it along the slot to the round exit at the slot\'s far end, with the mouse or a finger. Reach the exit and the part is out, scoring the number shown under it.'
+    question: 'How does a turn work?',
+    answer: 'On your turn, take a part that is still in its slot out along the slot to the round exit at the slot\'s far end. Reach the exit and the part is out, scoring the number shown under it.'
   },
   {
     question: 'What happens if I touch a wall?',
@@ -35,6 +35,6 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a buzz?',
-    answer: 'Press Undo to ask the table. If everyone agrees, the last turn is taken back.'
+    answer: 'Undo asks the table. If everyone agrees, the last turn is taken back.'
   }
 ];

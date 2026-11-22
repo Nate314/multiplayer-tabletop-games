@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, test, undo, type Seat, type Table } from './fixtures.ts';
 import { standardDeck, type PlayingCard, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { Ask, GameState } from '../games/gofish/types.ts';
 
@@ -373,13 +373,17 @@ test.describe('Go Fish controls', () => {
     await expect(alice.locator('.undo-vote')).toContainText('Alice wants to undo the last turn');
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('go fish');
     await expect(faq).toContainText('Asks so far');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Pick the rank to ask for');
+    await expect(controls).toContainText('click or tap a card in your hand');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

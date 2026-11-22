@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, test, undo, type Seat, type SeatOptions, type Table, headerButton } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, test, undo, type Seat, type SeatOptions, type Table, headerButton } from './fixtures.ts';
 import { cardName, type Rank, type Suit } from '../shared/playingCards.ts';
 import type { GameState, PlayingCard } from '../games/hearts/types.ts';
 
@@ -372,13 +372,17 @@ test.describe('Hearts controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { pages: [alice] } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('What is shooting the moon?');
     await expect(faq).toContainText('Passing and Continue are not moves');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Pass three cards');
+    await expect(controls).toContainText('click or tap Pass');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

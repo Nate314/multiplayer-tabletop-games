@@ -26,7 +26,7 @@ test('A to Z lists every game in one list without category headings', async ({ b
   await openFilters(page);
   await page.getByLabel('Sort').selectOption('A to Z');
   await expect(page.locator('.lobby-category-heading')).toHaveCount(0);
-  await expect(cards).toHaveCount(51);
+  await expect(cards).toHaveCount(55);
   await expect(cards.first()).toHaveText('Backgammon');
   await expect(cards.last()).toHaveText('Whodunit');
 });
@@ -39,24 +39,24 @@ test('category chips show only the picked categories', async ({ browser, server 
   await expect(cards).toHaveText(['Farkle', 'Five Dice']);
   await expect(dice).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Tile games' }).click();
-  await expect(cards).toHaveCount(7);
+  await expect(cards).toHaveCount(8);
   await dice.click();
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(6);
 });
 
 test('the players filter shows games that seat that many, marking those that need a house rule', async ({ browser, server }) => {
   const { page, cards } = await landing(browser, server);
   await openFilters(page);
   await page.getByLabel('Players').fill('7');
-  await expect(cards).toHaveCount(17);
-  expect((await cards.allTextContents()).sort()).toEqual(['Block Tower', 'Categories', 'Charades', 'Draw and Guess', 'Farkle', 'Fictionary', 'Five Dice', 'Hint Grid', 'Jigsaw', 'Nest', 'Rainbow Eights', 'Stage Rummy', 'Steady Hand', 'Street Deeds', 'Sudoku', "Texas Hold'em", 'Trading Floor']);
+  await expect(cards).toHaveCount(19);
+  expect((await cards.allTextContents()).sort()).toEqual(['Bingo', 'Block Tower', 'Categories', 'Charades', 'Draw and Guess', 'Farkle', 'Fictionary', 'Five Dice', 'Hint Grid', 'Jigsaw', 'Nest', 'Rainbow Eights', 'Shape Race', 'Stage Rummy', 'Steady Hand', 'Street Deeds', 'Sudoku', "Texas Hold'em", 'Trading Floor']);
   const marked = page.locator('.lobby-game', { has: page.locator('.lobby-game-house-rule') }).locator('.lobby-game-name');
   expect((await marked.allTextContents()).sort()).toEqual(['Nest', 'Stage Rummy']);
   await expect(card(page, 'Nest').locator('.lobby-game-house-rule')).toHaveText('7 with a house rule');
   await page.getByLabel('Players').fill('2');
   await expect(card(page, 'Hex Island').locator('.lobby-game-house-rule')).toHaveText('2 with a house rule');
   await page.getByLabel('Players').fill('');
-  await expect(cards).toHaveCount(51);
+  await expect(cards).toHaveCount(55);
 });
 
 test('typing a third digit or a zero in the players filter keeps the previous value', async ({ browser, server }) => {
@@ -83,7 +83,7 @@ test('filters are remembered after a reload and Clear filters shows every game a
   await expect(search).toHaveValue('zzz');
   await expect(page.getByText('No games match these filters')).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters' }).click();
-  await expect(cards).toHaveCount(51);
+  await expect(cards).toHaveCount(55);
   await expect(search).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Clear filters' })).toHaveCount(0);
 });
@@ -114,7 +114,7 @@ test('the Filter button hides sort, chips and Players, and counts the filters it
   await expect(page.getByText('No games match these filters')).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters' }).click();
   await expect(filter).toHaveText('Filter');
-  await expect(cards).toHaveCount(51);
+  await expect(cards).toHaveCount(55);
 });
 
 test('a press outside the Filter panel closes it', async ({ browser, server }) => {

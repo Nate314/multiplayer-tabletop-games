@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { HouseRuleValues } from '../shared/houseRules.ts';
 import type { Board } from '../games/mancala/types.ts';
 
@@ -250,12 +250,16 @@ test.describe('Mancala controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('counter-clockwise');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Sow a pit');
+    await expect(controls).toContainText('one of your outlined pits');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

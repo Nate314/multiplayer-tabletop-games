@@ -17,7 +17,7 @@ export const FAQS: FaqItem[] = [
     question: 'What is the special build phase?',
     answer: 'A house rule for five or six players, off unless the host turns it on. After each turn, every other player ' +
       'in turn order, starting with the next player, gets a build chance: build or buy a development card, with no ' +
-      'trading or playing cards, then click Done building. Players holding fewer than 2 cards, or away, are skipped. A ' +
+      'trading or playing cards, then finish with Done building. Players holding fewer than 2 cards, or away, are skipped. A ' +
       'card bought then is playable from your next turn, and the points to win reached then win when your own turn begins.'
   },
   {
@@ -28,33 +28,31 @@ export const FAQS: FaqItem[] = [
   {
     question: 'How does setup work?',
     answer: 'Each player places a settlement and a road next to it, in turn order, then again in reverse order, so the ' +
-      'first player places last. Click a highlighted intersection, then a highlighted path. Your second settlement gives ' +
+      'first player places last. Your second settlement gives ' +
       'you one card of each resource around it. No settlement may be next to another one, ever.'
   },
   {
     question: 'How does a turn go?',
-    answer: 'Click Roll the dice. Every hex with the rolled number produces: each settlement on its corners takes one ' +
-      'card and each city two, except on the hex with the robber. Then trade and build in any order, and click End turn. ' +
+    answer: 'Start by rolling the dice. Every hex with the rolled number produces: each settlement on its corners takes one ' +
+      'card and each city two, except on the hex with the robber. Then trade and build in any order, and end your turn. ' +
       'You may play one development card at any time in your turn, even before rolling.'
   },
   {
     question: 'What does building cost?',
     answer: 'Road: 1 wood and 1 brick. Settlement: 1 wood, 1 brick, 1 sheep and 1 wheat. City (upgrading a settlement): ' +
       '2 wheat and 3 ore. Development card: 1 sheep, 1 wheat and 1 ore. Each player has 15 roads, 5 settlements and 4 ' +
-      'cities. A road must join your own road, settlement or city, and a new settlement must be next to one of your roads. ' +
-      'Build with the Build buttons, or drag a road, settlement or city from your pieces tray onto a highlighted spot (or tap the piece, then the spot).'
+      'cities. A road must join your own road, settlement or city, and a new settlement must be next to one of your roads.'
   },
   {
     question: 'What happens on a 7?',
-    answer: 'Nobody produces. Everyone holding more than 7 cards picks half of them, rounded down, to give back, in the ' +
-      'Discard panel. Then the roller moves the robber to another hex and steals one random card from a player with a ' +
+    answer: 'Nobody produces. Everyone holding more than 7 cards gives half of them back, rounded down. Then the roller moves the robber to another hex and steals one random card from a player with a ' +
       'settlement or city there. Only the thief and the victim see which card it was.'
   },
   {
     question: 'How do I trade?',
-    answer: 'On your turn, after rolling, trade with the bank in the turn panel: 4 of one resource for 1 of another, or ' +
-      'better at a port where you have a settlement or city (3:1 at a 3:1 port, 2:1 for that port\'s resource). To trade ' +
-      'with players, click Offer a trade, choose a player or Everyone, set what you give and what you want, and send it. ' +
+    answer: 'On your turn, after rolling, trade with the bank: 4 of one resource for 1 of another, or ' +
+      'better at a port where you have a settlement or city (3:1 at a 3:1 port, 2:1 for that port\'s resource). You can also ' +
+      'offer a trade to one player or to everyone. ' +
       'The first player to accept makes the trade; you can withdraw it until then. Only the player whose turn it is can offer.'
   },
   {
@@ -89,7 +87,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can we undo a move?',
-    answer: 'Click Undo to ask everyone. The move is undone only if every player still in the game approves. Discards and ' +
+    answer: 'Undo asks everyone. The move is undone only if every player still in the game approves. Discards and ' +
       'trades are not moves, so an undo goes back past them too, and a roll played again may come up differently.'
   },
   {

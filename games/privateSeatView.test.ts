@@ -14,6 +14,7 @@ const NAVAL_SHOTS = { 1: [{ row: 0, col: 0, result: 'miss' }], 2: [{ row: 4, col
 const CASES: Record<string, (s: Loose) => Loose[]> = {
   hearts: s => [{ ...s, passes: { 1: s.hands[1].slice(0, 3) } }],
   euchre: s => [{ ...s, dealer: 1, discard: s.hands[1][0] }],
+  cribbage: s => [{ ...s, hands: { ...s.hands, 1: s.hands[1].slice(2) }, crib: s.hands[1].slice(0, 2) }],
   nest: s => [{ ...s, bidder: 2, phase: 'play', nest: s.hands[2].slice(0, 2) }],
   missiontricks: s => [{ ...s, distress: { direction: 'left', passes: { 1: s.hands[1][0] } } }],
   rainboweights: s => [
@@ -116,6 +117,8 @@ for (const game of GAMES) {
               if (Array.isArray(value) && key === 'chat') {
                 const lines = spectated[key] as unknown[];
                 for (const line of value) assert.ok(lines.some(candidate => JSON.stringify(candidate) === JSON.stringify(line)), `${key} line of seat ${seat}`);
+              } else if (key === 'boards') { // a race seat's own board, among every board the spectator sees
+                for (const [owner, board] of Object.entries(value as object)) assert.deepEqual((spectated[key] as Record<string, unknown>)[owner], board, `${key} of seat ${seat}`);
               } else assert.deepEqual(spectated[key], value, `${key} of seat ${seat}`);
             }
           }

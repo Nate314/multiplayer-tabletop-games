@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, tableScreen, test, undo, watch } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openControls, openFaq, type Seat, type SeatOptions, tableScreen, test, undo, watch } from './fixtures.ts';
 import type { GameState } from '../games/charades/types.ts';
 
 // One test per rule, control and difference in games/charades/README.md. Alice (seat 1) acts first; Bob and Cara guess.
@@ -291,5 +291,9 @@ test.describe('Charades rules', () => {
     await expect(faq).toContainText('What does "So close!" mean?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Guess the prompt');
+    await expect(controls).toContainText('Enter sends what you typed');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

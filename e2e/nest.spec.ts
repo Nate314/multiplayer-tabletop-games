@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, inHouseRules, leave, openFaq, type Seat, type SeatOptions, setHouseRules, type Table, test, undo } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, inHouseRules, leave, openControls, openFaq, type Seat, type SeatOptions, setHouseRules, type Table, test, undo } from './fixtures.ts';
 import type { Card, Color, GameState, TeamScores } from '../games/nest/types.ts';
 
 // One test per rule and control in games/nest/README.md. Seats join in order: Alice 1, Bob 2, Cara 3, Dan 4, so
@@ -486,6 +486,10 @@ test.describe('Nest controls', () => {
     await expect(faq).toContainText('Continue is not a move');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Lay cards aside');
+    await expect(controls).toContainText('click or tap Lay aside');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

@@ -10,6 +10,8 @@ const GAME_ICONS: Record<string, () => string> = {
   palacewalls: () => lineIcon(el('rect', { x: 3, y: 3, width: 5, height: 5 }), el('rect', { x: 9.5, y: 3, width: 5, height: 5 }), el('rect', { x: 16, y: 3, width: 5, height: 5 }), el('rect', { x: 3, y: 9.5, width: 5, height: 5 }), el('rect', { x: 16, y: 9.5, width: 5, height: 5 }), el('rect', { x: 3, y: 16, width: 5, height: 5 }), el('rect', { x: 9.5, y: 16, width: 5, height: 5 }), el('rect', { x: 16, y: 16, width: 5, height: 5 }), solid('rect', { x: 9.5, y: 9.5, width: 5, height: 5 })),
   backgammon: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 1.5 }),
     el('path', { d: 'M5.5 4l2 6.5 2-6.5M14.5 4l2 6.5 2-6.5M5.5 20l2-6.5 2 6.5M14.5 20l2-6.5 2 6.5' })),
+  // A 3 by 3 grid of dots with the center one ringed
+  bingo: () => lineIcon(...[5, 12, 19].flatMap(cy => [5, 12, 19].map(cx => pip(cx, cy, 1.6))), el('circle', { cx: 12, cy: 12, r: 4 })),
   roadsandfields: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18 }), el('path', { d: 'M3 8a13 13 0 0 1 13 13M3 14a7 7 0 0 1 7 7' })),
   // Three lines beside a large letter
   categories: () => lineIcon(el('path', { d: 'M14 6h7M14 12h7M14 18h7' }), label('B', 7.5, 18, 17)),
@@ -23,8 +25,12 @@ const GAME_ICONS: Record<string, () => string> = {
   fourinarow: () => lineIcon(el('rect', { x: 3, y: 4, width: 18, height: 16, rx: 2 }),
     ...[7.5, 12, 16.5].flatMap(x => [el('circle', { cx: x, cy: 9.5, r: 1.6 }), x === 12 ? solid('circle', { cx: x, cy: 14.5, r: 1.6 }) : el('circle', { cx: x, cy: 14.5, r: 1.6 })])),
   corners: () => lineIcon(...[3, 7.5, 12, 16.5].map(n => el('rect', { x: n, y: n, width: 4.5, height: 4.5 }))),
+  // A pegging board strip with two pegs standing in its holes
+  cribbage: () => lineIcon(el('rect', { x: 2, y: 11, width: 20, height: 8, rx: 2 }), pip(5.5, 15, 0.9), pip(12.5, 15, 0.9), pip(19.5, 15, 0.9), el('path', { d: 'M9 15V7M16 15V9' }), solid('circle', { cx: 9, cy: 5.5, r: 1.8 }), solid('circle', { cx: 16, cy: 7.5, r: 1.8 })),
   dominoes: () => lineIcon(el('rect', { x: 7, y: 2, width: 10, height: 20, rx: 2 }), el('path', { d: 'M7 12h10' }),
     pip(10, 5.5), pip(14, 8.5), pip(10, 15), pip(12, 17), pip(14, 19)),
+  // A triangle with a dot in each corner
+  tritiles: () => lineIcon(el('path', { d: 'M12 3L22 20H2z' }), pip(12, 8, 1.2), pip(7, 16.5, 1.2), pip(17, 16.5, 1.2)),
   euchre: () => lineIcon(el('rect', { x: 3.5, y: 5, width: 10, height: 14, rx: 1.5, transform: 'rotate(-12 8.5 12)' }),
     el('rect', { x: 10, y: 4, width: 10, height: 14, rx: 1.5, transform: 'rotate(10 15 11)' }), label('J', 15, 14, 7)),
   farkle: () => lineIcon(el('path', { d: 'M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z' })),
@@ -59,6 +65,8 @@ const GAME_ICONS: Record<string, () => string> = {
   snakesladders: () => lineIcon(el('path', { d: 'M5 21V3M10 21V3M5 8h5M5 13h5M5 18h5' }), el('path', { d: 'M20 3c-4 2 0 5-3 8s1 6-3 10' })),
   spades: () => lineIcon(solid('path', { d: 'M12 2C9 6 4 9 4 13a4 4 0 0 0 7 2.6L10 21h4l-1-5.4A4 4 0 0 0 20 13c0-4-5-7-8-11z' })),
   jewelguild: () => lineIcon(el('path', { d: 'M6 3h12l4 6-10 12L2 9zM2 9h20M9 3l3 6 3-6M8 9l4 12 4-12' })),
+  // A star above a square hole
+  shaperace: () => lineIcon(el('path', { d: 'M12 2l1.3 3.2 3.5.3-2.7 2.2.8 3.3-2.9-1.8-2.9 1.8.8-3.3-2.7-2.2 3.5-.3z' }), el('rect', { x: 7.5, y: 13, width: 9, height: 9 })),
   steadyhand: () => lineIcon(el('path', { d: 'M3 20h6v-6H5V8h8V4h8' }), el('circle', { cx: 3.5, cy: 20, r: 2 })),
   sudoku: () => lineIcon(el('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2 }), el('path', { d: 'M9 3v18M15 3v18M3 9h18M3 15h18' }), label('5', 12, 14.5, 6)),
   // Two railway lines, drawn with their ties, crossing at a city

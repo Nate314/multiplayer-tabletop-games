@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { WatchingContext } from './WatchingContext.ts';
 import { RulesTrigger, useRulesDialog } from './RulesButton';
+import { ControlsTrigger, useControlsDialog } from './ControlsButton';
 import HistoryButton, { useHistoryDialog } from './HistoryButton';
 import GameOverDialog from './GameOverDialog';
 import { canRematch } from './gameOver.ts';
@@ -106,7 +107,8 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const paused = gameState.paused === true;
   const canPause = (playerNumber !== null || localSeats !== null) && gameState.started && !gameState.isGameOver && !paused;
   const pauseBlocked = Boolean(gameState.undoVote || gameState.dismissVote || gameState.rematchVote || gameState.pauseVote) || gameState.disconnected.length > 0;
-  const rulesDialog = useRulesDialog(game, client.faq, houseRules, agreeNeeded);
+  const rulesDialog = useRulesDialog(game, client.faq, houseRules, agreeNeeded, !tableScreen);
+  const controlsDialog = useControlsDialog(game, client.controls);
   const settings = useSettingsDialog();
   // A player's credential is its seat key
   const pausedSeats = localSeats ?? (playerNumber === null ? [] : [{ seat: playerNumber, name: gameState.playerNames[playerNumber], seatKey: credential }]);
@@ -122,6 +124,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
             <ShareButton game={game} gameId={gameState.gameId} withLabel />
             {tableScreen && <button type="button" className="history-button qr-button" onClick={() => setQrOpen(true)}>Show QR code</button>}
             <RulesTrigger agreeNeeded={agreeNeeded} onOpen={rulesDialog.open} />
+            {!tableScreen && <ControlsTrigger onOpen={controlsDialog.open} />}
             {!tableScreen && <HideButton hidden={hidden} onToggle={() => setHidden(h => !h)} withLabel />}
             {canPause && <PauseButton disabled={pauseBlocked} onPause={() => gameService.requestPause()} />}
             <SettingsTrigger onOpen={settings.open} withLabel />
@@ -129,7 +132,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
             <ThemeToggle withLabel />
           </GameMenu>
           {/* In the header, so Hide and the wait for agreement, which dim everything else, leave them alone */}
-          {rulesDialog.dialog}{settings.dialog}
+          {rulesDialog.dialog}{controlsDialog.dialog}{settings.dialog}
         </header>
         {hidden && (
           <section className="hidden-cover" aria-label="Game hidden">
@@ -162,7 +165,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
           <>
             {localSeats && <PassAndPlayBar name={gameState.playerNames[playerNumber]} onPass={() => onShowSeat(null)} />}
             {/* Remounted per shown seat, so nothing one player picked (a pass, a rack order) shows to the next */}
-            <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} />
+            <Screen key={playerNumber} gameState={gameState} playerNumber={playerNumber} error={error} localSeats={localSeats?.map(local => local.seat)} />
             <DismissVote gameState={gameState} playerNumber={playerNumber} onVote={(approve) => gameService.voteDismiss(approve)} />
             <HandRequestPrompt gameState={gameState} onAnswer={(spectator, allow) => gameService.answerHand(spectator, allow)} />
           </>

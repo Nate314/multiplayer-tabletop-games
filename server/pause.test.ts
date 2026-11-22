@@ -308,6 +308,21 @@ function resumedFromFiles(store?: GameStore) {
   return { ...files, manager, alice, bob };
 }
 
+test('a game restored from files is kept 30 days from its restore', (t: TestContext) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const { alice, bob } = pauseFiles();
+  const { manager, clock } = managerFor();
+  clock.now += PAUSED_ROOM_TTL_MS;
+  uploaded(manager.uploadPauseFile(alice, DEVICE));
+  uploaded(manager.uploadPauseFile(bob, BOB_DEVICE));
+  assert.equal(manager.rawState(ROOM)?.pausedAt, 100_000); // the original pause time, from the seal
+  t.mock.timers.tick(DAY_MS);
+  assert.equal(manager.rawState(ROOM)?.paused, true);
+  clock.now += PAUSED_ROOM_TTL_MS;
+  t.mock.timers.tick(DAY_MS);
+  assert.equal(manager.rawState(ROOM), undefined);
+});
+
 test('files resume a lost game in the same seats on the same turn', () => {
   const { original, alice, bob } = pauseFiles();
   const { manager } = managerFor();

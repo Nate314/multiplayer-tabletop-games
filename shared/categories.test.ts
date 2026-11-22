@@ -21,18 +21,18 @@ test('the Puzzles group sits after Classic board games and is dropped while empt
 
 test('every registered game has the spec\'s category', () => {
   const expected: Record<GameCategory, string[]> = {
-    card: ['euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'spiteandmalice', 'spades', 'holdem', 'missiontricks', 'tradingfloor', 'rainboweights', 'war'],
+    card: ['cribbage', 'euchre', 'gofish', 'hearts', 'stagerummy', 'inorder', 'nest', 'spiteandmalice', 'spades', 'holdem', 'missiontricks', 'tradingfloor', 'rainboweights', 'war'],
     dice: ['farkle', 'fivedice'],
-    tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid'],
+    tile: ['palacewalls', 'roadsandfields', 'dominoes', 'rummytiles', 'lettergrid', 'tritiles'],
     classic: ['backgammon', 'checkers', 'chinesecheckers', 'chess', 'fourinarow', 'mancala', 'naval', 'pachisi', 'pawnsandwalls', 'roadtoretirement', 'snakesladders', 'tictactoe', 'ultimatetictactoe', 'whodunit'],
     puzzle: ['codebreaker', 'jigsaw', 'sudoku'],
     strategy: ['hexisland', 'corners', 'go', 'streetdeeds', 'jewelguild', 'territories', 'railroutes'],
-    party: ['charades', 'fictionary', 'categories', 'hintgrid', 'blocktower', 'drawandguess', 'steadyhand']
+    party: ['charades', 'fictionary', 'categories', 'hintgrid', 'blocktower', 'drawandguess', 'steadyhand', 'shaperace', 'bingo']
   };
   const actual = Object.fromEntries(Object.keys(expected).map(c => [c, GAMES.filter(g => g.info.category === c).map(g => g.info.id).sort()]));
   const sorted = Object.fromEntries(Object.entries(expected).map(([c, ids]) => [c, [...ids].sort()]));
   assert.deepEqual(actual, sorted);
   const grouped = groupByCategory(GAMES).flatMap(g => g.games.map(game => game.info.id));
-  assert.equal(grouped.length, 51);
-  assert.equal(new Set(grouped).size, 51);
+  assert.equal(grouped.length, 55);
+  assert.equal(new Set(grouped).size, 55);
 });

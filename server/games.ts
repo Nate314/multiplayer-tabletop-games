@@ -22,7 +22,7 @@ import { historyMoments, historyStep, platformView, publicView, type ViewRoom } 
 import { openSeal, sealRoom, shareHash, type SealedRoom } from './pauseSeal.ts';
 import { decodeImage, embedImages, imageMime, MAX_IMAGE_BYTES, MAX_ROOM_IMAGES, newImageId, type ImageUploadError } from './images.ts';
 import { buildPauseFile, canonicalJson, checkPauseFiles, pauseFilesMismatch, sealedRoomOf } from './pauseFiles.ts';
-import { MAX_NAME_LENGTH } from '../shared/types.ts';
+import { MAX_GAME_ID_LENGTH, MAX_NAME_LENGTH } from '../shared/types.ts';
 import type { HandRequest, JoinRole } from '../shared/types.ts';
 import type {
   BaseGameState, BasePublicState, GameResult, HistoryStep, OpenGame, Random, Result, Seat
@@ -114,6 +114,10 @@ function cleanName(value: unknown): string {
   return String(value ?? '').trim().slice(0, MAX_NAME_LENGTH);
 }
 
+function cleanGameId(value: unknown): string {
+  return String(value ?? '').trim().slice(0, MAX_GAME_ID_LENGTH);
+}
+
 export const NOT_AVAILABLE = 'not-available'; // one answer for a missing game and a refused credential, so neither can be told apart
 
 function sameSecret(a: string, b: string): boolean {
@@ -161,7 +165,8 @@ export function createGameManager(
   // Deletes every game paused for PAUSED_ROOM_TTL_MS, so abandoned pauses never fill the store
   function prunePausedRooms(): void {
     for (const [roomId, room] of rooms) {
-      if (room.state.paused && (room.state.pausedAt ?? now()) <= now() - PAUSED_ROOM_TTL_MS) deleteRoom(roomId);
+      const since = room.state.pause?.restoredAt ?? room.state.pausedAt ?? now(); // a restored game is kept from its restore
+      if (room.state.paused && since <= now() - PAUSED_ROOM_TTL_MS) deleteRoom(roomId);
     }
   }
 
@@ -441,7 +446,7 @@ export function createGameManager(
   function findHistoryRoom(gameType: unknown, gameId: unknown, credential: unknown, n?: number) {
     const game = findGame(gameType);
     if (!game) return null;
-    const roomId = `${game.info.id}/${cleanName(gameId)}`;
+    const roomId = `${game.info.id}/${cleanGameId(gameId)}`;
     let room = rooms.get(roomId);
     if (n !== undefined) {
       let archived = undefined as ArchivedGame | undefined;
@@ -729,11 +734,15 @@ export function createGameManager(
     const seatKeys = Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.seatKey]));
     const seatDevices = Object.fromEntries(uploads.flatMap(([seat, { device }]) => (device ? [[seat, device]] : [])));
     const rekeyed = (state: BaseGameState): BaseGameState => ({ ...state, seatKeys, seatDevices });
-    const pause = { seal: uploads[0][1].file.seal, shares: Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.file.share])) };
+    const pause = {
+      seal: uploads[0][1].file.seal, shares: Object.fromEntries(uploads.map(([seat, upload]) => [seat, upload.file.share])), restoredAt: now()
+    };
+    // The sealed pause time is untrusted JSON; a seal from before it was sealed, or a bad one, pauses from now
+    const { pausedAt } = sealed.state;
     const state: BaseGameState = {
       ...rekeyed(sealed.state),
       paused: true,
-      pausedAt: now(),
+      pausedAt: typeof pausedAt === 'number' && Number.isFinite(pausedAt) && pausedAt <= now() ? pausedAt : now(),
       disconnected: [...sealed.state.activePlayers].sort((a, b) => a - b),
       spectators: [],
       spectatorKeys: {},
@@ -789,7 +798,7 @@ export function createGameManager(
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
 
-      const id = cleanName(gameId);
+      const id = cleanGameId(gameId);
       const typedName = cleanName(playerName);
       const tableScreen = role === 'tableScreen';
       if (!id) return { error: 'Please enter a game ID' };
@@ -850,7 +859,7 @@ export function createGameManager(
       const game = findGame(gameType);
       if (!game) return { error: 'Unknown game' };
       if (game.info.passAndPlay === false) return { error: `Pass and play is not offered for ${game.info.name}` };
-      const id = cleanName(gameId);
+      const id = cleanGameId(gameId);
       if (!id) return { error: 'Please enter a game ID' };
       const cleaned = Array.isArray(names) ? names.map(cleanName).filter(Boolean) : [];
       if (cleaned.length < 2) return { error: 'Enter at least two names' };
@@ -1146,14 +1155,16 @@ export function createGameManager(
       const found = findPlayer(roomId, seat);
       if ('error' in found) return found;
       const { room } = found;
-      const { pause: _pause, pausedAt: _pausedAt, ...state } = room.state;
+      const { state } = room;
       if (!state.paused) return { error: 'The game is not paused' };
       if (state.disconnected.length > 0) {
         return { error: `Waiting for ${state.disconnected.map(missing => state.playerNames[missing]).join(', ')}` };
       }
       let next: BaseGameState = { ...state, pauseVote: null, paused: false, turnStartedAt: null };
+      // resumeClock still sees pausedAt, so a game clock can keep the time it had left
       if (room.game.resumeClock) next = room.game.resumeClock(next, now());
-      room.state = { ...next, gameStatus: 'Play resumed' };
+      const { pause: _pause, pausedAt: _pausedAt, ...resumed } = next;
+      room.state = { ...resumed, gameStatus: 'Play resumed' };
       save(roomId, room);
       return { state: view(room, seat) };
     },
@@ -1161,7 +1172,7 @@ export function createGameManager(
     // One seat's pause file, for that seat's key or remembered device only; any other ask is NOT_AVAILABLE
     pauseFile(gameType: unknown, gameId: unknown, seat: unknown, credential: unknown, now: Date): { file: PauseFile } | { error: string } {
       const game = findGame(gameType);
-      const room = game && rooms.get(`${game.info.id}/${cleanName(gameId)}`);
+      const room = game && rooms.get(`${game.info.id}/${cleanGameId(gameId)}`);
       const state = room?.state;
       if (!room || !state?.paused || !state.pause || typeof credential !== 'string') return { error: NOT_AVAILABLE };
       if (typeof seat !== 'number' || !state.activePlayers.includes(seat)) return { error: NOT_AVAILABLE };
@@ -1185,7 +1196,7 @@ export function createGameManager(
       if ('error' in parsed) return parsed;
       const { file } = parsed;
       const game = findGame(file.gameType)!;
-      if (cleanName(file.gameId) !== file.gameId || !seatsAgree(game, file)) return { error: NOT_A_PAUSE_FILE };
+      if (cleanGameId(file.gameId) !== file.gameId || !seatsAgree(game, file)) return { error: NOT_A_PAUSE_FILE };
       const roomId = `${game.info.id}/${file.gameId}`;
       const device = hashDeviceId(deviceId);
       const room = rooms.get(roomId);
@@ -1235,7 +1246,7 @@ export function createGameManager(
     resumeStatus(gameType: unknown, gameId: unknown, credential: unknown): ResumeStatus | { error: typeof NOT_AVAILABLE } {
       const game = findGame(gameType);
       if (!game || typeof credential !== 'string') return { error: NOT_AVAILABLE };
-      const roomId = `${game.info.id}/${cleanName(gameId)}`;
+      const roomId = `${game.info.id}/${cleanGameId(gameId)}`;
       const holds = (keys: string[]) => keys.some(key => sameSecret(key, credential));
       const lobby = lobbies.get(roomId);
       if (lobby && holds([...lobby.uploads.values()].map(upload => upload.seatKey))) {
@@ -1318,14 +1329,14 @@ export function createGameManager(
         };
       });
       const images = embedImages(imageIdsOf(game, roomStates(room)), loadImage);
-      return { file: buildGameFile(game.info.id, cleanName(gameId), steps, now, images) };
+      return { file: buildGameFile(game.info.id, cleanGameId(gameId), steps, now, images) };
     },
 
     // A picture from a seated player of an existing room, the lobby included; the seat key proves the seat.
     // It is kept until the room is deleted, or for as long as an archived game shows it
     uploadImage(gameType: unknown, gameId: unknown, seatKey: unknown, bytes: Buffer): { id: string } | { error: ImageUploadError } {
       const game = findGame(gameType);
-      const roomId = game && `${game.info.id}/${cleanName(gameId)}`;
+      const roomId = game && `${game.info.id}/${cleanGameId(gameId)}`;
       const room = roomId && rooms.get(roomId);
       if (!room || !store) return { error: 'no-room' };
       const { state } = room;

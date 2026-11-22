@@ -51,6 +51,14 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.seat'), '.trick'],
     move: async page => { await button(page, /^Take task/).first().click(); }
   },
+  cribbage: {
+    keep: ['.hand', '.hint', '.action-buttons'], // nobody has the turn while the crib is laid, so the hint leads
+    hide: ['.seats', '.starter'],
+    move: async page => { // everyone lays cards in the crib at once
+      for (let card = 0; card < 2; card++) await page.getByRole('region', { name: 'Your hand' }).getByRole('button').nth(card).click();
+      await button(page, 'Send to crib').click();
+    }
+  },
   war: {
     keep: ['.turn-message', '.flip-button', you('.war-seat'), you('.war-seat') + ' .war-seat-count'],
     hide: [others('.war-seat'), '.war-battle', '.war-summary'],
@@ -111,6 +119,18 @@ const HAND_ONLY: Record<string, Row> = {
     hide: [others('.player'), '.boneyard', '.line-ends'],
     board: '.board',
     move: async page => { await page.locator('.hand-tiles .tile-playable').first().click(); }
+  },
+  tritiles: {
+    keep: ['.hand', '.turn-message', '.action-buttons', you('.player')],
+    hide: [others('.player'), '.pool'],
+    board: '.board-area',
+    move: async page => {
+      await page.locator('.hand-tile-playable').first().click();
+      await page.locator('.tri-space').first().click();
+      // A space that takes the opening tile more than one way waits for Confirm
+      const confirm = button(page, 'Confirm');
+      if (await confirm.isVisible()) await confirm.click();
+    }
   },
   lettergrid: {
     keep: ['.rack', '.turn-message', '.turn-buttons', you('.score-row')],

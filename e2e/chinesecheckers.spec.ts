@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, openFaq, setPreference, test, undo, type Table, headerButton } from './fixtures.ts';
+import { dismiss, expect, leave, openControls, openFaq, setPreference, test, undo, type Table, headerButton } from './fixtures.ts';
 import { POINT_HOLES, holeKey } from '../games/chinesecheckers/board.ts';
 import type { PointIndex, Seat as SeatNumber } from '../games/chinesecheckers/types.ts';
 
@@ -375,6 +375,10 @@ test.describe('Chinese Checkers controls', () => {
     await expect(faq).toContainText('Why can five players not start?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(table.pages[0]);
+    await expect(controls).toContainText('Stop a chain of hops');
+    await expect(controls).toContainText('Tab to a glowing marble, then Enter or Space.');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

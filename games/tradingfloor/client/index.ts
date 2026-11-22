@@ -4,12 +4,14 @@ import GameScreen from './GameScreen';
 import HistoryBoard, { FinalRound } from './HistoryBoard';
 import { describeMove } from './describeMove.ts';
 import { QUESTIONS } from './faq.ts';
+import { CONTROLS } from './controls.ts';
 import './tradingfloor.scss';
 
 export const tradingfloorClient: ClientGame = {
   id: 'tradingfloor',
   Screen: GameScreen,
   faq: QUESTIONS,
+  controls: CONTROLS,
   HistoryBoard,
   describeMove,
   FinalRound,

@@ -2,7 +2,8 @@ import type { HouseRulesState } from './houseRules.ts';
 import type { Reaction, RecordedReaction } from './reactions.ts';
 import type { PauseRecord } from './pauseFile.ts';
 
-export const MAX_NAME_LENGTH = 20; // applies to player names and game IDs
+export const MAX_NAME_LENGTH = 20; // applies to player names
+export const MAX_GAME_ID_LENGTH = 36; // the length of a GUID
 
 export type Seat = number; // 1-based, seated in join order
 export type Result<T> = { state: T } | { error: string };
@@ -44,7 +45,7 @@ export type BaseGameState = {
   rematchVote?: RematchVote | null; // only once the game is over; missing in rooms saved before rematches
   pauseVote?: PauseVote | null; // missing in rooms saved before pausing
   paused?: boolean; // missing in rooms saved before pausing
-  pausedAt?: number; // server ms the game was paused, or restored from files; only while paused
+  pausedAt?: number; // server ms the game was paused, kept through a restore from files; only while paused
   pause?: PauseRecord; // only while paused; the server strips it from every view, like seatKeys
   houseRules?: HouseRulesState; // missing in games saved before house rules; read through houseRulesOf / houseRule
   turnStartedAt?: number | null; // server time the turn began, shifted later by paused time; absent with the turn timer off

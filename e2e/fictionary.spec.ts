@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openFaq, type Seat, type SeatOptions, tableScreen, test } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openControls, openFaq, type Seat, type SeatOptions, tableScreen, test } from './fixtures.ts';
 import type { GameState } from '../games/fictionary/types.ts';
 
 // One test per rule, control and difference in games/fictionary/README.md. Alice, Bob and Cara define quillon.
@@ -324,9 +324,13 @@ test.describe('Fictionary rules', () => {
   test('the FAQ opens from Rules', async ({ seat }) => {
     const { alice } = await seated(seat);
     const faq = await openFaq(alice);
-    await expect(faq).toContainText('How do I write a definition?');
+    await expect(faq).toContainText('What do I write?');
     await expect(faq).toContainText('What if I write the real definition?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Write a definition');
+    await expect(controls).toContainText('click or tap Submit');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

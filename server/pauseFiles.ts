@@ -6,9 +6,10 @@ import type { BaseGameState, BasePublicState, HistoryStep, Seat } from '../share
 import { openSeal, shareHash, type SealedRoom } from './pauseSeal.ts';
 import { historyMoments, historyStep, publicView, type ViewRoom } from './views.ts';
 
-// Secrets and per-run bookkeeping that must not outlive the pause: the seal protects the rest
+// Secrets and per-run bookkeeping that must not outlive the pause: the seal protects the rest, pausedAt among it,
+// so a game clock restored from files keeps the time it had left
 const UNSEALED_KEYS = [
-  'seatKeys', 'seatDevices', 'spectatorKeys', 'spectators', 'handRequests', 'reactions', 'pause', 'pausedAt', 'turnStartedAt', 'turnPausedAt'
+  'seatKeys', 'seatDevices', 'spectatorKeys', 'spectators', 'handRequests', 'reactions', 'pause', 'turnStartedAt', 'turnPausedAt'
 ] as const;
 
 function stripped(state: BaseGameState): BaseGameState {

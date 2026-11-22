@@ -23,7 +23,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I lay down my phase?',
-    answer: 'After drawing, select cards in your hand and click "Add selected to group 1" (or group 2). Click a staged card to put it back, or Clear to start over. "Lay down phase" is enabled once every group is right. Each group needs at least the cards its part asks for and may have more, such as a run of 8 for a run of 7 or a set of 4 for a set of 3, but you cannot add a group the phase does not ask for: play extra cards by hitting afterwards. You can lay down only once per hand.'
+    answer: 'After drawing, you build your phase from cards in your hand, a group at a time. It can be laid down once every group is right. Each group needs at least the cards its part asks for and may have more, such as a run of 8 for a run of 7 or a set of 4 for a set of 3, but you cannot add a group the phase does not ask for: play extra cards by hitting afterwards. You can lay down only once per hand.'
   },
   {
     question: 'How do Wilds work?',
@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What is hitting?',
-    answer: 'Once your own phase is down, you can add cards to any group on the table, yours or another player\'s: matching numbers on a set, the next number at either end of a run, the same color on a color group, or a Wild. Select the cards, then click "Hit here" on the group.'
+    answer: 'Once your own phase is down, you can add cards to any group on the table, yours or another player\'s: matching numbers on a set, the next number at either end of a run, the same color on a color group, or a Wild.'
   },
   {
     question: 'What does a Skip do?',
@@ -43,7 +43,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens between hands?',
-    answer: 'A scoring screen shows each player\'s phase, the cards they had left and their total. The next hand is dealt once every connected player has clicked Continue. The deal moves one seat on, and the player after the dealer starts.'
+    answer: 'A scoring screen shows each player\'s phase, the cards they had left and their total. The next hand is dealt once every connected player has continued. The deal moves one seat on, and the player after the dealer starts.'
   },
   {
     question: 'What if the draw pile runs out?',
@@ -51,7 +51,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I read the screen?',
-    answer: 'The draw pile and discard top are at the top. Your hand is below them; sort it by number or color with the Sort buttons. Every player is listed with their phase, score, card count and the groups they laid down. The player whose turn it is is outlined, and your hand is dimmed when it is not your turn.'
+    answer: 'The draw pile and discard top are at the top. Your hand is below them. Every player is listed with their phase, score, card count and the groups they laid down. The player whose turn it is is outlined, and your hand is dimmed when it is not your turn.'
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
@@ -63,7 +63,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every player still in the game approves.'
+    answer: 'Yes. The last move is undone only if every player still in the game approves.'
   },
   {
     question: 'Can the rules be changed?',

@@ -4,6 +4,7 @@ import GameScreen from './GameScreen';
 import HistoryBoard from './HistoryBoard';
 import { FinalRound } from './RevealRows';
 import { QUESTIONS } from './faq.ts';
+import { CONTROLS } from './controls.ts';
 import { describeMove } from './describeMove.ts';
 import './fictionary.scss';
 
@@ -11,6 +12,7 @@ export const fictionaryClient: ClientGame = {
   id: 'fictionary',
   Screen: GameScreen,
   faq: QUESTIONS,
+  controls: CONTROLS,
   HistoryBoard,
   describeMove,
   FinalRound,

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openFaq, setHouseRules, test, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { agreeToHouseRules, dismiss, expect, headerButton, inHouseRules, joinGame, leave, newPlayer, openControls, openFaq, setHouseRules, test, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import type { GameState } from '../games/categories/types.ts';
 
 // One test per rule, control and difference in games/categories/README.md. Seat 1 is Alice, seat 2 Bob, seat 3 Cara.
@@ -282,10 +282,15 @@ test.describe('Categories rules', () => {
     expect(after.list.filter(category => before.list.includes(category))).toEqual([]);
   });
 
-  test('the FAQ opens', async ({ seat }) => {
+  test('the FAQ opens, and Controls from its own item', async ({ seat }) => {
     const table = await seated(seat, ['Alice', 'Bob']);
     const faq = await openFaq(table.pages[0]);
-    await expect(faq).toContainText('How do I challenge an answer?');
+    await expect(faq).toContainText('How does a challenge work?');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(table.pages[0]);
+    await expect(controls).toContainText('Write an answer');
+    await expect(controls).toContainText('type');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('the review fits at phone size', async ({ seat }) => {

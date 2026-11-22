@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, undo, type Seat as SeatFixture } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openControls, openFaq, setPreference, test, undo, type Seat as SeatFixture } from './fixtures.ts';
 import type { PlacedWall, Position } from '../games/pawnsandwalls/types.ts';
 
 // One test per rule and control in games/pawnsandwalls/README.md. Every player sees the board the same way up: row 0 is
@@ -271,14 +271,18 @@ test.describe('Pawns and Walls controls', () => {
     await expect(frame).toHaveCSS('border-bottom-color', 'rgb(31, 99, 209)'); // Bob's blue at the bottom
   });
 
-  test('FAQ at the top of the page covers moving, placing walls and the rules', async ({ seat }) => {
+  test('FAQ at the top of the page covers the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
-    await expect(faq).toContainText('How do I move?');
-    await expect(faq).toContainText('How do I place a wall?');
+    await expect(faq).toContainText('How can I move?');
+    await expect(faq).toContainText('How do walls work?');
     await expect(faq).toContainText('How do I win?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Pick up a wall');
+    await expect(controls).toContainText('R, while you hold a wall.');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('clicking Undo asks everyone still in the game to approve', async ({ seat }) => {

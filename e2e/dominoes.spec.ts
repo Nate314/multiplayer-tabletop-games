@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import {
-  agreeToHouseRules, dismiss, expect, leave, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
+  agreeToHouseRules, dismiss, expect, inHouseRules, leave, openControls, openFaq, setHouseRules, test, undo, type Seat, type Table, headerButton } from './fixtures.ts';
 import { EMPTY_BOARD, boardFromLine, lay } from '../games/dominoes/board.ts';
 import type { Board, Layout } from '../games/dominoes/board.ts';
 import { pipsName, tilesOf } from '../games/dominoes/rules.ts';
@@ -108,10 +108,13 @@ test.describe('Dominoes rules', () => {
     const table = await seat('dominoes', ['Alice', 'Bob'], { agree: false });
     const [alice, bob] = table.pages;
     await setHouseRules(alice, 'dominoes', { branching: 'none', set: 9 });
-    const bobsSet = bob.getByLabel('Set', { exact: true });
-    await expect(bobsSet).toHaveValue('9');
-    await expect(bobsSet).toBeDisabled();
-    await expect(bobsSet.locator('option:checked')).toHaveText('Double-nine (55 tiles)');
+    // The rules live in the Rules dialog's House rules tab, read-only for everyone but the host
+    await inHouseRules(bob, async dialog => {
+      const bobsSet = dialog.getByLabel('Set', { exact: true });
+      await expect(bobsSet).toHaveValue('9');
+      await expect(bobsSet).toBeDisabled();
+      await expect(bobsSet.locator('option:checked')).toHaveText('Double-nine (55 tiles)');
+    });
 
     const cara = await table.join('Cara');
     await expect(hand(cara).getByRole('button')).toHaveCount(9);
@@ -325,7 +328,12 @@ test.describe('Dominoes rules', () => {
 
     const faq = await openFaq(bob);
     await expect(faq).toContainText('Double-six (28 tiles) or double-nine (55 tiles)');
-    await expect(faq).toContainText('Click Draw, or the boneyard');
+    await expect(faq).toContainText('You may draw only when no tile in your hand fits');
+    await faq.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(bob);
+    await expect(controls).toContainText('Draw a tile');
+    await expect(controls).toContainText('click or tap Draw or the boneyard');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 
   test('the host can set a lower target', async ({ seat }) => {

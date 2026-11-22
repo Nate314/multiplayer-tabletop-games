@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import { HOME, LAST_TRACK, NEST, TRACK_LENGTH, entryIndex, isOnTrack, trackIndex } from '../games/pachisi/rules.ts';
 import type { Progress, Seat as SeatNumber } from '../games/pachisi/types.ts';
 
@@ -470,6 +470,10 @@ test.describe('Pachisi controls', () => {
     await expect(faq).toContainText('blockade');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Select a pawn');
+    await expect(controls).toContainText('or into the center');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

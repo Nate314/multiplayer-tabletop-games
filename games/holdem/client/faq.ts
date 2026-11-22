@@ -18,8 +18,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Before the flop, the player left of the big blind. After it, the first player still in left of the button. A player who is all in is skipped.'
   },
   {
-    question: 'How do I bet?',
-    answer: 'On your turn click Fold, Check (when there is nothing to call) or Call. To bet or raise, type the total you want your bet to be this round in Amount and click Bet or Raise to, or click All in.'
+    question: 'What can I do on my turn?',
+    answer: 'Fold, check (when there is nothing to call) or call. Or bet or raise: you name the total you want your bet to be this round, or go all in.'
   },
   {
     question: 'How much must a raise be?',
@@ -47,7 +47,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens after a hand?',
-    answer: 'The result shows each pot and who won it. Every connected player with chips clicks Continue to deal the next hand. Between hands, players with chips may click Vote to end the game; the game ends when all of them have voted. Votes are cleared when the next hand starts.'
+    answer: 'The result shows each pot and who won it. The next hand is dealt once every connected player with chips has continued. Between hands, players with chips may vote to end the game; the game ends when all of them have voted. Votes are cleared when the next hand starts.'
   },
   {
     question: 'What if I run out of chips?',
@@ -55,7 +55,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last move. It is undone only if every connected player approves. The deck is reshuffled, so an undo cannot show the next card. Continue and votes are not moves.'
+    answer: 'Undo takes back the last move, but only if every connected player approves. The deck is reshuffled, so an undo cannot show the next card. Continue and votes are not moves.'
   },
   {
     question: 'What happens if someone leaves?',

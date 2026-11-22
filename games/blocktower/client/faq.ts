@@ -8,15 +8,11 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I pull a block?',
-    answer: 'On your turn, press on a block and drag it out of the tower. A slow drag slides it gently, a fast one jerks it. ' +
-      'Scroll or pinch to zoom. With the keyboard, click the tower or tab to it, ' +
-      'choose a block with the arrow keys, press Enter to grab it, then press Down to pull and Up to push it back; ' +
-      'pressing the same way again pulls harder. Escape lets go.'
+    answer: 'On your turn, grab a block and pull it out of the tower. A slow pull slides it gently, a fast one jerks it.'
   },
   {
     question: 'How do I turn the turntable?',
-    answer: 'The tower stands on a turntable, and the marks on it show which way it faces. On your turn, press on empty space and ' +
-      'drag left or right to turn it, and up or down to tilt the view. Q turns it left and E turns it right while held. A ' +
+    answer: 'The tower stands on a turntable, and the marks on it show which way it faces. On your turn you turn it yourself. A ' +
       'hard or jerky turn can shake or topple the tower, and that is your topple. The turntable stays where the last player ' +
       'left it, and it must stop spinning before the next player grabs a block.'
   },
@@ -38,8 +34,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I place the block?',
-    answer: 'Once the block is clear of the tower it is in your hand. Drag it to an open spot on top and it snaps in, or, once ' +
-      'the tower has stopped moving, click Place on top, left, middle or right. Without Free placement, letting go anywhere ' +
+    answer: 'Once the block is clear of the tower it is in your hand. Put it on an open spot on top and it snaps in. Without Free placement, letting go anywhere ' +
       'else leaves the block lying on the ground beside the turntable, to pick up again. A new level starts across the one ' +
       'below once the top level has 3 blocks. Placing the block ends your turn.'
   },
@@ -61,7 +56,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does Undo do?',
-    answer: 'Click Undo to ask everyone else to undo the last turn. If they all approve, the tower goes back to how it stood ' +
+    answer: 'Undo asks everyone else to undo the last turn. If they all approve, the tower goes back to how it stood ' +
       'at the start of that turn, with nobody holding a block.'
   },
   {

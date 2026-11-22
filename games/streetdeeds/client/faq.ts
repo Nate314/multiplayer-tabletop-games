@@ -14,16 +14,16 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does a turn go?',
-    answer: 'Click Roll the dice. Your token moves by the total and the space you land on takes effect at once: rent and ' +
+    answer: 'Roll the dice. Your token moves by the total and the space you land on takes effect at once: rent and ' +
       'taxes are paid for you, and a Fortune or Town Fund card is drawn and shown in the middle of the board. Passing ' +
       'or landing on Start pays $200. Doubles roll again; three doubles in a row send you straight to Jail. When you are done ' +
-      'building or mortgaging, click End turn.'
+      'building or mortgaging, end your turn.'
   },
   {
     question: 'How do buying and auctions work?',
     answer: 'Landing on a property the bank owns lets you buy it at its price, or decline. A declined property is ' +
       'auctioned to every player still in the game, you included (unless the house rules turned auctions off, when the ' +
-      'bank keeps it). Bid with the quick buttons or type an amount; you can ' +
+      'bank keeps it). You can ' +
       'never bid more cash than you hold. A pass is final, and the last bidder left buys at their bid. If nobody bids, ' +
       'the bank keeps it.'
   },
@@ -32,19 +32,19 @@ export const FAQS: FaqItem[] = [
     answer: 'A street charges the rent on its deed, doubled while its owner has the whole color group and it has no ' +
       'houses (even if another street of the group is mortgaged). Houses and hotels raise it. Stations charge $25, $50, ' +
       '$100 or $200 for one to four owned, and utilities 4 times the dice, or 10 times with both. Mortgaged property ' +
-      'charges nothing. Click any property on the board, or a chip in the player list, to see its deed.'
+      'charges nothing.'
   },
   {
     question: 'How do I build?',
-    answer: 'On your turn, with every street of a color group and none of it mortgaged, open a street\'s deed and ' +
-      'click Build house. Build evenly: a street may not get a second house before every street of the group has one. ' +
+    answer: 'On your turn, with every street of a color group and none of it mortgaged, you may build a house on ' +
+      'a street. Build evenly: a street may not get a second house before every street of the group has one. ' +
       'After four houses comes a hotel, which gives the four houses back to the bank. The bank has 32 houses and 12 ' +
       'hotels; when they run out nobody can build. Sell buildings back for half their cost, also evenly. A hotel sells ' +
       'back as four houses, or outright when the bank has fewer than four houses.'
   },
   {
     question: 'How do mortgages work?',
-    answer: 'Open a property\'s deed and click Mortgage to get its mortgage value, half its price. A street can ' +
+    answer: 'On your turn, mortgaging a property pays its mortgage value, half its price. A street can ' +
       'only be mortgaged when its color group has no buildings. Lifting the mortgage costs the mortgage value plus 10%.'
   },
   {
@@ -55,17 +55,17 @@ export const FAQS: FaqItem[] = [
       'that roll. In Jail you still collect rent, build, trade and bid.'
   },
   {
-    question: 'How do I trade?',
-    answer: 'Click Propose a trade, choose a player, and tick what each side gives: properties (none in a color group ' +
+    question: 'How does trading work?',
+    answer: 'An offer names a player and what each side gives: properties (none in a color group ' +
       'with buildings), cash and Jail passes. Any player may trade at any time, one offer at a time. ' +
-      'Nothing moves until the other player clicks Accept. Whoever receives a mortgaged property chooses for each one: ' +
+      'Nothing moves until the other player accepts. Whoever receives a mortgaged property chooses for each one: ' +
       'lift the mortgage now for its value plus 10%, or pay the 10% now and keep it mortgaged. An offer is refused if ' +
       'the receiver could not pay that 10%, and an offer from or to a player who disconnects is dropped.'
   },
   {
     question: 'What if I cannot pay?',
     answer: 'The game waits for you while you owe money: sell buildings, mortgage property or trade for cash, and the ' +
-      'debt is paid as soon as you have enough. If you cannot raise it, click Declare bankruptcy. Bankrupt to a player, ' +
+      'debt is paid as soon as you have enough. If you cannot raise it, declare bankruptcy. Bankrupt to a player, ' +
       'your buildings are sold to the bank at half price and that player takes your cash, properties and jail cards. ' +
       'Bankrupt to the bank, your properties are auctioned to the others, or with Auctions off go back to the bank ' +
       'unowned. You may also declare bankruptcy on your turn to leave the game; your properties then go the same way.'

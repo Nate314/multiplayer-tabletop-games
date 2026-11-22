@@ -13,13 +13,13 @@ type RulesButtonProps = {
 
 // The Rules dialog and what opens it, so the game menu can hold the button while the dialog lives outside the menu
 // eslint-disable-next-line react-refresh/only-export-components -- the hook belongs with its button; fast refresh reloads this file in full
-export function useRulesDialog(game: GameInfo, faq: FaqItem[], houseRules?: ReactNode, agreeNeeded = false): { open: () => void; dialog: ReactNode } {
+export function useRulesDialog(game: GameInfo, faq: FaqItem[], houseRules?: ReactNode, agreeNeeded = false, hasControls = false): { open: () => void; dialog: ReactNode } {
   const [isOpen, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const dialog = isOpen && (
     // The game's own styles apply here, even on the landing page
     <div data-game={game.id}>
-      <RulesDialog game={game} faq={faq} houseRules={houseRules} initialView={agreeNeeded ? 'houseRules' : 'rules'} onClose={close} />
+      <RulesDialog game={game} faq={faq} houseRules={houseRules} initialView={agreeNeeded ? 'houseRules' : 'rules'} hasControls={hasControls} onClose={close} />
     </div>
   );
   return { open: () => setOpen(true), dialog };

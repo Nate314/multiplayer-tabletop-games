@@ -14,13 +14,6 @@ export const FAQS: FaqItem[] = [
       'board.'
   },
   {
-    question: 'How do I move?',
-    answer: 'On your turn, click one of your pieces, then click a highlighted square. Click the piece again to let ' +
-      'it go, or click another of your pieces to choose that one instead. Or drag one of your pieces onto a ' +
-      'highlighted square; drop it anywhere else to put it back. A multi-jump drag stops at each landing: drag the ' +
-      'piece again, or click the next landing square.'
-  },
-  {
     question: 'How do captures work?',
     answer: 'Jump diagonally over an opposing piece next to you onto the empty square just beyond it, and the ' +
       'jumped piece is removed. Men capture forward only; kings capture both ways. If you can capture, you must, ' +
@@ -28,9 +21,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do multi-jumps work?',
-    answer: 'If the piece can jump again from where it lands, it must keep jumping in the same turn. Click each ' +
-      'landing square in turn; the move is sent once no more jumps are left. Where the jumps branch, you choose ' +
-      'the way. To start over, click the piece again.'
+    answer: 'If the piece can jump again from where it lands, it must keep jumping in the same turn. The move is sent ' +
+      'once no more jumps are left. Where the jumps branch, you choose the way.'
   },
   {
     question: 'How does a piece become a king?',
@@ -43,17 +35,16 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'Can the game be drawn?',
-    answer: 'Only by agreement. Click Offer draw at any time; your opponent sees Accept draw and Decline. The ' +
-      'offer lapses if they decline or make a move instead.'
+    answer: 'Only by agreement. Either player can offer a draw at any time. The offer lapses if the opponent declines ' +
+      'or makes a move instead.'
   },
   {
-    question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins. ' +
-      'Click Keep playing to change your mind.'
+    question: 'When can I resign?',
+    answer: 'You can resign at any time, on either player\'s turn, and your opponent wins.'
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last turn; it happens only if they approve.'
+    answer: 'It takes back the last turn, but only if your opponent approves.'
   },
   {
     question: 'What is highlighted on the board?',

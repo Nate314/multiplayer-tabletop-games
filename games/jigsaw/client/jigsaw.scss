@@ -284,6 +284,12 @@
     pointer-events: none;
   }
 
+  .jigsaw-spot:focus-visible,
+  .jigsaw-piece:focus-visible {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+  }
+
   .jigsaw-piece {
     &:not(.placed) .jigsaw-piece-face {
       stroke: var(--outline);

@@ -72,7 +72,7 @@ test('parseGameFile rejects anything that is not a saved game', () => {
     withChange({ steps: [{}] }),
     withChange({ gameId: 42 }),
     withChange({ gameId: '' }),
-    withChange({ gameId: 'x'.repeat(21) }),
+    withChange({ gameId: 'x'.repeat(37) }),
     withChange({ exportedAt: 1234 }),
     withChange({ gameType: 7 })
   ];
@@ -81,8 +81,8 @@ test('parseGameFile rejects anything that is not a saved game', () => {
   }
 });
 
-test('parseGameFile accepts a gameId of exactly 20 characters', () => {
-  const file = buildGameFile('chess', 'x'.repeat(20), steps, new Date('2026-10-18T20:15:00.000Z'));
+test('parseGameFile accepts a gameId of exactly 36 characters', () => {
+  const file = buildGameFile('chess', 'x'.repeat(36), steps, new Date('2026-10-18T20:15:00.000Z'));
   assert.deepEqual(parseGameFile(JSON.stringify(file), ['chess']), { file });
 });
 

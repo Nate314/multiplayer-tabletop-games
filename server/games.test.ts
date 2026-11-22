@@ -78,11 +78,38 @@ test('join trims the game ID and name and rejects blanks', () => {
   assert.deepEqual(manager.join('test', null, undefined), { error: 'Please enter a game ID' });
 });
 
-test('names and game IDs are cut to 20 characters', () => {
-  const result = joined(newManager().join('test', 'x'.repeat(30), 'y'.repeat(30)));
-  assert.equal(result.state.gameId, 'x'.repeat(20));
-  assert.equal(result.roomId, `test/${'x'.repeat(20)}`);
+test('names are cut to 20 characters and game IDs to 36', () => {
+  const result = joined(newManager().join('test', 'x'.repeat(40), 'y'.repeat(30)));
+  assert.equal(result.state.gameId, 'x'.repeat(36));
+  assert.equal(result.roomId, `test/${'x'.repeat(36)}`);
   assert.equal(result.state.playerNames[1], 'y'.repeat(20));
+});
+
+test('a 36-character GUID game works on every path', () => {
+  const id = '3f2b8c1e-9a4d-4e7b-b6c2-1d5e8f0a7c39';
+  const room = `test/${id}`;
+  const manager = newManager();
+  const alice = joined(manager.join('test', id, 'A'));
+  joined(manager.join('test', id, 'B'));
+  ok(manager.move(room, 1, tick));
+  manager.disconnect(room, 1);
+  assert.equal(joined(manager.join('test', id, 'A', true, alice.seatKey)).seat, 1);
+  ok(manager.requestPause(room, 1));
+  ok(manager.votePause(room, 2, true));
+  const pause = manager.pauseFile('test', id, 1, alice.seatKey, new Date());
+  assert.ok('file' in pause, 'error' in pause ? pause.error : '');
+  assert.equal(pause.file.gameId, id);
+  assert.ok('players' in manager.resumeStatus('test', id, alice.seatKey));
+
+  const over = newManager();
+  const winner = joined(over.join('test', id, 'A'));
+  over.join('test', id, 'B');
+  ok(over.move(room, 1, tick));
+  ok(over.move(room, 2, tick));
+  ok(over.move(room, 1, tick));
+  const exported = over.gameFile('test', id, winner.seatKey, new Date());
+  assert.ok('file' in exported, 'error' in exported ? exported.error : '');
+  assert.equal(exported.file.gameId, id);
 });
 
 test('an unknown or missing game type is refused', () => {

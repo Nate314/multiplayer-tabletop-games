@@ -14,12 +14,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'Your first play must be groups made only from your own tiles that add up to at least 30 points, counting each tile at its number and a joker as the tile it stands for. In that turn you may not add to or move the tiles already on the table. If the host turned on the house rule Add to melds on your first turn (everyone agrees to it before play), once your new groups reach 30 you may also add tiles from your rack to the groups on the table; those tiles do not count toward the 30, and you still may not split, move or reorder the tiles already there. Players who have made their first meld are marked with a check.'
   },
   {
-    question: 'How do I play tiles?',
-    answer: 'On your turn, click a tile to pick it up, then click the tile it should go in front of, the + at the end of a group, or New group. You can also drag tiles, with the mouse or a finger, and drop them in the same places; a tile dropped anywhere else goes back. On a phone, drag a table tile sideways, since a swipe up or down on the table scrolls the page, or pick it with a tap. Click a held tile again to put it down. When every group is valid, click Play. The line under your rack says what is wrong, or that the play is ready.'
-  },
-  {
     question: 'How do I rearrange the table?',
-    answer: 'After your first meld you may change the table freely during your turn: move tiles between groups, split a group with the thin bar between two of its tiles, or pick up a whole group with its handle and put it at the end of another group to merge them. At the end of the turn every group must be a valid set or run and you must have added at least one tile from your rack. Tiles that were on the table cannot go back to your rack. Click Reset to go back to your saved arrangement, or to the table as it was if you saved none.'
+    answer: 'After your first meld you may change the table freely during your turn: move tiles between groups, split a group, or move a whole group to the end of another to merge them. At the end of the turn every group must be a valid set or run and you must have added at least one tile from your rack. Tiles that were on the table cannot go back to your rack.'
   },
   {
     question: 'Do other players see my changes?',
@@ -31,7 +27,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What if I cannot or do not want to play?',
-    answer: 'Click Draw a tile to take one tile from the pool, which ends your turn. Drawing also throws away any changes you made to the table. When the pool is empty the button says Pass instead.'
+    answer: 'You can draw one tile from the pool, which ends your turn. Drawing also throws away any changes you made to the table. When the pool is empty you pass instead.'
   },
   {
     question: 'How does the game end?',
@@ -40,10 +36,6 @@ export const QUESTIONS: FaqItem[] = [
   {
     question: 'Who goes first?',
     answer: 'Each player draws a tile and the highest number goes first; a joker counts lowest, and tied players draw again. The tiles go back in the pool before the racks are dealt, and the status line shows the draw. Play then passes in seat order. There is no turn timer.'
-  },
-  {
-    question: 'How do I sort my rack?',
-    answer: 'Click Color or Number above your rack. You can also pick up a rack tile, or drag it, and put it in front of another one at any time, even when it is not your turn. Only you see the order.'
   },
   {
     question: 'Can I tell the colors apart without seeing color?',
@@ -55,11 +47,11 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I keep a good arrangement while I try another?',
-    answer: 'Yes. During your turn click Save when the table and your rack are in an arrangement you would be happy to play; Save works only while every group is a valid set or run and the play would be accepted. Click Reset to come back to it, and Reset again to go back to the start of the turn. Saved arrangements stay in your browser and end with your turn.'
+    answer: 'Yes. During your turn you can save the table and your rack when they are in an arrangement you would be happy to play; saving works only while every group is a valid set or run and the play would be accepted. You can come back to it, and then go back to the start of the turn. Saved arrangements stay in your browser and end with your turn.'
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last turn. It is undone only if every player still in the game approves.'
+    answer: 'Everyone is asked to undo the last turn. It is undone only if every player still in the game approves.'
   },
   {
     question: 'What happens if someone leaves?',

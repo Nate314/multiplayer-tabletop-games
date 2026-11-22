@@ -1,0 +1,281 @@
+[data-game="bingo"] {
+  /* Bingo's paper hall. Every rule is scoped to data-game="bingo", so none of it reaches the landing page or other games.
+   The header, FAQ dialog and vote panels use the platform defaults, rethemed through the --platform-* variables. */
+
+  color-scheme: light;
+  --hall: #f4efe4;
+  --text: #2a2620;
+  --muted: #6b6255;
+  --panel-bg: #fffdf8;
+  --panel-border: rgba(42, 38, 32, 0.15);
+  --button-bg: #2c5d8f;
+  --button-hover-bg: #224a73;
+  --button-text: #fff;
+  --status-bg: #ece6d8;
+  --error-bg: #fbe3e1;
+  --error-text: #8c1d13;
+  --callable: #fde9a8;
+  --marked: #d0453a;
+  --marked-text: #fff;
+  --lit: #2c5d8f;
+  --platform-page-bg: var(--hall);
+  --platform-text: var(--text);
+  --platform-button-bg: var(--button-bg);
+  --platform-button-hover-bg: var(--button-hover-bg);
+  --platform-button-text: var(--button-text);
+  --platform-panel-bg: var(--panel-bg);
+  --platform-panel-text: var(--text);
+
+  :root[data-theme="dark"] & {
+    color-scheme: dark;
+    --hall: #1d1b18;
+    --text: #ece6d8;
+    --muted: #b0a794;
+    --panel-bg: #2a2723;
+    --panel-border: rgba(236, 230, 216, 0.14);
+    --button-bg: #3f7cb8;
+    --button-hover-bg: #5490cb;
+    --status-bg: #3a362f;
+    --error-bg: #4a1f1b;
+    --error-text: #ffd5d0;
+    --callable: #6b5a1f;
+    --marked: #c0392f;
+    --lit: #3f7cb8;
+  }
+}
+
+.game-root[data-game="bingo"] {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 0 16px 32px;
+  background: var(--hall);
+}
+
+[data-game="bingo"] {
+  .game-header {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+    color: var(--text);
+  }
+
+  .game-info,
+  .bingo-seat {
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+
+  .game-info {
+    text-align: center;
+  }
+
+  .player-info,
+  .bingo-pattern {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .game-status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: var(--status-bg);
+  }
+
+  .game-status-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .turn-message {
+    font-weight: 600;
+  }
+
+  .bingo-calls {
+    margin: 8px 0;
+  }
+
+  .bingo-last {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .bingo-called {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 8px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .action-buttons button,
+  .bingo-claim,
+  .undo-vote-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .action-buttons button:not(:disabled):hover,
+  .bingo-claim:not(:disabled):hover,
+  .undo-vote-actions button:hover {
+    background: var(--button-hover-bg);
+  }
+
+  .action-buttons button:disabled,
+  .bingo-claim:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .bingo-auto {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .bingo-seat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+
+    h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Two cards across on a phone, three in between, four on a wide screen; the page scrolls */
+  .bingo-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (min-width: 600px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (min-width: 1000px) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .bingo-card {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .bingo-letter {
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+  }
+
+  .bingo-square {
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: clamp(0.65rem, 2.6vw, 0.95rem);
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .bingo-square:disabled {
+    cursor: default;
+  }
+
+  .bingo-callable {
+    background: var(--callable);
+  }
+
+  .bingo-marked {
+    background: var(--marked);
+    color: var(--marked-text);
+    border-color: var(--marked);
+  }
+
+  .bingo-free {
+    font-size: clamp(0.5rem, 2vw, 0.75rem);
+    text-transform: uppercase;
+  }
+
+  /* The called numbers board */
+  .bingo-board {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    /* Not a percentage: the history dialog and the table screen shrink-wrap it */
+    width: min(720px, 90vw);
+    margin: 0 auto;
+    color: var(--text);
+  }
+
+  .bingo-board-row {
+    display: grid;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    gap: 3px;
+    align-items: center;
+  }
+
+  .bingo-board-number {
+    text-align: center;
+    font-size: clamp(0.55rem, 2.2vw, 0.9rem);
+    font-variant-numeric: tabular-nums;
+    padding: 3px 0;
+    border-radius: 3px;
+    color: var(--muted);
+  }
+
+  .bingo-board-called {
+    background: var(--lit);
+    color: var(--button-text);
+    font-weight: 700;
+  }
+
+  .bingo-board-last {
+    outline: 2px solid var(--marked);
+  }
+}

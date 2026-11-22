@@ -8,14 +8,6 @@ export const FAQS: FaqItem[] = [
       'can join after the first move.'
   },
   {
-    question: 'How do I move?',
-    answer: 'On your turn, click one of your pieces. Its legal moves are marked: a dot for an empty square and a ' +
-      'ring for a capture. Click a marked square to move there. Click the piece again, or an empty unmarked ' +
-      'square, to put it down, or click another of your pieces to pick that one instead. Your pieces are always ' +
-      'at the bottom of the board. Or drag one of your pieces onto a marked square; drop it anywhere else to put ' +
-      'it back.'
-  },
-  {
     question: 'How do the pieces move?',
     answer: 'The king moves one square in any direction. The queen moves any distance in a straight line or ' +
       'diagonally, the rook any distance in a straight line, and the bishop any distance diagonally. None of ' +
@@ -25,9 +17,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I castle?',
-    answer: 'Click your king, then the square two to its left or right. The rook jumps to the other side of the ' +
-      'king. You can castle only if neither the king nor that rook has moved, the squares between them are ' +
-      'empty, and the king is not in check, does not pass through an attacked square, and does not land on one.'
+    answer: 'Castling moves the king two squares toward a rook, and the rook jumps to the other side of the king. You ' +
+      'can castle only if neither the king nor that rook has moved, the squares between them are empty, and the ' +
+      'king is not in check, does not pass through an attacked square, and does not land on one.'
   },
   {
     question: 'What is en passant?',
@@ -37,8 +29,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does promotion work?',
-    answer: 'When your pawn reaches the far rank, choose a queen, rook, bishop or knight in the box that appears. ' +
-      'Click Cancel to pick a different move.'
+    answer: 'When your pawn reaches the far rank, you choose a queen, rook, bishop or knight to replace it.'
   },
   {
     question: 'What are check and checkmate?',
@@ -57,21 +48,20 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I claim a draw?',
-    answer: 'On your turn, when the same position with you to move has happened three times, or fifty moves ' +
-      'each have passed without a capture or a pawn move, a Claim draw button appears. If the move you pick ' +
-      'would itself make the third repetition or the fiftieth move, a box asks whether to make the move and claim ' +
-      'the draw, or just move. Nobody has to claim, and the game goes on until someone does.'
+    answer: 'On your turn, when the same position with you to move has happened three times, or fifty moves each have ' +
+      'passed without a capture or a pawn move, you can claim a draw. If the move you pick would itself make the ' +
+      'third repetition or the fiftieth move, you can make the move and claim the draw in one go. Nobody has to ' +
+      'claim, and the game goes on until someone does.'
   },
   {
     question: 'How do I offer a draw?',
-    answer: 'Click Offer draw at any time. Your opponent sees Accept draw and Decline; accepting ends the game in ' +
-      'a draw. The offer lapses if they decline or make a move instead.'
+    answer: 'Either player can offer a draw at any time. If the opponent accepts, the game ends in a draw. The offer ' +
+      'lapses if they decline or make a move instead.'
   },
   {
-    question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins, ' +
-      'unless they could never checkmate you (they have only their king left), in which case it is a draw. Click ' +
-      'Keep playing to change your mind.'
+    question: 'When can I resign?',
+    answer: 'You can resign at any time, on either player\'s turn, and your opponent wins, unless they could never checkmate you (they ' +
+      'have only their king left), in which case it is a draw.'
   },
   {
     question: 'What do the highlights and the side panel show?',
@@ -92,7 +82,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last move; it happens only if they approve.'
+    answer: 'It takes back the last move, but only if your opponent approves.'
   },
   {
     question: 'What happens if someone leaves?',

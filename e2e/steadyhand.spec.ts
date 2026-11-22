@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect, headerButton, inHouseRules, openFaq, tableScreen, test, undo, watch, type Seat, type SeatOptions } from './fixtures.ts';
+import { expect, headerButton, inHouseRules, openControls, openFaq, tableScreen, test, undo, watch, type Seat, type SeatOptions } from './fixtures.ts';
 import { PARTS } from '../games/steadyhand/board.ts';
 import type { GameState, Point } from '../games/steadyhand/types.ts';
 
@@ -251,10 +251,15 @@ test.describe('Steady Hand solo and tolerance', () => {
     await expect(status(alice)).toHaveText('Alice brought out the Bolt for 8 points');
   });
 
-  test('the FAQ opens from Rules', async ({ seat }) => {
+  test('the FAQ opens from Rules, and Controls from its own item', async ({ seat }) => {
     const { alice } = await start(seat, ['Alice']);
     const dialog = await openFaq(alice);
-    await expect(dialog.getByText('How do I take a turn?')).toBeVisible();
+    await expect(dialog.getByText('How does a turn work?')).toBeVisible();
     await expect(dialog.getByText('What happens if I touch a wall?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Take a part out');
+    await expect(controls).toContainText('drag it along the slot');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

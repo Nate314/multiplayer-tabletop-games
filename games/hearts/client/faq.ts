@@ -19,7 +19,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'How do I play a trick?',
-    answer: 'Follow the suit led if you can; if you cannot, play anything. The highest card of the suit led takes the trick. Cards you may play are raised and outlined.'
+    answer: 'Follow the suit led if you can; if you cannot, play anything. The highest card of the suit led takes the trick.'
   },
   {
     question: 'Are there limits on what I can play?',
@@ -31,7 +31,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What happens after a hand?',
-    answer: 'A scoring screen shows what everyone took. The next hand is dealt once every connected player has clicked Continue.'
+    answer: 'A scoring screen shows what everyone took. The next hand is dealt once every connected player has continued.'
   },
   {
     question: 'What if a player leaves?',
@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I undo?',
-    answer: 'Click Undo to ask everyone to undo the last card played. It is undone only if every connected player approves. Passing and Continue are not moves, so an undo goes back past them.'
+    answer: 'Undo takes back the last card played, but only if every connected player approves. Passing and Continue are not moves, so an undo goes back past them.'
   },
   {
     question: 'Can the rules be changed?',

@@ -12,7 +12,8 @@ const ROOM = 'palacewalls/g1';
 const acknowledge = { type: 'acknowledgeRound' };
 
 function gameWith(...names: string[]): Manager {
-  const manager = rememberingKeys(createGameManager([palacewalls]));
+  // A fixed clock, so two views compared whole carry the same serverTime
+  const manager = rememberingKeys(createGameManager([palacewalls], Math.random, undefined, { now: () => 1_000_000 }));
   for (const name of names) manager.join('palacewalls', 'g1', name);
   return manager;
 }

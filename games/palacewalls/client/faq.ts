@@ -2,8 +2,8 @@ import type { FaqItem } from '../../../src/clientGames.ts';
 
 export const QUESTIONS: FaqItem[] = [
   {
-    question: 'How do I take tiles?',
-    answer: 'On your turn, click a tile in a factory or in the center. You pick up every tile of that color from that one place. From a factory, the tiles you leave behind move to the center. Click the tiles again to put them back. You can also drag a tile straight onto one of your lines.'
+    question: 'What happens when I take tiles?',
+    answer: 'On your turn you take every tile of one color from one factory or from the center. From a factory, the tiles you leave behind move to the center.'
   },
   {
     question: 'Where can I put them?',
@@ -11,7 +11,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'What if I take more tiles than the line holds?',
-    answer: 'The extra tiles drop to your floor line and cost points at the end of the round. You can also click the floor line to send all of them there.'
+    answer: 'The extra tiles drop to your floor line and cost points at the end of the round. You may also choose to send all of them to the floor line.'
   },
   {
     question: 'What is the tile marked 1?',
@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back a move?',
-    answer: 'Click Undo to ask everyone to undo the last turn. It is undone only if every player still in the game approves.'
+    answer: 'The last turn can be undone only if every player still in the game approves.'
   },
   {
     question: 'In what order do we play?',

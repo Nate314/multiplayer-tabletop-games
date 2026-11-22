@@ -40,7 +40,7 @@ test('parsePauseFile refuses broken files', () => {
     { ...file(), playerName: 'Bob' },
     { ...file(), players: { 1: 'Alice', 2: 7 } },
     { ...file(), gameId: '' },
-    { ...file(), gameId: 'x'.repeat(21) },
+    { ...file(), gameId: 'x'.repeat(37) },
     { ...file(), table: [] },
     { ...file(), history: {} },
     { ...file(), share: 5 },
@@ -88,4 +88,8 @@ test('a pause file named __proto__ is an unknown game', () => {
   assert.deepEqual(parsePauseFile(JSON.stringify(f), ['newgame'], LEGACY), {
     error: 'This pause file is for a game this site does not have'
   });
+});
+
+test('parsePauseFile accepts a gameId of exactly 36 characters', () => {
+  assert.deepEqual(parse({ ...file(), gameId: 'x'.repeat(36) }), { file: { ...file(), gameId: 'x'.repeat(36) } });
 });

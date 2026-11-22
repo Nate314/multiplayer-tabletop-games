@@ -10,8 +10,8 @@ export const QUESTIONS: FaqItem[] = [
     answer: 'A standard 52-card deck is shuffled. With 2 or 3 players everyone gets 7 cards, with 4 to 6 players everyone gets 5. The rest is the stock, face down. A random player goes first, and play goes up the seats.'
   },
   {
-    question: 'How do I ask?',
-    answer: 'On your turn, click a card in your hand to pick its rank, then click the player to ask (with only one other player holding cards, they are picked for you), then click Ask. You may only ask for a rank you hold at least one card of, and only a player who still has cards.'
+    question: 'What can I ask for?',
+    answer: 'On your turn you ask one player for a rank. You may only ask for a rank you hold at least one card of, and only a player who still has cards.'
   },
   {
     question: 'What happens when I ask?',
@@ -39,7 +39,7 @@ export const QUESTIONS: FaqItem[] = [
   },
   {
     question: 'Can I take back an ask?',
-    answer: 'Click Undo to ask everyone to undo the last ask. It is undone only if every player still in the game approves, and every hand and the stock go back to how they were.'
+    answer: 'Undo takes back the last ask, but only if every player still in the game approves. Every hand and the stock go back to how they were.'
   },
   {
     question: 'What happens if someone leaves?',

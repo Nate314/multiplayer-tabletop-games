@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, openControls, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
 import { POINT_COUNT, diceToPlay, pointIndex } from '../games/backgammon/rules.ts';
 import type { PointStack, Position, Seat as SeatNumber } from '../games/backgammon/types.ts';
 
@@ -460,13 +460,18 @@ test.describe('Backgammon controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat, server }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat, server }) => {
     const { alice } = await start(seat, server);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('doubling cube');
     await expect(faq).toContainText('bear off');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Move a checker');
+    await expect(controls).toContainText('drag the checker onto a highlighted point');
+    await expect(controls).toContainText('Choose the die to bear off with');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

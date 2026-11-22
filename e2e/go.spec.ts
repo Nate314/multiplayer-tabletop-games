@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { headerButton, dismiss, expect, inHouseRules, leave, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
+import { headerButton, dismiss, expect, inHouseRules, leave, openControls, openFaq, seeTable, test, undo, type Seat, type Table } from './fixtures.ts';
 import { boardOf } from '../games/go/testBoards.ts';
 import type { Seat as SeatNumber } from '../games/go/types.ts';
 
@@ -318,8 +318,12 @@ test.describe('Go controls', () => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('What is ko?');
-    await expect(faq).toContainText('How do I mark dead stones?');
+    await expect(faq).toContainText('How are dead stones marked?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Mark a group of stones dead, or bring it back');
+    await expect(controls).toContainText('Click or tap Resume play.');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import gameService from '../../../src/services/gameService';
 import Board from './Board';
-import Controls from './Controls';
+// The extension is needed: controls.ts sits beside Controls.tsx, and Windows resolves names case-insensitively
+import Controls from './Controls.tsx';
 import GameStatus from './GameStatus';
 import ScorePanel from './ScorePanel';
 import UndoVote from '../../../src/components/UndoVote';

@@ -8,19 +8,16 @@ export const FAQS: FaqItem[] = [
       'one point of the star and sees it at the bottom of the board.'
   },
   {
-    question: 'How do I move?',
-    answer: 'On your turn, the marbles you can move glow. Click one, and the holes it can reach are marked. Click a ' +
-      'marked hole to move there. A step to an adjacent hole is sent at once. Click the picked marble again to let ' +
-      'it go, or click another of your marbles to choose that one instead. The board is dimmed when it is not your ' +
-      'turn.'
+    question: 'Which marbles can I move?',
+    answer: 'On your turn, the marbles you can move glow. The board is dimmed when it is not your turn.'
   },
   {
     question: 'How do chains of hops and End move work?',
     answer: 'A hop jumps one adjacent marble, yours or anyone\'s, into the empty hole straight beyond. After a hop, ' +
-      'the holes the marble can hop to next are marked and a line shows the path so far. Click the next landing to ' +
-      'keep going, or click End move to stop where the marble is. When no further hop is possible, the move is sent ' +
+      'the holes the marble can hop to next are marked and a line shows the path so far. You can keep going or stop ' +
+      'where the marble is. When no further hop is possible, the move is sent ' +
       'by itself. A chain may not land on the same hole twice or end where it began, and a step cannot follow a ' +
-      'hop. Click the marble again to start the chain over.'
+      'hop. Picking the marble again starts the chain over.'
   },
   {
     question: 'Why did a player pass?',

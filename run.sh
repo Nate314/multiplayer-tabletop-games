@@ -9,4 +9,10 @@ if [ ! -f compose-launcher/run.sh ]; then
     exit 1
   }
 fi
+show=false
+for a in "$@"; do
+  shift
+  if [ "$a" = --show-open-games ]; then show=true; else set -- "$@" "$a"; fi
+done
+export SHOW_OPEN_GAMES=$show
 exec bash compose-launcher/run.sh "$@"

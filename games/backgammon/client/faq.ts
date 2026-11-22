@@ -20,23 +20,16 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How are the dice rolled?',
-    answer: 'After the opening roll, click Roll at the start of your turn. The dice are shown beside the board, ' +
+    answer: 'After the opening roll, you roll at the start of your turn. The dice are shown beside the board, ' +
       'with the used ones faded. Each die moves one checker that many points. You may move one checker for ' +
-      'both dice. A double is played four times.'
+      'both dice. A double is played four times, and your turn ends once your dice are used.'
   },
   {
     question: 'How does the doubling cube work?',
     answer: 'The game is played for the value on the cube, which starts in the middle at 1. Before rolling, ' +
-      'you may click Double if the cube is in the middle or it is yours. Your opponent clicks Take to play on ' +
-      'for twice the stake and own the cube, so only they can redouble next, or Drop to concede the game at ' +
+      'you may double if the cube is in the middle or it is yours. Your opponent can take to play on ' +
+      'for twice the stake and own the cube, so only they can redouble next, or drop to concede the game at ' +
       'the value before the double. There is no limit on redoubles.'
-  },
-  {
-    question: 'How do I move?',
-    answer: 'On your turn, the checkers that can move are highlighted. Click one, then click one of its ' +
-      'highlighted destinations. Click the checker again, or anywhere else, to choose a different one. Each ' +
-      'click moves one checker by one die, and your turn ends once your dice are used. You can also drag a ' +
-      'checker onto a highlighted point or your tray; drop it anywhere else to put it back.'
   },
   {
     question: 'Where can a checker land?',
@@ -58,10 +51,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How do I bear off?',
-    answer: 'Once all fifteen of your checkers are in your home board, a die can take a checker off from the ' +
-      'point with its number. A higher die can bear off from your highest occupied point. Select the checker ' +
-      'and click your highlighted tray. When either die could bear it off, buttons under the board ask which ' +
-      'die to use.'
+    answer: 'Once all fifteen of your checkers are in your home board, a die can take a checker off from the point ' +
+      'with its number. A higher die can bear off from your highest occupied point. When either die could bear a ' +
+      'checker off, you choose which die to use.'
   },
   {
     question: 'How do I win, and how many points is it worth?',
@@ -72,8 +64,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last move: a checker move, a roll, a double, a take or ' +
-      'a drop. It happens only if they approve. A roll that is undone may come up differently when rolled again.'
+    answer: 'It takes back the last move: a checker move, a roll, a double, a take or a drop. It happens only if your ' +
+      'opponent approves. A roll that is undone may come up differently when rolled again.'
   },
   {
     question: 'What happens if someone leaves?',

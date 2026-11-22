@@ -7,10 +7,6 @@ export const FAQS: FaqItem[] = [
       'Tic-Tac-Toe is for exactly two players, and nobody can join after the first move.'
   },
   {
-    question: 'How do I place a mark?',
-    answer: 'On your turn, click or tap an empty cell in a highlighted board. A cell that already holds a mark cannot be chosen.'
-  },
-  {
     question: 'Where can I play?',
     answer: 'The cell your opponent just played sends you to the matching board: a mark in the top right cell of ' +
       'any board sends you to the top right board. If that board is already won or full, you may play in any open ' +
@@ -38,17 +34,16 @@ export const FAQS: FaqItem[] = [
   {
     question: 'Can the game be drawn?',
     answer: 'Yes. If every board is claimed or full with no line of three claimed boards, the game is a draw. You can ' +
-      'also agree to a draw: click Offer draw at any time; your opponent sees Accept draw and Decline. The offer ' +
-      'lapses if they decline or make a move instead.'
+      'also agree to a draw: either player can offer one at any time. The offer lapses if the opponent declines ' +
+      'or makes a move instead.'
   },
   {
-    question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn, click Resign and then Confirm resign. Your opponent wins. ' +
-      'Click Keep playing to change your mind.'
+    question: 'When can I resign?',
+    answer: 'You can resign at any time, on either player\'s turn, and your opponent wins.'
   },
   {
     question: 'What does Undo do?',
-    answer: 'Undo asks your opponent to take back the last mark; it happens only if they approve.'
+    answer: 'It takes back the last mark, but only if your opponent approves.'
   },
   {
     question: 'What is highlighted on the board?',

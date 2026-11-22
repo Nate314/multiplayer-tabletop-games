@@ -216,7 +216,9 @@ export async function agreeToHouseRules(...pages: Page[]): Promise<void> {
   for (const page of pages) {
     await inHouseRules(page, async dialog => {
       await dialog.getByRole('button', { name: 'Agree', exact: true }).click();
-      await expect(dialog.locator('.house-rules-list li[aria-current].house-rules-agreed')).toBeVisible();
+      const agreed = dialog.locator('.house-rules-list li[aria-current].house-rules-agreed');
+      // Alone in a game that starts once everyone agrees (Shape Race), the list goes as the game starts
+      await expect.poll(async () => await agreed.count() > 0 || await dialog.locator('.house-rules-list').count() === 0).toBe(true);
     });
   }
 }
@@ -227,6 +229,12 @@ export async function openFaq(page: Page) {
   const dialog = page.getByRole('dialog', { name: / rules$/ });
   await dialog.getByRole('button', { name: 'FAQ', exact: true }).click();
   return dialog;
+}
+
+// Opens Controls from the game menu and returns the dialog
+export async function openControls(page: Page) {
+  await (await headerButton(page, 'Controls')).click();
+  return page.getByRole('dialog', { name: / controls$/ });
 }
 
 export const test = base.extend<{ seat: Seat }, { server: Server; serverEnv: Record<string, string> }>({

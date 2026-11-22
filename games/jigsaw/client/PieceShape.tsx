@@ -1,4 +1,4 @@
-import { memo, type CSSProperties } from 'react';
+import { memo, type CSSProperties, type KeyboardEvent } from 'react';
 import { PICTURE_H, PICTURE_W } from '../pictures.ts';
 import type { PiecePointerProps } from './usePieceDrag.ts';
 
@@ -17,12 +17,17 @@ type PieceShapeProps = {
   holderName?: string;
   highlighted?: boolean;
   pointer?: PiecePointerProps; // only on a piece this player can lift
+  // Keyboard play: a label makes it a button. onKeyDown takes the piece too, so one stable handler serves every piece
+  label?: string;
+  tabIndex?: number;
+  onKeyDown?(piece: number, event: KeyboardEvent<SVGGElement>): void;
+  onClick?(piece: number): void; // called for a screen reader's click only
 };
 
 // One piece: its shape filled with its part of the picture, moved to (x, y). Memoized, so a drag re-renders only the
 // dragged piece. A pattern rather than a clipped <image>, so the piece's bounding box is its shape, not the whole picture.
 // The pattern's tile is the cell and half a cell around it, room for any tab
-function PieceShape({ piece, x, y, offset, cell, turns, path, fillId, url, placed, heldBy, holderName, highlighted, pointer }: PieceShapeProps) {
+function PieceShape({ piece, x, y, offset, cell, turns, path, fillId, url, placed, heldBy, holderName, highlighted, pointer, label, tabIndex, onKeyDown, onClick }: PieceShapeProps) {
   const classes = ['jigsaw-piece', placed && 'placed', heldBy !== null && 'held', pointer && 'liftable', highlighted && 'highlighted'];
   const margin = { x: cell.w / 2, y: cell.h / 2 };
   return (
@@ -33,6 +38,11 @@ function PieceShape({ piece, x, y, offset, cell, turns, path, fillId, url, place
       data-held-by={heldBy ?? undefined}
       transform={`translate(${x},${y})${turns > 0 ? ` rotate(${turns * 90},${cell.w / 2},${cell.h / 2})` : ''}`}
       style={heldBy !== null ? { '--holder': `var(--player${heldBy})` } as CSSProperties : undefined}
+      role={label ? 'button' : undefined}
+      aria-label={label}
+      tabIndex={tabIndex}
+      onKeyDown={onKeyDown && (event => onKeyDown(piece, event))}
+      onClick={onClick && (event => { if (event.detail === 0) onClick(piece); })}
       {...pointer}
     >
       <pattern id={fillId} patternUnits="userSpaceOnUse" x={-margin.x} y={-margin.y} width={2 * cell.w} height={2 * cell.h}>

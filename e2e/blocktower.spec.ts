@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, leave, test, type Seat, type Table, headerButton } from './fixtures.ts';
+import { expect, leave, openControls, test, type Seat, type Table, headerButton } from './fixtures.ts';
 import type { GameState } from '../games/blocktower/types.ts';
 
 // One test per rule and control in games/blocktower/README.md, driven by the keyboard and buttons only, so they pass without WebGL.
@@ -217,5 +217,14 @@ test.describe('Block Tower rules', () => {
     await expect(rules.locator('.faq')).toContainText('What counts as toppling the tower?');
     await rules.getByRole('button', { name: 'Close' }).click();
     await expect(rules).toHaveCount(0);
+  });
+
+  test('Controls lists the keys and gestures', async ({ seat }) => {
+    const { alice } = await start(seat);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Turn the turntable');
+    await expect(controls).toContainText('Q turns it left and E turns it right while held.');
+    await controls.getByRole('button', { name: 'Close' }).click();
+    await expect(controls).toHaveCount(0);
   });
 });

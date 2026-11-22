@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, leave, inHouseRules, openFaq, setPreference, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
+import { dismiss, expect, leave, inHouseRules, openControls, openFaq, setPreference, test, undo, type Seat, type SeatOptions, type Table } from './fixtures.ts';
 import { buildDeck, sameCard } from '../games/rainboweights/rules.ts';
 import type { Card, Color, GameState, Value } from '../games/rainboweights/types.ts';
 
@@ -785,13 +785,17 @@ test.describe('Rainbow Eights controls', () => {
     await expect(alice.getByRole('button', { name: 'Approve' })).toHaveCount(0);
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ at the top of the page shows the rules, and Controls the controls', async ({ seat }) => {
     const { pages: [alice] } = await start(seat, ['Alice', 'Bob']);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('Wild Draw Four');
-    await expect(faq).toContainText('How do I call Last card?');
+    await expect(faq).toContainText('What is the Last card call?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Call Last card');
+    await expect(controls).toContainText('click or tap Last card! before playing');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });
 

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, drag, expect, leave, lift, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
+import { dismiss, drag, expect, leave, lift, openControls, openFaq, setPreference, test, undo, type Seat, type Table } from './fixtures.ts';
 import type { Board } from '../games/fourinarow/types.ts';
 
 // One test per rule, control and difference in games/fourinarow/README.md. Seat 1 (Alice) plays Red and moves first,
@@ -277,12 +277,15 @@ test.describe('Four in a Row controls', () => {
     await expect(status(alice)).toHaveText('Bob resigned. Alice wins!');
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { alice } = await start(seat);
     const faq = await openFaq(alice);
-    await expect(faq).toContainText('How do I drop a disc?');
     await expect(faq).toContainText('four of your discs in a row');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Drop a disc');
+    await expect(controls).toContainText('click or tap the arrow above a column');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

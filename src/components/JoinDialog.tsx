@@ -6,7 +6,7 @@ import { useClientGame } from '../games/useClientGame.ts';
 import { saveJoinForm } from '../services/settings.ts';
 import { joinLink } from '../services/share.ts';
 import { requestAlerts } from '../alerts/support.ts';
-import type { JoinRole } from '../../shared/types.ts';
+import { MAX_GAME_ID_LENGTH, type JoinRole } from '../../shared/types.ts';
 
 const JOIN_ROLES: { role: JoinRole; label: string; button: string }[] = [
   { role: 'player', label: 'Player', button: 'Join' },
@@ -142,8 +142,8 @@ export default function JoinDialog({
             type="text"
             value={gameId}
             onChange={(e) => onGameIdChange(e.target.value)}
-            maxLength={20}
-            placeholder="Pick one to create or join a game"
+            maxLength={MAX_GAME_ID_LENGTH}
+            placeholder="Optional: leave blank to start a new game"
           />
         </label>
         <ClientGameNotice status={status} name={game.name} onRetry={retry} />

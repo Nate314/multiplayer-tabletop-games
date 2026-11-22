@@ -42,8 +42,8 @@ export type ClientMessage =
   | { type: typeof MESSAGE_TYPES.REQUEST_HAND; payload: { seat: Seat } }
   | { type: typeof MESSAGE_TYPES.ANSWER_HAND; payload: { spectator: string; allow: boolean } }
   | { type: typeof MESSAGE_TYPES.SWITCH_TO_PLAYER; payload: { deviceId: string } }
-  | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown; moveCount?: number } } // moveCount: the count the mover saw
-  | { type: typeof MESSAGE_TYPES.GAME_ACTION; payload: { action: unknown } }
+  | { type: typeof MESSAGE_TYPES.MAKE_MOVE; payload: { move: unknown; moveCount?: number; seat?: Seat } } // moveCount: the count the mover saw
+  | { type: typeof MESSAGE_TYPES.GAME_ACTION; payload: { action: unknown; seat?: Seat } }
   | { type: typeof MESSAGE_TYPES.SET_HOUSE_RULES; payload: { proposal: HouseRulesProposal } }
   | { type: typeof MESSAGE_TYPES.AGREE_HOUSE_RULES; payload: { revision: number } }
   | { type: typeof MESSAGE_TYPES.REQUEST_UNDO }

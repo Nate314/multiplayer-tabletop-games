@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { dismiss, expect, headerButton, inHouseRules, leave, openFaq, setPreference, test, undo, type Table } from './fixtures.ts';
+import { dismiss, expect, headerButton, inHouseRules, leave, openControls, openFaq, setPreference, test, undo, type Table } from './fixtures.ts';
 import { careerOf, houseOf } from '../games/roadtoretirement/content.ts';
 import { money } from '../games/roadtoretirement/roadRules.ts';
 import type { Cell, GameState, RoadPlayer } from '../games/roadtoretirement/types.ts';
@@ -433,12 +433,16 @@ test.describe('Road to Retirement controls', () => {
     await expect(history.locator('.player-row[data-seat="1"] .player-details')).toHaveText('$15,000 cash, 2 loans, no career yet');
   });
 
-  test('FAQ at the top of the page shows the rules and controls', async ({ seat }) => {
+  test('FAQ shows the rules, and Controls the controls', async ({ seat }) => {
     const { pages: [alice] } = await seat(ROAD_GAME, ['Alice', 'Bob']);
     const faq = await openFaq(alice);
     await expect(faq).toContainText('What are risk spaces?');
-    await expect(faq).toContainText('How do I move on the 1860 Checkered board?');
+    await expect(faq).toContainText('How do pieces move on the 1860 Checkered board?');
     await faq.getByRole('button', { name: 'Close' }).click();
     await expect(faq).toHaveCount(0);
+    const controls = await openControls(alice);
+    await expect(controls).toContainText('Move on the 1860 Checkered board');
+    await expect(controls).toContainText('highlighted squares');
+    await controls.getByRole('button', { name: 'Close' }).click();
   });
 });

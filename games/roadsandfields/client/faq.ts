@@ -14,9 +14,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     question: 'How does a turn go?',
-    answer: 'The tile you must place is drawn for you and shown to everyone. Click one of the highlighted squares to put it ' +
-      'there (or drag the tile onto one), turn it with the Turn buttons, and click Place tile. Then click one of the circles on your tile to put a ' +
-      'meeple there (or drag the meeple from the tray onto it) and click Place meeple, or click No meeple. Anything you finished scores at once.'
+    answer: 'The tile you must place is drawn for you and shown to everyone. Put it on one of the highlighted squares, ' +
+      'turned to fit. Then put a meeple on one of the circles on your tile, or none. Anything you finished scores at once. ' +
+      'The tile placed last is outlined.'
   },
   {
     question: 'Where can a tile go?',
@@ -46,11 +46,6 @@ export const FAQS: FaqItem[] = [
     answer: 'After the last tile, everything still claimed scores: an unfinished road 1 a tile, an unfinished city 1 a tile and ' +
       '1 a pennant, an unfinished monastery 1 plus 1 for each tile around it. Each field scores 3 points for every finished ' +
       'city it touches, for the player with the most farmers on it. The table under the scores shows what the end added.'
-  },
-  {
-    question: 'How do I move around the board?',
-    answer: 'Drag the board to pan it, and use the mouse wheel or the + and − buttons to zoom. Fit shows the whole board again. ' +
-      'The tile placed last is outlined.'
   },
   {
     question: 'What if a player leaves?',
