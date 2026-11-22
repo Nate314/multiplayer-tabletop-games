@@ -10,7 +10,8 @@ export const CONTROLS: ControlItem[] = [
   {
     action: 'Move a pawn',
     pointer: 'Click or tap a marked square, or the center to go home. Or drag a glowing pawn onto a marked square or into the center; ' +
-      'drop it anywhere else, or press Escape while dragging, to put it back.'
+      'drop it anywhere else to put it back.',
+    keys: 'Escape while dragging puts it back.'
   },
-  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

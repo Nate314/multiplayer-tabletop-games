@@ -10,10 +10,11 @@ export const CONTROLS: ControlItem[] = [
     action: 'Move a checker',
     pointer: 'On your turn, the checkers that can move are highlighted. Click or tap one, then click or tap one of its highlighted destinations. ' +
       'Click or tap the checker again, or anywhere else, to choose a different one. Or drag the checker onto a highlighted point; ' +
-      'drop it anywhere else, or press Escape while dragging, to put it back.'
+      'drop it anywhere else to put it back.',
+    keys: 'Escape while dragging puts it back.'
   },
-  { action: 'Enter a checker from the bar', pointer: 'Click or tap your checker on the bar, then a highlighted point. Or drag it onto a highlighted point.' },
-  { action: 'Bear off a checker', pointer: 'Click or tap the checker, then your highlighted tray. Or drag the checker onto your tray.' },
+  { action: 'Enter a checker from the bar', pointer: 'Click or tap your checker on the bar, then a highlighted point. Or drag it onto a highlighted point.', keys: 'Escape while dragging puts it back.' },
+  { action: 'Bear off a checker', pointer: 'Click or tap the checker, then your highlighted tray. Or drag the checker onto your tray.', keys: 'Escape while dragging puts it back.' },
   { action: 'Choose the die to bear off with', pointer: 'When either die could bear the checker off, click or tap the die you want under the board, or Cancel.' },
   { action: 'Ask to take back the last move', pointer: 'Click or tap Undo. It happens only if your opponent approves.' }
 ];

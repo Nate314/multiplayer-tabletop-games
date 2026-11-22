@@ -6,12 +6,12 @@ export const CONTROLS: ControlItem[] = [
   { action: 'Select a tile from your rack', pointer: 'On your turn, click or tap a tile on your rack. Click or tap it again to deselect it.' },
   {
     action: 'Place a tile',
-    pointer: 'On your turn, click or tap an empty square with a tile selected, or drag a rack tile onto an empty square.', keys: 'Escape while dragging puts the tile back.'
+    pointer: 'On your turn, click or tap an empty square with a tile selected, or drag a rack tile onto an empty square.', keys: 'Escape while dragging puts it back.'
   },
   { action: 'Choose the letter of a blank', pointer: 'Placing a blank shows the letters: click or tap the one it stands for, or Cancel.' },
-  { action: 'Move a tile you placed this turn', pointer: 'On your turn, drag it to another empty square.', keys: 'Escape while dragging puts the tile back.' },
-  { action: 'Take a placed tile back', pointer: 'On your turn, click or tap it, or drag it onto your rack.', keys: 'Escape while dragging puts the tile back.' },
-  { action: 'Rearrange your rack', pointer: 'Drag a tile to another place on your rack, even when it is not your turn.', keys: 'Escape while dragging puts the tile back.' },
+  { action: 'Move a tile you placed this turn', pointer: 'On your turn, drag it to another empty square.', keys: 'Escape while dragging puts it back.' },
+  { action: 'Take a placed tile back', pointer: 'On your turn, click or tap it, or drag it onto your rack.', keys: 'Escape while dragging puts it back.' },
+  { action: 'Rearrange your rack', pointer: 'Drag a tile to another place on your rack, even when it is not your turn.', keys: 'Escape while dragging puts it back.' },
   { action: 'Shuffle your rack', pointer: 'Click or tap Shuffle, at any time.' },
   { action: 'Take back all your placed tiles', pointer: 'Click or tap Recall.' },
   { action: 'Play your word', pointer: 'On your turn, click or tap Play once the line under your rack shows its score.' },
@@ -21,5 +21,5 @@ export const CONTROLS: ControlItem[] = [
   },
   { action: 'Pass', pointer: 'On your turn, click or tap Pass.' },
   { action: 'End the game', pointer: 'After six scoreless turns in a row, any player can click or tap End game.' },
-  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];

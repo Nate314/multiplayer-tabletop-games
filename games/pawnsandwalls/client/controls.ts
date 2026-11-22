@@ -5,11 +5,13 @@ import type { ControlItem } from '../../../src/clientGames.ts';
 export const CONTROLS: ControlItem[] = [
   {
     action: 'Move your pawn',
-    pointer: 'On your turn, with Move selected, click or tap a highlighted square. Move is selected at the start of every turn. Or drag your pawn onto a highlighted square; drop it anywhere else to put it back.'
+    pointer: 'On your turn, with Move selected, click or tap a highlighted square. Move is selected at the start of every turn. Or drag your pawn onto a highlighted square; drop it anywhere else to put it back.',
+    keys: 'Escape while dragging puts it back.'
   },
   {
     action: 'Pick up a wall',
-    pointer: 'Click or tap the wall in the Your action box, or drag it onto the board. It starts horizontal.'
+    pointer: 'Click or tap the wall in the Your action box, or drag it onto the board. It starts horizontal.',
+    keys: 'Escape while dragging puts it back.'
   },
   {
     action: 'Turn the wall',
@@ -18,8 +20,9 @@ export const CONTROLS: ControlItem[] = [
   },
   {
     action: 'Place the wall',
-    pointer: 'A dot on the bottom right corner of a square marks each place it can go. Hover over the board to preview the wall and click to place it, tap a square, or drop the dragged wall there.'
+    pointer: 'A dot on the bottom right corner of a square marks each place it can go. Hover over the board to preview the wall and click to place it, tap a square, or drop the dragged wall there.',
+    keys: 'Escape while dragging puts it back.'
   },
   { action: 'Put the wall down and move instead', pointer: 'Click or tap Move in the Your action box.' },
-  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every player still in the game approves.' }
+  { action: 'Ask to take back the last turn', pointer: 'Click or tap Undo. It happens only if every connected player approves.' }
 ];
