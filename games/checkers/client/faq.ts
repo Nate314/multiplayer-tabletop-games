@@ -39,8 +39,8 @@ export const FAQS: FaqItem[] = [
       'or makes a move instead.'
   },
   {
-    question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn. Your opponent wins.'
+    question: 'When can I resign?',
+    answer: 'You can resign at any time, on either player\'s turn, and your opponent wins.'
   },
   {
     question: 'What does Undo do?',

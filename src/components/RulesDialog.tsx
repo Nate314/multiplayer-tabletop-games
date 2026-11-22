@@ -16,6 +16,7 @@ type RulesDialogProps = {
   faq: FaqItem[];
   houseRules?: ReactNode; // the game page's House rules tab; the landing page has none
   initialView?: RulesView;
+  hasControls?: boolean; // the game menu has a Controls item, so the FAQ points to it
   onClose: () => void;
 };
 
@@ -36,7 +37,7 @@ function linkResolver(gameId: string) {
   };
 }
 
-export default function RulesDialog({ game, faq, houseRules, initialView = 'rules', onClose }: RulesDialogProps) {
+export default function RulesDialog({ game, faq, houseRules, initialView = 'rules', hasControls = false, onClose }: RulesDialogProps) {
   useEscapeKey(onClose);
   const titleId = useId();
   const [view, setView] = useState<RulesView>(houseRules ? initialView : initialView === 'houseRules' ? 'rules' : initialView);
@@ -64,7 +65,12 @@ export default function RulesDialog({ game, faq, houseRules, initialView = 'rule
   if (view === 'houseRules') {
     body = houseRules;
   } else if (view === 'faq') {
-    body = <div className="faq"><FaqList items={faq} /></div>;
+    body = (
+      <div className="faq">
+        {hasControls && <p>To see how to do things, open Controls in the menu.</p>}
+        <FaqList items={faq} />
+      </div>
+    );
   } else if (rules.status === 'loading') {
     body = <p>Loading the rules...</p>;
   } else if (rules.status === 'failed') {

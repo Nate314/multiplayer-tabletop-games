@@ -59,8 +59,8 @@ export const FAQS: FaqItem[] = [
       'lapses if they decline or make a move instead.'
   },
   {
-    question: 'How do I resign?',
-    answer: 'At any time, on either player\'s turn. Your opponent wins, unless they could never checkmate you (they ' +
+    question: 'When can I resign?',
+    answer: 'You can resign at any time, on either player\'s turn, and your opponent wins, unless they could never checkmate you (they ' +
       'have only their king left), in which case it is a draw.'
   },
   {

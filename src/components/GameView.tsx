@@ -107,7 +107,7 @@ export default function GameView({ game, client, gameState, playerNumber, specta
   const paused = gameState.paused === true;
   const canPause = (playerNumber !== null || localSeats !== null) && gameState.started && !gameState.isGameOver && !paused;
   const pauseBlocked = Boolean(gameState.undoVote || gameState.dismissVote || gameState.rematchVote || gameState.pauseVote) || gameState.disconnected.length > 0;
-  const rulesDialog = useRulesDialog(game, client.faq, houseRules, agreeNeeded);
+  const rulesDialog = useRulesDialog(game, client.faq, houseRules, agreeNeeded, !tableScreen);
   const controlsDialog = useControlsDialog(game, client.controls);
   const settings = useSettingsDialog();
   // A player's credential is its seat key
